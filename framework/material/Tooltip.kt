@@ -84,7 +84,7 @@ object Tooltip {
         private val mouseHoverDisabled = AtomicBoolean(false)
         private val mouseHoverTooltip = AtomicBoolean(false)
         private var tooltipExpanded = AtomicBoolean(false)
-        private val coroutineScope = CoroutineScope(Dispatchers.Default)
+        private val coroutines = CoroutineScope(Dispatchers.Default)
 
         internal fun keepShowingOnTooltipHover(expanded: Boolean = false) {
             mouseHoverTooltip.set(true)
@@ -95,7 +95,7 @@ object Tooltip {
         fun mayShowOnTargetHover() {
             if (mouseHoverDisabled.get()) return
             mouseHoverTarget.set(true)
-            coroutineScope.launch {
+            coroutines.launch {
                 delay(TOOLTIP_DELAY)
                 if (mouseHoverTarget.get()) isOpen = true
             }
@@ -110,7 +110,7 @@ object Tooltip {
             mouseHoverTarget.set(false)
             mouseHoverDisabled.set(true)
             isOpen = false
-            coroutineScope.launch {
+            coroutines.launch {
                 delay(TOOLTIP_DELAY)
                 mouseHoverDisabled.set(false)
             }
@@ -123,7 +123,7 @@ object Tooltip {
         }
 
         private fun delayHide() {
-            coroutineScope.launch {
+            coroutines.launch {
                 delay(TOOLTIP_DELAY)
                 if (!mouseHoverTarget.get() && !mouseHoverTooltip.get()) isOpen = false
             }

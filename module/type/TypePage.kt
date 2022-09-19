@@ -80,7 +80,7 @@ import kotlinx.coroutines.CoroutineScope
 sealed class TypePage(
     type: TypeState.Thing,
     showAdvanced: Boolean = false,
-    coroutineScope: CoroutineScope
+    coroutines: CoroutineScope
 ) : Pages.Page() {
 
     override val hasSecondary: Boolean = false
@@ -100,7 +100,7 @@ sealed class TypePage(
         title = Label.SUBTYPES_OF + " " + type.name,
         behaviour = Navigator.Behaviour.Menu(),
         initExpandDepth = 4,
-        coroutineScope = coroutineScope
+        coroutines = coroutines
     ) { it.item.tryOpen() }
 
     companion object {
@@ -117,11 +117,11 @@ sealed class TypePage(
 
         @Composable
         fun create(type: TypeState.Thing): TypePage {
-            val coroutineScope = rememberCoroutineScope()
+            val coroutines = rememberCoroutineScope()
             return when (type) {
-                is TypeState.Entity -> Entity(type, coroutineScope)
-                is TypeState.Relation -> Relation(type, coroutineScope)
-                is TypeState.Attribute -> Attribute(type, coroutineScope)
+                is TypeState.Entity -> Entity(type, coroutines)
+                is TypeState.Relation -> Relation(type, coroutines)
+                is TypeState.Attribute -> Attribute(type, coroutines)
             }
         }
     }
@@ -271,7 +271,7 @@ sealed class TypePage(
                         MayTickIcon(it.isInherited)
                     },
                     Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
-                        MayRemoveButton(Label.UNDEFINE_OWNS_ATTRIBUTE_TYPE, it.isInherited) {
+                        MayRemoveButton(Label.UNDEFINE_OWNS_ATTRIBUTE_TYPE, it.isInherited, it.canBeUndefined) {
                             typeState.tryUndefineOwnsAttributeType(it.attributeType)
                         }
                     },
@@ -303,7 +303,7 @@ sealed class TypePage(
                 Form.Dropdown(
                     selected = attributeType,
                     placeholder = Label.ATTRIBUTE_TYPE.lowercase().hyphenate(),
-                    onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursively() },
+                    onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursivelyAsync() },
                     onSelection = { attributeType = it; it.loadSupertypes() },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
@@ -341,14 +341,18 @@ sealed class TypePage(
     @Composable
     protected fun PlaysRoleTypesSection() {
         SectionRow { Form.Text(value = Label.PLAYS) }
-        RoleTypesTable(typeState.playsRoleTypeProperties) { typeState.tryUndefinePlaysRoleType(it) }
+        RoleTypesTable(typeState.playsRoleTypeProperties) {
+            MayRemoveButton(Label.UNDEFINE_PLAYS_ROLE_TYPE, it.isInherited, it.canBeUndefined) {
+                typeState.tryUndefinePlaysRoleType(it.roleType)
+            }
+        }
         PlaysRoleTypeAddition()
     }
 
     @Composable
     protected fun RoleTypesTable(
         roleTypeProperties: List<TypeState.RoleTypeProperties>,
-        undefineFn: (TypeState.Role) -> Unit
+        buttonsFn: @Composable (TypeState.RoleTypeProperties) -> Unit
     ) {
         val tableHeight = Table.ROW_HEIGHT * (roleTypeProperties.size + 1).coerceAtLeast(2)
         SectionRow {
@@ -366,7 +370,7 @@ sealed class TypePage(
                         MayTickIcon(it.isInherited)
                     },
                     Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
-                        MayRemoveButton(Label.UNDEFINE_PLAYS_ROLE_TYPE, it.isInherited) { undefineFn(it.roleType) }
+                        buttonsFn(it)
                     },
                 )
             )
@@ -395,7 +399,7 @@ sealed class TypePage(
                 Form.Dropdown(
                     selected = roleType,
                     placeholder = Label.ROLE_TYPE.lowercase().hyphenate(),
-                    onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypeRecursively() },
+                    onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
                     onSelection = { roleType = it; it.loadSupertypes() },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
@@ -448,21 +452,21 @@ sealed class TypePage(
     private fun ButtonsSection() {
         SectionRow {
             Spacer(Modifier.weight(1f))
-            DeleteButton()
+            UndefineButton()
             ExportButton()
             RefreshButton()
         }
     }
 
     @Composable
-    private fun DeleteButton() {
+    private fun UndefineButton() {
         Form.TextButton(
-            text = Label.DELETE,
+            text = Label.UNDEFINE,
             textColor = Theme.studio.errorStroke,
             leadingIcon = Form.IconArg(Icon.Code.TRASH_CAN) { Theme.studio.errorStroke },
-            enabled = isEditable && typeState.canBeDeleted,
-            tooltip = Tooltip.Arg(Label.DELETE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
-        ) { typeState.initiateDelete() }
+            enabled = isEditable && typeState.canBeUndefined,
+            tooltip = Tooltip.Arg(Label.UNDEFINE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
+        ) { typeState.initiateUndefine() }
     }
 
     @Composable
@@ -473,7 +477,7 @@ sealed class TypePage(
             enabled = StudioState.project.current != null,
             tooltip = Tooltip.Arg(Label.EXPORT_SYNTAX)
         ) {
-            typeState.exportSyntax { syntax ->
+            typeState.exportSyntaxAsync { syntax ->
                 StudioState.project.tryCreateUntitledFile()?.let { file ->
                     file.content(syntax)
                     file.tryOpen()
@@ -489,18 +493,18 @@ sealed class TypePage(
             leadingIcon = Form.IconArg(Icon.Code.ROTATE),
             tooltip = Tooltip.Arg(Label.REFRESH)
         ) {
-            StudioState.schema.mayRefreshReadTx()
-            typeState.loadPageProperties()
+            StudioState.schema.closeReadTx()
+            typeState.loadTypeConstraintsAsync()
         }
     }
 
     @Composable
-    protected fun MayRemoveButton(tooltip: String, isVisible: Boolean, onClick: () -> Unit) {
+    protected fun MayRemoveButton(tooltip: String, isVisible: Boolean, enabled: Boolean = true, onClick: () -> Unit) {
         if (!isVisible) Form.IconButton(
             icon = Icon.Code.MINUS,
             modifier = Modifier.size(TABLE_BUTTON_HEIGHT),
             iconColor = Theme.studio.errorStroke,
-            enabled = isEditable,
+            enabled = isEditable && enabled,
             tooltip = Tooltip.Arg(tooltip, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
             onClick = onClick
         )
@@ -522,8 +526,8 @@ sealed class TypePage(
     }
 
     class Entity(
-        override var typeState: TypeState.Entity, coroutineScope: CoroutineScope
-    ) : TypePage(typeState, false, coroutineScope) {
+        override var typeState: TypeState.Entity, coroutines: CoroutineScope
+    ) : TypePage(typeState, false, coroutines) {
 
         override fun updatePageable(pageable: Pageable) {
             typeState = pageable as TypeState.Entity
@@ -541,8 +545,8 @@ sealed class TypePage(
     }
 
     class Relation(
-        override var typeState: TypeState.Relation, coroutineScope: CoroutineScope
-    ) : TypePage(typeState, typeState.playsRoleTypes.isNotEmpty(), coroutineScope) {
+        override var typeState: TypeState.Relation, coroutines: CoroutineScope
+    ) : TypePage(typeState, typeState.playsRoleTypes.isNotEmpty(), coroutines) {
 
         override fun updatePageable(pageable: Pageable) {
             typeState = pageable as TypeState.Relation
@@ -563,7 +567,11 @@ sealed class TypePage(
         @Composable
         private fun RelatesRoleTypesSection() {
             SectionRow { Form.Text(value = Label.RELATES) }
-            RoleTypesTable(typeState.relatesRoleTypeProperties) { typeState.tryUndefineRelatesRoleType(it) }
+            RoleTypesTable(typeState.relatesRoleTypeProperties) {
+                MayRemoveButton(Label.UNDEFINE_RELATES_ROLE_TYPE, it.isInherited, it.canBeUndefined) {
+                    typeState.tryUndefineRelatesRoleType(it.roleType)
+                }
+            }
             RelatesRoleTypeAddition()
         }
 
@@ -612,13 +620,10 @@ sealed class TypePage(
         }
     }
 
-    class Attribute(
-        override var typeState: TypeState.Attribute,
-        coroutineScope: CoroutineScope
-    ) : TypePage(
+    class Attribute(override var typeState: TypeState.Attribute, coroutines: CoroutineScope) : TypePage(
         type = typeState,
         showAdvanced = typeState.ownsAttributeTypes.isNotEmpty() || typeState.playsRoleTypes.isNotEmpty(),
-        coroutineScope = coroutineScope
+        coroutines = coroutines
     ) {
 
         override fun updatePageable(pageable: Pageable) {

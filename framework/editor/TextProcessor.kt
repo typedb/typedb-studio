@@ -136,7 +136,7 @@ internal interface TextProcessor {
         private var redoStack: ArrayDeque<TextChange> = ArrayDeque()
         private var changeQueue: BlockingQueue<TextChange> = LinkedBlockingQueue()
         private var changeCount: AtomicInteger = AtomicInteger(0)
-        private val coroutineScope = CoroutineScope(Dispatchers.Default)
+        private val coroutines = CoroutineScope(Dispatchers.Default)
 
         override fun clearHistory() {
             version = 0
@@ -431,7 +431,7 @@ internal interface TextProcessor {
             redoStack.clear()
             changeQueue.put(change)
             changeCount.incrementAndGet()
-            coroutineScope.launch {
+            coroutines.launch {
                 delay(Duration.milliseconds(TYPING_WINDOW_MILLIS))
                 if (changeCount.decrementAndGet() == 0) drainAndBatchChanges(isFinalChange = true)
             }

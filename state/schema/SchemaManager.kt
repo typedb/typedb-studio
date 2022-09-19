@@ -103,7 +103,7 @@ class SchemaManager constructor(
     private val isOpenAtomic = AtomicBooleanState(false)
     internal val onTypesUpdated = LinkedBlockingQueue<() -> Unit>()
     internal val database: String? get() = session.database
-    internal val coroutineScope = CoroutineScope(Dispatchers.Default)
+    internal val coroutines = CoroutineScope(Dispatchers.Default)
 
     companion object {
         private val TX_IDLE_TIME = Duration.seconds(16)
@@ -111,12 +111,9 @@ class SchemaManager constructor(
     }
 
     init {
-        session.onDBOpen { refreshAndPruneTypesAndOpen() }
-        session.onDBClose { close() }
-        session.transaction.onSchemaWriteReset {
-            mayRefreshReadTx()
-            refreshAndPruneTypesAndOpen()
-        }
+        session.transaction.onSchemaWriteReset { refreshTypesAndOpen() }
+        session.onOpen { refreshTypesAndOpen() }
+        session.onClose { close() }
     }
 
     fun onTypesUpdated(function: () -> Unit) = onTypesUpdated.put(function)
@@ -193,7 +190,7 @@ class SchemaManager constructor(
         }
     }
 
-    private fun refreshAndPruneTypesAndOpen() = openOrGetReadTx()?.let { tx ->
+    private fun refreshTypesAndOpen() = openOrGetReadTx()?.let { tx ->
         if (rootEntityType == null) rootEntityType = TypeState.Entity(
             conceptType = tx.concepts().rootEntityType, supertype = null, schemaMgr = this
         ).also { entityTypes[tx.concepts().rootEntityType] = it }
@@ -205,12 +202,13 @@ class SchemaManager constructor(
         ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
         (entityTypes.values + attributeTypes.values + relationTypes.values + roleTypes.values).forEach {
             if (tx.concepts().getThingType(it.name) == null) it.purge()
+            else if (it is TypeState.Thing && it.isOpen) it.loadTypeConstraintsAsync()
         }
         isOpenAtomic.set(true)
         onTypesUpdated.forEach { it() }
     }
 
-    fun exportTypeSchema(onSuccess: (String) -> Unit) = coroutineScope.launchAndHandle(notification, LOGGER) {
+    fun exportTypeSchemaAsync(onSuccess: (String) -> Unit) = coroutines.launchAndHandle(notification, LOGGER) {
         session.typeSchema()?.let { onSuccess(it) }
     }
 
@@ -228,19 +226,12 @@ class SchemaManager constructor(
         if (readTx.get() != null) return readTx.get()
         readTx.set(session.transaction()?.also {
             it.onClose { closeReadTx() }
-            scheduleCloseReadTx()
+            scheduleCloseReadTxAsync()
         })
         return readTx.get()
     }
 
-    fun mayRefreshReadTx() = synchronized(this) {
-        if (readTx.get() != null) {
-            closeReadTx()
-            openOrGetReadTx()
-        }
-    }
-
-    private fun scheduleCloseReadTx() = coroutineScope.launchAndHandle(notification, LOGGER) {
+    private fun scheduleCloseReadTxAsync() = coroutines.launchAndHandle(notification, LOGGER) {
         var duration = TX_IDLE_TIME
         while (true) {
             delay(duration)
@@ -252,7 +243,7 @@ class SchemaManager constructor(
         }
     }
 
-    private fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
+    fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
 
     fun register(typeState: TypeState) = when (typeState) {
         is TypeState.Entity -> entityTypes[typeState.conceptType] = typeState

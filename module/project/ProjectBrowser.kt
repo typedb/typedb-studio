@@ -90,7 +90,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
             contextMenuFn = { contextMenuItems(it) }
         ) { navState ->
             StudioState.project.onProjectChange { navState.replaceContainer(it) }
-            StudioState.project.onContentChange { navState.reloadEntries() }
+            StudioState.project.onContentChange { navState.reloadEntriesAsync() }
             StudioState.project.onClose { navState.close() }
         }
         buttons = navState.buttons
@@ -172,7 +172,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,
                     enabled = !directory.isRoot && !directory.isProjectData,
-                ) { directory.initiateDelete { itemState.navState.reloadEntries() } }
+                ) { directory.initiateDelete { itemState.navState.reloadEntriesAsync() } }
             )
         )
     }
@@ -203,7 +203,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
                     label = Label.DELETE,
                     icon = Icon.Code.TRASH_CAN,
                     enabled = !file.isProjectData,
-                ) { file.initiateDelete { itemState.navState.reloadEntries() } }
+                ) { file.initiateDelete { itemState.navState.reloadEntriesAsync() } }
             )
         )
     }

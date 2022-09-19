@@ -86,44 +86,32 @@ class ClientState constructor(
     private var databaseListRefreshedTime = System.currentTimeMillis()
     internal val isCluster get() = _client is TypeDBClient.Cluster
 
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val coroutines = CoroutineScope(Dispatchers.Default)
 
-    fun tryConnectToTypeDB(address: String, onSuccess: () -> Unit) {
-        tryConnect(address, null, onSuccess) { TypeDB.coreClient(address) }
-    }
+    fun tryConnectToTypeDBAsync(
+        address: String, onSuccess: () -> Unit
+    ) = tryConnectAsync(address, null, onSuccess) { TypeDB.coreClient(address) }
 
-    fun tryConnectToTypeDBCluster(
-        address: String,
-        username: String,
-        password: String,
-        tlsEnabled: Boolean,
-        onSuccess: () -> Unit
-    ) {
-        tryConnectToTypeDBCluster(address, username, TypeDBCredential(username, password, tlsEnabled), onSuccess)
-    }
+    fun tryConnectToTypeDBClusterAsync(
+        address: String, username: String, password: String,
+        tlsEnabled: Boolean, onSuccess: () -> Unit
+    ) = tryConnectToTypeDBClusterAsync(address, username, TypeDBCredential(username, password, tlsEnabled), onSuccess)
 
-    fun tryConnectToTypeDBCluster(
-        address: String,
-        username: String,
-        password: String,
-        caPath: String,
-        onSuccess: () -> Unit
-    ) {
-        tryConnectToTypeDBCluster(address, username, TypeDBCredential(username, password, Path.of(caPath)), onSuccess)
-    }
+    fun tryConnectToTypeDBClusterAsync(
+        address: String, username: String, password: String,
+        caPath: String, onSuccess: () -> Unit
+    ) = tryConnectToTypeDBClusterAsync(
+        address, username, TypeDBCredential(username, password, Path.of(caPath)), onSuccess
+    )
 
-    private fun tryConnectToTypeDBCluster(
-        address: String,
-        username: String,
-        credentials: TypeDBCredential,
-        onSuccess: () -> Unit
-    ) {
-        tryConnect(address, username, onSuccess) { TypeDB.clusterClient(address, credentials) }
-    }
+    private fun tryConnectToTypeDBClusterAsync(
+        address: String, username: String,
+        credentials: TypeDBCredential, onSuccess: () -> Unit
+    ) = tryConnectAsync(address, username, onSuccess) { TypeDB.clusterClient(address, credentials) }
 
-    private fun tryConnect(
+    private fun tryConnectAsync(
         newAddress: String, newUsername: String?, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient
-    ) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
+    ) = coroutines.launchAndHandle(notificationMgr, LOGGER) {
         if (isConnecting || isConnected) return@launchAndHandle
         statusAtomic.set(CONNECTING)
         try {
@@ -141,9 +129,9 @@ class ClientState constructor(
         }
     }
 
-    private fun mayRunAsyncCommand(function: () -> Unit) {
+    private fun mayRunCommandAsync(function: () -> Unit) {
         if (hasRunningCommandAtomic.compareAndSet(expected = false, new = true)) {
-            coroutineScope.launchAndHandle(notificationMgr, LOGGER) { function() }.invokeOnCompletion {
+            coroutines.launchAndHandle(notificationMgr, LOGGER) { function() }.invokeOnCompletion {
                 hasRunningCommandAtomic.set(false)
             }
         }
@@ -153,8 +141,8 @@ class ClientState constructor(
         session.transaction.sendStopSignal()
     }
 
-    fun tryUpdateTransactionType(type: TypeDBTransaction.Type) = mayRunAsyncCommand {
-        if (session.transaction.type == type) return@mayRunAsyncCommand
+    fun tryUpdateTransactionType(type: TypeDBTransaction.Type) = mayRunCommandAsync {
+        if (session.transaction.type == type) return@mayRunCommandAsync
         session.transaction.close()
         session.transaction.type = type
     }
@@ -166,11 +154,11 @@ class ClientState constructor(
 
     fun tryOpenSession(database: String) = tryOpenSession(database, session.type)
 
-    private fun tryOpenSession(database: String, type: TypeDBSession.Type) = mayRunAsyncCommand {
+    private fun tryOpenSession(database: String, type: TypeDBSession.Type) = mayRunCommandAsync {
         session.tryOpen(database, type)
     }
 
-    fun refreshDatabaseList() = mayRunAsyncCommand { refreshDatabaseListFn() }
+    fun refreshDatabaseList() = mayRunCommandAsync { refreshDatabaseListFn() }
 
     private fun refreshDatabaseListFn() {
         if (System.currentTimeMillis() - databaseListRefreshedTime < DATABASE_LIST_REFRESH_RATE_MS) return
@@ -189,7 +177,7 @@ class ClientState constructor(
         return null // TODO
     }
 
-    fun tryCreateDatabase(database: String, onSuccess: () -> Unit) = mayRunAsyncCommand {
+    fun tryCreateDatabase(database: String, onSuccess: () -> Unit) = mayRunCommandAsync {
         refreshDatabaseListFn()
         if (!databaseList.contains(database)) {
             try {
@@ -202,7 +190,7 @@ class ClientState constructor(
         } else notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE, database)
     }
 
-    fun tryDeleteDatabase(database: String) = mayRunAsyncCommand {
+    fun tryDeleteDatabase(database: String) = mayRunCommandAsync {
         try {
             if (session.database == database) session.close()
             _client?.databases()?.get(database)?.delete()
@@ -216,21 +204,17 @@ class ClientState constructor(
         return _client?.session(database, type)
     }
 
-    fun commitTransaction() = mayRunAsyncCommand { session.transaction.commit() }
+    fun commitTransaction() = mayRunCommandAsync { session.transaction.commit() }
 
-    fun rollbackTransaction() = mayRunAsyncCommand { session.transaction.rollback() }
+    fun rollbackTransaction() = mayRunCommandAsync { session.transaction.rollback() }
 
-    fun closeTransaction(
+    fun closeTransactionAsync(
         message: Message? = null, vararg params: Any
-    ) = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
-        session.transaction.close(message, *params)
-    }
+    ) = coroutines.launchAndHandle(notificationMgr, LOGGER) { session.transaction.close(message, *params) }
 
-    fun close() = coroutineScope.launchAndHandle(notificationMgr, LOGGER) {
-        closeBlocking()
-    }
+    fun closeAsync() = coroutines.launchAndHandle(notificationMgr, LOGGER) { close() }
 
-    fun closeBlocking() {
+    fun close() {
         if (
             statusAtomic.compareAndSet(expected = CONNECTED, new = DISCONNECTED) ||
             statusAtomic.compareAndSet(expected = CONNECTING, new = DISCONNECTED)

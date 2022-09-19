@@ -37,7 +37,7 @@ import mu.KotlinLogging
 class Project internal constructor(val path: Path, private val projectMgr: ProjectManager, preferenceMgr: PreferenceManager) : Navigable<PathState> {
 
     private val isOpen = AtomicBoolean(false)
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val coroutines = CoroutineScope(Dispatchers.Default)
     val directory: DirectoryState = DirectoryState(path, null, projectMgr, preferenceMgr)
 
     override val name: String get() = "${Project::class.simpleName} (${directory.name})"
@@ -60,7 +60,7 @@ class Project internal constructor(val path: Path, private val projectMgr: Proje
         if (isOpen.compareAndSet(false, true)) launchWatcher()
     }
 
-    private fun launchWatcher() = coroutineScope.launchAndHandle(projectMgr.notification, LOGGER) {
+    private fun launchWatcher() = coroutines.launchAndHandle(projectMgr.notification, LOGGER) {
         do {
             if (!path.exists() || !path.isReadable()) {
                 close()
