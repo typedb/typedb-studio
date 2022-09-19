@@ -100,7 +100,7 @@ object PreferenceDialog {
         @Composable
         fun Caption() {
             if (caption.isPresent) {
-                Caption(caption.get())
+                CaptionText(caption.get())
             }
         }
 
@@ -133,8 +133,8 @@ object PreferenceDialog {
         }
 
         class Checkbox(val state: PreferencesForm,
-                       initialValue: Boolean, override var label: String, override val caption: Optional<String> = Optional.empty(),
-                        ): PreferenceField {
+                       initialValue: Boolean, override var label: String,
+                       override val caption: Optional<String> = Optional.empty()) : PreferenceField {
 
             var value by mutableStateOf(initialValue)
 
@@ -154,7 +154,7 @@ object PreferenceDialog {
         }
 
         class Dropdown<T : Any>(val state: PreferencesForm, val values: List<T>, override val label: String,
-                                override val caption: Optional<String> = Optional.empty()): PreferenceField {
+                                override val caption: Optional<String> = Optional.empty()) : PreferenceField {
 
             var selected by mutableStateOf(values.first())
 
@@ -195,10 +195,8 @@ object PreferenceDialog {
 
         // Query Runner Preferences
         var matchQueryLimit = PreferenceField.TextInput(
-            this,
-            initialValue = preferenceMgr.matchQueryLimit.toString(),
-            label = SET_QUERY_LIMIT, 
-            placeholder = QUERY_LIMIT_PLACEHOLDER,
+            this, initialValue = preferenceMgr.matchQueryLimit.toString(),
+            label = SET_QUERY_LIMIT, placeholder = QUERY_LIMIT_PLACEHOLDER,
             caption = Optional.of(PREFERENCES_MATCH_QUERY_LIMIT_CAPTION)
         ) {/* validator = */ it.toLongOrNull() != null }
         
@@ -378,7 +376,7 @@ object PreferenceDialog {
     }
 
     @Composable
-    private fun Caption(text: String) {
+    private fun CaptionText(text: String) {
         CaptionSpacer()
         Row {
             RowSpacer()
