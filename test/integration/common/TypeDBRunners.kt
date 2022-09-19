@@ -24,15 +24,19 @@ import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
 import kotlin.io.path.Path
 
 object TypeDBRunners {
+    val CLUSTER_RUNNER_SERVER_COUNT = 3
+    val CLUSTER_RUNNER_DATA_PATH = Path("cluster-runner-data-path")
+
     fun withTypeDB(runnerType: RunnerType = RunnerType.CORE, testFunction: (TypeDBRunner) -> Unit) {
         val typeDB = when (runnerType) {
             RunnerType.CORE -> TypeDBCoreRunner()
-            RunnerType.CLUSTER -> TypeDBClusterRunner.create(Path(""), 3)
+            RunnerType.CLUSTER -> TypeDBClusterRunner.create(CLUSTER_RUNNER_DATA_PATH, CLUSTER_RUNNER_SERVER_COUNT)
         }
         typeDB.start()
         testFunction(typeDB)
         typeDB.stop()
     }
+
     enum class RunnerType {
         CORE,
         CLUSTER
