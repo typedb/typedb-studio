@@ -53,6 +53,8 @@ class TypeBrowserTest: IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
 
+                delayAndRecompose(composeRule, Delays.NETWORK_IO)
+
                 // We can assert that the schema has been written successfully here as the schema
                 // is shown in the type browser.
 

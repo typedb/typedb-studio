@@ -21,12 +21,13 @@ package com.vaticle.typedb.studio.test.integration.common
 import com.vaticle.typedb.common.test.TypeDBRunner
 import com.vaticle.typedb.common.test.cluster.TypeDBClusterRunner
 import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
+import kotlin.io.path.Path
 
 object TypeDBRunners {
     fun withTypeDB(runnerType: RunnerType = RunnerType.CORE, testFunction: (TypeDBRunner) -> Unit) {
         val typeDB = when (runnerType) {
             RunnerType.CORE -> TypeDBCoreRunner()
-            RunnerType.CLUSTER -> TypeDBClusterRunner()
+            RunnerType.CLUSTER -> TypeDBClusterRunner.create(Path(""), 3)
         }
         typeDB.start()
         testFunction(typeDB)
