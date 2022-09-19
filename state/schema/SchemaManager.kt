@@ -246,6 +246,8 @@ class SchemaManager constructor(
         }
     }
 
+    fun closeWriteTx() = synchronized(this) { writeTx.getAndSet(null)?.close() }
+
     fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
 
     fun register(typeState: TypeState) = when (typeState) {
@@ -268,6 +270,7 @@ class SchemaManager constructor(
             rootEntityType = null
             rootRelationType = null
             rootAttributeType = null
+            closeWriteTx()
             closeReadTx()
         }
     }
