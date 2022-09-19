@@ -111,9 +111,12 @@ class SchemaManager constructor(
     }
 
     init {
-        session.transaction.onSchemaWriteReset { refreshTypesAndOpen() }
         session.onOpen { refreshTypesAndOpen() }
         session.onClose { close() }
+        session.transaction.onSchemaWriteReset {
+            closeReadTx()
+            refreshTypesAndOpen()
+        }
     }
 
     fun onTypesUpdated(function: () -> Unit) = onTypesUpdated.put(function)
