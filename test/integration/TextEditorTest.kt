@@ -58,7 +58,6 @@ class TextEditorTest: IntegrationTest() {
             openProject(composeRule, projectDirectory = testID)
 
             clickIcon(composeRule, Icon.Code.PLUS)
-            delayAndRecompose(composeRule)
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
             clickIcon(composeRule, Icon.Code.FLOPPY_DISK)
@@ -125,10 +124,8 @@ class TextEditorTest: IntegrationTest() {
 
                 StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
 
-                clickIcon(composeRule, Icon.Code.PLAY)
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
-                clickIcon(composeRule, Icon.Code.ROTATE)
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
+                clickIcon(composeRule, Icon.Code.PLAY, delayMillis = Delays.NETWORK_IO)
+                clickIcon(composeRule, Icon.Code.ROTATE, delayMillis = Delays.NETWORK_IO)
 
                 assertNodeNotExistsWithText(composeRule, text = "repo-id")
             }

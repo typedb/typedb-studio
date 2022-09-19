@@ -110,7 +110,6 @@ class ProjectBrowserTest: IntegrationTest() {
             openProject(composeRule, projectDirectory = testID)
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
-            delayAndRecompose(composeRule)
 
             assertNodeExistsWithText(composeRule, text = "file1_2")
         }
@@ -123,11 +122,10 @@ class ProjectBrowserTest: IntegrationTest() {
             openProject(composeRule, projectDirectory = testID)
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
-            delayAndRecompose(composeRule)
+
             assertNodeExistsWithText(composeRule, text = "file1_2")
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_UP)
-            delayAndRecompose(composeRule)
 
             assertNodeExistsWithText(composeRule, text = testID)
             assertNodeNotExistsWithText(composeRule, text = "file1_2")
