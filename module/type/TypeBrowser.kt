@@ -135,7 +135,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
                     label = Label.UNDEFINE,
                     icon = Icon.Code.TRASH_CAN,
                     enabled = schemaIsWritable && typeState.canBeUndefined
-                ) { typeState.initiateUndefine() }
+                ) { typeState.initiateDelete() }
             )
         )
     }

@@ -34,7 +34,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
@@ -112,6 +111,7 @@ sealed class TypePage(
         private val VERTICAL_SPACING = 20.dp
         private val ICON_COL_WIDTH = 80.dp
         private val TABLE_BUTTON_HEIGHT = 24.dp
+        private val TABLE_ROW_HEIGHT = 40.dp
         private val EMPTY_BOX_HEIGHT = Table.ROW_HEIGHT
         private const val MAX_VISIBLE_SUBTYPES = 10
 
@@ -250,11 +250,12 @@ sealed class TypePage(
 
     @Composable
     private fun OwnsAttributeTypesTable() {
-        val tableHeight = Table.ROW_HEIGHT * (typeState.ownsAttributeTypes.size + 1).coerceAtLeast(2)
+        val tableHeight = TABLE_ROW_HEIGHT * (typeState.ownsAttributeTypes.size + 1).coerceAtLeast(2)
         SectionRow {
             Table.Layout(
                 items = typeState.ownsAttributeTypeProperties.sortedBy { it.attributeType.name },
                 modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
+                rowHeight = TABLE_ROW_HEIGHT,
                 columns = listOf(
                     Table.Column(header = Label.ATTRIBUTE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
                         ClickableText(ConceptDetailedLabel(props.attributeType.conceptType)) {
@@ -271,7 +272,7 @@ sealed class TypePage(
                         MayTickIcon(it.isInherited)
                     },
                     Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
-                        MayRemoveButton(Label.UNDEFINE_OWNS_ATTRIBUTE_TYPE, it.isInherited, it.canBeUndefined) {
+                        MayUndefineButton(Label.UNDEFINE_OWNS_ATTRIBUTE_TYPE, it.isInherited, it.canBeUndefined) {
                             typeState.tryUndefineOwnsAttributeType(it.attributeType)
                         }
                     },
@@ -342,7 +343,7 @@ sealed class TypePage(
     protected fun PlaysRoleTypesSection() {
         SectionRow { Form.Text(value = Label.PLAYS) }
         RoleTypesTable(typeState.playsRoleTypeProperties) {
-            MayRemoveButton(Label.UNDEFINE_PLAYS_ROLE_TYPE, it.isInherited, it.canBeUndefined) {
+            MayUndefineButton(Label.UNDEFINE_PLAYS_ROLE_TYPE, it.isInherited, it.canBeUndefined) {
                 typeState.tryUndefinePlaysRoleType(it.roleType)
             }
         }
@@ -352,13 +353,14 @@ sealed class TypePage(
     @Composable
     protected fun RoleTypesTable(
         roleTypeProperties: List<TypeState.RoleTypeProperties>,
-        buttonsFn: @Composable (TypeState.RoleTypeProperties) -> Unit
+        buttonsFn: @Composable RowScope.(TypeState.RoleTypeProperties) -> Unit
     ) {
-        val tableHeight = Table.ROW_HEIGHT * (roleTypeProperties.size + 1).coerceAtLeast(2)
+        val tableHeight = TABLE_ROW_HEIGHT * (roleTypeProperties.size + 1).coerceAtLeast(2)
         SectionRow {
             Table.Layout(
                 items = roleTypeProperties.sortedBy { it.roleType.scopedName },
                 modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
+                rowHeight = TABLE_ROW_HEIGHT,
                 columns = listOf(
                     Table.Column(header = Label.ROLE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
                         ClickableText(props.roleType.scopedName) { props.roleType.relationType.tryOpen() }
@@ -370,7 +372,7 @@ sealed class TypePage(
                         MayTickIcon(it.isInherited)
                     },
                     Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
-                        buttonsFn(it)
+                        Row(horizontalArrangement = Arrangement.spacedBy(LINE_SPACING)) { buttonsFn(it) }
                     },
                 )
             )
@@ -466,7 +468,7 @@ sealed class TypePage(
             leadingIcon = Form.IconArg(Icon.Code.TRASH_CAN) { Theme.studio.errorStroke },
             enabled = isEditable && typeState.canBeUndefined,
             tooltip = Tooltip.Arg(Label.UNDEFINE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
-        ) { typeState.initiateUndefine() }
+        ) { typeState.initiateDelete() }
     }
 
     @Composable
@@ -499,10 +501,10 @@ sealed class TypePage(
     }
 
     @Composable
-    protected fun MayRemoveButton(tooltip: String, isVisible: Boolean, enabled: Boolean = true, onClick: () -> Unit) {
+    protected fun MayUndefineButton(tooltip: String, isVisible: Boolean, enabled: Boolean = true, onClick: () -> Unit) {
         if (!isVisible) Form.IconButton(
             icon = Icon.Code.MINUS,
-            modifier = Modifier.size(TABLE_BUTTON_HEIGHT),
+//            modifier = Modifier.size(TABLE_BUTTON_HEIGHT),
             iconColor = Theme.studio.errorStroke,
             enabled = isEditable && enabled,
             tooltip = Tooltip.Arg(tooltip, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
@@ -568,8 +570,9 @@ sealed class TypePage(
         private fun RelatesRoleTypesSection() {
             SectionRow { Form.Text(value = Label.RELATES) }
             RoleTypesTable(typeState.relatesRoleTypeProperties) {
-                MayRemoveButton(Label.UNDEFINE_RELATES_ROLE_TYPE, it.isInherited, it.canBeUndefined) {
-                    typeState.tryUndefineRelatesRoleType(it.roleType)
+                EditButton { it.roleType.initiateRename() }
+                MayUndefineButton(Label.DELETE_ROLE_TYPE, it.isInherited, it.canBeUndefined) {
+                    typeState.initiateDeleteRoleType(it.roleType)
                 }
             }
             RelatesRoleTypeAddition()
@@ -640,12 +643,13 @@ sealed class TypePage(
 
         @Composable
         private fun OwnersSection() {
-            val tableHeight = Table.ROW_HEIGHT * (typeState.ownerTypes.size + 1).coerceAtLeast(2)
+            val tableHeight = TABLE_ROW_HEIGHT * (typeState.ownerTypes.size + 1).coerceAtLeast(2)
             SectionRow { Form.Text(value = Label.OWNERS) }
             SectionRow {
                 Table.Layout(
                     items = typeState.ownerTypeProperties.values.sortedBy { it.ownerType.name },
                     modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
+                    rowHeight = TABLE_ROW_HEIGHT,
                     columns = listOf(
                         Table.Column(header = Label.THING_TYPES, contentAlignment = Alignment.CenterStart) { props ->
                             ClickableText(ConceptDetailedLabel(props.ownerType.conceptType)) { props.ownerType.tryOpen() }

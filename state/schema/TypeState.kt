@@ -224,7 +224,6 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
         override fun onReopen(function: (Pageable) -> Unit) = callbacks.onReopen.put(function)
         override fun onClose(function: (Pageable) -> Unit) = callbacks.onClose.put(function)
         override fun compareTo(other: Navigable<Thing>): Int = name.compareTo(other.name)
-        override fun tryDelete() = tryUndefine()
 
         override fun tryOpen(): Boolean {
             isOpenAtomic.set(true)
@@ -376,20 +375,20 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
             // TODO
         }
 
-        fun initiateUndefine() = schemaMgr.confirmation.submit(
-            title = Label.CONFIRM_TYPE_UNDEFINE,
-            message = Sentence.CONFIRM_TYPE_UNDEFINE.format(name),
-            onConfirm = { tryUndefine() }
+        fun initiateDelete() = schemaMgr.confirmation.submit(
+            title = Label.CONFIRM_TYPE_DELETION,
+            message = Sentence.CONFIRM_TYPE_DELETION.format(encoding.label, name),
+            onConfirm = { this.tryDelete() }
         )
 
-        fun tryUndefine() = try {
+        override fun tryDelete() = try {
             schemaMgr.openOrGetWriteTx()?.let {
                 conceptType.asRemote(it).delete()
                 purge()
                 schemaMgr.onTypesUpdated.forEach { it() }
             } ?: Unit
         } catch (e: Exception) {
-            schemaMgr.notification.userError(LOGGER, FAILED_TO_DELETE_TYPE, e.message ?: UNKNOWN)
+            schemaMgr.notification.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)
         }
 
         override fun close() {
@@ -648,8 +647,19 @@ sealed class TypeState private constructor(name: String, val encoding: Encoding,
             // TODO
         }
 
-        fun tryUndefineRelatesRoleType(roleType: Role) {
-            // TODO
+        fun initiateDeleteRoleType(roleType: Role) = schemaMgr.confirmation.submit(
+            title = Label.CONFIRM_TYPE_DELETION,
+            message = Sentence.CONFIRM_TYPE_DELETION.format(Encoding.ROLE_TYPE.label, roleType.scopedName),
+            onConfirm = { tryDeleteRoleType(roleType) }
+        )
+
+        fun tryDeleteRoleType(roleType: Role) = try {
+            schemaMgr.openOrGetWriteTx()?.let {
+                conceptType.asRemote(it).unsetRelates(roleType.conceptType)
+                loadTypeConstraintsAsync()
+            } ?: Unit
+        } catch (e: Exception) {
+            schemaMgr.notification.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)
         }
 
         override fun toString(): String = "TypeState.Relation: $conceptType"
