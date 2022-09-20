@@ -47,8 +47,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlinx.coroutines.delay
+import mu.KotlinLogging
 
 object StudioActions {
+    private val LOGGER = KotlinLogging.logger {}
+
     suspend fun clickIcon(composeRule: ComposeContentTestRule, icon: Icon.Code, delayMillis: Int = Delays.RECOMPOSE) {
         clickText(composeRule, icon.unicode, delayMillis)
     }
@@ -109,7 +112,9 @@ object StudioActions {
                     beforeRetry()
                     delayAndRecompose(context, 500)
                 }
-            } catch (e: Exception) {}
+            } catch (e: Exception) {
+                LOGGER.error(e.stackTraceToString())
+            }
         }
 
         if (!successCondition()) {
