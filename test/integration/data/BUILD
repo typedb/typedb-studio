@@ -24,18 +24,18 @@ filegroup(
 )
 
 filegroup(
-    name = "query-string-files",
+    name = "sample-github-data-files",
     srcs = [
-        "data_string.tql",
-        "schema_string.tql",
-        "query_string.tql",
+        "sample_github_data/query.tql",
+        "sample_github_data/schema.tql",
+        "sample_github_data/data.tql",
     ],
     visibility = ["//test/integration:__subpackages__"],
 )
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*"]),
+    include = glob(["BUILD", "sample_github_data/*"]),
     exclude = glob(["sample_file_structure/*", "sample_file_structure/*/*"]),
     license_type = "agpl-header",
 )

@@ -18,10 +18,10 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import com.vaticle.typedb.studio.test.integration.common.Paths.DATA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Paths.QUERY_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Paths.SCHEMA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Paths.TQL_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.common.Paths.GITHUB_DATA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Paths.GITHUB_QUERY_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Paths.GITHUB_SCHEMA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Paths.SAMPLE_GITHUB_DATA_PATH
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
@@ -41,11 +41,11 @@ class QuickstartTest: IntegrationTest() {
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
-                createData(source = TQL_DATA_PATH, destination = testID)
+                createData(source = SAMPLE_GITHUB_DATA_PATH, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
-                writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
-                writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
-                verifyDataWrite(composeRule, typeDB.address(), dbName = testID, "$testID/${QUERY_FILE_NAME}")
+                writeSchemaInteractively(composeRule, dbName = testID, GITHUB_SCHEMA_FILE_NAME)
+                writeDataInteractively(composeRule, dbName = testID, GITHUB_DATA_FILE_NAME)
+                verifyDataWrite(composeRule, typeDB.address(), dbName = testID, "$testID/${GITHUB_QUERY_FILE_NAME}")
             }
         }
     }

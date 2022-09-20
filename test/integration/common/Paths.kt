@@ -21,10 +21,10 @@ package com.vaticle.typedb.studio.test.integration.common
 import java.io.File
 
 object Paths {
-    val SAMPLE_DATA_PATH = File("test/integration/data/sample_file_structure").absolutePath
-    val TQL_DATA_PATH = File("test/integration/data").absolutePath
+    val SAMPLE_FILE_STRUCTURE_PATH = File("test/integration/data/sample_file_structure").absolutePath
+    val SAMPLE_GITHUB_DATA_PATH = File("test/integration/data/sample_github_data").absolutePath
 
-    const val QUERY_FILE_NAME = "query_string.tql"
-    const val DATA_FILE_NAME = "data_string.tql"
-    const val SCHEMA_FILE_NAME = "schema_string.tql"
+    const val GITHUB_QUERY_FILE_NAME = "query.tql"
+    const val GITHUB_DATA_FILE_NAME = "data.tql"
+    const val GITHUB_SCHEMA_FILE_NAME = "schema.tql"
 }

@@ -68,7 +68,7 @@ kt_jvm_library(
 typedb_kt_test(
     name = "test-quickstart",
     srcs = ["QuickstartTest.kt"],
-    data = ["//test/integration/data:query-string-files"],
+    data = ["//test/integration/data:sample-github-data-files"],
     test_class = "com.vaticle.typedb.studio.test.integration.QuickstartTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries,
@@ -95,7 +95,7 @@ kt_jvm_test(
 typedb_kt_test(
     name = "test-texteditor",
     srcs = ["TextEditorTest.kt"],
-    data = ["//test/integration/data:sample-file-structure-files", "//test/integration/data:query-string-files"],
+    data = ["//test/integration/data:sample-file-structure-files", "//test/integration/data:sample-github-data-files"],
     test_class= "com.vaticle.typedb.studio.test.integration.TextEditorTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
@@ -118,7 +118,7 @@ typedb_kt_test(
 typedb_kt_test(
     name = "test-typebrowser",
     srcs = ["TypeBrowserTest.kt"],
-    data = ["//test/integration/data:sample-file-structure-files", "//test/integration/data:query-string-files"],
+    data = ["//test/integration/data:sample-file-structure-files", "//test/integration/data:sample-github-data-files"],
     test_class = "com.vaticle.typedb.studio.test.integration.TypeBrowserTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [

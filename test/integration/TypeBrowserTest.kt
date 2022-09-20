@@ -25,8 +25,8 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.test.integration.common.Paths.SCHEMA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Paths.TQL_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.common.Paths.GITHUB_SCHEMA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.common.Paths.SAMPLE_GITHUB_DATA_PATH
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
@@ -48,10 +48,10 @@ class TypeBrowserTest: IntegrationTest() {
         withTypeDB { typeDB ->
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
-                createData(source = TQL_DATA_PATH, destination = testID)
+                createData(source = SAMPLE_GITHUB_DATA_PATH, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 createDatabase(composeRule, dbName = testID)
-                writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
+                writeSchemaInteractively(composeRule, dbName = testID, GITHUB_SCHEMA_FILE_NAME)
 
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
@@ -70,10 +70,10 @@ class TypeBrowserTest: IntegrationTest() {
         withTypeDB { typeDB ->
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
-                createData(source = TQL_DATA_PATH, destination = testID)
+                createData(source = SAMPLE_GITHUB_DATA_PATH, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 createDatabase(composeRule, dbName = testID)
-                writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
+                writeSchemaInteractively(composeRule, dbName = testID, GITHUB_SCHEMA_FILE_NAME)
 
                 StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
@@ -92,10 +92,10 @@ class TypeBrowserTest: IntegrationTest() {
         withTypeDB { typeDB ->
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
-                createData(source = TQL_DATA_PATH, destination = testID)
+                createData(source = SAMPLE_GITHUB_DATA_PATH, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 createDatabase(composeRule, dbName = testID)
-                writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
+                writeSchemaInteractively(composeRule, dbName = testID, GITHUB_SCHEMA_FILE_NAME)
 
                 StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
