@@ -99,11 +99,19 @@ object StudioActions {
         beforeRetry: (() -> Unit) = {},
         successCondition: () -> Boolean
     ) {
+        var success = false
         val deadline = System.currentTimeMillis() + 10_000
-        while (!successCondition() && System.currentTimeMillis() < deadline) {
-            beforeRetry()
-            delayAndRecompose(context, 500)
+        while (!success && System.currentTimeMillis() < deadline) {
+            try {
+                if (successCondition()) {
+                    success = true
+                } else {
+                    beforeRetry()
+                    delayAndRecompose(context, 500)
+                }
+            } catch (e: Exception) {}
         }
+
         if (!successCondition()) {
             fail(failMessage)
         }
