@@ -52,6 +52,7 @@ kt_jvm_library(
         "@vaticle_typeql//java/query:query",
 
         # External Maven Dependencies
+        "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_test_desktop",
@@ -59,6 +60,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlin_kotlin_test",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
+        "@maven//:org_slf4j_slf4j_api",
     ],
 )
 

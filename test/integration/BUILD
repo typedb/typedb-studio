@@ -31,7 +31,6 @@ compose_test_libraries = [
     "//test/integration/common:common",
     "//test/integration:test-integration",
 
-    "@maven//:io_github_microutils_kotlin_logging_jvm",
     "@maven//:junit_junit",
     "@maven//:org_jetbrains_compose_ui_ui_desktop",
     "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
