@@ -213,6 +213,7 @@ object Label {
     const val USERS = "Users"
     const val VALUE = "Value"
     const val VALUE_TYPE = "Value Type"
+    const val WRITE = "Write"
     const val WRITE_TRANSACTION = "Write Transaction"
     const val YES = "Yes"
 }
