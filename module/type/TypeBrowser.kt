@@ -74,7 +74,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
             initExpandDepth = 1,
             openFn = { it.item.tryOpen() },
             contextMenuFn = { contextMenuItems(it) }
-        ) { StudioState.schema.onTypesUpdated { it.reloadEntries() } }
+        ) { StudioState.schema.onTypesUpdated { it.reloadEntriesAsync() } }
         buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
@@ -85,8 +85,8 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
     }
 
     private fun refresh(navState: Navigator.NavigatorState<TypeState.Thing>) {
-        StudioState.schema.mayRefreshReadTx()
-        navState.reloadEntries()
+        StudioState.schema.closeReadTx()
+        navState.reloadEntriesAsync()
     }
 
     private fun refreshButton(navState: Navigator.NavigatorState<TypeState.Thing>) = IconButtonArg(
@@ -99,7 +99,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
         enabled = StudioState.project.current != null,
         tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
     ) {
-        StudioState.schema.exportTypeSchema { schema ->
+        StudioState.schema.exportTypeSchemaAsync { schema ->
             refresh(navState)
             StudioState.project.tryCreateUntitledFile()?.let { file ->
                 file.content(schema)
@@ -110,7 +110,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
 
     private fun contextMenuItems(itemState: Navigator.ItemState<TypeState.Thing>): List<List<ContextMenu.Item>> {
         val typeState = itemState.item
-        typeState.loadContextMenuProperties()
+        if (!typeState.isOpen) typeState.loadTypeDependenciesAsync()
         return listOf(
             listOf(
                 ContextMenu.Item(

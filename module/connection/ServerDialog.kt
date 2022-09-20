@@ -79,12 +79,12 @@ object ServerDialog {
 
         override fun trySubmit() {
             when (server) {
-                TYPEDB -> StudioState.client.tryConnectToTypeDB(address) { StudioState.client.connectServerDialog.close() }
+                TYPEDB -> StudioState.client.tryConnectToTypeDBAsync(address) { StudioState.client.connectServerDialog.close() }
                 TYPEDB_CLUSTER -> when {
-                    caCertificate.isBlank() -> StudioState.client.tryConnectToTypeDBCluster(
+                    caCertificate.isBlank() -> StudioState.client.tryConnectToTypeDBClusterAsync(
                         address, username, password, tlsEnabled
                     ) { StudioState.client.connectServerDialog.close() }
-                    else -> StudioState.client.tryConnectToTypeDBCluster(
+                    else -> StudioState.client.tryConnectToTypeDBClusterAsync(
                         address, username, password, caCertificate
                     ) { StudioState.client.connectServerDialog.close() }
                 }
@@ -231,7 +231,7 @@ object ServerDialog {
     @Composable
     private fun ConnectedFormButtons(state: ConnectServerForm) {
         val focusReq = remember { FocusRequester() }
-        TextButton(text = Label.DISCONNECT, textColor = Theme.studio.errorStroke) { StudioState.client.close() }
+        TextButton(text = Label.DISCONNECT, textColor = Theme.studio.errorStroke) { StudioState.client.closeAsync() }
         FormRowSpacer()
         TextButton(text = Label.CLOSE, focusReq = focusReq) { state.cancel() }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
@@ -240,7 +240,7 @@ object ServerDialog {
     @Composable
     private fun ConnectingFormButtons() {
         val focusReq = remember { FocusRequester() }
-        TextButton(text = Label.CANCEL, focusReq = focusReq) { StudioState.client.close() }
+        TextButton(text = Label.CANCEL, focusReq = focusReq) { StudioState.client.closeAsync() }
         FormRowSpacer()
         TextButton(text = Label.CONNECTING, enabled = false) {}
         LaunchedEffect(focusReq) { focusReq.requestFocus() }

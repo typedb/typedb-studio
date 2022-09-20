@@ -81,7 +81,7 @@ object ProjectDialog {
 
     private val DIALOG_WIDTH = 500.dp
     private val DIALOG_HEIGHT = 200.dp
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val coroutines = CoroutineScope(Dispatchers.Default)
     private val LOGGER = KotlinLogging.logger {}
 
     @Composable
@@ -297,7 +297,7 @@ object ProjectDialog {
     }
 
     @Composable
-    private fun SaveFile(window: ComposeWindow) = coroutineScope.launchAndHandle(notification, LOGGER) {
+    private fun SaveFile(window: ComposeWindow) = coroutines.launchAndHandle(notification, LOGGER) {
         val projectFile = StudioState.project.saveFileDialog.file!!
         val fileDialog = FileDialog(window, Label.SAVE_FILE, FileDialog.SAVE).apply {
             directory = StudioState.project.current?.path.toString()

@@ -44,7 +44,7 @@ class NotificationManager {
 
     val queue: SnapshotStateList<Notification> = mutableStateListOf()
     val isOpen: Boolean get() = queue.isNotEmpty()
-    private val coroutineScope = CoroutineScope(Default)
+    private val coroutines = CoroutineScope(Default)
 
     companion object {
         private val HIDE_DELAY = Duration.seconds(10)
@@ -81,7 +81,7 @@ class NotificationManager {
         logger.info { message }
         val notification = Notification(Notification.Type.INFO, message.code(), stringOf(message, *params))
         queue += notification
-        coroutineScope.launchAndHandle(this, LOGGER) {
+        coroutines.launchAndHandle(this, LOGGER) {
             delay(HIDE_DELAY)
             dismiss(notification)
         }

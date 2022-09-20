@@ -134,7 +134,7 @@ object StudioActions {
         // clicked.
         composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
-        StudioState.client.tryConnectToTypeDB(address) {}
+        StudioState.client.tryConnectToTypeDBAsync(address) {}
         delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
         waitForConditionAndRecompose(composeRule, Errors.CONNECT_TYPEDB) { StudioState.client.isConnected }

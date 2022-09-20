@@ -148,7 +148,7 @@ object Tabs {
             var maxWidth by mutableStateOf(4096.dp)
             val openedTabSize: MutableMap<T, Dp> = mutableMapOf()
             var activeTab: T? by mutableStateOf(null)
-            internal var coroutineScope: CoroutineScope? = null
+            internal var coroutines: CoroutineScope? = null
 
             internal fun initTab(tab: T, isActive: Boolean, rawWidth: Int) {
                 if (tab == activeTab) return
@@ -168,7 +168,7 @@ object Tabs {
 
             internal fun scrollTabsBy(dp: Dp) {
                 val pos = scroller.value + (dp.value * density).toInt()
-                coroutineScope?.launch { scroller.animateScrollTo(pos) }
+                coroutines?.launch { scroller.animateScrollTo(pos) }
             }
         }
 
@@ -187,7 +187,7 @@ object Tabs {
             buttons: List<IconButtonArg> = listOf()
         ) {
             state.density = LocalDensity.current.density
-            state.coroutineScope = rememberCoroutineScope()
+            state.coroutines = rememberCoroutineScope()
             val closedTabs = state.openedTabSize.keys - tabs.toSet()
             closedTabs.forEach { state.openedTabSize.remove(it) }
             Row(Modifier.fillMaxWidth().height(HEIGHT).onSizeChanged {

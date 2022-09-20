@@ -84,7 +84,7 @@ internal class LogOutput constructor(
 
     private val isCollecting = AtomicBoolean(false)
     private val lastOutputTime = AtomicLong(System.currentTimeMillis())
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val coroutines = CoroutineScope(Dispatchers.Default)
 
     override val name: String = Label.LOG
     override val icon: Icon.Code = Icon.Code.ALIGN_LEFT
@@ -127,7 +127,7 @@ internal class LogOutput constructor(
         StudioState.notification.info(LOGGER, Message.Framework.TEXT_COPIED_TO_CLIPBOARD)
     }
 
-    private fun launchRunningIndicator() = coroutineScope.launchAndHandle(StudioState.notification, LOGGER) {
+    private fun launchRunningIndicator() = coroutines.launchAndHandle(StudioState.notification, LOGGER) {
         var duration = RUNNING_INDICATOR_DELAY
         while (isCollecting.get()) {
             delay(duration)

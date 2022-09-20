@@ -110,7 +110,7 @@ object TextToolbar {
         internal val status: String get() = finder.status()
         internal val density: Float get() = target.density
         private var changeCount: AtomicInteger = AtomicInteger(0)
-        private val coroutineScope = CoroutineScope(Dispatchers.Default)
+        private val coroutines = CoroutineScope(Dispatchers.Default)
 
         internal fun hide() {
             showFinder = false
@@ -271,7 +271,7 @@ object TextToolbar {
         @OptIn(ExperimentalTime::class)
         private fun delayedFindText() {
             changeCount.incrementAndGet()
-            coroutineScope.launch {
+            coroutines.launch {
                 delay(FIND_TEXT_DELAY)
                 if (changeCount.decrementAndGet() == 0 && findText.text.isNotEmpty()) findText()
             }
