@@ -204,12 +204,11 @@ internal class RunOutputGroup constructor(
 
     private suspend fun consumeConceptMapStreamResponse(response: Response.Stream.ConceptMaps) {
         val notificationMgr = StudioState.notification
-        val preferenceMgr = StudioState.preference
         // TODO: enable configuration of displaying GraphOutput for INSERT and UPDATE
         val table = if (response.source != MATCH) null else TableOutput(
             transaction = runner.transactionState, number = tableCount.incrementAndGet()
         ) // TODO: .also { outputs.add(it) }
-        val graph = if (response.source != MATCH || !preferenceMgr.graphOutputEnabled) null else GraphOutput(
+        val graph = if (response.source != MATCH || !StudioState.preference.graphOutputEnabled) null else GraphOutput(
                 transactionState = runner.transactionState, number = graphCount.incrementAndGet()
         ).also { outputs.add(it); activate(it) }
 

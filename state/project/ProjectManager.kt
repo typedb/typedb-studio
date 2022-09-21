@@ -154,7 +154,7 @@ class ProjectManager(
     }
 
     private fun initialiseProject(dir: Path, dataDirPath: Path, unsavedFilesDirPath: Path) {
-        current = Project(dir, this, preference).also { it.open() }
+        current = Project(dir, this).also { it.open() }
         if (dataDirPath.notExists()) dataDirPath.createDirectory()
         if (unsavedFilesDirPath.notExists()) unsavedFilesDirPath.createDirectory()
         current!!.directory.reloadEntries()

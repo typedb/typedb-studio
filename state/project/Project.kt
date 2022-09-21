@@ -34,11 +34,11 @@ import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
-class Project internal constructor(val path: Path, private val projectMgr: ProjectManager, preferenceMgr: PreferenceManager) : Navigable<PathState> {
+class Project internal constructor(val path: Path, private val projectMgr: ProjectManager) : Navigable<PathState> {
 
     private val isOpen = AtomicBoolean(false)
     private val coroutines = CoroutineScope(Dispatchers.Default)
-    val directory: DirectoryState = DirectoryState(path, null, projectMgr, preferenceMgr)
+    val directory: DirectoryState = DirectoryState(path, null, projectMgr)
 
     override val name: String get() = "${Project::class.simpleName} (${directory.name})"
     override val info: String? = null

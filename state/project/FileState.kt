@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
-import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
@@ -65,8 +64,7 @@ class FileState internal constructor(
     path: Path,
     parent: DirectoryState,
     projectMgr: ProjectManager,
-    preferenceMgr: PreferenceManager,
-) : PathState(parent, path, Type.FILE, projectMgr, preferenceMgr), Pageable.Runnable {
+) : PathState(parent, path, Type.FILE, projectMgr), Pageable.Runnable {
 
     @OptIn(ExperimentalTime::class)
     companion object {
@@ -226,7 +224,7 @@ class FileState internal constructor(
 
     fun content(lines: List<String>) {
         content = lines
-        if (preferenceMgr.autoSave) saveContent()
+        if (projectMgr.preference.autoSave) saveContent()
     }
 
     @OptIn(ExperimentalTime::class)

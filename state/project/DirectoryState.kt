@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Label.UNTITLED
 import com.vaticle.typedb.studio.state.common.util.Message
@@ -55,8 +54,7 @@ class DirectoryState internal constructor(
     path: Path,
     parent: DirectoryState?,
     projectMgr: ProjectManager,
-    preferenceMgr: PreferenceManager,
-) : PathState(parent, path, Type.DIRECTORY, projectMgr, preferenceMgr) {
+) : PathState(parent, path, Type.DIRECTORY, projectMgr) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -82,7 +80,7 @@ class DirectoryState internal constructor(
             return
         }
         val new = path.listDirectoryEntries().filter {
-            it.isReadable() && !preferenceMgr.isIgnoredPath(it)
+            it.isReadable() && !projectMgr.preference.isIgnoredPath(it)
         }.toSet()
         val old = entries.map { it.path }.toSet()
         if (new != old) {
@@ -94,8 +92,8 @@ class DirectoryState internal constructor(
     }
 
     private fun pathStateOf(path: Path): PathState {
-        return if (path.isDirectory()) DirectoryState(path, this, projectMgr, preferenceMgr)
-        else FileState(path, this, projectMgr, preferenceMgr)
+        return if (path.isDirectory()) DirectoryState(path, this, projectMgr)
+        else FileState(path, this, projectMgr)
     }
 
     fun nextUntitledDirName(): String {

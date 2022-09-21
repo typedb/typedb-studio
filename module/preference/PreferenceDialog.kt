@@ -90,7 +90,7 @@ object PreferenceDialog {
         @Composable fun Display()
 
         @Composable
-        fun FieldLayout(fieldContent: @Composable () -> Unit) {
+        fun Layout(fieldContent: @Composable () -> Unit) {
             Field(label) {
                 fieldContent()
             }
@@ -118,7 +118,7 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                FieldLayout @Composable {
+                Layout {
                     var border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {
                         if (this.isValid()) Theme.studio.border else Theme.studio.errorStroke
                     }
@@ -140,7 +140,7 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                FieldLayout @Composable {
+                Layout @Composable {
                     Checkbox(
                         value = value,
                         onChange = { value = it; state.modified = true }
@@ -160,7 +160,7 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                FieldLayout @Composable {
+                Layout @Composable {
                     Form.Dropdown(
                         values = values,
                         selected = selected,
@@ -262,20 +262,14 @@ object PreferenceDialog {
         }
 
         fun isValid(): Boolean {
-            return preferences.fold(true) { acc, preferenceField -> acc && preferenceField.isValid() } &&
-                entries.fold(true) { acc, preferenceGroup ->  acc && preferenceGroup.isValid() }
-        }
-
-        fun submit() {
-
+            return preferences.all { it.isValid() } &&
+                entries.all { it.isValid() }
         }
 
         @Composable
         fun Display() {
             PreferencesHeader(name)
-            for (preference in preferences) {
-                preference.Display()
-            }
+            preferences.forEach { it.Display() }
         }
     }
 
