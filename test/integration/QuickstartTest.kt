@@ -18,12 +18,9 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import com.vaticle.typedb.studio.test.integration.common.Paths.GITHUB_DATA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Paths.GITHUB_QUERY_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Paths.GITHUB_SCHEMA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Paths.SAMPLE_GITHUB_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.createData
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
@@ -41,11 +38,13 @@ class QuickstartTest: IntegrationTest() {
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
-                createData(source = SAMPLE_GITHUB_DATA_PATH, destination = testID)
+                copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
-                writeSchemaInteractively(composeRule, dbName = testID, GITHUB_SCHEMA_FILE_NAME)
-                writeDataInteractively(composeRule, dbName = testID, GITHUB_DATA_FILE_NAME)
-                verifyDataWrite(composeRule, typeDB.address(), dbName = testID, "$testID/${GITHUB_QUERY_FILE_NAME}")
+                writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
+                writeDataInteractively(composeRule, dbName = testID, SampleGitHubData.dataFile)
+                verifyDataWrite(composeRule,
+                    typeDB.address(), dbName = testID, "$testID/${SampleGitHubData.collaboratorsQueryFile}"
+                )
             }
         }
     }

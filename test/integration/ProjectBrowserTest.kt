@@ -20,9 +20,9 @@ package com.vaticle.typedb.studio.test.integration
 
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.test.integration.common.Paths.SAMPLE_FILE_STRUCTURE_PATH
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.createData
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
@@ -37,7 +37,7 @@ class ProjectBrowserTest: IntegrationTest() {
         runBlocking {
             val createdDirectoryName = "created"
 
-            createData(source = SAMPLE_FILE_STRUCTURE_PATH, destination = testID)
+            copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateDirectory(createdDirectoryName)
@@ -55,7 +55,7 @@ class ProjectBrowserTest: IntegrationTest() {
         runBlocking {
             val createdFileName = "created"
 
-            createData(source = SAMPLE_FILE_STRUCTURE_PATH, destination = testID)
+            copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
             StudioState.project.current!!.directory.asDirectory().tryCreateFile(createdFileName)
@@ -73,7 +73,7 @@ class ProjectBrowserTest: IntegrationTest() {
         runBlocking {
             val renamedFileName = "renamed"
 
-            createData(source = SAMPLE_FILE_STRUCTURE_PATH, destination = testID)
+            copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile()
@@ -90,7 +90,7 @@ class ProjectBrowserTest: IntegrationTest() {
     @Test
     fun deleteAFile() {
         runBlocking {
-            createData(source = SAMPLE_FILE_STRUCTURE_PATH, destination = testID)
+            copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
             StudioState.project.current!!.directory.entries.find { it.name == "file3" }!!.asFile().tryDelete()
@@ -106,7 +106,7 @@ class ProjectBrowserTest: IntegrationTest() {
     @Test
     fun expandFolders() {
         runBlocking {
-            createData(source = SAMPLE_FILE_STRUCTURE_PATH, destination = testID)
+            copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
@@ -118,7 +118,7 @@ class ProjectBrowserTest: IntegrationTest() {
     @Test
     fun expandThenCollapseFolders() {
         runBlocking {
-            createData(source = SAMPLE_FILE_STRUCTURE_PATH, destination = testID)
+            copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)

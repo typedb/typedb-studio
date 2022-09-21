@@ -16,6 +16,14 @@
 #
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+
+package(default_visibility = ["//test/integration:__subpackages__"])
+
+kt_jvm_library(
+    name = "paths",
+    srcs = glob(["Paths.kt"]),
+)
 
 filegroup(
     name = "sample-file-structure-files",
@@ -26,16 +34,16 @@ filegroup(
 filegroup(
     name = "sample-github-data-files",
     srcs = [
-        "sample_github_data/query.tql",
-        "sample_github_data/schema.tql",
-        "sample_github_data/data.tql",
+        "sample_github_data/github_collaborators_query.tql",
+        "sample_github_data/github_schema.tql",
+        "sample_github_data/github_data.tql",
     ],
     visibility = ["//test/integration:__subpackages__"],
 )
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["BUILD", "sample_github_data/*"]),
+    include = glob(["*", "sample_github_data/*"]),
     exclude = glob(["sample_file_structure/*", "sample_file_structure/*/*"]),
     license_type = "agpl-header",
 )

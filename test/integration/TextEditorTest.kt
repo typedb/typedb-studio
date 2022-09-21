@@ -25,18 +25,15 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.test.integration.common.Paths.GITHUB_DATA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Paths.GITHUB_QUERY_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Paths.SAMPLE_FILE_STRUCTURE_PATH
-import com.vaticle.typedb.studio.test.integration.common.Paths.GITHUB_SCHEMA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Paths.SAMPLE_GITHUB_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.createData
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
@@ -54,7 +51,7 @@ class TextEditorTest: IntegrationTest() {
     @Test
     fun makeAFileAndSaveIt() {
         runBlocking {
-            val path = createData(source = SAMPLE_FILE_STRUCTURE_PATH, destination = testID)
+            val path = copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
             clickIcon(composeRule, Icon.Code.PLUS)
@@ -74,11 +71,11 @@ class TextEditorTest: IntegrationTest() {
     fun schemaWriteAndCommit() {
         withTypeDB { typeDB ->
             runBlocking {
-                createData(source = SAMPLE_GITHUB_DATA_PATH, destination = testID)
+                copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
-                writeSchemaInteractively(composeRule, dbName = testID, GITHUB_SCHEMA_FILE_NAME)
+                writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
                 StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
@@ -96,13 +93,13 @@ class TextEditorTest: IntegrationTest() {
     fun dataWriteAndCommit() {
         withTypeDB {typeDB ->  
             runBlocking {
-                createData(source = SAMPLE_GITHUB_DATA_PATH, destination = testID)
+                copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
-                writeSchemaInteractively(composeRule, dbName = testID, GITHUB_SCHEMA_FILE_NAME)
-                writeDataInteractively(composeRule, dbName = testID, GITHUB_DATA_FILE_NAME)
-                verifyDataWrite(composeRule, typeDB.address(), dbName = testID, "$testID/${GITHUB_QUERY_FILE_NAME}")
+                writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
+                writeDataInteractively(composeRule, dbName = testID, SampleGitHubData.dataFile)
+                verifyDataWrite(composeRule, typeDB.address(), dbName = testID, "$testID/${SampleGitHubData.collaboratorsQueryFile}")
             }
         }
     }
@@ -111,7 +108,7 @@ class TextEditorTest: IntegrationTest() {
     fun schemaWriteAndRollback() {
         withTypeDB { typeDB ->
             runBlocking {
-                createData(source = SAMPLE_GITHUB_DATA_PATH, destination = testID)
+                copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
@@ -122,7 +119,7 @@ class TextEditorTest: IntegrationTest() {
                 clickText(composeRule, Label.SCHEMA.lowercase())
                 clickText(composeRule, Label.WRITE.lowercase())
 
-                StudioState.project.current!!.directory.entries.find { it.name == GITHUB_SCHEMA_FILE_NAME }!!.asFile().tryOpen()
+                StudioState.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!.asFile().tryOpen()
 
                 clickIcon(composeRule, Icon.Code.PLAY, delayMillis = Delays.NETWORK_IO)
                 clickIcon(composeRule, Icon.Code.ROTATE, delayMillis = Delays.NETWORK_IO)

@@ -81,7 +81,7 @@ object StudioActions {
         return composeRule.onNodeWithText(text).assertDoesNotExist()
     }
 
-    fun createData(source: String, destination: String): Path {
+    fun copyFolder(source: String, destination: String): Path {
         val destination = File(File(destination).absolutePath)
 
         destination.deleteRecursively()

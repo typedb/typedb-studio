@@ -28,6 +28,7 @@ skiko_runtime_platform = select({
      "//conditions:default": ["INVALID"]})
 
 compose_test_libraries = [
+    "//test/integration/data:paths",
     "//test/integration/common:common",
     "//test/integration:test-integration",
 

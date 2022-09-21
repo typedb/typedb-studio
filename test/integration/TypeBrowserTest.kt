@@ -25,14 +25,13 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.test.integration.common.Paths.GITHUB_SCHEMA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.common.Paths.SAMPLE_GITHUB_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickAllInstancesOfIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.createData
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
@@ -48,10 +47,10 @@ class TypeBrowserTest: IntegrationTest() {
         withTypeDB { typeDB ->
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
-                createData(source = SAMPLE_GITHUB_DATA_PATH, destination = testID)
+                copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 createDatabase(composeRule, dbName = testID)
-                writeSchemaInteractively(composeRule, dbName = testID, GITHUB_SCHEMA_FILE_NAME)
+                writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
@@ -70,10 +69,10 @@ class TypeBrowserTest: IntegrationTest() {
         withTypeDB { typeDB ->
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
-                createData(source = SAMPLE_GITHUB_DATA_PATH, destination = testID)
+                copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 createDatabase(composeRule, dbName = testID)
-                writeSchemaInteractively(composeRule, dbName = testID, GITHUB_SCHEMA_FILE_NAME)
+                writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
                 StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
@@ -92,10 +91,10 @@ class TypeBrowserTest: IntegrationTest() {
         withTypeDB { typeDB ->
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
-                createData(source = SAMPLE_GITHUB_DATA_PATH, destination = testID)
+                copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 createDatabase(composeRule, dbName = testID)
-                writeSchemaInteractively(composeRule, dbName = testID, GITHUB_SCHEMA_FILE_NAME)
+                writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
                 StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
