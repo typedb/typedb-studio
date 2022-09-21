@@ -140,7 +140,7 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                Layout @Composable {
+                Layout {
                     Checkbox(
                         value = value,
                         onChange = { value = it; state.modified = true }
@@ -160,7 +160,7 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                Layout @Composable {
+                Layout {
                     Form.Dropdown(
                         values = values,
                         selected = selected,
