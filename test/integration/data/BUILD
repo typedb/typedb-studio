@@ -20,10 +20,23 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
 package(default_visibility = ["//test/integration:__subpackages__"])
 
+skiko_runtime_platform = select({
+     "@vaticle_dependencies//util/platform:is_mac": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64"],
+     "@vaticle_dependencies//util/platform:is_linux": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64"],
+     "@vaticle_dependencies//util/platform:is_windows": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64"],
+     "//conditions:default": ["INVALID"]})
+
 kt_jvm_library(
     name = "paths",
-    srcs = glob(["Paths.kt"]),
+    srcs = ["Paths.kt"],
+    kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
+    runtime_deps = skiko_runtime_platform,
+    deps = [
+        # External Maven Dependencies
+        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
+    ],
 )
+
 
 filegroup(
     name = "sample-file-structure-files",
