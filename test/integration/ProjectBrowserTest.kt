@@ -111,7 +111,7 @@ class ProjectBrowserTest: IntegrationTest() {
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
 
-            assertNodeExistsWithText(composeRule, text = "file1_2")
+            assertNodeExistsWithText(composeRule, text = "file0")
         }
     }
 
@@ -123,12 +123,12 @@ class ProjectBrowserTest: IntegrationTest() {
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
 
-            assertNodeExistsWithText(composeRule, text = "file1_2")
+            assertNodeExistsWithText(composeRule, text = "file0")
 
             clickIcon(composeRule, Icon.Code.CHEVRONS_UP)
 
             assertNodeExistsWithText(composeRule, text = testID)
-            assertNodeNotExistsWithText(composeRule, text = "file1_2")
+            assertNodeNotExistsWithText(composeRule, text = "file0")
         }
     }
 }
