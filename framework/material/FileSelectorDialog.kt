@@ -1,6 +1,6 @@
 package com.vaticle.typedb.studio.framework.material
 
-import androidx.compose.ui.awt.ComposeDialog
+import androidx.compose.ui.awt.ComposeWindow
 import com.vaticle.typedb.studio.state.common.util.Property
 import java.awt.FileDialog
 import java.io.File
@@ -8,20 +8,27 @@ import java.util.Optional
 import javax.swing.JFileChooser
 
 object FileSelectorDialog {
-    fun selectFile(parent: ComposeDialog, title: String, selectorOptions: SelectorOptions): Optional<File> {
-        return when (Property.OS.Current) {
+    fun selectFilePath(parent: ComposeWindow, title: String, selectorOptions: SelectorOptions): String {
+        val file = when (Property.OS.Current) {
             Property.OS.MACOS -> macOSFileSelector(parent, title, selectorOptions)
             else -> otherOSFileSelector(title, selectorOptions)
         }
+
+        return if (file.isEmpty) "" else file.get().absolutePath
     }
 
-    private fun macOSFileSelector(parent: ComposeDialog, title: String, selectorOptions: SelectorOptions): Optional<File> {
+    private fun macOSFileSelector(parent: ComposeWindow, title: String, selectorOptions: SelectorOptions): Optional<File> {
         val fileDialog = FileDialog(parent, title, FileDialog.LOAD)
         fileDialog.apply {
             isMultipleMode = false
             isVisible = true
         }
-        return (Optional.of(File(fileDialog.file)))
+
+        return if (fileDialog.file == null) {
+            Optional.empty()
+        } else {
+            Optional.of(File(fileDialog.file))
+        }
     }
 
     private fun otherOSFileSelector(title: String, selectorOptions: SelectorOptions): Optional<File> {
@@ -37,12 +44,12 @@ object FileSelectorDialog {
         }
 
         val option = fileChooser.showOpenDialog(null)
-        if (option == JFileChooser.APPROVE_OPTION) {
+        return if (option == JFileChooser.APPROVE_OPTION) {
             val file = fileChooser.selectedFile
             assert(file.isFile)
-            return Optional.of(file.absoluteFile)
+            Optional.of(file.absoluteFile)
         } else {
-            return Optional.empty()
+            Optional.empty()
         }
     }
 
