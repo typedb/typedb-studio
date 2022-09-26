@@ -72,7 +72,6 @@ object StudioActions {
         clickAllInstancesOfText(composeRule, icon.unicode)
     }
 
-
     fun assertNodeExistsWithText(composeRule: ComposeContentTestRule, text: String): SemanticsNodeInteraction {
         return composeRule.onNodeWithText(text).assertExists()
     }
