@@ -263,7 +263,7 @@ object PreferenceDialog {
         inner class ProjectManager : PreferenceGroup(PROJECT_MANAGER) {
             private val IGNORED_PATHS_PLACEHOLDER = ".git"
 
-            private val ignoredPathsString = preferenceMgr.ignoredPaths.joinToString(",")
+            private val ignoredPathsString = preferenceMgr.ignoredPaths.joinToString(", ")
             var ignoredPaths = PreferenceField.TextInput(
                 initialValue = ignoredPathsString,
                 label = PROJECT_IGNORED_PATHS, placeholder = IGNORED_PATHS_PLACEHOLDER

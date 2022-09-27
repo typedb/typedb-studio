@@ -18,8 +18,12 @@
 
 package com.vaticle.typedb.studio.state.app
 
+import java.io.File
+import java.nio.file.FileSystems
 import java.nio.file.Path
+import java.util.regex.Matcher
 import kotlin.io.path.name
+import kotlin.io.path.relativeTo
 
 class PreferenceManager(appData: DataManager) {
     private val preferences = appData.preferences
@@ -43,7 +47,12 @@ class PreferenceManager(appData: DataManager) {
 
     fun isIgnoredPath(path: Path): Boolean {
         val ignoredPaths = preferences.ignoredPaths ?: Defaults.ignoredPaths
-        return ignoredPaths.contains(path.name)
+        val relativePath = path.relativeTo(path.parent)
+        for (ignored in ignoredPaths) {
+            val pathMatcher = FileSystems.getDefault().getPathMatcher("glob:$ignored")
+            if (pathMatcher.matches(relativePath)) return true
+        }
+        return false
     }
 
     private object Defaults {
