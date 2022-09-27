@@ -104,12 +104,12 @@ object ServerDialog {
     }
 
     @Composable
-    fun MayShowDialogs(window: ComposeWindow) {
-        if (Service.client.connectServerDialog.isOpen) ConnectServer(window)
+    fun MayShowDialogs() {
+        if (Service.client.connectServerDialog.isOpen) ConnectServer()
     }
 
     @Composable
-    private fun ConnectServer(window: ComposeWindow) {
+    private fun ConnectServer() {
         val state = remember { ConnectServerForm() }
         Dialog.Layout(
             Service.client.connectServerDialog,

@@ -152,7 +152,7 @@ object Studio {
                 CompositionLocalProvider(LocalWindowContext provides windowContext) {
                     Notifications.MayShowPopup()
                     ConfirmationDialog.MayShowDialog()
-                    ServerDialog.MayShowDialogs(window)
+                    ServerDialog.MayShowDialogs()
                     DatabaseDialog.MayShowDialogs()
                     PreferenceDialog.MayShowDialogs()
                     ProjectDialog.MayShowDialogs(window)
