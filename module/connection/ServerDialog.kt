@@ -18,9 +18,12 @@
 
 package com.vaticle.typedb.studio.module.connection
 
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,6 +47,7 @@ import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
+import com.vaticle.typedb.studio.framework.material.Form.TextButtonRow
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.SelectFileDialog
@@ -143,13 +147,14 @@ object ServerDialog {
     @Composable
     private fun ServerFormField(state: ConnectServerForm) {
         Field(label = Label.SERVER) {
-            Dropdown(
-                values = Property.Server.values().toList(),
-                selected = state.server,
-                onSelection = { state.server = it!! },
-                modifier = Modifier.fillMaxSize(),
-                enabled = Service.client.isDisconnected
-            )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                TextButtonRow(
+                    listOf(
+                        Form.TextButtonArg("TypeDB", color = { Form.toggleButtonColor(state.server == Property.Server.TYPEDB) }, enabled = Service.client.isDisconnected) {state.server = Property.Server.TYPEDB},
+                        Form.TextButtonArg("TypeDB Cluster", color = { Form.toggleButtonColor(state.server == Property.Server.TYPEDB_CLUSTER) }, enabled = Service.client.isDisconnected) { state.server = Property.Server.TYPEDB_CLUSTER}
+                    )
+                )
+            }
         }
     }
 
