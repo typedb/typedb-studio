@@ -26,8 +26,6 @@ import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.EntityType
 import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.RoleType
-import com.vaticle.typedb.client.api.concept.type.ThingType
-import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.studio.state.app.ConfirmationManager
 import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
@@ -54,9 +52,9 @@ class SchemaManager constructor(
     internal val pages: PageManager,
     internal val notification: NotificationManager,
     internal val confirmation: ConfirmationManager
-) : Navigable<TypeState.Thing> {
+) : Navigable<TypeState.Thing<*, *>> {
 
-    class EditTypeDialog<T : TypeState> : DialogManager() {
+    class TypeDialogManager<T : TypeState<*, *>> : DialogManager() {
 
         var typeState: T? by mutableStateOf(null); private set
         var onSuccess: (() -> Unit)? by mutableStateOf(null); private set
@@ -75,11 +73,11 @@ class SchemaManager constructor(
     }
 
     override val name: String = TypeQLToken.Type.THING.name.lowercase()
-    override val parent: TypeState.Thing? = null
+    override val parent: TypeState.Thing<*, *>? = null
     override val info: String? = null
     override val isExpandable: Boolean = true
     override val isBulkExpandable: Boolean = true
-    override val entries: List<TypeState.Thing>
+    override val entries: List<TypeState.Thing<*, *>>
         get() = rootEntityType?.let { listOf(it, rootRelationType!!, rootAttributeType!!) } ?: listOf()
 
     val isOpen: Boolean get() = isOpenAtomic.state
@@ -87,12 +85,15 @@ class SchemaManager constructor(
     var rootRelationType: TypeState.Relation? by mutableStateOf(null); private set
     var rootAttributeType: TypeState.Attribute? by mutableStateOf(null); private set
     val isWritable: Boolean get() = session.isSchema && session.transaction.isWrite
-    val createEntTypeDialog = EditTypeDialog<TypeState.Entity>()
-    val createRelTypeDialog = EditTypeDialog<TypeState.Relation>()
-    val createAttTypeDialog = EditTypeDialog<TypeState.Attribute>()
-    val renameTypeDialog = EditTypeDialog<TypeState>()
-    val editSuperTypeDialog = EditTypeDialog<TypeState.Thing>()
-    val editAbstractDialog = EditTypeDialog<TypeState.Thing>()
+    val createEntityTypeDialog = TypeDialogManager<TypeState.Entity>()
+    val createAttributeTypeDialog = TypeDialogManager<TypeState.Attribute>()
+    val createRelationTypeDialog = TypeDialogManager<TypeState.Relation>()
+    val renameTypeDialog = TypeDialogManager<TypeState<*, *>>()
+    val changeEntitySupertypeDialog = TypeDialogManager<TypeState.Entity>()
+    val changeAttributeSupertypeDialog = TypeDialogManager<TypeState.Attribute>()
+    val changeRelationSupertypeDialog = TypeDialogManager<TypeState.Relation>()
+    val changeRoleSupertypeDialog = TypeDialogManager<TypeState.Role>()
+    val changeAbstractDialog = TypeDialogManager<TypeState.Thing<*, *>>()
     private var writeTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private var readTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private val lastTransactionUse = AtomicLong(0)
@@ -101,7 +102,7 @@ class SchemaManager constructor(
     private val relationTypes = ConcurrentHashMap<RelationType, TypeState.Relation>()
     private val roleTypes = ConcurrentHashMap<RoleType, TypeState.Role>()
     private val isOpenAtomic = AtomicBooleanState(false)
-    internal val onTypesUpdated = LinkedBlockingQueue<() -> Unit>()
+    private val onTypesUpdated = LinkedBlockingQueue<() -> Unit>()
     internal val database: String? get() = session.database
     internal val coroutines = CoroutineScope(Dispatchers.Default)
 
@@ -121,74 +122,51 @@ class SchemaManager constructor(
 
     fun onTypesUpdated(function: () -> Unit) = onTypesUpdated.put(function)
 
-    override fun reloadEntries() {
-        openOrGetReadTx()?.let { tx -> // TODO: Implement API to retrieve .hasSubtypes() on TypeDB Type API
-            entries.forEach { it.hasSubtypes = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent }
+    override fun reloadEntries() = openOrGetReadTx()?.let { tx ->
+        // TODO: Implement API to retrieve .hasSubtypes() on TypeDB Type API
+        entries.forEach { it.hasSubtypes = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent }
+    } ?: Unit
+
+    override fun compareTo(other: Navigable<TypeState.Thing<*, *>>): Int = if (other is SchemaManager) 0 else -1
+
+    internal fun createTypeState(entityType: EntityType): TypeState.Entity? = openOrGetReadTx()?.let { tx ->
+        val remote = entityType.asRemote(tx)
+        val supertype = remote.supertype?.let { st ->
+            if (st.isEntityType) entityTypes[st] ?: createTypeState(st.asEntityType()) else null
+        }
+        entityTypes.computeIfAbsent(entityType) {
+            TypeState.Entity(entityType, supertype, this)
         }
     }
 
-    override fun compareTo(other: Navigable<TypeState.Thing>): Int {
-        return if (other is SchemaManager) 0 else -1
-    }
-
-    internal fun createTypeState(type: Type): TypeState? = when (type) {
-        is RoleType -> createTypeState(type)
-        else -> createTypeState(type as ThingType)
-    }
-
-    internal fun createTypeState(type: ThingType): TypeState.Thing? = when (type) {
-        is EntityType -> createTypeState(type)
-        is RelationType -> createTypeState(type)
-        is AttributeType -> createTypeState(type)
-        else -> throw IllegalStateException("Unrecognised ThingType object")
-    }
-
-    internal fun createTypeState(entityType: EntityType): TypeState.Entity? {
-        return openOrGetReadTx()?.let {
-            val remote = entityType.asRemote(it)
-            val supertype = remote.supertype?.let { st ->
-                if (st.isEntityType) entityTypes[st] ?: createTypeState(st.asEntityType()) else null
-            }
-            entityTypes.computeIfAbsent(entityType) {
-                TypeState.Entity(entityType, supertype, this)
-            }
+    internal fun createTypeState(attributeType: AttributeType): TypeState.Attribute? = openOrGetReadTx()?.let { tx ->
+        val remote = attributeType.asRemote(tx)
+        val supertype = remote.supertype?.let { st ->
+            if (st.isAttributeType) attributeTypes[st] ?: createTypeState(st.asAttributeType()) else null
+        }
+        attributeTypes.computeIfAbsent(attributeType) {
+            TypeState.Attribute(attributeType, supertype, this)
         }
     }
 
-    internal fun createTypeState(attributeType: AttributeType): TypeState.Attribute? {
-        return openOrGetReadTx()?.let {
-            val remote = attributeType.asRemote(it)
-            val supertype = remote.supertype?.let { st ->
-                if (st.isAttributeType) attributeTypes[st] ?: createTypeState(st.asAttributeType()) else null
-            }
-            attributeTypes.computeIfAbsent(attributeType) {
-                TypeState.Attribute(attributeType, supertype, this)
-            }
+    internal fun createTypeState(relationType: RelationType): TypeState.Relation? = openOrGetReadTx()?.let { tx ->
+        val remote = relationType.asRemote(tx)
+        val supertype = remote.supertype?.let { st ->
+            if (st.isRelationType) relationTypes[st] ?: createTypeState(st.asRelationType()) else null
+        }
+        relationTypes.computeIfAbsent(relationType) {
+            TypeState.Relation(relationType, supertype, this)
         }
     }
 
-    internal fun createTypeState(relationType: RelationType): TypeState.Relation? {
-        return openOrGetReadTx()?.let {
-            val remote = relationType.asRemote(it)
-            val supertype = remote.supertype?.let { st ->
-                if (st.isRelationType) relationTypes[st] ?: createTypeState(st.asRelationType()) else null
-            }
-            relationTypes.computeIfAbsent(relationType) {
-                TypeState.Relation(relationType, supertype, this)
-            }
+    internal fun createTypeState(roleType: RoleType): TypeState.Role? = openOrGetReadTx()?.let { tx ->
+        val remote = roleType.asRemote(tx)
+        val supertype = remote.supertype?.let { st ->
+            if (st.isRoleType) roleTypes[st] ?: createTypeState(st.asRoleType()) else null
         }
-    }
-
-    internal fun createTypeState(roleType: RoleType): TypeState.Role? {
-        return openOrGetReadTx()?.let { tx ->
-            val remote = roleType.asRemote(tx)
-            val supertype = remote.supertype?.let { st ->
-                if (st.isRoleType) roleTypes[st] ?: createTypeState(st.asRoleType()) else null
-            }
-            roleTypes[roleType] ?: createTypeState(remote.relationType)?.let { relationType ->
-                roleTypes.computeIfAbsent(roleType) {
-                    TypeState.Role(roleType, relationType, supertype, this)
-                }
+        roleTypes[roleType] ?: createTypeState(remote.relationType)?.let { relationType ->
+            roleTypes.computeIfAbsent(roleType) {
+                TypeState.Role(relationType, roleType, supertype, this)
             }
         }
     }
@@ -205,10 +183,10 @@ class SchemaManager constructor(
         ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
         (entityTypes.values + attributeTypes.values + relationTypes.values + roleTypes.values).forEach {
             if (tx.concepts().getThingType(it.name) == null) it.purge()
-            else if (it is TypeState.Thing && it.isOpen) it.loadTypeConstraintsAsync()
+            else if (it is TypeState.Thing && it.isOpen) it.loadConstraintsAsync()
         }
         isOpenAtomic.set(true)
-        onTypesUpdated.forEach { it() }
+        execOnTypesUpdated()
     }
 
     fun exportTypeSchemaAsync(onSuccess: (String) -> Unit) = coroutines.launchAndHandle(notification, LOGGER) {
@@ -246,18 +224,20 @@ class SchemaManager constructor(
         }
     }
 
+    internal fun execOnTypesUpdated() = onTypesUpdated.forEach { it() }
+
     fun closeWriteTx() = synchronized(this) { writeTx.getAndSet(null)?.close() }
 
     fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
 
-    fun register(typeState: TypeState) = when (typeState) {
+    fun register(typeState: TypeState<*, *>) = when (typeState) {
         is TypeState.Entity -> entityTypes[typeState.conceptType] = typeState
         is TypeState.Attribute -> attributeTypes[typeState.conceptType] = typeState
         is TypeState.Relation -> relationTypes[typeState.conceptType] = typeState
         is TypeState.Role -> roleTypes[typeState.conceptType] = typeState
     }
 
-    fun remove(typeState: TypeState) = when (typeState) {
+    fun remove(typeState: TypeState<*, *>) = when (typeState) {
         is TypeState.Entity -> entityTypes.remove(typeState.conceptType)
         is TypeState.Attribute -> attributeTypes.remove(typeState.conceptType)
         is TypeState.Relation -> relationTypes.remove(typeState.conceptType)

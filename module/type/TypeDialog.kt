@@ -46,7 +46,7 @@ import com.vaticle.typedb.studio.state.schema.TypeState
 
 object TypeDialog {
 
-    private class CreateTypeFormState<T : TypeState.Thing> constructor(
+    private class CreateTypeFormState<T : TypeState.Thing<*, T>> constructor(
         supertypeState: T,
         valueType: ValueType? = null,
         val isValid: ((CreateTypeFormState<T>) -> Boolean)? = null,
@@ -73,54 +73,57 @@ object TypeDialog {
 
     @Composable
     fun MayShowDialogs() {
-        if (StudioState.schema.createEntTypeDialog.isOpen) CreateEntityTypeDialog()
-        if (StudioState.schema.createRelTypeDialog.isOpen) CreateRelationTypeDialog()
-        if (StudioState.schema.createAttTypeDialog.isOpen) CreateAttributeTypeDialog()
         if (StudioState.schema.renameTypeDialog.isOpen) RenameTypeDialog()
-        if (StudioState.schema.editSuperTypeDialog.isOpen) EditSupertypeDialog()
-    }
-
-    private fun createThingTypeMessage(supertypeState: TypeState.Thing, name: String) = when (supertypeState.name) {
-        supertypeState.encoding.label -> Sentence.CREATE_TYPE.format(supertypeState.encoding.label.lowercase())
-        else -> Sentence.CREATE_TYPE_AS_SUBTYPE_OF.format(supertypeState.encoding.label.lowercase(), name)
+        if (StudioState.schema.createEntityTypeDialog.isOpen) CreateEntityTypeDialog()
+        if (StudioState.schema.createRelationTypeDialog.isOpen) CreateRelationTypeDialog()
+        if (StudioState.schema.createAttributeTypeDialog.isOpen) CreateAttributeTypeDialog()
+        if (StudioState.schema.changeEntitySupertypeDialog.isOpen) ChangeEntitySupertypeDialog()
+        if (StudioState.schema.changeAttributeSupertypeDialog.isOpen) ChangeAttributeSupertypeDialog()
+        if (StudioState.schema.changeRelationSupertypeDialog.isOpen) ChangeRelationSupertypeDialog()
+        if (StudioState.schema.changeRoleSupertypeDialog.isOpen) ChangeRoleSupertypeDialog()
     }
 
     @Composable
     private fun CreateEntityTypeDialog() = CreateThingTypeDialog(
-        dialogState = StudioState.schema.createEntTypeDialog,
+        dialogState = StudioState.schema.createEntityTypeDialog,
         rootTypeState = StudioState.schema.rootEntityType!!,
         title = Label.CREATE_ENTITY_TYPE
     ) { supertypeState, label, isAbstract, _ -> supertypeState.tryCreateSubtype(label, isAbstract) }
 
     @Composable
     private fun CreateRelationTypeDialog() = CreateThingTypeDialog(
-        dialogState = StudioState.schema.createRelTypeDialog,
+        dialogState = StudioState.schema.createRelationTypeDialog,
         rootTypeState = StudioState.schema.rootRelationType!!,
         title = Label.CREATE_RELATION_TYPE
     ) { supertypeState, label, isAbstract, _ -> supertypeState.tryCreateSubtype(label, isAbstract) }
 
     @Composable
-    private fun CreateAttributeTypeDialog() = CreateThingTypeDialog(
-        dialogState = StudioState.schema.createAttTypeDialog,
-        rootTypeState = StudioState.schema.rootAttributeType!!,
-        title = Label.CREATE_ATTRIBUTE_TYPE
-    ) { supertypeState, label, isAbstract, valueType ->
-        supertypeState.tryCreateSubtype(label, isAbstract, valueType!!)
-    }
+    private fun CreateAttributeTypeDialog() =
+        CreateThingTypeDialog(dialogState = StudioState.schema.createAttributeTypeDialog,
+            rootTypeState = StudioState.schema.rootAttributeType!!,
+            title = Label.CREATE_ATTRIBUTE_TYPE,
+            isValidFn = { it.valueType != null }) { supertypeState, label, isAbstract, valType ->
+            supertypeState.tryCreateSubtype(
+                label,
+                isAbstract,
+                valType!!
+            )
+        }
 
-    @Suppress("UNCHECKED_CAST")
     @Composable
-    private fun <T : TypeState.Thing> CreateThingTypeDialog(
-        dialogState: SchemaManager.EditTypeDialog<T>, rootTypeState: T, title: String,
+    private fun <T : TypeState.Thing<*, T>> CreateThingTypeDialog(
+        dialogState: SchemaManager.TypeDialogManager<T>,
+        rootTypeState: T,
+        title: String,
+        isValidFn: ((formState: CreateTypeFormState<T>) -> Boolean)? = null,
         creatorFn: (supertypeState: T, label: String, isAbstract: Boolean, valueType: ValueType?) -> Unit
     ) {
         val supertypeState = dialogState.typeState!!
-        createThingTypeMessage(supertypeState, supertypeState.name)
         val formState = remember {
             CreateTypeFormState(
                 supertypeState = supertypeState,
                 valueType = if (supertypeState is TypeState.Attribute) supertypeState.valueType else null,
-                isValid = if (supertypeState is TypeState.Attribute) { { it.valueType != null } } else null,
+                isValid = isValidFn,
                 onCancel = { dialogState.close() },
                 onSubmit = creatorFn
             )
@@ -128,11 +131,15 @@ object TypeDialog {
         Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.CREATE) {
                 LabelField(formState.label) { formState.label = it }
-                SupertypeField(formState, rootTypeState)
+                SupertypeField(formState.supertypeState, (listOf(rootTypeState) + rootTypeState.subtypes).map { it }) {
+                    formState.supertypeState = it
+                    if (it is TypeState.Attribute) formState.valueType = it.valueType
+                }
                 if (supertypeState is TypeState.Attribute) ValueTypeField(formState)
                 AbstractField(formState.isAbstract) { formState.isAbstract = it }
             }
         }
+        LaunchedEffect(formState) { rootTypeState.loadSubtypesRecursivelyAsync() }
     }
 
     @Composable
@@ -155,10 +162,57 @@ object TypeDialog {
         }
     }
 
+    @Composable
+    private fun ChangeEntitySupertypeDialog() = ChangeSupertypeDialog(
+        title = Label.CHANGE_ENTITY_SUPERTYPE,
+        dialogState = StudioState.schema.changeEntitySupertypeDialog,
+        selection = StudioState.schema.rootEntityType!!.subtypes
+    )
 
     @Composable
-    private fun EditSupertypeDialog() {
-        // TODO
+    private fun ChangeAttributeSupertypeDialog() = ChangeSupertypeDialog(
+        title = Label.CHANGE_ATTRIBUTE_SUPERTYPE,
+        dialogState = StudioState.schema.changeAttributeSupertypeDialog,
+        selection = StudioState.schema.rootAttributeType!!.subtypes.filter {
+            it.valueType == StudioState.schema.changeAttributeSupertypeDialog.typeState!!.valueType
+        })
+
+    @Composable
+    private fun ChangeRelationSupertypeDialog() = ChangeSupertypeDialog(
+        title = Label.CHANGE_RELATION_SUPERTYPE,
+        dialogState = StudioState.schema.changeRelationSupertypeDialog,
+        selection = StudioState.schema.rootRelationType!!.subtypes
+    )
+
+    @Composable
+    private fun ChangeRoleSupertypeDialog() = ChangeSupertypeDialog(
+        title = Label.CHANGE_ROLE_SUPERTYPE,
+        dialogState = StudioState.schema.changeRoleSupertypeDialog,
+        selection = StudioState.schema.changeRoleSupertypeDialog.typeState!!
+            .relationType.relatesRoleTypes.flatMap { it.subtypes }
+    )
+
+    @Composable
+    private fun <T : TypeState<*, T>> ChangeSupertypeDialog(
+        title: String, dialogState: SchemaManager.TypeDialogManager<T>, selection: List<T>,
+    ) {
+        val typeState = dialogState.typeState!!
+        val formState = remember {
+            object : Form.State {
+                var supertypeState: T by mutableStateOf(typeState.supertype!!)
+                override fun cancel() = dialogState.close()
+                override fun trySubmit() = typeState.tryChangeSupertype(supertypeState)
+                override fun isValid() = true
+            }
+        }
+        Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
+            Submission(state = formState, modifier = Modifier.fillMaxSize()) {
+                Form.Text(Sentence.CHANGE_SUPERTYPE.format(typeState.encoding.label, typeState.name), softWrap = true)
+                SupertypeField(formState.supertypeState, selection.filter { it != typeState }) {
+                    formState.supertypeState = it
+                }
+            }
+        }
     }
 
     @Composable
@@ -176,37 +230,34 @@ object TypeDialog {
     }
 
     @Composable
-    private fun <T : TypeState.Thing> SupertypeField(formState: CreateTypeFormState<T>, rootTypeState: T) {
-        Field(label = Label.SUPERTYPE) {
-            Form.Dropdown(
-                selected = formState.supertypeState,
-                values = (listOf(rootTypeState) + rootTypeState.subtypes).map { it as T },
-                displayFn = { AnnotatedString(it.name) },
-                onSelection = {
-                    formState.supertypeState = it
-                    if (it is TypeState.Attribute) formState.valueType = it.valueType
-                }
-            )
-        }
-        LaunchedEffect(formState) { rootTypeState.loadSubtypesRecursivelyAsync() }
+    private fun <T : TypeState<*, T>> SupertypeField(
+        selected: T, values: List<T>, onSelection: (value: T) -> Unit
+    ) = Field(label = Label.SUPERTYPE) {
+        Form.Dropdown(
+            selected = selected,
+            values = values,
+            displayFn = { AnnotatedString(it.name) },
+            onSelection = onSelection,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 
     @Composable
-    private fun <T : TypeState.Thing> ValueTypeField(formState: CreateTypeFormState<T>) {
-        Field(label = Label.VALUE_TYPE) {
-            Form.Dropdown(
-                selected = formState.valueType,
-                values = remember { ValueType.values().toList() - ValueType.OBJECT },
-                displayFn = { AnnotatedString(it.name.lowercase()) },
-                placeholder = Label.VALUE_TYPE.lowercase().hyphenate(),
-                onSelection = { formState.valueType = it },
-                enabled = formState.supertypeState.isRoot
-            )
-        }
+    private fun <T : TypeState.Thing<*, T>> ValueTypeField(
+        formState: CreateTypeFormState<T>
+    ) = Field(label = Label.VALUE_TYPE) {
+        Form.Dropdown(
+            selected = formState.valueType,
+            values = remember { ValueType.values().toList() - ValueType.OBJECT },
+            displayFn = { AnnotatedString(it.name.lowercase()) },
+            placeholder = Label.VALUE_TYPE.lowercase().hyphenate(),
+            onSelection = { formState.valueType = it },
+            enabled = formState.supertypeState.isRoot
+        )
     }
 
     @Composable
-    private fun AbstractField(value: Boolean, onChange: (Boolean) -> Unit) {
-        Field(label = Label.ABSTRACT) { Checkbox(value = value, onChange = onChange) }
+    private fun AbstractField(value: Boolean, onChange: (Boolean) -> Unit) = Field(label = Label.ABSTRACT) {
+        Checkbox(value = value, onChange = onChange)
     }
 }

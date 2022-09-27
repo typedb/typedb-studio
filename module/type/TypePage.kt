@@ -76,16 +76,16 @@ import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.schema.TypeState
 import kotlinx.coroutines.CoroutineScope
 
-sealed class TypePage(
-    type: TypeState.Thing,
+sealed class TypePage constructor(
+    initTypeState: TypeState.Thing<*, *>,
     showAdvanced: Boolean = false,
     coroutines: CoroutineScope
 ) : Pages.Page() {
 
     override val hasSecondary: Boolean = false
-    override val icon: Form.IconArg = conceptIcon(type.conceptType)
+    override val icon: Form.IconArg = conceptIcon(initTypeState.conceptType)
 
-    protected abstract val typeState: TypeState.Thing
+    protected abstract val typeState: TypeState.Thing<*, *>
     protected val isEditable
         get() = !typeState.isRoot && StudioState.schema.isWritable && !StudioState.client.hasRunningCommand
 
@@ -95,12 +95,12 @@ sealed class TypePage(
     private var width: Dp by mutableStateOf(0.dp)
     private var showAdvanced by mutableStateOf(showAdvanced)
     private val subtypesNavState = Navigator.NavigatorState(
-        container = type,
-        title = Label.SUBTYPES_OF + " " + type.name,
+        container = initTypeState,
+        title = Label.SUBTYPES_OF + " " + initTypeState.name,
         mode = Navigator.Mode.LIST,
         initExpandDepth = 4,
         coroutines = coroutines
-    ) { it.item.tryOpen() }
+    ) { it.item.tryOpen() }.also { initTypeState.onSubtypesUpdated { it.reloadEntries() } }
 
     companion object {
         private val MIN_WIDTH = 600.dp
@@ -116,7 +116,7 @@ sealed class TypePage(
         private const val MAX_VISIBLE_SUBTYPES = 10
 
         @Composable
-        fun create(type: TypeState.Thing): TypePage {
+        fun create(type: TypeState.Thing<*, *>): TypePage {
             val coroutines = rememberCoroutineScope()
             return when (type) {
                 is TypeState.Entity -> Entity(type, coroutines)
@@ -227,7 +227,7 @@ sealed class TypePage(
                 leadingIcon = conceptIcon(supertypeState.conceptType),
                 enabled = !typeState.isRoot,
             ) { supertypeState.tryOpen() }
-            EditButton { typeState.initiateEditSupertype() }
+            EditButton { typeState.initiateChangeSupertype() }
         }
     }
 
@@ -237,7 +237,7 @@ sealed class TypePage(
             Form.Text(value = Label.ABSTRACT)
             Spacer(Modifier.weight(1f))
             Form.TextBox(((if (typeState.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
-            EditButton(typeState.canBeAbstract) { typeState.initiateEditAbstract() }
+            EditButton(typeState.canBeAbstract) { typeState.initiateChangeAbstract() }
         }
     }
 
@@ -496,7 +496,7 @@ sealed class TypePage(
             tooltip = Tooltip.Arg(Label.REFRESH)
         ) {
             StudioState.schema.closeReadTx()
-            typeState.loadTypeConstraintsAsync()
+            typeState.loadConstraintsAsync()
         }
     }
 
@@ -547,9 +547,11 @@ sealed class TypePage(
         )
     }
 
-    class Entity(
-        override var typeState: TypeState.Entity, coroutines: CoroutineScope
-    ) : TypePage(typeState, false, coroutines) {
+    class Entity(override var typeState: TypeState.Entity, coroutines: CoroutineScope) : TypePage(
+        initTypeState = typeState,
+        showAdvanced = false,
+        coroutines = coroutines
+    ) {
 
         override fun updatePageable(pageable: Pageable) {
             typeState = pageable as TypeState.Entity
@@ -566,9 +568,11 @@ sealed class TypePage(
         }
     }
 
-    class Relation(
-        override var typeState: TypeState.Relation, coroutines: CoroutineScope
-    ) : TypePage(typeState, typeState.playsRoleTypes.isNotEmpty(), coroutines) {
+    class Relation(override var typeState: TypeState.Relation, coroutines: CoroutineScope) : TypePage(
+        initTypeState = typeState,
+        showAdvanced = typeState.playsRoleTypes.isNotEmpty(),
+        coroutines = coroutines
+    ) {
 
         override fun updatePageable(pageable: Pageable) {
             typeState = pageable as TypeState.Relation
@@ -644,7 +648,7 @@ sealed class TypePage(
     }
 
     class Attribute(override var typeState: TypeState.Attribute, coroutines: CoroutineScope) : TypePage(
-        type = typeState,
+        initTypeState = typeState,
         showAdvanced = typeState.ownsAttributeTypes.isNotEmpty() || typeState.playsRoleTypes.isNotEmpty(),
         coroutines = coroutines
     ) {
