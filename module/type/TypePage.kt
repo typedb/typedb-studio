@@ -53,6 +53,12 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.client.api.concept.thing.Entity
+import com.vaticle.typedb.client.api.concept.type.AttributeType
+import com.vaticle.typedb.client.api.concept.type.EntityType
+import com.vaticle.typedb.client.api.concept.type.RelationType
+import com.vaticle.typedb.client.api.concept.type.ThingType
+import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Util.hyphenate
 import com.vaticle.typedb.studio.framework.common.Util.toDP
@@ -76,16 +82,13 @@ import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.schema.TypeState
 import kotlinx.coroutines.CoroutineScope
 
-sealed class TypePage constructor(
-    initTypeState: TypeState.Thing<*, *>,
-    showAdvanced: Boolean = false,
-    coroutines: CoroutineScope
+sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
+    var typeState: TS, showAdvanced: Boolean = false, coroutines: CoroutineScope
 ) : Pages.Page() {
 
     override val hasSecondary: Boolean = false
-    override val icon: Form.IconArg = conceptIcon(initTypeState.conceptType)
+    override val icon: Form.IconArg = conceptIcon(typeState.conceptType)
 
-    protected abstract val typeState: TypeState.Thing<*, *>
     protected val isEditable
         get() = !typeState.isRoot && StudioState.schema.isWritable && !StudioState.client.hasRunningCommand
 
@@ -95,12 +98,12 @@ sealed class TypePage constructor(
     private var width: Dp by mutableStateOf(0.dp)
     private var showAdvanced by mutableStateOf(showAdvanced)
     private val subtypesNavState = Navigator.NavigatorState(
-        container = initTypeState,
-        title = Label.SUBTYPES_OF + " " + initTypeState.name,
+        container = typeState,
+        title = Label.SUBTYPES_OF + " " + typeState.name,
         mode = Navigator.Mode.LIST,
         initExpandDepth = 4,
         coroutines = coroutines
-    ) { it.item.tryOpen() }.also { initTypeState.onSubtypesUpdated { it.reloadEntries() } }
+    ) { it.item.tryOpen() }.also { typeState.onSubtypesUpdated { it.reloadEntries() } }
 
     companion object {
         private val MIN_WIDTH = 600.dp
@@ -116,7 +119,7 @@ sealed class TypePage constructor(
         private const val MAX_VISIBLE_SUBTYPES = 10
 
         @Composable
-        fun create(type: TypeState.Thing<*, *>): TypePage {
+        fun create(type: TypeState.Thing<*, *>): TypePage<*, *> {
             val coroutines = rememberCoroutineScope()
             return when (type) {
                 is TypeState.Entity -> Entity(type, coroutines)
@@ -124,6 +127,10 @@ sealed class TypePage constructor(
                 is TypeState.Attribute -> Attribute(type, coroutines)
             }
         }
+    }
+
+    override fun updatePageable(pageable: Pageable) {
+        typeState = pageable as TS
     }
 
     @Composable
@@ -547,15 +554,9 @@ sealed class TypePage constructor(
         )
     }
 
-    class Entity(override var typeState: TypeState.Entity, coroutines: CoroutineScope) : TypePage(
-        initTypeState = typeState,
-        showAdvanced = false,
-        coroutines = coroutines
-    ) {
-
-        override fun updatePageable(pageable: Pageable) {
-            typeState = pageable as TypeState.Entity
-        }
+    class Entity constructor(
+        typeState: TypeState.Entity, coroutines: CoroutineScope
+    ) : TypePage<EntityType, TypeState.Entity>(typeState, false, coroutines) {
 
         @Composable
         override fun MainSections() {
@@ -568,15 +569,9 @@ sealed class TypePage constructor(
         }
     }
 
-    class Relation(override var typeState: TypeState.Relation, coroutines: CoroutineScope) : TypePage(
-        initTypeState = typeState,
-        showAdvanced = typeState.playsRoleTypes.isNotEmpty(),
-        coroutines = coroutines
-    ) {
-
-        override fun updatePageable(pageable: Pageable) {
-            typeState = pageable as TypeState.Relation
-        }
+    class Relation constructor(
+        typeState: TypeState.Relation, coroutines: CoroutineScope
+    ) : TypePage<RelationType, TypeState.Relation>(typeState, typeState.playsRoleTypes.isNotEmpty(), coroutines) {
 
         @Composable
         override fun MainSections() {
@@ -647,15 +642,13 @@ sealed class TypePage constructor(
         }
     }
 
-    class Attribute(override var typeState: TypeState.Attribute, coroutines: CoroutineScope) : TypePage(
-        initTypeState = typeState,
+    class Attribute constructor(
+        typeState: TypeState.Attribute, coroutines: CoroutineScope
+    ) : TypePage<AttributeType, TypeState.Attribute>(
+        typeState = typeState,
         showAdvanced = typeState.ownsAttributeTypes.isNotEmpty() || typeState.playsRoleTypes.isNotEmpty(),
         coroutines = coroutines
     ) {
-
-        override fun updatePageable(pageable: Pageable) {
-            typeState = pageable as TypeState.Attribute
-        }
 
         @Composable
         override fun MainSections() {
