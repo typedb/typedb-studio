@@ -18,11 +18,8 @@
 
 package com.vaticle.typedb.studio.state.app
 
-import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
-import java.util.regex.Matcher
-import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 
 class PreferenceManager(appData: DataManager) {
