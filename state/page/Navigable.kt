@@ -18,7 +18,7 @@
 
 package com.vaticle.typedb.studio.state.page
 
-interface Navigable<T : Navigable<T>> : Comparable<Navigable<T>> {
+interface Navigable<out T : Navigable<T>> : Comparable<Navigable<@UnsafeVariance T>> {
     val name: String
     val parent: Navigable<T>?
     val info: String?

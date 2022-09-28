@@ -84,17 +84,17 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
         LaunchedEffect(navState) { navState.launch() }
     }
 
-    private fun refresh(navState: Navigator.NavigatorState<TypeState.Thing>) {
+    private fun refresh(navState: Navigator.NavigatorState<TypeState.Thing<*, *>>) {
         StudioState.schema.closeReadTx()
         navState.reloadEntriesAsync()
     }
 
-    private fun refreshButton(navState: Navigator.NavigatorState<TypeState.Thing>) = IconButtonArg(
+    private fun refreshButton(navState: Navigator.NavigatorState<TypeState.Thing<*, *>>) = IconButtonArg(
         icon = Icon.Code.ROTATE,
         tooltip = Tooltip.Arg(title = Label.REFRESH)
     ) { refresh(navState) }
 
-    private fun exportButton(navState: Navigator.NavigatorState<TypeState.Thing>) = IconButtonArg(
+    private fun exportButton(navState: Navigator.NavigatorState<TypeState.Thing<*, *>>) = IconButtonArg(
         icon = Icon.Code.ARROW_UP_RIGHT_FROM_SQUARE,
         enabled = StudioState.project.current != null,
         tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
@@ -108,7 +108,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
         }
     }
 
-    private fun contextMenuItems(itemState: Navigator.ItemState<TypeState.Thing>): List<List<ContextMenu.Item>> {
+    private fun contextMenuItems(itemState: Navigator.ItemState<TypeState.Thing<*, *>>): List<List<ContextMenu.Item>> {
         val typeState = itemState.item
         if (!typeState.isOpen) typeState.loadTypeDependenciesAsync()
         return listOf(
