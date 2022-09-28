@@ -148,13 +148,13 @@ object Pages {
 
         private fun closeMenuItem(pageable: Pageable) = ContextMenu.Item(
             label = Label.CLOSE,
-            icon = Icon.Code.XMARK,
+            icon = Icon.Purpose.CLOSE,
             info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + W"
         ) { close(pageable) }
 
         private fun saveMenuItem(pageable: Pageable) = ContextMenu.Item(
             label = Label.SAVE,
-            icon = Icon.Code.FLOPPY_DISK,
+            icon = Icon.Purpose.SAVE,
             info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + S",
             enabled = pageable.hasUnsavedChanges || pageable.isUnsavedPageable
         ) { pageable.initiateSave() }
@@ -181,8 +181,8 @@ object Pages {
                 isActiveFn = { StudioState.pages.active == it },
                 onClick = { it.activate() },
                 contextMenuFn = { state.contextMenuFn(it) },
-                closeButtonFn = { IconButtonArg(icon = Icon.Code.XMARK) { state.close(it) } },
-                buttons = listOf(IconButtonArg(Icon.Code.PLUS, enabled = enabled) { onNewPage() })
+                closeButtonFn = { IconButtonArg(icon = Icon.Purpose.CLOSE) { state.close(it) } },
+                buttons = listOf(IconButtonArg(Icon.Purpose.NEW_PAGE, enabled = enabled) { onNewPage() })
             )
             Separator.Horizontal()
             StudioState.pages.active?.let { state.openedPage(it, createPageFn).Layout() }

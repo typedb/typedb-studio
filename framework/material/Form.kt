@@ -104,7 +104,6 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Theme.ROUNDED_CORNER_SHAPE
 import com.vaticle.typedb.studio.framework.common.theme.Theme.RoundedCorners
 import com.vaticle.typedb.studio.framework.common.theme.Theme.rectangleIndication
-import com.vaticle.typedb.studio.framework.material.Icon.Code.CARET_DOWN
 import com.vaticle.typedb.studio.state.common.util.Label
 import java.awt.event.KeyEvent.KEY_PRESSED
 import java.net.URL
@@ -137,11 +136,11 @@ object Form {
         val color: @Composable () -> Color = { Theme.studio.border }
     )
 
-    data class IconArg(val code: Icon.Code, val color: @Composable () -> Color = { Theme.studio.icon })
+    data class IconArg(val code: Icon.Purpose, val color: @Composable () -> Color = { Theme.studio.icon })
 
     data class IconButtonArg(
-        val icon: Icon.Code,
-        val hoverIcon: Icon.Code? = null,
+        val icon: Icon.Purpose,
+        val hoverIcon: Icon.Purpose? = null,
         val color: @Composable () -> Color = { Theme.studio.icon },
         val hoverColor: @Composable (() -> Color)? = null,
         val disabledColor: @Composable (() -> Color)? = null,
@@ -384,8 +383,8 @@ object Form {
         onTextLayout: (TextLayoutResult) -> Unit = {},
         shape: Shape? = ROUNDED_CORNER_SHAPE,
         border: Border? = DEFAULT_BORDER,
-        trailingIcon: Icon.Code? = null,
-        leadingIcon: Icon.Code? = null
+        trailingIcon: Icon.Purpose? = null,
+        leadingIcon: Icon.Purpose? = null
     ) {
         val mod = border?.let {
             modifier.border(border.width, fadeable(border.color(), !enabled), border.shape)
@@ -481,7 +480,7 @@ object Form {
         state: MultilineTextInputState = rememberMultilineTextInputState(),
         value: TextFieldValue,
         modifier: Modifier,
-        icon: Icon.Code? = null,
+        icon: Icon.Purpose? = null,
         focusReq: FocusRequester = remember { FocusRequester() },
         onValueChange: (TextFieldValue) -> Unit,
         onTextLayout: (TextLayoutResult) -> Unit
@@ -662,7 +661,7 @@ object Form {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun RawIconButton(
-        icon: Icon.Code,
+        icon: Icon.Purpose,
         modifier: Modifier = Modifier,
         iconColor: Color = Theme.studio.icon,
         enabled: Boolean = true,
@@ -704,8 +703,8 @@ object Form {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun IconButton(
-        icon: Icon.Code,
-        hoverIcon: Icon.Code? = null,
+        icon: Icon.Purpose,
+        hoverIcon: Icon.Purpose? = null,
         modifier: Modifier = Modifier,
         focusReq: FocusRequester? = null,
         iconColor: Color = Theme.studio.icon,
@@ -857,7 +856,7 @@ object Form {
                 ),
                 textColor = Theme.studio.onPrimary,
                 focusReq = focusReq,
-                trailingIcon = IconArg(CARET_DOWN),
+                trailingIcon = IconArg(Icon.Purpose.SELECT),
                 enabled = enabled,
                 tooltip = tooltip,
             ) { state.toggle() }

@@ -43,7 +43,83 @@ object Icon {
     data class Offset(val x: Dp, val y: Dp)
     data class Scale(val x: Float, val y: Float)
 
-    enum class Code(
+    enum class Purpose(val shape: Shape) {
+        EXPAND(Shape.CHEVRONS_DOWN),
+        COLLAPSE(Shape.CHEVRONS_UP),
+        RUN(Shape.PLAY),
+        STOP(Shape.BOLT),
+        TABLE(Shape.TABLE_CELLS_LARGE),
+        RELATION(Shape.RHOMBUS),
+        ATTRIBUTE(Shape.OVAL),
+        THING(Shape.RECTANGLE),
+        CUT(Shape.SCISSORS),
+        COPY(Shape.OVERLAPPED_PAGES),
+        PASTE(Shape.PAGE_OVER_CLIPBOARD),
+        FIND(Shape.MAGNIFYING_GLASS),
+        REPLACE(Shape.OPPOSITE_HORIZONTAL_ARROWS),
+        INCREASE_TEXT_SIZE(Shape.ARROWS_MAXIMIZE),
+        DECREASE_TEXT_SIZE(Shape.ARROWS_MINIMIZE),
+        RESET_TEXT_SIZE(Shape.EXPAND),
+        PREVIOUS_UP(Shape.CHEVRON_UP),
+        NEXT_DOWN(Shape.CHEVRON_DOWN),
+        FONT_CASE(Shape.CAPITAL_A_LOWER_A),
+        EXACT_WORD(Shape.LETTER_W),
+        REGULAR_EXPRESSION(Shape.ASTERISK),
+        JUMP_TO_TOP(Shape.ARROW_UP_TO_LINE),
+        JUMP_TO_BOTTOM(Shape.ARROW_DOWN_TO_LINE),
+        ALIGN_TEXT_LEFT(Shape.ALIGN_LEFT),
+        GRAPH(Shape.DIAGRAM_PROJECT),
+        CLOSE(Shape.XMARK),
+        PREVIEW(Shape.EYE),
+        USERS(Shape.USERS),
+        ROLES(Shape.USER_GROUP),
+        TYPEQL(Shape.RECTANGLE_CODE),
+        OTHER_FILE(Shape.FILE_WITH_LINES),
+        PREVIOUS_LEFT(Shape.CARET_LEFT),
+        NEXT_RIGHT(Shape.CARET_RIGHT),
+        TYPES(Shape.SITEMAP),
+        REFRESH(Shape.ROTATE),
+        EXPORT(Shape.ARROW_UP_RIGHT_FROM_SQUARE),
+        RENAME(Shape.PEN),
+        CREATE_SUBTYPE(Shape.SQUARE_PLUS),
+        DELETE(Shape.TRASH_CAN),
+        OPEN(Shape.BLOCK_QUOTE),
+        CONNECT_TO_TYPEDB(Shape.SERVER),
+        SELECT_DATABASE(Shape.DATABASE),
+        MANAGE_DATABASE(Shape.DATABASE),
+        RELATES(Shape.PLUS),
+        PLAYS(Shape.PLUS),
+        OWNS(Shape.PLUS),
+        TICK(Shape.CHECK),
+        REMOVE(Shape.MINUS),
+        PIN(Shape.THUMBTACK),
+        RULES(Shape.DIAGRAM_SUBTASK),
+        OPEN_PROJECT(Shape.FOLDER_OPEN),
+        OPEN_DIRECTORY(Shape.FOLDER_OPEN),
+        SAVE(Shape.FLOPPY_DISK),
+        ONLINE(Shape.CIRCLE),
+        ROLLBACK(Shape.ROTATE_LEFT),
+        COMMIT(Shape.CHECK),
+        SELECT(Shape.CARET_DOWN),
+        NEW_PAGE(Shape.PLUS),
+        PROJECT(Shape.FOLDER_BLANK),
+        CREATE_DIRECTORY(Shape.FOLDER_PLUS),
+        CREATE_FILE(Shape.FILE_PLUS),
+        MOVE(Shape.FOLDER_ARROW_DOWN),
+        OPEN_FILE(Shape.BLOCK_QUOTE),
+        SYMLINK(Shape.LINK_SIMPLE),
+        FOLDER(Shape.FOLDER_BLANK),
+        UNEXPANDED_ITEM(Shape.CHEVRON_DOWN),
+        EXPANDED_ITEM(Shape.CHEVRON_RIGHT),
+        RESPONSE_TIME(Shape.CLOCK),
+        CURSOR(Shape.ARROW_POINTER),
+        HIDE(Shape.CHEVRON_DOWN),
+        SHOW(Shape.CHEVRON_UP);
+
+        val unicode: String = shape.unicode
+    }
+
+    enum class Shape(
         hexcode: UShort,
         val size: TextUnit = ICON_DEFAULT_SIZE,
         val offset: Offset = Offset(0.dp, 0.dp),
@@ -78,8 +154,8 @@ object Icon {
         CHEVRONS_UP(0xf325u),
         CIRCLE(0xf111u),
         CLOCK(0xf017u),
-        COPY(0xf0c5u),
-        CUT(0xf0c4u),
+        OVERLAPPED_PAGES(0xf0c5u),
+        SCISSORS(0xf0c4u),
         CURSOR(0xf246u),
         DATABASE(0xf1c0u),
         DELETE_RIGHT(0xe154u),
@@ -87,7 +163,7 @@ object Icon {
         DIAGRAM_SUBTASK(0xe479u),
         EXPAND(0xf065u),
         EYE(0xf06eu),
-        FILE_LINES(0xf15cu),
+        FILE_WITH_LINES(0xf15cu),
         FILE_PLUS(0xf319u),
         FLOPPY_DISK(0xf0c7u, 13.sp),
         FOLDER_ARROW_DOWN(0xe053u),
@@ -95,14 +171,14 @@ object Icon {
         FOLDER_OPEN(0xf07cu),
         FOLDER_BLANK(0xe185u),
         FOLDER_PLUS(0xf65eu),
-        FONT_CASE(0xf866u),
+        CAPITAL_A_LOWER_A(0xf866u),
         HEXAGON(0xf312u),
         LETTER_W(0x57u),
         LINK_SIMPLE(0xe1cdu),
         MAGNIFYING_GLASS(0xf002u, rotate = 90f),
         MINUS(0xf068u),
         OVAL(0xf111u, scale = Scale(1f, 0.618f)), // base icon is a Circle
-        PASTE(0xf0eau),
+        PAGE_OVER_CLIPBOARD(0xf0eau),
         PEN(0xf304u),
         PLUS(0x2bu),
         PLAY(0xf04bu),
@@ -111,7 +187,7 @@ object Icon {
         RHOMBUS(0xe23bu, rotate = 90f),
         ROTATE(0xf2f1u),
         ROTATE_LEFT(0xf2eau),
-        RIGHT_LEFT(0xf362u),
+        OPPOSITE_HORIZONTAL_ARROWS(0xf362u),
         SERVER(0xf233u),
         SITEMAP(0xf0e8u),
         SQUARE_BOLT(0xe265u, 13.sp),
@@ -123,6 +199,7 @@ object Icon {
         TRASH_CAN(0xf2edu),
         USER(0xf007u),
         USER_GROUP(0xf500u),
+        USERS(0xf0c0u),
         XMARK(0xf00du, 13.sp);
 
         val unicode: String = Char(hexcode).toString()
@@ -130,21 +207,21 @@ object Icon {
 
     @Composable
     fun Render(
-        icon: Code,
+        icon: Purpose,
         color: Color = Theme.studio.icon,
         disabledColor: Color? = null,
-        size: TextUnit = icon.size,
+        size: TextUnit = icon.shape.size,
         modifier: Modifier = Modifier,
         enabled: Boolean = true
     ) {
         Text(
-            text = icon.unicode,
+            text = icon.shape.unicode,
             color = if (!enabled && disabledColor != null) disabledColor else fadeable(color, !enabled),
             fontSize = size,
             fontFamily = FONT_AWESOME,
-            modifier = modifier.rotate(icon.rotate)
-                .offset(icon.offset.x, icon.offset.y)
-                .scale(icon.scale.x, icon.scale.y)
+            modifier = modifier.rotate(icon.shape.rotate)
+                .offset(icon.shape.offset.x, icon.shape.offset.y)
+                .scale(icon.shape.scale.x, icon.shape.scale.y)
         )
     }
 }

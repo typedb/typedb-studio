@@ -249,8 +249,8 @@ object Navigator {
         private val isCollapsing = AtomicBoolean(false)
         private val watchUpdate = AtomicBoolean(false)
         val buttons: List<IconButtonArg> = listOf(
-            IconButtonArg(Icon.Code.CHEVRONS_DOWN, tooltip = Tooltip.Arg(title = Label.EXPAND)) { expandAllAsync() },
-            IconButtonArg(Icon.Code.CHEVRONS_UP, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapseAsync() }
+            IconButtonArg(Icon.Purpose.EXPAND, tooltip = Tooltip.Arg(title = Label.EXPAND)) { expandAllAsync() },
+            IconButtonArg(Icon.Purpose.COLLAPSE, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapseAsync() }
         )
 
         fun reloadEntriesAsync() = coroutines.launchAndHandle(notification, LOGGER) { reloadEntries() }
@@ -492,7 +492,7 @@ object Navigator {
     private fun <T : Navigable<T>> ItemButton(item: ItemState<T>, itemHeight: Dp) {
         if (!item.isExpandable) Spacer(Modifier.size(itemHeight))
         else RawIconButton(
-            icon = if (item.isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
+            icon = if (item.isExpanded) Icon.Purpose.UNEXPANDED_ITEM else Icon.Purpose.EXPANDED_ITEM,
             modifier = Modifier.size(itemHeight).onGloballyPositioned {
                 item.updateButtonArea(it.boundsInWindow())
             },

@@ -114,7 +114,7 @@ object Toolbar {
 
     @Composable
     private fun ToolbarIconButton(
-        icon: Icon.Code,
+        icon: Icon.Purpose,
         onClick: () -> Unit,
         color: Color = Theme.studio.icon,
         enabled: Boolean = true,
@@ -143,7 +143,7 @@ object Toolbar {
         @Composable
         private fun OpenProjectButton() {
             ToolbarIconButton(
-                icon = Icon.Code.FOLDER_OPEN,
+                icon = Icon.Purpose.OPEN_PROJECT,
                 onClick = { StudioState.project.openProjectDialog.open() },
                 tooltip = Tooltip.Arg(title = Label.OPEN_PROJECT_DIRECTORY)
             )
@@ -153,7 +153,7 @@ object Toolbar {
         private fun SaveButton() {
             val activePage = StudioState.pages.active
             ToolbarIconButton(
-                icon = Icon.Code.FLOPPY_DISK,
+                icon = Icon.Purpose.SAVE,
                 onClick = { activePage?.initiateSave() },
                 enabled = activePage?.hasUnsavedChanges == true || activePage?.isUnsavedPageable == true,
                 tooltip = Tooltip.Arg(
@@ -190,7 +190,7 @@ object Toolbar {
             @Composable
             private fun ManageDatabasesButton(enabled: Boolean) {
                 ToolbarIconButton(
-                    icon = Icon.Code.DATABASE,
+                    icon = Icon.Purpose.MANAGE_DATABASE,
                     onClick = {
                         StudioState.client.refreshDatabaseList()
                         StudioState.client.manageDatabasesDialog.open()
@@ -359,7 +359,7 @@ object Toolbar {
                 @Composable
                 private fun OnlineIndicator() {
                     RawIconButton(
-                        icon = Icon.Code.CIRCLE,
+                        icon = Icon.Purpose.ONLINE,
                         modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
                         iconColor = if (isInteractive && hasOpenTx) Theme.studio.secondary else Theme.studio.icon,
                         enabled = isInteractive && hasOpenSession,
@@ -373,7 +373,7 @@ object Toolbar {
                 @Composable
                 private fun CloseButton(enabled: Boolean) {
                     ToolbarIconButton(
-                        icon = Icon.Code.XMARK,
+                        icon = Icon.Purpose.CLOSE,
                         onClick = { StudioState.client.closeTransactionAsync() },
                         color = Theme.studio.errorStroke,
                         enabled = enabled,
@@ -388,7 +388,7 @@ object Toolbar {
                 @Composable
                 private fun RollbackButton(enabled: Boolean) {
                     ToolbarIconButton(
-                        icon = Icon.Code.ROTATE_LEFT,
+                        icon = Icon.Purpose.ROLLBACK,
                         onClick = { StudioState.client.rollbackTransaction() },
                         color = Theme.studio.warningStroke,
                         enabled = enabled && isWriteTransaction,
@@ -403,7 +403,7 @@ object Toolbar {
                 @Composable
                 private fun CommitButton(enabled: Boolean) {
                     ToolbarIconButton(
-                        icon = Icon.Code.CHECK,
+                        icon = Icon.Purpose.COMMIT,
                         onClick = { StudioState.client.commitTransaction() },
                         color = Theme.studio.secondary,
                         enabled = enabled && isWriteTransaction,
@@ -431,7 +431,7 @@ object Toolbar {
         @Composable
         private fun RunButton() {
             ToolbarIconButton(
-                icon = Icon.Code.PLAY,
+                icon = Icon.Purpose.RUN,
                 color = Theme.studio.secondary,
                 onClick = { StudioState.pages.active?.let { if (it.isRunnable) it.asRunnable().mayOpenAndRun() } },
                 enabled = isReadyToRunQuery && hasRunnablePage,
@@ -445,7 +445,7 @@ object Toolbar {
         @Composable
         private fun StopButton() {
             ToolbarIconButton(
-                icon = Icon.Code.BOLT,
+                icon = Icon.Purpose.STOP,
                 color = Theme.studio.errorStroke,
                 onClick = { StudioState.client.sendStopSignal() },
                 enabled = hasRunningQuery && !hasStopSignal,
@@ -514,7 +514,7 @@ object Toolbar {
             TextButton(
                 text = text,
                 modifier = Modifier.height(TOOLBAR_BUTTON_SIZE),
-                trailingIcon = Form.IconArg(Icon.Code.SERVER),
+                trailingIcon = Form.IconArg(Icon.Purpose.CONNECT_TO_TYPEDB),
                 tooltip = Tooltip.Arg(title = Label.CONNECT_TO_TYPEDB)
             ) { StudioState.client.connectServerDialog.open() }
         }

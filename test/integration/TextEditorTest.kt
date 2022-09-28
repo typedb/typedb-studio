@@ -37,14 +37,14 @@ import com.vaticle.typedb.studio.test.integration.Utils.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.Utils.verifyDataWrite
 import com.vaticle.typedb.studio.test.integration.Utils.SCHEMA_FILE_NAME
 import com.vaticle.typedb.studio.test.integration.Utils.DATA_FILE_NAME
+import com.vaticle.typedb.studio.test.integration.Utils.NEW_PAGE_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.Utils.QUERY_FILE_NAME
 import com.vaticle.typedb.studio.test.integration.Utils.TQL_DATA_PATH
 import com.vaticle.typedb.studio.test.integration.Utils.SAVE_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.Utils.PLAY_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.Utils.ROLLBACK_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.Utils.PLUS_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.Utils.SAMPLE_DATA_PATH
-import com.vaticle.typedb.studio.test.integration.Utils.CHEVRON_UP_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.Utils.SHOW_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.Utils.RUN_ICON_STRING
 import java.io.File
 import kotlin.test.assertTrue
 import org.junit.Test
@@ -57,7 +57,7 @@ class TextEditorTest: IntegrationTest() {
         // We have to open a project to enable the '+' to create a new file.
             val path = cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
-            composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
+            composeRule.onNodeWithText(NEW_PAGE_ICON_STRING).performClick()
             delayAndRecompose(composeRule)
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
@@ -83,7 +83,7 @@ class TextEditorTest: IntegrationTest() {
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
             delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-            composeRule.onNodeWithText(CHEVRON_UP_ICON_STRING).performClick()
+            composeRule.onNodeWithText(SHOW_ICON_STRING).performClick()
             delayAndRecompose(composeRule)
 
             // We can assert that the schema has been written successfully here as the schema
@@ -119,7 +119,7 @@ class TextEditorTest: IntegrationTest() {
 
             StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
 
-            composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
+            composeRule.onNodeWithText(RUN_ICON_STRING).performClick()
             delayAndRecompose(composeRule, Delays.NETWORK_IO)
             composeRule.onNodeWithText(ROLLBACK_ICON_STRING).performClick()
             delayAndRecompose(composeRule, Delays.NETWORK_IO)

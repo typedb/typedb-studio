@@ -35,8 +35,8 @@ import com.vaticle.typedb.studio.test.integration.Utils.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.Utils.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.Utils.SCHEMA_FILE_NAME
 import com.vaticle.typedb.studio.test.integration.Utils.TQL_DATA_PATH
-import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_DOWN_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_UP_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.Utils.EXPAND_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.Utils.COLLAPSE_ICON_STRING
 import org.junit.Ignore
 import org.junit.Test
 
@@ -73,7 +73,7 @@ class TypeBrowserTest: IntegrationTest() {
             composeRule.onAllNodesWithText("Project").get(1).performClick()
             delayAndRecompose(composeRule)
 
-            composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
+            composeRule.onNodeWithText(COLLAPSE_ICON_STRING).performClick()
             delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText("commit-date").assertDoesNotExist()
@@ -90,12 +90,12 @@ class TypeBrowserTest: IntegrationTest() {
 
             StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
-            composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
+            composeRule.onNodeWithText(COLLAPSE_ICON_STRING).performClick()
             delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText("commit-date").assertDoesNotExist()
 
-            composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
+            composeRule.onNodeWithText(EXPAND_ICON_STRING).performClick()
             delayAndRecompose(composeRule)
 
             composeRule.onNodeWithText("commit-date").assertExists()

@@ -25,12 +25,12 @@ package com.vaticle.typedb.studio.test.integration
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typedb.studio.test.integration.Utils.COLLAPSE_ICON_STRING
 import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
 import com.vaticle.typedb.studio.test.integration.Utils.studioTest
 import com.vaticle.typedb.studio.test.integration.Utils.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.Utils.SAMPLE_DATA_PATH
-import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_DOWN_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_UP_ICON_STRING
+import com.vaticle.typedb.studio.test.integration.Utils.EXPAND_ICON_STRING
 import org.junit.Test
 
 class ProjectBrowserTest: IntegrationTest() {
@@ -108,7 +108,7 @@ class ProjectBrowserTest: IntegrationTest() {
         studioTest(composeRule) {
             cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
-            composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
+            composeRule.onNodeWithText(EXPAND_ICON_STRING).performClick()
             composeRule.waitForIdle()
 
             composeRule.onNodeWithText("file1_2").assertExists()
@@ -120,11 +120,11 @@ class ProjectBrowserTest: IntegrationTest() {
         studioTest(composeRule) {
             cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
 
-            composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
+            composeRule.onNodeWithText(EXPAND_ICON_STRING).performClick()
             composeRule.waitForIdle()
             composeRule.onNodeWithText("file1_2").assertExists()
 
-            composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
+            composeRule.onNodeWithText(COLLAPSE_ICON_STRING).performClick()
             composeRule.waitForIdle()
 
             composeRule.onNodeWithText(testID).assertExists()

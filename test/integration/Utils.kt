@@ -50,14 +50,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
 object Utils {
-    val SAVE_ICON_STRING = Icon.Code.FLOPPY_DISK.unicode
-    val PLUS_ICON_STRING = Icon.Code.PLUS.unicode
-    val PLAY_ICON_STRING = Icon.Code.PLAY.unicode
-    val CHECK_ICON_STRING = Icon.Code.CHECK.unicode
-    val ROLLBACK_ICON_STRING = Icon.Code.ROTATE_LEFT.unicode
-    val CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRON_UP.unicode
-    val DOUBLE_CHEVRON_DOWN_ICON_STRING = Icon.Code.CHEVRONS_DOWN.unicode
-    val DOUBLE_CHEVRON_UP_ICON_STRING = Icon.Code.CHEVRONS_UP.unicode
+    val SAVE_ICON_STRING = Icon.Purpose.SAVE.unicode
+    val NEW_PAGE_ICON_STRING = Icon.Purpose.NEW_PAGE.unicode
+    val RUN_ICON_STRING = Icon.Purpose.RUN.unicode
+    val COMMIT_ICON_STRING = Icon.Purpose.COMMIT.unicode
+    val ROLLBACK_ICON_STRING = Icon.Purpose.ROLLBACK.unicode
+    val SHOW_ICON_STRING = Icon.Purpose.SHOW.unicode
+    val EXPAND_ICON_STRING = Icon.Purpose.EXPAND.unicode
+    val COLLAPSE_ICON_STRING = Icon.Purpose.COLLAPSE.unicode
 
     val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
     val TQL_DATA_PATH = File("test/data").absolutePath
@@ -161,7 +161,7 @@ object Utils {
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
         StudioState.notification.dismissAll()
 
-        composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
+        composeRule.onNodeWithText(NEW_PAGE_ICON_STRING).performClick()
         delayAndRecompose(composeRule)
 
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
@@ -175,10 +175,10 @@ object Utils {
 
         StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
-        composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
+        composeRule.onNodeWithText(RUN_ICON_STRING).performClick()
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
+        composeRule.onNodeWithText(COMMIT_ICON_STRING).performClick()
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, FAIL_SCHEMA_WRITE) {
@@ -198,10 +198,10 @@ object Utils {
 
         StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
-        composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
+        composeRule.onNodeWithText(RUN_ICON_STRING).performClick()
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        composeRule.onNodeWithText(CHECK_ICON_STRING).performClick()
+        composeRule.onNodeWithText(COMMIT_ICON_STRING).performClick()
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, FAIL_DATA_WRITE) {

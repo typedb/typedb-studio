@@ -74,7 +74,7 @@ object ContextMenu {
 
     data class Item(
         val label: String,
-        val icon: Icon.Code? = null,
+        val icon: Icon.Purpose? = null,
         val iconColor: @Composable () -> Color = { Theme.studio.icon },
         val info: String? = null,
         val enabled: Boolean = true,

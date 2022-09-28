@@ -42,8 +42,8 @@ class FilePage private constructor(
     override val hasSecondary: Boolean = true
     override val icon: Form.IconArg
         get() = when {
-            file.isTypeQL -> Form.IconArg(Icon.Code.RECTANGLE_CODE) { Theme.studio.secondary }
-            else -> Form.IconArg(Icon.Code.FILE_LINES)
+            file.isTypeQL -> Form.IconArg(Icon.Purpose.TYPEQL) { Theme.studio.secondary }
+            else -> Form.IconArg(Icon.Purpose.OTHER_FILE)
         }
 
     private var runOutputState: RunOutputArea.State? by mutableStateOf(null)

@@ -109,11 +109,11 @@ object StatusBar {
         }
     }
 
-    private fun icon(key: StatusManager.Key): Icon.Code {
+    private fun icon(key: StatusManager.Key): Icon.Purpose {
         return when (key) {
-            TEXT_CURSOR_POSITION -> Icon.Code.ARROW_POINTER
-            OUTPUT_RESPONSE_TIME -> Icon.Code.CLOCK
-            QUERY_RESPONSE_TIME -> Icon.Code.CLOCK
+            TEXT_CURSOR_POSITION -> Icon.Purpose.CURSOR
+            OUTPUT_RESPONSE_TIME -> Icon.Purpose.RESPONSE_TIME
+            QUERY_RESPONSE_TIME -> Icon.Purpose.RESPONSE_TIME
         }
     }
 }

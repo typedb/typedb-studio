@@ -33,7 +33,7 @@ internal class TableOutput constructor(
 ) : RunOutput() {
 
     override val name: String = Label.TABLE + " ($number)"
-    override val icon: Icon.Code = Icon.Code.TABLE_CELLS_LARGE
+    override val icon: Icon.Purpose = Icon.Purpose.TABLE
     override val buttons: List<Form.IconButtonArg> = listOf()
 
     internal fun outputFn(conceptMap: ConceptMap): () -> Unit {
