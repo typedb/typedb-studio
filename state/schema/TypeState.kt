@@ -514,7 +514,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             val props = mutableMapOf<ThingType, OwnerTypeProperties>()
 
             fun load(ownerType: ThingType, isKey: Boolean, isInherited: Boolean) {
-                createTypeState(ownerType.asAttributeType())?.let {
+                schemaMgr.createTypeState(ownerType.asThingType())?.let {
                     val canBeUndefined = false // TODO
                     props[ownerType] = OwnerTypeProperties(it, isKey, isInherited, canBeUndefined)
                 }

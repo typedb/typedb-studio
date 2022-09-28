@@ -22,10 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.client.api.concept.type.AttributeType
-import com.vaticle.typedb.client.api.concept.type.EntityType
-import com.vaticle.typedb.client.api.concept.type.RelationType
-import com.vaticle.typedb.client.api.concept.type.RoleType
+import com.vaticle.typedb.client.api.concept.type.*
 import com.vaticle.typedb.studio.state.app.ConfirmationManager
 import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
@@ -128,6 +125,13 @@ class SchemaManager constructor(
     } ?: Unit
 
     override fun compareTo(other: Navigable<TypeState.Thing<*, *>>): Int = if (other is SchemaManager) 0 else -1
+
+    internal fun createTypeState(type: ThingType): TypeState.Thing<*, *>? = when (type) {
+        is EntityType -> createTypeState(type)
+        is RelationType -> createTypeState(type)
+        is AttributeType -> createTypeState(type)
+        else -> throw IllegalStateException("Unrecognised ThingType object")
+    }
 
     internal fun createTypeState(entityType: EntityType): TypeState.Entity? = openOrGetReadTx()?.let { tx ->
         val remote = entityType.asRemote(tx)
