@@ -95,7 +95,7 @@ class TextEditorTest: IntegrationTest() {
     @Test
     fun dataWriteAndCommit() {
         studioTestWithRunner(composeRule) { address ->
-        cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
+            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
             connectToTypeDB(composeRule, address)
             createDatabase(composeRule, dbName = testID)
             writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)

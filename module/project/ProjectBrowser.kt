@@ -118,7 +118,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
             }
             is FileState -> when {
                 itemState.item.asFile().isTypeQL && itemState.item.isSymbolicLink -> IconArg(Icon.Purpose.SYMLINK) { Theme.studio.secondary }
-                itemState.item.asFile().isTypeQL -> IconArg(Icon.Purpose.TYPEQL) { Theme.studio.secondary }
+                itemState.item.asFile().isTypeQL -> IconArg(Icon.Purpose.TYPEQL_FILE) { Theme.studio.secondary }
                 itemState.item.isSymbolicLink -> IconArg(Icon.Purpose.SYMLINK)
                 else -> IconArg(Icon.Purpose.OTHER_FILE)
             }
