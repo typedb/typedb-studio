@@ -52,7 +52,7 @@ import com.vaticle.typedb.studio.state.common.util.Label
 
 object Table {
 
-    data class Column<T>(
+    data class Column<T> constructor(
         val header: AnnotatedString?,
         val headerAlignment: Alignment = Alignment.Center,
         val contentAlignment: Alignment = Alignment.Center,

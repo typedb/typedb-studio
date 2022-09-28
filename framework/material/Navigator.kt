@@ -241,6 +241,7 @@ object Navigator {
         internal val contextMenuFn: ((item: ItemState<T>) -> List<List<ContextMenu.Item>>)? = null,
         private val openFn: (ItemState<T>) -> Unit
     ) {
+
         private var container: ItemState<T> by mutableStateOf(ItemState(container as T, null, this, coroutines))
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
         internal var density by mutableStateOf(0f)
@@ -256,9 +257,13 @@ object Navigator {
         private val isCollapsing = AtomicBoolean(false)
         private val watchUpdate = AtomicBoolean(false)
         val buttons: List<IconButtonArg> = listOf(
-            IconButtonArg(icon = Icon.Code.CHEVRONS_DOWN, tooltip = Tooltip.Arg(title = Label.EXPAND)) { expandAllAsync() },
-            IconButtonArg(icon = Icon.Code.CHEVRONS_UP, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapseAsync() }
+            IconButtonArg(Icon.Code.CHEVRONS_DOWN, tooltip = Tooltip.Arg(title = Label.EXPAND)) { expandAllAsync() },
+            IconButtonArg(Icon.Code.CHEVRONS_UP, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapseAsync() }
         )
+
+        fun reloadEntriesAsync() = coroutines.launchAndHandle(notification, LOGGER) { reloadEntries() }
+
+        fun reloadEntries() = container.reloadEntries()
 
         fun launch() = coroutines.launchAndHandle(notification, LOGGER) {
             container.expand(1 + initExpandDepth)
@@ -315,8 +320,6 @@ object Navigator {
             recomputeList()
             isCollapsing.set(false)
         }
-
-        fun reloadEntriesAsync() = coroutines.launchAndHandle(notification, LOGGER) { container.reloadEntries() }
 
         internal fun recomputeList() {
             var previous: ItemState<T>? = null

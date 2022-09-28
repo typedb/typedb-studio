@@ -191,7 +191,7 @@ object Studio {
                             ) {
                                 when (it) {
                                     is FileState -> FilePage.create(it)
-                                    is TypeState.Thing -> TypePage.create(it)
+                                    is TypeState.Thing<*, *> -> TypePage.create(it)
                                     else -> throw IllegalStateException("Unrecognised pageable type")
                                 }
                             }
