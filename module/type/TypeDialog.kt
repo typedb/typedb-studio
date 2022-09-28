@@ -81,6 +81,7 @@ object TypeDialog {
         if (StudioState.schema.changeAttributeSupertypeDialog.isOpen) ChangeAttributeSupertypeDialog()
         if (StudioState.schema.changeRelationSupertypeDialog.isOpen) ChangeRelationSupertypeDialog()
         if (StudioState.schema.changeRoleSupertypeDialog.isOpen) ChangeRoleSupertypeDialog()
+        if (StudioState.schema.changeAbstractDialog.isOpen) ChangeAbstractDialog()
     }
 
     @Composable
@@ -211,6 +212,27 @@ object TypeDialog {
                 SupertypeField(formState.supertypeState, selection.filter { it != typeState }) {
                     formState.supertypeState = it
                 }
+            }
+        }
+    }
+
+    @Composable
+    private fun ChangeAbstractDialog() {
+        val dialogState = StudioState.schema.changeAbstractDialog
+        val typeState = dialogState.typeState!!
+        val message = Sentence.CHANGE_TYPE_ABSTRACTNESS.format(typeState.encoding.label, typeState.name)
+        val formState = remember {
+            object : Form.State {
+                var isAbstract: Boolean by mutableStateOf(typeState.isAbstract)
+                override fun cancel() = dialogState.close()
+                override fun trySubmit() = typeState.tryChangeAbstract(isAbstract)
+                override fun isValid() = true
+            }
+        }
+        Dialog.Layout(dialogState, Label.CHANGE_TYPE_ABSTRACTNESS, DIALOG_WIDTH, DIALOG_HEIGHT) {
+            Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.CREATE) {
+                Form.Text(message, softWrap = true)
+                AbstractField(formState.isAbstract) { formState.isAbstract = it }
             }
         }
     }

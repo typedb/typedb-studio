@@ -34,6 +34,7 @@ object Label {
     const val CHANGE_ENTITY_SUPERTYPE = "Change Entity Supertype"
     const val CHANGE_RELATION_SUPERTYPE = "Change Relation Supertype"
     const val CHANGE_ROLE_SUPERTYPE = "Change Role Supertype"
+    const val CHANGE_TYPE_ABSTRACTNESS = "Change Type Abstractness"
     const val CLOSE = "Close"
     const val CLOSE_TRANSACTION = "Close Transaction"
     const val CLOSING_TYPEDB_STUDIO = "Closing TypeDB Studio"

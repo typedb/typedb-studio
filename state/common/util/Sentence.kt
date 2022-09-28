@@ -42,6 +42,7 @@ object Sentence {
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."
     const val CHANGE_SUPERTYPE = "Change the supertype of the %s type with label '%s'."
+    const val CHANGE_TYPE_ABSTRACTNESS  ="Change this  %s type with label '%s' to abstract or not."
     const val CONFIRM_DATABASE_DELETION =
         "Are you sure you would like to delete the database '%s' and all of its content? $ACTION_CANNOT_BE_UNDONE " +
                 "Enter the database name below in order to confirm its deletion."

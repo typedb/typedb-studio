@@ -81,6 +81,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
     }
 
     abstract val canBeDeleted: Boolean
+    abstract val canBeAbstract: Boolean
 
     var conceptType: T by mutableStateOf(conceptType)
     var supertype: TS? by mutableStateOf(supertype)
@@ -95,7 +96,6 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
     val ownsAttributeTypes: List<Attribute> get() = ownsAttributeTypeProperties.map { it.attributeType }
     var playsRoleTypeProperties: List<RoleTypeProperties> by mutableStateOf(emptyList())
     val playsRoleTypes: List<Role> get() = playsRoleTypeProperties.map { it.roleType }
-    val canBeAbstract get() = false // TODO
 
     protected abstract fun isSameEncoding(conceptType: Type): Boolean
     protected abstract fun asSameEncoding(conceptType: Type): T
@@ -215,6 +215,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         var isAbstract: Boolean by mutableStateOf(false)
         private var hasInstancesExplicit: Boolean by mutableStateOf(false)
         override val canBeDeleted get() = !hasSubtypes && !hasInstancesExplicit
+        override val canBeAbstract get() = !hasInstancesExplicit
 
         override val info: String? = null
         override val isBulkExpandable: Boolean = true
@@ -386,6 +387,12 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         }
 
         fun initiateChangeAbstract() = schemaMgr.changeAbstractDialog.open(this)
+
+        fun tryChangeAbstract(isAbstract: Boolean) = schemaMgr.openOrGetWriteTx()?.let { tx ->
+            conceptType.asRemote(tx).let { if (isAbstract) it.setAbstract() else it.unsetAbstract() }
+            schemaMgr.changeAbstractDialog.close()
+            loadAbstract()
+        } ?: Unit
 
         fun tryDefinePlaysRoleType(roleType: Role, overriddenType: Role?) {
             // TODO
@@ -688,6 +695,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         private var hasPlayerInstancesExplicit: Boolean by mutableStateOf(false)
         override val canBeDeleted: Boolean get() = !hasSubtypes && !hasPlayerInstancesExplicit
+        override val canBeAbstract get() = !hasPlayerInstancesExplicit
 
         override fun loadDependencies() {}
         override fun loadInheritables() {}
