@@ -186,7 +186,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     @Composable
     protected fun AdvancedSections(sections: @Composable (separator: @Composable () -> Unit) -> Unit) {
         SectionColumn(mayHighlightBackgroundModifier(showAdvanced)) {
-            Separator(!showAdvanced)
+            Separator(showAdvanced)
             SectionRow {
                 Form.Text(value = Label.ADVANCED)
                 Spacer(Modifier.weight(1f))
@@ -195,10 +195,10 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 ) { showAdvanced = !showAdvanced }
             }
             if (showAdvanced) {
-                Separator(!showAdvanced)
-                sections { Separator(!showAdvanced) }
+                Separator(showAdvanced)
+                sections { Separator(showAdvanced) }
             }
-            Separator(!showAdvanced)
+            Separator(showAdvanced)
         }
     }
 
