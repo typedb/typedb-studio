@@ -351,7 +351,7 @@ object Navigator {
             item.next?.let { maySelect(it) }
         }
 
-        internal fun mauSelectPrevious(item: ItemState<T>) {
+        internal fun maySelectPrevious(item: ItemState<T>) {
             item.previous?.let { maySelect(it) }
         }
 
@@ -563,7 +563,7 @@ object Navigator {
                     true
                 }
                 Key.DirectionUp -> {
-                    state.mauSelectPrevious(item)
+                    state.maySelectPrevious(item)
                     true
                 }
                 Key.DirectionDown -> {
