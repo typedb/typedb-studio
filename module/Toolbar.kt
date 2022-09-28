@@ -63,7 +63,7 @@ object Toolbar {
     private val isConnected get() = StudioState.client.isConnected
     private val isScript get() = StudioState.client.isScriptMode
     private val isInteractive get() = StudioState.client.isInteractiveMode
-    private val hasOpenSession get() = StudioState.client.isConnected && StudioState.client.session.isOpen
+    private val hasOpenSession get() = StudioState.client.session.isOpen
     private val hasOpenTx get() = StudioState.client.session.transaction.isOpen
     private val isSchemaSession get() = StudioState.client.session.isSchema
     private val isDataSession get() = StudioState.client.session.isData
@@ -78,7 +78,7 @@ object Toolbar {
     private val isReadyToRunQuery get() = StudioState.client.isReadyToRunQuery
     private val hasRunnablePage get() = StudioState.pages.active?.isRunnable == true
     private val hasRunningQuery get() = StudioState.client.hasRunningQuery
-    private val hasRunningCommand get() = StudioState.client.hasRunningCommand
+    private val hasRunningCommand get() = StudioState.client.hasRunningCommand && StudioState.schema.hasRunningWrite
     private val hasStopSignal get() = StudioState.client.session.transaction.hasStopSignal
 
     @Composable

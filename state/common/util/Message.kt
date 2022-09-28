@@ -192,7 +192,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             private const val MESSAGE_PREFIX = "TypeDB Studio Schema"
 
             val UNEXPECTED_ERROR =
-                Schema(1, "Unexpected error occurred with the database schema.")
+                Schema(1, "Unexpected error occurred with database schema management/operation.")
             val FAILED_TO_LOAD_TYPE =
                 Schema(2, "Failed to load type properties due to: %s.")
             val FAILED_TO_DELETE_TYPE =
