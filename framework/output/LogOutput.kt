@@ -87,13 +87,13 @@ internal class LogOutput constructor(
     private val coroutines = CoroutineScope(Dispatchers.Default)
 
     override val name: String = Label.LOG
-    override val icon: Icon.Purpose = Icon.Purpose.ALIGN_TEXT_LEFT
+    override val icon: Icon = Icon.ALIGN_TEXT_LEFT
     override val buttons: List<IconButtonArg> = listOf(
-        IconButtonArg(Icon.Purpose.COPY, tooltip = Tooltip.Arg(Label.COPY_All)) { copyToClipboard() },
-        IconButtonArg(Icon.Purpose.FIND, tooltip = Tooltip.Arg(Label.FIND)) { toggleFinder() },
-        IconButtonArg(Icon.Purpose.JUMP_TO_TOP, tooltip = Tooltip.Arg(Label.JUMP_TO_TOP)) { jumpToTop() },
+        IconButtonArg(Icon.COPY, tooltip = Tooltip.Arg(Label.COPY_All)) { copyToClipboard() },
+        IconButtonArg(Icon.FIND, tooltip = Tooltip.Arg(Label.FIND)) { toggleFinder() },
+        IconButtonArg(Icon.JUMP_TO_TOP, tooltip = Tooltip.Arg(Label.JUMP_TO_TOP)) { jumpToTop() },
         IconButtonArg(
-            icon = Icon.Purpose.JUMP_TO_BOTTOM,
+            icon = Icon.JUMP_TO_BOTTOM,
             color = { if (editorState.stickToBottom) Theme.studio.secondary else Theme.studio.icon },
             tooltip = Tooltip.Arg(Label.JUMP_AND_STICK_TO_BOTTOM)
         ) { editorState.stickToBottom = true }

@@ -349,7 +349,7 @@ object TextToolbar {
         MultilineTextInput(
             state = state.findTextInput,
             value = state.findText,
-            icon = Icon.Purpose.FIND,
+            icon = Icon.FIND,
             focusReq = state.findTextFocus,
             onValueChange = { state.updateFindText(it) },
             onTextLayout = { state.findTextLayout = it },
@@ -364,7 +364,7 @@ object TextToolbar {
         MultilineTextInput(
             state = state.replaceTextInput,
             value = state.replaceText,
-            icon = Icon.Purpose.REPLACE,
+            icon = Icon.REPLACE,
             onValueChange = { state.replaceText = it },
             onTextLayout = { state.replaceTextLayout = it },
             modifier = Modifier.height(state.replacerInputHeight())
@@ -407,8 +407,8 @@ object TextToolbar {
         IconButtonRow(
             size = BUTTON_HEIGHT,
             buttons = listOf(
-                FinderButton(Icon.Purpose.PREVIOUS_UP, findPreviousLabel) { state.findPrevious() },
-                FinderButton(Icon.Purpose.NEXT_DOWN, findNextLabel) { state.findNext() }
+                FinderButton(Icon.PREVIOUS_UP, findPreviousLabel) { state.findPrevious() },
+                FinderButton(Icon.NEXT_DOWN, findNextLabel) { state.findNext() }
             )
         )
     }
@@ -418,11 +418,11 @@ object TextToolbar {
         IconButtonRow(
             size = BUTTON_HEIGHT,
             buttons = listOf(
-                FinderButton(Icon.Purpose.FONT_CASE, Label.CASE_SENSITIVE, state.isCaseSensitive) {
+                FinderButton(Icon.FONT_CASE, Label.CASE_SENSITIVE, state.isCaseSensitive) {
                     state.toggleCaseSensitive()
                 },
-                FinderButton(Icon.Purpose.EXACT_WORD, Label.EXACT_WORD, state.isWord) { state.toggleWord() },
-                FinderButton(Icon.Purpose.REGULAR_EXPRESSION, Label.REGULAR_EXPRESSION, state.isRegex) { state.toggleRegex() },
+                FinderButton(Icon.EXACT_WORD, Label.EXACT_WORD, state.isWord) { state.toggleWord() },
+                FinderButton(Icon.REGULAR_EXPRESSION, Label.REGULAR_EXPRESSION, state.isRegex) { state.toggleRegex() },
             )
         )
     }
@@ -439,7 +439,7 @@ object TextToolbar {
 
     @Composable
     private fun FinderButton(
-        icon: Icon.Purpose, title: String? = null, isActive: Boolean = false, onClick: () -> Unit
+        icon: Icon, title: String? = null, isActive: Boolean = false, onClick: () -> Unit
     ) = IconButtonArg(
         icon = icon,
         color = { if (isActive) Theme.studio.secondary else Theme.studio.icon },

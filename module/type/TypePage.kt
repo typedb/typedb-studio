@@ -188,7 +188,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 Form.Text(value = Label.ADVANCED)
                 Spacer(Modifier.weight(1f))
                 Form.IconButton(
-                    icon = if (showAdvanced) Icon.Purpose.PREVIOUS_UP else Icon.Purpose.NEXT_DOWN
+                    icon = if (showAdvanced) Icon.PREVIOUS_UP else Icon.NEXT_DOWN
                 ) { showAdvanced = !showAdvanced }
             }
             if (showAdvanced) {
@@ -338,7 +338,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             ) { isKey = it }
             Form.TextButton(
                 text = Label.OWNS,
-                leadingIcon = Form.IconArg(Icon.Purpose.ADD_OWNS) { Theme.studio.secondary },
+                leadingIcon = Form.IconArg(Icon.ADD_OWNS) { Theme.studio.secondary },
                 enabled = isOwnable,
                 tooltip = Tooltip.Arg(Label.DEFINE_OWNS_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
                 onClick = { typeState.tryDefineOwnsAttributeType(attributeType!!, overriddenType, isKey) }
@@ -430,7 +430,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             }
             Form.TextButton(
                 text = Label.PLAYS,
-                leadingIcon = Form.IconArg(Icon.Purpose.ADD_PLAYS) { Theme.studio.secondary },
+                leadingIcon = Form.IconArg(Icon.ADD_PLAYS) { Theme.studio.secondary },
                 enabled = isPlayable,
                 tooltip = Tooltip.Arg(Label.DEFINE_PLAYS_ROLE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
                 onClick = { typeState.tryDefinePlaysRoleType(roleType!!, overriddenType) }
@@ -472,7 +472,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         Form.TextButton(
             text = Label.DELETE,
             textColor = Theme.studio.errorStroke,
-            leadingIcon = Form.IconArg(Icon.Purpose.DELETE) { Theme.studio.errorStroke },
+            leadingIcon = Form.IconArg(Icon.DELETE) { Theme.studio.errorStroke },
             enabled = isEditable && typeState.canBeDeleted,
             tooltip = Tooltip.Arg(Label.DELETE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
         ) { typeState.initiateDelete() }
@@ -482,7 +482,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     private fun ExportButton() {
         Form.TextButton(
             text = Label.EXPORT,
-            leadingIcon = Form.IconArg(Icon.Purpose.EXPORT),
+            leadingIcon = Form.IconArg(Icon.EXPORT),
             enabled = StudioState.project.current != null,
             tooltip = Tooltip.Arg(Label.EXPORT_SYNTAX)
         ) {
@@ -499,7 +499,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     private fun RefreshButton() {
         Form.TextButton(
             text = Label.REFRESH,
-            leadingIcon = Form.IconArg(Icon.Purpose.REFRESH),
+            leadingIcon = Form.IconArg(Icon.REFRESH),
             tooltip = Tooltip.Arg(Label.REFRESH)
         ) {
             StudioState.schema.closeReadTx()
@@ -515,7 +515,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         onClick: () -> Unit
     ) {
         if (!isVisible) Form.IconButton(
-            icon = Icon.Purpose.REMOVE,
+            icon = Icon.REMOVE,
             iconColor = Theme.studio.errorStroke,
             enabled = isEditable && enabled,
             tooltip = Tooltip.Arg(tooltip, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
@@ -531,7 +531,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         onClick: () -> Unit
     ) {
         if (!isVisible) Form.IconButton(
-            icon = Icon.Purpose.DELETE,
+            icon = Icon.DELETE,
             iconColor = Theme.studio.errorStroke,
             enabled = isEditable && enabled,
             tooltip = Tooltip.Arg(tooltip, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
@@ -541,13 +541,13 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
 
     @Composable
     protected fun MayTickIcon(boolean: Boolean) {
-        if (boolean) Icon.Render(icon = Icon.Purpose.TICK, color = Theme.studio.secondary)
+        if (boolean) Icon.Render(icon = Icon.TICK, color = Theme.studio.secondary)
     }
 
     @Composable
     protected fun EditButton(enabled: Boolean = true, onClick: () -> Unit) {
         Form.IconButton(
-            icon = Icon.Purpose.RENAME,
+            icon = Icon.RENAME,
             enabled = isEditable && enabled,
             tooltip = Tooltip.Arg(Label.RENAME, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
             onClick = onClick
@@ -630,7 +630,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 }
                 Form.TextButton(
                     text = Label.RELATES,
-                    leadingIcon = Form.IconArg(Icon.Purpose.ADD_RELATES) { Theme.studio.secondary },
+                    leadingIcon = Form.IconArg(Icon.ADD_RELATES) { Theme.studio.secondary },
                     enabled = isRelatable,
                     tooltip = Tooltip.Arg(
                         Label.DEFINE_RELATES_ROLE_TYPE,

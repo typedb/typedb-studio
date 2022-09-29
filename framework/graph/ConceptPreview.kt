@@ -54,7 +54,7 @@ class ConceptPreview constructor(
 ) : Browsers.Browser(isOpen, order) {
 
     override val label: String = Label.PREVIEW
-    override val icon: Icon.Purpose = Icon.Purpose.PREVIEW
+    override val icon: Icon = Icon.PREVIEW
     override val isActive: Boolean = true
     override var buttons: List<Form.IconButtonArg> = emptyList()
 

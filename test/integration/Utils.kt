@@ -50,14 +50,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
 object Utils {
-    val SAVE_ICON_STRING = Icon.Purpose.SAVE.unicode
-    val NEW_PAGE_ICON_STRING = Icon.Purpose.NEW_PAGE.unicode
-    val RUN_ICON_STRING = Icon.Purpose.RUN.unicode
-    val COMMIT_ICON_STRING = Icon.Purpose.COMMIT.unicode
-    val ROLLBACK_ICON_STRING = Icon.Purpose.ROLLBACK.unicode
-    val SHOW_ICON_STRING = Icon.Purpose.SHOW.unicode
-    val EXPAND_ICON_STRING = Icon.Purpose.EXPAND.unicode
-    val COLLAPSE_ICON_STRING = Icon.Purpose.COLLAPSE.unicode
+    val SAVE_ICON_STRING = Icon.SAVE.unicode
+    val NEW_PAGE_ICON_STRING = Icon.NEW_PAGE.unicode
+    val RUN_ICON_STRING = Icon.RUN.unicode
+    val COMMIT_ICON_STRING = Icon.COMMIT.unicode
+    val ROLLBACK_ICON_STRING = Icon.ROLLBACK.unicode
+    val SHOW_ICON_STRING = Icon.SHOW.unicode
+    val EXPAND_ICON_STRING = Icon.EXPAND.unicode
+    val COLLAPSE_ICON_STRING = Icon.COLLAPSE.unicode
 
     val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
     val TQL_DATA_PATH = File("test/data").absolutePath

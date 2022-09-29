@@ -136,11 +136,11 @@ object Form {
         val color: @Composable () -> Color = { Theme.studio.border }
     )
 
-    data class IconArg(val code: Icon.Purpose, val color: @Composable () -> Color = { Theme.studio.icon })
+    data class IconArg(val code: Icon, val color: @Composable () -> Color = { Theme.studio.icon })
 
     data class IconButtonArg(
-        val icon: Icon.Purpose,
-        val hoverIcon: Icon.Purpose? = null,
+        val icon: Icon,
+        val hoverIcon: Icon? = null,
         val color: @Composable () -> Color = { Theme.studio.icon },
         val hoverColor: @Composable (() -> Color)? = null,
         val disabledColor: @Composable (() -> Color)? = null,
@@ -383,8 +383,8 @@ object Form {
         onTextLayout: (TextLayoutResult) -> Unit = {},
         shape: Shape? = ROUNDED_CORNER_SHAPE,
         border: Border? = DEFAULT_BORDER,
-        trailingIcon: Icon.Purpose? = null,
-        leadingIcon: Icon.Purpose? = null
+        trailingIcon: Icon? = null,
+        leadingIcon: Icon? = null
     ) {
         val mod = border?.let {
             modifier.border(border.width, fadeable(border.color(), !enabled), border.shape)
@@ -480,7 +480,7 @@ object Form {
         state: MultilineTextInputState = rememberMultilineTextInputState(),
         value: TextFieldValue,
         modifier: Modifier,
-        icon: Icon.Purpose? = null,
+        icon: Icon? = null,
         focusReq: FocusRequester = remember { FocusRequester() },
         onValueChange: (TextFieldValue) -> Unit,
         onTextLayout: (TextLayoutResult) -> Unit
@@ -661,7 +661,7 @@ object Form {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun RawIconButton(
-        icon: Icon.Purpose,
+        icon: Icon,
         modifier: Modifier = Modifier,
         iconColor: Color = Theme.studio.icon,
         enabled: Boolean = true,
@@ -703,8 +703,8 @@ object Form {
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun IconButton(
-        icon: Icon.Purpose,
-        hoverIcon: Icon.Purpose? = null,
+        icon: Icon,
+        hoverIcon: Icon? = null,
         modifier: Modifier = Modifier,
         focusReq: FocusRequester? = null,
         iconColor: Color = Theme.studio.icon,
@@ -856,7 +856,7 @@ object Form {
                 ),
                 textColor = Theme.studio.onPrimary,
                 focusReq = focusReq,
-                trailingIcon = IconArg(Icon.Purpose.SELECT),
+                trailingIcon = IconArg(Icon.SELECT),
                 enabled = enabled,
                 tooltip = tooltip,
             ) { state.toggle() }

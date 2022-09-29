@@ -32,7 +32,7 @@ internal class GraphOutput constructor(transactionState: TransactionState, numbe
     private val graphVisualiser = GraphVisualiser(transactionState)
 
     override val name: String = "${Label.GRAPH} ($number)"
-    override val icon: Icon.Purpose = Icon.Purpose.GRAPH
+    override val icon: Icon = Icon.GRAPH
     override var buttons: List<Form.IconButtonArg> = emptyList()
 
     fun output(conceptMap: ConceptMap) {

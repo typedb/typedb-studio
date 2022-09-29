@@ -27,7 +27,7 @@ import com.vaticle.typedb.studio.state.common.util.Label
 class RoleBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
 
     override val label: String = Label.ROLES
-    override val icon: Icon.Purpose = Icon.Purpose.ROLES
+    override val icon: Icon = Icon.ROLES
     override val isActive: Boolean get() = false // TODO
     override val buttons: List<IconButtonArg> = listOf()
 

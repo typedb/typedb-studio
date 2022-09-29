@@ -54,7 +54,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
     }
 
     override val label: String = Label.PROJECT
-    override val icon: Icon.Purpose = Icon.Purpose.PROJECT
+    override val icon: Icon = Icon.PROJECT
     override val isActive: Boolean get() = StudioState.project.current != null
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
@@ -72,7 +72,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
         ) {
             Form.TextButton(
                 text = Label.OPEN_PROJECT,
-                leadingIcon = IconArg(Icon.Purpose.OPEN_PROJECT)
+                leadingIcon = IconArg(Icon.OPEN_PROJECT)
             ) { StudioState.project.openProjectDialog.open() }
         }
     }
@@ -112,15 +112,15 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
     private fun pathIcon(itemState: Navigator.ItemState<PathState>): IconArg {
         return when (itemState.item) {
             is DirectoryState -> when {
-                itemState.item.isSymbolicLink -> IconArg(Icon.Purpose.SYMLINK)
-                itemState.isExpanded -> IconArg(Icon.Purpose.OPEN_DIRECTORY)
-                else -> IconArg(Icon.Purpose.FOLDER)
+                itemState.item.isSymbolicLink -> IconArg(Icon.SYMLINK)
+                itemState.isExpanded -> IconArg(Icon.OPEN_DIRECTORY)
+                else -> IconArg(Icon.FOLDER)
             }
             is FileState -> when {
-                itemState.item.asFile().isTypeQL && itemState.item.isSymbolicLink -> IconArg(Icon.Purpose.SYMLINK) { Theme.studio.secondary }
-                itemState.item.asFile().isTypeQL -> IconArg(Icon.Purpose.TYPEQL_FILE) { Theme.studio.secondary }
-                itemState.item.isSymbolicLink -> IconArg(Icon.Purpose.SYMLINK)
-                else -> IconArg(Icon.Purpose.OTHER_FILE)
+                itemState.item.asFile().isTypeQL && itemState.item.isSymbolicLink -> IconArg(Icon.SYMLINK) { Theme.studio.secondary }
+                itemState.item.asFile().isTypeQL -> IconArg(Icon.TYPEQL_FILE) { Theme.studio.secondary }
+                itemState.item.isSymbolicLink -> IconArg(Icon.SYMLINK)
+                else -> IconArg(Icon.OTHER_FILE)
             }
         }
     }
@@ -140,36 +140,36 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
         val directory = itemState.item.asDirectory()
         return listOf(
             listOf(
-                ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Purpose.OPEN_DIRECTORY) { itemState.toggle() },
+                ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.OPEN_DIRECTORY) { itemState.toggle() },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.CREATE_DIRECTORY,
-                    icon = Icon.Purpose.CREATE_DIRECTORY,
+                    icon = Icon.CREATE_DIRECTORY,
                     enabled = !directory.isProjectData,
                 ) { directory.initiateCreateDirectory { itemState.expand() } },
                 ContextMenu.Item(
                     label = Label.CREATE_FILE,
-                    icon = Icon.Purpose.CREATE_FILE,
+                    icon = Icon.CREATE_FILE,
                     enabled = !directory.isProjectData,
                 ) { directory.initiateCreateFile { itemState.expand() } },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.RENAME,
-                    icon = Icon.Purpose.RENAME,
+                    icon = Icon.RENAME,
                     enabled = !directory.isProjectData,
                 ) { directory.initiateRename() },
                 ContextMenu.Item(
                     label = Label.MOVE,
-                    icon = Icon.Purpose.CREATE_FILE,
+                    icon = Icon.CREATE_FILE,
                     enabled = !directory.isProjectData,
                 ) { directory.initiateMove() }
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.DELETE,
-                    icon = Icon.Purpose.DELETE,
+                    icon = Icon.DELETE,
                     enabled = !directory.isRoot && !directory.isProjectData,
                 ) { directory.initiateDelete { itemState.navState.reloadEntriesAsync() } }
             )
@@ -182,25 +182,25 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
             listOf(
                 ContextMenu.Item(
                     label = Label.OPEN,
-                    icon = Icon.Purpose.OPEN_FILE
+                    icon = Icon.OPEN_FILE
                 ) { file.tryOpen() },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.RENAME,
-                    icon = Icon.Purpose.RENAME,
+                    icon = Icon.RENAME,
                     enabled = !file.isProjectData,
                 ) { file.initiateRename() },
                 ContextMenu.Item(
                     label = Label.MOVE,
-                    icon = Icon.Purpose.MOVE,
+                    icon = Icon.MOVE,
                     enabled = !file.isProjectData,
                 ) { file.initiateMove() },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.DELETE,
-                    icon = Icon.Purpose.DELETE,
+                    icon = Icon.DELETE,
                     enabled = !file.isProjectData,
                 ) { file.initiateDelete { itemState.navState.reloadEntriesAsync() } }
             )

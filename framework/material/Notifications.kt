@@ -98,7 +98,7 @@ object Notifications {
                 text = Label.DISMISS_ALL,
                 textColor = colorArgs.foreground,
                 bgColor = colorArgs.background,
-                trailingIcon = Form.IconArg(Icon.Purpose.CLOSE) { colorArgs.foreground },
+                trailingIcon = Form.IconArg(Icon.CLOSE) { colorArgs.foreground },
             ) { StudioState.notification.dismissAll() }
         }
     }
@@ -125,15 +125,15 @@ object Notifications {
                 height = textHeight.coerceAtLeast(NOTIFICATION_HEIGHT_MIN)
             }
             Column(Modifier.fillMaxHeight()) {
-                Button(Icon.Purpose.CLOSE, colorArgs) { StudioState.notification.dismiss(notification) }
+                Button(Icon.CLOSE, colorArgs) { StudioState.notification.dismiss(notification) }
                 Spacer(Modifier.weight(1f))
-                Button(Icon.Purpose.COPY, colorArgs) { clipboard.setText(AnnotatedString(notification.message)) }
+                Button(Icon.COPY, colorArgs) { clipboard.setText(AnnotatedString(notification.message)) }
             }
         }
     }
 
     @Composable
-    private fun Button(closeIcon: Icon.Purpose, colorArgs: ColorArgs, onClick: () -> Unit) {
+    private fun Button(closeIcon: Icon, colorArgs: ColorArgs, onClick: () -> Unit) {
         IconButton(
             icon = closeIcon,
             modifier = Modifier.size(MESSAGE_CLOSE_SIZE),

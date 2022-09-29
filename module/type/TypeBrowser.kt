@@ -49,7 +49,7 @@ import com.vaticle.typedb.studio.state.schema.TypeState
 class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
 
     override val label: String = Label.TYPES
-    override val icon: Icon.Purpose = Icon.Purpose.TYPES
+    override val icon: Icon = Icon.TYPES
     override val isActive: Boolean get() = StudioState.client.isConnected && StudioState.client.session.isOpen
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
@@ -90,12 +90,12 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
     }
 
     private fun refreshButton(navState: Navigator.NavigatorState<TypeState.Thing<*, *>>) = IconButtonArg(
-        icon = Icon.Purpose.REFRESH,
+        icon = Icon.REFRESH,
         tooltip = Tooltip.Arg(title = Label.REFRESH)
     ) { refresh(navState) }
 
     private fun exportButton(navState: Navigator.NavigatorState<TypeState.Thing<*, *>>) = IconButtonArg(
-        icon = Icon.Purpose.EXPORT,
+        icon = Icon.EXPORT,
         enabled = StudioState.project.current != null,
         tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
     ) {
@@ -115,25 +115,25 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
             listOf(
                 ContextMenu.Item(
                     label = Label.OPEN,
-                    icon = Icon.Purpose.OPEN
+                    icon = Icon.OPEN
                 ) { typeState.tryOpen() },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.CREATE_SUBTYPE,
-                    icon = Icon.Purpose.CREATE_SUBTYPE,
+                    icon = Icon.CREATE_SUBTYPE,
                     enabled = schemaIsWritable
                 ) { typeState.initiateCreateSubtype { itemState.expand() } },
                 ContextMenu.Item(
                     label = Label.RENAME_TYPE,
-                    icon = Icon.Purpose.RENAME,
+                    icon = Icon.RENAME,
                     enabled = schemaIsWritable
                 ) { typeState.initiateRename() }
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.DELETE,
-                    icon = Icon.Purpose.DELETE,
+                    icon = Icon.DELETE,
                     enabled = schemaIsWritable && typeState.canBeDeleted
                 ) { typeState.initiateDelete() }
             )
@@ -145,7 +145,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
         Box(Modifier.fillMaxSize().background(Theme.studio.backgroundLight), Alignment.Center) {
             Form.TextButton(
                 text = Label.CONNECT_TO_TYPEDB,
-                leadingIcon = Form.IconArg(Icon.Purpose.CONNECT_TO_TYPEDB)
+                leadingIcon = Form.IconArg(Icon.CONNECT_TO_TYPEDB)
             ) { StudioState.client.connectServerDialog.open() }
         }
     }
@@ -167,7 +167,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
         Box(Modifier.fillMaxSize().background(Theme.studio.backgroundLight), Alignment.Center) {
             Form.TextButton(
                 text = Label.SELECT_DATABASE,
-                leadingIcon = Form.IconArg(Icon.Purpose.SELECT_DATABASE)
+                leadingIcon = Form.IconArg(Icon.SELECT_DATABASE)
             ) { StudioState.client.selectDBDialog.open() }
         }
     }
