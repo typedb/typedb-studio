@@ -236,7 +236,7 @@ object Toolbar {
                         height = TOOLBAR_BUTTON_SIZE,
                         buttons = listOf(
                             TextButtonArg(
-                                text = schema.name.lowercase(),
+                                text = Label.SCHEMA.lowercase(),
                                 onClick = { StudioState.client.tryUpdateSessionType(schema) },
                                 color = { toggleButtonColor(isSchemaSession) },
                                 enabled = enabled,
@@ -247,7 +247,7 @@ object Toolbar {
                                 )
                             ),
                             TextButtonArg(
-                                text = data.name.lowercase(),
+                                text = Label.DATA.lowercase(),
                                 onClick = { StudioState.client.tryUpdateSessionType(data) },
                                 color = { toggleButtonColor(isDataSession) },
                                 enabled = enabled,
@@ -269,7 +269,7 @@ object Toolbar {
                         height = TOOLBAR_BUTTON_SIZE,
                         buttons = listOf(
                             TextButtonArg(
-                                text = write.name.lowercase(),
+                                text = Label.WRITE.lowercase(),
                                 onClick = { StudioState.client.tryUpdateTransactionType(write) },
                                 color = { toggleButtonColor(isWriteTransaction) },
                                 enabled = enabled,
@@ -280,7 +280,7 @@ object Toolbar {
                                 )
                             ),
                             TextButtonArg(
-                                text = read.name.lowercase(),
+                                text = Label.READ.lowercase(),
                                 onClick = { StudioState.client.tryUpdateTransactionType(read) },
                                 color = { toggleButtonColor(isReadTransaction) },
                                 enabled = enabled,

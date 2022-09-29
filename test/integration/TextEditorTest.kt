@@ -16,52 +16,48 @@
  *
  */
 
-// We need to access private function Studio.MainWindowColumn, this allows us to.
-// Do not use this outside of tests anywhere. It is extremely dangerous to do so.
+// We need to access the private function StudioState.client.session.tryOpen, this allows us to.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package com.vaticle.typedb.studio.test.integration
 
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.test.integration.Utils.studioTest
-import com.vaticle.typedb.studio.test.integration.Utils.studioTestWithRunner
-import com.vaticle.typedb.studio.test.integration.Utils.connectToTypeDB
-import com.vaticle.typedb.studio.test.integration.Utils.createDatabase
-import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
-import com.vaticle.typedb.studio.test.integration.Utils.delayAndRecompose
-import com.vaticle.typedb.studio.test.integration.Utils.writeSchemaInteractively
-import com.vaticle.typedb.studio.test.integration.Utils.writeDataInteractively
-import com.vaticle.typedb.studio.test.integration.Utils.verifyDataWrite
-import com.vaticle.typedb.studio.test.integration.Utils.SCHEMA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.Utils.DATA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.Utils.QUERY_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.Utils.TQL_DATA_PATH
-import com.vaticle.typedb.studio.test.integration.Utils.SAVE_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.Utils.PLAY_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.Utils.ROLLBACK_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.Utils.PLUS_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.Utils.SAMPLE_DATA_PATH
-import com.vaticle.typedb.studio.test.integration.Utils.CHEVRON_UP_ICON_STRING
+import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
+import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import java.io.File
 import kotlin.test.assertTrue
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class TextEditorTest: IntegrationTest() {
 
     @Test
     fun makeAFileAndSaveIt() {
-        studioTest(composeRule) {
-        // We have to open a project to enable the '+' to create a new file.
-            val path = cloneAndOpenProject(composeRule, source = SAMPLE_DATA_PATH, destination = testID)
+        runBlocking {
+            val path = copyFolder(source = SampleFileStructure.path, destination = testID)
+            openProject(composeRule, projectDirectory = testID)
 
-            composeRule.onNodeWithText(PLUS_ICON_STRING).performClick()
-            delayAndRecompose(composeRule)
+            clickIcon(composeRule, Icon.Code.PLUS)
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
-            composeRule.onNodeWithText(SAVE_ICON_STRING).performClick()
+            clickIcon(composeRule, Icon.Code.FLOPPY_DISK)
             val file = File("$path/Untitled1.tql")
             StudioState.project.saveFileDialog.file!!.trySave(file.toPath(), true)
             StudioState.project.current!!.reloadEntries()
@@ -73,58 +69,63 @@ class TextEditorTest: IntegrationTest() {
 
     @Test
     fun schemaWriteAndCommit() {
-        studioTestWithRunner(composeRule) { address ->
-        // We have to open a project to enable the '+' to create a new file.
-            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
-            connectToTypeDB(composeRule, address)
-            createDatabase(composeRule, dbName = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
+        withTypeDB { typeDB ->
+            runBlocking {
+                copyFolder(source = SampleGitHubData.path, destination = testID)
+                openProject(composeRule, projectDirectory = testID)
+                connectToTypeDB(composeRule, typeDB.address())
+                createDatabase(composeRule, dbName = testID)
+                writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-            StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
-            delayAndRecompose(composeRule, Delays.NETWORK_IO)
+                StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+                delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-            composeRule.onNodeWithText(CHEVRON_UP_ICON_STRING).performClick()
-            delayAndRecompose(composeRule)
+                StudioState.schema.reloadEntries()
 
-            // We can assert that the schema has been written successfully here as the schema
-            // is shown in the type browser.
-            composeRule.onNodeWithText("commit-date").assertExists()
+                // We can assert that the schema has been written successfully here as the schema
+                // is shown in the type browser.
+                assertNodeExistsWithText(composeRule, text = "commit-date")
+            }
         }
     }
 
     @Test
     fun dataWriteAndCommit() {
-        studioTestWithRunner(composeRule) { address ->
-        cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
-            connectToTypeDB(composeRule, address)
-            createDatabase(composeRule, dbName = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
-            writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
-            verifyDataWrite(composeRule, address, dbName = testID, "$testID/${QUERY_FILE_NAME}")
+        withTypeDB {typeDB ->  
+            runBlocking {
+                copyFolder(source = SampleGitHubData.path, destination = testID)
+                openProject(composeRule, projectDirectory = testID)
+                connectToTypeDB(composeRule, typeDB.address())
+                createDatabase(composeRule, dbName = testID)
+                writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
+                writeDataInteractively(composeRule, dbName = testID, SampleGitHubData.dataFile)
+                verifyDataWrite(composeRule, typeDB.address(), dbName = testID, "$testID/${SampleGitHubData.collaboratorsQueryFile}")
+            }
         }
     }
 
     @Test
     fun schemaWriteAndRollback() {
-        studioTestWithRunner(composeRule) { address ->
-            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
-            connectToTypeDB(composeRule, address)
-            createDatabase(composeRule, dbName = testID)
+        withTypeDB { typeDB ->
+            runBlocking {
+                copyFolder(source = SampleGitHubData.path, destination = testID)
+                openProject(composeRule, projectDirectory = testID)
+                connectToTypeDB(composeRule, typeDB.address())
+                createDatabase(composeRule, dbName = testID)
 
-            StudioState.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
-            delayAndRecompose(composeRule, Delays.NETWORK_IO)
+                StudioState.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
+                delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-            composeRule.onNodeWithText("schema").performClick()
-            composeRule.onNodeWithText("write").performClick()
+                clickText(composeRule, Label.SCHEMA.lowercase())
+                clickText(composeRule, Label.WRITE.lowercase())
 
-            StudioState.project.current!!.directory.entries.find { it.name == SCHEMA_FILE_NAME }!!.asFile().tryOpen()
+                StudioState.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!.asFile().tryOpen()
 
-            composeRule.onNodeWithText(PLAY_ICON_STRING).performClick()
-            delayAndRecompose(composeRule, Delays.NETWORK_IO)
-            composeRule.onNodeWithText(ROLLBACK_ICON_STRING).performClick()
-            delayAndRecompose(composeRule, Delays.NETWORK_IO)
+                clickIcon(composeRule, Icon.Code.PLAY, delayMillis = Delays.NETWORK_IO)
+                clickIcon(composeRule, Icon.Code.ROTATE, delayMillis = Delays.NETWORK_IO)
 
-            composeRule.onNodeWithText("repo-id").assertDoesNotExist()
+                assertNodeNotExistsWithText(composeRule, text = "repo-id")
+            }
         }
     }
 }

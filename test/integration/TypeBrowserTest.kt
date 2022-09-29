@@ -16,116 +16,98 @@
  *
  */
 
-// We need to access private function Studio.MainWindowColumn, this allows us to.
-// Do not use this outside of tests anywhere. It is extremely dangerous to do so.
+// We need to access the private function StudioState.client.session.tryOpen, this allows us to.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package com.vaticle.typedb.studio.test.integration
 
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.test.integration.Utils.studioTestWithRunner
-import com.vaticle.typedb.studio.test.integration.Utils.connectToTypeDB
-import com.vaticle.typedb.studio.test.integration.Utils.createDatabase
-import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
-import com.vaticle.typedb.studio.test.integration.Utils.delayAndRecompose
-import com.vaticle.typedb.studio.test.integration.Utils.writeSchemaInteractively
-import com.vaticle.typedb.studio.test.integration.Utils.SCHEMA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.Utils.TQL_DATA_PATH
-import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_DOWN_ICON_STRING
-import com.vaticle.typedb.studio.test.integration.Utils.DOUBLE_CHEVRON_UP_ICON_STRING
-import org.junit.Ignore
+import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickAllInstancesOfIcon
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
+import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class TypeBrowserTest: IntegrationTest() {
 
     @Test
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
-        studioTestWithRunner(composeRule) { address ->
-            connectToTypeDB(composeRule, address)
-            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
-            createDatabase(composeRule, dbName = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
+        withTypeDB { typeDB ->
+            runBlocking {
+                connectToTypeDB(composeRule, typeDB.address())
+                copyFolder(source = SampleGitHubData.path, destination = testID)
+                openProject(composeRule, projectDirectory = testID)
+                createDatabase(composeRule, dbName = testID)
+                writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-            // We can assert that the schema has been written successfully here as the schema
-            // is shown in the type browser.
-            composeRule.onNodeWithText("attribute").assertExists()
-            composeRule.onNodeWithText("commit-date").assertExists()
-            composeRule.onNodeWithText("commit-hash").assertExists()
+                delayAndRecompose(composeRule, Delays.NETWORK_IO)
+
+                // We can assert that the schema has been written successfully here as the schema
+                // is shown in the type browser.
+
+                assertNodeExistsWithText(composeRule, text = Label.ATTRIBUTE.lowercase())
+                assertNodeExistsWithText(composeRule, text = "commit-date")
+                assertNodeExistsWithText(composeRule, text = "commit-hash")
+            }
         }
     }
 
     @Test
     fun collapseTypes() {
-        studioTestWithRunner(composeRule) { address ->
-            connectToTypeDB(composeRule, address)
-            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
-            createDatabase(composeRule, dbName = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
+        withTypeDB { typeDB ->
+            runBlocking {
+                connectToTypeDB(composeRule, typeDB.address())
+                copyFolder(source = SampleGitHubData.path, destination = testID)
+                openProject(composeRule, projectDirectory = testID)
+                createDatabase(composeRule, dbName = testID)
+                writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-            StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
-            delayAndRecompose(composeRule, Delays.NETWORK_IO)
+                StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+                delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-            composeRule.onAllNodesWithText("Project").get(0).performClick()
-            composeRule.onAllNodesWithText("Project").get(1).performClick()
-            delayAndRecompose(composeRule)
+                clickAllInstancesOfIcon(composeRule, Icon.Code.CHEVRONS_UP)
 
-            composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
-            delayAndRecompose(composeRule)
+                delayAndRecompose(composeRule)
 
-            composeRule.onNodeWithText("commit-date").assertDoesNotExist()
+                assertNodeNotExistsWithText(composeRule, text = "commit-date")
+            }
         }
     }
 
     @Test
     fun collapseThenExpandTypes() {
-        studioTestWithRunner(composeRule) { address ->
-            connectToTypeDB(composeRule, address)
-            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
-            createDatabase(composeRule, dbName = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
+        withTypeDB { typeDB ->
+            runBlocking {
+                connectToTypeDB(composeRule, typeDB.address())
+                copyFolder(source = SampleGitHubData.path, destination = testID)
+                openProject(composeRule, projectDirectory = testID)
+                createDatabase(composeRule, dbName = testID)
+                writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-            StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+                StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
-            composeRule.onNodeWithText(DOUBLE_CHEVRON_UP_ICON_STRING).performClick()
-            delayAndRecompose(composeRule)
+                clickAllInstancesOfIcon(composeRule, Icon.Code.CHEVRONS_UP)
+                delayAndRecompose(composeRule)
 
-            composeRule.onNodeWithText("commit-date").assertDoesNotExist()
+                assertNodeNotExistsWithText(composeRule, text = "commit-date")
 
-            composeRule.onNodeWithText(DOUBLE_CHEVRON_DOWN_ICON_STRING).performClick()
-            delayAndRecompose(composeRule)
+                clickAllInstancesOfIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
+                delayAndRecompose(composeRule)
 
-            composeRule.onNodeWithText("commit-date").assertExists()
-        }
-    }
-
-    // This test is ignored as the export schema button doesn't open a new file during testing.
-    @Ignore
-    @Test
-    fun exportSchema() {
-        studioTestWithRunner(composeRule) { address ->
-            connectToTypeDB(composeRule, address)
-            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
-            createDatabase(composeRule, dbName = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
-
-            StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
-            delayAndRecompose(composeRule, Delays.NETWORK_IO)
-
-            StudioState.schema.exportTypeSchemaAsync { schema ->
-                StudioState.project.current!!.reloadEntries()
-                StudioState.project.tryCreateUntitledFile()?.let { file ->
-                    file.content(schema)
-                    file.tryOpen()
-                }
+                assertNodeExistsWithText(composeRule, text = "commit-date")
             }
-            composeRule.waitForIdle()
-
-            composeRule.onNodeWithText("define").assertExists()
-            composeRule.onNodeWithText("# This program is free software: you can redistribute it and/or modify").assertDoesNotExist()
         }
     }
 }
