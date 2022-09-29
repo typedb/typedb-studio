@@ -52,7 +52,7 @@ import mu.KotlinLogging
 object StudioActions {
     private val LOGGER = KotlinLogging.logger {}
 
-    suspend fun clickIcon(composeRule: ComposeContentTestRule, icon: Icon.Code, delayMillis: Int = Delays.RECOMPOSE) {
+    suspend fun clickIcon(composeRule: ComposeContentTestRule, icon: Icon, delayMillis: Int = Delays.RECOMPOSE) {
         clickText(composeRule, icon.unicode, delayMillis)
     }
 
@@ -68,7 +68,7 @@ object StudioActions {
         }
     }
 
-    fun clickAllInstancesOfIcon(composeRule: ComposeContentTestRule, icon: Icon.Code) {
+    fun clickAllInstancesOfIcon(composeRule: ComposeContentTestRule, icon: Icon) {
         clickAllInstancesOfText(composeRule, icon.unicode)
     }
 
@@ -162,7 +162,7 @@ object StudioActions {
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
         StudioState.notification.dismissAll()
 
-        clickIcon(composeRule, Icon.Code.PLUS)
+        clickIcon(composeRule, Icon.NEW_PAGE)
 
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
@@ -175,9 +175,9 @@ object StudioActions {
 
         StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
-        clickIcon(composeRule, Icon.Code.PLAY, delayMillis = Delays.NETWORK_IO)
+        clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
 
-        clickIcon(composeRule, Icon.Code.CHECK, delayMillis = Delays.NETWORK_IO)
+        clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE_FAILED) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
@@ -196,9 +196,9 @@ object StudioActions {
 
         StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
-        clickIcon(composeRule, Icon.Code.PLAY, delayMillis = Delays.NETWORK_IO)
+        clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
 
-        clickIcon(composeRule, Icon.Code.CHECK, delayMillis = Delays.NETWORK_IO)
+        clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, Errors.DATA_WRITE_FAILED) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
