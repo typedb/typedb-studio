@@ -150,7 +150,7 @@ object ServerDialog {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 TextButtonRow(
                     listOf(
-                        Form.TextButtonArg("TypeDB", color = { Form.toggleButtonColor(state.server == Property.Server.TYPEDB) }, enabled = Service.client.isDisconnected) {state.server = Property.Server.TYPEDB},
+                        Form.TextButtonArg("TypeDB Core", color = { Form.toggleButtonColor(state.server == Property.Server.TYPEDB) }, enabled = Service.client.isDisconnected) {state.server = Property.Server.TYPEDB},
                         Form.TextButtonArg("TypeDB Cluster", color = { Form.toggleButtonColor(state.server == Property.Server.TYPEDB_CLUSTER) }, enabled = Service.client.isDisconnected) { state.server = Property.Server.TYPEDB_CLUSTER}
                     )
                 )
