@@ -97,7 +97,7 @@ internal class TextRenderer(private val viewport: Viewport) {
                 fullyDrawnWithoutTruncation = true
                 break
             } else {
-                val breakIndex = lineBreak.index - (if (lineBreak.reason == BlockStart) 1 else 0)
+                val breakIndex = lineBreak.index - (if (lineBreak.reason == BLOCK_START) 1 else 0)
                 var lineText = remainingText.substring(0 until breakIndex)
                 var textLine: TextLine
                 if (lines.size == maxLines - 1) {
