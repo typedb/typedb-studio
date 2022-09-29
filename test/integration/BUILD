@@ -28,8 +28,9 @@ skiko_runtime_platform = select({
      "//conditions:default": ["INVALID"]})
 
 compose_test_libraries = [
-    "test-integration",
-    "test-utils",
+    "//test/integration/data:paths",
+    "//test/integration/common:common",
+    "//test/integration:test-integration",
 
     "@maven//:junit_junit",
     "@maven//:org_jetbrains_compose_ui_ui_desktop",
@@ -45,42 +46,6 @@ compose_test_libraries = [
 ]
 
 kt_jvm_library(
-    name = "test-utils",
-    srcs = ["Utils.kt"],
-    kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
-    runtime_deps = skiko_runtime_platform,
-    deps = [
-        "//:studio",
-        "//framework/material",
-        "//framework/common",
-        "//state",
-        "//state/app",
-        "//state/common",
-        "//state/connection",
-        "//state/project",
-        "//state/page",
-
-        # External Vaticle Dependencies
-        "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_client_java//:client-java",
-        "@vaticle_typedb_common//:common",
-        "@vaticle_typedb_common//test:typedb-runner",
-        "@vaticle_typeql//java:typeql-lang",
-        "@vaticle_typeql//java/common:common",
-        "@vaticle_typeql//java/query:query",
-
-        # External Maven Dependencies
-        "@maven//:junit_junit",
-        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_test_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_test_junit4_desktop",
-        "@maven//:org_jetbrains_kotlin_kotlin_test",
-        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
-        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
-    ],
-)
-
-kt_jvm_library(
     name = "test-integration",
     srcs = ["IntegrationTest.kt"],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
@@ -88,6 +53,7 @@ kt_jvm_library(
     deps = [
         "//:studio",
         "//state",
+        "//framework/common",
 
         # External Maven Dependencies
         "@maven//:junit_junit",
@@ -103,7 +69,7 @@ kt_jvm_library(
 typedb_kt_test(
     name = "test-quickstart",
     srcs = ["QuickstartTest.kt"],
-    data = ["//test/data:query-string-files"],
+    data = ["//test/integration/data:sample-github-data-files"],
     test_class = "com.vaticle.typedb.studio.test.integration.QuickstartTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries,
@@ -116,10 +82,11 @@ typedb_kt_test(
 kt_jvm_test(
     name = "test-projectbrowser",
     srcs = ["ProjectBrowserTest.kt"],
-    data = ["//test/data:sample-file-structure-files"],
+    data = ["//test/integration/data:sample-file-structure-files"],
     test_class = "com.vaticle.typedb.studio.test.integration.ProjectBrowserTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
+        "//framework/material",
         "//state",
         "//state/page",
         "//state/project",
@@ -129,16 +96,18 @@ kt_jvm_test(
 typedb_kt_test(
     name = "test-texteditor",
     srcs = ["TextEditorTest.kt"],
-    data = ["//test/data:sample-file-structure-files", "//test/data:query-string-files"],
+    data = ["//test/integration/data:sample-file-structure-files", "//test/integration/data:sample-github-data-files"],
     test_class= "com.vaticle.typedb.studio.test.integration.TextEditorTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
+        "//framework/material",
         "//state",
         "//state/app",
         "//state/common",
         "//state/connection",
         "//state/project",
         "//state/page",
+        "//state/schema",
 
         "@vaticle_typedb_client_java//api",
     ],
@@ -150,10 +119,11 @@ typedb_kt_test(
 typedb_kt_test(
     name = "test-typebrowser",
     srcs = ["TypeBrowserTest.kt"],
-    data = ["//test/data:sample-file-structure-files", "//test/data:query-string-files"],
+    data = ["//test/integration/data:sample-file-structure-files", "//test/integration/data:sample-github-data-files"],
     test_class = "com.vaticle.typedb.studio.test.integration.TypeBrowserTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
+        "//framework/material",
         "//state",
         "//state/app",
         "//state/common",

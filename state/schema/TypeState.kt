@@ -81,6 +81,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
     }
 
     abstract val canBeDeleted: Boolean
+    abstract val canBeAbstract: Boolean
 
     var conceptType: T by mutableStateOf(conceptType)
     var supertype: TS? by mutableStateOf(supertype)
@@ -95,7 +96,6 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
     val ownsAttributeTypes: List<Attribute> get() = ownsAttributeTypeProperties.map { it.attributeType }
     var playsRoleTypeProperties: List<RoleTypeProperties> by mutableStateOf(emptyList())
     val playsRoleTypes: List<Role> get() = playsRoleTypeProperties.map { it.roleType }
-    val canBeAbstract get() = false // TODO
 
     protected abstract fun isSameEncoding(conceptType: Type): Boolean
     protected abstract fun asSameEncoding(conceptType: Type): T
@@ -154,25 +154,25 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
     fun initiateRename() = schemaMgr.renameTypeDialog.open(this)
 
-    fun tryRename(label: String) = try {
-        schemaMgr.openOrGetWriteTx()?.let {
+    fun tryRename(label: String) = schemaMgr.mayWriteAsync {
+        try {
             conceptType.asRemote(it).setLabel(label)
             schemaMgr.remove(this)
             updateConceptTypeAndName(label)
             schemaMgr.register(this)
             schemaMgr.execOnTypesUpdated()
             schemaMgr.renameTypeDialog.close()
-        } ?: Unit
-    } catch (e: Exception) {
-        schemaMgr.notification.userError(
-            LOGGER, Message.Schema.FAILED_TO_RENAME_TYPE,
-            encoding.label, conceptType.label, label, e.message ?: UNKNOWN
-        )
+        } catch (e: Exception) {
+            schemaMgr.notification.userError(
+                LOGGER, Message.Schema.FAILED_TO_RENAME_TYPE,
+                encoding.label, conceptType.label, label, e.message ?: UNKNOWN
+            )
+        }
     }
 
     protected fun tryChangeSupertype(
         dialogState: SchemaManager.TypeDialogManager<*>, function: (TypeDBTransaction) -> Unit
-    ) = schemaMgr.openOrGetWriteTx()?.let {
+    ) = schemaMgr.mayWriteAsync {
         function(it)
         dialogState.onSuccess?.invoke()
         dialogState.close()
@@ -215,6 +215,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         var isAbstract: Boolean by mutableStateOf(false)
         private var hasInstancesExplicit: Boolean by mutableStateOf(false)
         override val canBeDeleted get() = !hasSubtypes && !hasInstancesExplicit
+        override val canBeAbstract get() = !hasInstancesExplicit
 
         override val info: String? = null
         override val isBulkExpandable: Boolean = true
@@ -371,7 +372,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         ) {
             if (schemaMgr.openOrGetReadTx()?.concepts()?.getThingType(label) != null) schemaMgr.notification.userError(
                 LOGGER, Message.Schema.FAILED_TO_CREATE_TYPE_DUE_TO_DUPLICATE, encoding.label, label
-            ) else schemaMgr.openOrGetWriteTx()?.let { tx ->
+            ) else schemaMgr.mayWriteAsync { tx ->
                 try {
                     creatorFn(tx)
                     dialogState.onSuccess?.invoke()
@@ -386,6 +387,12 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         }
 
         fun initiateChangeAbstract() = schemaMgr.changeAbstractDialog.open(this)
+
+        fun tryChangeAbstract(isAbstract: Boolean) = schemaMgr.mayWriteAsync { tx ->
+            conceptType.asRemote(tx).let { if (isAbstract) it.setAbstract() else it.unsetAbstract() }
+            schemaMgr.changeAbstractDialog.close()
+            loadAbstract()
+        }
 
         fun tryDefinePlaysRoleType(roleType: Role, overriddenType: Role?) {
             // TODO
@@ -409,14 +416,14 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             onConfirm = { this.tryDelete() }
         )
 
-        override fun tryDelete() = try {
-            schemaMgr.openOrGetWriteTx()?.let {
+        override fun tryDelete() = schemaMgr.mayWriteAsync {
+            try {
                 conceptType.asRemote(it).delete()
                 purge()
                 schemaMgr.execOnTypesUpdated()
-            } ?: Unit
-        } catch (e: Exception) {
-            schemaMgr.notification.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)
+            } catch (e: Exception) {
+                schemaMgr.notification.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)
+            }
         }
 
         override fun close() {
@@ -668,13 +675,13 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             onConfirm = { tryDeleteRoleType(roleType) }
         )
 
-        fun tryDeleteRoleType(roleType: Role) = try {
-            schemaMgr.openOrGetWriteTx()?.let {
+        fun tryDeleteRoleType(roleType: Role) =schemaMgr.mayWriteAsync {
+            try {
                 conceptType.asRemote(it).unsetRelates(roleType.conceptType)
                 loadConstraintsAsync()
-            } ?: Unit
-        } catch (e: Exception) {
-            schemaMgr.notification.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)
+            } catch (e: Exception) {
+                schemaMgr.notification.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)
+            }
         }
 
         override fun toString(): String = "TypeState.Relation: $conceptType"
@@ -688,6 +695,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         private var hasPlayerInstancesExplicit: Boolean by mutableStateOf(false)
         override val canBeDeleted: Boolean get() = !hasSubtypes && !hasPlayerInstancesExplicit
+        override val canBeAbstract get() = !hasPlayerInstancesExplicit
 
         override fun loadDependencies() {}
         override fun loadInheritables() {}

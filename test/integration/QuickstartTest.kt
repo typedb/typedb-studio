@@ -16,36 +16,36 @@
  *
  */
 
-// We need to access private function Studio.MainWindow, this allows us to.
-// Do not use this outside of tests anywhere. It is extremely dangerous to do so.
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package com.vaticle.typedb.studio.test.integration
 
-import com.vaticle.typedb.studio.test.integration.Utils.studioTestWithRunner
-import com.vaticle.typedb.studio.test.integration.Utils.connectToTypeDB
-import com.vaticle.typedb.studio.test.integration.Utils.createDatabase
-import com.vaticle.typedb.studio.test.integration.Utils.cloneAndOpenProject
-import com.vaticle.typedb.studio.test.integration.Utils.writeSchemaInteractively
-import com.vaticle.typedb.studio.test.integration.Utils.writeDataInteractively
-import com.vaticle.typedb.studio.test.integration.Utils.verifyDataWrite
-import com.vaticle.typedb.studio.test.integration.Utils.SCHEMA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.Utils.DATA_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.Utils.QUERY_FILE_NAME
-import com.vaticle.typedb.studio.test.integration.Utils.TQL_DATA_PATH
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
+import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class QuickstartTest: IntegrationTest() {
 
     @Test
     fun Quickstart() {
-        studioTestWithRunner(composeRule) { address ->
-            connectToTypeDB(composeRule, address)
-            createDatabase(composeRule, dbName = testID)
-            cloneAndOpenProject(composeRule, source = TQL_DATA_PATH, destination = testID)
-            writeSchemaInteractively(composeRule, dbName = testID, SCHEMA_FILE_NAME)
-            writeDataInteractively(composeRule, dbName = testID, DATA_FILE_NAME)
-            verifyDataWrite(composeRule, address, dbName = testID, "$testID/${QUERY_FILE_NAME}")
+        withTypeDB { typeDB ->
+            runBlocking {
+                connectToTypeDB(composeRule, typeDB.address())
+                createDatabase(composeRule, dbName = testID)
+                copyFolder(source = SampleGitHubData.path, destination = testID)
+                openProject(composeRule, projectDirectory = testID)
+                writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
+                writeDataInteractively(composeRule, dbName = testID, SampleGitHubData.dataFile)
+                verifyDataWrite(composeRule,
+                    typeDB.address(), dbName = testID, "$testID/${SampleGitHubData.collaboratorsQueryFile}"
+                )
+            }
         }
     }
 }

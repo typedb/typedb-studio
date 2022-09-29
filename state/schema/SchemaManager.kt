@@ -78,6 +78,7 @@ class SchemaManager constructor(
         get() = rootEntityType?.let { listOf(it, rootRelationType!!, rootAttributeType!!) } ?: listOf()
 
     val isOpen: Boolean get() = isOpenAtomic.state
+    val hasRunningWrite: Boolean get() = hasRunningWriteAtomic.state
     var rootEntityType: TypeState.Entity? by mutableStateOf(null); private set
     var rootRelationType: TypeState.Relation? by mutableStateOf(null); private set
     var rootAttributeType: TypeState.Attribute? by mutableStateOf(null); private set
@@ -100,6 +101,7 @@ class SchemaManager constructor(
     private val roleTypes = ConcurrentHashMap<RoleType, TypeState.Role>()
     private val isOpenAtomic = AtomicBooleanState(false)
     private val onTypesUpdated = LinkedBlockingQueue<() -> Unit>()
+    private var hasRunningWriteAtomic = AtomicBooleanState(false)
     internal val database: String? get() = session.database
     internal val coroutines = CoroutineScope(Dispatchers.Default)
 
@@ -197,7 +199,15 @@ class SchemaManager constructor(
         session.typeSchema()?.let { onSuccess(it) }
     }
 
-    internal fun openOrGetWriteTx(): TypeDBTransaction? = synchronized(this) {
+    internal fun mayWriteAsync(function: (TypeDBTransaction) -> Unit) {
+        if (hasRunningWriteAtomic.compareAndSet(expected = false, new = true)) {
+            coroutines.launchAndHandle(notification, LOGGER) {
+                openOrGetWriteTx()?.let { function(it) } ?: Unit
+            }.invokeOnCompletion { hasRunningWriteAtomic.set(false) }
+        }
+    }
+
+    private fun openOrGetWriteTx(): TypeDBTransaction? = synchronized(this) {
         if (!isWritable) return null
         if (readTx.get() != null) closeReadTx()
         if (writeTx.get() != null) return writeTx.get()

@@ -71,14 +71,13 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
     val hasRunningQuery get() = session.transaction.hasRunningQuery
-    val hasRunningCommand get() = hasRunningCommandAtomic.state || runningClosingCommands.state > 0
+    val hasRunningCommand get() = hasRunningCommandAtomic.state
     val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     val session = SessionState(this, notificationMgr)
     private val statusAtomic = AtomicReferenceState(DISCONNECTED)
     private var _client: TypeDBClient? by mutableStateOf(null)
     private var hasRunningCommandAtomic = AtomicBooleanState(false)
-    private var runningClosingCommands = AtomicIntegerState(0)
     private var databaseListRefreshedTime = System.currentTimeMillis()
     internal val isCluster get() = _client is TypeDBClient.Cluster
 

@@ -15,10 +15,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+
+// We need to access the private function StudioState.client.session.tryOpen, this allows us to.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
-package com.vaticle.typedb.studio.test.integration
+package com.vaticle.typedb.studio.test.integration.common
 
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
@@ -29,9 +32,6 @@ import com.vaticle.typedb.client.TypeDB
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
-import com.vaticle.typedb.studio.Studio
-import com.vaticle.typedb.studio.framework.common.WindowContext
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
@@ -47,50 +47,46 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
 
-object Utils {
-    val SAVE_ICON_STRING = Icon.SAVE.unicode
-    val NEW_PAGE_ICON_STRING = Icon.NEW_PAGE.unicode
-    val RUN_ICON_STRING = Icon.RUN.unicode
-    val COMMIT_ICON_STRING = Icon.COMMIT.unicode
-    val ROLLBACK_ICON_STRING = Icon.ROLLBACK.unicode
-    val SHOW_ICON_STRING = Icon.SHOW.unicode
-    val EXPAND_ICON_STRING = Icon.EXPAND.unicode
-    val COLLAPSE_ICON_STRING = Icon.COLLAPSE.unicode
+object StudioActions {
+    private val LOGGER = KotlinLogging.logger {}
 
-    val SAMPLE_DATA_PATH = File("test/data/sample_file_structure").absolutePath
-    val TQL_DATA_PATH = File("test/data").absolutePath
-
-    const val QUERY_FILE_NAME = "query_string.tql"
-    const val DATA_FILE_NAME = "data_string.tql"
-    const val SCHEMA_FILE_NAME = "schema_string.tql"
-
-    const val FAIL_CONNECT_TYPEDB = "Failed to connect to TypeDB."
-    const val FAIL_CREATE_DATABASE = "Failed to create the database."
-    const val FAIL_DATA_WRITE = "Failed to write the data."
-    const val FAIL_SCHEMA_WRITE = "Failed to write the schema."
-
-    fun runComposeRule(compose: ComposeContentTestRule, rule: suspend ComposeContentTestRule.() -> Unit) {
-        runBlocking { compose.rule() }
+    suspend fun clickIcon(composeRule: ComposeContentTestRule, icon: Icon.Code, delayMillis: Int = Delays.RECOMPOSE) {
+        clickText(composeRule, icon.unicode, delayMillis)
     }
 
-    fun studioTest(compose: ComposeContentTestRule, funcBody: suspend () -> Unit) {
-        runComposeRule(compose) {
-            setContent { Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0)) }
-            funcBody()
+    suspend fun clickText(composeRule: ComposeContentTestRule, text: String, delayMillis: Int = Delays.RECOMPOSE) {
+        composeRule.onNodeWithText(text).performClick()
+        delayAndRecompose(composeRule, delayMillis)
+    }
+
+    fun clickAllInstancesOfText(composeRule: ComposeContentTestRule, text: String) {
+        val length = composeRule.onAllNodesWithText(text).fetchSemanticsNodes().size
+        for (i in 0 until length) {
+            composeRule.onAllNodesWithText(text)[i].performClick()
         }
     }
 
-    fun studioTestWithRunner(compose: ComposeContentTestRule, funcBody: suspend (String) -> Unit) {
-        val typeDB = TypeDBCoreRunner()
-        typeDB.start()
-        val address = typeDB.address()
-        runComposeRule(compose) {
-            setContent { Studio.MainWindowContent(WindowContext.Test(1000, 1000, 0, 0)) }
-            funcBody(address)
-        }
-        typeDB.stop()
+    fun clickAllInstancesOfIcon(composeRule: ComposeContentTestRule, icon: Icon.Code) {
+        clickAllInstancesOfText(composeRule, icon.unicode)
+    }
+
+    fun assertNodeExistsWithText(composeRule: ComposeContentTestRule, text: String): SemanticsNodeInteraction {
+        return composeRule.onNodeWithText(text).assertExists()
+    }
+
+    fun assertNodeNotExistsWithText(composeRule: ComposeContentTestRule, text: String) {
+        return composeRule.onNodeWithText(text).assertDoesNotExist()
+    }
+
+    fun copyFolder(source: String, destination: String): Path {
+        val destination = File(File(destination).absolutePath)
+
+        destination.deleteRecursively()
+        File(source).copyRecursively(overwrite = true, target = destination)
+
+        return destination.toPath()
     }
 
     /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
@@ -105,26 +101,31 @@ object Utils {
         beforeRetry: (() -> Unit) = {},
         successCondition: () -> Boolean
     ) {
+        var success = false
         val deadline = System.currentTimeMillis() + 10_000
-        while (!successCondition() && System.currentTimeMillis() < deadline) {
-            beforeRetry()
-            delayAndRecompose(context, 500)
+        while (!success && System.currentTimeMillis() < deadline) {
+            try {
+                if (successCondition()) {
+                    success = true
+                } else {
+                    beforeRetry()
+                    delayAndRecompose(context, 500)
+                }
+            } catch (e: Exception) {
+                LOGGER.error(e.stackTraceToString())
+            }
         }
+
         if (!successCondition()) {
             fail(failMessage)
         }
     }
 
-    fun cloneAndOpenProject(composeRule: ComposeContentTestRule, source: String, destination: String): Path {
-        val absolute = File(File(destination).absolutePath)
+    suspend fun openProject(composeRule: ComposeContentTestRule, projectDirectory: String) {
+        val projectPath = File(File(projectDirectory).absolutePath).toPath()
+        StudioState.project.tryOpenProject(projectPath)
 
-        absolute.deleteRecursively()
-        File(source).copyRecursively(overwrite = true, target = absolute)
-
-        StudioState.project.tryOpenProject(absolute.toPath())
-
-        composeRule.waitForIdle()
-        return absolute.toPath()
+        delayAndRecompose(composeRule)
     }
 
     suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String) {
@@ -135,9 +136,9 @@ object Utils {
         StudioState.client.tryConnectToTypeDBAsync(address) {}
         delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
-        waitForConditionAndRecompose(composeRule, FAIL_CONNECT_TYPEDB) { StudioState.client.isConnected }
+        waitForConditionAndRecompose(composeRule, Errors.CONNECT_TYPEDB_FAILED) { StudioState.client.isConnected }
 
-        composeRule.onNodeWithText(address).assertExists()
+        assertNodeExistsWithText(composeRule, text = address)
     }
 
     suspend fun createDatabase(composeRule: ComposeContentTestRule, dbName: String) {
@@ -153,7 +154,7 @@ object Utils {
 
         waitForConditionAndRecompose(
             context = composeRule,
-            failMessage = FAIL_CREATE_DATABASE,
+            failMessage = Errors.CREATE_DATABASE_FAILED,
             beforeRetry = { StudioState.client.refreshDatabaseList() }
         ) { StudioState.client.databaseList.contains(dbName) }
     }
@@ -161,8 +162,7 @@ object Utils {
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
         StudioState.notification.dismissAll()
 
-        composeRule.onNodeWithText(NEW_PAGE_ICON_STRING).performClick()
-        delayAndRecompose(composeRule)
+        clickIcon(composeRule, Icon.Code.PLUS)
 
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
@@ -170,18 +170,16 @@ object Utils {
         StudioState.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        composeRule.onNodeWithText("schema").performClick()
-        composeRule.onNodeWithText("write").performClick()
+        clickText(composeRule, Label.SCHEMA.lowercase())
+        clickText(composeRule, Label.WRITE.lowercase())
 
         StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
-        composeRule.onNodeWithText(RUN_ICON_STRING).performClick()
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        clickIcon(composeRule, Icon.Code.PLAY, delayMillis = Delays.NETWORK_IO)
 
-        composeRule.onNodeWithText(COMMIT_ICON_STRING).performClick()
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        clickIcon(composeRule, Icon.Code.CHECK, delayMillis = Delays.NETWORK_IO)
 
-        waitForConditionAndRecompose(composeRule, FAIL_SCHEMA_WRITE) {
+        waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE_FAILED) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
@@ -193,28 +191,26 @@ object Utils {
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        composeRule.onNodeWithText("data").performClick()
-        composeRule.onNodeWithText("write").performClick()
+        clickText(composeRule, Label.DATA.lowercase())
+        clickText(composeRule, Label.WRITE.lowercase())
 
         StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
-        composeRule.onNodeWithText(RUN_ICON_STRING).performClick()
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        clickIcon(composeRule, Icon.Code.PLAY, delayMillis = Delays.NETWORK_IO)
 
-        composeRule.onNodeWithText(COMMIT_ICON_STRING).performClick()
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        clickIcon(composeRule, Icon.Code.CHECK, delayMillis = Delays.NETWORK_IO)
 
-        waitForConditionAndRecompose(composeRule, FAIL_DATA_WRITE) {
+        waitForConditionAndRecompose(composeRule, Errors.DATA_WRITE_FAILED) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
 
     suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, address: String, dbName: String, queryFileName: String) {
-        val queryString = fileNameToString(queryFileName)
+        val queryString = readQueryFileToString(queryFileName)
 
-        composeRule.onNodeWithText("infer").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText("read").performClick()
+        clickText(composeRule, Label.INFER.lowercase())
+        clickText(composeRule, Label.READ.lowercase())
+
         delayAndRecompose(composeRule)
 
         TypeDB.coreClient(address).use { client ->
@@ -235,15 +231,22 @@ object Utils {
         }
     }
 
-    private fun fileNameToString(fileName: String): String {
-        return Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8).filter { line -> !line.startsWith('#') }
-            .joinToString("")
+    private fun readQueryFileToString(queryFileName: String): String {
+        return Files.readAllLines(Paths.get(queryFileName), StandardCharsets.UTF_8)
+            .joinToString("\n")
     }
-}
 
-object Delays {
-    const val RECOMPOSE = 500
-    const val FILE_IO = 750
-    const val NETWORK_IO = 1_500
-    const val CONNECT_SERVER = 2_500
+    object Errors {
+        private const val CONNECT_TYPEDB_FAILED = "Failed to connect to TypeDB."
+        private const val CREATE_DATABASE_FAILED = "Failed to create the database."
+        private const val DATA_WRITE_FAILED = "Failed to write the data."
+        private const val SCHEMA_WRITE_FAILED = "Failed to write the schema."
+    }
+
+    object Delays {
+        const val RECOMPOSE = 500
+        const val FILE_IO = 750
+        const val NETWORK_IO = 1_500
+        const val CONNECT_SERVER = 2_500
+    }
 }
