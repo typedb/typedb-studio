@@ -68,6 +68,7 @@ import com.vaticle.typedb.studio.state.common.util.Label.QUERY
 import com.vaticle.typedb.studio.state.common.util.Label.QUERY_RUNNER
 import com.vaticle.typedb.studio.state.common.util.Label.SET_QUERY_LIMIT
 import com.vaticle.typedb.studio.state.common.util.Label.TEXT_EDITOR
+import com.vaticle.typedb.studio.state.common.util.Sentence.IGNORED_PATHS_CAPTION
 import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
 import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
 import com.vaticle.typedb.studio.state.page.Navigable
@@ -87,7 +88,7 @@ object PreferenceDialog {
 
     sealed interface PreferenceField {
         val label: String
-        val caption: Optional<String>
+        val caption: String?
         fun isValid(): Boolean
         @Composable fun Display()
 
@@ -101,13 +102,13 @@ object PreferenceDialog {
 
         @Composable
         fun Caption() {
-            if (caption.isPresent) {
-                CaptionText(caption.get())
+            if (!caption.isNullOrBlank()) {
+                CaptionText(caption!!)
             }
         }
 
         class TextInput(initialValue: String,
-                        override val label: String, override val caption: Optional<String> = Optional.empty(),
+                        override val label: String, override val caption: String? = null,
                         private var placeholder: String,
                         var validator: (String) -> Boolean = { true }) : PreferenceField {
 
@@ -134,7 +135,7 @@ object PreferenceDialog {
         }
 
         class Checkbox(initialValue: Boolean, override var label: String,
-                       override val caption: Optional<String> = Optional.empty()) : PreferenceField {
+                       override val caption: String? = null) : PreferenceField {
 
             var value by mutableStateOf(initialValue)
 
@@ -154,7 +155,7 @@ object PreferenceDialog {
         }
 
         class Dropdown<T : Any>(val values: List<T>, override val label: String,
-                                override val caption: Optional<String> = Optional.empty()) : PreferenceField {
+                                override val caption: String? = null) : PreferenceField {
 
             private var selected by mutableStateOf(values.first())
 
@@ -243,7 +244,7 @@ object PreferenceDialog {
         inner class GraphVisualiser : PreferenceGroup(GRAPH_VISUALISER) {
             var graphOutput = PreferenceField.Checkbox(
                 initialValue = preferenceMgr.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT,
-                caption = Optional.of(PREFERENCES_GRAPH_OUTPUT_CAPTION)
+                caption = PREFERENCES_GRAPH_OUTPUT_CAPTION
             )
 
             override val preferences: List<PreferenceField> = listOf(graphOutput)
@@ -266,7 +267,8 @@ object PreferenceDialog {
             private val ignoredPathsString = preferenceMgr.ignoredPaths.joinToString(", ")
             var ignoredPaths = PreferenceField.TextInput(
                 initialValue = ignoredPathsString,
-                label = PROJECT_IGNORED_PATHS, placeholder = IGNORED_PATHS_PLACEHOLDER
+                label = PROJECT_IGNORED_PATHS, placeholder = IGNORED_PATHS_PLACEHOLDER,
+                caption = IGNORED_PATHS_CAPTION
             )
 
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
@@ -281,7 +283,7 @@ object PreferenceDialog {
             var matchQueryLimit = PreferenceField.TextInput(
                 initialValue = preferenceMgr.matchQueryLimit.toString(),
                 label = SET_QUERY_LIMIT, placeholder = QUERY_LIMIT_PLACEHOLDER,
-                caption = Optional.of(PREFERENCES_MATCH_QUERY_LIMIT_CAPTION)
+                caption = PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
             ) {/* validator = */ it.toLongOrNull() != null }
 
             override val preferences: List<PreferenceField> = listOf(matchQueryLimit)

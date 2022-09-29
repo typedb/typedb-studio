@@ -97,6 +97,7 @@ object Sentence {
     const val OUTPUT_RESPONSE_TIME_DESCRIPTION = "Duration to collect all answers of the query from the server."
     const val PREFERENCES_MATCH_QUERY_LIMIT_CAPTION = "When running a match query, the number of results will be limited to " +
             "this value."
+    const val IGNORED_PATHS_CAPTION = "Wildcard matching, e.g. .git, *.tql, README.?d, data/**/out"
     const val QUERY_RESPONSE_TIME_DESCRIPTION =
         "Duration to collect auxiliary information/concepts to display informative log & graph output."
     const val RENAME_DIRECTORY = "Rename the directory at %s."
