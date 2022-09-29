@@ -113,6 +113,26 @@ enum class Icon(private val shape: Shape) {
         private val ICON_DEFAULT_SIZE: TextUnit = 12.sp
         private val FONT_FILE = "resources/icons/fontawesome/font-awesome-6-pro-solid-900.otf"
         private val FONT_AWESOME = FontFamily(Font(FONT_FILE))
+
+        @Composable
+        fun Render(
+            icon: Icon,
+            color: Color = Theme.studio.icon,
+            disabledColor: Color? = null,
+            size: TextUnit = icon.shape.size,
+            modifier: Modifier = Modifier,
+            enabled: Boolean = true
+        ) {
+            Text(
+                text = icon.shape.unicode,
+                color = if (!enabled && disabledColor != null) disabledColor else fadeable(color, !enabled),
+                fontSize = size,
+                fontFamily = FONT_AWESOME,
+                modifier = modifier.rotate(icon.shape.rotate)
+                    .offset(icon.shape.offset.x, icon.shape.offset.y)
+                    .scale(icon.shape.scale.x, icon.shape.scale.y)
+            )
+        }
     }
 
     data class Offset(val x: Dp, val y: Dp)
@@ -202,25 +222,5 @@ enum class Icon(private val shape: Shape) {
         XMARK(0xf00du, 13.sp);
 
         val unicode: String = Char(hexcode).toString()
-    }
-
-    @Composable
-    fun Render(
-        icon: Icon,
-        color: Color = Theme.studio.icon,
-        disabledColor: Color? = null,
-        size: TextUnit = icon.shape.size,
-        modifier: Modifier = Modifier,
-        enabled: Boolean = true
-    ) {
-        Text(
-            text = icon.shape.unicode,
-            color = if (!enabled && disabledColor != null) disabledColor else fadeable(color, !enabled),
-            fontSize = size,
-            fontFamily = FONT_AWESOME,
-            modifier = modifier.rotate(icon.shape.rotate)
-                .offset(icon.shape.offset.x, icon.shape.offset.y)
-                .scale(icon.shape.scale.x, icon.shape.scale.y)
-        )
     }
 }
