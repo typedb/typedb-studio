@@ -136,7 +136,7 @@ object StudioActions {
         StudioState.client.tryConnectToTypeDBAsync(address) {}
         delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
-        waitForConditionAndRecompose(composeRule, Errors.CONNECT_TYPEDB) { StudioState.client.isConnected }
+        waitForConditionAndRecompose(composeRule, Errors.CONNECT_TYPEDB_FAILED) { StudioState.client.isConnected }
 
         assertNodeExistsWithText(composeRule, text = address)
     }
@@ -154,7 +154,7 @@ object StudioActions {
 
         waitForConditionAndRecompose(
             context = composeRule,
-            failMessage = Errors.CREATE_DATABASE,
+            failMessage = Errors.CREATE_DATABASE_FAILED,
             beforeRetry = { StudioState.client.refreshDatabaseList() }
         ) { StudioState.client.databaseList.contains(dbName) }
     }
@@ -179,7 +179,7 @@ object StudioActions {
 
         clickIcon(composeRule, Icon.Code.CHECK, delayMillis = Delays.NETWORK_IO)
 
-        waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE) {
+        waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE_FAILED) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
@@ -200,7 +200,7 @@ object StudioActions {
 
         clickIcon(composeRule, Icon.Code.CHECK, delayMillis = Delays.NETWORK_IO)
 
-        waitForConditionAndRecompose(composeRule, Errors.DATA_WRITE) {
+        waitForConditionAndRecompose(composeRule, Errors.DATA_WRITE_FAILED) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
@@ -237,10 +237,10 @@ object StudioActions {
     }
 
     object Errors {
-        private const val CONNECT_TYPEDB = "Failed to connect to TypeDB."
-        private const val CREATE_DATABASE = "Failed to create the database."
-        private const val DATA_WRITE = "Failed to write the data."
-        private const val SCHEMA_WRITE = "Failed to write the schema."
+        private const val CONNECT_TYPEDB_FAILED = "Failed to connect to TypeDB."
+        private const val CREATE_DATABASE_FAILED = "Failed to create the database."
+        private const val DATA_WRITE_FAILED = "Failed to write the data."
+        private const val SCHEMA_WRITE_FAILED = "Failed to write the schema."
     }
 
     object Delays {
