@@ -19,8 +19,8 @@
 package com.vaticle.typedb.studio.framework.common.geometry
 
 import androidx.compose.ui.geometry.Offset
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.AngularDirection.Clockwise
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.AngularDirection.CounterClockwise
+import com.vaticle.typedb.studio.framework.common.geometry.Geometry.AngularDirection.CLOCKWISE
+import com.vaticle.typedb.studio.framework.common.geometry.Geometry.AngularDirection.COUNTER_CLOCKWISE
 import com.vaticle.typedb.studio.framework.common.geometry.Geometry.Circle
 import com.vaticle.typedb.studio.framework.common.geometry.Geometry.Ray
 import com.vaticle.typedb.studio.framework.common.geometry.Geometry.quadraticRoots
@@ -81,27 +81,27 @@ class GeometryTest {
 
     @Test
     fun sweepAngle1() {
-        assertFloatEquals(expected = 90f, actual = sweepAngle(from = 10f, to = 100f, direction = Clockwise))
+        assertFloatEquals(expected = 90f, actual = sweepAngle(from = 10f, to = 100f, direction = CLOCKWISE))
     }
 
     @Test
     fun sweepAngle2() {
-        assertFloatEquals(expected = -270f, actual = sweepAngle(from = 10f, to = 100f, direction = CounterClockwise))
+        assertFloatEquals(expected = -270f, actual = sweepAngle(from = 10f, to = 100f, direction = COUNTER_CLOCKWISE))
     }
 
     @Test
     fun sweepAngle3() {
-        assertFloatEquals(expected = 45f, actual = sweepAngle(from = -10f, to = 35f, direction = Clockwise))
+        assertFloatEquals(expected = 45f, actual = sweepAngle(from = -10f, to = 35f, direction = CLOCKWISE))
     }
 
     @Test
     fun sweepAngle4() {
-        assertFloatEquals(expected = -45f, actual = sweepAngle(from = 35f, to = -10f, direction = CounterClockwise))
+        assertFloatEquals(expected = -45f, actual = sweepAngle(from = 35f, to = -10f, direction = COUNTER_CLOCKWISE))
     }
 
     @Test
     fun sweepAngle5() {
-        assertFloatEquals(expected = -135f, actual = sweepAngle(from = 135f, to = 0f, direction = CounterClockwise))
+        assertFloatEquals(expected = -135f, actual = sweepAngle(from = 135f, to = 0f, direction = COUNTER_CLOCKWISE))
     }
 
     @Test

@@ -156,8 +156,8 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
     private fun curveArrowhead(fullArc: Geometry.Arc, majorArc: MajorArc): Pair<Geometry.Line, Geometry.Line>? {
         val arrowTarget = fullArc.offsetAtAngle(majorArc.end)
         val approachAngle = when (fullArc.direction) {
-            Geometry.AngularDirection.Clockwise -> (majorArc.end - 1).normalisedAngle()
-            Geometry.AngularDirection.CounterClockwise -> (majorArc.end + 1).normalisedAngle()
+            Geometry.AngularDirection.CLOCKWISE -> (majorArc.end - 1).normalisedAngle()
+            Geometry.AngularDirection.COUNTER_CLOCKWISE -> (majorArc.end + 1).normalisedAngle()
         }
         val arrowSource = fullArc.offsetAtAngle(approachAngle)
         val lines = Geometry.arrowhead(arrowSource, arrowTarget, ARROWHEAD_LENGTH, ARROWHEAD_WIDTH)
@@ -211,29 +211,29 @@ class EdgeRenderer(private val graphArea: GraphArea, private val ctx: RendererCo
     }
 
     private enum class EdgeColorCode {
-        Regular,
-        Background,
-        Inferred,
-        InferredBackground;
+        REGULAR,
+        BACKGROUND,
+        INFERRED,
+        INFERRED_BACKGROUND;
 
         companion object {
             fun of(edge: Edge, graphArea: GraphArea): EdgeColorCode {
                 val isInferred = edge is Edge.Inferrable && edge.isInferred
                 val isBackground = with(graphArea.interactions) { edge.isBackground }
                 return when {
-                    isInferred && isBackground -> InferredBackground
-                    isBackground -> Background
-                    isInferred -> Inferred
-                    else -> Regular
+                    isInferred && isBackground -> INFERRED_BACKGROUND
+                    isBackground -> BACKGROUND
+                    isInferred -> INFERRED
+                    else -> REGULAR
                 }
             }
         }
 
         fun toColor(theme: Color.GraphTheme) = when (this) {
-            Regular -> theme.edge
-            Background -> theme.edge.copy(alpha = BACKGROUND_ALPHA)
-            Inferred -> theme.inferred
-            InferredBackground -> theme.inferred.copy(alpha = BACKGROUND_ALPHA)
+            REGULAR -> theme.edge
+            BACKGROUND -> theme.edge.copy(alpha = BACKGROUND_ALPHA)
+            INFERRED -> theme.inferred
+            INFERRED_BACKGROUND -> theme.inferred.copy(alpha = BACKGROUND_ALPHA)
         }
     }
 
