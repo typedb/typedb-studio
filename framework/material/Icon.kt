@@ -61,6 +61,7 @@ enum class Icon(private val shape: Shape) {
     FONT_CASE(Shape.CAPITAL_A_LOWER_A),
     GRAPH(Shape.DIAGRAM_PROJECT),
     HIDE(Shape.CHEVRON_DOWN),
+    ITEM_COLLAPSED(Shape.CHEVRON_RIGHT),
     ITEM_EXPANDED(Shape.CHEVRON_DOWN),
     JUMP_TO_BOTTOM(Shape.ARROW_DOWN_TO_LINE),
     JUMP_TO_TOP(Shape.ARROW_UP_TO_LINE),
@@ -79,7 +80,7 @@ enum class Icon(private val shape: Shape) {
     RELATION(Shape.DIAMOND_SIDEWAYS),
     REMOVE(Shape.MINUS),
     RENAME(Shape.PEN),
-    REPLACE(Shape.OPPOSITE_HORIZONTAL_ARROWS),
+    REPLACE(Shape.ARROWS_OPPOSITE_HORIZONTAL),
     RESPONSE_TIME(Shape.CLOCK),
     ROLES(Shape.USER_GROUP),
     ROLLBACK(Shape.ROTATE_LEFT),
@@ -98,7 +99,6 @@ enum class Icon(private val shape: Shape) {
     THING(Shape.RECTANGLE),
     TICK(Shape.CHECK),
     TYPES(Shape.SITEMAP),
-    ITEM_COLLAPSED(Shape.CHEVRON_RIGHT),
     USERS(Shape.USERS);
 
     val unicode: String = shape.unicode
@@ -144,6 +144,7 @@ enum class Icon(private val shape: Shape) {
         ALIGN_LEFT(0xf036u),
         ARROWS_MAXIMIZE(0xf31du),
         ARROWS_MINIMIZE(0xe0a5u),
+        ARROWS_OPPOSITE_HORIZONTAL(0xf362u),
         ARROW_DOWN_TO_LINE(0xf33du),
         ARROW_POINTER(0xf245u),
         ARROW_UP_RIGHT_FROM_SQUARE(0xf08eu),
@@ -174,6 +175,7 @@ enum class Icon(private val shape: Shape) {
         DELETE_RIGHT(0xe154u),
         DIAGRAM_PROJECT(0xf542u),
         DIAGRAM_SUBTASK(0xe479u),
+        DIAMOND_SIDEWAYS(0xe23bu, rotate = 90f),
         EXPAND(0xf065u),
         EYE(0xf06eu),
         FILE_PLUS(0xf319u),
@@ -189,7 +191,6 @@ enum class Icon(private val shape: Shape) {
         LINK_SIMPLE(0xe1cdu),
         MAGNIFYING_GLASS(0xf002u, rotate = 90f),
         MINUS(0xf068u),
-        OPPOSITE_HORIZONTAL_ARROWS(0xf362u),
         OVAL(0xf111u, scale = Scale(1f, 0.618f)), // base icon is a Circle
         OVERLAPPED_PAGES(0xf0c5u),
         PAGE_OVER_CLIPBOARD(0xf0eau),
@@ -197,7 +198,6 @@ enum class Icon(private val shape: Shape) {
         PLAY(0xf04bu),
         PLUS(0x2bu),
         RECTANGLE(0xf2fau),
-        DIAMOND_SIDEWAYS(0xe23bu, rotate = 90f),
         ROTATE(0xf2f1u),
         ROTATE_LEFT(0xf2eau),
         SCISSORS(0xf0c4u),
