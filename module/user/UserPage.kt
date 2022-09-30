@@ -202,15 +202,17 @@ package com.vaticle.typedb.studio.module.user
 //        }
 //    }
 //
-//    @Composable
-//    private fun TypeSections() {
-//        LabelSection()
-//        Separator()
-//        SupertypeSection()
-//        AbstractSection()
-//        MainSections()
-//        ButtonsSection()
-//    }
+    @Composable
+    private fun UserSections() {
+        NameSection()
+
+        LabelSection()
+        Separator()
+        SupertypeSection()
+        AbstractSection()
+        MainSections()
+        ButtonsSection()
+    }
 //
 //    @Composable
 //    private fun LabelSection() {
