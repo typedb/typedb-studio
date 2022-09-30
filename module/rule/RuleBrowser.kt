@@ -27,7 +27,7 @@ import com.vaticle.typedb.studio.state.common.util.Label
 class RuleBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
 
     override val label: String = Label.RULES
-    override val icon: Icon.Code = Icon.Code.DIAGRAM_SUBTASK
+    override val icon: Icon = Icon.RULES
     override val isActive: Boolean get() = false // TODO
     override val buttons: List<IconButtonArg> = listOf()
 

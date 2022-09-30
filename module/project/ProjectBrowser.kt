@@ -38,7 +38,6 @@ import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.IconArg
 import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.Icon.Code.FOLDER_PLUS
 import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.state.StudioState
@@ -55,7 +54,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
     }
 
     override val label: String = Label.PROJECT
-    override val icon: Icon.Code = Icon.Code.FOLDER_BLANK
+    override val icon: Icon = Icon.FOLDER
     override val isActive: Boolean get() = StudioState.project.current != null
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
@@ -73,7 +72,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
         ) {
             Form.TextButton(
                 text = Label.OPEN_PROJECT,
-                leadingIcon = IconArg(Icon.Code.FOLDER_OPEN)
+                leadingIcon = IconArg(Icon.FOLDER_OPEN)
             ) { StudioState.project.openProjectDialog.open() }
         }
     }
@@ -113,15 +112,15 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
     private fun pathIcon(itemState: Navigator.ItemState<PathState>): IconArg {
         return when (itemState.item) {
             is DirectoryState -> when {
-                itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE)
-                itemState.isExpanded -> IconArg(Icon.Code.FOLDER_OPEN)
-                else -> IconArg(Icon.Code.FOLDER_BLANK)
+                itemState.item.isSymbolicLink -> IconArg(Icon.SYMLINK)
+                itemState.isExpanded -> IconArg(Icon.FOLDER_OPEN)
+                else -> IconArg(Icon.FOLDER)
             }
             is FileState -> when {
-                itemState.item.asFile().isTypeQL && itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE) { Theme.studio.secondary }
-                itemState.item.asFile().isTypeQL -> IconArg(Icon.Code.RECTANGLE_CODE) { Theme.studio.secondary }
-                itemState.item.isSymbolicLink -> IconArg(Icon.Code.LINK_SIMPLE)
-                else -> IconArg(Icon.Code.FILE_LINES)
+                itemState.item.asFile().isTypeQL && itemState.item.isSymbolicLink -> IconArg(Icon.SYMLINK) { Theme.studio.secondary }
+                itemState.item.asFile().isTypeQL -> IconArg(Icon.FILE_TYPEQL) { Theme.studio.secondary }
+                itemState.item.isSymbolicLink -> IconArg(Icon.SYMLINK)
+                else -> IconArg(Icon.FILE_OTHER)
             }
         }
     }
@@ -141,36 +140,36 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
         val directory = itemState.item.asDirectory()
         return listOf(
             listOf(
-                ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.Code.FOLDER_OPEN) { itemState.toggle() },
+                ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.FOLDER_OPEN) { itemState.toggle() },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.CREATE_DIRECTORY,
-                    icon = FOLDER_PLUS,
+                    icon = Icon.DIRECTORY_CREATE,
                     enabled = !directory.isProjectData,
                 ) { directory.initiateCreateDirectory { itemState.expand() } },
                 ContextMenu.Item(
                     label = Label.CREATE_FILE,
-                    icon = Icon.Code.FILE_PLUS,
+                    icon = Icon.FILE_CREATE,
                     enabled = !directory.isProjectData,
                 ) { directory.initiateCreateFile { itemState.expand() } },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.RENAME,
-                    icon = Icon.Code.PEN,
+                    icon = Icon.RENAME,
                     enabled = !directory.isProjectData,
                 ) { directory.initiateRename() },
                 ContextMenu.Item(
                     label = Label.MOVE,
-                    icon = Icon.Code.FOLDER_ARROW_DOWN,
+                    icon = Icon.FILE_CREATE,
                     enabled = !directory.isProjectData,
                 ) { directory.initiateMove() }
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.DELETE,
-                    icon = Icon.Code.TRASH_CAN,
+                    icon = Icon.DELETE,
                     enabled = !directory.isRoot && !directory.isProjectData,
                 ) { directory.initiateDelete { itemState.navState.reloadEntriesAsync() } }
             )
@@ -183,25 +182,25 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
             listOf(
                 ContextMenu.Item(
                     label = Label.OPEN,
-                    icon = Icon.Code.BLOCK_QUOTE
+                    icon = Icon.FILE_OPEN
                 ) { file.tryOpen() },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.RENAME,
-                    icon = Icon.Code.PEN,
+                    icon = Icon.RENAME,
                     enabled = !file.isProjectData,
                 ) { file.initiateRename() },
                 ContextMenu.Item(
                     label = Label.MOVE,
-                    icon = Icon.Code.FOLDER_ARROW_DOWN,
+                    icon = Icon.MOVE,
                     enabled = !file.isProjectData,
                 ) { file.initiateMove() },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.DELETE,
-                    icon = Icon.Code.TRASH_CAN,
+                    icon = Icon.DELETE,
                     enabled = !file.isProjectData,
                 ) { file.initiateDelete { itemState.navState.reloadEntriesAsync() } }
             )

@@ -77,7 +77,7 @@ class TypeBrowserTest: IntegrationTest() {
                 StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                clickAllInstancesOfIcon(composeRule, Icon.Code.CHEVRONS_UP)
+                clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
 
                 delayAndRecompose(composeRule)
 
@@ -98,12 +98,12 @@ class TypeBrowserTest: IntegrationTest() {
 
                 StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
 
-                clickAllInstancesOfIcon(composeRule, Icon.Code.CHEVRONS_UP)
+                clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
                 delayAndRecompose(composeRule)
 
                 assertNodeNotExistsWithText(composeRule, text = "commit-date")
 
-                clickAllInstancesOfIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
+                clickAllInstancesOfIcon(composeRule, Icon.EXPAND)
                 delayAndRecompose(composeRule)
 
                 assertNodeExistsWithText(composeRule, text = "commit-date")

@@ -108,15 +108,15 @@ class Graph(private val interactions: Interactions) {
                 simulation.alpha = value
             }
         val drag = Drag(this)
-        var forceSource = ForceSource.Query
+        var forceSource = ForceSource.QUERY
         private var edgeCurveProviders = ConcurrentHashMap<Edge, com.vaticle.force.graph.api.Vertex>()
 
         fun step() {
             if (isStable || graph.isEmpty()) return
             if (isStepRunning.compareAndSet(false, true)) {
                 when (forceSource) {
-                    ForceSource.Query -> initialiseForces()
-                    ForceSource.Drag -> drag.initialiseForces(interactions.draggedVertex)
+                    ForceSource.QUERY -> initialiseForces()
+                    ForceSource.DRAG -> drag.initialiseForces(interactions.draggedVertex)
                 }
                 simulation.tick()
                 iteration++
@@ -191,7 +191,7 @@ class Graph(private val interactions: Interactions) {
             }
         }
 
-        enum class ForceSource { Query, Drag }
+        enum class ForceSource { QUERY, DRAG }
 
         class Drag(private val physics: Physics) {
 
@@ -201,7 +201,7 @@ class Graph(private val interactions: Interactions) {
 
             fun onDragStart(vertex: Vertex) {
                 freezePermanently(vertex)
-                physics.forceSource = ForceSource.Drag
+                physics.forceSource = ForceSource.DRAG
                 simulation.apply {
                     alpha = 0.25
                     alphaDecay = 0.0

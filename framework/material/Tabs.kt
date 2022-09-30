@@ -87,7 +87,7 @@ object Tabs {
             tabs: List<T>,
             position: Position,
             labelFn: (T) -> String,
-            iconFn: (T) -> Icon.Code,
+            iconFn: (T) -> Icon,
             isActiveFn: (T) -> Boolean,
             onClick: (T) -> Unit,
         ) {
@@ -103,7 +103,7 @@ object Tabs {
             tab: T,
             position: Position,
             labelFn: (T) -> String,
-            iconFn: (T) -> Icon.Code,
+            iconFn: (T) -> Icon,
             isActiveFn: (T) -> Boolean,
             onClick: (T) -> Unit,
         ) {
@@ -260,7 +260,7 @@ object Tabs {
                         leadingIconButton?.let { Button(it) }
                         icon?.let {
                             Spacer()
-                            Icon.Render(icon = it.code, color = it.color(), size = TAB_ICON_SIZE)
+                            Icon.Render(icon = it.icon, color = it.color(), size = TAB_ICON_SIZE)
                             Spacer()
                         }
                         if (leadingIconButton == null && icon == null) Spacer()
@@ -291,7 +291,7 @@ object Tabs {
         @Composable
         private fun <T : Any> PreviousTabsButton(state: State<T>) {
             Form.IconButton(
-                icon = Icon.Code.CARET_LEFT,
+                icon = Icon.PREVIOUS_LEFT,
                 modifier = Modifier.size(HEIGHT),
                 bgColor = Color.Transparent,
                 roundedCorners = Theme.RoundedCorners.NONE,
@@ -302,7 +302,7 @@ object Tabs {
         @Composable
         private fun <T : Any> NextTabsButton(state: State<T>) {
             Form.IconButton(
-                icon = Icon.Code.CARET_RIGHT,
+                icon = Icon.NEXT_RIGHT,
                 modifier = Modifier.size(HEIGHT),
                 bgColor = Color.Transparent,
                 roundedCorners = Theme.RoundedCorners.NONE,

@@ -101,7 +101,7 @@ object DatabaseDialog {
                     Spacer(modifier = Modifier.weight(1f))
                     TextButton(
                         text = Label.REFRESH,
-                        leadingIcon = Form.IconArg(Icon.Code.ROTATE)
+                        leadingIcon = Form.IconArg(Icon.REFRESH)
                     ) { StudioState.client.refreshDatabaseList() }
                     FormRowSpacer()
                     TextButton(text = Label.CLOSE) { dialogState.close() }
@@ -118,7 +118,7 @@ object DatabaseDialog {
             buttonSide = ActionableList.Side.RIGHT,
             buttonFn = { databaseName ->
                 IconButtonArg(
-                    icon = Icon.Code.TRASH_CAN,
+                    icon = Icon.DELETE,
                     color = { Theme.studio.errorStroke },
                     onClick = {
                         StudioState.confirmation.submit(

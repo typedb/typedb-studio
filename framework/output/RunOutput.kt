@@ -38,7 +38,7 @@ import com.vaticle.typedb.studio.framework.material.Separator
 internal sealed class RunOutput {
 
     abstract val name: String
-    abstract val icon: Icon.Code
+    abstract val icon: Icon
     abstract val buttons: List<Form.IconButtonArg>
 
     @Composable

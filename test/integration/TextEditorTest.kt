@@ -54,10 +54,10 @@ class TextEditorTest: IntegrationTest() {
             val path = copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
-            clickIcon(composeRule, Icon.Code.PLUS)
+            clickIcon(composeRule, Icon.ADD)
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
-            clickIcon(composeRule, Icon.Code.FLOPPY_DISK)
+            clickIcon(composeRule, Icon.SAVE)
             val file = File("$path/Untitled1.tql")
             StudioState.project.saveFileDialog.file!!.trySave(file.toPath(), true)
             StudioState.project.current!!.reloadEntries()
@@ -121,8 +121,8 @@ class TextEditorTest: IntegrationTest() {
 
                 StudioState.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!.asFile().tryOpen()
 
-                clickIcon(composeRule, Icon.Code.PLAY, delayMillis = Delays.NETWORK_IO)
-                clickIcon(composeRule, Icon.Code.ROTATE, delayMillis = Delays.NETWORK_IO)
+                clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
+                clickIcon(composeRule, Icon.ROLLBACK, delayMillis = Delays.NETWORK_IO)
 
                 assertNodeNotExistsWithText(composeRule, text = "repo-id")
             }

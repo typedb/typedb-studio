@@ -33,10 +33,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Typography
-import com.vaticle.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.BlockStart
-import com.vaticle.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.Overflow
-import com.vaticle.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.Whitespace
-import com.vaticle.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.WordBreak
+import com.vaticle.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.BLOCK_START
+import com.vaticle.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.OVERFLOW
+import com.vaticle.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.WHITESPACE
+import com.vaticle.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.WORD_BREAK
 import com.vaticle.typedb.studio.framework.material.Form
 import java.util.concurrent.ConcurrentHashMap
 import org.jetbrains.skia.Font
@@ -97,7 +97,7 @@ internal class TextRenderer(private val viewport: Viewport) {
                 fullyDrawnWithoutTruncation = true
                 break
             } else {
-                val breakIndex = lineBreak.index - (if (lineBreak.reason == BlockStart) 1 else 0)
+                val breakIndex = lineBreak.index - (if (lineBreak.reason == BLOCK_START) 1 else 0)
                 var lineText = remainingText.substring(0 until breakIndex)
                 var textLine: TextLine
                 if (lines.size == maxLines - 1) {
@@ -136,22 +136,22 @@ internal class TextRenderer(private val viewport: Viewport) {
         var lineEndIndex = lineOverflowIndex
         while (lineEndIndex > 0) {
             val char = text[lineEndIndex]
-            if (char.isWhitespace()) return LineBreak(lineEndIndex, Whitespace)
+            if (char.isWhitespace()) return LineBreak(lineEndIndex, WHITESPACE)
             if (char.isWordBreakSymbol() && lineEndIndex < lineOverflowIndex) { // don't allow line to overflow
-                return LineBreak(lineEndIndex + 1, WordBreak)
+                return LineBreak(lineEndIndex + 1, WORD_BREAK)
             }
-            if (char.isBlockStartSymbol()) return LineBreak(lineEndIndex, BlockStart)
+            if (char.isBlockStartSymbol()) return LineBreak(lineEndIndex, BLOCK_START)
             lineEndIndex--
         }
-        return LineBreak(index = lineOverflowIndex, Overflow)
+        return LineBreak(index = lineOverflowIndex, OVERFLOW)
     }
 
     private data class LineBreak(val index: Int, val reason: Reason) {
         enum class Reason {
-            Whitespace,
-            WordBreak,
-            BlockStart,
-            Overflow
+            WHITESPACE,
+            WORD_BREAK,
+            BLOCK_START,
+            OVERFLOW
         }
     }
 

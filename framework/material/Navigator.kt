@@ -249,8 +249,8 @@ object Navigator {
         private val isCollapsing = AtomicBoolean(false)
         private val watchUpdate = AtomicBoolean(false)
         val buttons: List<IconButtonArg> = listOf(
-            IconButtonArg(Icon.Code.CHEVRONS_DOWN, tooltip = Tooltip.Arg(title = Label.EXPAND)) { expandAllAsync() },
-            IconButtonArg(Icon.Code.CHEVRONS_UP, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapseAsync() }
+            IconButtonArg(Icon.EXPAND, tooltip = Tooltip.Arg(title = Label.EXPAND)) { expandAllAsync() },
+            IconButtonArg(Icon.COLLAPSE, tooltip = Tooltip.Arg(title = Label.COLLAPSE)) { collapseAsync() }
         )
 
         fun reloadEntriesAsync() = coroutines.launchAndHandle(notification, LOGGER) { reloadEntries() }
@@ -492,7 +492,7 @@ object Navigator {
     private fun <T : Navigable<T>> ItemButton(item: ItemState<T>, itemHeight: Dp) {
         if (!item.isExpandable) Spacer(Modifier.size(itemHeight))
         else RawIconButton(
-            icon = if (item.isExpanded) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_RIGHT,
+            icon = if (item.isExpanded) Icon.ITEM_EXPANDED else Icon.ITEM_COLLAPSED,
             modifier = Modifier.size(itemHeight).onGloballyPositioned {
                 item.updateButtonArea(it.boundsInWindow())
             },
@@ -502,7 +502,7 @@ object Navigator {
     @Composable
     private fun <T : Navigable<T>> ItemIcon(item: ItemState<T>, iconArg: (ItemState<T>) -> IconArg) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
-            Icon.Render(icon = iconArg(item).code, color = iconArg(item).color())
+            Icon.Render(icon = iconArg(item).icon, color = iconArg(item).color())
         }
     }
 
