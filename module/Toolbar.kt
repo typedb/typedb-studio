@@ -63,7 +63,7 @@ object Toolbar {
     private val isConnected get() = StudioState.client.isConnected
     private val isScript get() = StudioState.client.isScriptMode
     private val isInteractive get() = StudioState.client.isInteractiveMode
-    private val hasOpenSession get() = StudioState.client.isConnected && StudioState.client.session.isOpen
+    private val hasOpenSession get() = StudioState.client.session.isOpen
     private val hasOpenTx get() = StudioState.client.session.transaction.isOpen
     private val isSchemaSession get() = StudioState.client.session.isSchema
     private val isDataSession get() = StudioState.client.session.isData
@@ -78,7 +78,7 @@ object Toolbar {
     private val isReadyToRunQuery get() = StudioState.client.isReadyToRunQuery
     private val hasRunnablePage get() = StudioState.pages.active?.isRunnable == true
     private val hasRunningQuery get() = StudioState.client.hasRunningQuery
-    private val hasRunningCommand get() = StudioState.client.hasRunningCommand
+    private val hasRunningCommand get() = StudioState.client.hasRunningCommand && StudioState.schema.hasRunningWrite
     private val hasStopSignal get() = StudioState.client.session.transaction.hasStopSignal
 
     @Composable
@@ -236,7 +236,7 @@ object Toolbar {
                         height = TOOLBAR_BUTTON_SIZE,
                         buttons = listOf(
                             TextButtonArg(
-                                text = schema.name.lowercase(),
+                                text = Label.SCHEMA.lowercase(),
                                 onClick = { StudioState.client.tryUpdateSessionType(schema) },
                                 color = { toggleButtonColor(isSchemaSession) },
                                 enabled = enabled,
@@ -247,7 +247,7 @@ object Toolbar {
                                 )
                             ),
                             TextButtonArg(
-                                text = data.name.lowercase(),
+                                text = Label.DATA.lowercase(),
                                 onClick = { StudioState.client.tryUpdateSessionType(data) },
                                 color = { toggleButtonColor(isDataSession) },
                                 enabled = enabled,
@@ -269,7 +269,7 @@ object Toolbar {
                         height = TOOLBAR_BUTTON_SIZE,
                         buttons = listOf(
                             TextButtonArg(
-                                text = write.name.lowercase(),
+                                text = Label.WRITE.lowercase(),
                                 onClick = { StudioState.client.tryUpdateTransactionType(write) },
                                 color = { toggleButtonColor(isWriteTransaction) },
                                 enabled = enabled,
@@ -280,7 +280,7 @@ object Toolbar {
                                 )
                             ),
                             TextButtonArg(
-                                text = read.name.lowercase(),
+                                text = Label.READ.lowercase(),
                                 onClick = { StudioState.client.tryUpdateTransactionType(read) },
                                 color = { toggleButtonColor(isReadTransaction) },
                                 enabled = enabled,

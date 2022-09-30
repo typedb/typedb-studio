@@ -48,17 +48,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.client.api.concept.thing.Entity
 import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.EntityType
 import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.ThingType
-import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Util.hyphenate
 import com.vaticle.typedb.studio.framework.common.Util.toDP
@@ -90,7 +87,8 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     override val icon: Form.IconArg = conceptIcon(typeState.conceptType)
 
     protected val isEditable
-        get() = !typeState.isRoot && StudioState.schema.isWritable && !StudioState.client.hasRunningCommand
+        get() = !typeState.isRoot && StudioState.schema.isWritable &&
+                !StudioState.schema.hasRunningWrite && !StudioState.client.hasRunningCommand
 
     private val focusReq = FocusRequester()
     private val horScroller = ScrollState(0)
@@ -169,21 +167,26 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     }
 
     @Composable
-    protected fun Separator(color: Color = Theme.studio.border.copy(alpha = FADED_OPACITY)) {
+    protected fun Separator(highlight: Boolean = false) {
         Separator.Horizontal(
-            color = color,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            color = when {
+                !highlight -> Theme.studio.border.copy(alpha = FADED_OPACITY)
+                else -> Theme.studio.warningStroke.copy(alpha = FADED_OPACITY / 3)
+            }
         )
     }
 
     @Composable
+    private fun mayHighlightBackgroundModifier(highlight: Boolean) = when {
+        highlight -> Modifier.background(Theme.studio.warningBackground.copy(alpha = FADED_OPACITY / 5))
+        else -> Modifier
+    }
+
+    @Composable
     protected fun AdvancedSections(sections: @Composable (separator: @Composable () -> Unit) -> Unit) {
-        val borderColor = if (!showAdvanced) Theme.studio.border.copy(alpha = FADED_OPACITY)
-        else Theme.studio.warningStroke.copy(alpha = FADED_OPACITY / 3)
-        val modifier = if (!showAdvanced) Modifier
-        else Modifier.background(Theme.studio.warningBackground.copy(alpha = FADED_OPACITY / 5))
-        SectionColumn(modifier) {
-            Separator(borderColor)
+        SectionColumn(mayHighlightBackgroundModifier(showAdvanced)) {
+            Separator(showAdvanced)
             SectionRow {
                 Form.Text(value = Label.ADVANCED)
                 Spacer(Modifier.weight(1f))
@@ -192,10 +195,10 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 ) { showAdvanced = !showAdvanced }
             }
             if (showAdvanced) {
-                Separator(borderColor)
-                sections { Separator(borderColor) }
+                Separator(showAdvanced)
+                sections { Separator(showAdvanced) }
             }
-            Separator(borderColor)
+            Separator(showAdvanced)
         }
     }
 
@@ -204,9 +207,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         LabelSection()
         Separator()
         SupertypeSection()
-        Separator()
         AbstractSection()
-        Separator()
         MainSections()
         ButtonsSection()
     }
@@ -240,11 +241,15 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
 
     @Composable
     private fun AbstractSection() {
-        SectionRow {
-            Form.Text(value = Label.ABSTRACT)
-            Spacer(Modifier.weight(1f))
-            Form.TextBox(((if (typeState.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
-            EditButton(typeState.canBeAbstract) { typeState.initiateChangeAbstract() }
+        SectionColumn(mayHighlightBackgroundModifier(typeState.isAbstract)) {
+            Separator(typeState.isAbstract)
+            SectionRow {
+                Form.Text(value = Label.ABSTRACT)
+                Spacer(Modifier.weight(1f))
+                Form.TextBox(((if (typeState.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
+                EditButton(typeState.canBeAbstract) { typeState.initiateChangeAbstract() }
+            }
+            Separator(typeState.isAbstract)
         }
     }
 
