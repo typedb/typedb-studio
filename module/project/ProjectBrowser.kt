@@ -54,7 +54,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
     }
 
     override val label: String = Label.PROJECT
-    override val icon: Icon = Icon.PROJECT
+    override val icon: Icon = Icon.FOLDER
     override val isActive: Boolean get() = StudioState.project.current != null
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
