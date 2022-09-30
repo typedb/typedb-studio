@@ -143,7 +143,7 @@ object Toolbar {
         @Composable
         private fun OpenProjectButton() {
             ToolbarIconButton(
-                icon = Icon.OPEN_PROJECT,
+                icon = Icon.FOLDER_OPEN,
                 onClick = { StudioState.project.openProjectDialog.open() },
                 tooltip = Tooltip.Arg(title = Label.OPEN_PROJECT_DIRECTORY)
             )
@@ -190,7 +190,7 @@ object Toolbar {
             @Composable
             private fun ManageDatabasesButton(enabled: Boolean) {
                 ToolbarIconButton(
-                    icon = Icon.MANAGE_DATABASE,
+                    icon = Icon.DATABASE,
                     onClick = {
                         StudioState.client.refreshDatabaseList()
                         StudioState.client.manageDatabasesDialog.open()

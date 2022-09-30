@@ -182,7 +182,7 @@ object Pages {
                 onClick = { it.activate() },
                 contextMenuFn = { state.contextMenuFn(it) },
                 closeButtonFn = { IconButtonArg(icon = Icon.CLOSE) { state.close(it) } },
-                buttons = listOf(IconButtonArg(Icon.NEW_PAGE, enabled = enabled) { onNewPage() })
+                buttons = listOf(IconButtonArg(Icon.ADD, enabled = enabled) { onNewPage() })
             )
             Separator.Horizontal()
             StudioState.pages.active?.let { state.openedPage(it, createPageFn).Layout() }

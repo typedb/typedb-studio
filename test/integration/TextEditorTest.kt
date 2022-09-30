@@ -54,7 +54,7 @@ class TextEditorTest: IntegrationTest() {
             val path = copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
-            clickIcon(composeRule, Icon.NEW_PAGE)
+            clickIcon(composeRule, Icon.ADD)
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
             clickIcon(composeRule, Icon.SAVE)

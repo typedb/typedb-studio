@@ -72,7 +72,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
         ) {
             Form.TextButton(
                 text = Label.OPEN_PROJECT,
-                leadingIcon = IconArg(Icon.OPEN_PROJECT)
+                leadingIcon = IconArg(Icon.FOLDER_OPEN)
             ) { StudioState.project.openProjectDialog.open() }
         }
     }
@@ -113,14 +113,14 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
         return when (itemState.item) {
             is DirectoryState -> when {
                 itemState.item.isSymbolicLink -> IconArg(Icon.SYMLINK)
-                itemState.isExpanded -> IconArg(Icon.OPEN_DIRECTORY)
+                itemState.isExpanded -> IconArg(Icon.FOLDER_OPEN)
                 else -> IconArg(Icon.FOLDER)
             }
             is FileState -> when {
                 itemState.item.asFile().isTypeQL && itemState.item.isSymbolicLink -> IconArg(Icon.SYMLINK) { Theme.studio.secondary }
-                itemState.item.asFile().isTypeQL -> IconArg(Icon.TYPEQL_FILE) { Theme.studio.secondary }
+                itemState.item.asFile().isTypeQL -> IconArg(Icon.FILE_TYPEQL) { Theme.studio.secondary }
                 itemState.item.isSymbolicLink -> IconArg(Icon.SYMLINK)
-                else -> IconArg(Icon.OTHER_FILE)
+                else -> IconArg(Icon.FILE_OTHER)
             }
         }
     }
@@ -140,17 +140,17 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
         val directory = itemState.item.asDirectory()
         return listOf(
             listOf(
-                ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.OPEN_DIRECTORY) { itemState.toggle() },
+                ContextMenu.Item(Label.EXPAND_COLLAPSE, Icon.FOLDER_OPEN) { itemState.toggle() },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.CREATE_DIRECTORY,
-                    icon = Icon.CREATE_DIRECTORY,
+                    icon = Icon.DIRECTORY_CREATE,
                     enabled = !directory.isProjectData,
                 ) { directory.initiateCreateDirectory { itemState.expand() } },
                 ContextMenu.Item(
                     label = Label.CREATE_FILE,
-                    icon = Icon.CREATE_FILE,
+                    icon = Icon.FILE_CREATE,
                     enabled = !directory.isProjectData,
                 ) { directory.initiateCreateFile { itemState.expand() } },
             ),
@@ -162,7 +162,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
                 ) { directory.initiateRename() },
                 ContextMenu.Item(
                     label = Label.MOVE,
-                    icon = Icon.CREATE_FILE,
+                    icon = Icon.FILE_CREATE,
                     enabled = !directory.isProjectData,
                 ) { directory.initiateMove() }
             ),
@@ -182,7 +182,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
             listOf(
                 ContextMenu.Item(
                     label = Label.OPEN,
-                    icon = Icon.OPEN_FILE
+                    icon = Icon.FILE_OPEN
                 ) { file.tryOpen() },
             ),
             listOf(

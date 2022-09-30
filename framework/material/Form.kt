@@ -856,7 +856,7 @@ object Form {
                 ),
                 textColor = Theme.studio.onPrimary,
                 focusReq = focusReq,
-                trailingIcon = IconArg(Icon.SELECT),
+                trailingIcon = IconArg(Icon.DROPDOWN_SELECT),
                 enabled = enabled,
                 tooltip = tooltip,
             ) { state.toggle() }

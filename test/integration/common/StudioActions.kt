@@ -162,7 +162,7 @@ object StudioActions {
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
         StudioState.notification.dismissAll()
 
-        clickIcon(composeRule, Icon.NEW_PAGE)
+        clickIcon(composeRule, Icon.ADD)
 
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)

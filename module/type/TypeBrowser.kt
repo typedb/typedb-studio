@@ -121,7 +121,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
             listOf(
                 ContextMenu.Item(
                     label = Label.CREATE_SUBTYPE,
-                    icon = Icon.CREATE_SUBTYPE,
+                    icon = Icon.SUBTYPE_CREATE,
                     enabled = schemaIsWritable
                 ) { typeState.initiateCreateSubtype { itemState.expand() } },
                 ContextMenu.Item(
@@ -167,7 +167,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
         Box(Modifier.fillMaxSize().background(Theme.studio.backgroundLight), Alignment.Center) {
             Form.TextButton(
                 text = Label.SELECT_DATABASE,
-                leadingIcon = Form.IconArg(Icon.SELECT_DATABASE)
+                leadingIcon = Form.IconArg(Icon.DATABASE)
             ) { StudioState.client.selectDBDialog.open() }
         }
     }

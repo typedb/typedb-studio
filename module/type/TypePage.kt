@@ -343,7 +343,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             ) { isKey = it }
             Form.TextButton(
                 text = Label.OWNS,
-                leadingIcon = Form.IconArg(Icon.ADD_OWNS) { Theme.studio.secondary },
+                leadingIcon = Form.IconArg(Icon.ADD) { Theme.studio.secondary },
                 enabled = isOwnable,
                 tooltip = Tooltip.Arg(Label.DEFINE_OWNS_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
                 onClick = { typeState.tryDefineOwnsAttributeType(attributeType!!, overriddenType, isKey) }
@@ -435,7 +435,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             }
             Form.TextButton(
                 text = Label.PLAYS,
-                leadingIcon = Form.IconArg(Icon.ADD_PLAYS) { Theme.studio.secondary },
+                leadingIcon = Form.IconArg(Icon.ADD) { Theme.studio.secondary },
                 enabled = isPlayable,
                 tooltip = Tooltip.Arg(Label.DEFINE_PLAYS_ROLE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
                 onClick = { typeState.tryDefinePlaysRoleType(roleType!!, overriddenType) }
@@ -635,7 +635,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 }
                 Form.TextButton(
                     text = Label.RELATES,
-                    leadingIcon = Form.IconArg(Icon.ADD_RELATES) { Theme.studio.secondary },
+                    leadingIcon = Form.IconArg(Icon.ADD) { Theme.studio.secondary },
                     enabled = isRelatable,
                     tooltip = Tooltip.Arg(
                         Label.DEFINE_RELATES_ROLE_TYPE,

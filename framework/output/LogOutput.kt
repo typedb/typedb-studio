@@ -87,7 +87,7 @@ internal class LogOutput constructor(
     private val coroutines = CoroutineScope(Dispatchers.Default)
 
     override val name: String = Label.LOG
-    override val icon: Icon = Icon.ALIGN_TEXT_LEFT
+    override val icon: Icon = Icon.TEXT_LEFT_ALIGN
     override val buttons: List<IconButtonArg> = listOf(
         IconButtonArg(Icon.COPY, tooltip = Tooltip.Arg(Label.COPY_All)) { copyToClipboard() },
         IconButtonArg(Icon.FIND, tooltip = Tooltip.Arg(Label.FIND)) { toggleFinder() },

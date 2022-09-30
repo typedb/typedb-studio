@@ -322,21 +322,21 @@ internal class EventHandler constructor(
 
     private fun increaseTextSizeMenuItem() = ContextMenu.Item(
         label = Label.INCREASE_TEXT_SIZE,
-        icon = Icon.INCREASE_TEXT_SIZE,
+        icon = Icon.TEXT_SIZE_INCREASE,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + =",
         enabled = !StudioState.editor.isMaxScale
     ) { StudioState.editor.increaseScale() }
 
     private fun decreaseTextSizeMenuItem() = ContextMenu.Item(
         label = Label.DECREASE_TEXT_SIZE,
-        icon = Icon.DECREASE_TEXT_SIZE,
+        icon = Icon.TEXT_SIZE_DECREASE,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + -",
         enabled = !StudioState.editor.isMinScale
     ) { StudioState.editor.decreaseScale() }
 
     private fun resetTextSizeMenuItem() = ContextMenu.Item(
         label = Label.RESET_TEXT_SIZE,
-        icon = Icon.RESET_TEXT_SIZE,
+        icon = Icon.TEXT_SIZE_RESET,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + 0",
         enabled = !StudioState.editor.isDefaultScale
     ) { StudioState.editor.resetScale() }
