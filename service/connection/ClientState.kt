@@ -61,6 +61,10 @@ class ClientState constructor(
         private val LOGGER = KotlinLogging.logger {}
     }
 
+    private val statusAtomic = AtomicReferenceState(DISCONNECTED)
+    private var _client: TypeDBClient? by mutableStateOf(null)
+    private var hasRunningCommandAtomic = AtomicBooleanState(false)
+    private var databaseListRefreshedTime = System.currentTimeMillis()
     val connectServerDialog = DialogState.Base()
     val selectDBDialog = DialogState.Base()
     val manageDatabasesDialog = DialogState.Base()
@@ -78,11 +82,7 @@ class ClientState constructor(
     val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     val session = SessionState(this, notificationSrv, preferenceSrv)
-    private val statusAtomic = AtomicReferenceState(DISCONNECTED)
-    private var _client: TypeDBClient? by mutableStateOf(null)
-    private var hasRunningCommandAtomic = AtomicBooleanState(false)
-    private var databaseListRefreshedTime = System.currentTimeMillis()
-    internal val isCluster get() = _client is TypeDBClient.Cluster
+    val isCluster get() = _client is TypeDBClient.Cluster
 
     private val coroutines = CoroutineScope(Dispatchers.Default)
 

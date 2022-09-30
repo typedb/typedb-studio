@@ -86,6 +86,7 @@ import com.vaticle.typedb.studio.module.project.ProjectDialog
 import com.vaticle.typedb.studio.module.type.TypeBrowser
 import com.vaticle.typedb.studio.module.type.TypeDialog
 import com.vaticle.typedb.studio.module.type.TypePage
+import com.vaticle.typedb.studio.module.user.UserBrowser
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
@@ -114,8 +115,8 @@ object Studio {
     private val browsers = listOf(
         ProjectBrowser(true, 1),
         TypeBrowser(true, 2),
-        // RuleBrowser(false, 3),
-        // UserBrowser(false, 4),
+        UserBrowser(false, 3),
+        // RuleBrowser(false, 4),
         // RoleBrowser(false, 5),
     )
 
