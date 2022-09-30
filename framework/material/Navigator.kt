@@ -502,7 +502,7 @@ object Navigator {
     @Composable
     private fun <T : Navigable<T>> ItemIcon(item: ItemState<T>, iconArg: (ItemState<T>) -> IconArg) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ICON_WIDTH)) {
-            Icon.Render(icon = iconArg(item).code, color = iconArg(item).color())
+            Icon.Render(icon = iconArg(item).icon, color = iconArg(item).color())
         }
     }
 

@@ -260,7 +260,7 @@ object Tabs {
                         leadingIconButton?.let { Button(it) }
                         icon?.let {
                             Spacer()
-                            Icon.Render(icon = it.code, color = it.color(), size = TAB_ICON_SIZE)
+                            Icon.Render(icon = it.icon, color = it.color(), size = TAB_ICON_SIZE)
                             Spacer()
                         }
                         if (leadingIconButton == null && icon == null) Spacer()

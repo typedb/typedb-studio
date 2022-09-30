@@ -136,7 +136,7 @@ object Form {
         val color: @Composable () -> Color = { Theme.studio.border }
     )
 
-    data class IconArg(val code: Icon, val color: @Composable () -> Color = { Theme.studio.icon })
+    data class IconArg(val icon: Icon, val color: @Composable () -> Color = { Theme.studio.icon })
 
     data class IconButtonArg(
         val icon: Icon,
@@ -354,13 +354,13 @@ object Form {
         ) {
             leadingIcon?.let {
                 ButtonSpacer()
-                Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
+                Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.icon, it.color()) }
             }
             ButtonSpacer()
             Text(text, textStyle = Theme.typography.body1, color = textColor)
             ButtonSpacer()
             trailingIcon?.let {
-                Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.code, it.color()) }
+                Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.icon, it.color()) }
                 ButtonSpacer()
             }
         }
@@ -639,7 +639,7 @@ object Form {
                     leadingIcon?.let {
                         ButtonSpacer()
                         Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) {
-                            Icon.Render(it.code, fadeable(it.color(), !enabled))
+                            Icon.Render(it.icon, fadeable(it.color(), !enabled))
                         }
                     }
                     ButtonSpacer()
@@ -649,7 +649,7 @@ object Form {
                 trailingIcon?.let {
                     Row {
                         Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) {
-                            Icon.Render(it.code, fadeable(it.color(), !enabled))
+                            Icon.Render(it.icon, fadeable(it.color(), !enabled))
                         }
                         ButtonSpacer()
                     }
