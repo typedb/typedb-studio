@@ -98,7 +98,7 @@ enum class Icon(private val shape: Shape) {
     THING(Shape.RECTANGLE),
     TICK(Shape.CHECK),
     TYPES(Shape.SITEMAP),
-    UNEXPANDED_ITEM(Shape.CHEVRON_RIGHT),
+    ITEM_COLLAPSED(Shape.CHEVRON_RIGHT),
     USERS(Shape.USERS);
 
     val unicode: String = shape.unicode

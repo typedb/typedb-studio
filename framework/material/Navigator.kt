@@ -492,7 +492,7 @@ object Navigator {
     private fun <T : Navigable<T>> ItemButton(item: ItemState<T>, itemHeight: Dp) {
         if (!item.isExpandable) Spacer(Modifier.size(itemHeight))
         else RawIconButton(
-            icon = if (item.isExpanded) Icon.ITEM_EXPANDED else Icon.UNEXPANDED_ITEM,
+            icon = if (item.isExpanded) Icon.ITEM_EXPANDED else Icon.ITEM_COLLAPSED,
             modifier = Modifier.size(itemHeight).onGloballyPositioned {
                 item.updateButtonArea(it.boundsInWindow())
             },
