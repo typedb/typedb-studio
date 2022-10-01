@@ -108,11 +108,11 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
     abstract fun tryChangeSupertype(supertypeState: TS)
     abstract override fun toString(): String
 
-    fun loadSupertypes(loadInheritables: Boolean = false) = schemaMgr.openOrGetReadTx()?.let { tx ->
+    fun loadSupertypes() = schemaMgr.openOrGetReadTx()?.let { tx ->
         val typeTx = conceptType.asRemote(tx)
         supertype = typeTx.supertype?.let {
             if (isSameEncoding(it)) createTypeState(asSameEncoding(it)) else null
-        }?.also { if (loadInheritables) it.loadInheritables() }
+        }?.also { it.loadInheritables() }
         supertypes = typeTx.supertypes
             .filter { isSameEncoding(it) && it != typeTx }
             .map { createTypeState(asSameEncoding(it)) }.toList().filterNotNull()
@@ -675,7 +675,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             onConfirm = { tryDeleteRoleType(roleType) }
         )
 
-        fun tryDeleteRoleType(roleType: Role) =schemaMgr.mayWriteAsync {
+        fun tryDeleteRoleType(roleType: Role) = schemaMgr.mayWriteAsync {
             try {
                 conceptType.asRemote(it).unsetRelates(roleType.conceptType)
                 loadConstraintsAsync()
