@@ -692,10 +692,23 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             supertypeState: Relation
         ) = super.tryChangeSupertype(schemaMgr.changeRelationSupertypeDialog) {
             conceptType.asRemote(it).setSupertype(supertypeState.conceptType)
-        } ?: Unit
+        }
 
-        fun tryDefineRelatesRoleType(roleType: String, overriddenType: Role?) {
-            // TODO
+        fun tryDefineRelatesRoleType(
+            roleType: String, overriddenType: Role?, onSuccess: (() -> Unit)?
+        ) = schemaMgr.mayWriteAsync { tx ->
+            try {
+                overriddenType?.let {
+                    conceptType.asRemote(tx).setRelates(roleType, it.name)
+                } ?: conceptType.asRemote(tx).setRelates(roleType)
+                loadRelatesRoleTypes()
+                onSuccess?.let { it() }
+            } catch (e: Exception) {
+                schemaMgr.notification.userError(
+                    LOGGER, Message.Schema.FAILED_TO_RELATE_ROLE_TYPE,
+                    name, roleType, e.message ?: UNKNOWN
+                )
+            }
         }
 
         fun initiateDeleteRoleType(roleType: Role) = schemaMgr.confirmation.submit(
