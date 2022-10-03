@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.module.connection
 
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,15 +34,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
-import com.vaticle.typedb.studio.framework.material.Form.Dropdown
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.IconButton
 import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
+import com.vaticle.typedb.studio.framework.material.Form.MultilineTextInput
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
@@ -70,7 +70,8 @@ object ServerDialog {
 
     private class ConnectServerForm : Form.State {
         var server: Property.Server by mutableStateOf(appData.server ?: TYPEDB)
-        var address: String by mutableStateOf(appData.address ?: "")
+        var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
+        var clusterAddresses: TextFieldValue by mutableStateOf(TextFieldValue(""))
         var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
@@ -82,25 +83,26 @@ object ServerDialog {
 
         override fun isValid(): Boolean {
             return when (server) {
-                TYPEDB -> !address.isBlank()
-                TYPEDB_CLUSTER -> !(address.isBlank() || username.isBlank() || password.isBlank())
+                TYPEDB -> !coreAddress.isBlank()
+                TYPEDB_CLUSTER -> !(clusterAddresses.text.isBlank() || username.isBlank() || password.isBlank())
             }
         }
 
         override fun trySubmit() {
             when (server) {
-                TYPEDB -> Service.client.tryConnectToTypeDBAsync(address) { Service.client.connectServerDialog.close() }
+                TYPEDB -> Service.client.tryConnectToTypeDBAsync(coreAddress) { Service.client.connectServerDialog.close() }
                 TYPEDB_CLUSTER -> when {
                     caCertificate.isBlank() -> Service.client.tryConnectToTypeDBClusterAsync(
-                        address, username, password, tlsEnabled
+                        clusterAddresses, username, password, tlsEnabled
                     ) { Service.client.connectServerDialog.close() }
                     else -> Service.client.tryConnectToTypeDBClusterAsync(
-                        address, username, password, caCertificate
+                        clusterAddresses, username, password, caCertificate
                     ) { Service.client.connectServerDialog.close() }
                 }
             }
             appData.server = server
-            appData.address = address
+            appData.coreAddress = coreAddress
+            appData.clusterAddresses = clusterAddresses.text
             appData.username = username
             appData.tlsEnabled = tlsEnabled
             appData.caCertificate = caCertificate
@@ -122,13 +124,15 @@ object ServerDialog {
             HEIGHT
         ) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
-                ServerFormField(state)
-                AddressFormField(state, Service.client.isDisconnected)
+                ServerFormButtons(state)
                 if (state.server == TYPEDB_CLUSTER) {
+                    ClusterAddressFormField(state, Service.client.isConnected)
                     UsernameFormField(state)
                     PasswordFormField(state)
                     TLSEnabledFormField(state)
                     if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
+                } else if (state.server == TYPEDB) {
+                    CoreAddressFormField(state, Service.client.isDisconnected)
                 }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -145,13 +149,19 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ServerFormField(state: ConnectServerForm) {
+    private fun ServerFormButtons(state: ConnectServerForm) {
         Field(label = Label.SERVER) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 TextButtonRow(
                     listOf(
-                        Form.TextButtonArg("TypeDB Core", color = { Form.toggleButtonColor(state.server == Property.Server.TYPEDB) }, enabled = Service.client.isDisconnected) {state.server = Property.Server.TYPEDB},
-                        Form.TextButtonArg("TypeDB Cluster", color = { Form.toggleButtonColor(state.server == Property.Server.TYPEDB_CLUSTER) }, enabled = Service.client.isDisconnected) { state.server = Property.Server.TYPEDB_CLUSTER}
+                        Form.TextButtonArg("TypeDB Core",
+                            color = { Form.toggleButtonColor(state.server == Property.Server.TYPEDB) },
+                            enabled = Service.client.isDisconnected)
+                            {state.server = Property.Server.TYPEDB},
+                        Form.TextButtonArg("TypeDB Cluster",
+                            color = { Form.toggleButtonColor(state.server == Property.Server.TYPEDB_CLUSTER) },
+                            enabled = Service.client.isDisconnected)
+                            { state.server = Property.Server.TYPEDB_CLUSTER}
                     )
                 )
             }
@@ -159,17 +169,33 @@ object ServerDialog {
     }
 
     @Composable
-    private fun AddressFormField(state: ConnectServerForm, shouldFocus: Boolean) {
+    private fun CoreAddressFormField(state: ConnectServerForm, shouldFocus: Boolean) {
         var modifier = Modifier.fillMaxSize()
         val focusReq = if (shouldFocus) FocusRequester() else null
         focusReq?.let { modifier = modifier.focusRequester(focusReq) }
         Field(label = Label.ADDRESS) {
             TextInput(
-                value = state.address,
+                value = state.coreAddress,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
-                onValueChange = { state.address = it },
+                onValueChange = { state.coreAddress = it },
                 enabled = Service.client.isDisconnected,
                 modifier = modifier
+            )
+        }
+        LaunchedEffect(focusReq) { focusReq?.requestFocus() }
+    }
+
+    @Composable
+    private fun ClusterAddressFormField(state: ConnectServerForm, shouldFocus: Boolean) {
+        var modifier = Modifier.fillMaxSize()
+        val focusReq = if (shouldFocus) FocusRequester() else null
+        focusReq?.let { modifier = modifier.focusRequester(focusReq) }
+        Field(label = Label.ADDRESS) {
+            MultilineTextInput(
+                value = state.clusterAddresses,
+                onValueChange = { state.clusterAddresses = it },
+                modifier = modifier,
+                onTextLayout = {}
             )
         }
         LaunchedEffect(focusReq) { focusReq?.requestFocus() }
