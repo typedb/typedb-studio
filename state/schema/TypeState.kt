@@ -33,8 +33,6 @@ import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchA
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
-import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
-import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_LOAD_TYPE
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.page.Navigable
 import com.vaticle.typedb.studio.state.page.Pageable
@@ -173,9 +171,16 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
     protected fun tryChangeSupertype(
         dialogState: SchemaManager.TypeDialogManager<*>, function: (TypeDBTransaction) -> Unit
     ) = schemaMgr.mayWriteAsync {
-        function(it)
-        dialogState.onSuccess?.invoke()
-        dialogState.close()
+        try {
+            function(it)
+            dialogState.onSuccess?.invoke()
+            dialogState.close()
+        } catch (e: Exception) {
+            schemaMgr.notification.userError(
+                LOGGER, Message.Schema.FAILED_TO_CHANGE_SUPERTYPE,
+                encoding.label, conceptType.label, e.message ?: UNKNOWN
+            )
+        }
     }
 
     open fun purge() {
@@ -283,7 +288,9 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 loadSubtypesRecursively()
                 callbacks.onSubtypesUpdated.forEach { it() }
             } catch (e: TypeDBClientException) {
-                schemaMgr.notification.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN)
+                schemaMgr.notification.userError(
+                    LOGGER, Message.Schema.FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN
+                )
             }
         }
 
@@ -389,9 +396,16 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         fun initiateChangeAbstract() = schemaMgr.changeAbstractDialog.open(this)
 
         fun tryChangeAbstract(isAbstract: Boolean) = schemaMgr.mayWriteAsync { tx ->
-            conceptType.asRemote(tx).let { if (isAbstract) it.setAbstract() else it.unsetAbstract() }
-            schemaMgr.changeAbstractDialog.close()
-            loadAbstract()
+            try {
+                conceptType.asRemote(tx).let { if (isAbstract) it.setAbstract() else it.unsetAbstract() }
+                schemaMgr.changeAbstractDialog.close()
+                loadAbstract()
+            } catch (e: Exception) {
+                schemaMgr.notification.userError(
+                    LOGGER, Message.Schema.FAILED_TO_CHANGE_ABSTRACT,
+                    encoding.label, e.message ?: UNKNOWN
+                )
+            }
         }
 
         fun tryDefinePlaysRoleType(roleType: Role, overriddenType: Role?) {
@@ -435,7 +449,9 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 purge()
                 schemaMgr.execOnTypesUpdated()
             } catch (e: Exception) {
-                schemaMgr.notification.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)
+                schemaMgr.notification.userError(
+                    LOGGER, Message.Schema.FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN
+                )
             }
         }
 
@@ -693,7 +709,10 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 conceptType.asRemote(it).unsetRelates(roleType.conceptType)
                 loadConstraintsAsync()
             } catch (e: Exception) {
-                schemaMgr.notification.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)
+                schemaMgr.notification.userError(
+                    LOGGER, Message.Schema.FAILED_TO_DELETE_TYPE,
+                    encoding.label, e.message ?: UNKNOWN
+                )
             }
         }
 
