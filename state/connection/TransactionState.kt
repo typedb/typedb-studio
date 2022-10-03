@@ -98,7 +98,7 @@ class TransactionState constructor(
         else try {
             val options = typeDBOptions()
                 .infer(infer.value)
-                .explain(infer.value)
+                .explain(explain.value)
                 .transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
             session.transaction(type, options)!!.apply {
                 onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN) }
