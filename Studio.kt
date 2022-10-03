@@ -115,8 +115,8 @@ object Studio {
     private val browsers = listOf(
         ProjectBrowser(true, 1),
         TypeBrowser(true, 2),
-        UserBrowser(false, 3),
-        // RuleBrowser(false, 4),
+        // RuleBrowser(false, 3),
+        // UserBrowser(false, 4),
         // RoleBrowser(false, 5),
     )
 
