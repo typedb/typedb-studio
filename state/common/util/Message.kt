@@ -202,7 +202,9 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val FAILED_TO_CREATE_TYPE =
                 Schema(5, "Failed to create %s type with label '%s' due to: %s.")
             val FAILED_TO_RENAME_TYPE =
-                Schema(6, "Failed to rename %s type with label '%s' to '%s' due to: %s.")
+                Schema(6, "Failed to rename %s type '%s' to '%s' due to: %s.")
+            val FAILED_OWN_ATTRIBUTE_TYPE =
+                Schema(7, "Failed to define %s type '%s' to own attribute type '%s'.")
         }
     }
 

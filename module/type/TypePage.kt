@@ -297,7 +297,11 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     private fun OwnsAttributeTypeAddition() {
         var attributeType: TypeState.Attribute? by remember { mutableStateOf(null) }
         val attributeTypeList = StudioState.schema.rootAttributeType?.subtypes
-            ?.filter { !typeState.ownsAttributeTypes.contains(it) }
+            ?.filter {
+                typeState.ownsAttributeTypeProperties.none { prop ->
+                    prop.attributeType == it || prop.overriddenType == it
+                }
+            }
             ?.sortedBy { it.name }
             ?: listOf()
 
@@ -346,7 +350,13 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 leadingIcon = Form.IconArg(Icon.ADD) { Theme.studio.secondary },
                 enabled = isOwnable,
                 tooltip = Tooltip.Arg(Label.DEFINE_OWNS_ATTRIBUTE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-                onClick = { typeState.tryDefineOwnsAttributeType(attributeType!!, overriddenType, isKey) }
+                onClick = {
+                    typeState.tryDefineOwnsAttributeType(attributeType!!, overriddenType, isKey) {
+                        attributeType = null
+                        overriddenType = null
+                        isKey = false
+                    }
+                }
             )
         }
     }
@@ -396,7 +406,9 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         var roleType: TypeState.Role? by remember { mutableStateOf(null) }
         val roleTypeList = StudioState.schema.rootRelationType?.subtypes
             ?.flatMap { it.relatesRoleTypes }
-            ?.filter { !typeState.playsRoleTypes.contains(it) }
+            ?.filter {
+                typeState.playsRoleTypeProperties.none { prop -> prop.roleType == it || prop.overriddenType == it }
+            }
             ?.sortedBy { it.scopedName }
             ?: listOf()
 

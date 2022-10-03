@@ -402,8 +402,21 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             // TODO
         }
 
-        fun tryDefineOwnsAttributeType(attributeType: Attribute, overriddenType: Attribute?, key: Boolean) {
-            // TODO
+        fun tryDefineOwnsAttributeType(
+            attributeType: Attribute, overriddenType: Attribute?, isKey: Boolean, onSuccess: () -> Unit
+        ) = schemaMgr.mayWriteAsync { tx ->
+            try {
+                overriddenType?.let {
+                    conceptType.asRemote(tx).setOwns(attributeType.conceptType, overriddenType.conceptType, isKey)
+                } ?: conceptType.asRemote(tx).setOwns(attributeType.conceptType, isKey)
+                loadOwnsAttributeTypes()
+                onSuccess()
+            } catch (e: Exception) {
+                schemaMgr.notification.userError(
+                    LOGGER, Message.Schema.FAILED_OWN_ATTRIBUTE_TYPE,
+                    encoding.label, name, attributeType.name, e.message ?: UNKNOWN
+                )
+            }
         }
 
         fun initiateRemoveOwnsAttributeType(attributeType: Attribute) {
