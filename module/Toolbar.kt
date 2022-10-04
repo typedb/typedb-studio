@@ -523,7 +523,7 @@ object Toolbar {
         @Composable
         private fun OpenPreferencesDialogButton() {
             ToolbarIconButton(
-                icon = Icon.Code.GEAR,
+                icon = Icon.PREFERENCES,
                 onClick = { StudioState.preference.preferencesDialog.toggle() },
                 tooltip = Tooltip.Arg(title = Label.OPEN_PREFERENCES)
             )

@@ -72,6 +72,7 @@ enum class Icon(private val shape: Shape) {
     OPEN(Shape.BLOCK_QUOTE),
     PASTE(Shape.PAGE_OVER_CLIPBOARD),
     PIN(Shape.THUMBTACK),
+    PREFERENCES(Shape.GEAR),
     PREVIEW(Shape.EYE),
     PREVIOUS_LEFT(Shape.CARET_LEFT),
     PREVIOUS_UP(Shape.CHEVRON_UP),
