@@ -65,6 +65,7 @@ import com.vaticle.typedb.studio.state.common.util.Label.OK
 import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_IGNORED_PATHS
 import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_MANAGER
 import com.vaticle.typedb.studio.state.common.util.Label.QUERY_RUNNER
+import com.vaticle.typedb.studio.state.common.util.Label.RESET
 import com.vaticle.typedb.studio.state.common.util.Label.SET_QUERY_LIMIT
 import com.vaticle.typedb.studio.state.common.util.Label.TEXT_EDITOR
 import com.vaticle.typedb.studio.state.common.util.Sentence.IGNORED_PATHS_CAPTION
@@ -355,9 +356,18 @@ object PreferenceDialog {
                 Separator.Horizontal()
                 ColumnSpacer()
                 Row {
-                    Column() {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                            ChangeFormButtons(state)
+                    Column {
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                                    ResetButton(state)
+                                }
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                    ChangeFormButtons(state)
+                                }
+                            }
                         }
                     }
                 }
@@ -387,6 +397,18 @@ object PreferenceDialog {
         }
         RowSpacer()
         RowSpacer()
+    }
+
+    @Composable
+    private fun ResetButton(state: PreferencesForm) {
+        if (state.modified) {
+            RowSpacer()
+            RowSpacer()
+            TextButton(RESET) {
+                focusedPreferenceGroup.reset()
+                state.modified = false
+            }
+        }
     }
 
     @Composable

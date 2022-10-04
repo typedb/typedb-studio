@@ -172,6 +172,7 @@ object Label {
     const val REPLACE_ALL = "Replace All"
     const val REPLACE_ALL_OCCURRENCES = "Replace All Occurrences"
     const val REPLACE_NEXT_OCCURRENCE = "Replace Next Occurrence"
+    const val RESET = "Reset"
     const val RESET_TEXT_SIZE = "Reset Text Size"
     const val ROLE = "Role"
     const val ROLES = "Roles"
