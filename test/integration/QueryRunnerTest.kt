@@ -73,16 +73,16 @@ class QueryRunnerTest: IntegrationTest() {
                 val sessionType = StudioState.client.session.type
                 assertEquals(sessionType, TypeDBSession.Type.DATA)
 
-                val priorTransaction = StudioState.client.session.transaction.transaction!!
-                val priorTransactionType = priorTransaction.type()
-                val priorTransactionIsInfer = priorTransaction.options().infer().get()
-                val priorTransactionIsSnapshot = StudioState.client.session.transaction.snapshot.value
-                val priorTransactionIsNotExplain = !priorTransaction.options().explain().get()
+                val transaction = StudioState.client.session.transaction.transaction!!
+                val transactionType = transaction.type()
+                val transactionIsInfer = transaction.options().infer().get()
+                val transactionIsSnapshot = StudioState.client.session.transaction.snapshot.value
+                val transactionIsNotExplain = !transaction.options().explain().get()
 
-                assertEquals(priorTransactionType, TypeDBTransaction.Type.READ)
-                assert(priorTransactionIsInfer)
-                assert(priorTransactionIsSnapshot)
-                assert(priorTransactionIsNotExplain)
+                assertEquals(transactionType, TypeDBTransaction.Type.READ)
+                assert(transactionIsInfer)
+                assert(transactionIsSnapshot)
+                assert(transactionIsNotExplain)
             }
         }
     }
