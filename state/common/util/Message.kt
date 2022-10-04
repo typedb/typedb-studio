@@ -34,7 +34,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
          * function with every new nested class added into ErrorMessage.
          */
         fun loadClasses() {
-            System; Framework; Connection; Project; Schema
+            System; Framework; Connection; Project; Schema; Preference
         }
     }
 
@@ -221,4 +221,15 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Visualiser(2, "This concept has been fully explained.")
         }
     }
+
+    class Preference(codeNumber: Int, messageBody: String) :
+        Message(CODE_PREFIX, codeNumber, MESSAGE_PREFIX, messageBody) {
+            companion object {
+                private const val CODE_PREFIX = "PRF"
+                private const val MESSAGE_PREFIX = "TypeDB Studio Preferences"
+
+                val UNEXPECTED_ERROR =
+                    Preference(1, "Unexpected error occurred in preferences.")
+            }
+        }
 }

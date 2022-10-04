@@ -64,15 +64,16 @@ import com.vaticle.typedb.studio.state.common.util.Label.MANAGE_PREFERENCES
 import com.vaticle.typedb.studio.state.common.util.Label.OK
 import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_IGNORED_PATHS
 import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_MANAGER
-import com.vaticle.typedb.studio.state.common.util.Label.QUERY
 import com.vaticle.typedb.studio.state.common.util.Label.QUERY_RUNNER
 import com.vaticle.typedb.studio.state.common.util.Label.SET_QUERY_LIMIT
 import com.vaticle.typedb.studio.state.common.util.Label.TEXT_EDITOR
 import com.vaticle.typedb.studio.state.common.util.Sentence.IGNORED_PATHS_CAPTION
 import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
 import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
+import com.vaticle.typedb.studio.state.common.util.Message.Preference.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.page.Navigable
-import java.util.Optional
+import java.lang.UnsupportedOperationException
+import mu.KotlinLogging
 
 object PreferenceDialog {
     private val WIDTH = 800.dp
@@ -83,8 +84,11 @@ object PreferenceDialog {
     private val PREFERENCE_GROUP_MIN_SIZE = 500.dp
 
     private val preferenceMgr = StudioState.preference
+    private val notificationMgr = StudioState.notification
     private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup(""))
     private var state by mutableStateOf(PreferencesForm())
+
+    private val LOGGER = KotlinLogging.logger {}
 
     sealed interface PreferenceField {
         val label: String
@@ -222,7 +226,8 @@ object PreferenceDialog {
         override val isExpandable = entries.isNotEmpty()
         override val isBulkExpandable = entries.isNotEmpty()
 
-        open val submit = {}
+        open val submit = {notificationMgr.systemError(LOGGER, UnsupportedOperationException(), UNEXPECTED_ERROR)}
+        open val reset = {notificationMgr.systemError(LOGGER, UnsupportedOperationException(), UNEXPECTED_ERROR)}
 
         override fun reloadEntries() {}
 
@@ -250,6 +255,7 @@ object PreferenceDialog {
             override val preferences: List<PreferenceField> = listOf(graphOutput)
 
             override val submit = { preferenceMgr.graphOutputEnabled = graphOutput.value }
+            override val reset = { graphOutput.value = preferenceMgr.graphOutputEnabled}
         }
 
         inner class TextEditor : PreferenceGroup(TEXT_EDITOR) {
@@ -259,6 +265,7 @@ object PreferenceDialog {
             override val preferences: List<PreferenceField> = listOf(autoSave)
 
             override val submit = { preferenceMgr.autoSave = autoSave.value }
+            override val reset = { autoSave.value = preferenceMgr.autoSave }
         }
 
         inner class ProjectManager : PreferenceGroup(PROJECT_MANAGER) {
@@ -274,7 +281,7 @@ object PreferenceDialog {
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
 
             override val submit = { preferenceMgr.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }}
-
+            override val reset = { ignoredPaths.value = preferenceMgr.ignoredPaths.joinToString(", ") }
         }
 
         inner class QueryRunner : PreferenceGroup(QUERY_RUNNER) {
@@ -289,6 +296,7 @@ object PreferenceDialog {
             override val preferences: List<PreferenceField> = listOf(matchQueryLimit)
 
             override val submit = { preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong()}
+            override val reset = { matchQueryLimit.value = preferenceMgr.matchQueryLimit.toString() }
         }
     }
 
@@ -301,7 +309,7 @@ object PreferenceDialog {
             title = MANAGE_PREFERENCES,
             behaviour = Navigator.Behaviour.Browser(clicksToOpenItem = 1),
             initExpandDepth = 0,
-            openFn = { focusedPreferenceGroup = it.item }
+            openFn = { focusedPreferenceGroup.reset(); state.modified = false; focusedPreferenceGroup = it.item }
         )
 
         Navigator.Layout(
@@ -370,7 +378,7 @@ object PreferenceDialog {
             state.cancel()
         }
         RowSpacer()
-        TextButton(APPLY, enabled = state.modified) {
+        TextButton(APPLY, enabled = state.modified && state.isValid()) {
             state.apply()
         }
         RowSpacer()
