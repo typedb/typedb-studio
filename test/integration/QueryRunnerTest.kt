@@ -38,6 +38,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProje
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
+import kotlin.test.assertEquals
 
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -45,7 +46,7 @@ import org.junit.Test
 class QueryRunnerTest: IntegrationTest() {
 
     @Test
-    fun toolbarTogglesAreReflected() {
+    fun toolbarTogglesSetQueryOptionsCorrectly() {
         withTypeDB { typeDB ->
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
@@ -68,20 +69,19 @@ class QueryRunnerTest: IntegrationTest() {
 
                 StudioState.pages.active?.let { if (it.isRunnable) it.asRunnable().mayOpenAndRun() }
 
-                val sessionIsData = StudioState.client.session.isData
-                val transactionIsRead = StudioState.client.session.transaction.transaction!!.type().isRead
-                val snapshotIsDisabled = !StudioState.client.session.transaction.snapshot.value
-
-                assert(sessionIsData)
-                assert(transactionIsRead)
-                assert(snapshotIsDisabled)
+                val sessionType = StudioState.client.session.type
+                assertEquals(sessionType, TypeDBSession.Type.DATA)
 
                 val priorTransaction = StudioState.client.session.transaction.transaction!!
-                val priorTransactionInfer = priorTransaction.options().infer().get()
-                val priorTransactionExplain = priorTransaction.options().explain().get()
+                val priorTransactionType = priorTransaction.type()
+                val priorTransactionIsInfer = priorTransaction.options().infer().get()
+                val priorTransactionIsNotSnapshot = !StudioState.client.session.transaction.snapshot.value
+                val priorTransactionIsNotExplain = !priorTransaction.options().explain().get()
 
-                assert(priorTransactionInfer)
-                assert(!priorTransactionExplain)
+                assertEquals(priorTransactionType, TypeDBTransaction.Type.READ)
+                assert(priorTransactionIsInfer)
+                assert(priorTransactionIsNotSnapshot)
+                assert(priorTransactionIsNotExplain)
             }
         }
     }
