@@ -33,6 +33,15 @@ import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchA
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
+import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_ABSTRACT
+import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_SUPERTYPE
+import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_CREATE_TYPE
+import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_CREATE_TYPE_DUE_TO_DUPLICATE
+import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
+import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_OWN_ATTRIBUTE_TYPE
+import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_PLAY_ROLE_TYPE
+import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_RELATE_ROLE_TYPE
+import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_RENAME_TYPE
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.page.Navigable
 import com.vaticle.typedb.studio.state.page.Pageable
@@ -83,17 +92,19 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
     var conceptType: T by mutableStateOf(conceptType)
     var supertype: TS? by mutableStateOf(supertype)
-    var supertypes: List<TS> by mutableStateOf(this.supertype?.let { listOf(it) } ?: listOf())
+    var supertypes: List<TS> by mutableStateOf(this.supertype?.let { listOf(it) } ?: listOf()) // exclude self
     var subtypesExplicit: List<TS> by mutableStateOf(listOf())
-    val subtypes: List<TS> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten()
+    val subtypes: List<TS> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten() // exclude self
 
     val isRoot get() = conceptType.isRoot
     var name: String by mutableStateOf(conceptType.label.name())
     var hasSubtypes: Boolean by mutableStateOf(false)
-    var ownsAttributeTypeProperties: List<AttributeTypeProperties> by mutableStateOf(emptyList())
-    val ownsAttributeTypes: List<Attribute> get() = ownsAttributeTypeProperties.map { it.attributeType }
-    var playsRoleTypeProperties: List<RoleTypeProperties> by mutableStateOf(emptyList())
-    val playsRoleTypes: List<Role> get() = playsRoleTypeProperties.map { it.roleType }
+    var ownsAttTypeProperties: List<AttributeTypeProperties> by mutableStateOf(emptyList())
+    val ownsAttTypes: List<Attribute> get() = ownsAttTypeProperties.map { it.attributeType }
+    var playsRolTypeProperties: List<RoleTypeProperties> by mutableStateOf(emptyList())
+    val playsRolTypes: List<Role> get() = playsRolTypeProperties.map { it.roleType }
+    val notifications get() = schemaMgr.notification
+    val coroutines get() = schemaMgr.coroutines
 
     protected abstract fun isSameEncoding(conceptType: Type): Boolean
     protected abstract fun asSameEncoding(conceptType: Type): T
@@ -106,14 +117,15 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
     abstract fun tryChangeSupertype(supertypeState: TS)
     abstract override fun toString(): String
 
-    fun loadSupertypes() = schemaMgr.openOrGetReadTx()?.let { tx ->
+    fun loadSupertypesAsync() = coroutines.launchAndHandle(notifications, LOGGER) { loadSupertypes() }
+
+    fun loadSupertypes(): Unit = schemaMgr.openOrGetReadTx()?.let { tx ->
         val typeTx = conceptType.asRemote(tx)
         supertype = typeTx.supertype?.let {
             if (isSameEncoding(it)) createTypeState(asSameEncoding(it)) else null
         }?.also { it.loadInheritables() }
-        supertypes = typeTx.supertypes
-            .filter { isSameEncoding(it) && it != typeTx }
-            .map { createTypeState(asSameEncoding(it)) }.toList().filterNotNull()
+        supertype?.loadSupertypes()
+        supertypes = supertype?.let { listOf(it) + it.supertypes } ?: listOf()
     } ?: Unit
 
     protected fun loadHasSubtypes() = schemaMgr.openOrGetReadTx()?.let {
@@ -121,7 +133,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         hasSubtypes = conceptType.asRemote(it).subtypesExplicit.findAny().isPresent
     }
 
-    fun loadSubtypesRecursivelyAsync() = schemaMgr.coroutines.launchAndHandle(schemaMgr.notification, LOGGER) {
+    fun loadSubtypesRecursivelyAsync() = coroutines.launchAndHandle(notifications, LOGGER) {
         loadSubtypesRecursively()
     }
 
@@ -161,9 +173,8 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             schemaMgr.execOnTypesUpdated()
             schemaMgr.renameTypeDialog.close()
         } catch (e: Exception) {
-            schemaMgr.notification.userError(
-                LOGGER, Message.Schema.FAILED_TO_RENAME_TYPE,
-                encoding.label, conceptType.label, label, e.message ?: UNKNOWN
+            notifications.userError(
+                LOGGER, FAILED_TO_RENAME_TYPE, encoding.label, conceptType.label, label, e.message ?: UNKNOWN
             )
         }
     }
@@ -176,8 +187,8 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             dialogState.onSuccess?.invoke()
             dialogState.close()
         } catch (e: Exception) {
-            schemaMgr.notification.userError(
-                LOGGER, Message.Schema.FAILED_TO_CHANGE_SUPERTYPE,
+            notifications.userError(
+                LOGGER, FAILED_TO_CHANGE_SUPERTYPE,
                 encoding.label, conceptType.label, e.message ?: UNKNOWN
             )
         }
@@ -268,15 +279,11 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             loadConstraintsAsync()
         }
 
-        fun exportSyntaxAsync(
-            onSuccess: (syntax: String) -> Unit
-        ) = schemaMgr.coroutines.launchAndHandle(schemaMgr.notification, LOGGER) {
-            schemaMgr.openOrGetReadTx()?.let { tx ->
-                conceptType.asRemote(tx).syntax?.let { onSuccess(it) }
-            }
+        fun exportSyntaxAsync(onSuccess: (String) -> Unit) = coroutines.launchAndHandle(notifications, LOGGER) {
+            schemaMgr.openOrGetReadTx()?.let { tx -> conceptType.asRemote(tx).syntax?.let { onSuccess(it) } }
         }
 
-        fun loadConstraintsAsync() = schemaMgr.coroutines.launchAndHandle(schemaMgr.notification, LOGGER) {
+        fun loadConstraintsAsync() = coroutines.launchAndHandle(notifications, LOGGER) {
             loadConstraints()
         }
 
@@ -288,13 +295,13 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 loadSubtypesRecursively()
                 callbacks.onSubtypesUpdated.forEach { it() }
             } catch (e: TypeDBClientException) {
-                schemaMgr.notification.userError(
+                notifications.userError(
                     LOGGER, Message.Schema.FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN
                 )
             }
         }
 
-        fun loadTypeDependenciesAsync() = schemaMgr.coroutines.launchAndHandle(schemaMgr.notification, LOGGER) {
+        fun loadTypeDependenciesAsync() = coroutines.launchAndHandle(notifications, LOGGER) {
             loadDependencies()
         }
 
@@ -350,7 +357,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                     load(typeTx = typeTx, attributeType = it, isKey = false, isInherited = true)
                 }
             }
-            ownsAttributeTypeProperties = properties
+            ownsAttTypeProperties = properties
         }
 
         private fun loadPlaysRoleTypes() {
@@ -371,14 +378,14 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 typeTx.playsExplicit.forEach { load(typeTx, it, false) }
                 typeTx.plays.filter { !loaded.contains(it) }.forEach { load(typeTx, it, true) }
             }
-            playsRoleTypeProperties = properties
+            playsRolTypeProperties = properties
         }
 
         protected fun tryCreateSubtype(
             label: String, dialogState: SchemaManager.TypeDialogManager<*>, creatorFn: (TypeDBTransaction) -> Unit
         ) {
-            if (schemaMgr.openOrGetReadTx()?.concepts()?.getThingType(label) != null) schemaMgr.notification.userError(
-                LOGGER, Message.Schema.FAILED_TO_CREATE_TYPE_DUE_TO_DUPLICATE, encoding.label, label
+            if (schemaMgr.openOrGetReadTx()?.concepts()?.getThingType(label) != null) notifications.userError(
+                LOGGER, FAILED_TO_CREATE_TYPE_DUE_TO_DUPLICATE, encoding.label, label
             ) else schemaMgr.mayWriteAsync { tx ->
                 try {
                     creatorFn(tx)
@@ -386,9 +393,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                     dialogState.close()
                     schemaMgr.execOnTypesUpdated()
                 } catch (e: Exception) {
-                    schemaMgr.notification.userError(
-                        LOGGER, Message.Schema.FAILED_TO_CREATE_TYPE, encoding.label, label, e.message ?: UNKNOWN
-                    )
+                    notifications.userError(LOGGER, FAILED_TO_CREATE_TYPE, encoding.label, label, e.message ?: UNKNOWN)
                 }
             }
         }
@@ -401,10 +406,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 schemaMgr.changeAbstractDialog.close()
                 loadAbstract()
             } catch (e: Exception) {
-                schemaMgr.notification.userError(
-                    LOGGER, Message.Schema.FAILED_TO_CHANGE_ABSTRACT,
-                    encoding.label, e.message ?: UNKNOWN
-                )
+                notifications.userError(LOGGER, FAILED_TO_CHANGE_ABSTRACT, encoding.label, e.message ?: UNKNOWN)
             }
         }
 
@@ -418,8 +420,8 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 loadOwnsAttributeTypes()
                 onSuccess()
             } catch (e: Exception) {
-                schemaMgr.notification.userError(
-                    LOGGER, Message.Schema.FAILED_TO_OWN_ATTRIBUTE_TYPE,
+                notifications.userError(
+                    LOGGER, FAILED_TO_OWN_ATTRIBUTE_TYPE,
                     encoding.label, name, attributeType.name, e.message ?: UNKNOWN
                 )
             }
@@ -439,9 +441,8 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 loadPlaysRoleTypes()
                 onSuccess()
             } catch (e: Exception) {
-                schemaMgr.notification.userError(
-                    LOGGER, Message.Schema.FAILED_TO_PLAY_ROLE_TYPE,
-                    encoding.label, name, roleType.name, e.message ?: UNKNOWN
+                notifications.userError(
+                    LOGGER, FAILED_TO_PLAY_ROLE_TYPE, encoding.label, name, roleType.name, e.message ?: UNKNOWN
                 )
             }
         }
@@ -462,9 +463,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 purge()
                 schemaMgr.execOnTypesUpdated()
             } catch (e: Exception) {
-                schemaMgr.notification.userError(
-                    LOGGER, Message.Schema.FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN
-                )
+                notifications.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)
             }
         }
 
@@ -651,10 +650,9 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             loadRelatesRoleTypes()
         }
 
-        fun loadRelatesRoleTypesRecursivelyAsync() =
-            schemaMgr.coroutines.launchAndHandle(schemaMgr.notification, LOGGER) {
-                loadRelatesRoleTypesRecursively()
-            }
+        fun loadRelatesRoleTypesRecursivelyAsync() = coroutines.launchAndHandle(notifications, LOGGER) {
+            loadRelatesRoleTypesRecursively()
+        }
 
         private fun loadRelatesRoleTypesRecursively() {
             loadRelatesRoleTypes()
@@ -717,10 +715,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 loadRelatesRoleTypes()
                 onSuccess?.let { it() }
             } catch (e: Exception) {
-                schemaMgr.notification.userError(
-                    LOGGER, Message.Schema.FAILED_TO_RELATE_ROLE_TYPE,
-                    name, roleType, e.message ?: UNKNOWN
-                )
+                notifications.userError(LOGGER, FAILED_TO_RELATE_ROLE_TYPE, name, roleType, e.message ?: UNKNOWN)
             }
         }
 
@@ -735,10 +730,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 conceptType.asRemote(it).unsetRelates(roleType.conceptType)
                 loadConstraintsAsync()
             } catch (e: Exception) {
-                schemaMgr.notification.userError(
-                    LOGGER, Message.Schema.FAILED_TO_DELETE_TYPE,
-                    encoding.label, e.message ?: UNKNOWN
-                )
+                notifications.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)
             }
         }
 
