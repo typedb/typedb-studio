@@ -43,7 +43,7 @@ class TransactionState constructor(
 ) {
 
     companion object {
-        const val ONE_HOUR_IN_MILLS = 60 * 60 * 1_000
+        const val ONE_HOUR_IN_MILLIS = 60 * 60 * 1_000
         private val LOGGER = KotlinLogging.logger {}
     }
 
@@ -98,7 +98,7 @@ class TransactionState constructor(
         else try {
             val options = typeDBOptions()
                 .infer(infer.value)
-                .explain(explain.value)
+                .explain(infer.value)
                 .transactionTimeoutMillis(ONE_HOUR_IN_MILLS)
             session.transaction(type, options)!!.apply {
                 onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN) }
