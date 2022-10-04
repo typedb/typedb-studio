@@ -81,12 +81,12 @@ object StudioActions {
     }
 
     fun copyFolder(source: String, destination: String): Path {
-        val destination = File(File(destination).absolutePath)
+        val absoluteDestination = File(File(destination).absolutePath)
 
-        destination.deleteRecursively()
-        File(source).copyRecursively(overwrite = true, target = destination)
+        absoluteDestination.deleteRecursively()
+        File(source).copyRecursively(overwrite = true, target = absoluteDestination)
 
-        return destination.toPath()
+        return absoluteDestination.toPath()
     }
 
     /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
