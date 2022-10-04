@@ -65,6 +65,7 @@ class QueryRunnerTest: IntegrationTest() {
 
                 clickText(composeRule, Label.DATA.lowercase())
                 clickText(composeRule, Label.READ.lowercase())
+                clickText(composeRule, Label.SNAPSHOT.lowercase())
                 clickText(composeRule, Label.INFER.lowercase())
 
                 StudioState.pages.active?.let { if (it.isRunnable) it.asRunnable().mayOpenAndRun() }
@@ -75,12 +76,12 @@ class QueryRunnerTest: IntegrationTest() {
                 val priorTransaction = StudioState.client.session.transaction.transaction!!
                 val priorTransactionType = priorTransaction.type()
                 val priorTransactionIsInfer = priorTransaction.options().infer().get()
-                val priorTransactionIsNotSnapshot = !StudioState.client.session.transaction.snapshot.value
+                val priorTransactionIsSnapshot = StudioState.client.session.transaction.snapshot.value
                 val priorTransactionIsNotExplain = !priorTransaction.options().explain().get()
 
                 assertEquals(priorTransactionType, TypeDBTransaction.Type.READ)
                 assert(priorTransactionIsInfer)
-                assert(priorTransactionIsNotSnapshot)
+                assert(priorTransactionIsSnapshot)
                 assert(priorTransactionIsNotExplain)
             }
         }
