@@ -109,7 +109,7 @@ class ProjectBrowserTest: IntegrationTest() {
             copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
-            clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
+            clickIcon(composeRule, Icon.EXPAND)
 
             assertNodeExistsWithText(composeRule, text = "file0")
         }
@@ -121,11 +121,11 @@ class ProjectBrowserTest: IntegrationTest() {
             copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
-            clickIcon(composeRule, Icon.Code.CHEVRONS_DOWN)
+            clickIcon(composeRule, Icon.EXPAND)
 
             assertNodeExistsWithText(composeRule, text = "file0")
 
-            clickIcon(composeRule, Icon.Code.CHEVRONS_UP)
+            clickIcon(composeRule, Icon.COLLAPSE)
 
             assertNodeExistsWithText(composeRule, text = testID)
             assertNodeNotExistsWithText(composeRule, text = "file0")

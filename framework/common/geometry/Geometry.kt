@@ -22,8 +22,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.AngularDirection.Clockwise
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.AngularDirection.CounterClockwise
+import com.vaticle.typedb.studio.framework.common.geometry.Geometry.AngularDirection.CLOCKWISE
+import com.vaticle.typedb.studio.framework.common.geometry.Geometry.AngularDirection.COUNTER_CLOCKWISE
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
@@ -82,7 +82,7 @@ object Geometry {
 
         @Stable
         val direction: AngularDirection
-            get() = if (sweepAngle > 0) Clockwise else CounterClockwise
+            get() = if (sweepAngle > 0) CLOCKWISE else COUNTER_CLOCKWISE
 
         @Stable
         val endAngle: Float
@@ -103,8 +103,8 @@ object Geometry {
     }
 
     enum class AngularDirection {
-        Clockwise,
-        CounterClockwise
+        CLOCKWISE,
+        COUNTER_CLOCKWISE
     }
 
     fun midpoint(from: Offset, to: Offset): Offset {
@@ -240,8 +240,8 @@ object Geometry {
         val fromAngle = from.normalisedAngle()
         val toAngle = to.normalisedAngle()
         return when (direction) {
-            Clockwise -> if (toAngle > fromAngle) toAngle - fromAngle else 360 + toAngle - fromAngle
-            CounterClockwise -> if (toAngle < fromAngle) toAngle - fromAngle else -360 + toAngle - fromAngle
+            CLOCKWISE -> if (toAngle > fromAngle) toAngle - fromAngle else 360 + toAngle - fromAngle
+            COUNTER_CLOCKWISE -> if (toAngle < fromAngle) toAngle - fromAngle else -360 + toAngle - fromAngle
         }
     }
 
@@ -402,7 +402,7 @@ object Geometry {
         val point3FromCentre = point3 - centrePoint
         val t3 = atan2(point3FromCentre.y, point3FromCentre.x).radToDeg()
 
-        val direction = if ((t2 in t1..t3) || (t3 in t2..t1) || (t1 in t3..t2)) Clockwise else CounterClockwise
+        val direction = if ((t2 in t1..t3) || (t3 in t2..t1) || (t1 in t3..t2)) CLOCKWISE else COUNTER_CLOCKWISE
         return Arc(topLeft = topLeft, size = size, startAngle = t1, sweepAngle = sweepAngle(t1, t3, direction))
     }
 

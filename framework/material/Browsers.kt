@@ -119,7 +119,7 @@ object Browsers {
         }
 
         abstract val label: String
-        abstract val icon: Icon.Code
+        abstract val icon: Icon
         abstract val isActive: Boolean
         abstract val buttons: List<Form.IconButtonArg>
 
@@ -160,7 +160,7 @@ object Browsers {
                 Form.Text(value = label)
                 Spacer(Modifier.weight(1f))
                 Buttons(*buttons.toTypedArray(), isActive = isActive)
-                Buttons(Form.IconButtonArg(Icon.Code.XMARK) { toggle() }, isActive = true)
+                Buttons(Form.IconButtonArg(Icon.CLOSE) { toggle() }, isActive = true)
             }
         }
 

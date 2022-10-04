@@ -112,7 +112,7 @@ object RunOutputArea {
     @Composable
     private fun ToggleButton(state: State) {
         Form.IconButton(
-            icon = if (state.isOpen) Icon.Code.CHEVRON_DOWN else Icon.Code.CHEVRON_UP,
+            icon = if (state.isOpen) Icon.HIDE else Icon.SHOW,
             modifier = Modifier.size(PANEL_BAR_HEIGHT),
             bgColor = Color.Transparent,
             roundedCorners = Theme.RoundedCorners.NONE,
@@ -141,10 +141,10 @@ object RunOutputArea {
                     labelFn = { AnnotatedString(runnerName(it)) },
                     isActiveFn = { runnerMgr.isActive(it) },
                     onClick = { runnerMgr.activate(it) },
-                    closeButtonFn = { IconButtonArg(icon = Icon.Code.XMARK) { mayCloseRunner(it) } },
+                    closeButtonFn = { IconButtonArg(icon = Icon.CLOSE) { mayCloseRunner(it) } },
                     leadingButtonFn = {
                         IconButtonArg(
-                            icon = Icon.Code.THUMBTACK,
+                            icon = Icon.PIN,
                             color = { Theme.studio.icon.copy(if (runnerMgr.isSaved(it)) 1f else 0.3f) },
                             hoverColor = { Theme.studio.icon },
                             disabledColor = { Theme.studio.icon },

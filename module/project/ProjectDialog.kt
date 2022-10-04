@@ -153,7 +153,7 @@ object ProjectDialog {
                 )
                 RowSpacer()
                 Form.IconButton(
-                    icon = Icon.Code.FOLDER_OPEN,
+                    icon = Icon.FOLDER_OPEN,
                     tooltip = Tooltip.Arg(Label.OPEN_PROJECT_DIRECTORY)
                 ) { launchDirectorySelector(state, window, title) }
             }

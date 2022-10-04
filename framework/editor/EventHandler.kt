@@ -272,41 +272,41 @@ internal class EventHandler constructor(
 
     private fun cutSelectionMenuItem() = ContextMenu.Item(
         label = Label.CUT,
-        icon = Icon.Code.CUT,
+        icon = Icon.CUT,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + X",
         enabled = processor.isWritable && target.selection != null
     ) { cut() }
 
     private fun copySelectionMenuItem() = ContextMenu.Item(
         label = Label.COPY,
-        icon = Icon.Code.COPY,
+        icon = Icon.COPY,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + C",
         enabled = target.selection != null
     ) { copy() }
 
     private fun pasteTextMenuItem() = ContextMenu.Item(
         label = Label.PASTE,
-        icon = Icon.Code.PASTE,
+        icon = Icon.PASTE,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + V",
         enabled = processor.isWritable && !clipboard.getText().isNullOrBlank()
     ) { paste() }
 
     private fun findTextMenuItem() = ContextMenu.Item(
         label = Label.FIND,
-        icon = Icon.Code.MAGNIFYING_GLASS,
+        icon = Icon.FIND,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + F"
     ) { toolbar.showFinder() }
 
     private fun replaceMenuItem() = ContextMenu.Item(
         label = Label.REPLACE,
-        icon = Icon.Code.RIGHT_LEFT,
+        icon = Icon.REPLACE,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + R",
         enabled = processor.isWritable
     ) { toolbar.mayShowReplacer() }
 
     private fun runFileMenuItem() = ContextMenu.Item(
         label = Label.RUN_FILE,
-        icon = Icon.Code.PLAY,
+        icon = Icon.RUN,
         iconColor = { Theme.studio.secondary },
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
         enabled = processor.file?.isRunnable == true && StudioState.client.isReadyToRunQuery
@@ -314,7 +314,7 @@ internal class EventHandler constructor(
 
     private fun runSelectionMenuItem() = ContextMenu.Item(
         label = Label.RUN_SELECTION,
-        icon = Icon.Code.PLAY,
+        icon = Icon.RUN,
         iconColor = { Theme.studio.secondary },
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
         enabled = processor.file?.isRunnable == true && target.selection != null && StudioState.client.isReadyToRunQuery
@@ -322,21 +322,21 @@ internal class EventHandler constructor(
 
     private fun increaseTextSizeMenuItem() = ContextMenu.Item(
         label = Label.INCREASE_TEXT_SIZE,
-        icon = Icon.Code.ARROWS_MAXIMIZE,
+        icon = Icon.TEXT_SIZE_INCREASE,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + =",
         enabled = !StudioState.editor.isMaxScale
     ) { StudioState.editor.increaseScale() }
 
     private fun decreaseTextSizeMenuItem() = ContextMenu.Item(
         label = Label.DECREASE_TEXT_SIZE,
-        icon = Icon.Code.ARROWS_MINIMIZE,
+        icon = Icon.TEXT_SIZE_DECREASE,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + -",
         enabled = !StudioState.editor.isMinScale
     ) { StudioState.editor.decreaseScale() }
 
     private fun resetTextSizeMenuItem() = ContextMenu.Item(
         label = Label.RESET_TEXT_SIZE,
-        icon = Icon.Code.EXPAND,
+        icon = Icon.TEXT_SIZE_RESET,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + 0",
         enabled = !StudioState.editor.isDefaultScale
     ) { StudioState.editor.resetScale() }

@@ -54,7 +54,7 @@ class ConceptPreview constructor(
 ) : Browsers.Browser(isOpen, order) {
 
     override val label: String = Label.PREVIEW
-    override val icon: Icon.Code = Icon.Code.EYE
+    override val icon: Icon = Icon.PREVIEW
     override val isActive: Boolean = true
     override var buttons: List<Form.IconButtonArg> = emptyList()
 
@@ -100,7 +100,7 @@ class ConceptPreview constructor(
     private fun ConceptTypePreview(concept: Concept) {
         val type = if (concept is Type) concept else concept.asThing().type
         Row(verticalAlignment = Alignment.CenterVertically) {
-            conceptIcon(type).let { Icon.Render(it.code, it.color()) }
+            conceptIcon(type).let { Icon.Render(it.icon, it.color()) }
             Form.ButtonSpacer()
             Form.Text(ConceptDetailedLabel(type))
         }
