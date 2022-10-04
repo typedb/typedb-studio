@@ -26,13 +26,14 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.test.integration.common.StudioActions
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
@@ -55,7 +56,7 @@ class QueryRunnerTest: IntegrationTest() {
                 writeDataInteractively(composeRule, dbName = testID, SampleGitHubData.dataFile)
 
                 StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
-                StudioActions.delayAndRecompose(composeRule, StudioActions.Delays.NETWORK_IO)
+                delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
                 StudioState.project.current!!.directory.entries.find {
                     it.name == SampleGitHubData.collaboratorsQueryFile
@@ -65,10 +66,11 @@ class QueryRunnerTest: IntegrationTest() {
                 clickText(composeRule, Label.READ.lowercase())
                 clickText(composeRule, Label.INFER.lowercase())
 
-                clickIcon(composeRule, Icon.RUN, delayMillis = 0)
+                clickIcon(composeRule, Icon.RUN, Delays.INSTANT)
 
-                val priorTransactionInfer = StudioState.client.session.transaction.transaction!!.options().infer().get()
-                val priorTransactionExplain = StudioState.client.session.transaction.transaction!!.options().explain().get()
+                val priorTransaction = StudioState.client.session.transaction.transaction!!
+                val priorTransactionInfer = priorTransaction.options().infer().get()
+                val priorTransactionExplain = priorTransaction.options().explain().get()
 
                 assert(priorTransactionInfer && !priorTransactionExplain)
             }
