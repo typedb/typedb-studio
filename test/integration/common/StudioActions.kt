@@ -21,6 +21,7 @@
 
 package com.vaticle.typedb.studio.test.integration.common
 
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.hasClickAction
@@ -58,7 +59,7 @@ object StudioActions {
 
     suspend fun clickText(composeRule: ComposeContentTestRule, text: String, delayMillis: Int = Delays.RECOMPOSE) {
         composeRule.onNodeWithText(text).performClick()
-        delayAndRecompose(composeRule, delayMillis)
+        if (delayMillis > 0) delayAndRecompose(composeRule, delayMillis)
     }
 
     fun clickAllInstancesOfText(composeRule: ComposeContentTestRule, text: String) {
@@ -81,12 +82,12 @@ object StudioActions {
     }
 
     fun copyFolder(source: String, destination: String): Path {
-        val destination = File(File(destination).absolutePath)
+        val absoluteDestination = File(File(destination).absolutePath)
 
-        destination.deleteRecursively()
-        File(source).copyRecursively(overwrite = true, target = destination)
+        absoluteDestination.deleteRecursively()
+        File(source).copyRecursively(overwrite = true, target = absoluteDestination)
 
-        return destination.toPath()
+        return absoluteDestination.toPath()
     }
 
     /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
@@ -176,7 +177,6 @@ object StudioActions {
         StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
         clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
-
         clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE_FAILED) {
@@ -197,7 +197,6 @@ object StudioActions {
         StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
         clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
-
         clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, Errors.DATA_WRITE_FAILED) {
