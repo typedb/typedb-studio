@@ -45,7 +45,7 @@ import org.junit.Test
 class QueryRunnerTest: IntegrationTest() {
 
     @Test
-    fun inferNotExplainRegression() {
+    fun toolbarTogglesAreReflected() {
         withTypeDB { typeDB ->
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
@@ -68,11 +68,20 @@ class QueryRunnerTest: IntegrationTest() {
 
                 StudioState.pages.active?.let { if (it.isRunnable) it.asRunnable().mayOpenAndRun() }
 
+                val sessionIsData = StudioState.client.session.isData
+                val transactionIsRead = StudioState.client.session.transaction.transaction!!.type().isRead
+                val snapshotIsDisabled = !StudioState.client.session.transaction.snapshot.value
+
+                assert(sessionIsData)
+                assert(transactionIsRead)
+                assert(snapshotIsDisabled)
+
                 val priorTransaction = StudioState.client.session.transaction.transaction!!
                 val priorTransactionInfer = priorTransaction.options().infer().get()
                 val priorTransactionExplain = priorTransaction.options().explain().get()
 
-                assert(priorTransactionInfer && !priorTransactionExplain)
+                assert(priorTransactionInfer)
+                assert(!priorTransactionExplain)
             }
         }
     }
