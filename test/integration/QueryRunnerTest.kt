@@ -44,7 +44,7 @@ import org.junit.Test
 class QueryRunnerTest: IntegrationTest() {
 
     @Test
-    fun ExplainNotInferRegression() {
+    fun InferNotExplainRegression() {
         withTypeDB { typeDB ->
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())

@@ -21,7 +21,6 @@
 
 package com.vaticle.typedb.studio.test.integration.common
 
-import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.hasClickAction
@@ -177,6 +176,7 @@ object StudioActions {
         StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
 
         clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
+
         clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE_FAILED) {
@@ -197,6 +197,7 @@ object StudioActions {
         StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
 
         clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
+
         clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, Errors.DATA_WRITE_FAILED) {
