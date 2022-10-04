@@ -207,10 +207,12 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Schema(7, "Failed to change supertype of %s type '%s' due to: %s.")
             val FAILED_TO_CHANGE_ABSTRACT =
                 Schema(8, "Failed to change %s type to abstract / not abstract due to: %s.")
-            val FAILED_OWN_ATTRIBUTE_TYPE =
+            val FAILED_TO_OWN_ATTRIBUTE_TYPE =
                 Schema(9, "Failed to define %s type '%s' to own attribute type '%s' due to: %s.")
+            val FAILED_TO_PLAY_ROLE_TYPE =
+                Schema(10, "Failed to define %s type '%s' to play role type '%s' due to: %s.")
             val FAILED_TO_RELATE_ROLE_TYPE =
-                Schema(10, "Failed to define relation type '%s' to relate role type '%s' due to: %s.")
+                Schema(11, "Failed to define relation type '%s' to relate role type '%s' due to: %s.")
         }
     }
 

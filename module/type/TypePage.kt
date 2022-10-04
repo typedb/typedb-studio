@@ -450,7 +450,12 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 leadingIcon = Form.IconArg(Icon.ADD) { Theme.studio.secondary },
                 enabled = isPlayable,
                 tooltip = Tooltip.Arg(Label.DEFINE_PLAYS_ROLE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-                onClick = { typeState.tryDefinePlaysRoleType(roleType!!, overriddenType) }
+                onClick = {
+                    typeState.tryDefinePlaysRoleType(roleType!!, overriddenType) {
+                        roleType = null
+                        overriddenType = null
+                    }
+                }
             )
         }
     }

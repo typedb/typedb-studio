@@ -408,14 +408,6 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             }
         }
 
-        fun tryDefinePlaysRoleType(roleType: Role, overriddenType: Role?) {
-            // TODO
-        }
-
-        fun initiateRemovePlaysRoleType(roleType: Role) {
-            // TODO
-        }
-
         fun tryDefineOwnsAttributeType(
             attributeType: Attribute, overriddenType: Attribute?, isKey: Boolean, onSuccess: () -> Unit
         ) = schemaMgr.mayWriteAsync { tx ->
@@ -427,13 +419,34 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 onSuccess()
             } catch (e: Exception) {
                 schemaMgr.notification.userError(
-                    LOGGER, Message.Schema.FAILED_OWN_ATTRIBUTE_TYPE,
+                    LOGGER, Message.Schema.FAILED_TO_OWN_ATTRIBUTE_TYPE,
                     encoding.label, name, attributeType.name, e.message ?: UNKNOWN
                 )
             }
         }
 
         fun initiateRemoveOwnsAttributeType(attributeType: Attribute) {
+            // TODO
+        }
+
+        fun tryDefinePlaysRoleType(
+            roleType: Role, overriddenType: Role?, onSuccess: () -> Unit
+        ) = schemaMgr.mayWriteAsync { tx ->
+            try {
+                overriddenType?.let {
+                    conceptType.asRemote(tx).setPlays(roleType.conceptType, it.conceptType)
+                } ?: conceptType.asRemote(tx).setPlays(roleType.conceptType)
+                loadPlaysRoleTypes()
+                onSuccess()
+            } catch (e: Exception) {
+                schemaMgr.notification.userError(
+                    LOGGER, Message.Schema.FAILED_TO_PLAY_ROLE_TYPE,
+                    encoding.label, name, roleType.name, e.message ?: UNKNOWN
+                )
+            }
+        }
+
+        fun initiateRemovePlaysRoleType(roleType: Role) {
             // TODO
         }
 
