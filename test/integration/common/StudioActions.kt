@@ -58,9 +58,7 @@ object StudioActions {
 
     suspend fun clickText(composeRule: ComposeContentTestRule, text: String, delayMillis: Int = Delays.RECOMPOSE) {
         composeRule.onNodeWithText(text).performClick()
-        if (delayMillis > Delays.INSTANT) {
-            delayAndRecompose(composeRule, delayMillis)
-        }
+        delayAndRecompose(composeRule, delayMillis)
     }
 
     fun clickAllInstancesOfText(composeRule: ComposeContentTestRule, text: String) {
@@ -246,7 +244,6 @@ object StudioActions {
     }
 
     object Delays {
-        const val INSTANT = 0
         const val RECOMPOSE = 500
         const val FILE_IO = 750
         const val NETWORK_IO = 1_500

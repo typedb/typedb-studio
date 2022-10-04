@@ -66,7 +66,7 @@ class QueryRunnerTest: IntegrationTest() {
                 clickText(composeRule, Label.READ.lowercase())
                 clickText(composeRule, Label.INFER.lowercase())
 
-                clickIcon(composeRule, Icon.RUN, Delays.INSTANT)
+                StudioState.pages.active?.let { if (it.isRunnable) it.asRunnable().mayOpenAndRun() }
 
                 val priorTransaction = StudioState.client.session.transaction.transaction!!
                 val priorTransactionInfer = priorTransaction.options().infer().get()
