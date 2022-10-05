@@ -196,7 +196,7 @@ object PreferenceDialog {
         }
 
         class Checkbox(initialValue: Boolean, override var label: String,
-           override val caption: String? = null) : PreferenceField {
+                       override val caption: String? = null) : PreferenceField {
 
             var value by mutableStateOf(initialValue)
 
@@ -244,6 +244,7 @@ object PreferenceDialog {
             PreferenceGroup().ProjectManager(),
             PreferenceGroup().QueryRunner()
         )
+
         val rootPreferenceGroup = PreferenceGroup(entries = preferenceGroups)
 
         override fun cancel() {
