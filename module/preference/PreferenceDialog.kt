@@ -19,9 +19,12 @@
 package com.vaticle.typedb.studio.module.preference
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,9 +37,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.rememberComponentRectPositionProvider
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
@@ -113,17 +122,20 @@ object PreferenceDialog {
             }
         }
 
-        class TextInput(initialValue: String,
+        class ValidatedTextInput(initialValue: String,
                         override val label: String, override val caption: String? = null,
-                        private var placeholder: String,
-                        var validator: (String) -> Boolean = { true }) : PreferenceField {
+                        private val placeholder: String, private val invalidWarning: String,
+                        private val validator: (String) -> Boolean = { true }) : PreferenceField {
 
             var value by mutableStateOf(initialValue)
 
             @Composable
             override fun Display() {
+                val positionProvider = rememberComponentRectPositionProvider(
+                    offset = DpOffset(0.dp, -(2 * Form.FIELD_HEIGHT.value).dp)
+                )
                 Layout {
-                    var border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {
+                    val border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {
                         if (this.isValid()) Theme.studio.border else Theme.studio.errorStroke
                     }
                     TextInput(
@@ -132,11 +144,55 @@ object PreferenceDialog {
                         border = border,
                         onValueChange = { value = it; focusedPreferenceGroup.modified = true }
                     )
+                    if (!this.isValid()) {
+                        InvalidPopup(invalidWarning, positionProvider)
+                    }
                 }
             }
 
             override fun isValid(): Boolean {
                 return validator(value)
+            }
+
+            @Composable
+            fun InvalidPopup(text: String, popupPositionProvider: PopupPositionProvider) {
+                Popup(
+                    popupPositionProvider
+                ) {
+                    Box(
+                        Modifier.background(color = Theme.studio.errorBackground)
+                            .border(Form.BORDER_WIDTH, Theme.studio.errorStroke, RectangleShape)
+                    ) {
+                        Column {
+                            Row(Modifier.padding(5.dp), Arrangement.SpaceBetween) {
+                                Text(value = text, softWrap = true)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        class TextInput(initialValue: String,
+                                 override val label: String, override val caption: String? = null,
+                                 private val placeholder: String) : PreferenceField {
+
+            var value by mutableStateOf(initialValue)
+
+            @Composable
+            override fun Display() {
+                Layout {
+                    TextInput(
+                        value = value,
+                        placeholder = placeholder,
+                        border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {Theme.studio.border},
+                        onValueChange = { value = it; focusedPreferenceGroup.modified = true }
+                    )
+                }
+            }
+
+            override fun isValid(): Boolean {
+                return true
             }
         }
 
@@ -201,7 +257,7 @@ object PreferenceDialog {
 
         fun ok() {
             apply()
-            cancel()
+            if (rootPreferenceGroup.isValid()) cancel()
         }
 
         fun isModified(): Boolean {
@@ -213,13 +269,12 @@ object PreferenceDialog {
         }
 
         override fun trySubmit() {
-            for (preference in preferenceGroups) {
-                if (preference.isValid()) {
-                    preference.submit()
-                } else {
-                    focusedPreferenceGroup = preference
-                    break
-                }
+            preferenceGroups.forEach {
+                if (it.isValid()) it.submit()
+            }
+
+            if (preferenceGroups.any { !it.isValid() }) {
+                focusedPreferenceGroup = preferenceGroups.first { !it.isValid() }
             }
         }
     }
@@ -308,17 +363,23 @@ object PreferenceDialog {
 
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
 
-            override val submit = { modified = false; preferenceMgr.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }}
-            override val reset = { modified = false; ignoredPaths.value = preferenceMgr.ignoredPaths.joinToString(", ") }
+            override val submit = {
+                modified = false
+                preferenceMgr.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
+            }
+            override val reset = {
+                modified = false
+                ignoredPaths.value = preferenceMgr.ignoredPaths.joinToString(", ")
+            }
         }
 
         inner class QueryRunner : PreferenceGroup(QUERY_RUNNER) {
             private val QUERY_LIMIT_PLACEHOLDER = "1000"
 
-            var matchQueryLimit = PreferenceField.TextInput(
+            var matchQueryLimit = PreferenceField.ValidatedTextInput(
                 initialValue = preferenceMgr.matchQueryLimit.toString(),
                 label = SET_QUERY_LIMIT, placeholder = QUERY_LIMIT_PLACEHOLDER,
-                caption = PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
+                invalidWarning = "Please enter an integer.", caption = PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
             ) {/* validator = */ it.toLongOrNull() != null }
 
             override val preferences: List<PreferenceField> = listOf(matchQueryLimit)
