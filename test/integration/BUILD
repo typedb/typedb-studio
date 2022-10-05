@@ -78,6 +78,26 @@ typedb_kt_test(
     server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
 )
 
+typedb_kt_test(
+    name = "test-queryrunner",
+    srcs = ["QueryRunnerTest.kt"],
+    data = ["//test/integration/data:sample-github-data-files"],
+    test_class = "com.vaticle.typedb.studio.test.integration.QueryRunnerTest",
+    runtime_deps = skiko_runtime_platform,
+    deps = compose_test_libraries + [
+        "//framework/material",
+        "//state",
+        "//state/connection",
+        "//state/project",
+        "//state/page",
+        "//state/common",
+
+        "@vaticle_typedb_client_java//api",
+    ],
+    server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
+    server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
+    server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
+)
 
 kt_jvm_test(
     name = "test-projectbrowser",

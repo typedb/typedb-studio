@@ -262,10 +262,10 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
 
     @Composable
     private fun OwnsAttributeTypesTable() {
-        val tableHeight = TABLE_ROW_HEIGHT * (typeState.ownsAttributeTypes.size + 1).coerceAtLeast(2)
+        val tableHeight = TABLE_ROW_HEIGHT * (typeState.ownsAttTypes.size + 1).coerceAtLeast(2)
         SectionRow {
             Table.Layout(
-                items = typeState.ownsAttributeTypeProperties.sortedBy { it.attributeType.name },
+                items = typeState.ownsAttTypeProperties.sortedBy { it.attributeType.name },
                 modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
                 rowHeight = TABLE_ROW_HEIGHT,
                 columns = listOf(
@@ -296,18 +296,15 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     @Composable
     private fun OwnsAttributeTypeAddition() {
         var attributeType: TypeState.Attribute? by remember { mutableStateOf(null) }
+        val definedAttrTypes = (typeState.ownsAttTypes + typeState.supertypes.flatMap { it.ownsAttTypes }).toSet()
         val attributeTypeList = StudioState.schema.rootAttributeType?.subtypes
-            ?.filter {
-                typeState.ownsAttributeTypeProperties.none { prop ->
-                    prop.attributeType == it || prop.overriddenType == it
-                }
-            }
+            ?.filter { !definedAttrTypes.contains(it) }
             ?.sortedBy { it.name }
             ?: listOf()
 
         var overriddenType: TypeState.Attribute? by remember { mutableStateOf(null) }
         val overridableTypeList: List<TypeState.Attribute> = attributeType?.supertypes
-            ?.intersect(typeState.supertype!!.ownsAttributeTypes.toSet())
+            ?.intersect(typeState.supertype!!.ownsAttTypes.toSet())
             ?.sortedBy { it.name } ?: listOf()
 
         val isOwnable = isEditable && attributeType != null
@@ -321,7 +318,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     selected = attributeType,
                     placeholder = Label.ATTRIBUTE_TYPE.lowercase().hyphenate(),
                     onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursivelyAsync() },
-                    onSelection = { attributeType = it; it.loadSupertypes() },
+                    onSelection = { attributeType = it; it.loadSupertypesAsync() },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
@@ -364,7 +361,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     @Composable
     protected fun PlaysRoleTypesSection() {
         SectionRow { Form.Text(value = Label.PLAYS) }
-        RoleTypesTable(typeState.playsRoleTypeProperties) {
+        RoleTypesTable(typeState.playsRolTypeProperties) {
             MayRemoveIconButton(Label.REMOVE_PLAYS_ROLE_TYPE, it.isInherited, it.canBeUndefined) {
                 typeState.initiateRemovePlaysRoleType(it.roleType)
             }
@@ -404,17 +401,16 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     @Composable
     private fun PlaysRoleTypeAddition() {
         var roleType: TypeState.Role? by remember { mutableStateOf(null) }
+        val definedRoleTypes = (typeState.playsRolTypes + typeState.supertypes.flatMap { it.playsRolTypes }).toSet()
         val roleTypeList = StudioState.schema.rootRelationType?.subtypes
             ?.flatMap { it.relatesRoleTypes }
-            ?.filter {
-                typeState.playsRoleTypeProperties.none { prop -> prop.roleType == it || prop.overriddenType == it }
-            }
+            ?.filter { !definedRoleTypes.contains(it) }
             ?.sortedBy { it.scopedName }
             ?: listOf()
 
         var overriddenType: TypeState.Role? by remember { mutableStateOf(null) }
         val overridableTypeList: List<TypeState.Role> = roleType?.supertypes
-            ?.intersect(typeState.supertype!!.playsRoleTypes.toSet())
+            ?.intersect(typeState.supertype!!.playsRolTypes.toSet())
             ?.sortedBy { it.scopedName } ?: listOf()
 
         val isPlayable = isEditable && roleType != null
@@ -426,7 +422,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     selected = roleType,
                     placeholder = Label.ROLE_TYPE.lowercase().hyphenate(),
                     onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
-                    onSelection = { roleType = it; it.loadSupertypes() },
+                    onSelection = { roleType = it; it.loadSupertypesAsync() },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
                     modifier = Modifier.fillMaxSize(),
                     enabled = isEditable,
@@ -450,7 +446,12 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 leadingIcon = Form.IconArg(Icon.ADD) { Theme.studio.secondary },
                 enabled = isPlayable,
                 tooltip = Tooltip.Arg(Label.DEFINE_PLAYS_ROLE_TYPE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-                onClick = { typeState.tryDefinePlaysRoleType(roleType!!, overriddenType) }
+                onClick = {
+                    typeState.tryDefinePlaysRoleType(roleType!!, overriddenType) {
+                        roleType = null
+                        overriddenType = null
+                    }
+                }
             )
         }
     }
@@ -588,7 +589,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
 
     class Relation constructor(
         typeState: TypeState.Relation, coroutines: CoroutineScope
-    ) : TypePage<RelationType, TypeState.Relation>(typeState, typeState.playsRoleTypes.isNotEmpty(), coroutines) {
+    ) : TypePage<RelationType, TypeState.Relation>(typeState, typeState.playsRolTypes.isNotEmpty(), coroutines) {
 
         @Composable
         override fun MainSections() {
@@ -653,7 +654,12 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                         Label.DEFINE_RELATES_ROLE_TYPE,
                         Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION
                     ),
-                    onClick = { typeState.tryDefineRelatesRoleType(roleType, overriddenType) }
+                    onClick = {
+                        typeState.tryDefineRelatesRoleType(roleType, overriddenType) {
+                            roleType = ""
+                            overriddenType = null
+                        }
+                    }
                 )
             }
         }
@@ -663,7 +669,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         typeState: TypeState.Attribute, coroutines: CoroutineScope
     ) : TypePage<AttributeType, TypeState.Attribute>(
         typeState = typeState,
-        showAdvanced = typeState.ownsAttributeTypes.isNotEmpty() || typeState.playsRoleTypes.isNotEmpty(),
+        showAdvanced = typeState.ownsAttTypes.isNotEmpty() || typeState.playsRolTypes.isNotEmpty(),
         coroutines = coroutines
     ) {
 

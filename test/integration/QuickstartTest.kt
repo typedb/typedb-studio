@@ -33,7 +33,7 @@ import org.junit.Test
 class QuickstartTest: IntegrationTest() {
 
     @Test
-    fun Quickstart() {
+    fun quickstart() {
         withTypeDB { typeDB ->
             runBlocking {
                 connectToTypeDB(composeRule, typeDB.address())
