@@ -118,7 +118,11 @@ object PreferenceDialog {
 
         @Composable
         fun Caption() {
-            CaptionText(caption!!)
+            CaptionSpacer()
+            Row {
+                RowSpacer()
+                Text(caption!!, alpha = Color.FADED_OPACITY)
+            }
         }
 
         class TextInputValidated(initialValue: String,
@@ -320,7 +324,7 @@ object PreferenceDialog {
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        ResetButton(state)
+                        ResetButton(this@PreferenceGroup)
                     }
                 }
             }
@@ -337,7 +341,7 @@ object PreferenceDialog {
             override val preferences: List<PreferenceField> = listOf(graphOutput)
 
             override val submit = { modified = false; preferenceMgr.graphOutputEnabled = graphOutput.value }
-            override val reset = { modified = false; graphOutput.value = preferenceMgr.graphOutputEnabled}
+            override val reset = { modified = false; graphOutput.value = preferenceMgr.graphOutputEnabled }
         }
 
         inner class TextEditor : PreferenceGroup(TEXT_EDITOR) {
@@ -474,10 +478,10 @@ object PreferenceDialog {
     }
 
     @Composable
-    private fun ResetButton(state: PreferencesForm) {
-        if (focusedPreferenceGroup.isModified()) {
+    private fun ResetButton(preferenceGroup: PreferenceGroup) {
+        if (preferenceGroup.isModified()) {
             TextButton(RESET, modifier = Modifier.height(RESET_BUTTON_HEIGHT)) {
-                focusedPreferenceGroup.reset()
+                preferenceGroup.reset()
             }
         }
     }
@@ -487,14 +491,5 @@ object PreferenceDialog {
         ColumnSpacer()
         Separator.Horizontal()
         ColumnSpacer()
-    }
-
-    @Composable
-    private fun CaptionText(text: String) {
-        CaptionSpacer()
-        Row {
-            RowSpacer()
-            Text(text, alpha = Color.FADED_OPACITY)
-        }
     }
 }
