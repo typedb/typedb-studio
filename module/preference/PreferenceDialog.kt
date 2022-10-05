@@ -120,7 +120,6 @@ object PreferenceDialog {
         fun Caption() {
             CaptionSpacer()
             Row {
-                RowSpacer()
                 Text(caption!!, alpha = Color.FADED_OPACITY)
             }
         }
