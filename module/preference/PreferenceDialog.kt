@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,7 +36,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +63,7 @@ import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Label.APPLY
 import com.vaticle.typedb.studio.state.common.util.Label.CANCEL
 import com.vaticle.typedb.studio.state.common.util.Label.ENABLE_EDITOR_AUTOSAVE
@@ -112,20 +111,20 @@ object PreferenceDialog {
             Field(label) {
                 fieldContent()
             }
-            Caption()
+            if (!caption.isNullOrBlank()) {
+                Caption()
+            }
         }
 
         @Composable
         fun Caption() {
-            if (!caption.isNullOrBlank()) {
-                CaptionText(caption!!)
-            }
+            CaptionText(caption!!)
         }
 
-        class ValidatedTextInput(initialValue: String,
-                        override val label: String, override val caption: String? = null,
-                        private val placeholder: String, private val invalidWarning: String,
-                        private val validator: (String) -> Boolean = { true }) : PreferenceField {
+        class TextInputValidated(initialValue: String,
+                                 override val label: String, override val caption: String? = null,
+                                 private val placeholder: String, private val invalidWarning: String,
+                                 private val validator: (String) -> Boolean = { true }) : PreferenceField {
 
             var value by mutableStateOf(initialValue)
 
@@ -174,8 +173,8 @@ object PreferenceDialog {
         }
 
         class TextInput(initialValue: String,
-                                 override val label: String, override val caption: String? = null,
-                                 private val placeholder: String) : PreferenceField {
+                        override val label: String, override val caption: String? = null,
+                        private val placeholder: String) : PreferenceField {
 
             var value by mutableStateOf(initialValue)
 
@@ -197,7 +196,7 @@ object PreferenceDialog {
         }
 
         class Checkbox(initialValue: Boolean, override var label: String,
-                       override val caption: String? = null) : PreferenceField {
+           override val caption: String? = null) : PreferenceField {
 
             var value by mutableStateOf(initialValue)
 
@@ -376,15 +375,15 @@ object PreferenceDialog {
         inner class QueryRunner : PreferenceGroup(QUERY_RUNNER) {
             private val QUERY_LIMIT_PLACEHOLDER = "1000"
 
-            var matchQueryLimit = PreferenceField.ValidatedTextInput(
+            var matchQueryLimit = PreferenceField.TextInputValidated(
                 initialValue = preferenceMgr.matchQueryLimit.toString(),
                 label = SET_QUERY_LIMIT, placeholder = QUERY_LIMIT_PLACEHOLDER,
-                invalidWarning = "Please enter an integer.", caption = PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
+                invalidWarning = Label.PREFERENCE_INTEGER_WARNING, caption = PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
             ) {/* validator = */ it.toLongOrNull() != null }
 
             override val preferences: List<PreferenceField> = listOf(matchQueryLimit)
 
-            override val submit = { modified = false; preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong()}
+            override val submit = { modified = false; preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong() }
             override val reset = { modified = false; matchQueryLimit.value = preferenceMgr.matchQueryLimit.toString() }
         }
     }
