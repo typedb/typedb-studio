@@ -164,7 +164,7 @@ object PreferenceDialog {
                     ) {
                         Column {
                             Row(Modifier.padding(5.dp), Arrangement.SpaceBetween) {
-                                Text(value = text, softWrap = true)
+                                Text(value = text)
                             }
                         }
                     }
