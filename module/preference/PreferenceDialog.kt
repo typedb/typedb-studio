@@ -25,7 +25,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -83,6 +85,7 @@ object PreferenceDialog {
     private val NAVIGATOR_MIN_SIZE = 150.dp
     private val PREFERENCE_GROUP_INIT_SIZE = 600.dp
     private val PREFERENCE_GROUP_MIN_SIZE = 500.dp
+    private val RESET_BUTTON_HEIGHT = 20.dp
 
     private val preferenceMgr = StudioState.preference
     private val notificationMgr = StudioState.notification
@@ -119,10 +122,6 @@ object PreferenceDialog {
 
             var value by mutableStateOf(initialValue)
 
-            override fun isValid(): Boolean {
-                return validator(value)
-            }
-
             @Composable
             override fun Display() {
                 Layout {
@@ -133,9 +132,13 @@ object PreferenceDialog {
                         value = value,
                         placeholder = placeholder,
                         border = border,
-                        onValueChange = { value = it; state.modified = true }
+                        onValueChange = { value = it; focusedPreferenceGroup.modified = true }
                     )
                 }
+            }
+
+            override fun isValid(): Boolean {
+                return validator(value)
             }
         }
 
@@ -149,7 +152,7 @@ object PreferenceDialog {
                 Layout {
                     Checkbox(
                         value = value,
-                        onChange = { value = it; state.modified = true }
+                        onChange = { value = it; focusedPreferenceGroup.modified = true }
                     )
                 }
             }
@@ -170,7 +173,7 @@ object PreferenceDialog {
                     Form.Dropdown(
                         values = values,
                         selected = selected,
-                        onSelection = { selected = it; state.modified = true }
+                        onSelection = { selected = it; focusedPreferenceGroup.modified = true }
                     )
                 }
             }
@@ -188,7 +191,6 @@ object PreferenceDialog {
             PreferenceGroup().ProjectManager(),
             PreferenceGroup().QueryRunner()
         )
-        var modified by mutableStateOf(false)
         val rootPreferenceGroup = PreferenceGroup(entries = preferenceGroups)
 
         override fun cancel() {
@@ -196,9 +198,8 @@ object PreferenceDialog {
         }
 
         fun apply() {
-            if (isValid()) {
+            if (isModified()) {
                 trySubmit()
-                modified = false
             }
         }
 
@@ -207,12 +208,23 @@ object PreferenceDialog {
             cancel()
         }
 
+        fun isModified(): Boolean {
+            return rootPreferenceGroup.isModified()
+        }
+
         override fun isValid(): Boolean {
             return rootPreferenceGroup.isValid()
         }
 
         override fun trySubmit() {
-            preferenceGroups.forEach { it.submit() }
+            for (preference in preferenceGroups) {
+                if (preference.isValid()) {
+                    preference.submit()
+                } else {
+                    focusedPreferenceGroup = preference
+                    break
+                }
+            }
         }
     }
 
@@ -227,6 +239,8 @@ object PreferenceDialog {
         override val isExpandable = entries.isNotEmpty()
         override val isBulkExpandable = entries.isNotEmpty()
 
+        var modified by mutableStateOf(false)
+
         open val submit = {notificationMgr.systemError(LOGGER, UnsupportedOperationException(), UNEXPECTED_ERROR)}
         open val reset = {notificationMgr.systemError(LOGGER, UnsupportedOperationException(), UNEXPECTED_ERROR)}
 
@@ -236,6 +250,10 @@ object PreferenceDialog {
             return this.name.compareTo(other.name);
         }
 
+        fun isModified(): Boolean {
+            return this.modified || entries.any { it.isModified() }
+        }
+
         fun isValid(): Boolean {
             return preferences.all { it.isValid() } &&
                 entries.all { it.isValid() }
@@ -243,7 +261,19 @@ object PreferenceDialog {
 
         @Composable
         fun Display() {
-            PreferencesHeader(name)
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                        PreferencesHeader(name)
+                    }
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        ResetButton(state)
+                    }
+                }
+            }
+            SpacedHorizontalSeparator()
             preferences.forEach { it.Display() }
         }
 
@@ -255,18 +285,19 @@ object PreferenceDialog {
 
             override val preferences: List<PreferenceField> = listOf(graphOutput)
 
-            override val submit = { preferenceMgr.graphOutputEnabled = graphOutput.value }
-            override val reset = { graphOutput.value = preferenceMgr.graphOutputEnabled}
+            override val submit = { modified = false; preferenceMgr.graphOutputEnabled = graphOutput.value }
+            override val reset = { modified = false; graphOutput.value = preferenceMgr.graphOutputEnabled}
         }
 
         inner class TextEditor : PreferenceGroup(TEXT_EDITOR) {
             var autoSave = PreferenceField.Checkbox(
                 initialValue = preferenceMgr.autoSave, label = ENABLE_EDITOR_AUTOSAVE
             )
+
             override val preferences: List<PreferenceField> = listOf(autoSave)
 
-            override val submit = { preferenceMgr.autoSave = autoSave.value }
-            override val reset = { autoSave.value = preferenceMgr.autoSave }
+            override val submit = { modified = false; preferenceMgr.autoSave = autoSave.value }
+            override val reset = { modified = false; autoSave.value = preferenceMgr.autoSave }
         }
 
         inner class ProjectManager : PreferenceGroup(PROJECT_MANAGER) {
@@ -281,8 +312,8 @@ object PreferenceDialog {
 
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
 
-            override val submit = { preferenceMgr.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }}
-            override val reset = { ignoredPaths.value = preferenceMgr.ignoredPaths.joinToString(", ") }
+            override val submit = { modified = false; preferenceMgr.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }}
+            override val reset = { modified = false; ignoredPaths.value = preferenceMgr.ignoredPaths.joinToString(", ") }
         }
 
         inner class QueryRunner : PreferenceGroup(QUERY_RUNNER) {
@@ -296,8 +327,8 @@ object PreferenceDialog {
 
             override val preferences: List<PreferenceField> = listOf(matchQueryLimit)
 
-            override val submit = { preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong()}
-            override val reset = { matchQueryLimit.value = preferenceMgr.matchQueryLimit.toString() }
+            override val submit = { modified = false; preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong()}
+            override val reset = { modified = false; matchQueryLimit.value = preferenceMgr.matchQueryLimit.toString() }
         }
     }
 
@@ -310,7 +341,7 @@ object PreferenceDialog {
             title = MANAGE_PREFERENCES,
             behaviour = Navigator.Behaviour.Browser(clicksToOpenItem = 1),
             initExpandDepth = 0,
-            openFn = { focusedPreferenceGroup.reset(); state.modified = false; focusedPreferenceGroup = it.item }
+            openFn = { focusedPreferenceGroup = it.item }
         )
 
         Navigator.Layout(
@@ -355,21 +386,10 @@ object PreferenceDialog {
                 )
                 Separator.Horizontal()
                 ColumnSpacer()
-                Row {
-                    Column {
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
-                                    ResetButton(state)
-                                }
-                            }
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                    ChangeFormButtons(state)
-                                }
-                            }
-                        }
-                    }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    ChangeFormButtons(state)
+                    RowSpacer()
+                    RowSpacer()
                 }
                 ColumnSpacer()
             }
@@ -379,7 +399,6 @@ object PreferenceDialog {
     @Composable
     private fun PreferencesHeader(text: String) {
         Text(text, fontWeight = FontWeight.Bold)
-        SpacedHorizontalSeparator()
     }
 
     @Composable
@@ -388,25 +407,20 @@ object PreferenceDialog {
             state.cancel()
         }
         RowSpacer()
-        TextButton(APPLY, enabled = state.modified && state.isValid()) {
+        TextButton(APPLY, enabled = state.isModified()) {
             state.apply()
         }
         RowSpacer()
         TextButton(OK) {
             state.ok()
         }
-        RowSpacer()
-        RowSpacer()
     }
 
     @Composable
     private fun ResetButton(state: PreferencesForm) {
-        if (state.modified) {
-            RowSpacer()
-            RowSpacer()
-            TextButton(RESET) {
+        if (focusedPreferenceGroup.isModified()) {
+            TextButton(RESET, modifier = Modifier.height(RESET_BUTTON_HEIGHT)) {
                 focusedPreferenceGroup.reset()
-                state.modified = false
             }
         }
     }
