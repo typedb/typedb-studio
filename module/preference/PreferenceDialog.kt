@@ -75,6 +75,7 @@ import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_IGNORED_PATHS
 import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_MANAGER
 import com.vaticle.typedb.studio.state.common.util.Label.QUERY_RUNNER
 import com.vaticle.typedb.studio.state.common.util.Label.RESET
+import com.vaticle.typedb.studio.state.common.util.Label.ROOT
 import com.vaticle.typedb.studio.state.common.util.Label.SET_QUERY_LIMIT
 import com.vaticle.typedb.studio.state.common.util.Label.TEXT_EDITOR
 import com.vaticle.typedb.studio.state.common.util.Message.Preference.Companion.UNEXPECTED_ERROR
@@ -97,7 +98,7 @@ object PreferenceDialog {
     private val notificationMgr = StudioState.notification
     private val LOGGER = KotlinLogging.logger {}
 
-    private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup())
+    private var focusedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root(emptyList()))
     private var state by mutableStateOf(PreferencesForm())
 
     sealed interface PreferenceField {
@@ -288,7 +289,7 @@ object PreferenceDialog {
             PreferenceGroup.QueryRunner()
         )
 
-        val rootPreferenceGroup = PreferenceGroup(entries = preferenceGroups)
+        val rootPreferenceGroup = PreferenceGroup.Root(entries = preferenceGroups)
 
         override fun cancel() {
             StudioState.preference.preferencesDialog.close()
@@ -320,18 +321,17 @@ object PreferenceDialog {
         }
     }
 
-    open class PreferenceGroup(
+    abstract class PreferenceGroup(
         override val name: String = "",
         override val entries: List<PreferenceGroup> = emptyList(),
+        override val info: String? = null,
+        override val parent: Navigable<PreferenceGroup>? = null,
+        override val isExpandable: Boolean = entries.isNotEmpty(),
+        override val isBulkExpandable: Boolean = entries.isNotEmpty(),
         open val preferences: List<PreferenceField> = emptyList(),
     ): Navigable<PreferenceGroup> {
 
-        override val info: String? = null
-        override val parent: Navigable<PreferenceGroup>? = null
-        override val isExpandable = entries.isNotEmpty()
-        override val isBulkExpandable = entries.isNotEmpty()
-
-        open val submit = {notificationMgr.systemError(LOGGER, UnsupportedOperationException(), UNEXPECTED_ERROR)}
+        abstract fun submit()
 
         fun reset() {
             preferences.forEach { it.reset() }
@@ -375,6 +375,14 @@ object PreferenceDialog {
             preferences.forEach { it.Display() }
         }
 
+        class Root(override val entries: List<PreferenceGroup>): PreferenceGroup(entries = entries) {
+            override val preferences: List<PreferenceField> = emptyList()
+
+            override fun submit() {
+                notificationMgr.systemError(LOGGER, UnsupportedOperationException(), UNEXPECTED_ERROR)
+            }
+        }
+
         class GraphVisualiser : PreferenceGroup(GRAPH_VISUALISER) {
             var graphOutput = PreferenceField.Checkbox(
                 initialValue = preferenceMgr.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT,
@@ -383,7 +391,9 @@ object PreferenceDialog {
 
             override val preferences: List<PreferenceField> = listOf(graphOutput)
 
-            override val submit = { preferences.forEach { it.reset() }; preferenceMgr.graphOutputEnabled = graphOutput.value }
+            override fun submit() {
+                preferences.forEach { it.reset() }; preferenceMgr.graphOutputEnabled = graphOutput.value
+            }
         }
 
         class TextEditor : PreferenceGroup(TEXT_EDITOR) {
@@ -393,7 +403,9 @@ object PreferenceDialog {
 
             override val preferences: List<PreferenceField> = listOf(autoSave)
 
-            override val submit = { preferences.forEach { it.reset()  }; preferenceMgr.autoSave = autoSave.value }
+            override fun submit() {
+                preferences.forEach { it.reset()  }; preferenceMgr.autoSave = autoSave.value
+            }
         }
 
         class ProjectManager : PreferenceGroup(PROJECT_MANAGER) {
@@ -408,7 +420,7 @@ object PreferenceDialog {
 
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
 
-            override val submit = {
+            override fun submit() {
                 preferences.forEach { it.reset()  }
                 preferenceMgr.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
             }
@@ -425,7 +437,9 @@ object PreferenceDialog {
 
             override val preferences: List<PreferenceField> = listOf(matchQueryLimit)
 
-            override val submit = { preferences.forEach { it.reset()  }; preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong() }
+            override fun submit() {
+                preferences.forEach { it.reset()  }; preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong()
+            }
         }
     }
 
