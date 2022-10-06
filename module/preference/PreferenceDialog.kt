@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
@@ -135,13 +136,15 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                val positionProvider = rememberComponentRectPositionProvider(
-                    offset = DpOffset(0.dp, -(2 * Form.FIELD_HEIGHT.value).dp)
-                )
                 Layout {
                     val border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {
                         if (this.isValid()) Theme.studio.border else Theme.studio.errorStroke
                     }
+                    val positionProvider = rememberComponentRectPositionProvider(
+                        anchor = Alignment.TopStart,
+                        alignment = Alignment.BottomEnd,
+                        offset = DpOffset(0.dp, -(Form.FIELD_HEIGHT.value + 1).dp)
+                    )
                     TextInput(
                         value = value,
                         placeholder = placeholder,
