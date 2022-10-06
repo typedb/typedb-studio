@@ -250,10 +250,10 @@ object PreferenceDialog {
 
     class PreferencesForm : State {
         private val preferenceGroups: List<PreferenceGroup> = listOf(
-            PreferenceGroup().GraphVisualiser(),
-            PreferenceGroup().TextEditor(),
-            PreferenceGroup().ProjectManager(),
-            PreferenceGroup().QueryRunner()
+            PreferenceGroup.GraphVisualiser(),
+            PreferenceGroup.TextEditor(),
+            PreferenceGroup.ProjectManager(),
+            PreferenceGroup.QueryRunner()
         )
 
         val rootPreferenceGroup = PreferenceGroup(entries = preferenceGroups)
@@ -337,7 +337,7 @@ object PreferenceDialog {
             preferences.forEach { it.Display() }
         }
 
-        inner class GraphVisualiser : PreferenceGroup(GRAPH_VISUALISER) {
+        class GraphVisualiser : PreferenceGroup(GRAPH_VISUALISER) {
             var graphOutput = PreferenceField.Checkbox(
                 initialValue = preferenceMgr.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT,
                 caption = PREFERENCES_GRAPH_OUTPUT_CAPTION
@@ -349,7 +349,7 @@ object PreferenceDialog {
             override val reset = { modified = false; graphOutput.value = preferenceMgr.graphOutputEnabled }
         }
 
-        inner class TextEditor : PreferenceGroup(TEXT_EDITOR) {
+        class TextEditor : PreferenceGroup(TEXT_EDITOR) {
             var autoSave = PreferenceField.Checkbox(
                 initialValue = preferenceMgr.autoSave, label = ENABLE_EDITOR_AUTOSAVE
             )
@@ -360,7 +360,7 @@ object PreferenceDialog {
             override val reset = { modified = false; autoSave.value = preferenceMgr.autoSave }
         }
 
-        inner class ProjectManager : PreferenceGroup(PROJECT_MANAGER) {
+        class ProjectManager : PreferenceGroup(PROJECT_MANAGER) {
             private val IGNORED_PATHS_PLACEHOLDER = ".git"
 
             private val ignoredPathsString = preferenceMgr.ignoredPaths.joinToString(", ")
@@ -382,7 +382,7 @@ object PreferenceDialog {
             }
         }
 
-        inner class QueryRunner : PreferenceGroup(QUERY_RUNNER) {
+        class QueryRunner : PreferenceGroup(QUERY_RUNNER) {
             private val QUERY_LIMIT_PLACEHOLDER = "1000"
 
             var matchQueryLimit = PreferenceField.TextInputValidated(
