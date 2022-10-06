@@ -280,12 +280,10 @@ object PreferenceDialog {
         }
 
         override fun trySubmit() {
-            preferenceGroups.forEach {
-                if (it.isValid()) it.submit()
-            }
-
-            if (preferenceGroups.any { !it.isValid() }) {
-                focusedPreferenceGroup = preferenceGroups.first { !it.isValid() }
+            if (preferenceGroups.all { it.isValid() }) {
+                preferenceGroups.forEach {
+                    it.submit()
+                }
             }
         }
     }
@@ -475,7 +473,7 @@ object PreferenceDialog {
             state.cancel()
         }
         RowSpacer()
-        TextButton(APPLY, enabled = state.isModified()) {
+        TextButton(APPLY, enabled = state.isModified() && state.isValid()) {
             state.apply()
         }
         RowSpacer()
