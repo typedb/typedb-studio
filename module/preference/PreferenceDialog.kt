@@ -124,10 +124,12 @@ object PreferenceDialog {
             }
         }
 
-        class TextInputValidated(initialValue: String,
-                                 override val label: String, override val caption: String? = null,
-                                 private val placeholder: String, private val invalidWarning: String,
-                                 private val validator: (String) -> Boolean = { true }) : PreferenceField {
+        class TextInputValidated(
+            initialValue: String,
+            override val label: String, override val caption: String? = null,
+            private val placeholder: String, private val invalidWarning: String,
+            private val validator: (String) -> Boolean = { true }
+        ): PreferenceField {
 
             var value by mutableStateOf(initialValue)
 
@@ -175,9 +177,11 @@ object PreferenceDialog {
             }
         }
 
-        class TextInput(initialValue: String,
-                        override val label: String, override val caption: String? = null,
-                        private val placeholder: String) : PreferenceField {
+        class TextInput(
+            initialValue: String,
+            override val label: String, override val caption: String? = null,
+            private val placeholder: String
+        ): PreferenceField {
 
             var value by mutableStateOf(initialValue)
 
@@ -198,8 +202,10 @@ object PreferenceDialog {
             }
         }
 
-        class Checkbox(initialValue: Boolean, override var label: String,
-                       override val caption: String? = null) : PreferenceField {
+        class Checkbox(
+            initialValue: Boolean, override var label: String,
+            override val caption: String? = null
+        ): PreferenceField {
 
             var value by mutableStateOf(initialValue)
 
@@ -218,8 +224,10 @@ object PreferenceDialog {
             }
         }
 
-        class Dropdown<T : Any>(val values: List<T>, override val label: String,
-                                override val caption: String? = null) : PreferenceField {
+        class Dropdown<T : Any>(
+            val values: List<T>, override val label: String,
+            override val caption: String? = null
+        ): PreferenceField {
 
             private var selected by mutableStateOf(values.first())
 
@@ -286,7 +294,7 @@ object PreferenceDialog {
         override val name: String = "",
         override val entries: List<PreferenceGroup> = emptyList(),
         open val preferences: List<PreferenceField> = emptyList(),
-    ) : Navigable<PreferenceGroup> {
+    ): Navigable<PreferenceGroup> {
 
         override var parent: Navigable<PreferenceGroup>? = null
         override val info: String? = null
@@ -401,7 +409,7 @@ object PreferenceDialog {
             title = MANAGE_PREFERENCES,
             behaviour = Navigator.Behaviour.Browser(clicksToOpenItem = 1),
             initExpandDepth = 0,
-            openFn = { focusedPreferenceGroup = it.item }
+            openFn = { focusedPreferenceGroup = it.item },
         )
 
         Navigator.Layout(
