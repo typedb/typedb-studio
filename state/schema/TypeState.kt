@@ -298,6 +298,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 notifications.userError(
                     LOGGER, Message.Schema.FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN
                 )
+                e.printStackTrace() // TODO: remove this once we fixed random failures post successful commit
             }
         }
 
