@@ -75,7 +75,6 @@ import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_IGNORED_PATHS
 import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_MANAGER
 import com.vaticle.typedb.studio.state.common.util.Label.QUERY_RUNNER
 import com.vaticle.typedb.studio.state.common.util.Label.RESET
-import com.vaticle.typedb.studio.state.common.util.Label.ROOT
 import com.vaticle.typedb.studio.state.common.util.Label.SET_QUERY_LIMIT
 import com.vaticle.typedb.studio.state.common.util.Label.TEXT_EDITOR
 import com.vaticle.typedb.studio.state.common.util.Message.Preference.Companion.UNEXPECTED_ERROR
