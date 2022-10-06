@@ -132,6 +132,10 @@ class TransactionState constructor(
         } else null
     }
 
+    private fun mayExecOnSchemaWriteReset() {
+        if (session.isSchema && isWrite) onSchemaWriteReset.forEach { it() }
+    }
+
     internal fun commit() {
         sendStopSignal()
         if (isOpenAtomic.compareAndSet(expected = true, new = false)) {
@@ -139,9 +143,10 @@ class TransactionState constructor(
                 _transaction?.commit()
                 _transaction = null
                 notificationMgr.info(LOGGER, TRANSACTION_COMMIT_SUCCESSFULLY)
-                if (session.isSchema && isWrite) onSchemaWriteReset.forEach { it() }
             } catch (e: Exception) {
                 notificationMgr.userError(LOGGER, TRANSACTION_COMMIT_FAILED, e.message ?: e)
+            } finally {
+                mayExecOnSchemaWriteReset()
             }
         }
     }
@@ -150,7 +155,7 @@ class TransactionState constructor(
         sendStopSignal()
         _transaction?.rollback()
         notificationMgr.userWarning(LOGGER, TRANSACTION_ROLLBACK)
-        if (session.isSchema && isWrite) onSchemaWriteReset.forEach { it() }
+        mayExecOnSchemaWriteReset()
     }
 
     internal fun close(message: Message? = null, vararg params: Any) {
@@ -160,7 +165,7 @@ class TransactionState constructor(
             _transaction = null
             hasRunningQueryAtomic.set(false)
             message?.let { notificationMgr.userError(LOGGER, it, *params) }
-            if (session.isSchema && isWrite) onSchemaWriteReset.forEach { it() }
+            mayExecOnSchemaWriteReset()
         }
     }
 
