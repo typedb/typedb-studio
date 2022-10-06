@@ -675,7 +675,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             schemaMgr.openOrGetReadTx()?.let { tx ->
                 val typeTx = conceptType.asRemote(tx)
                 typeTx.relatesExplicit.forEach { load(tx, typeTx, it, false) }
-                typeTx.relates.filter { !loaded.contains(it) }.forEach { load(tx, typeTx, it, true) }
+                typeTx.relates.filter { !loaded.contains(it) && !it.isRoot }.forEach { load(tx, typeTx, it, true) }
             }
             relatesRoleTypeProperties = properties
         }
