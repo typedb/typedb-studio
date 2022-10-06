@@ -34,7 +34,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -335,11 +334,11 @@ object PreferenceDialog {
         open val submit = {notificationMgr.systemError(LOGGER, UnsupportedOperationException(), UNEXPECTED_ERROR)}
 
         fun reset() {
-            entries.forEach { it.reset() }
+            preferences.forEach { it.reset() }
         }
 
-        fun resetAll() {
-            entries.forEach { it.resetAll() }
+        fun resetSelfAndDescendants() {
+            entries.forEach { it.resetSelfAndDescendants() }
             preferences.forEach { it.reset() }
         }
 
@@ -455,7 +454,7 @@ object PreferenceDialog {
 
     @Composable
     private fun Preferences() {
-        state.rootPreferenceGroup.resetAll()
+        state.rootPreferenceGroup.resetSelfAndDescendants()
 
         Dialog.Layout(StudioState.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT, padding = 0.dp) {
             Column {
