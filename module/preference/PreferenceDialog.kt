@@ -403,8 +403,6 @@ object PreferenceDialog {
 
     @Composable
     private fun NavigatorLayout(state: PreferencesForm) {
-        focusedPreferenceGroup = state.rootPreferenceGroup.entries.first()
-
         val navState = rememberNavigatorState(
             container = state.rootPreferenceGroup,
             title = MANAGE_PREFERENCES,
@@ -449,6 +447,9 @@ object PreferenceDialog {
                         initSize = Either.first(PREFERENCE_GROUP_INIT_SIZE), minSize = PREFERENCE_GROUP_MIN_SIZE
                     ) {
                         Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
+                            if (focusedPreferenceGroup.name.isBlank()) {
+                                focusedPreferenceGroup = state.rootPreferenceGroup.entries.first()
+                            }
                             focusedPreferenceGroup.Display()
                         }
                     }
