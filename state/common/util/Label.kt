@@ -141,7 +141,7 @@ object Label {
     const val PATH_TO_CA_CERTIFICATE = "/path/to/ca/certificate"
     const val PLAYS = "Plays"
     const val POPULATE_REQUIRED_FIELDS = "Populate Required Fields"
-    const val PREFERENCE_INTEGER_WARNING = "Please input an integer."
+    const val PREFERENCE_INTEGER_WARNING = "Please input a positive integer."
     const val PREVIEW = "Preview"
     const val PREVIOUS_OCCURRENCE = "Previous Occurrence"
     const val PROJECT = "Project"

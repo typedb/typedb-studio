@@ -96,15 +96,17 @@ object PreferenceDialog {
 
     private val preferenceMgr = StudioState.preference
     private val notificationMgr = StudioState.notification
-    private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup(""))
-    private var state by mutableStateOf(PreferencesForm())
-
     private val LOGGER = KotlinLogging.logger {}
+
+    private var focusedPreferenceGroup by mutableStateOf(PreferenceGroup())
+    private var state by mutableStateOf(PreferencesForm())
 
     sealed interface PreferenceField {
         val label: String
         val caption: String?
+        var modified: Boolean
         fun isValid(): Boolean
+        fun reset()
         @Composable fun Display()
 
         @Composable
@@ -126,11 +128,13 @@ object PreferenceDialog {
         }
 
         class TextInputValidated(
-            initialValue: String,
+            val initialValue: String,
             override val label: String, override val caption: String? = null,
             private val placeholder: String, private val invalidWarning: String,
             private val validator: (String) -> Boolean = { true }
         ): PreferenceField {
+
+            override var modified by mutableStateOf(false)
 
             var value by mutableStateOf(initialValue)
 
@@ -143,18 +147,23 @@ object PreferenceDialog {
                     val positionProvider = rememberComponentRectPositionProvider(
                         anchor = Alignment.TopStart,
                         alignment = Alignment.BottomEnd,
-                        offset = DpOffset(0.dp, -(Form.FIELD_HEIGHT.value + 1).dp)
+                        offset = DpOffset(0.dp, -(Form.FIELD_HEIGHT.value + Form.FIELD_SPACING.value).dp)
                     )
                     TextInput(
                         value = value,
                         placeholder = placeholder,
                         border = border,
-                        onValueChange = { value = it; focusedPreferenceGroup.modified = true }
+                        onValueChange = { value = it; modified = true }
                     )
                     if (!this.isValid()) {
                         InvalidPopup(invalidWarning, positionProvider)
                     }
                 }
+            }
+
+            override fun reset() {
+                modified = false
+                value = initialValue
             }
 
             override fun isValid(): Boolean {
@@ -181,10 +190,12 @@ object PreferenceDialog {
         }
 
         class TextInput(
-            initialValue: String,
+            val initialValue: String,
             override val label: String, override val caption: String? = null,
             private val placeholder: String
         ): PreferenceField {
+
+            override var modified by mutableStateOf(false)
 
             var value by mutableStateOf(initialValue)
 
@@ -195,9 +206,14 @@ object PreferenceDialog {
                         value = value,
                         placeholder = placeholder,
                         border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {Theme.studio.border},
-                        onValueChange = { value = it; focusedPreferenceGroup.modified = true }
+                        onValueChange = { value = it; modified = true }
                     )
                 }
+            }
+
+            override fun reset() {
+                modified = false
+                value = initialValue
             }
 
             override fun isValid(): Boolean {
@@ -206,9 +222,11 @@ object PreferenceDialog {
         }
 
         class Checkbox(
-            initialValue: Boolean, override var label: String,
+            val initialValue: Boolean, override var label: String,
             override val caption: String? = null
         ): PreferenceField {
+
+            override var modified by mutableStateOf(false)
 
             var value by mutableStateOf(initialValue)
 
@@ -217,9 +235,14 @@ object PreferenceDialog {
                 Layout {
                     Checkbox(
                         value = value,
-                        onChange = { value = it; focusedPreferenceGroup.modified = true }
+                        onChange = { value = it; modified = true }
                     )
                 }
+            }
+
+            override fun reset() {
+                modified = false
+                value = initialValue
             }
 
             override fun isValid(): Boolean {
@@ -232,6 +255,8 @@ object PreferenceDialog {
             override val caption: String? = null
         ): PreferenceField {
 
+            override var modified by mutableStateOf(false)
+
             private var selected by mutableStateOf(values.first())
 
             @Composable
@@ -240,9 +265,14 @@ object PreferenceDialog {
                     Form.Dropdown(
                         values = values,
                         selected = selected,
-                        onSelection = { selected = it; focusedPreferenceGroup.modified = true }
+                        onSelection = { selected = it; modified = true }
                     )
                 }
+            }
+
+            override fun reset() {
+                modified = false
+                selected = values.first()
             }
 
             override fun isValid(): Boolean {
@@ -297,15 +327,21 @@ object PreferenceDialog {
         open val preferences: List<PreferenceField> = emptyList(),
     ): Navigable<PreferenceGroup> {
 
-        override var parent: Navigable<PreferenceGroup>? = null
         override val info: String? = null
+        override val parent: Navigable<PreferenceGroup>? = null
         override val isExpandable = entries.isNotEmpty()
         override val isBulkExpandable = entries.isNotEmpty()
 
-        var modified by mutableStateOf(false)
-
         open val submit = {notificationMgr.systemError(LOGGER, UnsupportedOperationException(), UNEXPECTED_ERROR)}
-        open val reset = {notificationMgr.systemError(LOGGER, UnsupportedOperationException(), UNEXPECTED_ERROR)}
+
+        fun reset() {
+            entries.forEach { it.reset() }
+        }
+
+        fun resetAll() {
+            entries.forEach { it.resetAll() }
+            preferences.forEach { it.reset() }
+        }
 
         override fun reloadEntries() {}
 
@@ -314,7 +350,7 @@ object PreferenceDialog {
         }
 
         fun isModified(): Boolean {
-            return this.modified || entries.any { it.isModified() }
+            return preferences.any { it.modified } || entries.any { it.isModified() }
         }
 
         fun isValid(): Boolean {
@@ -348,8 +384,7 @@ object PreferenceDialog {
 
             override val preferences: List<PreferenceField> = listOf(graphOutput)
 
-            override val submit = { modified = false; preferenceMgr.graphOutputEnabled = graphOutput.value }
-            override val reset = { modified = false; graphOutput.value = preferenceMgr.graphOutputEnabled }
+            override val submit = { preferences.forEach { it.reset() }; preferenceMgr.graphOutputEnabled = graphOutput.value }
         }
 
         class TextEditor : PreferenceGroup(TEXT_EDITOR) {
@@ -359,8 +394,7 @@ object PreferenceDialog {
 
             override val preferences: List<PreferenceField> = listOf(autoSave)
 
-            override val submit = { modified = false; preferenceMgr.autoSave = autoSave.value }
-            override val reset = { modified = false; autoSave.value = preferenceMgr.autoSave }
+            override val submit = { preferences.forEach { it.reset()  }; preferenceMgr.autoSave = autoSave.value }
         }
 
         class ProjectManager : PreferenceGroup(PROJECT_MANAGER) {
@@ -376,12 +410,8 @@ object PreferenceDialog {
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
 
             override val submit = {
-                modified = false
+                preferences.forEach { it.reset()  }
                 preferenceMgr.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
-            }
-            override val reset = {
-                modified = false
-                ignoredPaths.value = preferenceMgr.ignoredPaths.joinToString(", ")
             }
         }
 
@@ -392,17 +422,16 @@ object PreferenceDialog {
                 initialValue = preferenceMgr.matchQueryLimit.toString(),
                 label = SET_QUERY_LIMIT, placeholder = QUERY_LIMIT_PLACEHOLDER,
                 invalidWarning = Label.PREFERENCE_INTEGER_WARNING, caption = PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
-            ) {/* validator = */ it.toLongOrNull() != null }
+            ) {/* validator = */ it.toLongOrNull() != null && it.toLongOrNull()!! >= 0 }
 
             override val preferences: List<PreferenceField> = listOf(matchQueryLimit)
 
-            override val submit = { modified = false; preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong() }
-            override val reset = { modified = false; matchQueryLimit.value = preferenceMgr.matchQueryLimit.toString() }
+            override val submit = { preferences.forEach { it.reset()  }; preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong() }
         }
     }
 
     @Composable
-    private fun NavigatorLayout(state: PreferencesForm) {
+    private fun NavigatorLayout() {
         val navState = rememberNavigatorState(
             container = state.rootPreferenceGroup,
             title = MANAGE_PREFERENCES,
@@ -426,7 +455,7 @@ object PreferenceDialog {
 
     @Composable
     private fun Preferences() {
-        state = remember { PreferencesForm() }
+        state.rootPreferenceGroup.resetAll()
 
         Dialog.Layout(StudioState.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT, padding = 0.dp) {
             Column {
@@ -439,7 +468,7 @@ object PreferenceDialog {
                     ) {
                         Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight)) {
                             ColumnSpacer()
-                            NavigatorLayout(state)
+                            NavigatorLayout()
                         }
                     },
                     Frame.Pane(
