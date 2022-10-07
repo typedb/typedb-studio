@@ -94,8 +94,6 @@ object PreferenceDialog {
     private val RESET_BUTTON_HEIGHT = 20.dp
 
     private val preferenceMgr = StudioState.preference
-    private val notificationMgr = StudioState.notification
-    private val LOGGER = KotlinLogging.logger {}
 
     private var focusedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root(emptyList()))
     private var state by mutableStateOf(PreferencesForm())
@@ -105,7 +103,6 @@ object PreferenceDialog {
         val caption: String?
         var modified: Boolean
         fun isValid(): Boolean
-        fun reset()
         @Composable fun Display()
 
         @Composable
@@ -113,6 +110,7 @@ object PreferenceDialog {
             Field(label) {
                 fieldContent()
             }
+
             if (!caption.isNullOrBlank()) {
                 Caption()
             }
@@ -160,11 +158,6 @@ object PreferenceDialog {
                 }
             }
 
-            override fun reset() {
-                modified = false
-                value = initialValue
-            }
-
             override fun isValid(): Boolean {
                 return validator(value)
             }
@@ -210,11 +203,6 @@ object PreferenceDialog {
                 }
             }
 
-            override fun reset() {
-                modified = false
-                value = initialValue
-            }
-
             override fun isValid(): Boolean {
                 return true
             }
@@ -237,11 +225,6 @@ object PreferenceDialog {
                         onChange = { value = it; modified = true }
                     )
                 }
-            }
-
-            override fun reset() {
-                modified = false
-                value = initialValue
             }
 
             override fun isValid(): Boolean {
@@ -267,11 +250,6 @@ object PreferenceDialog {
                         onSelection = { selected = it; modified = true }
                     )
                 }
-            }
-
-            override fun reset() {
-                modified = false
-                selected = values.first()
             }
 
             override fun isValid(): Boolean {
@@ -331,14 +309,11 @@ object PreferenceDialog {
     ): Navigable<PreferenceGroup> {
 
         abstract fun submit()
-
-        fun reset() {
-            preferences.forEach { it.reset() }
-        }
+        abstract fun reset()
 
         fun resetSelfAndDescendants() {
+            this.reset()
             entries.forEach { it.resetSelfAndDescendants() }
-            preferences.forEach { it.reset() }
         }
 
         override fun reloadEntries() {}
@@ -377,9 +352,9 @@ object PreferenceDialog {
         class Root(override val entries: List<PreferenceGroup>): PreferenceGroup(entries = entries) {
             override val preferences: List<PreferenceField> = emptyList()
 
-            override fun submit() {
-                notificationMgr.systemError(LOGGER, UnsupportedOperationException(), UNEXPECTED_ERROR)
-            }
+            override fun submit() {}
+
+            override fun reset() {}
         }
 
         class GraphVisualiser : PreferenceGroup(GRAPH_VISUALISER) {
@@ -391,7 +366,13 @@ object PreferenceDialog {
             override val preferences: List<PreferenceField> = listOf(graphOutput)
 
             override fun submit() {
-                preferences.forEach { it.reset() }; preferenceMgr.graphOutputEnabled = graphOutput.value
+                preferenceMgr.graphOutputEnabled = graphOutput.value
+                graphOutput.modified = false
+            }
+
+            override fun reset() {
+                graphOutput.value = preferenceMgr.graphOutputEnabled
+                graphOutput.modified = false
             }
         }
 
@@ -403,12 +384,20 @@ object PreferenceDialog {
             override val preferences: List<PreferenceField> = listOf(autoSave)
 
             override fun submit() {
-                preferences.forEach { it.reset()  }; preferenceMgr.autoSave = autoSave.value
+                preferenceMgr.autoSave = autoSave.value
+                autoSave.modified = false
+            }
+
+            override fun reset() {
+                autoSave.value = preferenceMgr.autoSave
+                autoSave.modified = false
             }
         }
 
         class ProjectManager : PreferenceGroup(PROJECT_MANAGER) {
-            private val IGNORED_PATHS_PLACEHOLDER = ".git"
+            companion object {
+                private val IGNORED_PATHS_PLACEHOLDER = ".git"
+            }
 
             private val ignoredPathsString = preferenceMgr.ignoredPaths.joinToString(", ")
             var ignoredPaths = PreferenceField.TextInput(
@@ -420,13 +409,20 @@ object PreferenceDialog {
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
 
             override fun submit() {
-                preferences.forEach { it.reset()  }
                 preferenceMgr.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
+                ignoredPaths.modified = false
+            }
+
+            override fun reset() {
+                ignoredPaths.value = preferenceMgr.ignoredPaths.joinToString(", ")
+                ignoredPaths.modified = false
             }
         }
 
         class QueryRunner : PreferenceGroup(QUERY_RUNNER) {
-            private val QUERY_LIMIT_PLACEHOLDER = "1000"
+            companion object {
+                private val QUERY_LIMIT_PLACEHOLDER = "1000"
+            }
 
             var matchQueryLimit = PreferenceField.TextInputValidated(
                 initialValue = preferenceMgr.matchQueryLimit.toString(),
@@ -437,7 +433,13 @@ object PreferenceDialog {
             override val preferences: List<PreferenceField> = listOf(matchQueryLimit)
 
             override fun submit() {
-                preferences.forEach { it.reset()  }; preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong()
+                preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong()
+                matchQueryLimit.modified = false
+            }
+
+            override fun reset() {
+                matchQueryLimit.value = preferenceMgr.matchQueryLimit.toString()
+                matchQueryLimit.modified = false
             }
         }
     }
