@@ -77,12 +77,10 @@ import com.vaticle.typedb.studio.state.common.util.Label.QUERY_RUNNER
 import com.vaticle.typedb.studio.state.common.util.Label.RESET
 import com.vaticle.typedb.studio.state.common.util.Label.SET_QUERY_LIMIT
 import com.vaticle.typedb.studio.state.common.util.Label.TEXT_EDITOR
-import com.vaticle.typedb.studio.state.common.util.Message.Preference.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.state.common.util.Sentence.IGNORED_PATHS_CAPTION
 import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
 import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
 import com.vaticle.typedb.studio.state.page.Navigable
-import mu.KotlinLogging
 
 object PreferenceDialog {
     private val WIDTH = 800.dp
@@ -132,7 +130,6 @@ object PreferenceDialog {
         ): PreferenceField {
 
             override var modified by mutableStateOf(false)
-
             var value by mutableStateOf(initialValue)
 
             @Composable
@@ -188,7 +185,6 @@ object PreferenceDialog {
         ): PreferenceField {
 
             override var modified by mutableStateOf(false)
-
             var value by mutableStateOf(initialValue)
 
             @Composable
@@ -214,7 +210,6 @@ object PreferenceDialog {
         ): PreferenceField {
 
             override var modified by mutableStateOf(false)
-
             var value by mutableStateOf(initialValue)
 
             @Composable
@@ -238,7 +233,6 @@ object PreferenceDialog {
         ): PreferenceField {
 
             override var modified by mutableStateOf(false)
-
             private var selected by mutableStateOf(values.first())
 
             @Composable
