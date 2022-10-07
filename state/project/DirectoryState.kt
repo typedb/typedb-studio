@@ -53,7 +53,7 @@ import mu.KotlinLogging
 class DirectoryState internal constructor(
     path: Path,
     parent: DirectoryState?,
-    projectMgr: ProjectManager
+    projectMgr: ProjectManager,
 ) : PathState(parent, path, Type.DIRECTORY, projectMgr) {
 
     companion object {

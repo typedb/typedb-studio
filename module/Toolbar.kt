@@ -464,6 +464,7 @@ object Toolbar {
             ToolbarRow {
                 // TODO: ModeButtons()
                 ConnectionButton()
+                OpenPreferencesDialogButton()
             }
         }
 
@@ -517,6 +518,15 @@ object Toolbar {
                 trailingIcon = Form.IconArg(Icon.CONNECT_TO_TYPEDB),
                 tooltip = Tooltip.Arg(title = Label.CONNECT_TO_TYPEDB)
             ) { StudioState.client.connectServerDialog.open() }
+        }
+
+        @Composable
+        private fun OpenPreferencesDialogButton() {
+            ToolbarIconButton(
+                icon = Icon.PREFERENCES,
+                onClick = { StudioState.preference.preferencesDialog.toggle() },
+                tooltip = Tooltip.Arg(title = Label.OPEN_PREFERENCES)
+            )
         }
     }
 }

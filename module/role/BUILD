@@ -40,7 +40,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-module-roles:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-module-role:{pom_version}"],
 )
 
 checkstyle_test(

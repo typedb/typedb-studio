@@ -66,7 +66,7 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Theme.DIALOG_PADDING
 import com.vaticle.typedb.studio.framework.material.Browsers
 import com.vaticle.typedb.studio.framework.material.ConfirmationDialog
-import com.vaticle.typedb.studio.framework.material.Form.FormRowSpacer
+import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.SelectableText
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
@@ -78,6 +78,7 @@ import com.vaticle.typedb.studio.module.StatusBar
 import com.vaticle.typedb.studio.module.Toolbar
 import com.vaticle.typedb.studio.module.connection.DatabaseDialog
 import com.vaticle.typedb.studio.module.connection.ServerDialog
+import com.vaticle.typedb.studio.module.preference.PreferenceDialog
 import com.vaticle.typedb.studio.module.project.FilePage
 import com.vaticle.typedb.studio.module.project.ProjectBrowser
 import com.vaticle.typedb.studio.module.project.ProjectDialog
@@ -152,6 +153,7 @@ object Studio {
                     ConfirmationDialog.MayShowDialog()
                     ServerDialog.MayShowDialogs()
                     DatabaseDialog.MayShowDialogs()
+                    PreferenceDialog.MayShowDialogs()
                     ProjectDialog.MayShowDialogs(window)
                     TypeDialog.MayShowDialogs()
                 }
@@ -263,9 +265,9 @@ object Studio {
                         Row {
                             Spacer(Modifier.weight(1f))
                             TextButton(text = Label.COPY) { clipboard.setText(AnnotatedString(exceptionText())) }
-                            FormRowSpacer()
+                            RowSpacer()
                             TextButton(text = Label.QUIT) { quit = true; onClose() }
-                            FormRowSpacer()
+                            RowSpacer()
                             TextButton(text = Label.REOPEN, onClick = onClose)
                         }
                     }

@@ -31,6 +31,7 @@ import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.atomic.AtomicIntegerState
 import com.vaticle.typedb.studio.state.common.atomic.AtomicReferenceState
@@ -48,7 +49,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 
-class ClientState constructor(private val notificationMgr: NotificationManager) {
+class ClientState constructor(
+    private val notificationMgr: NotificationManager,
+    private val preferenceMgr: PreferenceManager
+    ) {
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
     enum class Mode { SCRIPT, INTERACTIVE }
@@ -74,7 +78,7 @@ class ClientState constructor(private val notificationMgr: NotificationManager) 
     val hasRunningCommand get() = hasRunningCommandAtomic.state
     val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
-    val session = SessionState(this, notificationMgr)
+    val session = SessionState(this, notificationMgr, preferenceMgr)
     private val statusAtomic = AtomicReferenceState(DISCONNECTED)
     private var _client: TypeDBClient? by mutableStateOf(null)
     private var hasRunningCommandAtomic = AtomicBooleanState(false)

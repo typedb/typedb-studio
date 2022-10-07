@@ -23,7 +23,7 @@ import com.vaticle.typedb.studio.state.app.DataManager
 import com.vaticle.typedb.studio.state.app.EditorManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.StatusManager
-import com.vaticle.typedb.studio.state.common.util.PreferenceManager
+import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.connection.ClientState
 import com.vaticle.typedb.studio.state.page.PageManager
 import com.vaticle.typedb.studio.state.project.ProjectManager
@@ -47,14 +47,14 @@ object StudioState {
     }
 
     fun init() {
-        preference = PreferenceManager()
         appData = DataManager()
+        preference = PreferenceManager(appData)
         editor = EditorManager()
         status = StatusManager()
         notification = NotificationManager()
         confirmation = ConfirmationManager()
         pages = PageManager()
-        client = ClientState(notification)
+        client = ClientState(notification, preference)
         project = ProjectManager(preference, appData, notification, confirmation, client, pages)
         schema = SchemaManager(client.session, pages, notification, confirmation)
     }

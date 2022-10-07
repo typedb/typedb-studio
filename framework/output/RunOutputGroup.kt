@@ -208,9 +208,10 @@ internal class RunOutputGroup constructor(
         val table = if (response.source != MATCH) null else TableOutput(
             transaction = runner.transactionState, number = tableCount.incrementAndGet()
         ) // TODO: .also { outputs.add(it) }
-        val graph = if (response.source != MATCH) null else GraphOutput(
-            transactionState = runner.transactionState, number = graphCount.incrementAndGet()
+        val graph = if (response.source != MATCH || !StudioState.preference.graphOutputEnabled) null else GraphOutput(
+                transactionState = runner.transactionState, number = graphCount.incrementAndGet()
         ).also { outputs.add(it); activate(it) }
+
         consumeStreamResponse(response, onCompleted = { graph?.setCompleted() }) {
             collectSerial(launchCompletableFuture(notificationMgr, LOGGER) { logOutput.outputFn(it) })
             table?.let { t -> collectSerial(launchCompletableFuture(notificationMgr, LOGGER) { t.outputFn(it) }) }

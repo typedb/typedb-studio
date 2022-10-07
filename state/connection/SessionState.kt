@@ -27,6 +27,7 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.app.NotificationManager
+import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
@@ -38,7 +39,8 @@ import mu.KotlinLogging
 
 class SessionState constructor(
     internal val client: ClientState,
-    private val notificationMgr: NotificationManager
+    private val notificationMgr: NotificationManager,
+    private val preferenceMgr: PreferenceManager
 ) {
 
     companion object {
@@ -50,7 +52,7 @@ class SessionState constructor(
     val isData: Boolean get() = type == TypeDBSession.Type.DATA
     val isOpen get() = isOpenAtomic.state
     var database: String? by mutableStateOf(null)
-    val transaction = TransactionState(this, notificationMgr)
+    val transaction = TransactionState(this, notificationMgr, preferenceMgr)
     private var _session = AtomicReference<TypeDBSession>(null)
     private val isOpenAtomic = AtomicBooleanState(false)
     private val isResetting = AtomicBoolean(false)

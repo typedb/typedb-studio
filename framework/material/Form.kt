@@ -115,11 +115,12 @@ object Form {
 
     val FIELD_HEIGHT = 28.dp
     val BORDER_WIDTH = 1.dp
+    val FIELD_SPACING = 12.dp
     val DEFAULT_BORDER = Border(BORDER_WIDTH, ROUNDED_CORNER_SHAPE)
     private const val LABEL_WEIGHT = 1f
-    private const val INPUT_WEIGHT = 3f
+    private const val INPUT_WEIGHT = 2.5f
+    private val CAPTION_SPACING = 5.dp
     private val INNER_SPACING = 10.dp
-    private val FIELD_SPACING = 12.dp
     private val TRAILING_ICON_SIZE = 12.dp
     private val TEXT_BUTTON_PADDING = 8.dp
     private val MULTILINE_INPUT_PADDING = 4.dp
@@ -194,7 +195,7 @@ object Form {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
                     TextButton(text = Label.CANCEL) { state.cancel() }
-                    FormRowSpacer()
+                    RowSpacer()
                     TextButton(text = submitLabel, enabled = state.isValid()) { state.trySubmit() }
                 }
             }
@@ -202,8 +203,18 @@ object Form {
     }
 
     @Composable
-    fun FormRowSpacer() {
+    fun RowSpacer() {
         Spacer(modifier = Modifier.width(INNER_SPACING))
+    }
+
+    @Composable
+    fun ColumnSpacer() {
+        Spacer(modifier = Modifier.height(INNER_SPACING))
+    }
+
+    @Composable
+    fun CaptionSpacer() {
+        Spacer(modifier = Modifier.height(CAPTION_SPACING))
     }
 
     @Composable

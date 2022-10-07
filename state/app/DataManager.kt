@@ -93,9 +93,33 @@ class DataManager {
             set(value) = value?.let { setProperty(CONNECTION_CA_CERTIFICATE, it) } ?: Unit
     }
 
+    inner class Preferences {
+        private val AUTO_SAVE = "editor.autosave"
+        private val IGNORED_PATHS = "project.ignoredpaths"
+        private val MATCH_QUERY_LIMIT = "query.matchlimit"
+        private val GRAPH_OUTPUT = "graph.output"
+
+        var autoSave: Boolean?
+            get() = properties?.getProperty(AUTO_SAVE)?.toBoolean()
+            set(value) = setProperty(AUTO_SAVE, value.toString())
+
+        var ignoredPaths: List<String>?
+            get() = properties?.getProperty(IGNORED_PATHS)?.split(',')?.map { it.trim() }
+            set(value) = setProperty(IGNORED_PATHS, value!!.joinToString())
+
+        var matchQueryLimit: String?
+            get() = properties?.getProperty(MATCH_QUERY_LIMIT)
+            set(value) = setProperty(MATCH_QUERY_LIMIT, value!!)
+
+        var graphOutputEnabled: Boolean?
+            get() = properties?.getProperty(GRAPH_OUTPUT)?.toBoolean()
+            set(value) = setProperty(GRAPH_OUTPUT, value.toString())
+    }
+
     var properties: Properties? by mutableStateOf(null)
     var project = Project()
     var connection = Connection()
+    var preferences = Preferences()
 
     private fun setProperty(key: String, value: String) {
         properties?.setProperty(key, value)

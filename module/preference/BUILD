@@ -20,42 +20,44 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
 package(default_visibility = [
     "//framework:__subpackages__",
-    "//module:__subpackages__",
-    "//state:__subpackages__",
-    "//:__pkg__",
-    "//test/integration:__subpackages__"
+    "//module:__pkg__",
+    "//:__pkg__"
 ])
 
 kt_jvm_library(
-    name = "connection",
+    name = "preference",
     srcs = glob(["*.kt"]),
+    kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
         "//state/app:app",
         "//state/common:common",
+        "//state/connection:connection",
+        "//state/project:project",
+        "//state/page:page",
+        "//state:state",
+        "//framework/common:common",
+        "//framework/material:material",
 
-        # External Vaticle Dependencies
-        "@vaticle_typedb_client_java//:client-java",
-        "@vaticle_typedb_client_java//api:api",
-        "@vaticle_typedb_client_java//common:common",
-        "@vaticle_typedb_client_java//concept:concept", #TODO: remove this after debugging
-        "@vaticle_typedb_client_java//connection:connection", #TODO: remove this after debugging
-        "@vaticle_typedb_client_java//stream:stream", #TODO: remove this after debugging
         "@vaticle_typedb_common//:common",
-        "@vaticle_typeql//java/query:query",
-        "@vaticle_typeql//java/pattern:pattern",
-        "@vaticle_typeql//java:typeql-lang",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
+        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
+        "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-connection:{pom_version}"],
+    resource_strip_prefix = "resources",
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-module-preference:{pom_version}"],
 )
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*", "*/*"]),
+    include = glob(["*"]),
     license_type = "agpl-header",
 )

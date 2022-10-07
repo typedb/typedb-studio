@@ -102,9 +102,17 @@ import mu.KotlinLogging
 
 object Navigator {
 
-    enum class Mode(val clicksToOpenItem: Int) {
-        BROWSER(2),
-        LIST(1),
+    sealed interface Behaviour {
+        val clicksToOpenItem: Int
+        val itemsAreFocusable: Boolean
+
+        class Browser(override val clicksToOpenItem: Int = 2): Behaviour {
+            override val itemsAreFocusable = true
+        }
+
+        class Menu(override val clicksToOpenItem: Int = 1): Behaviour {
+            override val itemsAreFocusable = false
+        }
     }
 
     @OptIn(ExperimentalTime::class)
@@ -226,7 +234,7 @@ object Navigator {
     class NavigatorState<T : Navigable<T>> constructor(
         container: Navigable<T>,
         private val title: String,
-        internal val mode: Mode,
+        internal val behaviour: Behaviour,
         private val initExpandDepth: Int = 0,
         private val liveUpdate: Boolean = false,
         private var coroutines: CoroutineScope,
@@ -336,14 +344,14 @@ object Navigator {
 
         internal fun open(item: ItemState<T>) {
             openFn(item)
-            if (mode == Mode.LIST) hovered = null
+            if (!behaviour.itemsAreFocusable) hovered = null
         }
 
         internal fun maySelectNext(item: ItemState<T>) {
             item.next?.let { maySelect(it) }
         }
 
-        internal fun mauSelectPrevious(item: ItemState<T>) {
+        internal fun maySelectPrevious(item: ItemState<T>) {
             item.previous?.let { maySelect(it) }
         }
 
@@ -352,7 +360,7 @@ object Navigator {
         }
 
         internal fun maySelect(item: ItemState<T>) {
-            if (mode == Mode.LIST) return
+            if (!behaviour.itemsAreFocusable) return
             selected = item
             item.focusReq.requestFocus()
             mayScrollToAndFocusOnSelected()
@@ -383,7 +391,7 @@ object Navigator {
 
     @Composable
     fun <T : Navigable<T>> rememberNavigatorState(
-        container: Navigable<T>, title: String, mode: Mode,
+        container: Navigable<T>, title: String, behaviour: Behaviour,
         initExpandDepth: Int = 0, liveUpdate: Boolean = false,
         openFn: (ItemState<T>) -> Unit,
         contextMenuFn: ((item: ItemState<T>) -> List<List<ContextMenu.Item>>)? = null,
@@ -394,7 +402,7 @@ object Navigator {
             NavigatorState(
                 container = container,
                 title = title,
-                mode = mode,
+                behaviour = behaviour,
                 initExpandDepth = initExpandDepth,
                 liveUpdate = liveUpdate,
                 coroutines = coroutines,
@@ -411,7 +419,7 @@ object Navigator {
         modifier: Modifier = Modifier,
         itemHeight: Dp = ITEM_HEIGHT,
         bottomSpace: Dp = BOTTOM_SPACE,
-        iconArg: (ItemState<T>) -> IconArg,
+        iconArg: ((ItemState<T>) -> IconArg)? = null,
         styleArgs: ((ItemState<T>) -> List<Typography.Style>) = { listOf() },
     ) {
         val density = LocalDensity.current.density
@@ -443,7 +451,7 @@ object Navigator {
     @Composable
     private fun <T : Navigable<T>> ItemLayout(
         state: NavigatorState<T>, item: ItemState<T>, itemHeight: Dp,
-        iconArg: (ItemState<T>) -> IconArg, styleArgs: (ItemState<T>) -> List<Typography.Style>
+        iconArg: ((ItemState<T>) -> IconArg)?, styleArgs: (ItemState<T>) -> List<Typography.Style>
     ) {
         val styles = styleArgs(item)
         val bgColor = when {
@@ -454,7 +462,7 @@ object Navigator {
 
         fun mayOpenItem(event: MouseEvent) {
             val isLeftClick = event.button == 1
-            val isOpenClickCount = event.clickCount == state.mode.clicksToOpenItem
+            val isOpenClickCount = event.clickCount == state.behaviour.clicksToOpenItem
             val isHoverExpandButton = item.isHoverExpandButton(event.x, event.y)
             if (isLeftClick && isOpenClickCount && !isHoverExpandButton) state.open(item)
         }
@@ -479,7 +487,7 @@ object Navigator {
                 val itemDepth = if (rootsAreExpandable) item.depth else item.depth - 1
                 if (itemDepth > 0) Spacer(modifier = Modifier.width(ICON_WIDTH * itemDepth))
                 if (rootsAreExpandable) ItemButton(item, itemHeight) else Spacer(Modifier.width(TEXT_SPACING))
-                ItemIcon(item, iconArg)
+                if (iconArg != null) ItemIcon(item, iconArg)
                 Spacer(Modifier.width(TEXT_SPACING))
                 ItemText(item, styles)
                 Spacer(modifier = Modifier.width(AREA_PADDING))
@@ -555,7 +563,7 @@ object Navigator {
                     true
                 }
                 Key.DirectionUp -> {
-                    state.mauSelectPrevious(item)
+                    state.maySelectPrevious(item)
                     true
                 }
                 Key.DirectionDown -> {

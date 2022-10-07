@@ -91,7 +91,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     private val subtypesNavState = Navigator.NavigatorState(
         container = typeState,
         title = Label.SUBTYPES_OF + " " + typeState.name,
-        mode = Navigator.Mode.LIST,
+        behaviour = Navigator.Behaviour.Menu(),
         initExpandDepth = 4,
         coroutines = coroutines
     ) { it.item.tryOpen() }.also { typeState.onSubtypesUpdated { it.reloadEntries() } }
