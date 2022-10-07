@@ -390,7 +390,7 @@ object PreferenceDialog {
 
         class ProjectManager : PreferenceGroup(PROJECT_MANAGER) {
             companion object {
-                private val IGNORED_PATHS_PLACEHOLDER = ".git"
+                private const val IGNORED_PATHS_PLACEHOLDER = ".git"
             }
 
             private val ignoredPathsString = preferenceMgr.ignoredPaths.joinToString(", ")
@@ -415,7 +415,7 @@ object PreferenceDialog {
 
         class QueryRunner : PreferenceGroup(QUERY_RUNNER) {
             companion object {
-                private val QUERY_LIMIT_PLACEHOLDER = "1000"
+                private const val QUERY_LIMIT_PLACEHOLDER = "1000"
             }
 
             var matchQueryLimit = PreferenceField.TextInputValidated(
