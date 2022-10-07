@@ -47,6 +47,7 @@ import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -95,6 +96,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
+import com.vaticle.typedb.studio.framework.common.Util
 import com.vaticle.typedb.studio.framework.common.Util.isMouseHover
 import com.vaticle.typedb.studio.framework.common.Util.italics
 import com.vaticle.typedb.studio.framework.common.Util.toDP
@@ -124,7 +126,7 @@ object Form {
     private val CAPTION_SPACING = 5.dp
     private val INNER_SPACING = 10.dp
     private val TRAILING_ICON_SIZE = 12.dp
-    private val TEXT_BUTTON_PADDING = 8.dp
+    val TEXT_BUTTON_PADDING = 8.dp
     private val LOADING_SPINNER_SIZE = 14.dp
     private val LOADING_SPINNER_STROKE_WIDTH = 2.dp
     private val ICON_SPACING = 6.dp
@@ -930,6 +932,90 @@ object Form {
             Key.Enter, Key.NumPadEnter -> onEnter?.let { it(); true } ?: false
             Key.Spacebar -> onSpace?.let { it(); true } ?: false
             else -> false
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    fun <T : Any> InputDropdown(
+        values: List<T>,
+        selected: T?,
+        displayFn: @Composable (T) -> AnnotatedString = { AnnotatedString(it.toString()) },
+        onExpand: (() -> Unit)? = null,
+        onSelection: (value: T) -> Unit,
+        placeholder: String = "",
+        enabled: Boolean = true,
+        modifier: Modifier = Modifier,
+        focusReq: FocusRequester? = null,
+        tooltip: Tooltip.Arg? = null,
+    ) {
+
+        class DropdownState {
+            var expanded by mutableStateOf(false)
+            var isButtonHover by mutableStateOf(false)
+            var mouseIndex: Int? by mutableStateOf(null)
+            var width: Dp by mutableStateOf(0.dp)
+
+            fun toggle() {
+                expanded = !expanded
+                if (expanded && onExpand != null) onExpand()
+            }
+
+            fun select(value: T) {
+                onSelection(value); expanded = false
+            }
+
+            fun mouseOutFrom(index: Int) {
+                if (mouseIndex == index) mouseIndex = null
+            }
+
+            fun mouseInTo(index: Int) {
+                mouseIndex = index
+            }
+        }
+
+        val pixelDensity = LocalDensity.current.density
+        val state = remember { DropdownState() }
+        val itemPadding = PaddingValues(horizontal = Form.TEXT_BUTTON_PADDING)
+        var value by mutableStateOf("")
+        Box {
+            OutlinedTextField(
+                value = value,
+                placeholder = {"HO"},
+                modifier = modifier.onSizeChanged { state.width = Util.toDP(it.width, pixelDensity) }.pointerMoveFilter(
+                    onEnter = { state.isButtonHover = true; false },
+                    onExit = { state.isButtonHover = false; false }
+                ),
+                trailingIcon = { Icon.DROPDOWN_SELECT },
+                enabled = enabled,
+                onValueChange = {value = it},
+                label = { Text("Label") },
+                readOnly = false,
+            )
+//            DropdownMenu(
+//                expanded = state.expanded,
+//                onDismissRequest = { if (!state.isButtonHover) state.expanded = false },
+//                modifier = Modifier.background(Theme.studio.surface)
+//                    .defaultMinSize(minWidth = state.width)
+//                    .border(Form.BORDER_WIDTH, Theme.studio.border, Theme.ROUNDED_CORNER_SHAPE) // TODO: how to make not rounded?
+//            ) {
+//                val itemModifier = Modifier.height(Form.FIELD_HEIGHT)
+//                if (values.isEmpty()) DropdownMenuItem({}, itemModifier.background(Theme.studio.surface)) {
+//                    Row { Text(value = "(${Label.NONE})") }
+//                } else values.forEachIndexed { i, value ->
+//                    val color = if (value == selected) Theme.studio.secondary else Theme.studio.onSurface
+//                    DropdownMenuItem(
+//                        onClick = { state.select(value) }, contentPadding = itemPadding,
+//                        modifier = itemModifier
+//                            .background(if (i == state.mouseIndex) Theme.studio.primary else Theme.studio.surface)
+//                            .pointerHoverIcon(icon = PointerIconDefaults.Hand)
+//                            .pointerMoveFilter(
+//                                onExit = { state.mouseOutFrom(i); false },
+//                                onEnter = { state.mouseInTo(i); false }
+//                            ),
+//                    ) { Row { Text(value = displayFn(value), color = color) } }
+//                }
+//            }
         }
     }
 }

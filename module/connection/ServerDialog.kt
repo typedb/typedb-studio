@@ -34,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
@@ -43,7 +42,7 @@ import com.vaticle.typedb.studio.framework.material.Form.Checkbox
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.IconButton
 import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
-import com.vaticle.typedb.studio.framework.material.Form.MultilineTextInput
+import com.vaticle.typedb.studio.framework.material.Form.InputDropdown
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
@@ -71,7 +70,7 @@ object ServerDialog {
     private class ConnectServerForm : Form.State {
         var server: Property.Server by mutableStateOf(appData.server ?: TYPEDB)
         var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
-        var clusterAddresses: TextFieldValue by mutableStateOf(TextFieldValue(""))
+        var clusterAddresses: List<String> by mutableStateOf(emptyList())
         var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
@@ -84,7 +83,7 @@ object ServerDialog {
         override fun isValid(): Boolean {
             return when (server) {
                 TYPEDB -> !coreAddress.isBlank()
-                TYPEDB_CLUSTER -> !(clusterAddresses.text.isBlank() || username.isBlank() || password.isBlank())
+                TYPEDB_CLUSTER -> !(clusterAddresses.isEmpty() || username.isBlank() || password.isBlank())
             }
         }
 
@@ -93,16 +92,16 @@ object ServerDialog {
                 TYPEDB -> Service.client.tryConnectToTypeDBAsync(coreAddress) { Service.client.connectServerDialog.close() }
                 TYPEDB_CLUSTER -> when {
                     caCertificate.isBlank() -> Service.client.tryConnectToTypeDBClusterAsync(
-                        clusterAddresses, username, password, tlsEnabled
+                        clusterAddresses.first(), username, password, tlsEnabled
                     ) { Service.client.connectServerDialog.close() }
                     else -> Service.client.tryConnectToTypeDBClusterAsync(
-                        clusterAddresses, username, password, caCertificate
+                        clusterAddresses.first(), username, password, caCertificate
                     ) { Service.client.connectServerDialog.close() }
                 }
             }
             appData.server = server
             appData.coreAddress = coreAddress
-            appData.clusterAddresses = clusterAddresses.text
+            appData.clusterAddresses = clusterAddresses.joinToString(", ")
             appData.username = username
             appData.tlsEnabled = tlsEnabled
             appData.caCertificate = caCertificate
@@ -125,8 +124,9 @@ object ServerDialog {
         ) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 ServerFormButtons(state)
+                ConfigurationField(state)
                 if (state.server == TYPEDB_CLUSTER) {
-                    ClusterAddressFormField(state, Service.client.isConnected)
+                    ClusterAddressesFormField(state, Service.client.isConnected)
                     UsernameFormField(state)
                     PasswordFormField(state)
                     TLSEnabledFormField(state)
@@ -145,6 +145,13 @@ object ServerDialog {
                     }
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun ConfigurationField(state: ConnectServerForm) {
+        Field(label = "Configuration") {
+            InputDropdown(emptyList(), null, onSelection = {})
         }
     }
 
@@ -190,29 +197,22 @@ object ServerDialog {
         var modifier = Modifier.fillMaxSize()
         val focusReq = if (shouldFocus) FocusRequester() else null
         focusReq?.let { modifier = modifier.focusRequester(focusReq) }
-        Field(label = Label.ADDRESSES) {
-            MultilineTextInput(
-                value = state.clusterAddresses,
-                onValueChange = { state.clusterAddresses = it },
-                modifier = modifier,
-                onTextLayout = {}
-            )
-        }
 
-        Field(label = Label.CA_CERTIFICATE) {
+        Field(label = Label.ADDRESSES) {
             Row {
                 TextInput(
-                    value = state.caCertificate,
-                    placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
-                    onValueChange = { state.caCertificate = it },
-                    enabled = StudioState.client.isDisconnected,
-                    modifier = Modifier.weight(1f).focusRequester(focusReq),
+                    value = if (state.clusterAddresses.firstOrNull() == null) "" else state.clusterAddresses.first(),
+                    placeholder = Property.DEFAULT_SERVER_ADDRESS,
+                    onValueChange = { },
+                    enabled = false,
+                    modifier = modifier.weight(1f),
                 )
                 FormRowSpacer()
                 IconButton(
-                    icon = Icon.FOLDER_OPEN,
+                    icon = Icon.ADD,
                     tooltip = Tooltip.Arg(Label.OPEN_PROJECT_DIRECTORY)
-                ) { state.caCertificate = selectFilePath(window, Label.SELECT_CERTIFICATE, SelectorOptions.FILES) }
+                ) {}
+//                { state.clusterAddresses = inputAddressesDialog() }
             }
         }
         LaunchedEffect(focusReq) { focusReq?.requestFocus() }
