@@ -186,17 +186,34 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ClusterAddressFormField(state: ConnectServerForm, shouldFocus: Boolean) {
+    private fun ClusterAddressesFormField(state: ConnectServerForm, shouldFocus: Boolean) {
         var modifier = Modifier.fillMaxSize()
         val focusReq = if (shouldFocus) FocusRequester() else null
         focusReq?.let { modifier = modifier.focusRequester(focusReq) }
-        Field(label = Label.ADDRESS) {
+        Field(label = Label.ADDRESSES) {
             MultilineTextInput(
                 value = state.clusterAddresses,
                 onValueChange = { state.clusterAddresses = it },
                 modifier = modifier,
                 onTextLayout = {}
             )
+        }
+
+        Field(label = Label.CA_CERTIFICATE) {
+            Row {
+                TextInput(
+                    value = state.caCertificate,
+                    placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
+                    onValueChange = { state.caCertificate = it },
+                    enabled = StudioState.client.isDisconnected,
+                    modifier = Modifier.weight(1f).focusRequester(focusReq),
+                )
+                FormRowSpacer()
+                IconButton(
+                    icon = Icon.FOLDER_OPEN,
+                    tooltip = Tooltip.Arg(Label.OPEN_PROJECT_DIRECTORY)
+                ) { state.caCertificate = selectFilePath(window, Label.SELECT_CERTIFICATE, SelectorOptions.FILES) }
+            }
         }
         LaunchedEffect(focusReq) { focusReq?.requestFocus() }
     }
