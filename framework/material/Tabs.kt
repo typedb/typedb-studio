@@ -279,14 +279,11 @@ object Tabs {
         }
 
         private suspend fun PointerInputScope.onPointerInput(
-            contextMenu: ContextMenu.State,
-            onClick: (MouseEvent) -> Unit
-        ) {
-            contextMenu.onPointerInput(
-                pointerInputScope = this,
-                onSinglePrimaryPressed = onClick
-            )
-        }
+            contextMenu: ContextMenu.State, onClick: (MouseEvent) -> Unit
+        ) = contextMenu.onPointerInput(
+            pointerInputScope = this,
+            onSinglePrimaryPressed = onClick
+        )
 
         @Composable
         private fun <T : Any> PreviousTabsButton(state: State<T>) {

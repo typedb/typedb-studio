@@ -61,17 +61,10 @@ import com.vaticle.typedb.studio.framework.common.Util.hyphenate
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.vaticle.typedb.studio.framework.material.*
 import com.vaticle.typedb.studio.framework.material.Concept.ConceptDetailedLabel
 import com.vaticle.typedb.studio.framework.material.Concept.conceptIcon
-import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.ClickableText
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.Navigator
-import com.vaticle.typedb.studio.framework.material.Pages
-import com.vaticle.typedb.studio.framework.material.Scrollbar
-import com.vaticle.typedb.studio.framework.material.Separator
-import com.vaticle.typedb.studio.framework.material.Table
-import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
@@ -266,7 +259,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         SectionRow {
             Table.Layout(
                 items = typeState.ownsAttTypeProperties.sortedBy { it.attributeType.name },
-                modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
+                modifier = Modifier.weight(1f).height(tableHeight).border(1.dp, Theme.studio.border),
                 rowHeight = TABLE_ROW_HEIGHT,
                 columns = listOf(
                     Table.Column(header = Label.ATTRIBUTE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
@@ -283,13 +276,18 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
                         MayTickIcon(it.isInherited)
                     },
-                    Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
-                        MayRemoveIconButton(Label.REMOVE_OWNS_ATTRIBUTE_TYPE, it.isInherited, it.canBeUndefined) {
-                            typeState.initiateRemoveOwnsAttributeType(it.attributeType)
-                        }
-                    },
                 )
-            )
+            ) {
+                listOf(
+                    listOf(
+                        ContextMenu.Item(
+                            label = Label.REMOVE,
+                            icon = Icon.REMOVE,
+                            enabled = isEditable && !it.isInherited && it.canBeUndefined
+                        ) { typeState.initiateRemoveOwnsAttributeType(it.attributeType) }
+                    )
+                )
+            }
         }
     }
 
@@ -362,9 +360,15 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     protected fun PlaysRoleTypesSection() {
         SectionRow { Form.Text(value = Label.PLAYS) }
         RoleTypesTable(typeState.playsRolTypeProperties) {
-            MayRemoveIconButton(Label.REMOVE_PLAYS_ROLE_TYPE, it.isInherited, it.canBeUndefined) {
-                typeState.initiateRemovePlaysRoleType(it.roleType)
-            }
+            listOf(
+                listOf(
+                    ContextMenu.Item(
+                        label = Label.REMOVE,
+                        icon = Icon.REMOVE,
+                        enabled = isEditable && it.canBeUndefined
+                    ) { typeState.initiateRemovePlaysRoleType(it.roleType) }
+                )
+            )
         }
         PlaysRoleTypeAddition()
     }
@@ -372,14 +376,15 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     @Composable
     protected fun RoleTypesTable(
         roleTypeProperties: List<TypeState.RoleTypeProperties>,
-        buttonsFn: @Composable RowScope.(TypeState.RoleTypeProperties) -> Unit
+        contextMenuFn: (TypeState.RoleTypeProperties) -> List<List<ContextMenu.Item>>,
     ) {
         val tableHeight = TABLE_ROW_HEIGHT * (roleTypeProperties.size + 1).coerceAtLeast(2)
         SectionRow {
             Table.Layout(
                 items = roleTypeProperties.sortedBy { it.roleType.scopedName },
-                modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
+                modifier = Modifier.weight(1f).height(tableHeight).border(1.dp, Theme.studio.border),
                 rowHeight = TABLE_ROW_HEIGHT,
+                contextMenuFn = contextMenuFn,
                 columns = listOf(
                     Table.Column(header = Label.ROLE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
                         ClickableText(props.roleType.scopedName) { props.roleType.relationType.tryOpen() }
@@ -389,9 +394,6 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     },
                     Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
                         MayTickIcon(it.isInherited)
-                    },
-                    Table.Column(header = null, size = Either.second(ICON_COL_WIDTH)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(LINE_SPACING)) { buttonsFn(it) }
                     },
                 )
             )
@@ -542,22 +544,6 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     }
 
     @Composable
-    protected fun MayDeleteIconButton(
-        tooltip: String,
-        isVisible: Boolean,
-        enabled: Boolean = true,
-        onClick: () -> Unit
-    ) {
-        if (!isVisible) Form.IconButton(
-            icon = Icon.DELETE,
-            iconColor = Theme.studio.errorStroke,
-            enabled = isEditable && enabled,
-            tooltip = Tooltip.Arg(tooltip, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-            onClick = onClick
-        )
-    }
-
-    @Composable
     protected fun MayTickIcon(boolean: Boolean) {
         if (boolean) Icon.Render(icon = Icon.TICK, color = Theme.studio.secondary)
     }
@@ -607,10 +593,20 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         private fun RelatesRoleTypesSection() {
             SectionRow { Form.Text(value = Label.RELATES) }
             RoleTypesTable(typeState.relatesRoleTypeProperties) {
-                EditButton { it.roleType.initiateRename() }
-                MayDeleteIconButton(Label.DELETE_ROLE_TYPE, it.isInherited, it.canBeUndefined) {
-                    typeState.initiateDeleteRoleType(it.roleType)
-                }
+                listOf(
+                    listOf(
+                        ContextMenu.Item(
+                            label = Label.RENAME,
+                            icon = Icon.RENAME,
+                            enabled = isEditable && !it.isInherited,
+                        ) { it.roleType.initiateRename() },
+                        ContextMenu.Item(
+                            label = Label.DELETE,
+                            icon = Icon.DELETE,
+                            enabled = isEditable && !it.isInherited && it.canBeUndefined
+                        ) { typeState.initiateDeleteRoleType(it.roleType) }
+                    )
+                )
             }
             RelatesRoleTypeAddition()
         }
@@ -688,7 +684,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             SectionRow {
                 Table.Layout(
                     items = typeState.ownerTypeProperties.values.sortedBy { it.ownerType.name },
-                    modifier = Modifier.border(1.dp, Theme.studio.border).weight(1f).height(tableHeight),
+                    modifier = Modifier.weight(1f).height(tableHeight).border(1.dp, Theme.studio.border),
                     rowHeight = TABLE_ROW_HEIGHT,
                     columns = listOf(
                         Table.Column(header = Label.THING_TYPES, contentAlignment = Alignment.CenterStart) { props ->

@@ -831,7 +831,8 @@ object Form {
             }
 
             fun select(value: T) {
-                onSelection(value); expanded = false
+                onSelection(value)
+                expanded = false
             }
 
             fun mouseOutFrom(index: Int) {
@@ -878,8 +879,8 @@ object Form {
                             .background(if (i == state.mouseIndex) Theme.studio.primary else Theme.studio.surface)
                             .pointerHoverIcon(icon = PointerIconDefaults.Hand)
                             .pointerMoveFilter(
-                                onExit = { state.mouseOutFrom(i); false },
-                                onEnter = { state.mouseInTo(i); false }
+                                onEnter = { state.mouseInTo(i); false },
+                                onExit = { state.mouseOutFrom(i); false }
                             ),
                     ) { Row { Text(value = displayFn(value), color = color) } }
                 }

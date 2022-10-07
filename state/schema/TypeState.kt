@@ -61,7 +61,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         ROLE_TYPE(Label.ROLE.lowercase())
     }
 
-    data class AttributeTypeProperties(
+    data class AttributeTypeProperties constructor(
         val attributeType: Attribute,
         val overriddenType: Attribute?,
         val isKey: Boolean,
@@ -69,18 +69,17 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         val canBeUndefined: Boolean,
     )
 
-    data class OwnerTypeProperties(
+    data class OwnerTypeProperties constructor(
         val ownerType: Thing<*, *>,
         val isKey: Boolean,
         val isInherited: Boolean,
-        val canBeUndefined: Boolean
     )
 
-    data class RoleTypeProperties(
+    data class RoleTypeProperties constructor(
         val roleType: Role,
         val overriddenType: Role?,
         val isInherited: Boolean,
-        val canBeUndefined: Boolean
+        val canBeUndefined: Boolean,
     )
 
     companion object {
@@ -564,8 +563,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
             fun load(ownerType: ThingType, isKey: Boolean, isInherited: Boolean) {
                 schemaMgr.createTypeState(ownerType.asThingType())?.let {
-                    val canBeUndefined = false // TODO
-                    props[ownerType] = OwnerTypeProperties(it, isKey, isInherited, canBeUndefined)
+                    props[ownerType] = OwnerTypeProperties(it, isKey, isInherited)
                 }
             }
 

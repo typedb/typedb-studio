@@ -19,16 +19,7 @@
 package com.vaticle.typedb.studio.framework.material
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
@@ -38,8 +29,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
@@ -74,7 +70,11 @@ object Table {
     private val CELL_PADDING_VERTICAL = 4.dp
 
     @Composable
-    private fun bgColor(i: Int): Color = if (i % 2 == 0) Theme.studio.backgroundLight else Theme.studio.backgroundMedium
+    private fun bgColor(isHover: Boolean, i: Int): Color = when {
+        isHover -> Theme.studio.indicationBase.copy(alpha = Theme.INDICATION_HOVER_ALPHA)
+        i % 2 == 0 -> Theme.studio.backgroundLight
+        else -> Theme.studio.backgroundMedium
+    }
 
     @Composable
     fun <T> Layout(
@@ -85,11 +85,12 @@ object Table {
         columnBorderSize: Dp = COLUMN_BORDER_SIZE,
         horCellPadding: Dp = CELL_PADDING_HORIZONTAL,
         verCellPadding: Dp = CELL_PADDING_VERTICAL,
-        columns: List<Column<T>>
+        columns: List<Column<T>>,
+        contextMenuFn: ((item: T) -> List<List<ContextMenu.Item>>)? = null,
     ) {
-        Column(modifier) {
+        Column(modifier.background(Theme.studio.backgroundMedium)) {
             if (showHeader) Header(rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
-            Body(items, rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
+            Body(items, rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns, contextMenuFn)
         }
     }
 
@@ -114,8 +115,13 @@ object Table {
 
     @Composable
     private fun <T> Body(
-        items: List<T>, rowHeight: Dp, columnBorderSize: Dp,
-        horCellPadding: Dp, verCellPadding: Dp, columns: List<Column<T>>,
+        items: List<T>,
+        rowHeight: Dp,
+        columnBorderSize: Dp,
+        horCellPadding: Dp,
+        verCellPadding: Dp,
+        columns: List<Column<T>>,
+        contextMenuFn: ((item: T) -> List<List<ContextMenu.Item>>)?,
     ) {
         val density = LocalDensity.current.density
         val scroller = rememberLazyListState()
@@ -124,7 +130,10 @@ object Table {
             if (items.isEmpty()) EmptyRow()
             else LazyColumn(Modifier, state = scroller) {
                 items(items.count()) {
-                    Row(items[it], it, rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
+                    Row(
+                        items[it], it, rowHeight, columnBorderSize,
+                        horCellPadding, verCellPadding, columns, contextMenuFn
+                    )
                 }
             }
             Scrollbar.Vertical(rememberScrollbarAdapter(scroller), Modifier.align(Alignment.CenterEnd), height)
@@ -138,19 +147,43 @@ object Table {
         }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun <T> Row(
-        item: T, rowID: Int, rowHeight: Dp, columnBorderSize: Dp,
-        horCellPadding: Dp, verCellPadding: Dp, columns: List<Column<T>>
+        item: T,
+        rowID: Int,
+        rowHeight: Dp,
+        columnBorderSize: Dp,
+        horCellPadding: Dp,
+        verCellPadding: Dp,
+        columns: List<Column<T>>,
+        contextMenuFn: ((item: T) -> List<List<ContextMenu.Item>>)?
     ) {
-        Row(Modifier.fillMaxWidth().height(rowHeight), Arrangement.spacedBy(columnBorderSize)) {
-            columns.forEach { col ->
-                Box(
-                    contentAlignment = col.contentAlignment,
-                    modifier = col.size.apply({ Modifier.weight(it) }, { Modifier.width(it) })
-                        .fillMaxHeight().background(bgColor(rowID))
-                        .padding(horCellPadding, verCellPadding)
-                ) { col.content(item) }
+        val contextMenuState = remember { ContextMenu.State() }
+        var isHover by remember { mutableStateOf(false) }
+        Box {
+            var modifier = Modifier.fillMaxWidth().height(rowHeight)
+            contextMenuFn?.let {
+                ContextMenu.Popup(contextMenuState) { it(item) }
+                modifier = modifier.pointerHoverIcon(PointerIconDefaults.Hand)
+                    .pointerInput(item) { contextMenuState.onPointerInput(this) }
+                    .pointerMoveFilter(
+                        onEnter = { isHover = true; false },
+                        onExit = { isHover = false; false }
+                    )
+            }
+            Row(modifier) {
+                columns.forEachIndexed { i, col ->
+                    Box(
+                        contentAlignment = col.contentAlignment,
+                        modifier = col.size.apply({ Modifier.weight(it) }, { Modifier.width(it) })
+                            .fillMaxHeight().background(bgColor(isHover, rowID))
+                            .padding(horCellPadding, verCellPadding)
+                    ) { col.content(item) }
+                    if (i < columns.size - 1) Spacer(
+                        Modifier.height(rowHeight).width(columnBorderSize).background(Theme.studio.backgroundDark)
+                    )
+                }
             }
         }
     }
