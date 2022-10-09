@@ -89,23 +89,41 @@ object ServerDialog {
 
         override fun trySubmit() {
             when (server) {
-                TYPEDB -> Service.client.tryConnectToTypeDBAsync(coreAddress) { Service.client.connectServerDialog.close() }
-                TYPEDB_CLUSTER -> when {
-                    caCertificate.isBlank() -> Service.client.tryConnectToTypeDBClusterAsync(
-                        clusterAddresses.first(), username, password, tlsEnabled
-                    ) { Service.client.connectServerDialog.close() }
-                    else -> Service.client.tryConnectToTypeDBClusterAsync(
-                        clusterAddresses.first(), username, password, caCertificate
-                    ) { Service.client.connectServerDialog.close() }
+                TYPEDB ->  {
+                    val config = ConnectionConfiguration.Core(coreAddress)
+                    rememberConfig(config)
+                    Service.client.tryConnectToTypeDBAsync(coreAddress) {
+                        Service.client.connectServerDialog.close()
+                    }
+                }
+                TYPEDB_CLUSTER -> {
+                    val config = ConnectionConfiguration.Cluster(clusterAddresses.toSet(), username, password, tlsEnabled, caCertificate)
+                    rememberConfig(config)
+                    when {
+                        caCertificate.isBlank() -> Service.client.tryConnectToTypeDBClusterAsync(
+                            clusterAddresses.first(), username, password, tlsEnabled
+                        ) {
+                            Service.client.connectServerDialog.close()
+                        }
+                        else -> Service.client.tryConnectToTypeDBClusterAsync(
+                            clusterAddresses.first(), username, password, caCertificate
+                        ) {
+                            Service.client.connectServerDialog.close()
+                        }
+                    }
                 }
             }
             appData.server = server
-            appData.coreAddress = coreAddress
-            appData.clusterAddresses = clusterAddresses.joinToString(", ")
-            appData.username = username
-            appData.tlsEnabled = tlsEnabled
-            appData.caCertificate = caCertificate
+//            appData.coreAddress = coreAddress
+//            appData.clusterAddresses = clusterAddresses.joinToString(", ")
+//            appData.username = username
+//            appData.tlsEnabled = tlsEnabled
+//            appData.caCertificate = caCertificate
         }
+    }
+
+    private fun rememberConfig(config: ConnectionConfiguration) {
+
     }
 
     @Composable
@@ -151,7 +169,7 @@ object ServerDialog {
     @Composable
     private fun ConfigurationField(state: ConnectServerForm) {
         Field(label = "Configuration") {
-            InputDropdown(emptyList(), null, onSelection = {})
+            InputDropdown(listOf("A", "B", "C"), null, onSelection = {})
         }
     }
 

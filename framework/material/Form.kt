@@ -61,6 +61,7 @@ import androidx.compose.ui.awt.awtEvent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -94,6 +95,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
 import com.vaticle.typedb.studio.framework.common.Util
@@ -974,48 +976,45 @@ object Form {
             }
         }
 
-        val pixelDensity = LocalDensity.current.density
-        val state = remember { DropdownState() }
-        val itemPadding = PaddingValues(horizontal = Form.TEXT_BUTTON_PADDING)
-        var value by mutableStateOf("")
-        Box {
+        var expanded by remember { mutableStateOf(false) }
+        val suggestions = listOf("Item1","Item2","Item3")
+        var selectedText by remember { mutableStateOf("") }
+
+        var textfieldSize by remember { mutableStateOf(Size.Zero)}
+
+        val icon = if (expanded)
+            Icon.ITEM_EXPANDED //it requires androidx.compose.material:material-icons-extended
+        else
+            Icon.ITEM_COLLAPSED
+
+
+        Column() {
             OutlinedTextField(
-                value = value,
-                placeholder = {"HO"},
-                modifier = modifier.onSizeChanged { state.width = Util.toDP(it.width, pixelDensity) }.pointerMoveFilter(
-                    onEnter = { state.isButtonHover = true; false },
-                    onExit = { state.isButtonHover = false; false }
-                ),
-                trailingIcon = { Icon.DROPDOWN_SELECT },
-                enabled = enabled,
-                onValueChange = {value = it},
-                label = { Text("Label") },
-                readOnly = false,
+                value = selectedText,
+                onValueChange = { selectedText = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { coordinates ->
+                        //This value is used to assign to the DropDown the same width
+                        textfieldSize = coordinates.size.toSize()
+                    },
+                label = {Text("Label")},
+                trailingIcon = {icon}
             )
-//            DropdownMenu(
-//                expanded = state.expanded,
-//                onDismissRequest = { if (!state.isButtonHover) state.expanded = false },
-//                modifier = Modifier.background(Theme.studio.surface)
-//                    .defaultMinSize(minWidth = state.width)
-//                    .border(Form.BORDER_WIDTH, Theme.studio.border, Theme.ROUNDED_CORNER_SHAPE) // TODO: how to make not rounded?
-//            ) {
-//                val itemModifier = Modifier.height(Form.FIELD_HEIGHT)
-//                if (values.isEmpty()) DropdownMenuItem({}, itemModifier.background(Theme.studio.surface)) {
-//                    Row { Text(value = "(${Label.NONE})") }
-//                } else values.forEachIndexed { i, value ->
-//                    val color = if (value == selected) Theme.studio.secondary else Theme.studio.onSurface
-//                    DropdownMenuItem(
-//                        onClick = { state.select(value) }, contentPadding = itemPadding,
-//                        modifier = itemModifier
-//                            .background(if (i == state.mouseIndex) Theme.studio.primary else Theme.studio.surface)
-//                            .pointerHoverIcon(icon = PointerIconDefaults.Hand)
-//                            .pointerMoveFilter(
-//                                onExit = { state.mouseOutFrom(i); false },
-//                                onEnter = { state.mouseInTo(i); false }
-//                            ),
-//                    ) { Row { Text(value = displayFn(value), color = color) } }
-//                }
-//            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier
+                    .width(with(LocalDensity.current){textfieldSize.width.toDp()})
+            ) {
+                suggestions.forEach { label ->
+                    DropdownMenuItem(onClick = {
+                        selectedText = label
+                    }) {
+                        Text("label")
+                    }
+                }
+            }
         }
     }
 }
