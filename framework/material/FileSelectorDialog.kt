@@ -32,10 +32,10 @@ object FileSelectorDialog {
             else -> otherOSFileSelector(title, selectorOptions)
         }
 
-        return if (file.isEmpty) null else file.get().absolutePath
+        return file?.absolutePath
     }
 
-    private fun macOSFileSelector(parent: ComposeDialog, title: String, selectorOptions: SelectorOptions): Optional<File> {
+    private fun macOSFileSelector(parent: ComposeDialog, title: String, selectorOptions: SelectorOptions): File? {
         when (selectorOptions) {
             SelectorOptions.FILES_ONLY -> System.setProperty("apple.awt.fileDialogForDirectories", "false")
             SelectorOptions.DIRECTORIES_ONLY -> System.setProperty("apple.awt.fileDialogForDirectories", "true")
@@ -47,14 +47,14 @@ object FileSelectorDialog {
             isVisible = true
         }
 
-        return if (fileDialog.file == null) {
-            Optional.empty()
+        return if (fileDialog.directory == null && fileDialog.file == null) {
+            null
         } else {
-            Optional.of(File("${fileDialog.directory}/${fileDialog.file}"))
+            File("${fileDialog.directory}/${fileDialog.file}").absoluteFile
         }
     }
 
-    private fun otherOSFileSelector(title: String, selectorOptions: SelectorOptions): Optional<File> {
+    private fun otherOSFileSelector(title: String, selectorOptions: SelectorOptions): File? {
         val selectionMode = when (selectorOptions) {
             SelectorOptions.FILES_ONLY -> JFileChooser.FILES_ONLY
             SelectorOptions.DIRECTORIES_ONLY -> JFileChooser.DIRECTORIES_ONLY
@@ -67,10 +67,9 @@ object FileSelectorDialog {
 
         val option = fileChooser.showOpenDialog(null)
         return if (option == JFileChooser.APPROVE_OPTION) {
-            val file = fileChooser.selectedFile
-            Optional.of(file.absoluteFile)
+            fileChooser.selectedFile.absoluteFile
         } else {
-            Optional.empty()
+            null
         }
     }
 
