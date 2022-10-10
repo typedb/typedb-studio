@@ -305,6 +305,7 @@ interface KeyMapper {
                     Keys.DirectionDown -> Command.MOVE_END
                     Keys.Backspace -> Command.DELETE_LINE_START
                     Keys.Q -> Command.QUIT
+                    Keys.R -> Command.REPLACE
                     else -> null
                 }
                 // Emacs-like shortcuts
@@ -338,7 +339,6 @@ interface KeyMapper {
                     Keys.D -> Command.DELETE_CHAR_NEXT
                     Keys.K -> Command.DELETE_LINE_END
                     Keys.O -> Command.ENTER
-                    Keys.R -> Command.REPLACE
                     else -> null
                 }
                 event.isAltPressed && event.isShiftPressed -> when (event.key) {
