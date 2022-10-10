@@ -204,8 +204,6 @@ object ServerDialog {
 
     @Composable
     private fun CACertificateFormField(state: ConnectServerForm, window: ComposeDialog) {
-        val focusReq = remember { FocusRequester() }
-
         Field(label = Label.CA_CERTIFICATE) {
             Row {
                 TextInput(
@@ -213,7 +211,7 @@ object ServerDialog {
                     placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
                     onValueChange = { state.caCertificate = it },
                     enabled = StudioState.client.isDisconnected,
-                    modifier = Modifier.weight(1f).focusRequester(focusReq),
+                    modifier = Modifier.weight(1f)
                 )
                 RowSpacer()
                 IconButton(
