@@ -194,6 +194,7 @@ object Label {
     const val SCHEMA_SESSION = "Schema Session"
     const val SCRIPT_MODE = "Script Mode"
     const val SELECT_ATTRIBUTE_TYPE = "Select Attribute Type"
+    const val SELECT_CERTIFICATE_FILE = "Select Certificate File"
     const val SELECT_DATABASE = "Select Database"
     const val SELECT_OVERRIDDEN_TYPE_OPTIONAL = "Select Overridden Type (Optional)"
     const val SELECT_PREFERENCE_GROUP = "Select a preference group from the menu on the left."

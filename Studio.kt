@@ -289,8 +289,6 @@ object Studio {
         // Enable anti-aliasing
         System.setProperty("awt.useSystemAAFontSettings", "on")
         System.setProperty("swing.aatext", "true")
-        // Enable FileDialog to select "directories" on MacOS
-        System.setProperty("apple.awt.fileDialogForDirectories", "true")
         // Enable native Windows UI style
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()) // Set UI style for Windows
     }
