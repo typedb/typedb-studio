@@ -20,7 +20,10 @@ package com.vaticle.typedb.studio.module.connection
 
 interface ConnectionConfiguration {
     companion object {
-        private const val SEPARATOR: String = "|"
+        // Someone will probably put a pipe in their username and break this.
+        // We need a separator that is an invalid character in an address, username, password or file path.
+        private const val INTER_CONFIG_SEPARATOR: String = ":value:"
+        private const val CONFIG_SEPARATOR: String = ":config:"
         private const val CLUSTER_ID: String = "cluster"
         private const val CORE_ID: String = "core"
     }
@@ -30,8 +33,12 @@ interface ConnectionConfiguration {
 
     class Core(val address: String) : ConnectionConfiguration
 
-    fun fromString(configString: String): ConnectionConfiguration {
-        val config: List<String> = configString.split(SEPARATOR)
+    fun configsFromString(configsString: String): List<ConnectionConfiguration> {
+
+    }
+
+    fun configFromString(configString: String): ConnectionConfiguration {
+        val config: List<String> = configString.split(INTER_CONFIG_SEPARATOR)
 
         return if (config[0] == CLUSTER_ID) {
             Cluster(config[1].split(",").toSet(), config[2], config[3], config[4].toBooleanStrictOrNull()!!, config[5])
@@ -40,13 +47,14 @@ interface ConnectionConfiguration {
         }
     }
 
-    fun toString(config: ConnectionConfiguration): String {
+    fun configToString(config: ConnectionConfiguration): String {
         return when (config) {
             is Cluster -> {
-                listOf(CLUSTER_ID, config.addresses.joinToString(","), config.username, config.password, config.tls, config.certPath).joinToString(SEPARATOR)
+                listOf(CLUSTER_ID, config.addresses.joinToString(","), config.username, config.password,
+                    config.tls, config.certPath).joinToString(INTER_CONFIG_SEPARATOR)
             }
             is Core -> {
-                listOf(CORE_ID, config.address).joinToString(SEPARATOR)
+                listOf(CORE_ID, config.address).joinToString(INTER_CONFIG_SEPARATOR)
             }
             else -> {
                 throw RuntimeException("No such connection configuration type.")
