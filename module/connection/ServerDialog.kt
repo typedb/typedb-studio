@@ -216,7 +216,7 @@ object ServerDialog {
                 RowSpacer()
                 IconButton(
                     icon = Icon.FOLDER_OPEN,
-                    tooltip = Tooltip.Arg(Label.OPEN_PROJECT_DIRECTORY)
+                    tooltip = Tooltip.Arg(Label.SELECT_CERTIFICATE_FILE)
                 ) {
                     val certSelectionResult = selectFilePath(window, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES)
                     if (certSelectionResult != null) {
