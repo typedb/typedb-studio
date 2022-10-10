@@ -218,7 +218,7 @@ object ServerDialog {
                     icon = Icon.FOLDER_OPEN,
                     tooltip = Tooltip.Arg(Label.SELECT_CERTIFICATE_FILE)
                 ) {
-                    val certSelectionResult = selectFilePath(window, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES)
+                    val certSelectionResult = selectFilePath(window, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY)
                     if (certSelectionResult != null) {
                         state.caCertificate = certSelectionResult
                     }
