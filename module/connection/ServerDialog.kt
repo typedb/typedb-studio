@@ -113,12 +113,6 @@ object ServerDialog {
                     }
                 }
             }
-            appData.server = server
-//            appData.coreAddress = coreAddress
-//            appData.clusterAddresses = clusterAddresses.joinToString(", ")
-//            appData.username = username
-//            appData.tlsEnabled = tlsEnabled
-//            appData.caCertificate = caCertificate
         }
     }
 

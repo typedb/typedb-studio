@@ -85,7 +85,7 @@ class DataService {
             set(value) = value?.let { setProperty(CONNECTION_CORE_ADDRESS, it) } ?: Unit
         var clusterAddresses: String?
             get() = properties?.getProperty(CONNECTION_CLUSTER_ADDRESSES)
-            set(value) = value?.let { setProperty(CONNECTION_CA_CERTIFICATE, it) } ?: Unit
+            set(value) = value?.let { setProperty(CONNECTION_CLUSTER_ADDRESSES, it) } ?: Unit
         var username: String?
             get() = properties?.getProperty(CONNECTION_USERNAME)
             set(value) = value?.let { setProperty(CONNECTION_USERNAME, it) } ?: Unit
