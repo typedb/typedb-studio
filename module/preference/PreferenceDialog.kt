@@ -450,7 +450,7 @@ object PreferenceDialog {
 
         Navigator.Layout(
             state = navState,
-            modifier = Modifier.fillMaxSize().padding(Theme.DIALOG_PADDING),
+            modifier = Modifier.fillMaxSize(),
         )
 
         LaunchedEffect(navState) { navState.launch() }
@@ -475,6 +475,7 @@ object PreferenceDialog {
                         initSize = Either.first(NAVIGATOR_INIT_SIZE), minSize = NAVIGATOR_MIN_SIZE
                     ) {
                         Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight)) {
+                            ColumnSpacer()
                             NavigatorLayout()
                         }
                     },
@@ -482,7 +483,7 @@ object PreferenceDialog {
                         id = PreferenceDialog.javaClass.canonicalName + ".secondary",
                         initSize = Either.first(PREFERENCE_GROUP_INIT_SIZE), minSize = PREFERENCE_GROUP_MIN_SIZE
                     ) {
-                        Column(modifier = Modifier.fillMaxHeight().padding(Theme.DIALOG_PADDING)) {
+                        Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
                             if (focusedPreferenceGroup.name.isBlank()) {
                                 focusedPreferenceGroup = state.rootPreferenceGroup.entries.first()
                             }
