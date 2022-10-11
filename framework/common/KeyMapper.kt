@@ -25,6 +25,7 @@ import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
+import com.vaticle.typedb.studio.framework.common.KeyMapper.*
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Property.OS
 import java.awt.event.KeyEvent.KEY_LOCATION_NUMPAD
@@ -33,13 +34,13 @@ interface KeyMapper {
 
     val modKey: String
 
-    fun map(event: KeyEvent): com.vaticle.typedb.studio.framework.common.KeyMapper.Command?
+    fun map(event: KeyEvent): Command?
 
     companion object {
 
-        val CURRENT: com.vaticle.typedb.studio.framework.common.KeyMapper = when (OS.Current) {
-            OS.MACOS -> com.vaticle.typedb.studio.framework.common.KeyMapper.MacOSKeyMapper
-            else -> com.vaticle.typedb.studio.framework.common.KeyMapper.DefaultKeyMapper
+        val CURRENT: KeyMapper = when (OS.Current) {
+            OS.MACOS -> MacOSKeyMapper
+            else -> DefaultKeyMapper
         }
     }
 
@@ -173,124 +174,124 @@ interface KeyMapper {
         fun map(
             event: KeyEvent,
             shortcutModifier: (KeyEvent) -> Boolean
-        ): com.vaticle.typedb.studio.framework.common.KeyMapper.Command? {
+        ): Command? {
             return when {
                 shortcutModifier(event) && event.isShiftPressed -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Z -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.REDO
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Enter, com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.EnterNumPad -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOD_ENTER_SHIFT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionLeft -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_LINE_LEFT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionRight -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_LINE_RIGHT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionUp -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.REORDER_LINES_UP
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionDown -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.REORDER_LINES_DOWN
+                    Keys.Z -> Command.REDO
+                    Keys.Enter, Keys.EnterNumPad -> Command.MOD_ENTER_SHIFT
+                    Keys.DirectionLeft -> Command.SELECT_LINE_LEFT
+                    Keys.DirectionRight -> Command.SELECT_LINE_RIGHT
+                    Keys.DirectionUp -> Command.REORDER_LINES_UP
+                    Keys.DirectionDown -> Command.REORDER_LINES_DOWN
                     else -> null
                 }
                 shortcutModifier(event) -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.C, com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Insert -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.COPY
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.V -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.PASTE
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.X -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.CUT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.D -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.DUPLICATE
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.A -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_ALL
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Z -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.UNDO
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.F -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.FIND
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.S -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SAVE
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.W -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.CLOSE
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.N, com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.T -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.NEW_PAGE
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Enter, com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.EnterNumPad -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOD_ENTER
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Slash -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.TOGGLE_COMMENT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Equals -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.TEXT_SIZE_INCREASE
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Minus -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.TEXT_SIZE_DECREASE
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Zero -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.TEXT_SIZE_RESET
+                    Keys.C, Keys.Insert -> Command.COPY
+                    Keys.V -> Command.PASTE
+                    Keys.X -> Command.CUT
+                    Keys.D -> Command.DUPLICATE
+                    Keys.A -> Command.SELECT_ALL
+                    Keys.Z -> Command.UNDO
+                    Keys.F -> Command.FIND
+                    Keys.S -> Command.SAVE
+                    Keys.W -> Command.CLOSE
+                    Keys.N, Keys.T -> Command.NEW_PAGE
+                    Keys.Enter, Keys.EnterNumPad -> Command.MOD_ENTER
+                    Keys.Slash -> Command.TOGGLE_COMMENT
+                    Keys.Equals -> Command.TEXT_SIZE_INCREASE
+                    Keys.Minus -> Command.TEXT_SIZE_DECREASE
+                    Keys.Zero -> Command.TEXT_SIZE_RESET
                     else -> null
                 }
                 event.isCtrlPressed && event.isShiftPressed -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Tab -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.CTRL_TAB_SHIFT
+                    Keys.Tab -> Command.CTRL_TAB_SHIFT
                     else -> null
                 }
                 event.isCtrlPressed -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Tab -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.CTRL_TAB
+                    Keys.Tab -> Command.CTRL_TAB
                     else -> null
                 }
                 event.isAltPressed && event.isShiftPressed -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionLeft -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_WORD_LEFT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionRight -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_WORD_RIGHT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionUp -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_PARAGRAPH_PREV
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionDown -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_PARAGRAPH_NEXT
+                    Keys.DirectionLeft -> Command.SELECT_WORD_LEFT
+                    Keys.DirectionRight -> Command.SELECT_WORD_RIGHT
+                    Keys.DirectionUp -> Command.SELECT_PARAGRAPH_PREV
+                    Keys.DirectionDown -> Command.SELECT_PARAGRAPH_NEXT
                     else -> null
                 }
                 event.isShiftPressed -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionLeft -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_CHAR_LEFT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionRight -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_CHAR_RIGHT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionUp -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_LINE_UP
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionDown -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_LINE_DOWN
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.PageUp -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_PAGE_UP
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.PageDown -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_PAGE_DOWN
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.MoveHome -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_HOME
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.MoveEnd -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_END
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Insert -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.PASTE
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Tab -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.TAB_SHIFT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Enter, com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.EnterNumPad -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.ENTER_SHIFT
+                    Keys.DirectionLeft -> Command.SELECT_CHAR_LEFT
+                    Keys.DirectionRight -> Command.SELECT_CHAR_RIGHT
+                    Keys.DirectionUp -> Command.SELECT_LINE_UP
+                    Keys.DirectionDown -> Command.SELECT_LINE_DOWN
+                    Keys.PageUp -> Command.SELECT_PAGE_UP
+                    Keys.PageDown -> Command.SELECT_PAGE_DOWN
+                    Keys.MoveHome -> Command.SELECT_HOME
+                    Keys.MoveEnd -> Command.SELECT_END
+                    Keys.Insert -> Command.PASTE
+                    Keys.Tab -> Command.TAB_SHIFT
+                    Keys.Enter, Keys.EnterNumPad -> Command.ENTER_SHIFT
                     else -> null
                 }
                 else -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionLeft -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_CHAR_LEFT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionRight -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_CHAR_RIGHT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionUp -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_LINE_UP
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionDown -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_LINE_DOWN
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.PageUp -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_PAGE_UP
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.PageDown -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_PAGE_DOWN
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.MoveHome -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_LINE_START
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.MoveEnd -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_LINE_END
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Enter, com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.EnterNumPad -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.ENTER
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Backspace -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.DELETE_CHAR_PREV
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Delete -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.DELETE_CHAR_NEXT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Paste -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.PASTE
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Cut -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.CUT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Tab -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.TAB
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Copy -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.COPY
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Escape -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.ESCAPE
+                    Keys.DirectionLeft -> Command.MOVE_CHAR_LEFT
+                    Keys.DirectionRight -> Command.MOVE_CHAR_RIGHT
+                    Keys.DirectionUp -> Command.MOVE_LINE_UP
+                    Keys.DirectionDown -> Command.MOVE_LINE_DOWN
+                    Keys.PageUp -> Command.MOVE_PAGE_UP
+                    Keys.PageDown -> Command.MOVE_PAGE_DOWN
+                    Keys.MoveHome -> Command.MOVE_LINE_START
+                    Keys.MoveEnd -> Command.MOVE_LINE_END
+                    Keys.Enter, Keys.EnterNumPad -> Command.ENTER
+                    Keys.Backspace -> Command.DELETE_CHAR_PREV
+                    Keys.Delete -> Command.DELETE_CHAR_NEXT
+                    Keys.Paste -> Command.PASTE
+                    Keys.Cut -> Command.CUT
+                    Keys.Tab -> Command.TAB
+                    Keys.Copy -> Command.COPY
+                    Keys.Escape -> Command.ESCAPE
                     else -> null
                 }
             }
         }
     }
 
-    object DefaultKeyMapper : com.vaticle.typedb.studio.framework.common.KeyMapper {
+    object DefaultKeyMapper : KeyMapper {
 
         override val modKey: String = Label.CTRL
 
-        override fun map(event: KeyEvent): com.vaticle.typedb.studio.framework.common.KeyMapper.Command? {
+        override fun map(event: KeyEvent): Command? {
             return when {
                 event.isCtrlPressed && event.isShiftPressed -> when (event.key) {
                     // no unique keys to filter, but necessary to route event to CommonKeyMapper
                     else -> null
                 }
                 event.isCtrlPressed -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionLeft -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_WORD_LEFT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionRight -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_WORD_RIGHT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionUp -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_PARAGRAPH_PREV
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionDown -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_PARAGRAPH_NEXT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Delete -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.DELETE_WORD_NEXT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Backspace -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.DELETE_WORD_PREV
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Backslash -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_NONE
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.H -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.REPLACE
+                    Keys.DirectionLeft -> Command.MOVE_WORD_LEFT
+                    Keys.DirectionRight -> Command.MOVE_WORD_RIGHT
+                    Keys.DirectionUp -> Command.MOVE_PARAGRAPH_PREV
+                    Keys.DirectionDown -> Command.MOVE_PARAGRAPH_NEXT
+                    Keys.Delete -> Command.DELETE_WORD_NEXT
+                    Keys.Backspace -> Command.DELETE_WORD_PREV
+                    Keys.Backslash -> Command.SELECT_NONE
+                    Keys.H -> Command.REPLACE
                     else -> null
                 }
                 else -> null
-            } ?: com.vaticle.typedb.studio.framework.common.KeyMapper.CommonKeyMapper.map(
+            } ?: CommonKeyMapper.map(
                 event,
                 KeyEvent::isCtrlPressed
             )
         }
     }
 
-    object MacOSKeyMapper : com.vaticle.typedb.studio.framework.common.KeyMapper {
+    object MacOSKeyMapper : KeyMapper {
 
         override val modKey: String = Label.CMD
 
-        override fun map(event: KeyEvent): com.vaticle.typedb.studio.framework.common.KeyMapper.Command? {
+        override fun map(event: KeyEvent): Command? {
             return when {
                 event.isMetaPressed && event.isCtrlPressed -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Space -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.EMOJI_WINDOW
+                    Keys.Space -> Command.EMOJI_WINDOW
                     else -> null
                 }
                 event.isMetaPressed && event.isShiftPressed -> when (event.key) {
@@ -298,46 +299,46 @@ interface KeyMapper {
                     else -> null
                 }
                 event.isMetaPressed -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionLeft -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_LINE_LEFT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionRight -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_LINE_RIGHT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionUp -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_HOME
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionDown -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_END
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Backspace -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.DELETE_LINE_START
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Q -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.QUIT
+                    Keys.DirectionLeft -> Command.MOVE_LINE_LEFT
+                    Keys.DirectionRight -> Command.MOVE_LINE_RIGHT
+                    Keys.DirectionUp -> Command.MOVE_HOME
+                    Keys.DirectionDown -> Command.MOVE_END
+                    Keys.Backspace -> Command.DELETE_LINE_START
+                    Keys.Q -> Command.QUIT
+                    Keys.R -> Command.REPLACE
                     else -> null
                 }
                 // Emacs-like shortcuts
                 event.isCtrlPressed && event.isAltPressed && event.isShiftPressed -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.F -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_WORD_RIGHT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.B -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_WORD_LEFT
+                    Keys.F -> Command.SELECT_WORD_RIGHT
+                    Keys.B -> Command.SELECT_WORD_LEFT
                     else -> null
                 }
                 event.isCtrlPressed && event.isAltPressed -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.F -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_WORD_RIGHT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.B -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_WORD_LEFT
+                    Keys.F -> Command.MOVE_WORD_RIGHT
+                    Keys.B -> Command.MOVE_WORD_LEFT
                     else -> null
                 }
                 event.isCtrlPressed && event.isShiftPressed -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.F -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_CHAR_RIGHT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.B -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_CHAR_LEFT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.P -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_LINE_UP
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.N -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_LINE_DOWN
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.A -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_LINE_START
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.E -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_LINE_END
+                    Keys.F -> Command.SELECT_CHAR_RIGHT
+                    Keys.B -> Command.SELECT_CHAR_LEFT
+                    Keys.P -> Command.SELECT_LINE_UP
+                    Keys.N -> Command.SELECT_LINE_DOWN
+                    Keys.A -> Command.SELECT_LINE_START
+                    Keys.E -> Command.SELECT_LINE_END
                     else -> null
                 }
                 event.isCtrlPressed -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.F -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_CHAR_LEFT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.B -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_CHAR_RIGHT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.P -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_LINE_UP
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.N -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_LINE_DOWN
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.A -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_LINE_START
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.E -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_LINE_END
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.H -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.DELETE_CHAR_PREV
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.D -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.DELETE_CHAR_NEXT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.K -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.DELETE_LINE_END
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.O -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.ENTER
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.R -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.REPLACE
+                    Keys.F -> Command.MOVE_CHAR_LEFT
+                    Keys.B -> Command.MOVE_CHAR_RIGHT
+                    Keys.P -> Command.MOVE_LINE_UP
+                    Keys.N -> Command.MOVE_LINE_DOWN
+                    Keys.A -> Command.MOVE_LINE_START
+                    Keys.E -> Command.MOVE_LINE_END
+                    Keys.H -> Command.DELETE_CHAR_PREV
+                    Keys.D -> Command.DELETE_CHAR_NEXT
+                    Keys.K -> Command.DELETE_LINE_END
+                    Keys.O -> Command.ENTER
                     else -> null
                 }
                 event.isAltPressed && event.isShiftPressed -> when (event.key) {
@@ -345,16 +346,16 @@ interface KeyMapper {
                     else -> null
                 }
                 event.isAltPressed -> when (event.key) {
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionLeft -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_WORD_LEFT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionRight -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_WORD_RIGHT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionUp -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_PARAGRAPH_PREV
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.DirectionDown -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_PARAGRAPH_NEXT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Delete -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.DELETE_WORD_NEXT
-                    com.vaticle.typedb.studio.framework.common.KeyMapper.Keys.Backspace -> com.vaticle.typedb.studio.framework.common.KeyMapper.Command.DELETE_WORD_PREV
+                    Keys.DirectionLeft -> Command.MOVE_WORD_LEFT
+                    Keys.DirectionRight -> Command.MOVE_WORD_RIGHT
+                    Keys.DirectionUp -> Command.MOVE_PARAGRAPH_PREV
+                    Keys.DirectionDown -> Command.MOVE_PARAGRAPH_NEXT
+                    Keys.Delete -> Command.DELETE_WORD_NEXT
+                    Keys.Backspace -> Command.DELETE_WORD_PREV
                     else -> null
                 }
                 else -> null
-            } ?: com.vaticle.typedb.studio.framework.common.KeyMapper.CommonKeyMapper.map(
+            } ?: CommonKeyMapper.map(
                 event,
                 KeyEvent::isMetaPressed
             )
