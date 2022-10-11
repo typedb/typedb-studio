@@ -344,7 +344,10 @@ object PreferenceDialog {
                 }
             }
             SpacedHorizontalSeparator()
-            preferences.forEach { it.Display() }
+            preferences.forEach {
+                it.Display()
+                ColumnSpacer()
+            }
         }
 
         class Root(override val entries: List<PreferenceGroup>): PreferenceGroup(entries = entries) {
