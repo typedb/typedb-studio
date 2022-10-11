@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.RoundRect
@@ -64,7 +65,7 @@ object Theme {
     const val INDICATION_HOVER_ALPHA = 0.1f
     private const val INDICATION_PRESSED_ALPHA = 0.2f
     private val StudioColorsState = staticCompositionLocalOf { Color.Themes.DARK_STUDIO }
-    private val GraphColorsState = staticCompositionLocalOf { Color.Themes.DARK_GRAPH }
+    private var GraphColorsState = compositionLocalOf { Color.Themes.LIGHT_GRAPH }
     private val TypographyState = staticCompositionLocalOf { Typography.Themes.DEFAULT }
 
     enum class RoundedCorners(val topLeft: Float, val topRight: Float, val bottomRight: Float, val bottomLeft: Float) {
@@ -110,11 +111,6 @@ object Theme {
         @Composable
         @ReadOnlyComposable
         get() = StudioColorsState.current
-
-    val graph: Color.GraphTheme
-        @Composable
-        @ReadOnlyComposable
-        get() = GraphColorsState.current
 
     val typography: Typography.Theme
         @Composable

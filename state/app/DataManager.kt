@@ -28,6 +28,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy
 import ch.qos.logback.core.util.FileSize
+import com.vaticle.typedb.studio.framework.common.theme.Color
+import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.APP_DATA_DIR_DISABLED
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.DATA_DIR_NOT_WRITABLE
 import com.vaticle.typedb.studio.state.common.util.Message.System.Companion.UNEXPECTED_ERROR_APP_DATA_DIR
@@ -98,6 +100,7 @@ class DataManager {
         private val IGNORED_PATHS = "project.ignoredpaths"
         private val MATCH_QUERY_LIMIT = "query.matchlimit"
         private val GRAPH_OUTPUT = "graph.output"
+        private val GRAPH_THEME = "graph.theme"
 
         var autoSave: Boolean?
             get() = properties?.getProperty(AUTO_SAVE)?.toBoolean()
@@ -114,6 +117,18 @@ class DataManager {
         var graphOutputEnabled: Boolean?
             get() = properties?.getProperty(GRAPH_OUTPUT)?.toBoolean()
             set(value) = setProperty(GRAPH_OUTPUT, value.toString())
+
+        var graphTheme: Color.GraphTheme?
+            get() = stringToTheme(properties?.getProperty(GRAPH_OUTPUT))
+            set(value) = setProperty(GRAPH_THEME, value!!.name)
+
+        private fun stringToTheme(themeString: String?): Color.GraphTheme? {
+            return when (themeString) {
+                Label.DARK_GRAPH_NAME -> Color.Themes.DARK_GRAPH
+                Label.LIGHT_GRAPH_NAME -> Color.Themes.LIGHT_GRAPH
+                else -> null
+            }
+        }
     }
 
     var properties: Properties? by mutableStateOf(null)

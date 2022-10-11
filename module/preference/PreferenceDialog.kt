@@ -75,6 +75,7 @@ import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_IGNORED_PATHS
 import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_MANAGER
 import com.vaticle.typedb.studio.state.common.util.Label.QUERY_RUNNER
 import com.vaticle.typedb.studio.state.common.util.Label.RESET
+import com.vaticle.typedb.studio.state.common.util.Label.SET_GRAPH_THEME
 import com.vaticle.typedb.studio.state.common.util.Label.SET_QUERY_LIMIT
 import com.vaticle.typedb.studio.state.common.util.Label.TEXT_EDITOR
 import com.vaticle.typedb.studio.state.common.util.Sentence.IGNORED_PATHS_CAPTION
@@ -206,7 +207,7 @@ object PreferenceDialog {
 
         class Checkbox(
             val initialValue: Boolean, override var label: String,
-            override val caption: String? = null
+            override val caption: String? = null, val enabled: Boolean = true
         ): PreferenceField {
 
             override var modified by mutableStateOf(false)
@@ -217,7 +218,8 @@ object PreferenceDialog {
                 Layout {
                     Checkbox(
                         value = value,
-                        onChange = { value = it; modified = true }
+                        onChange = { value = it; modified = true },
+                        enabled = enabled
                     )
                 }
             }
@@ -228,20 +230,22 @@ object PreferenceDialog {
         }
 
         class Dropdown<T : Any>(
+            private val initialValue: T,
             val values: List<T>, override val label: String,
-            override val caption: String? = null
+            override val caption: String? = null, val enabled: Boolean = true
         ): PreferenceField {
 
             override var modified by mutableStateOf(false)
-            private var selected by mutableStateOf(values.first())
+            var value by mutableStateOf(values.find { it == initialValue })
 
             @Composable
             override fun Display() {
                 Layout {
                     Form.Dropdown(
                         values = values,
-                        selected = selected,
-                        onSelection = { selected = it; modified = true }
+                        selected = value,
+                        onSelection = { value = it; modified = true },
+                        enabled = enabled
                     )
                 }
             }
@@ -357,11 +361,19 @@ object PreferenceDialog {
                 caption = PREFERENCES_GRAPH_OUTPUT_CAPTION
             )
 
-            override val preferences: List<PreferenceField> = listOf(graphOutput)
+            val graphThemes = listOf(Color.Themes.DARK_GRAPH, Color.Themes.LIGHT_GRAPH)
+            var graphTheme = PreferenceField.Dropdown(
+                initialValue = preferenceMgr.graphTheme,
+                values = graphThemes, label = SET_GRAPH_THEME, enabled = graphOutput.value
+            )
+
+            override val preferences: List<PreferenceField> = listOf(graphOutput, graphTheme)
 
             override fun submit() {
+                preferenceMgr.graphTheme = graphTheme.value!!
                 preferenceMgr.graphOutputEnabled = graphOutput.value
                 graphOutput.modified = false
+                graphTheme.modified = false
             }
 
             override fun reset() {

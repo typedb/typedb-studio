@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.framework.common.theme
 import androidx.compose.material.Colors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.vaticle.typedb.studio.state.common.util.Label
 
 object Color {
 
@@ -49,6 +50,7 @@ object Color {
     )
 
     data class GraphTheme(
+        val name: String,
         val background: Color,
         val vertex: Vertex,
         val vertexLabel: Color,
@@ -66,6 +68,9 @@ object Color {
             val relation: Color,
             val attribute: Color,
         )
+        override fun toString(): String {
+            return this.name
+        }
     }
 
     private object DarkPalette {
@@ -119,7 +124,26 @@ object Color {
             isLight = false
         )
         val DARK_GRAPH = GraphTheme(
+            name = Label.DARK_GRAPH_NAME,
             background = DarkPalette.Purple0,
+            vertex = GraphTheme.Vertex(
+                thingType = DarkPalette.Pink1,
+                entityType = DarkPalette.Pink1,
+                relationType = DarkPalette.Orange2,
+                attributeType = DarkPalette.Blue1,
+                entity = DarkPalette.Pink3,
+                relation = DarkPalette.Orange3,
+                attribute = DarkPalette.Blue2,
+            ),
+            vertexLabel = DarkPalette.Black,
+            edge = DarkPalette.Blue1,
+            edgeLabel = DarkPalette.Blue1,
+            inferred = DarkPalette.Green,
+            explanation = DarkPalette.Red1,
+        )
+        val LIGHT_GRAPH = GraphTheme(
+            name = Label.LIGHT_GRAPH_NAME,
+            background = DarkPalette.White,
             vertex = GraphTheme.Vertex(
                 thingType = DarkPalette.Pink1,
                 entityType = DarkPalette.Pink1,

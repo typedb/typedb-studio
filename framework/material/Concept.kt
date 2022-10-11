@@ -32,14 +32,15 @@ import com.vaticle.typedb.client.api.concept.type.AttributeType.ValueType
 import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.vaticle.typedb.studio.state.StudioState
 import java.time.format.DateTimeFormatter
 
 object Concept {
 
     fun conceptIcon(concept: com.vaticle.typedb.client.api.concept.Concept) = when (concept) {
-        is Relation, is RelationType -> Form.IconArg(Icon.RELATION) { Theme.graph.vertex.relationType }
-        is Attribute<*>, is AttributeType -> Form.IconArg(Icon.ATTRIBUTE) { Theme.graph.vertex.attributeType }
-        is ThingType -> Form.IconArg(Icon.THING) { Theme.graph.vertex.entityType }
+        is Relation, is RelationType -> Form.IconArg(Icon.RELATION) { StudioState.preference.graphTheme.vertex.relationType }
+        is Attribute<*>, is AttributeType -> Form.IconArg(Icon.ATTRIBUTE) { StudioState.preference.graphTheme.vertex.attributeType }
+        is ThingType -> Form.IconArg(Icon.THING) { StudioState.preference.graphTheme.vertex.entityType }
         else -> throw IllegalArgumentException("Type icon not defined for concept: $concept")
     }
 

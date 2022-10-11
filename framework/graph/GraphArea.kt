@@ -29,6 +29,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -44,9 +46,9 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
-import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Typography
+import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.connection.TransactionState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +62,7 @@ class GraphArea(transactionState: TransactionState) {
     val graphBuilder = GraphBuilder(graph, transactionState, coroutines)
     val viewport = Viewport(graph)
     val physicsRunner = PhysicsRunner(this)
-    var theme: Color.GraphTheme? = null
+    val graphTheme by mutableStateOf(StudioState.preference.graphTheme)
     var typography: Typography.Theme? = null
     internal val textRenderer = TextRenderer(viewport)
 
@@ -71,11 +73,10 @@ class GraphArea(transactionState: TransactionState) {
     @Composable
     fun Layout() {
         val density = LocalDensity.current.density
-        theme = Theme.graph
         typography = Theme.typography
 
         Box(
-            Modifier.graphicsLayer(clip = true).background(Theme.graph.background)
+            Modifier.graphicsLayer(clip = true).background(graphTheme.background)
                 .onGloballyPositioned { onLayout(density, it) }
         ) { Graphics(graph.physics.iteration, viewport.density, viewport.physicalSize, viewport.scale) }
 
@@ -101,7 +102,7 @@ class GraphArea(transactionState: TransactionState) {
         // has been at least one composition cycle before trying to read those states
         graph.vertices.filter { !it.readyToCompose }.forEach { it.readyToCompose = true }
         val typography = Theme.typography
-        val vertexLabelColor = Theme.graph.vertexLabel
+        val vertexLabelColor = graphTheme.vertexLabel
         Canvas(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale)) {
             drawEdges(edges)
             drawVertices(vertices, vertexLabelColor, typography)
@@ -121,7 +122,7 @@ class GraphArea(transactionState: TransactionState) {
         }
     }
 
-    private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, theme!!, typography!!)
+    private fun rendererContext(drawScope: DrawScope) = RendererContext(drawScope, graphTheme, typography!!)
 
     private fun vertexBackgroundRenderer(vertex: Vertex, drawScope: DrawScope): VertexBackgroundRenderer {
         return VertexBackgroundRenderer.of(vertex, this, rendererContext(drawScope))
