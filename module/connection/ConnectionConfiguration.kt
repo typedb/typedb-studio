@@ -33,9 +33,9 @@ interface ConnectionConfiguration {
 
     class Core(val address: String) : ConnectionConfiguration
 
-    fun configsFromString(configsString: String): List<ConnectionConfiguration> {
-
-    }
+//    fun configsFromString(configsString: String): List<ConnectionConfiguration> {
+//
+//    }
 
     fun configFromString(configString: String): ConnectionConfiguration {
         val config: List<String> = configString.split(INTER_CONFIG_SEPARATOR)
