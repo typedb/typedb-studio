@@ -19,16 +19,15 @@
 package com.vaticle.typedb.studio.framework.material
 
 import androidx.compose.ui.awt.ComposeDialog
-import com.vaticle.typedb.studio.state.common.util.Property
+import com.vaticle.typedb.studio.state.common.util.Property.OS
 import java.awt.FileDialog
 import java.io.File
-import java.util.Optional
 import javax.swing.JFileChooser
 
-object FileSelectorDialog {
+object FileDialog {
     fun selectFilePath(parent: ComposeDialog, title: String, selectorOptions: SelectorOptions): String? {
-        val file = when (Property.OS.Current) {
-            Property.OS.MACOS -> macOSFileSelector(parent, title, selectorOptions)
+        val file = when (OS.Current) {
+            OS.MACOS -> macOSFileSelector(parent, title, selectorOptions)
             else -> otherOSFileSelector(title, selectorOptions)
         }
 
@@ -41,7 +40,7 @@ object FileSelectorDialog {
             SelectorOptions.DIRECTORIES_ONLY -> System.setProperty("apple.awt.fileDialogForDirectories", "true")
         }
 
-        val fileDialog = FileDialog(parent, title, FileDialog.LOAD)
+        val fileDialog = java.awt.FileDialog(parent, title, FileDialog.LOAD)
         fileDialog.apply {
             isMultipleMode = false
             isVisible = true
@@ -55,11 +54,7 @@ object FileSelectorDialog {
     }
 
     private fun otherOSFileSelector(title: String, selectorOptions: SelectorOptions): File? {
-        val selectionMode = when (selectorOptions) {
-            SelectorOptions.FILES_ONLY -> JFileChooser.FILES_ONLY
-            SelectorOptions.DIRECTORIES_ONLY -> JFileChooser.DIRECTORIES_ONLY
-        }
-
+        val selectionMode = selectorOptions.toJFileChooserOptions()
         val fileChooser = JFileChooser().apply {
             dialogTitle = title
             fileSelectionMode = selectionMode
@@ -75,6 +70,13 @@ object FileSelectorDialog {
 
     enum class SelectorOptions {
         FILES_ONLY,
-        DIRECTORIES_ONLY,
+        DIRECTORIES_ONLY;
+
+        fun toJFileChooserOptions(): Int {
+            return when (this) {
+                FILES_ONLY -> JFileChooser.FILES_ONLY
+                DIRECTORIES_ONLY -> JFileChooser.DIRECTORIES_ONLY
+            }
+        }
     }
 }

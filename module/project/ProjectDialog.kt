@@ -156,9 +156,9 @@ object ProjectDialog {
                     icon = Icon.FOLDER_OPEN,
                     tooltip = Tooltip.Arg(Label.OPEN_PROJECT_DIRECTORY)
                 ) {
-                    val directorySelected = selectFilePath(window, Label.OPEN_PROJECT_DIRECTORY, SelectorOptions.DIRECTORIES_ONLY)
-                    if (directorySelected != null) {
-                        state.field = directorySelected
+                    val selectedDirectoryPath = selectFilePath(window, Label.OPEN_PROJECT_DIRECTORY, SelectorOptions.DIRECTORIES_ONLY)
+                    if (selectedDirectoryPath != null) {
+                        state.field = selectedDirectoryPath
                     }
                 }
             }

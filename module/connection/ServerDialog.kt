@@ -119,7 +119,8 @@ object ServerDialog {
                     UsernameFormField(state)
                     PasswordFormField(state)
                     TLSEnabledFormField(state)
-                    if (state.tlsEnabled) CACertificateFormField(state, window)
+                    val dialog = window
+                    if (state.tlsEnabled) CACertificateFormField(state, dialog)
                 }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -203,7 +204,7 @@ object ServerDialog {
     }
 
     @Composable
-    private fun CACertificateFormField(state: ConnectServerForm, window: ComposeDialog) {
+    private fun CACertificateFormField(state: ConnectServerForm, dialog: ComposeDialog) {
         Field(label = Label.CA_CERTIFICATE) {
             Row {
                 TextInput(
@@ -218,9 +219,9 @@ object ServerDialog {
                     icon = Icon.FOLDER_OPEN,
                     tooltip = Tooltip.Arg(Label.SELECT_CERTIFICATE_FILE)
                 ) {
-                    val certSelectionResult = selectFilePath(window, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY)
-                    if (certSelectionResult != null) {
-                        state.caCertificate = certSelectionResult
+                    val selectedFilePath = selectFilePath(dialog, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY)
+                    if (selectedFilePath != null) {
+                        state.caCertificate = selectedFilePath
                     }
                 }
             }
