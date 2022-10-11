@@ -24,7 +24,7 @@ import java.awt.FileDialog
 import java.io.File
 import javax.swing.JFileChooser
 
-object FileDialog {
+object SelectFileDialog {
     fun selectFilePath(parent: ComposeDialog, title: String, selectorOptions: SelectorOptions): String? {
         val file = when (OS.Current) {
             OS.MACOS -> macOSFileSelector(parent, title, selectorOptions)

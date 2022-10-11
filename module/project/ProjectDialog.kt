@@ -33,8 +33,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.material.Dialog
-import com.vaticle.typedb.studio.framework.material.FileSelectorDialog.SelectorOptions
-import com.vaticle.typedb.studio.framework.material.FileSelectorDialog.selectFilePath
+import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
+import com.vaticle.typedb.studio.framework.material.SelectFileDialog.selectFilePath
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.RowSpacer

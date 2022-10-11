@@ -35,8 +35,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
-import com.vaticle.typedb.studio.framework.material.FileSelectorDialog.selectFilePath
-import com.vaticle.typedb.studio.framework.material.FileSelectorDialog.SelectorOptions
+import com.vaticle.typedb.studio.framework.material.SelectFileDialog.selectFilePath
+import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
 import com.vaticle.typedb.studio.framework.material.Form.Dropdown
@@ -119,8 +119,7 @@ object ServerDialog {
                     UsernameFormField(state)
                     PasswordFormField(state)
                     TLSEnabledFormField(state)
-                    val dialog = window
-                    if (state.tlsEnabled) CACertificateFormField(state, dialog)
+                    if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
                 }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -204,7 +203,7 @@ object ServerDialog {
     }
 
     @Composable
-    private fun CACertificateFormField(state: ConnectServerForm, dialog: ComposeDialog) {
+    private fun CACertificateFormField(state: ConnectServerForm, dialogWindow: ComposeDialog) {
         Field(label = Label.CA_CERTIFICATE) {
             Row {
                 TextInput(
@@ -219,7 +218,7 @@ object ServerDialog {
                     icon = Icon.FOLDER_OPEN,
                     tooltip = Tooltip.Arg(Label.SELECT_CERTIFICATE_FILE)
                 ) {
-                    val selectedFilePath = selectFilePath(dialog, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY)
+                    val selectedFilePath = selectFilePath(dialogWindow, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY)
                     if (selectedFilePath != null) {
                         state.caCertificate = selectedFilePath
                     }
