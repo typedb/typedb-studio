@@ -528,22 +528,6 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     }
 
     @Composable
-    protected fun MayRemoveIconButton(
-        tooltip: String,
-        isVisible: Boolean,
-        enabled: Boolean = true,
-        onClick: () -> Unit
-    ) {
-        if (!isVisible) Form.IconButton(
-            icon = Icon.REMOVE,
-            iconColor = Theme.studio.errorStroke,
-            enabled = isEditable && enabled,
-            tooltip = Tooltip.Arg(tooltip, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-            onClick = onClick
-        )
-    }
-
-    @Composable
     protected fun MayTickIcon(boolean: Boolean) {
         if (boolean) Icon.Render(icon = Icon.TICK, color = Theme.studio.secondary)
     }
@@ -601,6 +585,13 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                             enabled = isEditable && !it.isInherited,
                         ) { it.roleType.initiateRename() },
                         ContextMenu.Item(
+                            label = Label.CHANGE_OVERRIDDEN_TYPE,
+                            icon = Icon.TYPES,
+                            enabled = isEditable && !it.isInherited,
+                        ) { it.roleType.initiateChangeOverriddenType() },
+                    ),
+                    listOf(
+                        ContextMenu.Item(
                             label = Label.DELETE,
                             icon = Icon.DELETE,
                             enabled = isEditable && !it.isInherited && it.canBeUndefined
@@ -616,7 +607,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             var roleType: String by remember { mutableStateOf("") }
             var overriddenType: TypeState.Role? by remember { mutableStateOf(null) }
             val overridableTypeList = typeState.supertype?.relatesRoleTypes
-                ?.filter { StudioState.schema.rootRelationType?.relatesRoleTypes?.contains(it) != true }
+                ?.filter { it != StudioState.schema.rootRoleType }
                 ?.sortedBy { it.scopedName } ?: listOf()
 
             val isRelatable = isEditable && roleType.isNotEmpty()

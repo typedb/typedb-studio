@@ -20,8 +20,10 @@ package com.vaticle.typedb.studio.state.common.util
 
 object Sentence {
 
-    private const val ACTION_CANNOT_BE_UNDONE = "This action cannot be undone."
-    private const val CHANGE_NEEDS_COMMIT = "This change will not be persisted until you commit the transaction."
+    private const val ACTION_CANNOT_BE_UNDONE =
+        "This action cannot be undone."
+    private const val CHANGE_NEEDS_COMMIT =
+        "This change will not be persisted until you commit the transaction."
     private const val BUTTON_ENABLED_WHEN_CONNECTED =
         "This button will only be enabled when a connection has been established to a TypeDB server."
     private const val BUTTON_ENABLED_WHEN_SESSION_OPEN =
@@ -33,7 +35,8 @@ object Sentence {
         "This button will only be enabled when there is an open session to a database, and the transaction type is 'read'."
     private const val BUTTON_ENABLED_WHEN_TRANSACTION_IS_WRITE =
         "This button will only be enabled when there is an open session to a database, and the transaction type is 'write'."
-    private const val RUNNABLE_FILE_EXTENSIONS = "Runnable files are those with the extensions: %s."
+    private const val RUNNABLE_FILE_EXTENSIONS =
+        "Runnable files are those with the extensions: %s."
     const val BUTTON_ENABLED_WHEN_RUNNING =
         "This button will only be enabled when there is a running query."
     const val BUTTON_ENABLED_WHEN_RUNNABLE =
@@ -41,8 +44,12 @@ object Sentence {
                 "while no other query is running. " + RUNNABLE_FILE_EXTENSIONS
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."
-    const val CHANGE_SUPERTYPE = "Change the supertype of the %s type with label '%s'."
-    const val CHANGE_TYPE_ABSTRACTNESS  ="Change this  %s type with label '%s' to abstract or not."
+    const val CHANGE_OVERRIDDEN_TYPE =
+        "Change the overridden %s type of '%s'."
+    const val CHANGE_SUPERTYPE =
+        "Change the supertype of the %s type '%s'."
+    const val CHANGE_TYPE_ABSTRACTNESS =
+        "Change this  %s type with label '%s' to abstract or not."
     const val CONFIRM_DATABASE_DELETION =
         "Are you sure you would like to delete the database '%s' and all of its content? $ACTION_CANNOT_BE_UNDONE " +
                 "Enter the database name below in order to confirm its deletion."
@@ -53,20 +60,24 @@ object Sentence {
     const val CONFIRM_TYPE_DELETION =
         "Are you sure you would like to delete this %s type with the label '%s'? $CHANGE_NEEDS_COMMIT"
     const val CONFIRM_FILE_TYPE_CHANGE_NON_RUNNABLE =
-        "You are about to convert this runnable file (%s) to a non-runnable file (%s). " +
-                RUNNABLE_FILE_EXTENSIONS +
+        "You are about to convert this runnable file (%s) to a non-runnable file (%s). " + RUNNABLE_FILE_EXTENSIONS +
                 " Are you sure you want to proceed?"
-    const val CONFIRM_QUITING_APPLICATION = "Are you sure you want to close TypeDB Studio? " +
-            "Unsaved files will still be available when you reopen."
+    const val CONFIRM_QUITING_APPLICATION =
+        "Are you sure you want to close TypeDB Studio? Unsaved files will still be available when you reopen."
     const val CREATE_DATABASE_BUTTON_DESCRIPTION =
         "Create a new database on your TypeDB Server. This button will only be enabled the provided name is valid, " +
                 "i.e. valid syntax and does not already exist."
-    const val CREATE_DIRECTORY = "Create a new directory under %s."
-    const val CREATE_FILE = "Create a new file under %s."
-    const val CREATE_TYPE = "Create a new %s type."
-    const val CREATE_TYPE_AS_SUBTYPE_OF = "Create a new %s type as a subtype of '%s'."
+    const val CREATE_DIRECTORY =
+        "Create a new directory under %s."
+    const val CREATE_FILE =
+        "Create a new file under %s."
+    const val CREATE_TYPE =
+        "Create a new %s type."
+    const val CREATE_TYPE_AS_SUBTYPE_OF =
+        "Create a new %s type as a subtype of '%s'."
     const val EDITING_TYPES_REQUIREMENT_DESCRIPTION =
         "Functionalities for editing schema types are under development and COMING SOON."
+
     //TODO: "To edit types in the schema, you need to have a 'schema' session and a 'write' transaction'."
     const val ENABLE_INFERENCE_DESCRIPTION =
         "Enabling inference means that you will get inferred answers in your match query. " +
@@ -83,7 +94,8 @@ object Sentence {
                 "Enabling snapshot in a 'read' transaction allows you to query for explanations of inferred concept answers. " +
                 "The transaction will be opened on the latest snapshot when the first query is ran. " +
                 BUTTON_ENABLED_WHEN_SESSION_OPEN
-    const val PREFERENCES_GRAPH_OUTPUT_CAPTION = "When running a match query, a graph output will be displayed."
+    const val PREFERENCES_GRAPH_OUTPUT_CAPTION =
+        "When running a match query, a graph output will be displayed."
     const val INTERACTIVE_MODE_DESCRIPTION =
         "Running TypeDB Studio in 'interactive' mode (as opposed to 'script' mode), means that you can interact with a " +
                 "TypeDB server interactively. In 'script' mode, you have to declare the user, database, session, and " +
@@ -95,15 +107,19 @@ object Sentence {
                 BUTTON_ENABLED_WHEN_CONNECTED
     const val MANAGE_DATABASES_MESSAGE =
         "Below is the list of databases on your TypeDB Server. You can delete them individually, or create new ones. "
-    const val OUTPUT_RESPONSE_TIME_DESCRIPTION = "Duration to collect all answers of the query from the server."
-    const val PREFERENCES_MATCH_QUERY_LIMIT_CAPTION = "When running a match query, the number of results will be limited to " +
-            "this value."
+    const val OUTPUT_RESPONSE_TIME_DESCRIPTION =
+        "Duration to collect all answers of the query from the server."
+    const val PREFERENCES_MATCH_QUERY_LIMIT_CAPTION =
+        "When running a match query, the number of results will be limited to this value."
     const val IGNORED_PATHS_CAPTION = "Supports wildcard matching, e.g.: .git, *.tql, README.?d, data/**/out"
     const val QUERY_RESPONSE_TIME_DESCRIPTION =
         "Duration to collect auxiliary information/concepts to display informative log & graph output."
-    const val RENAME_DIRECTORY = "Rename the directory at %s."
-    const val RENAME_FILE = "Rename the file at %s."
-    const val RENAME_TYPE = "Rename the %s type with label '%s'."
+    const val RENAME_DIRECTORY =
+        "Rename the directory at %s."
+    const val RENAME_FILE =
+        "Rename the file at %s."
+    const val RENAME_TYPE =
+        "Rename the %s type with label '%s'."
     const val SAVE_CURRENT_FILE_DESCRIPTION =
         "By default, edited text files are automatically saved, except for untitled files that have not been saved. " +
                 "This button will only be enabled if the currently opened file needs saving."
@@ -158,5 +174,4 @@ object Sentence {
                 "undefining schema, in addition to matching. " + BUTTON_ENABLED_WHEN_SESSION_OPEN
     const val TYPE_BROWSER_ONLY_INTERACTIVE =
         "The Type Browser only works in 'interactive' mode."
-
 }

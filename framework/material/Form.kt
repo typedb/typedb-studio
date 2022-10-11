@@ -168,10 +168,10 @@ object Form {
     }
 
     @Composable
-    fun Field(label: String, fieldInput: @Composable () -> Unit) {
+    fun Field(label: String, fieldInput: @Composable RowScope.() -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(value = label, modifier = LABEL_MODIFIER)
-            Box(modifier = INPUT_MODIFIER) { fieldInput() }
+            Row(modifier = INPUT_MODIFIER, horizontalArrangement = Arrangement.spacedBy(INNER_SPACING)) { fieldInput() }
         }
     }
 
@@ -859,10 +859,10 @@ object Form {
         val state = remember { DropdownState() }
         val placeholderAnnStr = italics(placeholder)
         val itemPadding = PaddingValues(horizontal = TEXT_BUTTON_PADDING)
-        Box {
+        Box(modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) }) {
             TextButton(
                 text = selected?.let { displayFn(it).ifBlank { placeholderAnnStr } } ?: placeholderAnnStr,
-                modifier = modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) }.pointerMoveFilter(
+                modifier = Modifier.defaultMinSize(minWidth = state.width).pointerMoveFilter(
                     onEnter = { state.isButtonHover = true; false },
                     onExit = { state.isButtonHover = false; false }
                 ),

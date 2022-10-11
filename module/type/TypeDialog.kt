@@ -32,12 +32,14 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.api.concept.type.AttributeType.ValueType
 import com.vaticle.typedb.studio.framework.common.Util.hyphenate
+import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
+import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
@@ -80,7 +82,7 @@ object TypeDialog {
         if (StudioState.schema.changeEntitySupertypeDialog.isOpen) ChangeEntitySupertypeDialog()
         if (StudioState.schema.changeAttributeSupertypeDialog.isOpen) ChangeAttributeSupertypeDialog()
         if (StudioState.schema.changeRelationSupertypeDialog.isOpen) ChangeRelationSupertypeDialog()
-        if (StudioState.schema.changeRoleSupertypeDialog.isOpen) ChangeRoleSupertypeDialog()
+        if (StudioState.schema.changeOverriddenRoleTypeDialog.isOpen) ChangeRoleOverriddenTypeDialog()
         if (StudioState.schema.changeAbstractDialog.isOpen) ChangeAbstractDialog()
     }
 
@@ -167,34 +169,27 @@ object TypeDialog {
     private fun ChangeEntitySupertypeDialog() = ChangeSupertypeDialog(
         title = Label.CHANGE_ENTITY_SUPERTYPE,
         dialogState = StudioState.schema.changeEntitySupertypeDialog,
-        selection = StudioState.schema.rootEntityType!!.subtypes
+        selection = StudioState.schema.rootEntityType!!.subtypesWithSelf
     )
 
     @Composable
     private fun ChangeAttributeSupertypeDialog() = ChangeSupertypeDialog(
         title = Label.CHANGE_ATTRIBUTE_SUPERTYPE,
         dialogState = StudioState.schema.changeAttributeSupertypeDialog,
-        selection = StudioState.schema.rootAttributeType!!.subtypes.filter {
+        selection = StudioState.schema.rootAttributeType!!.subtypesWithSelf.filter {
             it.valueType == StudioState.schema.changeAttributeSupertypeDialog.typeState!!.valueType
+                    || it == StudioState.schema.rootAttributeType
         })
 
     @Composable
     private fun ChangeRelationSupertypeDialog() = ChangeSupertypeDialog(
         title = Label.CHANGE_RELATION_SUPERTYPE,
         dialogState = StudioState.schema.changeRelationSupertypeDialog,
-        selection = StudioState.schema.rootRelationType!!.subtypes
+        selection = StudioState.schema.rootRelationType!!.subtypesWithSelf
     )
 
     @Composable
-    private fun ChangeRoleSupertypeDialog() = ChangeSupertypeDialog(
-        title = Label.CHANGE_ROLE_SUPERTYPE,
-        dialogState = StudioState.schema.changeRoleSupertypeDialog,
-        selection = StudioState.schema.changeRoleSupertypeDialog.typeState!!
-            .relationType.relatesRoleTypes.flatMap { it.subtypes }
-    )
-
-    @Composable
-    private fun <T : TypeState<*, T>> ChangeSupertypeDialog(
+    private fun <T : TypeState.Thing<*, T>> ChangeSupertypeDialog(
         title: String, dialogState: SchemaManager.TypeDialogManager<T>, selection: List<T>,
     ) {
         val typeState = dialogState.typeState!!
@@ -209,9 +204,42 @@ object TypeDialog {
         Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize()) {
                 Form.Text(Sentence.CHANGE_SUPERTYPE.format(typeState.encoding.label, typeState.name), softWrap = true)
-                SupertypeField(formState.supertypeState, selection.filter { it != typeState }) {
-                    formState.supertypeState = it
-                }
+                SupertypeField(
+                    selected = formState.supertypeState,
+                    values = selection.filter { it != typeState }.sortedBy { it.name }
+                ) { formState.supertypeState = it }
+            }
+        }
+    }
+
+    @Composable
+    private fun ChangeRoleOverriddenTypeDialog() {
+        val dialogState = StudioState.schema.changeOverriddenRoleTypeDialog
+        val typeState = dialogState.typeState!!
+        val message = Sentence.CHANGE_OVERRIDDEN_TYPE.format(typeState.encoding.label, typeState.scopedName)
+        val selection = typeState.relationType.supertype!!.relatesRoleTypes.filter {
+            it != StudioState.schema.rootRoleType
+        }
+        val formState = remember {
+            object : Form.State {
+                var overriddenType: TypeState.Role? by mutableStateOf(
+                    if (typeState.supertype != StudioState.schema.rootRoleType) typeState.supertype else null
+                )
+
+                override fun cancel() = dialogState.close()
+                override fun isValid() = true
+                override fun trySubmit() = typeState.tryChangeOverriddenType(
+                    supertypeState = overriddenType ?: StudioState.schema.rootRoleType!!
+                )
+            }
+        }
+        Dialog.Layout(dialogState, Label.CHANGE_OVERRIDDEN_ROLE_TYPE, DIALOG_WIDTH, DIALOG_HEIGHT) {
+            Submission(state = formState, modifier = Modifier.fillMaxSize()) {
+                Form.Text(message, softWrap = true)
+                OverriddenTypeField(
+                    selected = formState.overriddenType,
+                    values = selection.filter { it != typeState }.sortedBy { it.name }
+                ) { formState.overriddenType = it }
             }
         }
     }
@@ -262,6 +290,24 @@ object TypeDialog {
             onSelection = onSelection,
             modifier = Modifier.fillMaxSize()
         )
+    }
+
+    @Composable
+    private fun <T : TypeState<*, T>> OverriddenTypeField(
+        selected: T?, values: List<T>, onSelection: (value: T?) -> Unit
+    ) = Field(label = Label.OVERRIDDEN_TYPE) {
+        Form.Dropdown(
+            selected = selected,
+            placeholder = "(${Label.NONE})",
+            values = values,
+            displayFn = { AnnotatedString(it.name) },
+            onSelection = { onSelection(it) },
+            modifier = Modifier.weight(1f)
+        )
+        Form.IconButton(
+            icon = Icon.REMOVE,
+            iconColor = Theme.studio.errorStroke,
+        ) { onSelection(null) }
     }
 
     @Composable
