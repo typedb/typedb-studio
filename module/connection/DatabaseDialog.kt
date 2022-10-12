@@ -181,10 +181,11 @@ object DatabaseDialog {
         Dropdown(
             values = StudioState.client.databaseList,
             selected = StudioState.client.session.database,
-            onSelection = { StudioState.client.tryOpenSession(it!!) },
+            onSelection = { it?.let { StudioState.client.tryOpenSession(it) } ?: StudioState.client.closeSession() },
             onExpand = { StudioState.client.refreshDatabaseList() },
             placeholder = Label.DATABASE.lowercase(),
             modifier = modifier,
+            allowNone = true,
             enabled = enabled,
             focusReq = focusReq,
             tooltip = Tooltip.Arg(

@@ -40,7 +40,7 @@ import mu.KotlinLogging
 class SessionState constructor(
     internal val client: ClientState,
     private val notificationMgr: NotificationManager,
-    private val preferenceMgr: PreferenceManager
+    preferenceMgr: PreferenceManager
 ) {
 
     companion object {
