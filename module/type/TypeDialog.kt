@@ -32,14 +32,12 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.client.api.concept.type.AttributeType.ValueType
 import com.vaticle.typedb.studio.framework.common.Util.hyphenate
-import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
-import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
@@ -228,9 +226,7 @@ object TypeDialog {
 
                 override fun cancel() = dialogState.close()
                 override fun isValid() = true
-                override fun trySubmit() = typeState.tryChangeOverriddenType(
-                    supertypeState = overriddenType ?: StudioState.schema.rootRoleType!!
-                )
+                override fun trySubmit() = typeState.tryChangeOverriddenType(overriddenType)
             }
         }
         Dialog.Layout(dialogState, Label.CHANGE_OVERRIDDEN_ROLE_TYPE, DIALOG_WIDTH, DIALOG_HEIGHT) {
@@ -284,10 +280,10 @@ object TypeDialog {
         selected: T, values: List<T>, onSelection: (value: T) -> Unit
     ) = Field(label = Label.SUPERTYPE) {
         Form.Dropdown(
-            selected = selected,
             values = values,
+            selected = selected,
             displayFn = { AnnotatedString(it.name) },
-            onSelection = onSelection,
+            onSelection = { onSelection(it!!) },
             modifier = Modifier.fillMaxSize()
         )
     }
@@ -297,17 +293,14 @@ object TypeDialog {
         selected: T?, values: List<T>, onSelection: (value: T?) -> Unit
     ) = Field(label = Label.OVERRIDDEN_TYPE) {
         Form.Dropdown(
-            selected = selected,
-            placeholder = "(${Label.NONE})",
             values = values,
+            selected = selected,
             displayFn = { AnnotatedString(it.name) },
             onSelection = { onSelection(it) },
-            modifier = Modifier.weight(1f)
+            placeholder = Label.OVERRIDDEN_TYPE.hyphenate().lowercase(),
+            modifier = Modifier.fillMaxSize(),
+            allowNone = true
         )
-        Form.IconButton(
-            icon = Icon.REMOVE,
-            iconColor = Theme.studio.errorStroke,
-        ) { onSelection(null) }
     }
 
     @Composable
@@ -315,11 +308,11 @@ object TypeDialog {
         formState: CreateTypeFormState<T>
     ) = Field(label = Label.VALUE_TYPE) {
         Form.Dropdown(
-            selected = formState.valueType,
             values = remember { ValueType.values().toList() - ValueType.OBJECT },
+            selected = formState.valueType,
             displayFn = { AnnotatedString(it.name.lowercase()) },
-            placeholder = Label.VALUE_TYPE.lowercase().hyphenate(),
-            onSelection = { formState.valueType = it },
+            onSelection = { formState.valueType = it!! },
+            placeholder = Label.VALUE_TYPE.hyphenate().lowercase(),
             enabled = formState.supertypeState.isRoot
         )
     }

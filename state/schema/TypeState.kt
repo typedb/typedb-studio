@@ -770,10 +770,11 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         fun initiateChangeOverriddenType() = schemaMgr.changeOverriddenRoleTypeDialog.open(this)
 
         fun tryChangeOverriddenType(
-            supertypeState: Role
-        ) = super.tryChangeSupertype(schemaMgr.changeOverriddenRoleTypeDialog) {
-            if (supertypeState == schemaMgr.rootRoleType) relationType.conceptType.asRemote(it).setRelates(name)
-            else relationType.conceptType.asRemote(it).setRelates(name, supertypeState.conceptType)
+            overriddenType: Role?
+        ) = super.tryChangeSupertype(schemaMgr.changeOverriddenRoleTypeDialog) { tx ->
+            relationType.conceptType.asRemote(tx).let { r ->
+                overriddenType?.let { o -> r.setRelates(name, o.conceptType) } ?: r.setRelates(name)
+            }
         }
 
         override fun toString(): String = "TypeState.Role: $conceptType"

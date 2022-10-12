@@ -313,26 +313,28 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         SectionRow {
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
+                    values = attributeTypeList,
                     selected = attributeType,
-                    placeholder = Label.ATTRIBUTE_TYPE.lowercase().hyphenate(),
-                    onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursivelyAsync() },
-                    onSelection = { attributeType = it; it.loadSupertypesAsync() },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
+                    onSelection = { attributeType = it; it?.loadSupertypesAsync() },
+                    onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursivelyAsync() },
+                    placeholder = Label.ATTRIBUTE_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxSize(),
-                    enabled = isEditable,
-                    values = attributeTypeList
+                    allowNone = true,
+                    enabled = isEditable
                 )
             }
             Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
+                    values = overridableTypeList,
                     selected = overriddenType,
-                    placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
-                    onSelection = { overriddenType = it },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
+                    onSelection = { overriddenType = it },
+                    placeholder = Label.OVERRIDDEN_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = isOverridable,
-                    values = overridableTypeList
+                    allowNone = true,
+                    enabled = isOverridable
                 )
             }
             Form.Text(value = Label.KEY.lowercase(), enabled = isKeyable)
@@ -421,26 +423,28 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         SectionRow {
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
+                    values = roleTypeList,
                     selected = roleType,
-                    placeholder = Label.ROLE_TYPE.lowercase().hyphenate(),
-                    onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
-                    onSelection = { roleType = it; it.loadSupertypesAsync() },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
+                    onSelection = { roleType = it; it?.loadSupertypesAsync() },
+                    onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
+                    placeholder = Label.ROLE_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxSize(),
-                    enabled = isEditable,
-                    values = roleTypeList
+                    allowNone = true,
+                    enabled = isEditable
                 )
             }
             Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
+                    values = overridableTypeList,
                     selected = overriddenType,
-                    placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
-                    onSelection = { overriddenType = it },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
+                    onSelection = { overriddenType = it },
+                    placeholder = Label.OVERRIDDEN_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = isOverridable,
-                    values = overridableTypeList
+                    allowNone = true,
+                    enabled = isOverridable
                 )
             }
             Form.TextButton(
@@ -624,13 +628,14 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
                 Box(Modifier.weight(1f)) {
                     Form.Dropdown(
+                        values = overridableTypeList,
                         selected = overriddenType,
-                        placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
-                        onSelection = { overriddenType = it },
                         displayFn = { ConceptDetailedLabel(it.conceptType) },
+                        onSelection = { overriddenType = it },
+                        placeholder = Label.OVERRIDDEN_TYPE.hyphenate().lowercase(),
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = isOverridable,
-                        values = overridableTypeList
+                        allowNone = true,
+                        enabled = isOverridable
                     )
                 }
                 Form.TextButton(
