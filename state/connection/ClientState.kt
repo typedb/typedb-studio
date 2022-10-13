@@ -33,7 +33,6 @@ import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
-import com.vaticle.typedb.studio.state.common.atomic.AtomicIntegerState
 import com.vaticle.typedb.studio.state.common.atomic.AtomicReferenceState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
@@ -52,7 +51,7 @@ import mu.KotlinLogging
 class ClientState constructor(
     private val notificationMgr: NotificationManager,
     private val preferenceMgr: PreferenceManager
-    ) {
+) {
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
     enum class Mode { SCRIPT, INTERACTIVE }
@@ -206,6 +205,8 @@ class ClientState constructor(
     fun commitTransaction() = mayRunCommandAsync { session.transaction.commit() }
 
     fun rollbackTransaction() = mayRunCommandAsync { session.transaction.rollback() }
+
+    fun closeSession() = coroutines.launchAndHandle(notificationMgr, LOGGER) { session.close() }
 
     fun closeTransactionAsync(
         message: Message? = null, vararg params: Any

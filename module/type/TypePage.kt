@@ -313,26 +313,28 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         SectionRow {
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
+                    values = attributeTypeList,
                     selected = attributeType,
-                    placeholder = Label.ATTRIBUTE_TYPE.lowercase().hyphenate(),
-                    onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursivelyAsync() },
-                    onSelection = { attributeType = it; it.loadSupertypesAsync() },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
+                    onSelection = { attributeType = it; it?.loadSupertypesAsync() },
+                    onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursivelyAsync() },
+                    placeholder = Label.ATTRIBUTE_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxSize(),
-                    enabled = isEditable,
-                    values = attributeTypeList
+                    allowNone = true,
+                    enabled = isEditable
                 )
             }
             Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
+                    values = overridableTypeList,
                     selected = overriddenType,
-                    placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
-                    onSelection = { overriddenType = it },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
+                    onSelection = { overriddenType = it },
+                    placeholder = Label.OVERRIDDEN_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = isOverridable,
-                    values = overridableTypeList
+                    allowNone = true,
+                    enabled = isOverridable
                 )
             }
             Form.Text(value = Label.KEY.lowercase(), enabled = isKeyable)
@@ -421,26 +423,28 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         SectionRow {
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
+                    values = roleTypeList,
                     selected = roleType,
-                    placeholder = Label.ROLE_TYPE.lowercase().hyphenate(),
-                    onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
-                    onSelection = { roleType = it; it.loadSupertypesAsync() },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
+                    onSelection = { roleType = it; it?.loadSupertypesAsync() },
+                    onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
+                    placeholder = Label.ROLE_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxSize(),
-                    enabled = isEditable,
-                    values = roleTypeList
+                    allowNone = true,
+                    enabled = isEditable
                 )
             }
             Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
             Box(Modifier.weight(1f)) {
                 Form.Dropdown(
+                    values = overridableTypeList,
                     selected = overriddenType,
-                    placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
-                    onSelection = { overriddenType = it },
                     displayFn = { ConceptDetailedLabel(it.conceptType) },
+                    onSelection = { overriddenType = it },
+                    placeholder = Label.OVERRIDDEN_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = isOverridable,
-                    values = overridableTypeList
+                    allowNone = true,
+                    enabled = isOverridable
                 )
             }
             Form.TextButton(
@@ -528,22 +532,6 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     }
 
     @Composable
-    protected fun MayRemoveIconButton(
-        tooltip: String,
-        isVisible: Boolean,
-        enabled: Boolean = true,
-        onClick: () -> Unit
-    ) {
-        if (!isVisible) Form.IconButton(
-            icon = Icon.REMOVE,
-            iconColor = Theme.studio.errorStroke,
-            enabled = isEditable && enabled,
-            tooltip = Tooltip.Arg(tooltip, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
-            onClick = onClick
-        )
-    }
-
-    @Composable
     protected fun MayTickIcon(boolean: Boolean) {
         if (boolean) Icon.Render(icon = Icon.TICK, color = Theme.studio.secondary)
     }
@@ -601,6 +589,13 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                             enabled = isEditable && !it.isInherited,
                         ) { it.roleType.initiateRename() },
                         ContextMenu.Item(
+                            label = Label.CHANGE_OVERRIDDEN_TYPE,
+                            icon = Icon.TYPES,
+                            enabled = isEditable && !it.isInherited,
+                        ) { it.roleType.initiateChangeOverriddenType() },
+                    ),
+                    listOf(
+                        ContextMenu.Item(
                             label = Label.DELETE,
                             icon = Icon.DELETE,
                             enabled = isEditable && !it.isInherited && it.canBeUndefined
@@ -616,7 +611,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             var roleType: String by remember { mutableStateOf("") }
             var overriddenType: TypeState.Role? by remember { mutableStateOf(null) }
             val overridableTypeList = typeState.supertype?.relatesRoleTypes
-                ?.filter { StudioState.schema.rootRelationType?.relatesRoleTypes?.contains(it) != true }
+                ?.filter { it != StudioState.schema.rootRoleType }
                 ?.sortedBy { it.scopedName } ?: listOf()
 
             val isRelatable = isEditable && roleType.isNotEmpty()
@@ -633,13 +628,14 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
                 Box(Modifier.weight(1f)) {
                     Form.Dropdown(
+                        values = overridableTypeList,
                         selected = overriddenType,
-                        placeholder = (Label.OVERRIDDEN_TYPE.hyphenate() + " (" + Label.OPTIONAL + ")").lowercase(),
-                        onSelection = { overriddenType = it },
                         displayFn = { ConceptDetailedLabel(it.conceptType) },
+                        onSelection = { overriddenType = it },
+                        placeholder = Label.OVERRIDDEN_TYPE.hyphenate().lowercase(),
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = isOverridable,
-                        values = overridableTypeList
+                        allowNone = true,
+                        enabled = isOverridable
                     )
                 }
                 Form.TextButton(

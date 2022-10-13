@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.module.project
 
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,7 +36,6 @@ import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOpt
 import com.vaticle.typedb.studio.framework.material.SelectFileDialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Field
-import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
@@ -57,7 +55,6 @@ import kotlin.io.path.Path
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
-
 
 object ProjectDialog {
 
@@ -144,24 +141,21 @@ object ProjectDialog {
     private fun SelectDirectoryField(state: PathForm, window: ComposeDialog, title: String) {
         val focusReq = remember { FocusRequester() }
         Field(label = Label.DIRECTORY) {
-            Row {
-                TextInput(
-                    value = state.field,
-                    placeholder = Label.PATH_OF_DIRECTORY,
-                    onValueChange = { state.field = it },
-                    modifier = Modifier.weight(1f).focusRequester(focusReq),
+            TextInput(
+                value = state.field,
+                placeholder = Label.PATH_OF_DIRECTORY,
+                onValueChange = { state.field = it },
+                modifier = Modifier.weight(1f).focusRequester(focusReq),
+            )
+            Form.IconButton(
+                icon = Icon.FOLDER_OPEN,
+                tooltip = Tooltip.Arg(title)
+            ) {
+                val selectedDirectoryPath = SelectFileDialog.selectPath(
+                    window, title, SelectorOptions.DIRECTORIES_ONLY
                 )
-                RowSpacer()
-                Form.IconButton(
-                    icon = Icon.FOLDER_OPEN,
-                    tooltip = Tooltip.Arg(title)
-                ) {
-                    val selectedDirectoryPath = SelectFileDialog.selectPath(
-                        window, title, SelectorOptions.DIRECTORIES_ONLY
-                    )
-                    if (selectedDirectoryPath != null) {
-                        state.field = selectedDirectoryPath
-                    }
+                if (selectedDirectoryPath != null) {
+                    state.field = selectedDirectoryPath
                 }
             }
         }

@@ -81,6 +81,7 @@ class SchemaManager constructor(
     val hasRunningWrite: Boolean get() = hasRunningWriteAtomic.state
     var rootEntityType: TypeState.Entity? by mutableStateOf(null); private set
     var rootRelationType: TypeState.Relation? by mutableStateOf(null); private set
+    var rootRoleType: TypeState.Role? by mutableStateOf(null); private set
     var rootAttributeType: TypeState.Attribute? by mutableStateOf(null); private set
     val isWritable: Boolean get() = session.isSchema && session.transaction.isWrite
     val createEntityTypeDialog = TypeDialogManager<TypeState.Entity>()
@@ -90,7 +91,7 @@ class SchemaManager constructor(
     val changeEntitySupertypeDialog = TypeDialogManager<TypeState.Entity>()
     val changeAttributeSupertypeDialog = TypeDialogManager<TypeState.Attribute>()
     val changeRelationSupertypeDialog = TypeDialogManager<TypeState.Relation>()
-    val changeRoleSupertypeDialog = TypeDialogManager<TypeState.Role>()
+    val changeOverriddenRoleTypeDialog = TypeDialogManager<TypeState.Role>()
     val changeAbstractDialog = TypeDialogManager<TypeState.Thing<*, *>>()
     private var writeTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private var readTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
@@ -128,51 +129,59 @@ class SchemaManager constructor(
 
     override fun compareTo(other: Navigable<TypeState.Thing<*, *>>): Int = if (other is SchemaManager) 0 else -1
 
-    internal fun createTypeState(type: ThingType): TypeState.Thing<*, *>? = when (type) {
-        is EntityType -> createTypeState(type)
-        is RelationType -> createTypeState(type)
-        is AttributeType -> createTypeState(type)
+    internal fun typeStateOf(type: ThingType): TypeState.Thing<*, *>? = when (type) {
+        is EntityType -> typeStateOf(type)
+        is RelationType -> typeStateOf(type)
+        is AttributeType -> typeStateOf(type)
         else -> throw IllegalStateException("Unrecognised ThingType object")
     }
 
-    internal fun createTypeState(entityType: EntityType): TypeState.Entity? = openOrGetReadTx()?.let { tx ->
+    internal fun typeStateOf(entityType: EntityType): TypeState.Entity? = openOrGetReadTx()?.let { tx ->
         val remote = entityType.asRemote(tx)
-        val supertype = remote.supertype?.let { st ->
-            if (st.isEntityType) entityTypes[st] ?: createTypeState(st.asEntityType()) else null
-        }
-        entityTypes.computeIfAbsent(entityType) {
-            TypeState.Entity(entityType, supertype, this)
+        entityTypes[entityType] ?: let {
+            val supertype = remote.supertype?.let { st ->
+                if (st.isEntityType) entityTypes[st] ?: typeStateOf(st.asEntityType()) else null
+            }
+            entityTypes.computeIfAbsent(entityType) {
+                TypeState.Entity(entityType, supertype, this)
+            }
         }
     }
 
-    internal fun createTypeState(attributeType: AttributeType): TypeState.Attribute? = openOrGetReadTx()?.let { tx ->
+    internal fun typeStateOf(attributeType: AttributeType): TypeState.Attribute? = openOrGetReadTx()?.let { tx ->
         val remote = attributeType.asRemote(tx)
-        val supertype = remote.supertype?.let { st ->
-            if (st.isAttributeType) attributeTypes[st] ?: createTypeState(st.asAttributeType()) else null
-        }
-        attributeTypes.computeIfAbsent(attributeType) {
-            TypeState.Attribute(attributeType, supertype, this)
+        attributeTypes[attributeType] ?: let {
+            val supertype = remote.supertype?.let { st ->
+                if (st.isAttributeType) attributeTypes[st] ?: typeStateOf(st.asAttributeType()) else null
+            }
+            attributeTypes.computeIfAbsent(attributeType) {
+                TypeState.Attribute(attributeType, supertype, this)
+            }
         }
     }
 
-    internal fun createTypeState(relationType: RelationType): TypeState.Relation? = openOrGetReadTx()?.let { tx ->
+    internal fun typeStateOf(relationType: RelationType): TypeState.Relation? = openOrGetReadTx()?.let { tx ->
         val remote = relationType.asRemote(tx)
-        val supertype = remote.supertype?.let { st ->
-            if (st.isRelationType) relationTypes[st] ?: createTypeState(st.asRelationType()) else null
-        }
-        relationTypes.computeIfAbsent(relationType) {
-            TypeState.Relation(relationType, supertype, this)
+        relationTypes[relationType] ?: let {
+            val supertype = remote.supertype?.let { st ->
+                if (st.isRelationType) relationTypes[st] ?: typeStateOf(st.asRelationType()) else null
+            }
+            relationTypes.computeIfAbsent(relationType) {
+                TypeState.Relation(relationType, supertype, this)
+            }
         }
     }
 
-    internal fun createTypeState(roleType: RoleType): TypeState.Role? = openOrGetReadTx()?.let { tx ->
+    internal fun typeStateOf(roleType: RoleType): TypeState.Role? = openOrGetReadTx()?.let { tx ->
         val remote = roleType.asRemote(tx)
-        val supertype = remote.supertype?.let { st ->
-            if (st.isRoleType) roleTypes[st] ?: createTypeState(st.asRoleType()) else null
-        }
-        roleTypes[roleType] ?: createTypeState(remote.relationType)?.let { relationType ->
-            roleTypes.computeIfAbsent(roleType) {
-                TypeState.Role(relationType, roleType, supertype, this)
+        roleTypes[roleType] ?: let {
+            val supertype = remote.supertype?.let { st ->
+                if (st.isRoleType) roleTypes[st] ?: typeStateOf(st.asRoleType()) else null
+            }
+            typeStateOf(remote.relationType)?.let { relationType ->
+                roleTypes.computeIfAbsent(roleType) {
+                    TypeState.Role(relationType, roleType, supertype, this)
+                }
             }
         }
     }
@@ -184,6 +193,10 @@ class SchemaManager constructor(
         if (rootRelationType == null) rootRelationType = TypeState.Relation(
             conceptType = tx.concepts().rootRelationType, supertype = null, schemaMgr = this
         ).also { relationTypes[tx.concepts().rootRelationType] = it }
+        val conceptRoleType = tx.concepts().rootRelationType.asRemote(tx).relates.findFirst().get()
+        if (rootRoleType == null) rootRoleType = TypeState.Role(
+            relationType = rootRelationType!!, conceptType = conceptRoleType, supertype = null, schemaMgr = this
+        ).also { roleTypes[conceptRoleType] = it }
         if (rootAttributeType == null) rootAttributeType = TypeState.Attribute(
             conceptType = tx.concepts().rootAttributeType, supertype = null, schemaMgr = this
         ).also { attributeTypes[tx.concepts().rootAttributeType] = it }

@@ -141,9 +141,9 @@ object ServerDialog {
             Dropdown(
                 values = Property.Server.values().toList(),
                 selected = state.server,
-                onSelection = { state.server = it },
-                enabled = StudioState.client.isDisconnected,
-                modifier = Modifier.fillMaxSize()
+                onSelection = { state.server = it!! },
+                modifier = Modifier.fillMaxSize(),
+                enabled = StudioState.client.isDisconnected
             )
         }
     }

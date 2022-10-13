@@ -241,7 +241,7 @@ object PreferenceDialog {
                     Form.Dropdown(
                         values = values,
                         selected = selected,
-                        onSelection = { selected = it; modified = true }
+                        onSelection = { selected = it!!; modified = true }
                     )
                 }
             }

@@ -94,6 +94,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
     var supertypes: List<TS> by mutableStateOf(this.supertype?.let { listOf(it) } ?: listOf()) // exclude self
     var subtypesExplicit: List<TS> by mutableStateOf(listOf())
     val subtypes: List<TS> get() = subtypesExplicit.map { listOf(it) + it.subtypes }.flatten() // exclude self
+    val subtypesWithSelf: List<TS> get() = listOf(this as TS) + subtypes
 
     val isRoot get() = conceptType.isRoot
     var name: String by mutableStateOf(conceptType.label.name())
@@ -107,13 +108,11 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
     protected abstract fun isSameEncoding(conceptType: Type): Boolean
     protected abstract fun asSameEncoding(conceptType: Type): T
-    protected abstract fun createTypeState(type: T): TS?
+    protected abstract fun typeStateOf(type: T): TS?
     protected abstract fun updateConceptTypeAndName(label: String)
     protected abstract fun requestSubtypesExplicit(): List<T>?
     protected abstract fun loadDependencies()
     protected abstract fun loadInheritables()
-    abstract fun initiateChangeSupertype()
-    abstract fun tryChangeSupertype(supertypeState: TS)
     abstract override fun toString(): String
 
     fun loadSupertypesAsync() = coroutines.launchAndHandle(notifications, LOGGER) { loadSupertypes() }
@@ -121,7 +120,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
     fun loadSupertypes(): Unit = schemaMgr.openOrGetReadTx()?.let { tx ->
         val typeTx = conceptType.asRemote(tx)
         supertype = typeTx.supertype?.let {
-            if (isSameEncoding(it)) createTypeState(asSameEncoding(it)) else null
+            if (isSameEncoding(it)) typeStateOf(asSameEncoding(it)) else null
         }?.also { it.loadInheritables() }
         supertype?.loadSupertypes()
         supertypes = supertype?.let { listOf(it) + it.supertypes } ?: listOf()
@@ -152,7 +151,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             val retained: List<TS>
             if (new != old) {
                 val deleted = old - new
-                val added = (new - old).mapNotNull { createTypeState(it) }
+                val added = (new - old).mapNotNull { typeStateOf(it) }
                 retained = subtypesExplicit.filter { !deleted.contains(it.conceptType) }
                 subtypesExplicit = (retained + added).sortedBy { it.conceptType.label.scopedName() }
             }
@@ -185,10 +184,13 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             function(it)
             dialogState.onSuccess?.invoke()
             dialogState.close()
+            when (this) {
+                is Thing -> loadConstraints()
+                is Role -> relationType.loadConstraints()
+            }
         } catch (e: Exception) {
             notifications.userError(
-                LOGGER, FAILED_TO_CHANGE_SUPERTYPE,
-                encoding.label, conceptType.label, e.message ?: UNKNOWN
+                LOGGER, FAILED_TO_CHANGE_SUPERTYPE, encoding.label, conceptType.label, e.message ?: UNKNOWN
             )
         }
     }
@@ -262,6 +264,8 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         abstract fun initiateCreateSubtype(onSuccess: () -> Unit)
         abstract fun tryCreateSubtype(label: String, isAbstract: Boolean)
+        abstract fun initiateChangeSupertype()
+        abstract fun tryChangeSupertype(supertypeState: TTS)
 
         fun onSubtypesUpdated(function: () -> Unit) = callbacks.onSubtypesUpdated.put(function)
 
@@ -286,7 +290,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             loadConstraints()
         }
 
-        private fun loadConstraints() {
+        internal fun loadConstraints() {
             try {
                 loadSupertypes()
                 loadAbstract()
@@ -335,8 +339,8 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
             fun load(typeTx: ThingType.Remote, attributeType: AttributeType, isKey: Boolean, isInherited: Boolean) {
                 loaded.add(attributeType)
-                schemaMgr.createTypeState(attributeType)?.let { ats ->
-                    val ots = typeTx.getOwnsOverridden(attributeType)?.let { schemaMgr.createTypeState(it) }
+                schemaMgr.typeStateOf(attributeType)?.let { ats ->
+                    val ots = typeTx.getOwnsOverridden(attributeType)?.let { schemaMgr.typeStateOf(it) }
                     val canBeUndefined = false // TODO
                     properties.add(AttributeTypeProperties(ats, ots, isKey, isInherited, canBeUndefined))
                 }
@@ -366,8 +370,8 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
             fun load(typeTx: ThingType.Remote, roleType: RoleType, isInherited: Boolean) {
                 loaded.add(roleType)
-                schemaMgr.createTypeState(roleType)?.let { rts ->
-                    val ots = typeTx.getPlaysOverridden(roleType)?.let { schemaMgr.createTypeState(it) }
+                schemaMgr.typeStateOf(roleType)?.let { rts ->
+                    val ots = typeTx.getPlaysOverridden(roleType)?.let { schemaMgr.typeStateOf(it) }
                     val canBeUndefined = false // TODO
                     properties.add(RoleTypeProperties(rts, ots, isInherited, canBeUndefined))
                 }
@@ -489,7 +493,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         override fun isSameEncoding(conceptType: Type) = conceptType.isEntityType
         override fun asSameEncoding(conceptType: Type) = conceptType.asEntityType()!!
-        override fun createTypeState(type: EntityType) = schemaMgr.createTypeState(type)
+        override fun typeStateOf(type: EntityType) = schemaMgr.typeStateOf(type)
 
         override fun updateConceptTypeAndName(label: String) = schemaMgr.openOrGetReadTx()?.let {
             conceptType = it.concepts().getEntityType(label)!!
@@ -523,7 +527,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             supertypeState: Entity
         ) = super.tryChangeSupertype(schemaMgr.changeEntitySupertypeDialog) {
             conceptType.asRemote(it).setSupertype(supertypeState.conceptType)
-        } ?: Unit
+        }
 
         override fun toString(): String = "TypeState.Entity: $conceptType"
     }
@@ -542,7 +546,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         override fun isSameEncoding(conceptType: Type) = conceptType.isAttributeType
         override fun asSameEncoding(conceptType: Type) = conceptType.asAttributeType()!!
-        override fun createTypeState(type: AttributeType) = schemaMgr.createTypeState(type)
+        override fun typeStateOf(type: AttributeType) = schemaMgr.typeStateOf(type)
 
         override fun updateConceptTypeAndName(label: String) = schemaMgr.openOrGetReadTx()?.let {
             conceptType = it.concepts().getAttributeType(label)!!
@@ -562,7 +566,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             val props = mutableMapOf<ThingType, OwnerTypeProperties>()
 
             fun load(ownerType: ThingType, isKey: Boolean, isInherited: Boolean) {
-                schemaMgr.createTypeState(ownerType.asThingType())?.let {
+                schemaMgr.typeStateOf(ownerType.asThingType())?.let {
                     props[ownerType] = OwnerTypeProperties(it, isKey, isInherited)
                 }
             }
@@ -628,7 +632,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         override fun isSameEncoding(conceptType: Type) = conceptType.isRelationType
         override fun asSameEncoding(conceptType: Type) = conceptType.asRelationType()!!
-        override fun createTypeState(type: RelationType) = schemaMgr.createTypeState(type)
+        override fun typeStateOf(type: RelationType) = schemaMgr.typeStateOf(type)
 
         override fun updateConceptTypeAndName(label: String) = schemaMgr.openOrGetReadTx()?.let {
             conceptType = it.concepts().getRelationType(label)!!
@@ -647,6 +651,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         override fun loadOtherConstraints() {
             super.loadOtherConstraints()
             loadRelatesRoleTypes()
+            relatesRoleTypes.forEach { it.loadSupertypes() }
         }
 
         fun loadRelatesRoleTypesRecursivelyAsync() = coroutines.launchAndHandle(notifications, LOGGER) {
@@ -664,8 +669,8 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
             fun load(tx: TypeDBTransaction, typeTx: RelationType.Remote, roleType: RoleType, isInherited: Boolean) {
                 loaded.add(roleType)
-                schemaMgr.createTypeState(roleType)?.let { rts ->
-                    val ots = typeTx.getRelatesOverridden(roleType)?.let { schemaMgr.createTypeState(it) }
+                schemaMgr.typeStateOf(roleType)?.let { rts ->
+                    val ots = typeTx.getRelatesOverridden(roleType)?.let { schemaMgr.typeStateOf(it) }
                     val canBeUndefined = !roleType.asRemote(tx).playerInstancesExplicit.findAny().isPresent
                     properties.add(RoleTypeProperties(rts, ots, isInherited, canBeUndefined))
                 }
@@ -751,7 +756,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         override fun isSameEncoding(conceptType: Type) = conceptType.isRoleType
         override fun asSameEncoding(conceptType: Type) = conceptType.asRoleType()!!
-        override fun createTypeState(type: RoleType) = schemaMgr.createTypeState(type)
+        override fun typeStateOf(type: RoleType) = schemaMgr.typeStateOf(type)
 
         override fun updateConceptTypeAndName(label: String) = schemaMgr.openOrGetReadTx()?.let {
             conceptType = relationType.conceptType.asRemote(it).getRelates(label)!!
@@ -762,13 +767,15 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             conceptType.asRemote(it).subtypesExplicit.toList()
         }
 
-        override fun initiateChangeSupertype() = schemaMgr.changeRoleSupertypeDialog.open(this)
+        fun initiateChangeOverriddenType() = schemaMgr.changeOverriddenRoleTypeDialog.open(this)
 
-        override fun tryChangeSupertype(
-            supertypeState: Role
-        ) = super.tryChangeSupertype(schemaMgr.changeRoleSupertypeDialog) {
-            // TODO: conceptType.asRemote(it).setSupertype(supertypeState.conceptType)
-        } ?: Unit
+        fun tryChangeOverriddenType(
+            overriddenType: Role?
+        ) = super.tryChangeSupertype(schemaMgr.changeOverriddenRoleTypeDialog) { tx ->
+            relationType.conceptType.asRemote(tx).let { r ->
+                overriddenType?.let { o -> r.setRelates(name, o.conceptType) } ?: r.setRelates(name)
+            }
+        }
 
         override fun toString(): String = "TypeState.Role: $conceptType"
     }
