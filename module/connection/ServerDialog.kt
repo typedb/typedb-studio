@@ -205,25 +205,22 @@ object ServerDialog {
     @Composable
     private fun CACertificateFormField(state: ConnectServerForm, dialogWindow: ComposeDialog) {
         Field(label = Label.CA_CERTIFICATE) {
-            Row {
-                TextInput(
-                    value = state.caCertificate,
-                    placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
-                    onValueChange = { state.caCertificate = it },
-                    enabled = StudioState.client.isDisconnected,
-                    modifier = Modifier.weight(1f)
+            TextInput(
+                value = state.caCertificate,
+                placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
+                onValueChange = { state.caCertificate = it },
+                enabled = StudioState.client.isDisconnected,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                icon = Icon.FOLDER_OPEN,
+                tooltip = Tooltip.Arg(Label.SELECT_CERTIFICATE_FILE)
+            ) {
+                val selectedFilePath = SelectFileDialog.selectPath(
+                    dialogWindow, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY
                 )
-                RowSpacer()
-                IconButton(
-                    icon = Icon.FOLDER_OPEN,
-                    tooltip = Tooltip.Arg(Label.SELECT_CERTIFICATE_FILE)
-                ) {
-                    val selectedFilePath = SelectFileDialog.selectPath(
-                        dialogWindow, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY
-                    )
-                    if (selectedFilePath != null) {
-                        state.caCertificate = selectedFilePath
-                    }
+                if (selectedFilePath != null) {
+                    state.caCertificate = selectedFilePath
                 }
             }
         }
