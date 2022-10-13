@@ -25,13 +25,15 @@ import java.io.File
 import javax.swing.JFileChooser
 
 object SelectFileDialog {
-    fun selectPath(parent: ComposeDialog, title: String, selectorOptions: SelectorOptions): String? {
+    data class Result(val selectedPath: String?)
+
+    fun open(parent: ComposeDialog, title: String, selectorOptions: SelectorOptions): Result {
         val file = when (OS.Current) {
             OS.MACOS -> macOSFileSelector(parent, title, selectorOptions)
             else -> otherOSFileSelector(title, selectorOptions)
         }
 
-        return file?.absolutePath
+        return Result(file?.absolutePath)
     }
 
     private fun macOSFileSelector(parent: ComposeDialog, title: String, selectorOptions: SelectorOptions): File? {
@@ -46,21 +48,20 @@ object SelectFileDialog {
             isVisible = true
         }
 
-        when (selectorOptions) {
+        return when (selectorOptions) {
             SelectorOptions.FILES_ONLY -> {
-                return if (fileDialog.file == null) {
+                if (fileDialog.file == null) {
                     null
                 } else
                     File("${fileDialog.directory}/${fileDialog.file}").absoluteFile
             }
-            SelectorOptions.DIRECTORIES_ONLY -> {
 
+            SelectorOptions.DIRECTORIES_ONLY -> {
+                if (fileDialog.directory == null) {
+                    null
+                } else
+                    File(fileDialog.directory).absoluteFile
             }
-        }
-        return if (fileDialog.directory == null && fileDialog.file == null) {
-            null
-        } else {
-            File("${fileDialog.directory}/${fileDialog.file}").absoluteFile
         }
     }
 

@@ -216,7 +216,7 @@ object ServerDialog {
                 icon = Icon.FOLDER_OPEN,
                 tooltip = Tooltip.Arg(Label.SELECT_CERTIFICATE_FILE)
             ) {
-                val selectedFilePath = SelectFileDialog.selectPath(
+                val (selectedFilePath) = SelectFileDialog.open(
                     dialogWindow, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY
                 )
                 if (selectedFilePath != null) {

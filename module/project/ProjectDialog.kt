@@ -151,7 +151,7 @@ object ProjectDialog {
                 icon = Icon.FOLDER_OPEN,
                 tooltip = Tooltip.Arg(title)
             ) {
-                val selectedDirectoryPath = SelectFileDialog.selectPath(
+                val (selectedDirectoryPath) = SelectFileDialog.open(
                     window, title, SelectorOptions.DIRECTORIES_ONLY
                 )
                 if (selectedDirectoryPath != null) {
