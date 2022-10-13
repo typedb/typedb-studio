@@ -25,7 +25,7 @@ import java.io.File
 import javax.swing.JFileChooser
 
 object SelectFileDialog {
-    fun selectFilePath(parent: ComposeDialog, title: String, selectorOptions: SelectorOptions): String? {
+    fun selectPath(parent: ComposeDialog, title: String, selectorOptions: SelectorOptions): String? {
         val file = when (OS.Current) {
             OS.MACOS -> macOSFileSelector(parent, title, selectorOptions)
             else -> otherOSFileSelector(title, selectorOptions)
@@ -40,7 +40,7 @@ object SelectFileDialog {
             SelectorOptions.DIRECTORIES_ONLY -> System.setProperty("apple.awt.fileDialogForDirectories", "true")
         }
 
-        val fileDialog = java.awt.FileDialog(parent, title, FileDialog.LOAD)
+        val fileDialog = FileDialog(parent, title, FileDialog.LOAD)
         fileDialog.apply {
             isMultipleMode = false
             isVisible = true

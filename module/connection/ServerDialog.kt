@@ -35,7 +35,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
-import com.vaticle.typedb.studio.framework.material.SelectFileDialog.selectFilePath
+import com.vaticle.typedb.studio.framework.material.SelectFileDialog
 import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
@@ -218,7 +218,9 @@ object ServerDialog {
                     icon = Icon.FOLDER_OPEN,
                     tooltip = Tooltip.Arg(Label.SELECT_CERTIFICATE_FILE)
                 ) {
-                    val selectedFilePath = selectFilePath(dialogWindow, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY)
+                    val selectedFilePath = SelectFileDialog.selectPath(
+                        dialogWindow, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY
+                    )
                     if (selectedFilePath != null) {
                         state.caCertificate = selectedFilePath
                     }

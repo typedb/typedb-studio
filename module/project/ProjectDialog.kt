@@ -34,7 +34,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
-import com.vaticle.typedb.studio.framework.material.SelectFileDialog.selectFilePath
+import com.vaticle.typedb.studio.framework.material.SelectFileDialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
@@ -154,9 +154,11 @@ object ProjectDialog {
                 RowSpacer()
                 Form.IconButton(
                     icon = Icon.FOLDER_OPEN,
-                    tooltip = Tooltip.Arg(Label.OPEN_PROJECT_DIRECTORY)
+                    tooltip = Tooltip.Arg(title)
                 ) {
-                    val selectedDirectoryPath = selectFilePath(window, Label.OPEN_PROJECT_DIRECTORY, SelectorOptions.DIRECTORIES_ONLY)
+                    val selectedDirectoryPath = SelectFileDialog.selectPath(
+                        window, title, SelectorOptions.DIRECTORIES_ONLY
+                    )
                     if (selectedDirectoryPath != null) {
                         state.field = selectedDirectoryPath
                     }
