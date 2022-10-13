@@ -50,14 +50,12 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.CaptionSpacer
-import com.vaticle.typedb.studio.framework.material.Form.Checkbox
 import com.vaticle.typedb.studio.framework.material.Form.ColumnSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.State
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
-import com.vaticle.typedb.studio.framework.material.Form.TextInput
 import com.vaticle.typedb.studio.framework.material.Frame
 import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
@@ -96,12 +94,11 @@ object PreferenceDialog {
     private var focusedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root(emptyList()))
     private var state by mutableStateOf(PreferencesForm())
 
-    sealed interface PreferenceField {
-        val label: String
-        val caption: String?
-        var modified: Boolean
-        fun isValid(): Boolean
-        @Composable fun Display()
+    sealed class PreferenceField(val label: String, private val caption: String?) {
+        abstract fun isValid(): Boolean
+        @Composable abstract fun Display()
+
+        var modified by mutableStateOf(false)
 
         @Composable
         fun Layout(fieldContent: @Composable () -> Unit) {
@@ -123,14 +120,13 @@ object PreferenceDialog {
         }
 
         class TextInputValidated(
-            val initialValue: String,
-            override val label: String, override val caption: String? = null,
+            initValue: String,
+            label: String, caption: String? = null,
             private val placeholder: String, private val invalidWarning: String,
             private val validator: (String) -> Boolean = { true }
-        ): PreferenceField {
+        ): PreferenceField(label, caption) {
 
-            override var modified by mutableStateOf(false)
-            var value by mutableStateOf(initialValue)
+            var value by mutableStateOf(initValue)
 
             @Composable
             override fun Display() {
@@ -143,7 +139,7 @@ object PreferenceDialog {
                         alignment = Alignment.BottomEnd,
                         offset = DpOffset(0.dp, -(Form.FIELD_HEIGHT.value + Form.FIELD_SPACING.value).dp)
                     )
-                    TextInput(
+                    Form.TextInput(
                         value = value,
                         placeholder = placeholder,
                         border = border,
@@ -179,18 +175,17 @@ object PreferenceDialog {
         }
 
         class TextInput(
-            val initialValue: String,
-            override val label: String, override val caption: String? = null,
+            initValue: String,
+            label: String, caption: String? = null,
             private val placeholder: String
-        ): PreferenceField {
+        ): PreferenceField(label, caption) {
 
-            override var modified by mutableStateOf(false)
-            var value by mutableStateOf(initialValue)
+            var value by mutableStateOf(initValue)
 
             @Composable
             override fun Display() {
                 Layout {
-                    TextInput(
+                    Form.TextInput(
                         value = value,
                         placeholder = placeholder,
                         border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {Theme.studio.border},
@@ -205,17 +200,15 @@ object PreferenceDialog {
         }
 
         class Checkbox(
-            val initialValue: Boolean, override var label: String,
-            override val caption: String? = null
-        ): PreferenceField {
+            initValue: Boolean, label: String, caption: String? = null
+        ): PreferenceField(label, caption) {
 
-            override var modified by mutableStateOf(false)
-            var value by mutableStateOf(initialValue)
+            var value by mutableStateOf(initValue)
 
             @Composable
             override fun Display() {
                 Layout {
-                    Checkbox(
+                    Form.Checkbox(
                         value = value,
                         onChange = { value = it; modified = true }
                     )
@@ -228,12 +221,10 @@ object PreferenceDialog {
         }
 
         class Dropdown<T : Any>(
-            val values: List<T>, override val label: String,
-            override val caption: String? = null
-        ): PreferenceField {
+            initValue: T, val values: List<T>, label: String, caption: String? = null
+        ): PreferenceField(label, caption) {
 
-            override var modified by mutableStateOf(false)
-            private var selected by mutableStateOf(values.first())
+            private var selected by mutableStateOf(values.find { it == initValue})
 
             @Composable
             override fun Display() {
@@ -313,7 +304,7 @@ object PreferenceDialog {
         override fun reloadEntries() {}
 
         override fun compareTo(other: Navigable<PreferenceGroup>): Int {
-            return this.name.compareTo(other.name);
+            return this.name.compareTo(other.name)
         }
 
         fun isModified(): Boolean {
@@ -352,8 +343,8 @@ object PreferenceDialog {
         }
 
         class GraphVisualiser : PreferenceGroup(GRAPH_VISUALISER) {
-            var graphOutput = PreferenceField.Checkbox(
-                initialValue = preferenceMgr.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT,
+            private var graphOutput = PreferenceField.Checkbox(
+                initValue = preferenceMgr.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT,
                 caption = PREFERENCES_GRAPH_OUTPUT_CAPTION
             )
 
@@ -371,8 +362,8 @@ object PreferenceDialog {
         }
 
         class TextEditor : PreferenceGroup(TEXT_EDITOR) {
-            var autoSave = PreferenceField.Checkbox(
-                initialValue = preferenceMgr.autoSave, label = ENABLE_EDITOR_AUTOSAVE
+            private var autoSave = PreferenceField.Checkbox(
+                initValue = preferenceMgr.autoSave, label = ENABLE_EDITOR_AUTOSAVE
             )
 
             override val preferences: List<PreferenceField> = listOf(autoSave)
@@ -394,8 +385,8 @@ object PreferenceDialog {
             }
 
             private val ignoredPathsString = preferenceMgr.ignoredPaths.joinToString(", ")
-            var ignoredPaths = PreferenceField.TextInput(
-                initialValue = ignoredPathsString,
+            private var ignoredPaths = PreferenceField.TextInput(
+                initValue = ignoredPathsString,
                 label = PROJECT_IGNORED_PATHS, placeholder = IGNORED_PATHS_PLACEHOLDER,
                 caption = IGNORED_PATHS_CAPTION
             )
@@ -418,8 +409,8 @@ object PreferenceDialog {
                 private const val QUERY_LIMIT_PLACEHOLDER = "1000"
             }
 
-            var matchQueryLimit = PreferenceField.TextInputValidated(
-                initialValue = preferenceMgr.matchQueryLimit.toString(),
+            private var matchQueryLimit = PreferenceField.TextInputValidated(
+                initValue = preferenceMgr.matchQueryLimit.toString(),
                 label = SET_QUERY_LIMIT, placeholder = QUERY_LIMIT_PLACEHOLDER,
                 invalidWarning = Label.PREFERENCE_INTEGER_WARNING, caption = PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
             ) {/* validator = */ it.toLongOrNull() != null && it.toLongOrNull()!! >= 0 }
