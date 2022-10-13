@@ -46,6 +46,17 @@ object SelectFileDialog {
             isVisible = true
         }
 
+        when (selectorOptions) {
+            SelectorOptions.FILES_ONLY -> {
+                return if (fileDialog.file == null) {
+                    null
+                } else
+                    File("${fileDialog.directory}/${fileDialog.file}").absoluteFile
+            }
+            SelectorOptions.DIRECTORIES_ONLY -> {
+
+            }
+        }
         return if (fileDialog.directory == null && fileDialog.file == null) {
             null
         } else {
