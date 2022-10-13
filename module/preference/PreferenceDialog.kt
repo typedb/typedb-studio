@@ -229,7 +229,7 @@ object PreferenceDialog {
             initValue: T, val values: List<T>, label: String, caption: String? = null
         ) : PreferenceField(label, caption) {
 
-            private var selected by mutableStateOf(values.find { it == initValue})
+            private var selected by mutableStateOf(values.find { it == initValue })
 
             @Composable
             override fun Display() {
