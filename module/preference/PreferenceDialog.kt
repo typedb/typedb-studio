@@ -38,8 +38,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
@@ -47,6 +51,7 @@ import androidx.compose.ui.window.rememberComponentRectPositionProvider
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.vaticle.typedb.studio.framework.editor.TextToolbar
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.CaptionSpacer
@@ -57,6 +62,7 @@ import com.vaticle.typedb.studio.framework.material.Form.State
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
 import com.vaticle.typedb.studio.framework.material.Frame
+import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.framework.material.Separator
@@ -204,6 +210,36 @@ object PreferenceDialog {
             }
         }
 
+        class MultilineTextInput(
+            initValue: String,
+            label: String, caption: String? = null,
+        ): PreferenceField(label, caption) {
+
+            var value by mutableStateOf(TextFieldValue(initValue))
+
+            @Composable
+            override fun Display() {
+                Layout {
+                    Form.MultilineTextInput(
+                        value = value,
+                        onValueChange = { },
+                        onTextLayout = { state.replaceTextLayout = it },
+                        modifier = Modifier.height(state.replacerInputHeight())
+                            .onPreviewKeyEvent { state.handle(it, focusManager, TextToolbar.State.InputType.REPLACER) },
+                    )
+                }
+            }
+
+            internal fun replacerInputHeight(): Dp {
+                val height = lineHeight * replaceText.text.split("\n").size + TextToolbar.INPUT_VERTICAL_PADDING * 2
+                return height.coerceIn(TextToolbar.INPUT_MIN_HEIGHT, TextToolbar.INPUT_MAX_HEIGHT)
+            }
+
+            override fun isValid(): Boolean {
+                return true
+            }
+        }
+
         class Checkbox(
             initValue: Boolean, label: String, caption: String? = null
         ) : PreferenceField(label, caption) {
@@ -250,6 +286,7 @@ object PreferenceDialog {
 
     class PreferencesForm : State {
         private val preferenceGroups: List<PreferenceGroup> = listOf(
+//            PreferenceGroup.GraphVisualiser(entries = listOf(PreferenceGroup.TextEditor())),
             PreferenceGroup.GraphVisualiser(),
             PreferenceGroup.TextEditor(),
             PreferenceGroup.Project(),
@@ -345,7 +382,7 @@ object PreferenceDialog {
             override fun reset() {}
         }
 
-        class GraphVisualiser : PreferenceGroup(GRAPH_VISUALISER) {
+        class GraphVisualiser(entries: List<PreferenceGroup> = emptyList()) : PreferenceGroup(GRAPH_VISUALISER, entries) {
             private var graphOutput = PreferenceField.Checkbox(
                 initValue = preferenceSrv.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT,
                 caption = PREFERENCES_GRAPH_OUTPUT_CAPTION
@@ -474,7 +511,7 @@ object PreferenceDialog {
                         id = PreferenceDialog.javaClass.canonicalName + ".primary",
                         initSize = Either.first(NAVIGATOR_INIT_SIZE), minSize = NAVIGATOR_MIN_SIZE
                     ) {
-                        Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight)) {
+                        Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight).padding(10.dp)) {
                             ColumnSpacer()
                             NavigatorLayout()
                         }
@@ -483,7 +520,7 @@ object PreferenceDialog {
                         id = PreferenceDialog.javaClass.canonicalName + ".secondary",
                         initSize = Either.first(PREFERENCE_GROUP_INIT_SIZE), minSize = PREFERENCE_GROUP_MIN_SIZE
                     ) {
-                        Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
+                        Column(modifier = Modifier.fillMaxHeight().padding(Dialog.DIALOG_SPACING)) {
                             if (focusedPreferenceGroup.name.isBlank()) {
                                 focusedPreferenceGroup = state.rootPreferenceGroup.entries.first()
                             }
@@ -493,11 +530,13 @@ object PreferenceDialog {
                 )
                 Separator.Horizontal()
                 ColumnSpacer()
+                ColumnSpacer()
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     ChangeFormButtons(state)
                     RowSpacer()
                     RowSpacer()
                 }
+                ColumnSpacer()
                 ColumnSpacer()
             }
         }
