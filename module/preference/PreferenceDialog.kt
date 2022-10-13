@@ -94,7 +94,7 @@ object PreferenceDialog {
     private var focusedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root(emptyList()))
     private var state by mutableStateOf(PreferencesForm())
 
-    sealed class PreferenceField(val label: String, private val caption: String?) {
+    sealed class PreferenceField(private val label: String, private val caption: String?) {
         abstract fun isValid(): Boolean
         @Composable abstract fun Display()
 
@@ -224,7 +224,7 @@ object PreferenceDialog {
             initValue: T, val values: List<T>, label: String, caption: String? = null
         ): PreferenceField(label, caption) {
 
-            private var selected by mutableStateOf(values.find { it == initValue})
+            private var selected by mutableStateOf(values.find { it == initValue })
 
             @Composable
             override fun Display() {
@@ -257,9 +257,7 @@ object PreferenceDialog {
             StudioState.preference.preferencesDialog.close()
         }
 
-        fun apply() {
-            trySubmit()
-        }
+        fun apply() = trySubmit()
 
         fun ok() {
             apply()
