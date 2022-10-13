@@ -48,21 +48,21 @@ object SelectFileDialog {
             isVisible = true
         }
 
-        return when (selectorOptions) {
+        when (selectorOptions) {
             SelectorOptions.FILES_ONLY -> {
                 if (fileDialog.file == null) {
-                    null
-                } else
-                    File("${fileDialog.directory}/${fileDialog.file}").absoluteFile
+                    return null
+                }
             }
 
             SelectorOptions.DIRECTORIES_ONLY -> {
                 if (fileDialog.directory == null) {
-                    null
-                } else
-                    File(fileDialog.directory).absoluteFile
+                    return null
+                }
             }
         }
+
+        return File("${fileDialog.directory}/${fileDialog.file}").absoluteFile
     }
 
     private fun otherOSFileSelector(title: String, selectorOptions: SelectorOptions): File? {
