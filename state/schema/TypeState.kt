@@ -394,7 +394,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                     creatorFn(tx)
                     dialogState.onSuccess?.invoke()
                     dialogState.close()
-                    schemaMgr.execOnTypesUpdated()
+                    execOnTypesUpdated()
                 } catch (e: Exception) {
                     notifications.userError(LOGGER, FAILED_TO_CREATE_TYPE, encoding.label, label, e.message ?: UNKNOWN)
                 }
@@ -468,6 +468,11 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             } catch (e: Exception) {
                 notifications.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)
             }
+        }
+
+        private fun execOnTypesUpdated() {
+            callbacks.onSubtypesUpdated.forEach { it() }
+            supertype?.execOnTypesUpdated() ?: schemaMgr.execOnTypesUpdated()
         }
 
         override fun close() {
