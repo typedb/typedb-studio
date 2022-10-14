@@ -99,10 +99,6 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
     val isRoot get() = conceptType.isRoot
     var name: String by mutableStateOf(conceptType.label.name())
     var hasSubtypes: Boolean by mutableStateOf(false)
-    var ownsAttTypeProperties: List<AttributeTypeProperties> by mutableStateOf(emptyList())
-    val ownsAttTypes: List<Attribute> get() = ownsAttTypeProperties.map { it.attributeType }
-    var playsRolTypeProperties: List<RoleTypeProperties> by mutableStateOf(emptyList())
-    val playsRolTypes: List<Role> get() = playsRolTypeProperties.map { it.roleType }
     val notifications get() = schemaMgr.notification
     val coroutines get() = schemaMgr.coroutines
 
@@ -230,6 +226,11 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         }
 
         var isAbstract: Boolean by mutableStateOf(false)
+        var ownsAttTypeProperties: List<AttributeTypeProperties> by mutableStateOf(emptyList())
+        val ownsAttTypes: List<Attribute> get() = ownsAttTypeProperties.map { it.attributeType }
+        var playsRolTypeProperties: List<RoleTypeProperties> by mutableStateOf(emptyList())
+        val playsRolTypes: List<Role> get() = playsRolTypeProperties.map { it.roleType }
+
         private var hasInstancesExplicit: Boolean by mutableStateOf(false)
         override val canBeDeleted get() = !hasSubtypes && !hasInstancesExplicit
         override val canBeAbstract get() = !hasInstancesExplicit
