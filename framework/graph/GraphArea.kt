@@ -95,11 +95,12 @@ class GraphArea(transactionState: TransactionState) {
     // TODO: we tried using Composables.key here, but it performs drastically worse (while zooming in/out) than
     //       this explicit Composable with unused parameters - investigate why
     fun Graphics(physicsIteration: Long, density: Float, size: DpSize, scale: Float) {
-        // Take snapshots of vertices and edges so we can iterate them while the source collections are concurrently modified
+        // Take snapshots of vertices and edges so that we can iterate them while the source collections are
+        // concurrently modified.
         val edges = graph.edges.toList()
         val vertices = graph.vertices.filter { it.readyToCompose && viewport.rectIsVisible(it.geometry.rect) }
         // Since vertices contain MutableStates and are created on a different thread, we need to ensure their lifetime
-        // has been at least one composition cycle before trying to read those states
+        // has been at least one composition cycle before trying to read those states.
         graph.vertices.filter { !it.readyToCompose }.forEach { it.readyToCompose = true }
         val typography = Theme.typography
         val vertexLabelColor = graphTheme.vertexLabel

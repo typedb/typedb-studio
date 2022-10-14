@@ -17,7 +17,6 @@ digraph mygraph {
   "//framework/editor/highlighter:highlighter"
   "//framework/editor/highlighter:highlighter" -> "//framework/editor/highlighter/common:common"
   "//framework/editor/highlighter:highlighter" -> "//framework/editor/highlighter/typeql:typeql"
-  "//framework/editor/highlighter:highlighter" -> "//framework/common:common"
   "//framework/editor/highlighter/typeql:typeql"
   "//framework/editor/highlighter/typeql:typeql" -> "//framework/editor/highlighter/common:common"
   "//framework/editor/highlighter/common:common"
