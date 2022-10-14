@@ -119,6 +119,7 @@ object Form {
     val DEFAULT_BORDER = Border(BORDER_WIDTH, ROUNDED_CORNER_SHAPE)
     private const val LABEL_WEIGHT = 1f
     private const val INPUT_WEIGHT = 2.5f
+    private const val PLACEHOLDER_OPACITY = 0.75f
     private val CAPTION_SPACING = 5.dp
     private val INNER_SPACING = 10.dp
     private val TRAILING_ICON_SIZE = 12.dp
@@ -168,10 +169,10 @@ object Form {
     }
 
     @Composable
-    fun Field(label: String, fieldInput: @Composable () -> Unit) {
+    fun Field(label: String, fieldInput: @Composable RowScope.() -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(value = label, modifier = LABEL_MODIFIER)
-            Box(modifier = INPUT_MODIFIER) { fieldInput() }
+            Row(modifier = INPUT_MODIFIER, horizontalArrangement = Arrangement.spacedBy(INNER_SPACING)) { fieldInput() }
         }
     }
 
@@ -427,7 +428,7 @@ object Form {
                         if (value.isEmpty()) Text(
                             value = Label.E_G_ + " " + placeholder,
                             textStyle = textStyle.copy(fontStyle = FontStyle.Italic),
-                            color = fadeable(fontColor, true)
+                            color = fadeable(fontColor, true, PLACEHOLDER_OPACITY)
                         )
                     }
                     trailingIcon?.let {
@@ -821,11 +822,12 @@ object Form {
         values: List<T>,
         selected: T?,
         displayFn: @Composable (T) -> AnnotatedString = { AnnotatedString(it.toString()) },
+        onSelection: (value: T?) -> Unit,
         onExpand: (() -> Unit)? = null,
-        onSelection: (value: T) -> Unit,
         placeholder: String = "",
-        enabled: Boolean = true,
         modifier: Modifier = Modifier,
+        allowNone: Boolean = false,
+        enabled: Boolean = true,
         focusReq: FocusRequester? = null,
         tooltip: Tooltip.Arg? = null,
     ) {
@@ -841,7 +843,7 @@ object Form {
                 if (expanded && onExpand != null) onExpand()
             }
 
-            fun select(value: T) {
+            fun select(value: T?) {
                 onSelection(value)
                 expanded = false
             }
@@ -858,15 +860,29 @@ object Form {
         val pixelDensity = LocalDensity.current.density
         val state = remember { DropdownState() }
         val placeholderAnnStr = italics(placeholder)
-        val itemPadding = PaddingValues(horizontal = TEXT_BUTTON_PADDING)
-        Box {
+        val noneAnnStr = italics("(${Label.NONE.lowercase()})")
+
+        @Composable
+        fun MenuItem(i: Int, value: AnnotatedString, color: Color, onClick: () -> Unit) = DropdownMenuItem(
+            onClick = onClick,
+            contentPadding = PaddingValues(horizontal = TEXT_BUTTON_PADDING),
+            modifier = Modifier.height(FIELD_HEIGHT)
+                .background(if (i == state.mouseIndex) Theme.studio.primary else Theme.studio.surface)
+                .pointerHoverIcon(icon = PointerIconDefaults.Hand)
+                .pointerMoveFilter(
+                    onEnter = { state.mouseInTo(i); false },
+                    onExit = { state.mouseOutFrom(i); false }
+                ),
+        ) { Row { Text(value = value, color = color) } }
+
+        Box(modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) }) {
             TextButton(
-                text = selected?.let { displayFn(it).ifBlank { placeholderAnnStr } } ?: placeholderAnnStr,
-                modifier = modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) }.pointerMoveFilter(
+                text = selected?.let { displayFn(it) } ?: (placeholderAnnStr + AnnotatedString(" ") + noneAnnStr),
+                modifier = Modifier.defaultMinSize(minWidth = state.width).pointerMoveFilter(
                     onEnter = { state.isButtonHover = true; false },
                     onExit = { state.isButtonHover = false; false }
                 ),
-                textColor = Theme.studio.onPrimary,
+                textColor = fadeable(Theme.studio.onPrimary, selected == null, PLACEHOLDER_OPACITY),
                 focusReq = focusReq,
                 trailingIcon = IconArg(Icon.DROPDOWN_SELECT),
                 enabled = enabled,
@@ -879,21 +895,13 @@ object Form {
                     .defaultMinSize(minWidth = state.width)
                     .border(BORDER_WIDTH, Theme.studio.border, ROUNDED_CORNER_SHAPE) // TODO: how to make not rounded?
             ) {
-                val itemModifier = Modifier.height(FIELD_HEIGHT)
-                if (values.isEmpty()) DropdownMenuItem({}, itemModifier.background(Theme.studio.surface)) {
-                    Row { Text(value = "(${Label.NONE})") }
-                } else values.forEachIndexed { i, value ->
+                if (allowNone || values.isEmpty()) {
+                    val color = fadeable(Theme.studio.onSurface, true, PLACEHOLDER_OPACITY)
+                    MenuItem(0, noneAnnStr, color) { if (values.isNotEmpty()) state.select(null) }
+                }
+                values.forEachIndexed { i, value ->
                     val color = if (value == selected) Theme.studio.secondary else Theme.studio.onSurface
-                    DropdownMenuItem(
-                        onClick = { state.select(value) }, contentPadding = itemPadding,
-                        modifier = itemModifier
-                            .background(if (i == state.mouseIndex) Theme.studio.primary else Theme.studio.surface)
-                            .pointerHoverIcon(icon = PointerIconDefaults.Hand)
-                            .pointerMoveFilter(
-                                onEnter = { state.mouseInTo(i); false },
-                                onExit = { state.mouseOutFrom(i); false }
-                            ),
-                    ) { Row { Text(value = displayFn(value), color = color) } }
+                    MenuItem(i = i + (if (allowNone) 1 else 0), displayFn(value), color) { state.select(value) }
                 }
             }
         }
