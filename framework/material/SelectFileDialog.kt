@@ -48,18 +48,10 @@ object SelectFileDialog {
             isVisible = true
         }
 
-        when (selectorOptions) {
-            SelectorOptions.FILES_ONLY -> {
-                if (fileDialog.file == null) {
-                    return null
-                }
-            }
-
-            SelectorOptions.DIRECTORIES_ONLY -> {
-                if (fileDialog.directory == null) {
-                    return null
-                }
-            }
+        // When selecting a directory, fileDialog.file is the selected directory and fileDialog.directory is the rest
+        // of the path. Therefore, if fileDialog.file is null, then no directory was selected.
+        if (fileDialog.file == null) {
+            return null
         }
 
         return File("${fileDialog.directory}/${fileDialog.file}").absoluteFile
