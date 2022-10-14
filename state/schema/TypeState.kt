@@ -546,8 +546,8 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         val valueType: AttributeType.ValueType? = if (!conceptType.isRoot) conceptType.valueType else null
         val isKeyable: Boolean get() = conceptType.valueType.isKeyable
-        var ownerTypeProperties: Map<ThingType, OwnerTypeProperties> by mutableStateOf(mapOf())
-        val ownerTypes get() = ownerTypeProperties.values.map { it.ownerType }
+        var ownerTypeProperties: List<OwnerTypeProperties> by mutableStateOf(listOf())
+        val ownerTypes get() = ownerTypeProperties.map { it.ownerType }
 
         override fun isSameEncoding(conceptType: Type) = conceptType.isAttributeType
         override fun asSameEncoding(conceptType: Type) = conceptType.asAttributeType()!!
@@ -568,11 +568,13 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         }
 
         private fun loadOwnerTypes() {
-            val props = mutableMapOf<ThingType, OwnerTypeProperties>()
+            val loaded = mutableSetOf<ThingType>()
+            val properties = mutableListOf<OwnerTypeProperties>()
 
             fun load(ownerType: ThingType, isKey: Boolean, isInherited: Boolean) {
+                loaded.add(ownerType)
                 schemaMgr.typeStateOf(ownerType.asThingType())?.let {
-                    props[ownerType] = OwnerTypeProperties(it, isKey, isInherited)
+                    properties.add(OwnerTypeProperties(it, isKey, isInherited))
                 }
             }
 
@@ -581,18 +583,18 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 typeTx.getOwnersExplicit(true).forEach {
                     load(it, isKey = true, isInherited = false)
                 }
-                typeTx.getOwnersExplicit(false).filter { !props.contains(it) }.forEach {
+                typeTx.getOwnersExplicit(false).filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = false, isInherited = false)
                 }
-                typeTx.getOwners(true).filter { !props.contains(it) }.forEach {
+                typeTx.getOwners(true).filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = true, isInherited = true)
                 }
-                typeTx.getOwners(false).filter { !props.contains(it) }.forEach {
+                typeTx.getOwners(false).filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = false, isInherited = true)
                 }
             }
 
-            ownerTypeProperties = props
+            ownerTypeProperties = properties
         }
 
         override fun initiateCreateSubtype(onSuccess: () -> Unit) =

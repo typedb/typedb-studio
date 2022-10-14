@@ -688,7 +688,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             SectionRow { Form.Text(value = Label.OWNERS) }
             SectionRow {
                 Table.Layout(
-                    items = typeState.ownerTypeProperties.values.sortedBy { it.ownerType.name },
+                    items = typeState.ownerTypeProperties.sortedBy { it.ownerType.name },
                     modifier = Modifier.weight(1f).height(tableHeight).border(1.dp, Theme.studio.border),
                     rowHeight = TABLE_ROW_HEIGHT,
                     columns = listOf(
