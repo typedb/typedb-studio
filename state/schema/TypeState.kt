@@ -137,7 +137,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
     protected fun loadSubtypesRecursively() {
         loadSubtypesExplicit()
-        subtypes.forEach { it.loadSubtypesRecursively() }
+        subtypesExplicit.forEach { it.loadSubtypesRecursively() }
     }
 
     fun removeSubtypeExplicit(subtype: TS) {
@@ -296,7 +296,6 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 loadAbstract()
                 loadOtherConstraints()
                 loadSubtypesRecursively()
-                callbacks.onSubtypesUpdated.forEach { it() }
             } catch (e: TypeDBClientException) {
                 notifications.userError(
                     LOGGER, Message.Schema.FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN

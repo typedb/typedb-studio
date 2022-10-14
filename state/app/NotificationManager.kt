@@ -70,7 +70,7 @@ class NotificationManager {
         ) = this.launch(Default) {
             try {
                 function()
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
             } catch (e: Throwable) {
                 notificationMgr.systemError(logger, e, UNEXPECTED_ERROR_IN_COROUTINE, e.message ?: UNKNOWN)
             }

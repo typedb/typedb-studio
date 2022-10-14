@@ -242,7 +242,7 @@ object Navigator {
         private val openFn: (ItemState<T>) -> Unit
     ) {
 
-        private var container: ItemState<T> by mutableStateOf(ItemState(container as T, null, this, coroutines))
+        private var container: ItemState<T> = ItemState(container as T, null, this, coroutines)
         internal var entries: List<ItemState<T>> by mutableStateOf(emptyList()); private set
         internal var density by mutableStateOf(0f)
         private var itemWidth by mutableStateOf(0.dp)
@@ -265,7 +265,9 @@ object Navigator {
 
         fun reloadEntries() = container.reloadEntries()
 
-        fun launch() = coroutines.launchAndHandle(notification, LOGGER) {
+        fun launchAsync() = coroutines.launchAndHandle(notification, LOGGER) { launch() }
+
+        fun launch() {
             container.expand(1 + initExpandDepth)
             if (liveUpdate) {
                 watchUpdate.set(true)
@@ -275,7 +277,7 @@ object Navigator {
 
         fun replaceContainer(newContainer: Navigable<T>) {
             container = ItemState(newContainer as T, null, this, coroutines)
-            launch()
+            launchAsync()
         }
 
         fun close() {

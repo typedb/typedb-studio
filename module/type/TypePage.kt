@@ -42,7 +42,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,19 +60,28 @@ import com.vaticle.typedb.studio.framework.common.Util.hyphenate
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.*
 import com.vaticle.typedb.studio.framework.material.Concept.ConceptDetailedLabel
 import com.vaticle.typedb.studio.framework.material.Concept.conceptIcon
+import com.vaticle.typedb.studio.framework.material.ContextMenu
+import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.ClickableText
+import com.vaticle.typedb.studio.framework.material.Icon
+import com.vaticle.typedb.studio.framework.material.Navigator
+import com.vaticle.typedb.studio.framework.material.Pages
+import com.vaticle.typedb.studio.framework.material.Scrollbar
+import com.vaticle.typedb.studio.framework.material.Separator
+import com.vaticle.typedb.studio.framework.material.Table
+import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.schema.TypeState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
-    var typeState: TS, showAdvanced: Boolean = false, coroutines: CoroutineScope
+    var typeState: TS, showAdvanced: Boolean = false
 ) : Pages.Page() {
 
     override val hasSecondary: Boolean = false
@@ -88,13 +96,14 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
     private var showAdvanced by mutableStateOf(showAdvanced)
+    private var subtypesNavStateLaunched = false
     private val subtypesNavState = Navigator.NavigatorState(
         container = typeState,
         title = Label.SUBTYPES_OF + " " + typeState.name,
         behaviour = Navigator.Behaviour.Menu(),
-        initExpandDepth = 4,
-        coroutines = coroutines
-    ) { it.item.tryOpen() }.also { typeState.onSubtypesUpdated { it.reloadEntries() } }
+        initExpandDepth = 1,
+        coroutines = CoroutineScope(Dispatchers.Default)
+    ) { it.item.tryOpen() }.also { typeState.onSubtypesUpdated { it.reloadEntriesAsync() } }
 
     companion object {
         private val MIN_WIDTH = 600.dp
@@ -104,18 +113,15 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         private val LINE_END_PADDING = 4.dp
         private val VERTICAL_SPACING = 20.dp
         private val ICON_COL_WIDTH = 80.dp
-        private val TABLE_BUTTON_HEIGHT = 24.dp
         private val TABLE_ROW_HEIGHT = 40.dp
         private val EMPTY_BOX_HEIGHT = Table.ROW_HEIGHT
         private const val MAX_VISIBLE_SUBTYPES = 10
 
-        @Composable
         fun create(type: TypeState.Thing<*, *>): TypePage<*, *> {
-            val coroutines = rememberCoroutineScope()
             return when (type) {
-                is TypeState.Entity -> Entity(type, coroutines)
-                is TypeState.Relation -> Relation(type, coroutines)
-                is TypeState.Attribute -> Attribute(type, coroutines)
+                is TypeState.Entity -> Entity(type)
+                is TypeState.Relation -> Relation(type)
+                is TypeState.Attribute -> Attribute(type)
             }
         }
     }
@@ -478,7 +484,13 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 iconArg = { conceptIcon(it.item.conceptType) }
             )
         }
-        LaunchedEffect(subtypesNavState) { subtypesNavState.launch() }
+        LaunchedEffect(subtypesNavState) {
+            if (subtypesNavStateLaunched) subtypesNavState.reloadEntries()
+            else {
+                subtypesNavState.launch()
+                subtypesNavStateLaunched = true
+            }
+        }
     }
 
     @Composable
@@ -546,9 +558,9 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         )
     }
 
-    class Entity constructor(
-        typeState: TypeState.Entity, coroutines: CoroutineScope
-    ) : TypePage<EntityType, TypeState.Entity>(typeState, false, coroutines) {
+    class Entity constructor(typeState: TypeState.Entity) : TypePage<EntityType, TypeState.Entity>(
+        typeState = typeState, showAdvanced = false
+    ) {
 
         @Composable
         override fun MainSections() {
@@ -561,9 +573,9 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         }
     }
 
-    class Relation constructor(
-        typeState: TypeState.Relation, coroutines: CoroutineScope
-    ) : TypePage<RelationType, TypeState.Relation>(typeState, typeState.playsRolTypes.isNotEmpty(), coroutines) {
+    class Relation constructor(typeState: TypeState.Relation) : TypePage<RelationType, TypeState.Relation>(
+        typeState = typeState, showAdvanced = typeState.playsRolTypes.isNotEmpty()
+    ) {
 
         @Composable
         override fun MainSections() {
@@ -657,12 +669,9 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         }
     }
 
-    class Attribute constructor(
-        typeState: TypeState.Attribute, coroutines: CoroutineScope
-    ) : TypePage<AttributeType, TypeState.Attribute>(
+    class Attribute constructor(typeState: TypeState.Attribute) : TypePage<AttributeType, TypeState.Attribute>(
         typeState = typeState,
-        showAdvanced = typeState.ownsAttTypes.isNotEmpty() || typeState.playsRolTypes.isNotEmpty(),
-        coroutines = coroutines
+        showAdvanced = typeState.ownsAttTypes.isNotEmpty() || typeState.playsRolTypes.isNotEmpty()
     ) {
 
         @Composable
