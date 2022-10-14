@@ -32,6 +32,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.material.Dialog
+import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
+import com.vaticle.typedb.studio.framework.material.SelectFileDialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.Submission
@@ -44,13 +46,11 @@ import com.vaticle.typedb.studio.state.StudioState.notification
 import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Property
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.project.DirectoryState
 import com.vaticle.typedb.studio.state.project.PathState.Type.DIRECTORY
 import com.vaticle.typedb.studio.state.project.PathState.Type.FILE
 import java.awt.FileDialog
-import javax.swing.JFileChooser
 import kotlin.io.path.Path
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -149,41 +149,17 @@ object ProjectDialog {
             )
             Form.IconButton(
                 icon = Icon.FOLDER_OPEN,
-                tooltip = Tooltip.Arg(Label.OPEN_PROJECT_DIRECTORY)
-            ) { launchDirectorySelector(state, window, title) }
+                tooltip = Tooltip.Arg(title)
+            ) {
+                val (selectedDirectoryPath) = SelectFileDialog.open(
+                    window, title, SelectorOptions.DIRECTORIES_ONLY
+                )
+                if (selectedDirectoryPath != null) {
+                    state.field = selectedDirectoryPath
+                }
+            }
         }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
-    }
-
-    private fun launchDirectorySelector(state: PathForm, parent: ComposeDialog, title: String) {
-        when (Property.OS.Current) {
-            Property.OS.MACOS -> macOSDirectorySelector(state, parent, title)
-            else -> otherOSDirectorySelector(state, title)
-        }
-    }
-
-    private fun macOSDirectorySelector(state: PathForm, parent: ComposeDialog, title: String) {
-        val fileDialog = FileDialog(parent, title, FileDialog.LOAD)
-        fileDialog.apply {
-            directory = state.field
-            isMultipleMode = false
-            isVisible = true
-        }
-        fileDialog.directory?.let { state.field = Path(it).resolve(fileDialog.file).toString() }
-    }
-
-    private fun otherOSDirectorySelector(state: PathForm, title: String) {
-        val directoryChooser = JFileChooser().apply {
-            currentDirectory = Path(state.field).toFile()
-            dialogTitle = title
-            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-        }
-        val option = directoryChooser.showOpenDialog(null)
-        if (option == JFileChooser.APPROVE_OPTION) {
-            val directory = directoryChooser.selectedFile
-            assert(directory.isDirectory)
-            state.field = directory.absolutePath
-        }
     }
 
     @Composable

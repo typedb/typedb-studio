@@ -29,20 +29,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.ComposeDialog
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
+import com.vaticle.typedb.studio.framework.material.SelectFileDialog
+import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
 import com.vaticle.typedb.studio.framework.material.Form.Dropdown
 import com.vaticle.typedb.studio.framework.material.Form.Field
+import com.vaticle.typedb.studio.framework.material.Form.IconButton
 import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
+import com.vaticle.typedb.studio.framework.material.Icon
+import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Property
@@ -113,7 +119,7 @@ object ServerDialog {
                     UsernameFormField(state)
                     PasswordFormField(state)
                     TLSEnabledFormField(state)
-                    if (state.tlsEnabled) CACertificateFormField(state)
+                    if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
                 }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -197,15 +203,26 @@ object ServerDialog {
     }
 
     @Composable
-    private fun CACertificateFormField(state: ConnectServerForm) {
+    private fun CACertificateFormField(state: ConnectServerForm, dialogWindow: ComposeDialog) {
         Field(label = Label.CA_CERTIFICATE) {
             TextInput(
                 value = state.caCertificate,
                 placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
                 onValueChange = { state.caCertificate = it },
                 enabled = StudioState.client.isDisconnected,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.weight(1f)
             )
+            IconButton(
+                icon = Icon.FOLDER_OPEN,
+                tooltip = Tooltip.Arg(Label.SELECT_CERTIFICATE_FILE)
+            ) {
+                val (selectedFilePath) = SelectFileDialog.open(
+                    dialogWindow, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY
+                )
+                if (selectedFilePath != null) {
+                    state.caCertificate = selectedFilePath
+                }
+            }
         }
     }
 
