@@ -61,9 +61,9 @@ class GraphArea(transactionState: TransactionState) {
     val coroutines = CoroutineScope(Dispatchers.Default)
     val graphBuilder = GraphBuilder(graph, transactionState, coroutines)
     val viewport = Viewport(graph)
-    val physicsRunner = PhysicsRunner(this)
-    val graphTheme by mutableStateOf(StudioState.preference.graphTheme)
     var typography: Typography.Theme? = null
+    private val physicsRunner = PhysicsRunner(this)
+    private val graphTheme = StudioState.preference.graphTheme
     internal val textRenderer = TextRenderer(viewport)
 
     companion object {
