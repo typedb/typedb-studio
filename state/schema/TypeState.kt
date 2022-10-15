@@ -291,7 +291,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             loadConstraints()
         }
 
-        internal fun loadConstraints() {
+        fun loadConstraints() {
             try {
                 loadSupertypes()
                 loadAbstract()
@@ -567,7 +567,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             loadOwnerTypes()
         }
 
-        private fun loadOwnerTypes() {
+        fun loadOwnerTypes() {
             val loaded = mutableSetOf<ThingType>()
             val properties = mutableListOf<OwnerTypeProperties>()
 

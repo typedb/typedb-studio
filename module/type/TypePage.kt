@@ -267,13 +267,18 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 items = typeState.ownsAttTypeProperties.sortedBy { it.attributeType.name },
                 modifier = Modifier.weight(1f).height(tableHeight).border(1.dp, Theme.studio.border),
                 rowHeight = TABLE_ROW_HEIGHT,
+                contextMenuFn = { ownsAttributeTypesContextMenu(it) },
+                onContextMenuLaunch = {
+                    it.attributeType.loadOwnerTypes()
+                    it.overriddenType?.loadOwnerTypes()
+                },
                 columns = listOf(
-                    Table.Column(header = Label.ATTRIBUTE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
+                    Table.Column(header = Label.ATTRIBUTE_TYPE, contentAlignment = Alignment.CenterStart) { props ->
                         ClickableText(ConceptDetailedLabel(props.attributeType.conceptType)) {
                             props.attributeType.tryOpen()
                         }
                     },
-                    Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
+                    Table.Column(header = Label.OVERRIDDEN_TYPE, contentAlignment = Alignment.CenterStart) { props ->
                         props.overriddenType?.let { ot ->
                             ClickableText(ConceptDetailedLabel(ot.conceptType)) { ot.tryOpen() }
                         }
@@ -283,19 +288,41 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                         MayTickIcon(it.isInherited)
                     },
                 )
-            ) {
-                listOf(
-                    listOf(
-                        ContextMenu.Item(
-                            label = Label.REMOVE,
-                            icon = Icon.REMOVE,
-                            enabled = isEditable && !it.isInherited && it.canBeUndefined
-                        ) { typeState.initiateRemoveOwnsAttributeType(it.attributeType) }
-                    )
-                )
-            }
+            )
         }
     }
+
+    private fun ownsAttributeTypesContextMenu(it: TypeState.AttributeTypeProperties) = listOf(
+        listOf(
+            ContextMenu.Item(
+                label = Label.GO_TO_ATTRIBUTE_TYPE,
+                icon = Icon.GO_TO,
+            ) { it.attributeType.tryOpen() },
+            ContextMenu.Item(
+                label = Label.GO_TO_OVERRIDDEN_TYPE,
+                icon = Icon.GO_TO,
+                enabled = it.overriddenType != null
+            ) { it.overriddenType?.tryOpen() },
+            ContextMenu.Item(
+                label = Label.GO_TO_INHERITED_TYPE,
+                icon = Icon.GO_TO,
+                enabled = it.isInherited || it.overriddenType != null
+            ) {
+                when {
+                    it.isInherited -> it.attributeType
+                    else -> it.overriddenType!!
+                }.ownerTypeProperties.filter { p -> !p.isInherited }.map { p -> p.ownerType }.toSet()
+                    .intersect(typeState.supertypes.toSet()).firstOrNull()?.tryOpen()
+            }
+        ),
+        listOf(
+            ContextMenu.Item(
+                label = Label.REMOVE,
+                icon = Icon.REMOVE,
+                enabled = isEditable && !it.isInherited && it.canBeUndefined
+            ) { typeState.initiateRemoveOwnsAttributeType(it.attributeType) }
+        )
+    )
 
     @Composable
     private fun OwnsAttributeTypeAddition() {
@@ -394,10 +421,10 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 rowHeight = TABLE_ROW_HEIGHT,
                 contextMenuFn = contextMenuFn,
                 columns = listOf(
-                    Table.Column(header = Label.ROLE_TYPES, contentAlignment = Alignment.CenterStart) { props ->
+                    Table.Column(header = Label.ROLE_TYPE, contentAlignment = Alignment.CenterStart) { props ->
                         ClickableText(props.roleType.scopedName) { props.roleType.relationType.tryOpen() }
                     },
-                    Table.Column(header = Label.OVERRIDDEN, contentAlignment = Alignment.CenterStart) { props ->
+                    Table.Column(header = Label.OVERRIDDEN_TYPE, contentAlignment = Alignment.CenterStart) { props ->
                         props.overriddenType?.let { ot -> ClickableText(ot.scopedName) { ot.relationType.tryOpen() } }
                     },
                     Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
