@@ -225,7 +225,7 @@ object PreferenceDialog {
             initValue: T, val values: List<T>, label: String, caption: String? = null
         ): PreferenceField(label, caption) {
 
-            var value by mutableStateOf(values.find { it == initValue })
+            var value by mutableStateOf(values.find { it == initValue } ?: values.first())
 
             @Composable
             override fun Display() {
@@ -233,7 +233,7 @@ object PreferenceDialog {
                     Form.Dropdown(
                         values = values,
                         selected = value,
-                        onSelection = { value = it; modified = true },
+                        onSelection = { value = it!!; modified = true },
                     )
                 }
             }
@@ -358,15 +358,17 @@ object PreferenceDialog {
             override val preferences: List<PreferenceField> = listOf(graphOutput, graphTheme)
 
             override fun submit() {
-                preferenceMgr.graphTheme = graphTheme.value!!
                 preferenceMgr.graphOutputEnabled = graphOutput.value
+                preferenceMgr.graphTheme = graphTheme.value
                 graphOutput.modified = false
                 graphTheme.modified = false
             }
 
             override fun reset() {
                 graphOutput.value = preferenceMgr.graphOutputEnabled
+                graphTheme.value = preferenceMgr.graphTheme
                 graphOutput.modified = false
+                graphTheme.modified = false
             }
         }
 

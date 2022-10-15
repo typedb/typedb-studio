@@ -73,7 +73,7 @@ object Color {
         }
     }
 
-    private object DarkPalette {
+    private object CommonPalette {
         val Black = Color(0xFF09022F)
         val Blue1 = Color(0xFF5CA8FF)
         val Blue2 = Color(0xFF92E4FC)
@@ -84,6 +84,13 @@ object Color {
         val Pink1 = Color(0xFFF28DD7)
         val Pink2 = Color(0xFFFFA9E8)
         val Pink3 = Color(0xFFE69CFF)
+        val Red1 = Color(0xFFCF4A55)
+        val Red2 = Color(0xFFF66B65)
+        val White = Color(0xFFFFFFFF)
+        val White2 = Color(0xFFd5ccff)
+    }
+
+    private object DarkPalette {
         val Purple0 = Color(0xFF080226)
         val Purple1 = Color(0xFF0E053F)
         val Purple2 = Color(0xFF180F49)
@@ -93,17 +100,13 @@ object Color {
         val Purple6 = Color(0xFF392D7F)
         val Purple7 = Color(0xFF544899)
         val Purple8 = Color(0xFF888DCA)
-        val Red1 = Color(0xFFCF4A55)
-        val Red2 = Color(0xFFF66B65)
-        val White = Color(0xFFFFFFFF)
-        val White2 = Color(0xFFd5ccff)
     }
 
     object Themes {
         val DARK_STUDIO = StudioTheme(
             primary = DarkPalette.Purple4,
-            secondary = DarkPalette.Green,
-            tertiary = DarkPalette.Pink1,
+            secondary = CommonPalette.Green,
+            tertiary = CommonPalette.Pink1,
             backgroundDark = DarkPalette.Purple0,
             backgroundMedium = DarkPalette.Purple1,
             backgroundLight = DarkPalette.Purple2,
@@ -111,53 +114,53 @@ object Color {
             border = DarkPalette.Purple6,
             scrollbar = DarkPalette.Purple8,
             icon = DarkPalette.Purple8,
-            warningStroke = DarkPalette.Orange3,
-            warningBackground = DarkPalette.Orange1,
-            errorStroke = DarkPalette.Red2,
-            errorBackground = DarkPalette.Red1,
-            onPrimary = DarkPalette.White2,
+            warningStroke = CommonPalette.Orange3,
+            warningBackground = CommonPalette.Orange1,
+            errorStroke = CommonPalette.Red2,
+            errorBackground = CommonPalette.Red1,
+            onPrimary = CommonPalette.White2,
             onSecondary = DarkPalette.Purple0,
-            onBackground = DarkPalette.White2,
-            onSurface = DarkPalette.White2,
-            onError = DarkPalette.White,
-            indicationBase = DarkPalette.White,
+            onBackground = CommonPalette.White2,
+            onSurface = CommonPalette.White2,
+            onError = CommonPalette.White,
+            indicationBase = CommonPalette.White,
             isLight = false
         )
         val DARK_GRAPH = GraphTheme(
             name = Label.DARK_GRAPH_NAME,
             background = DarkPalette.Purple0,
             vertex = GraphTheme.Vertex(
-                thingType = DarkPalette.Pink1,
-                entityType = DarkPalette.Pink1,
-                relationType = DarkPalette.Orange2,
-                attributeType = DarkPalette.Blue1,
-                entity = DarkPalette.Pink3,
-                relation = DarkPalette.Orange3,
-                attribute = DarkPalette.Blue2,
+                thingType = CommonPalette.Pink1,
+                entityType = CommonPalette.Pink1,
+                relationType = CommonPalette.Orange2,
+                attributeType = CommonPalette.Blue1,
+                entity = CommonPalette.Pink3,
+                relation = CommonPalette.Orange3,
+                attribute = CommonPalette.Blue2,
             ),
-            vertexLabel = DarkPalette.Black,
-            edge = DarkPalette.Blue1,
-            edgeLabel = DarkPalette.Blue1,
-            inferred = DarkPalette.Green,
-            explanation = DarkPalette.Red1,
+            vertexLabel = CommonPalette.Black,
+            edge = CommonPalette.Blue1,
+            edgeLabel = CommonPalette.Blue1,
+            inferred = CommonPalette.Green,
+            explanation = CommonPalette.Red1,
         )
         val LIGHT_GRAPH = GraphTheme(
             name = Label.LIGHT_GRAPH_NAME,
-            background = DarkPalette.White,
+            background = CommonPalette.White,
             vertex = GraphTheme.Vertex(
-                thingType = DarkPalette.Pink1,
-                entityType = DarkPalette.Pink1,
-                relationType = DarkPalette.Orange2,
-                attributeType = DarkPalette.Blue1,
-                entity = DarkPalette.Pink3,
-                relation = DarkPalette.Orange3,
-                attribute = DarkPalette.Blue2,
+                thingType = CommonPalette.Pink1,
+                entityType = CommonPalette.Pink1,
+                relationType = CommonPalette.Orange2,
+                attributeType = CommonPalette.Blue1,
+                entity = CommonPalette.Pink3,
+                relation = CommonPalette.Orange3,
+                attribute = CommonPalette.Blue2,
             ),
-            vertexLabel = DarkPalette.Black,
-            edge = DarkPalette.Blue1,
-            edgeLabel = DarkPalette.Blue1,
-            inferred = DarkPalette.Green,
-            explanation = DarkPalette.Red1,
+            vertexLabel = CommonPalette.Black,
+            edge = CommonPalette.Blue1,
+            edgeLabel = CommonPalette.Blue1,
+            inferred = CommonPalette.Green,
+            explanation = CommonPalette.Red1,
         )
     }
 
