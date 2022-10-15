@@ -39,16 +39,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.rememberComponentRectPositionProvider
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.common.Util
 import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
@@ -97,9 +93,6 @@ object PreferenceDialog {
 
     private var focusedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root(emptyList()))
     private var state by mutableStateOf(PreferencesForm())
-
-    private var lineHeight by mutableStateOf(0.dp)
-
 
     sealed class PreferenceField(private val label: String, private val caption: String?) {
         abstract fun isValid(): Boolean
@@ -211,45 +204,29 @@ object PreferenceDialog {
             }
         }
 
-        class MultilineTextInput(
-            initValue: String, lineHeight: Int,
-            label: String, caption: String? = null,
-        ): PreferenceField(label, caption) {
-
-            var value by mutableStateOf(TextFieldValue(initValue))
-
-            @Composable
-            override fun Display() {
-                ComputeFontHeight()
-                Layout {
-                    Form.MultilineTextInput(
-                        value = value,
-                        onValueChange = { },
-                        onTextLayout = { },
-                        modifier = Modifier.height(100.dp)
-                    )
-                }
-            }
-
-            private fun replacerInputHeight(height: Int): Dp {
-                val height = lineHeight * height + 4.dp * 2
-                return height.coerceIn(28.dp, 120.dp)
-            }
-
-            @Composable
-            private fun ComputeFontHeight() {
-                // We render a character to find out the default height of a line for the given font
-                // TODO: use FinderTextInput TextLayoutResult after: https://github.com/JetBrains/compose-jb/issues/1781
-                androidx.compose.material.Text(
-                    text = "0", style = Theme.typography.body1,
-                    onTextLayout = { lineHeight = Util.toDP(it.size.height, 1f) }
-                )
-            }
-
-            override fun isValid(): Boolean {
-                return true
-            }
-        }
+//        class MultilineTextInput(
+//            initValue: String, lineHeight: Int,
+//            label: String, caption: String? = null,
+//        ): PreferenceField(label, caption) {
+//
+//            var value by mutableStateOf(TextFieldValue(initValue))
+//
+//            @Composable
+//            override fun Display() {
+//                Layout {
+//                    Form.MultilineTextInput(
+//                        value = value,
+//                        onValueChange = { },
+//                        onTextLayout = { },
+//                        modifier = Modifier.height(100.dp)
+//                    )
+//                }
+//            }
+//
+//            override fun isValid(): Boolean {
+//                return true
+//            }
+//        }
 
         class Checkbox(
             initValue: Boolean, label: String, caption: String? = null
@@ -431,23 +408,27 @@ object PreferenceDialog {
         }
 
         class Project : PreferenceGroup(PROJECT_MANAGER) {
+            companion object {
+                private const val IGNORED_PATHS_PLACEHOLDER = ".git, *.tql, README.?d, data/**/out"
+            }
 
             private val ignoredPathsString = preferenceSrv.ignoredPaths.joinToString(", ")
-            private var ignoredPaths = PreferenceField.MultilineTextInput(
+            private var ignoredPaths = PreferenceField.TextInput(
                 initValue = ignoredPathsString,
-                label = PROJECT_IGNORED_PATHS, lineHeight = 5,
-                caption = IGNORED_PATHS_CAPTION
+                label = PROJECT_IGNORED_PATHS,
+                caption = IGNORED_PATHS_CAPTION,
+                placeholder = IGNORED_PATHS_PLACEHOLDER,
             )
 
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
 
             override fun submit() {
-                preferenceSrv.ignoredPaths = ignoredPaths.value.text.split(',').map { it.trim() }
+                preferenceSrv.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
                 ignoredPaths.modified = false
             }
 
             override fun reset() {
-                ignoredPaths.value = TextFieldValue(preferenceSrv.ignoredPaths.joinToString(", "))
+                ignoredPaths.value = preferenceSrv.ignoredPaths.joinToString(", ")
                 ignoredPaths.modified = false
             }
         }
@@ -519,7 +500,7 @@ object PreferenceDialog {
                         id = PreferenceDialog.javaClass.canonicalName + ".primary",
                         initSize = Either.first(NAVIGATOR_INIT_SIZE), minSize = NAVIGATOR_MIN_SIZE
                     ) {
-                        Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight).padding(10.dp)) {
+                        Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight)) {
                             ColumnSpacer()
                             NavigatorLayout()
                         }
