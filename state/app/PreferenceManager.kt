@@ -38,7 +38,11 @@ class PreferenceManager(appData: DataManager) {
         get() = preferences.graphOutputEnabled ?: field
         set(value) = run { preferences.graphOutputEnabled = value }
 
-    var graphTheme by mutableStateOf(Defaults.graphTheme)
+//    var graphTheme by mutableStateOf(Defaults.graphTheme)
+
+    var graphTheme: Color.GraphTheme = Defaults.graphTheme
+        get() = preferences.graphTheme ?: field
+        set(value) = run { preferences.graphTheme = value }
 
     var matchQueryLimit: Long = Defaults.matchQueryLimit
         get() = preferences.matchQueryLimit?.toLong() ?: field
@@ -59,10 +63,10 @@ class PreferenceManager(appData: DataManager) {
     }
 
     private object Defaults {
-        val autoSave = true
-        val graphOutputEnabled = true
-        val matchQueryLimit = 1000L
+        const val autoSave = true
+        const val graphOutputEnabled = true
+        const val matchQueryLimit = 1000L
         val ignoredPaths = listOf(".git")
-        val graphTheme = Color.Themes.LIGHT_GRAPH
+        val graphTheme = Color.Themes.DARK_GRAPH
     }
 }

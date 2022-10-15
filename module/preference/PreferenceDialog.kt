@@ -360,15 +360,13 @@ object PreferenceDialog {
             override fun submit() {
                 preferenceMgr.graphOutputEnabled = graphOutput.value
                 preferenceMgr.graphTheme = graphTheme.value
-                graphOutput.modified = false
-                graphTheme.modified = false
+                preferences.forEach { it.modified = false }
             }
 
             override fun reset() {
                 graphOutput.value = preferenceMgr.graphOutputEnabled
                 graphTheme.value = preferenceMgr.graphTheme
-                graphOutput.modified = false
-                graphTheme.modified = false
+                preferences.forEach { it.modified = false }
             }
         }
 
@@ -381,12 +379,12 @@ object PreferenceDialog {
 
             override fun submit() {
                 preferenceMgr.autoSave = autoSave.value
-                autoSave.modified = false
+                preferences.forEach { it.modified = false }
             }
 
             override fun reset() {
                 autoSave.value = preferenceMgr.autoSave
-                autoSave.modified = false
+                preferences.forEach { it.modified = false }
             }
         }
 
@@ -406,12 +404,12 @@ object PreferenceDialog {
 
             override fun submit() {
                 preferenceMgr.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
-                ignoredPaths.modified = false
+                preferences.forEach { it.modified = false }
             }
 
             override fun reset() {
                 ignoredPaths.value = preferenceMgr.ignoredPaths.joinToString(", ")
-                ignoredPaths.modified = false
+                preferences.forEach { it.modified = false }
             }
         }
 
@@ -430,12 +428,12 @@ object PreferenceDialog {
 
             override fun submit() {
                 preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong()
-                matchQueryLimit.modified = false
+                preferences.forEach { it.modified = false }
             }
 
             override fun reset() {
                 matchQueryLimit.value = preferenceMgr.matchQueryLimit.toString()
-                matchQueryLimit.modified = false
+                preferences.forEach { it.modified = false }
             }
         }
     }

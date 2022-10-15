@@ -119,7 +119,7 @@ class DataManager {
             set(value) = setProperty(GRAPH_OUTPUT, value.toString())
 
         var graphTheme: Color.GraphTheme?
-            get() = stringToTheme(properties?.getProperty(GRAPH_OUTPUT))
+            get() = stringToTheme(properties?.getProperty(GRAPH_THEME))
             set(value) = setProperty(GRAPH_THEME, value!!.name)
 
         private fun stringToTheme(themeString: String?): Color.GraphTheme? {
