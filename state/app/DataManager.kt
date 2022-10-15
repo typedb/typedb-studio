@@ -120,12 +120,12 @@ class DataManager {
 
         var graphTheme: Color.GraphTheme?
             get() = stringToTheme(properties?.getProperty(GRAPH_THEME))
-            set(value) = setProperty(GRAPH_THEME, value!!.name)
+            set(value) = setProperty(GRAPH_THEME, value!!.name.lowercase())
 
         private fun stringToTheme(themeString: String?): Color.GraphTheme? {
             return when (themeString) {
-                Label.DARK_GRAPH_NAME -> Color.Themes.DARK_GRAPH
-                Label.LIGHT_GRAPH_NAME -> Color.Themes.LIGHT_GRAPH
+                Label.DARK_GRAPH_NAME.lowercase() -> Color.Themes.DARK_GRAPH
+                Label.LIGHT_GRAPH_NAME.lowercase() -> Color.Themes.LIGHT_GRAPH
                 else -> null
             }
         }

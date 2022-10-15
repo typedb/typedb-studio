@@ -18,9 +18,6 @@
 
 package com.vaticle.typedb.studio.state.app
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.vaticle.typedb.studio.framework.common.theme.Color
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -37,8 +34,6 @@ class PreferenceManager(appData: DataManager) {
     var graphOutputEnabled: Boolean = Defaults.graphOutputEnabled
         get() = preferences.graphOutputEnabled ?: field
         set(value) = run { preferences.graphOutputEnabled = value }
-
-//    var graphTheme by mutableStateOf(Defaults.graphTheme)
 
     var graphTheme: Color.GraphTheme = Defaults.graphTheme
         get() = preferences.graphTheme ?: field
