@@ -37,9 +37,9 @@ import java.time.format.DateTimeFormatter
 
 object Concept {
 
-    fun conceptIcon(concept: com.vaticle.typedb.client.api.concept.Concept) {
+    fun conceptIcon(concept: com.vaticle.typedb.client.api.concept.Concept): Form.IconArg {
         val graphTheme = StudioState.preference.graphTheme
-        when (concept) {
+        return when (concept) {
             is Relation, is RelationType -> Form.IconArg(Icon.RELATION) { graphTheme.vertex.relationType }
             is Attribute<*>, is AttributeType -> Form.IconArg(Icon.ATTRIBUTE) { graphTheme.vertex.attributeType }
             is ThingType -> Form.IconArg(Icon.THING) { graphTheme.vertex.entityType }
