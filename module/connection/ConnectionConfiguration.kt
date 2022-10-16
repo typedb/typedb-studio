@@ -20,9 +20,7 @@ package com.vaticle.typedb.studio.module.connection
 
 interface ConnectionConfiguration {
     companion object {
-        // Someone will probably put a pipe in their username and break this.
-        // We need a separator that is an invalid character in an address, username, password or file path.
-        private const val INTER_CONFIG_SEPARATOR: String = ":value:"
+        private const val VALUE_SEPARATOR: String = ":value:"
         private const val CONFIG_SEPARATOR: String = ":config:"
         private const val CLUSTER_ID: String = "cluster"
         private const val CORE_ID: String = "core"
@@ -33,17 +31,29 @@ interface ConnectionConfiguration {
 
     class Core(val address: String) : ConnectionConfiguration
 
-//    fun configsFromString(configsString: String): List<ConnectionConfiguration> {
-//
-//    }
+    fun configsFromString(configsString: String): List<ConnectionConfiguration> {
+        val configs: List<String> = configsString.split(CONFIG_SEPARATOR)
 
-    fun configFromString(configString: String): ConnectionConfiguration {
-        val config: List<String> = configString.split(INTER_CONFIG_SEPARATOR)
+        return configs.mapNotNull { configFromString(it) }
+    }
+
+    fun configFromString(configString: String): ConnectionConfiguration? {
+        val config: List<String> = configString.split(VALUE_SEPARATOR)
 
         return if (config[0] == CLUSTER_ID) {
-            Cluster(config[1].split(",").toSet(), config[2], config[3], config[4].toBooleanStrictOrNull()!!, config[5])
+            try {
+                Cluster(config[1].split(",").toSet(), config[2], config[3], config[4].toBooleanStrictOrNull()!!, config[5])
+            } catch (e: Exception) {
+                null
+            }
+        } else if (config[0] == CORE_ID) {
+            try {
+                Core(config[1])
+            } catch (e: Exception) {
+                null
+            }
         } else {
-            Core(config[1])
+            null
         }
     }
 
@@ -51,10 +61,10 @@ interface ConnectionConfiguration {
         return when (config) {
             is Cluster -> {
                 listOf(CLUSTER_ID, config.addresses.joinToString(","), config.username, config.password,
-                    config.tls, config.certPath).joinToString(INTER_CONFIG_SEPARATOR)
+                    config.tls, config.certPath).joinToString(VALUE_SEPARATOR)
             }
             is Core -> {
-                listOf(CORE_ID, config.address).joinToString(INTER_CONFIG_SEPARATOR)
+                listOf(CORE_ID, config.address).joinToString(VALUE_SEPARATOR)
             }
             else -> {
                 throw RuntimeException("No such connection configuration type.")

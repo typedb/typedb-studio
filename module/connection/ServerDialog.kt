@@ -39,10 +39,10 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
+import com.vaticle.typedb.studio.framework.material.Form.Dropdown
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.IconButton
 import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
-import com.vaticle.typedb.studio.framework.material.Form.InputDropdown
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
@@ -63,8 +63,8 @@ import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNEC
 
 object ServerDialog {
 
-    private val WIDTH = 500.dp
-    private val HEIGHT = 340.dp
+    private val WIDTH = 550.dp
+    private val HEIGHT = 400.dp
     private val appData = Service.data.connection
 
     private class ConnectServerForm : Form.State {
@@ -163,7 +163,7 @@ object ServerDialog {
     @Composable
     private fun ConfigurationField(state: ConnectServerForm) {
         Field(label = "Configuration") {
-            InputDropdown(listOf("A", "B", "C"), null, onSelection = {})
+            Dropdown(listOf("A", "B", "C"), null, onSelection = {}, modifier = Modifier.fillMaxSize())
         }
     }
 
