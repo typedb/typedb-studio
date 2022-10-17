@@ -18,11 +18,14 @@
 
 package com.vaticle.typedb.studio.module.connection
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +39,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.vaticle.typedb.studio.framework.material.ActionableList
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
@@ -57,6 +61,7 @@ import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Property
 import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB
 import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_CLUSTER
+import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNECTED
@@ -65,12 +70,14 @@ object ServerDialog {
 
     private val WIDTH = 550.dp
     private val HEIGHT = 400.dp
+    private val ADDRESS_MANAGER_WIDTH = 400.dp
+    private val ADDRESS_MANAGER_HEIGHT = 500.dp
     private val appData = Service.data.connection
 
     private class ConnectServerForm : Form.State {
         var server: Property.Server by mutableStateOf(appData.server ?: TYPEDB)
         var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
-        var clusterAddresses: List<String> by mutableStateOf(emptyList())
+        var clusterAddresses: MutableSet<String> by mutableStateOf(HashSet())
         var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
@@ -82,7 +89,7 @@ object ServerDialog {
 
         override fun isValid(): Boolean {
             return when (server) {
-                TYPEDB -> !coreAddress.isBlank()
+                TYPEDB -> coreAddress.isNotBlank()
                 TYPEDB_CLUSTER -> !(clusterAddresses.isEmpty() || username.isBlank() || password.isBlank())
             }
         }
@@ -123,6 +130,7 @@ object ServerDialog {
     @Composable
     fun MayShowDialogs() {
         if (Service.client.connectServerDialog.isOpen) ConnectServer()
+        if (StudioState.client.manageDatabasesDialog.isOpen) ManageAddresses()
     }
 
     @Composable
@@ -228,6 +236,69 @@ object ServerDialog {
             }
         }
         LaunchedEffect(focusReq) { focusReq?.requestFocus() }
+    }
+
+    @Composable
+    private fun ManageAddresses(state: ConnectServerForm) {
+        val focusReq = remember { FocusRequester() }
+
+        var value by mutableStateOf("")
+
+        val dialogState = StudioState.client.manageAddressesDialog
+        Dialog.Layout(dialogState, Label.MANAGE_DATABASES, ADDRESS_MANAGER_WIDTH, ADDRESS_MANAGER_HEIGHT) {
+            Column(Modifier.fillMaxSize()) {
+                Text(value = Sentence.MANAGE_ADDRESSES_MESSAGE, softWrap = true)
+                Spacer(Modifier.height(Dialog.DIALOG_SPACING))
+                ModifiableAddressList(Modifier.fillMaxWidth().weight(1f))
+                Spacer(Modifier.height(Dialog.DIALOG_SPACING))
+                Row {
+                    TextInput(
+                        value = value,
+                        placeholder = Label.DATABASE_NAME,
+                        onValueChange = { value = it },
+                        modifier = Modifier.weight(1f).focusRequester(focusReq),
+                    )
+                    RowSpacer()
+                    TextButton(
+                        text = Label.CREATE,
+                        tooltip = Tooltip.Arg(
+                            title = Label.CREATE_DATABASE,
+                            description = Sentence.CREATE_DATABASE_BUTTON_DESCRIPTION
+                        )
+                    ) { state.clusterAddresses. }
+                }
+                Spacer(Modifier.height(Dialog.DIALOG_SPACING * 2))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    RowSpacer()
+                    TextButton(text = Label.CLOSE) { dialogState.close() }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun ModifiableAddressList(modifier: Modifier) {
+        ActionableList.Layout(
+            items = StudioState.client.databaseList,
+            modifier = modifier.border(1.dp, Theme.studio.border),
+            buttonSide = ActionableList.Side.RIGHT,
+            buttonFn = { databaseName ->
+                Form.IconButtonArg(
+                    icon = Icon.DELETE,
+                    color = { Theme.studio.errorStroke },
+                    onClick = {
+                        StudioState.confirmation.submit(
+                            title = Label.DELETE_DATABASE,
+                            message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
+                            verificationValue = databaseName,
+                            confirmLabel = Label.DELETE,
+                            onConfirm = { StudioState.client.tryDeleteDatabase(databaseName) }
+                        )
+                    }
+                )
+            }
+        )
     }
 
     @Composable

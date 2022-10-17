@@ -57,6 +57,10 @@ interface ConnectionConfiguration {
         }
     }
 
+    fun configsToString(configs: List<ConnectionConfiguration>): String {
+        return configs.joinToString(CONFIG_SEPARATOR) { configToString(it) }
+    }
+
     fun configToString(config: ConnectionConfiguration): String {
         return when (config) {
             is Cluster -> {

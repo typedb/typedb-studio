@@ -102,6 +102,9 @@ object Sentence {
                 "transaction that you're connecting in each script you run on TypeDB Server. In 'interactive' mode, you " +
                 "can set on these parameters in the toolbar, and perform queries against the TypeDB server with configured " +
                 "parameters interactively. " + BUTTON_ENABLED_WHEN_CONNECTED
+    const val MANAGE_ADDRESSES_MESSAGE =
+        "Below is the list of addresses for your current cluster connection configuration. You can delete them or " +
+                "add new ones. It is not necessary to input more than two or three addresses."
     const val MANAGE_DATABASES_DESCRIPTION =
         "You can manage your databases by adding or deleting databases from the TypeDB Server you are connected to. " +
                 BUTTON_ENABLED_WHEN_CONNECTED
