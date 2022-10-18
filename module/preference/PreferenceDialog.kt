@@ -473,7 +473,10 @@ object PreferenceDialog {
             modifier = Modifier.fillMaxSize(),
         )
 
-        LaunchedEffect(navState) { navState.launch() }
+        LaunchedEffect(navState) {
+            navState.launch()
+            navState.maySelectFirstWithoutFocus()
+        }
     }
 
     @Composable

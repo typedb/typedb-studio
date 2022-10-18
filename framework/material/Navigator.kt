@@ -33,6 +33,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -102,17 +103,13 @@ import mu.KotlinLogging
 
 object Navigator {
 
-    sealed interface Behaviour {
-        val clicksToOpenItem: Int
+    sealed class Behaviour(
+        val clicksToOpenItem: Int,
         val itemsAreFocusable: Boolean
+    ) {
+        class Browser(clicksToOpenItem: Int = 2): Behaviour(clicksToOpenItem, true)
 
-        class Browser(override val clicksToOpenItem: Int = 2) : Behaviour {
-            override val itemsAreFocusable = true
-        }
-
-        class Menu(override val clicksToOpenItem: Int = 1) : Behaviour {
-            override val itemsAreFocusable = false
-        }
+        class Menu(clicksToOpenItem: Int = 1): Behaviour(clicksToOpenItem, false)
     }
 
     @OptIn(ExperimentalTime::class)
@@ -366,6 +363,10 @@ object Navigator {
             selected = item
             item.focusReq.requestFocus()
             mayScrollToAndFocusOnSelected()
+        }
+
+        fun maySelectFirstWithoutFocus() {
+            if (behaviour.itemsAreFocusable) entries.firstOrNull()?.let { selected = it }
         }
 
         private fun mayScrollToAndFocusOnSelected() {
