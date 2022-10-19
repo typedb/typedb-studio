@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -74,10 +75,13 @@ object ServerDialog {
     private val ADDRESS_MANAGER_HEIGHT = 500.dp
     private val appData = Service.data.connection
 
+    private val state by mutableStateOf(ConnectServerForm())
+
     private class ConnectServerForm : Form.State {
+        var configurations: MutableList<ConnectionConfiguration> = mutableStateListOf(appData.configurations ?: )
         var server: Property.Server by mutableStateOf(appData.server ?: TYPEDB)
         var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
-        var clusterAddresses: MutableSet<String> by mutableStateOf(HashSet())
+        var clusterAddresses: MutableList<String> = mutableStateListOf(appData.clusterAddresses)
         var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
@@ -130,18 +134,16 @@ object ServerDialog {
     @Composable
     fun MayShowDialogs() {
         if (Service.client.connectServerDialog.isOpen) ConnectServer()
-        if (StudioState.client.manageDatabasesDialog.isOpen) ManageAddresses()
+        if (StudioState.client.manageAddressesDialog.isOpen) ManageAddresses()
     }
 
     @Composable
     private fun ConnectServer() {
-        val state = remember { ConnectServerForm() }
-        Dialog.Layout(
-            Service.client.connectServerDialog,
+        Dialog.Layout(Service.client.connectServerDialog,
             Label.CONNECT_TO_TYPEDB,
             WIDTH,
             HEIGHT
-        ) {
+        , onCloseRequest = {}) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 ServerFormButtons(state)
                 ConfigurationField(state)
@@ -203,7 +205,7 @@ object ServerDialog {
         Field(label = Label.ADDRESS) {
             TextInput(
                 value = state.coreAddress,
-                placeholder = Property.DEFAULT_SERVER_ADDRESS,
+                placeholder = Label.DEFAULT_SERVER_ADDRESS,
                 onValueChange = { state.coreAddress = it },
                 enabled = Service.client.isDisconnected,
                 modifier = modifier
@@ -222,7 +224,7 @@ object ServerDialog {
             Row {
                 TextInput(
                     value = if (state.clusterAddresses.firstOrNull() == null) "" else state.clusterAddresses.first(),
-                    placeholder = Property.DEFAULT_SERVER_ADDRESS,
+                    placeholder = Label.DEFAULT_SERVER_ADDRESS,
                     onValueChange = { },
                     enabled = false,
                     modifier = modifier.weight(1f),
@@ -230,22 +232,22 @@ object ServerDialog {
                 FormRowSpacer()
                 IconButton(
                     icon = Icon.ADD,
-                    tooltip = Tooltip.Arg(Label.OPEN_PROJECT_DIRECTORY)
-                ) {}
-//                { state.clusterAddresses = inputAddressesDialog() }
+                    tooltip = Tooltip.Arg(Label.MANAGE_CLUSTER_ADDRESSES)
+                )
+                { StudioState.client.manageAddressesDialog.open() }
             }
         }
         LaunchedEffect(focusReq) { focusReq?.requestFocus() }
     }
 
     @Composable
-    private fun ManageAddresses(state: ConnectServerForm) {
+    private fun ManageAddresses() {
         val focusReq = remember { FocusRequester() }
 
         var value by mutableStateOf("")
 
         val dialogState = StudioState.client.manageAddressesDialog
-        Dialog.Layout(dialogState, Label.MANAGE_DATABASES, ADDRESS_MANAGER_WIDTH, ADDRESS_MANAGER_HEIGHT) {
+        Dialog.Layout(dialogState, Label.MANAGE_CLUSTER_ADDRESSES, ADDRESS_MANAGER_WIDTH, ADDRESS_MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Text(value = Sentence.MANAGE_ADDRESSES_MESSAGE, softWrap = true)
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING))
@@ -254,7 +256,7 @@ object ServerDialog {
                 Row {
                     TextInput(
                         value = value,
-                        placeholder = Label.DATABASE_NAME,
+                        placeholder = Label.DEFAULT_SERVER_ADDRESS,
                         onValueChange = { value = it },
                         modifier = Modifier.weight(1f).focusRequester(focusReq),
                     )
@@ -262,10 +264,15 @@ object ServerDialog {
                     TextButton(
                         text = Label.CREATE,
                         tooltip = Tooltip.Arg(
-                            title = Label.CREATE_DATABASE,
-                            description = Sentence.CREATE_DATABASE_BUTTON_DESCRIPTION
+                            title = Label.ADDRESS,
+                            description = Sentence.MANAGE_ADDRESSES_MESSAGE
                         )
-                    ) { state.clusterAddresses. }
+                    ) {
+                        if (value.isNotBlank()) {
+                            state.clusterAddresses.add(value)
+                            value = ""
+                        }
+                    }
                 }
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING * 2))
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -280,21 +287,17 @@ object ServerDialog {
     @Composable
     private fun ModifiableAddressList(modifier: Modifier) {
         ActionableList.Layout(
-            items = StudioState.client.databaseList,
+            items = state.clusterAddresses.toMutableList(),
             modifier = modifier.border(1.dp, Theme.studio.border),
             buttonSide = ActionableList.Side.RIGHT,
-            buttonFn = { databaseName ->
+            buttonFn = { address ->
                 Form.IconButtonArg(
                     icon = Icon.DELETE,
                     color = { Theme.studio.errorStroke },
                     onClick = {
-                        StudioState.confirmation.submit(
-                            title = Label.DELETE_DATABASE,
-                            message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
-                            verificationValue = databaseName,
-                            confirmLabel = Label.DELETE,
-                            onConfirm = { StudioState.client.tryDeleteDatabase(databaseName) }
-                        )
+//                        state.clusterAddresses = state.clusterAddresses.filter { address != it }.toMutableSet()
+                        state.clusterAddresses.remove(address)
+//                        println(state.clusterAddresses)
                     }
                 )
             }

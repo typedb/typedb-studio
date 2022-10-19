@@ -22,9 +22,6 @@ import java.nio.file.Path
 import kotlin.io.path.extension
 
 object Property {
-
-    const val DEFAULT_SERVER_ADDRESS: String = "localhost:1729"
-
     enum class OS(val displayName: String) {
         WINDOWS("Windows"),
         MACOS("MacOS"),
