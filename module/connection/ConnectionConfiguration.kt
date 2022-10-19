@@ -19,59 +19,60 @@
 package com.vaticle.typedb.studio.module.connection
 
 interface ConnectionConfiguration {
+
+    data class Cluster(val addresses: Set<String>, val username: String, val password: String,
+                  val tls: Boolean, val certPath: String): ConnectionConfiguration
+
+    data class Core(val address: String) : ConnectionConfiguration
+
     companion object {
         private const val VALUE_SEPARATOR: String = ":value:"
         private const val CONFIG_SEPARATOR: String = ":config:"
         private const val CLUSTER_ID: String = "cluster"
         private const val CORE_ID: String = "core"
-    }
 
-    class Cluster(val addresses: Set<String>, val username: String, val password: String,
-                  val tls: Boolean, val certPath: String): ConnectionConfiguration
+        fun configsFromString(configsString: String): MutableList<ConnectionConfiguration> {
+            val configs: List<String> = configsString.split(CONFIG_SEPARATOR)
 
-    class Core(val address: String) : ConnectionConfiguration
-
-    fun configsFromString(configsString: String): List<ConnectionConfiguration> {
-        val configs: List<String> = configsString.split(CONFIG_SEPARATOR)
-
-        return configs.mapNotNull { configFromString(it) }
-    }
-
-    fun configFromString(configString: String): ConnectionConfiguration? {
-        val config: List<String> = configString.split(VALUE_SEPARATOR)
-
-        return if (config[0] == CLUSTER_ID) {
-            try {
-                Cluster(config[1].split(",").toSet(), config[2], config[3], config[4].toBooleanStrictOrNull()!!, config[5])
-            } catch (e: Exception) {
-                null
-            }
-        } else if (config[0] == CORE_ID) {
-            try {
-                Core(config[1])
-            } catch (e: Exception) {
-                null
-            }
-        } else {
-            null
+            return configs.mapNotNull { configFromString(it) }.toMutableList()
         }
-    }
 
-    fun configsToString(configs: List<ConnectionConfiguration>): String {
-        return configs.joinToString(CONFIG_SEPARATOR) { configToString(it) }
-    }
+        fun configsToString(configs: List<ConnectionConfiguration>): String {
+            return configs.joinToString(CONFIG_SEPARATOR) { configToString(it) }
+        }
 
-    fun configToString(config: ConnectionConfiguration): String {
-        return when (config) {
-            is Cluster -> {
-                listOf(CLUSTER_ID, config.addresses.joinToString(","), config.username, config.password,
-                    config.tls, config.certPath).joinToString(VALUE_SEPARATOR)
+        private fun configFromString(configString: String): ConnectionConfiguration? {
+            val config: List<String> = configString.split(VALUE_SEPARATOR)
+
+            return if (config[0] == CLUSTER_ID) {
+                try {
+                    Cluster(config[1].split(",").toSet(), config[2], config[3], config[4].toBooleanStrictOrNull()!!, config[5])
+                } catch (e: Exception) {
+                    null
+                }
+            } else if (config[0] == CORE_ID) {
+                try {
+                    Core(config[1])
+                } catch (e: Exception) {
+                    null
+                }
+            } else {
+                null
             }
-            is Core -> {
-                listOf(CORE_ID, config.address).joinToString(VALUE_SEPARATOR)
-            }
-            else -> {
-                throw RuntimeException("No such connection configuration type.")
+        }
+
+        private fun configToString(config: ConnectionConfiguration): String {
+            return when (config) {
+                is Cluster -> {
+                    listOf(CLUSTER_ID, config.addresses.joinToString(","), config.username, config.password,
+                        config.tls, config.certPath).joinToString(VALUE_SEPARATOR)
+                }
+                is Core -> {
+                    listOf(CORE_ID, config.address).joinToString(VALUE_SEPARATOR)
+                }
+                else -> {
+                    throw RuntimeException("No such connection configuration type.")
+                }
             }
         }
     }

@@ -78,14 +78,23 @@ object ServerDialog {
     private val state by mutableStateOf(ConnectServerForm())
 
     private class ConnectServerForm : Form.State {
-        var configurations: MutableList<ConnectionConfiguration> = mutableStateListOf(appData.configurations ?: )
-        var server: Property.Server by mutableStateOf(appData.server ?: TYPEDB)
-        var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
-        var clusterAddresses: MutableList<String> = mutableStateListOf(appData.clusterAddresses)
-        var username: String by mutableStateOf(appData.username ?: "")
-        var password: String by mutableStateOf("")
-        var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
-        var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
+        lateinit var server: Property.Server
+
+
+        constructor() {
+            var configurations: MutableList<ConnectionConfiguration> by mutableStateOf(appData.configurations ?: mutableListOf())
+            var currentConfiguration: ConnectionConfiguration = configurations.first()
+            if (currentConfiguration is ConnectionConfiguration.Core) {
+
+            }
+            server by mutableStateOf(if (currentConfiguration is ConnectionConfiguration.Core) Property.Server.TYPEDB else Property.Server.TYPEDB_CLUSTER)
+            var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
+            var clusterAddresses: MutableList<String> = mutableStateListOf(appData.clusterAddresses)
+            var username: String by mutableStateOf(appData.username ?: "")
+            var password: String by mutableStateOf("")
+            var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
+            var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
+        }
 
         override fun cancel() {
             Service.client.connectServerDialog.close()
@@ -128,7 +137,10 @@ object ServerDialog {
     }
 
     private fun rememberConfig(config: ConnectionConfiguration) {
-
+        if (appData.configurations?.contains(config) == true) {
+            appData.configurations?.remove(config)
+        }
+        appData.configurations!!.add(0, config)
     }
 
     @Composable
