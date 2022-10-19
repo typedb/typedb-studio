@@ -79,7 +79,11 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         val roleType: Role,
         val overriddenType: Role?,
         val isInherited: Boolean,
-        val canBeUndefined: Boolean,
+    )
+
+    data class PlayerTypeProperties constructor(
+        val playerType: Thing<*, *>,
+        val isInherited: Boolean,
     )
 
     companion object {
@@ -107,7 +111,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
     protected abstract fun typeStateOf(type: T): TS?
     protected abstract fun updateConceptTypeAndName(label: String)
     protected abstract fun requestSubtypesExplicit(): List<T>?
-    protected abstract fun loadDependencies()
+    internal abstract fun loadDependencies()
     protected abstract fun loadInheritables()
     abstract override fun toString(): String
 
@@ -371,9 +375,9 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             fun load(typeTx: ThingType.Remote, roleType: RoleType, isInherited: Boolean) {
                 loaded.add(roleType)
                 schemaMgr.typeStateOf(roleType)?.let { rts ->
+                    rts.loadDependencies()
                     val ots = typeTx.getPlaysOverridden(roleType)?.let { schemaMgr.typeStateOf(it) }
-                    val canBeUndefined = false // TODO
-                    properties.add(RoleTypeProperties(rts, ots, isInherited, canBeUndefined))
+                    properties.add(RoleTypeProperties(rts, ots, isInherited))
                 }
             }
 
@@ -624,7 +628,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             supertypeState: Attribute
         ) = super.tryChangeSupertype(schemaMgr.changeAttributeSupertypeDialog) {
             conceptType.asRemote(it).setSupertype(supertypeState.conceptType)
-        } ?: Unit
+        }
 
         override fun toString(): String = "TypeState.Attribute: $conceptType"
     }
@@ -653,6 +657,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         override fun loadInheritables() {
             super.loadInheritables()
             loadRelatesRoleTypes()
+            relatesRoleTypes.forEach { it.loadPlayerTypes() }
         }
 
         override fun loadOtherConstraints() {
@@ -674,19 +679,19 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             val loaded = mutableSetOf<RoleType>()
             val properties = mutableListOf<RoleTypeProperties>()
 
-            fun load(tx: TypeDBTransaction, typeTx: RelationType.Remote, roleType: RoleType, isInherited: Boolean) {
+            fun load(relTypeTx: RelationType.Remote, roleType: RoleType, isInherited: Boolean) {
                 loaded.add(roleType)
                 schemaMgr.typeStateOf(roleType)?.let { rts ->
-                    val ots = typeTx.getRelatesOverridden(roleType)?.let { schemaMgr.typeStateOf(it) }
-                    val canBeUndefined = !roleType.asRemote(tx).playerInstancesExplicit.findAny().isPresent
-                    properties.add(RoleTypeProperties(rts, ots, isInherited, canBeUndefined))
+                    rts.loadDependencies()
+                    val ots = relTypeTx.getRelatesOverridden(roleType)?.let { schemaMgr.typeStateOf(it) }
+                    properties.add(RoleTypeProperties(rts, ots, isInherited))
                 }
             }
 
             schemaMgr.openOrGetReadTx()?.let { tx ->
-                val typeTx = conceptType.asRemote(tx)
-                typeTx.relatesExplicit.forEach { load(tx, typeTx, it, false) }
-                typeTx.relates.filter { !loaded.contains(it) && !it.isRoot }.forEach { load(tx, typeTx, it, true) }
+                val relTypeTx = conceptType.asRemote(tx)
+                relTypeTx.relatesExplicit.forEach { load(relTypeTx, it, false) }
+                relTypeTx.relates.filter { !loaded.contains(it) && !it.isRoot }.forEach { load(relTypeTx, it, true) }
             }
             relatesRoleTypeProperties = properties
         }
@@ -755,16 +760,14 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         val scopedName get() = relationType.name + ":" + name
 
         private var hasPlayerInstancesExplicit: Boolean by mutableStateOf(false)
+        var playerTypeProperties: List<PlayerTypeProperties> by mutableStateOf(emptyList())
         override val canBeDeleted: Boolean get() = !hasSubtypes && !hasPlayerInstancesExplicit
         override val canBeAbstract get() = !hasPlayerInstancesExplicit
 
-        override fun loadDependencies() {}
         override fun loadInheritables() {}
-
         override fun isSameEncoding(conceptType: Type) = conceptType.isRoleType
         override fun asSameEncoding(conceptType: Type) = conceptType.asRoleType()!!
         override fun typeStateOf(type: RoleType) = schemaMgr.typeStateOf(type)
-
         override fun updateConceptTypeAndName(label: String) = schemaMgr.openOrGetReadTx()?.let {
             conceptType = relationType.conceptType.asRemote(it).getRelates(label)!!
             name = conceptType.label.name()
@@ -772,6 +775,34 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         override fun requestSubtypesExplicit() = schemaMgr.openOrGetReadTx()?.let {
             conceptType.asRemote(it).subtypesExplicit.toList()
+        }
+
+        override fun loadDependencies() {
+            loadHasPlayerInstances()
+        }
+
+        private fun loadHasPlayerInstances() = schemaMgr.openOrGetReadTx()?.let { tx ->
+            hasPlayerInstancesExplicit = conceptType.asRemote(tx).playerInstancesExplicit.findAny().isPresent
+        }
+
+        fun loadPlayerTypes() {
+            val loaded = mutableSetOf<ThingType>()
+            val properties = mutableListOf<PlayerTypeProperties>()
+
+            fun load(playerType: ThingType, isInherited: Boolean) {
+                loaded.add(playerType)
+                schemaMgr.typeStateOf(playerType.asThingType())?.let {
+                    properties.add(PlayerTypeProperties(it, isInherited))
+                }
+            }
+
+            schemaMgr.openOrGetReadTx()?.let { tx ->
+                val roleTypeTx = conceptType.asRemote(tx)
+                roleTypeTx.playerTypesExplicit.forEach { load(it, isInherited = false) }
+                roleTypeTx.playerTypes.filter { !loaded.contains(it) }.forEach { load(it, isInherited = false) }
+            }
+
+            playerTypeProperties = properties
         }
 
         fun initiateChangeOverriddenType() = schemaMgr.changeOverriddenRoleTypeDialog.open(this)

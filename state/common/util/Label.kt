@@ -105,6 +105,7 @@ object Label {
     const val GO_TO_ATTRIBUTE_TYPE = "Go to Attribute Type"
     const val GO_TO_INHERITED_TYPE = "Go to Inherited Type"
     const val GO_TO_OVERRIDDEN_TYPE = "Go to Overridden Type"
+    const val GO_TO_ROLE_TYPE = "Go to Role Type"
     const val INCREASE_TEXT_SIZE = "Increase Text Size"
     const val INFER = "Infer"
     const val INHERITED = "Inherited"

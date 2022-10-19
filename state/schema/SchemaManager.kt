@@ -28,6 +28,8 @@ import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
+import com.vaticle.typedb.studio.state.common.util.Message
+import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_OPEN_WRITE_TX
 import com.vaticle.typedb.studio.state.connection.SessionState
 import com.vaticle.typedb.studio.state.page.Navigable
 import com.vaticle.typedb.studio.state.page.PageManager
@@ -215,7 +217,7 @@ class SchemaManager constructor(
     internal fun mayWriteAsync(function: (TypeDBTransaction) -> Unit) {
         if (hasRunningWriteAtomic.compareAndSet(expected = false, new = true)) {
             coroutines.launchAndHandle(notification, LOGGER) {
-                openOrGetWriteTx()?.let { function(it) } ?: Unit
+                openOrGetWriteTx()?.let { function(it) } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_WRITE_TX)
             }.invokeOnCompletion { hasRunningWriteAtomic.set(false) }
         }
     }

@@ -73,12 +73,14 @@ import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Table
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.state.StudioState
+import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.page.Pageable
 import com.vaticle.typedb.studio.state.schema.TypeState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import mu.KotlinLogging
 
 sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     var typeState: TS, showAdvanced: Boolean = false
@@ -95,6 +97,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     private val horScroller = ScrollState(0)
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
+    private val coroutines = CoroutineScope(Dispatchers.Default)
     private var showAdvanced by mutableStateOf(showAdvanced)
     private var subtypesNavStateLaunched = false
     private val subtypesNavState = Navigator.NavigatorState(
@@ -116,6 +119,8 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         private val TABLE_ROW_HEIGHT = 40.dp
         private val EMPTY_BOX_HEIGHT = Table.ROW_HEIGHT
         private const val MAX_VISIBLE_SUBTYPES = 10
+
+        private val LOGGER = KotlinLogging.logger {}
 
         fun create(type: TypeState.Thing<*, *>): TypePage<*, *> {
             return when (type) {
@@ -267,10 +272,12 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 items = typeState.ownsAttTypeProperties.sortedBy { it.attributeType.name },
                 modifier = Modifier.weight(1f).height(tableHeight).border(1.dp, Theme.studio.border),
                 rowHeight = TABLE_ROW_HEIGHT,
-                contextMenuFn = { ownsAttributeTypesContextMenu(it) },
-                onContextMenuLaunch = {
-                    it.attributeType.loadOwnerTypes()
-                    it.overriddenType?.loadOwnerTypes()
+                contextMenuFn = {
+                    coroutines.launchAndHandle(typeState.notifications, LOGGER) {
+                        it.attributeType.loadOwnerTypes()
+                        it.overriddenType?.loadOwnerTypes()
+                    }
+                    ownsAttributeTypesContextMenu(it)
                 },
                 columns = listOf(
                     Table.Column(header = Label.ATTRIBUTE_TYPE, contentAlignment = Alignment.CenterStart) { props ->
@@ -292,25 +299,25 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         }
     }
 
-    private fun ownsAttributeTypesContextMenu(it: TypeState.AttributeTypeProperties) = listOf(
+    private fun ownsAttributeTypesContextMenu(prop: TypeState.AttributeTypeProperties) = listOf(
         listOf(
             ContextMenu.Item(
                 label = Label.GO_TO_ATTRIBUTE_TYPE,
                 icon = Icon.GO_TO,
-            ) { it.attributeType.tryOpen() },
+            ) { prop.attributeType.tryOpen() },
             ContextMenu.Item(
                 label = Label.GO_TO_OVERRIDDEN_TYPE,
                 icon = Icon.GO_TO,
-                enabled = it.overriddenType != null
-            ) { it.overriddenType?.tryOpen() },
+                enabled = prop.overriddenType != null
+            ) { prop.overriddenType?.tryOpen() },
             ContextMenu.Item(
                 label = Label.GO_TO_INHERITED_TYPE,
                 icon = Icon.GO_TO,
-                enabled = it.isInherited || it.overriddenType != null
+                enabled = prop.isInherited || prop.overriddenType != null
             ) {
                 when {
-                    it.isInherited -> it.attributeType
-                    else -> it.overriddenType!!
+                    prop.isInherited -> prop.attributeType
+                    else -> prop.overriddenType!!
                 }.ownerTypeProperties.filter { p -> !p.isInherited }.map { p -> p.ownerType }.toSet()
                     .intersect(typeState.supertypes.toSet()).firstOrNull()?.tryOpen()
             }
@@ -319,8 +326,8 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             ContextMenu.Item(
                 label = Label.REMOVE,
                 icon = Icon.REMOVE,
-                enabled = isEditable && !it.isInherited && it.canBeUndefined
-            ) { typeState.initiateRemoveOwnsAttributeType(it.attributeType) }
+                enabled = isEditable && !prop.isInherited && prop.canBeUndefined
+            ) { typeState.initiateRemoveOwnsAttributeType(prop.attributeType) }
         )
     )
 
@@ -395,18 +402,46 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     protected fun PlaysRoleTypesSection() {
         SectionRow { Form.Text(value = Label.PLAYS) }
         RoleTypesTable(typeState.playsRolTypeProperties) {
-            listOf(
-                listOf(
-                    ContextMenu.Item(
-                        label = Label.REMOVE,
-                        icon = Icon.REMOVE,
-                        enabled = isEditable && it.canBeUndefined
-                    ) { typeState.initiateRemovePlaysRoleType(it.roleType) }
-                )
-            )
+            coroutines.launchAndHandle(typeState.notifications, LOGGER) {
+                it.roleType.loadPlayerTypes()
+                it.overriddenType?.loadPlayerTypes()
+            }
+            playsRoleTypesContextMenu(it)
         }
         PlaysRoleTypeAddition()
     }
+
+    private fun playsRoleTypesContextMenu(prop: TypeState.RoleTypeProperties) = listOf(
+        listOf(
+            ContextMenu.Item(
+                label = Label.GO_TO_ROLE_TYPE,
+                icon = Icon.GO_TO,
+            ) { prop.roleType.relationType.tryOpen() },
+            ContextMenu.Item(
+                label = Label.GO_TO_OVERRIDDEN_TYPE,
+                icon = Icon.GO_TO,
+                enabled = prop.overriddenType != null,
+            ) { prop.overriddenType?.relationType?.tryOpen() },
+            ContextMenu.Item(
+                label = Label.GO_TO_INHERITED_TYPE,
+                icon = Icon.GO_TO,
+                enabled = prop.isInherited || prop.overriddenType != null,
+            ) {
+                when {
+                    prop.isInherited -> prop.roleType
+                    else -> prop.overriddenType!!
+                }.playerTypeProperties.filter { p -> !p.isInherited }.map { p -> p.playerType }.toSet()
+                    .intersect(typeState.supertypes.toSet()).firstOrNull()?.tryOpen()
+            }
+        ),
+        listOf(
+            ContextMenu.Item(
+                label = Label.REMOVE,
+                icon = Icon.REMOVE,
+                enabled = isEditable && prop.roleType.canBeDeleted
+            ) { typeState.initiateRemovePlaysRoleType(prop.roleType) }
+        )
+    )
 
     @Composable
     protected fun RoleTypesTable(
@@ -637,7 +672,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                         ContextMenu.Item(
                             label = Label.DELETE,
                             icon = Icon.DELETE,
-                            enabled = isEditable && !it.isInherited && it.canBeUndefined
+                            enabled = isEditable && !it.isInherited && it.roleType.canBeDeleted
                         ) { typeState.initiateDeleteRoleType(it.roleType) }
                     )
                 )

@@ -86,16 +86,11 @@ object Table {
         horCellPadding: Dp = CELL_PADDING_HORIZONTAL,
         verCellPadding: Dp = CELL_PADDING_VERTICAL,
         contextMenuFn: ((item: T) -> List<List<ContextMenu.Item>>)? = null,
-        onContextMenuLaunch: ((item: T) -> Unit)? = null,
         columns: List<Column<T>>,
     ) {
         Column(modifier.background(Theme.studio.backgroundMedium)) {
             if (showHeader) Header(rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
-            Body(
-                items, rowHeight, columnBorderSize,
-                horCellPadding, verCellPadding, columns,
-                onContextMenuLaunch, contextMenuFn
-            )
+            Body(items, rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns, contextMenuFn)
         }
     }
 
@@ -126,7 +121,6 @@ object Table {
         horCellPadding: Dp,
         verCellPadding: Dp,
         columns: List<Column<T>>,
-        onContextMenuLaunch: ((item: T) -> Unit)?,
         contextMenuFn: ((item: T) -> List<List<ContextMenu.Item>>)?,
     ) {
         val density = LocalDensity.current.density
@@ -138,8 +132,7 @@ object Table {
                 items(items.count()) {
                     Row(
                         items[it], it, rowHeight, columnBorderSize,
-                        horCellPadding, verCellPadding, columns,
-                        onContextMenuLaunch, contextMenuFn
+                        horCellPadding, verCellPadding, columns, contextMenuFn
                     )
                 }
             }
@@ -164,7 +157,6 @@ object Table {
         horCellPadding: Dp,
         verCellPadding: Dp,
         columns: List<Column<T>>,
-        onContextMenuLaunch: ((item: T) -> Unit)?,
         contextMenuFn: ((item: T) -> List<List<ContextMenu.Item>>)?
     ) {
         val contextMenuState = remember { ContextMenu.State() }
@@ -172,7 +164,7 @@ object Table {
         Box {
             var modifier = Modifier.fillMaxWidth().height(rowHeight)
             contextMenuFn?.let {
-                ContextMenu.Popup(contextMenuState, onContextMenuLaunch?.let { { it(item) } }) { it(item) }
+                ContextMenu.Popup(contextMenuState) { it(item) }
                 modifier = modifier.pointerHoverIcon(PointerIconDefaults.Hand)
                     .pointerInput(item) { contextMenuState.onPointerInput(this) }
                     .pointerMoveFilter(

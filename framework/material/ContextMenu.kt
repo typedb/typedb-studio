@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -134,7 +133,7 @@ object ContextMenu {
     }
 
     @Composable
-    fun Popup(state: State, onLaunch: (() -> Unit)? = null, itemListsFn: () -> List<List<Item>>) {
+    fun Popup(state: State, itemListsFn: () -> List<List<Item>>) {
         if (state.isOpen) {
             Popup(
                 focusable = true,
@@ -156,7 +155,6 @@ object ContextMenu {
                     }
                 }
             }
-            onLaunch?.let { LaunchedEffect(state) { it() } }
         }
     }
 
