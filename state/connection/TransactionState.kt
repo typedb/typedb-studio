@@ -125,6 +125,7 @@ class TransactionState constructor(
                     else if (!isOpen) close(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignalAtomic.set(false)
                     hasRunningQueryAtomic.set(false)
+                    mayExecOnSchemaWriteReset()
                 }.also { it.launch() }
             }
         } catch (e: Exception) {
