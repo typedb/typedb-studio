@@ -1,0 +1,46 @@
+/*
+ * Copyright (C) 2022 Vaticle
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
+package com.vaticle.typedb.studio.state.connection
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.vaticle.typedb.studio.state.app.DataManager
+import com.vaticle.typedb.studio.state.common.util.Property
+
+class ConnectionConfigurationManager(appData: DataManager) {
+    var currentServerType: Property.Server by mutableStateOf(Property.Server.TYPEDB)
+    var currentConfig: ConnectionConfiguration by mutableStateOf(ConnectionConfiguration.Core("localhost:1729"))
+
+    fun getAddress(): String {
+        return if (currentConfig is ConnectionConfiguration.Core) {
+            (currentConfig as ConnectionConfiguration.Core).address
+        } else {
+            ""
+        }
+    }
+
+    fun getTLS(): Boolean {
+        return if (currentConfig is ConnectionConfiguration.Cluster) {
+            (currentConfig as ConnectionConfiguration.Cluster).tls
+        } else {
+            false
+        }
+    }
+}

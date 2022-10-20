@@ -128,7 +128,7 @@ object Form {
     private val CAPTION_SPACING = 5.dp
     private val INNER_SPACING = 10.dp
     private val TRAILING_ICON_SIZE = 12.dp
-    val TEXT_BUTTON_PADDING = 8.dp
+    private val TEXT_BUTTON_PADDING = 8.dp
     private val LOADING_SPINNER_SIZE = 14.dp
     private val LOADING_SPINNER_STROKE_WIDTH = 2.dp
     private val ICON_SPACING = 6.dp
