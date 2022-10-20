@@ -493,12 +493,16 @@ object Form {
         icon: Icon? = null,
         focusReq: FocusRequester = remember { FocusRequester() },
         onValueChange: (TextFieldValue) -> Unit,
-        onTextLayout: (TextLayoutResult) -> Unit
+        onTextLayout: (TextLayoutResult) -> Unit,
+        border: Border? = null,
     ) {
+        val mod = border?.let {
+            modifier.border(border.width, fadeable(border.color(), false), border.shape)
+        } ?: modifier
         val density = LocalDensity.current.density
         Row(
             verticalAlignment = Alignment.Top,
-            modifier = modifier.fillMaxWidth()
+            modifier = mod.fillMaxWidth()
                 .background(Theme.studio.surface)
                 .onSizeChanged { state.density = density }
                 .pointerHoverIcon(PointerIconDefaults.Text)

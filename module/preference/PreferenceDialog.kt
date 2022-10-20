@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
@@ -204,29 +205,30 @@ object PreferenceDialog {
             }
         }
 
-//        class MultilineTextInput(
-//            initValue: String, lineHeight: Int,
-//            label: String, caption: String? = null,
-//        ): PreferenceField(label, caption) {
-//
-//            var value by mutableStateOf(TextFieldValue(initValue))
-//
-//            @Composable
-//            override fun Display() {
-//                Layout {
-//                    Form.MultilineTextInput(
-//                        value = value,
-//                        onValueChange = { },
-//                        onTextLayout = { },
-//                        modifier = Modifier.height(100.dp)
-//                    )
-//                }
-//            }
-//
-//            override fun isValid(): Boolean {
-//                return true
-//            }
-//        }
+        class MultilineTextInput(
+            initValue: String, lineHeight: Int,
+            label: String, caption: String? = null,
+        ): PreferenceField(label, caption) {
+
+            var value by mutableStateOf(TextFieldValue(initValue))
+
+            @Composable
+            override fun Display() {
+                Layout {
+                    Form.MultilineTextInput(
+                        value = value,
+                        onValueChange = { value = it },
+                        onTextLayout = { },
+                        border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {Theme.studio.border},
+                        modifier = Modifier.height(100.dp)
+                    )
+                }
+            }
+
+            override fun isValid(): Boolean {
+                return true
+            }
+        }
 
         class Checkbox(
             initValue: Boolean, label: String, caption: String? = null
@@ -274,7 +276,6 @@ object PreferenceDialog {
 
     class PreferencesForm : State {
         private val preferenceGroups: List<PreferenceGroup> = listOf(
-//            PreferenceGroup.GraphVisualiser(entries = listOf(PreferenceGroup.TextEditor())),
             PreferenceGroup.GraphVisualiser(),
             PreferenceGroup.TextEditor(),
             PreferenceGroup.Project(),
@@ -314,12 +315,13 @@ object PreferenceDialog {
     abstract class PreferenceGroup(
         override val name: String = "",
         override val entries: List<PreferenceGroup> = emptyList(),
-        override val info: String? = null,
         override val parent: Navigable<PreferenceGroup>? = null,
-        override val isExpandable: Boolean = entries.isNotEmpty(),
-        override val isBulkExpandable: Boolean = entries.isNotEmpty(),
         open val preferences: List<PreferenceField> = emptyList(),
     ) : Navigable<PreferenceGroup> {
+
+        override val info: String? = null
+        override val isExpandable: Boolean = entries.isNotEmpty()
+        override val isBulkExpandable: Boolean = entries.isNotEmpty()
 
         abstract fun submit()
         abstract fun reset()
@@ -408,27 +410,23 @@ object PreferenceDialog {
         }
 
         class Project : PreferenceGroup(PROJECT_MANAGER) {
-            companion object {
-                private const val IGNORED_PATHS_PLACEHOLDER = ".git, *.tql, README.?d, data/**/out"
-            }
-
             private val ignoredPathsString = preferenceSrv.ignoredPaths.joinToString(", ")
-            private var ignoredPaths = PreferenceField.TextInput(
+            private var ignoredPaths = PreferenceField.MultilineTextInput(
                 initValue = ignoredPathsString,
                 label = PROJECT_IGNORED_PATHS,
                 caption = IGNORED_PATHS_CAPTION,
-                placeholder = IGNORED_PATHS_PLACEHOLDER,
+                lineHeight = 10,
             )
 
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
 
             override fun submit() {
-                preferenceSrv.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
+                preferenceSrv.ignoredPaths = ignoredPaths.value.text.split(',').map { it.trim() }
                 ignoredPaths.modified = false
             }
 
             override fun reset() {
-                ignoredPaths.value = preferenceSrv.ignoredPaths.joinToString(", ")
+                ignoredPaths.value = preferenceSrv.ignoredPaths.joinToString(", ").let { TextFieldValue(it) }
                 ignoredPaths.modified = false
             }
         }
@@ -487,6 +485,9 @@ object PreferenceDialog {
 
     @Composable
     private fun Preferences() {
+        state.rootPreferenceGroup.resetSelfAndDescendants()
+        selectedPreferenceGroup = state.rootPreferenceGroup.entries.first()
+
         Dialog.Layout(
             Service.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT,
             padding = 0.dp, onCloseRequest = { state.cancel() }
@@ -509,9 +510,6 @@ object PreferenceDialog {
                         initSize = Either.first(PREFERENCE_GROUP_INIT_SIZE), minSize = PREFERENCE_GROUP_MIN_SIZE
                     ) {
                         Column(modifier = Modifier.fillMaxHeight().padding(Dialog.DIALOG_SPACING)) {
-                            if (selectedPreferenceGroup.name.isBlank()) {
-                                selectedPreferenceGroup = state.rootPreferenceGroup.entries.first()
-                            }
                             selectedPreferenceGroup.Display()
                         }
                     }
