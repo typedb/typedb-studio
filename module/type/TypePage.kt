@@ -662,15 +662,15 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         private fun relatesRoleTypesContextMenu(props: TypeState.RoleTypeProperties) = listOf(
             listOf(
                 ContextMenu.Item(
+                    label = Label.GO_TO_ROLE_TYPE,
+                    icon = Icon.GO_TO,
+                    enabled = props.isInherited,
+                ) { props.roleType.relationType.tryOpen() },
+                ContextMenu.Item(
                     label = Label.GO_TO_OVERRIDDEN_TYPE,
                     icon = Icon.GO_TO,
                     enabled = props.overriddenType != null,
-                ) { props.overriddenType?.relationType?.tryOpen() },
-                ContextMenu.Item(
-                    label = Label.GO_TO_INHERITED_TYPE,
-                    icon = Icon.GO_TO,
-                    enabled = props.isInherited,
-                ) { props.roleType.relationType.tryOpen() }
+                ) { props.overriddenType?.relationType?.tryOpen() }
             ),
             listOf(
                 ContextMenu.Item(
