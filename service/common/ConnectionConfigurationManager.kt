@@ -18,44 +18,29 @@
 
 package com.vaticle.typedb.studio.state.app
 
-import java.nio.file.FileSystems
-import java.nio.file.Path
-import kotlin.io.path.relativeTo
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.vaticle.typedb.studio.state.connection.ConnectionConfiguration
+import com.vaticle.typedb.studio.state.common.util.Property
 
 class ConnectionConfigurationManager(appData: DataManager) {
-    private val preferences = appData.preferences
-    val preferencesDialog = DialogManager.Base()
+    var currentServerType: Property.Server by mutableStateOf(Property.Server.TYPEDB)
+    var currentConfig: ConnectionConfiguration by mutableStateOf(ConnectionConfiguration.Core("localhost:1729"))
 
-    var autoSave: Boolean = Defaults.autoSave
-        get() = preferences.autoSave ?: field
-        set(value) = run { preferences.autoSave = value }
-
-    var graphOutputEnabled: Boolean = Defaults.graphOutputEnabled
-        get() = preferences.graphOutputEnabled ?: field
-        set(value) = run { preferences.graphOutputEnabled = value }
-
-    var matchQueryLimit: Long = Defaults.matchQueryLimit
-        get() = preferences.matchQueryLimit?.toLong() ?: field
-        set(value) = run { preferences.matchQueryLimit = value.toString() }
-
-    var ignoredPaths: List<String> = Defaults.ignoredPaths
-        get() = preferences.ignoredPaths ?: field
-        set(value) = run { preferences.ignoredPaths = value}
-
-    fun isIgnoredPath(path: Path): Boolean {
-        val ignoredPaths = preferences.ignoredPaths ?: Defaults.ignoredPaths
-        val relativePath = path.relativeTo(path.parent)
-        for (ignored in ignoredPaths) {
-            val pathMatcher = FileSystems.getDefault().getPathMatcher("glob:$ignored")
-            if (pathMatcher.matches(relativePath)) return true
+    fun getAddress(): String {
+        return if (currentConfig is ConnectionConfiguration.Core) {
+            (currentConfig as ConnectionConfiguration.Core).address
+        } else {
+            ""
         }
-        return false
     }
 
-    private object Defaults {
-        val autoSave = true
-        val graphOutputEnabled = true
-        val matchQueryLimit = 1000L
-        val ignoredPaths = listOf(".git")
+    fun getTLS(): Boolean {
+        return if (currentConfig is ConnectionConfiguration.Cluster) {
+            (currentConfig as ConnectionConfiguration.Cluster).tls
+        } else {
+            false
+        }
     }
 }

@@ -66,6 +66,7 @@ import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNECTED
+import com.vaticle.typedb.studio.state.connection.ConnectionConfiguration
 
 object ServerDialog {
 

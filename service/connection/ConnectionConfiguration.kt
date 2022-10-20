@@ -16,7 +16,7 @@
  *
  */
 
-package com.vaticle.typedb.studio.module.connection
+package com.vaticle.typedb.studio.state.connection
 
 interface ConnectionConfiguration {
 
@@ -64,7 +64,8 @@ interface ConnectionConfiguration {
         private fun configToString(config: ConnectionConfiguration): String {
             return when (config) {
                 is Cluster -> {
-                    listOf(CLUSTER_ID, config.addresses.joinToString(","), config.username, config.password,
+                    listOf(
+                        CLUSTER_ID, config.addresses.joinToString(","), config.username, config.password,
                         config.tls, config.certPath).joinToString(VALUE_SEPARATOR)
                 }
                 is Core -> {

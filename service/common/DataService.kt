@@ -28,7 +28,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy
 import ch.qos.logback.core.util.FileSize
-import com.vaticle.typedb.studio.module.connection.ConnectionConfiguration
+import com.vaticle.typedb.studio.state.connection.ConnectionConfiguration
 import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.APP_DATA_DIR_DISABLED
 import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.DATA_DIR_NOT_WRITABLE
 import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.UNEXPECTED_ERROR_APP_DATA_DIR
