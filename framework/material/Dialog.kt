@@ -60,9 +60,10 @@ object Dialog {
     fun Layout(
         state: DialogState, title: String, width: Dp, height: Dp,
         padding: Dp = Theme.DIALOG_PADDING,
+        onCloseRequest: () -> Unit = {},
         content: @Composable DialogWindowScope.() -> Unit
     ) = Dialog(
-        title = title, onCloseRequest = { state.close() }, state = rememberDialogState(
+        title = title, onCloseRequest = { onCloseRequest(); state.close() }, state = rememberDialogState(
             position = WindowPosition.Aligned(Alignment.Center),
             size = DpSize(width, height)
         )

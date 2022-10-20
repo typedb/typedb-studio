@@ -91,7 +91,7 @@ object PreferenceDialog {
 
     private val preferenceSrv = Service.preference
 
-    private var focusedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root(emptyList()))
+    private var selectedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root())
     private var state by mutableStateOf(PreferencesForm())
 
     sealed class PreferenceField(private val label: String, private val caption: String?) {
@@ -362,7 +362,7 @@ object PreferenceDialog {
             preferences.forEach { it.Display() }
         }
 
-        class Root(override val entries: List<PreferenceGroup>) : PreferenceGroup(entries = entries) {
+        class Root(override val entries: List<PreferenceGroup> = emptyList()) : PreferenceGroup(entries = entries) {
             override val preferences: List<PreferenceField> = emptyList()
 
             override fun submit() {}
@@ -465,7 +465,7 @@ object PreferenceDialog {
             title = MANAGE_PREFERENCES,
             behaviour = Navigator.Behaviour.Browser(clicksToOpenItem = 1),
             initExpandDepth = 0,
-            openFn = { focusedPreferenceGroup = it.item },
+            openFn = { selectedPreferenceGroup = it.item },
         )
 
         Navigator.Layout(
@@ -486,14 +486,11 @@ object PreferenceDialog {
 
     @Composable
     private fun Preferences() {
-        state.rootPreferenceGroup.resetSelfAndDescendants()
-
-        Dialog.Layout(
-            Service.preference.preferencesDialog,
-            MANAGE_PREFERENCES,
-            WIDTH,
-            HEIGHT,
-            padding = 0.dp
+        Dialog.Layout(Service.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT,
+            padding = 0.dp, onCloseRequest = {
+                state.rootPreferenceGroup.resetSelfAndDescendants()
+                selectedPreferenceGroup = state.rootPreferenceGroup.entries.first()
+            }
         ) {
             Column {
                 Frame.Row(
@@ -513,10 +510,10 @@ object PreferenceDialog {
                         initSize = Either.first(PREFERENCE_GROUP_INIT_SIZE), minSize = PREFERENCE_GROUP_MIN_SIZE
                     ) {
                         Column(modifier = Modifier.fillMaxHeight().padding(Dialog.DIALOG_SPACING)) {
-                            if (focusedPreferenceGroup.name.isBlank()) {
-                                focusedPreferenceGroup = state.rootPreferenceGroup.entries.first()
+                            if (selectedPreferenceGroup.name.isBlank()) {
+                                selectedPreferenceGroup = state.rootPreferenceGroup.entries.first()
                             }
-                            focusedPreferenceGroup.Display()
+                            selectedPreferenceGroup.Display()
                         }
                     }
                 )
