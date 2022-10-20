@@ -97,7 +97,6 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     private val horScroller = ScrollState(0)
     private val verScroller = ScrollState(0)
     private var width: Dp by mutableStateOf(0.dp)
-    private val coroutines = CoroutineScope(Dispatchers.Default)
     private var showAdvanced by mutableStateOf(showAdvanced)
     private var subtypesNavStateLaunched = false
     private val subtypesNavState = Navigator.NavigatorState(
@@ -107,6 +106,8 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         initExpandDepth = 1,
         coroutines = CoroutineScope(Dispatchers.Default)
     ) { it.item.tryOpen() }.also { typeState.onSubtypesUpdated { it.reloadEntriesAsync() } }
+
+    internal val coroutines = CoroutineScope(Dispatchers.Default)
 
     companion object {
         private val MIN_WIDTH = 600.dp
@@ -401,7 +402,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     @Composable
     protected fun PlaysRoleTypesSection() {
         SectionRow { Form.Text(value = Label.PLAYS) }
-        RoleTypesTable(typeState.playsRolTypeProperties) {
+        RoleTypesTable(typeState.playsRoleTypeProperties) {
             coroutines.launchAndHandle(typeState.notifications, LOGGER) {
                 it.roleType.loadPlayerTypes()
                 it.overriddenType?.loadPlayerTypes()
@@ -473,7 +474,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     @Composable
     private fun PlaysRoleTypeAddition() {
         var roleType: TypeState.Role? by remember { mutableStateOf(null) }
-        val definedRoleTypes = (typeState.playsRolTypes + typeState.supertypes.flatMap { it.playsRolTypes }).toSet()
+        val definedRoleTypes = (typeState.playsRoleTypes + typeState.supertypes.flatMap { it.playsRoleTypes }).toSet()
         val roleTypeList = StudioState.schema.rootRelationType?.subtypes
             ?.flatMap { it.relatesRoleTypes }
             ?.filter { !definedRoleTypes.contains(it) }
@@ -482,7 +483,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
 
         var overriddenType: TypeState.Role? by remember { mutableStateOf(null) }
         val overridableTypeList: List<TypeState.Role> = roleType?.supertypes
-            ?.intersect(typeState.supertype!!.playsRolTypes.toSet())
+            ?.intersect(typeState.supertype!!.playsRoleTypes.toSet())
             ?.sortedBy { it.scopedName } ?: listOf()
 
         val isPlayable = isEditable && roleType != null
@@ -636,7 +637,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     }
 
     class Relation constructor(typeState: TypeState.Relation) : TypePage<RelationType, TypeState.Relation>(
-        typeState = typeState, showAdvanced = typeState.playsRolTypes.isNotEmpty()
+        typeState = typeState, showAdvanced = typeState.playsRoleTypes.isNotEmpty()
     ) {
 
         @Composable
@@ -654,31 +655,43 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         @Composable
         private fun RelatesRoleTypesSection() {
             SectionRow { Form.Text(value = Label.RELATES) }
-            RoleTypesTable(typeState.relatesRoleTypeProperties) {
-                listOf(
-                    listOf(
-                        ContextMenu.Item(
-                            label = Label.RENAME,
-                            icon = Icon.RENAME,
-                            enabled = isEditable && !it.isInherited,
-                        ) { it.roleType.initiateRename() },
-                        ContextMenu.Item(
-                            label = Label.CHANGE_OVERRIDDEN_TYPE,
-                            icon = Icon.TYPES,
-                            enabled = isEditable && !it.isInherited,
-                        ) { it.roleType.initiateChangeOverriddenType() },
-                    ),
-                    listOf(
-                        ContextMenu.Item(
-                            label = Label.DELETE,
-                            icon = Icon.DELETE,
-                            enabled = isEditable && !it.isInherited && it.roleType.canBeDeleted
-                        ) { typeState.initiateDeleteRoleType(it.roleType) }
-                    )
-                )
-            }
+            RoleTypesTable(typeState.relatesRoleTypeProperties) { relatesRoleTypesContextMenu(it) }
             RelatesRoleTypeAddition()
         }
+
+        private fun relatesRoleTypesContextMenu(props: TypeState.RoleTypeProperties) = listOf(
+            listOf(
+                ContextMenu.Item(
+                    label = Label.GO_TO_OVERRIDDEN_TYPE,
+                    icon = Icon.GO_TO,
+                    enabled = props.overriddenType != null,
+                ) { props.overriddenType?.relationType?.tryOpen() },
+                ContextMenu.Item(
+                    label = Label.GO_TO_INHERITED_TYPE,
+                    icon = Icon.GO_TO,
+                    enabled = props.isInherited,
+                ) { props.roleType.relationType.tryOpen() }
+            ),
+            listOf(
+                ContextMenu.Item(
+                    label = Label.RENAME,
+                    icon = Icon.RENAME,
+                    enabled = isEditable && !props.isInherited,
+                ) { props.roleType.initiateRename() },
+                ContextMenu.Item(
+                    label = Label.CHANGE_OVERRIDDEN_TYPE,
+                    icon = Icon.TYPES,
+                    enabled = isEditable && !props.isInherited,
+                ) { props.roleType.initiateChangeOverriddenType() },
+            ),
+            listOf(
+                ContextMenu.Item(
+                    label = Label.DELETE,
+                    icon = Icon.DELETE,
+                    enabled = isEditable && !props.isInherited && props.roleType.canBeDeleted
+                ) { typeState.initiateDeleteRoleType(props.roleType) }
+            )
+        )
 
         @Composable
         private fun RelatesRoleTypeAddition() {
@@ -733,7 +746,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
 
     class Attribute constructor(typeState: TypeState.Attribute) : TypePage<AttributeType, TypeState.Attribute>(
         typeState = typeState,
-        showAdvanced = typeState.ownsAttTypes.isNotEmpty() || typeState.playsRolTypes.isNotEmpty()
+        showAdvanced = typeState.ownsAttTypes.isNotEmpty() || typeState.playsRoleTypes.isNotEmpty()
     ) {
 
         @Composable

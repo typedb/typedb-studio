@@ -232,8 +232,8 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         var isAbstract: Boolean by mutableStateOf(false)
         var ownsAttTypeProperties: List<AttributeTypeProperties> by mutableStateOf(emptyList())
         val ownsAttTypes: List<Attribute> get() = ownsAttTypeProperties.map { it.attributeType }
-        var playsRolTypeProperties: List<RoleTypeProperties> by mutableStateOf(emptyList())
-        val playsRolTypes: List<Role> get() = playsRolTypeProperties.map { it.roleType }
+        var playsRoleTypeProperties: List<RoleTypeProperties> by mutableStateOf(emptyList())
+        val playsRoleTypes: List<Role> get() = playsRoleTypeProperties.map { it.roleType }
 
         private var hasInstancesExplicit: Boolean by mutableStateOf(false)
         override val canBeDeleted get() = !hasSubtypes && !hasInstancesExplicit
@@ -386,7 +386,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 typeTx.playsExplicit.forEach { load(typeTx, it, false) }
                 typeTx.plays.filter { !loaded.contains(it) }.forEach { load(typeTx, it, true) }
             }
-            playsRolTypeProperties = properties
+            playsRoleTypeProperties = properties
         }
 
         protected fun tryCreateSubtype(
