@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -421,6 +422,7 @@ object Navigator {
         state: NavigatorState<T>,
         modifier: Modifier = Modifier,
         itemHeight: Dp = ITEM_HEIGHT,
+        horizontalItemPadding: Dp = 0.dp,
         bottomSpace: Dp = BOTTOM_SPACE,
         iconArg: ((ItemState<T>) -> IconArg)? = null,
         styleArgs: ((ItemState<T>) -> List<Typography.Style>) = { listOf() },
@@ -440,7 +442,7 @@ object Navigator {
                     .horizontalScroll(state = horScrollState)
                     .pointerMoveFilter(onExit = { state.hovered = null; false })
             ) {
-                state.entries.forEach { item { ItemLayout(state, it, itemHeight, iconArg, styleArgs) } }
+                state.entries.forEach { item { ItemLayout(state, it, itemHeight, iconArg, styleArgs, horizontalItemPadding) } }
                 if (bottomSpace > 0.dp) item { Spacer(Modifier.height(bottomSpace)) }
             }
             Scrollbar.Vertical(verScrollAdapter, Modifier.align(Alignment.CenterEnd), state.areaHeight)
@@ -454,7 +456,8 @@ object Navigator {
     @Composable
     private fun <T : Navigable<T>> ItemLayout(
         state: NavigatorState<T>, item: ItemState<T>, itemHeight: Dp,
-        iconArg: ((ItemState<T>) -> IconArg)?, styleArgs: (ItemState<T>) -> List<Typography.Style>
+        iconArg: ((ItemState<T>) -> IconArg)?, styleArgs: (ItemState<T>) -> List<Typography.Style>,
+        horizontalItemPadding: Dp
     ) {
         val styles = styleArgs(item)
         val bgColor = when {
@@ -477,6 +480,7 @@ object Navigator {
                 .widthIn(min = state.minWidth).height(itemHeight)
                 .focusRequester(item.focusReq).focusable()
                 .onKeyEvent { onKeyEvent(it, state, item) }
+                .padding(horizontal = horizontalItemPadding)
                 .pointerHoverIcon(PointerIconDefaults.Hand)
                 .pointerInput(item) { onPointerInput(state, item) }
                 .onPointerEvent(Release) { mayOpenItem(it.awtEvent) }

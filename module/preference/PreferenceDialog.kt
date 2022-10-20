@@ -471,6 +471,7 @@ object PreferenceDialog {
         Navigator.Layout(
             state = navState,
             modifier = Modifier.fillMaxSize(),
+            horizontalItemPadding = Dialog.DIALOG_SPACING
         )
 
         LaunchedEffect(navState) {
