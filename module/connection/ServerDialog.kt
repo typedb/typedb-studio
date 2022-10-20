@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
@@ -66,7 +67,6 @@ import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNECTED
-import com.vaticle.typedb.studio.state.connection.ConnectionConfiguration
 
 object ServerDialog {
 
@@ -79,23 +79,13 @@ object ServerDialog {
     private val state by mutableStateOf(ConnectServerForm())
 
     private class ConnectServerForm : Form.State {
-        lateinit var server: Property.Server
-
-
-        constructor() {
-            var configurations: MutableList<ConnectionConfiguration> by mutableStateOf(appData.configurations ?: mutableListOf())
-            var currentConfiguration: ConnectionConfiguration = configurations.first()
-            if (currentConfiguration is ConnectionConfiguration.Core) {
-
-            }
-            server by mutableStateOf(if (currentConfiguration is ConnectionConfiguration.Core) Property.Server.TYPEDB else Property.Server.TYPEDB_CLUSTER)
-            var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
-            var clusterAddresses: MutableList<String> = mutableStateListOf(appData.clusterAddresses)
-            var username: String by mutableStateOf(appData.username ?: "")
-            var password: String by mutableStateOf("")
-            var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
-            var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
-        }
+        var server: Property.Server by mutableStateOf(appData.server ?: Property.Server.TYPEDB)
+        var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
+        var clusterAddresses: MutableList<String> = SnapshotStateList<String>().let { it.addAll(appData.clusterAddresses ?: emptyList()); it}
+        var username: String by mutableStateOf(appData.username ?: "")
+        var password: String by mutableStateOf("")
+        var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
+        var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
 
         override fun cancel() {
             Service.client.connectServerDialog.close()
@@ -111,15 +101,11 @@ object ServerDialog {
         override fun trySubmit() {
             when (server) {
                 TYPEDB ->  {
-                    val config = ConnectionConfiguration.Core(coreAddress)
-                    rememberConfig(config)
                     Service.client.tryConnectToTypeDBAsync(coreAddress) {
                         Service.client.connectServerDialog.close()
                     }
                 }
                 TYPEDB_CLUSTER -> {
-                    val config = ConnectionConfiguration.Cluster(clusterAddresses.toSet(), username, password, tlsEnabled, caCertificate)
-                    rememberConfig(config)
                     when {
                         caCertificate.isBlank() -> Service.client.tryConnectToTypeDBClusterAsync(
                             clusterAddresses.first(), username, password, tlsEnabled
@@ -137,17 +123,10 @@ object ServerDialog {
         }
     }
 
-    private fun rememberConfig(config: ConnectionConfiguration) {
-        if (appData.configurations?.contains(config) == true) {
-            appData.configurations?.remove(config)
-        }
-        appData.configurations!!.add(0, config)
-    }
-
     @Composable
     fun MayShowDialogs() {
         if (Service.client.connectServerDialog.isOpen) ConnectServer()
-        if (StudioState.client.manageAddressesDialog.isOpen) ManageAddresses()
+        if (Service.client.manageAddressesDialog.isOpen) ManageAddresses()
     }
 
     @Composable
@@ -247,7 +226,7 @@ object ServerDialog {
                     icon = Icon.ADD,
                     tooltip = Tooltip.Arg(Label.MANAGE_CLUSTER_ADDRESSES)
                 )
-                { StudioState.client.manageAddressesDialog.open() }
+                { Service.client.manageAddressesDialog.open() }
             }
         }
         LaunchedEffect(focusReq) { focusReq?.requestFocus() }
@@ -259,7 +238,7 @@ object ServerDialog {
 
         var value by mutableStateOf("")
 
-        val dialogState = StudioState.client.manageAddressesDialog
+        val dialogState = Service.client.manageAddressesDialog
         Dialog.Layout(dialogState, Label.MANAGE_CLUSTER_ADDRESSES, ADDRESS_MANAGER_WIDTH, ADDRESS_MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Text(value = Sentence.MANAGE_ADDRESSES_MESSAGE, softWrap = true)

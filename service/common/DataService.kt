@@ -28,7 +28,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy
 import ch.qos.logback.core.util.FileSize
-import com.vaticle.typedb.studio.state.connection.ConnectionConfiguration
 import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.APP_DATA_DIR_DISABLED
 import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.DATA_DIR_NOT_WRITABLE
 import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.UNEXPECTED_ERROR_APP_DATA_DIR
@@ -71,36 +70,31 @@ class DataService {
 
     inner class Connection {
 
-//        private val CONNECTION_SERVER = "connection.server"
-//        private val CONNECTION_CORE_ADDRESS = "connection.core_address"
-//        private val CONNECTION_CLUSTER_ADDRESSES = "connection.cluster_addresses"
-//        private val CONNECTION_USERNAME = "connection.username"
-//        private val CONNECTION_TLS_ENABLED = "connection.tls_enabled"
-//        private val CONNECTION_CA_CERTIFICATE = "connection.ca_certificate"
-        private val CONNECTION_CONFIGURATIONS = "connection.configurations"
+        private val CONNECTION_SERVER = "connection.server"
+        private val CONNECTION_CORE_ADDRESS = "connection.core_address"
+        private val CONNECTION_CLUSTER_ADDRESSES = "connection.cluster_addresses"
+        private val CONNECTION_USERNAME = "connection.username"
+        private val CONNECTION_TLS_ENABLED = "connection.tls_enabled"
+        private val CONNECTION_CA_CERTIFICATE = "connection.ca_certificate"
 
-        var configurations: MutableList<ConnectionConfiguration>?
-            get() = properties?.getProperty(CONNECTION_CONFIGURATIONS)?.let { ConnectionConfiguration.configsFromString(it) }
-            set(value) = value?.let { setProperty(CONNECTION_CONFIGURATIONS, ConnectionConfiguration.configsToString(it) ) } ?: Unit
-//
-//        var server: Property.Server?
-//            get() = properties?.getProperty(CONNECTION_SERVER)?.let { Property.Server.of(it) }
-//            set(value) = value?.let { setProperty(CONNECTION_SERVER, it.displayName) } ?: Unit
-//        var coreAddress: String?
-//            get() = properties?.getProperty(CONNECTION_CORE_ADDRESS)
-//            set(value) = value?.let { setProperty(CONNECTION_CORE_ADDRESS, it) } ?: Unit
-//        var clusterAddresses: String?
-//            get() = properties?.getProperty(CONNECTION_CLUSTER_ADDRESSES)
-//            set(value) = value?.let { setProperty(CONNECTION_CLUSTER_ADDRESSES, it) } ?: Unit
-//        var username: String?
-//            get() = properties?.getProperty(CONNECTION_USERNAME)
-//            set(value) = value?.let { setProperty(CONNECTION_USERNAME, it) } ?: Unit
-//        var tlsEnabled: Boolean?
-//            get() = properties?.getProperty(CONNECTION_TLS_ENABLED)?.toBooleanStrictOrNull()
-//            set(value) = value?.let { setProperty(CONNECTION_TLS_ENABLED, it.toString()) } ?: Unit
-//        var caCertificate: String?
-//            get() = properties?.getProperty(CONNECTION_CA_CERTIFICATE)
-//            set(value) = value?.let { setProperty(CONNECTION_CA_CERTIFICATE, it) } ?: Unit
+        var server: Property.Server?
+            get() = properties?.getProperty(CONNECTION_SERVER)?.let { Property.Server.of(it) }
+            set(value) = value?.let { setProperty(CONNECTION_SERVER, it.displayName) } ?: Unit
+        var coreAddress: String?
+            get() = properties?.getProperty(CONNECTION_CORE_ADDRESS)
+            set(value) = value?.let { setProperty(CONNECTION_CORE_ADDRESS, it) } ?: Unit
+        var clusterAddresses: MutableList<String>?
+            get() = properties?.getProperty(CONNECTION_CLUSTER_ADDRESSES)?.split(",")?.toMutableList()
+            set(value) = value?.let { setProperty(CONNECTION_CLUSTER_ADDRESSES, it.joinToString(",")) } ?: Unit
+        var username: String?
+            get() = properties?.getProperty(CONNECTION_USERNAME)
+            set(value) = value?.let { setProperty(CONNECTION_USERNAME, it) } ?: Unit
+        var tlsEnabled: Boolean?
+            get() = properties?.getProperty(CONNECTION_TLS_ENABLED)?.toBooleanStrictOrNull()
+            set(value) = value?.let { setProperty(CONNECTION_TLS_ENABLED, it.toString()) } ?: Unit
+        var caCertificate: String?
+            get() = properties?.getProperty(CONNECTION_CA_CERTIFICATE)
+            set(value) = value?.let { setProperty(CONNECTION_CA_CERTIFICATE, it) } ?: Unit
     }
 
     inner class Preferences {
