@@ -487,10 +487,7 @@ object PreferenceDialog {
     @Composable
     private fun Preferences() {
         Dialog.Layout(Service.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT,
-            padding = 0.dp, onCloseRequest = {
-                state.rootPreferenceGroup.resetSelfAndDescendants()
-                selectedPreferenceGroup = state.rootPreferenceGroup.entries.first()
-            }
+            padding = 0.dp, onCloseRequest = { state.cancel() }
         ) {
             Column {
                 Frame.Row(
