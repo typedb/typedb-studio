@@ -92,15 +92,15 @@ object StudioActions {
     /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
     suspend fun delayAndRecompose(composeRule: ComposeContentTestRule, timeMillis: Int = Delays.RECOMPOSE) {
         delay(timeMillis.toLong())
-        composeRule.waitForIdle()
+        composeRule.awaitIdle()
     }
 
     suspend fun waitForConditionAndRecompose(
         context: ComposeContentTestRule,
         failMessage: String,
         beforeRetry: (() -> Unit) = {},
-        interval: Int = Delays.NETWORK_IO,
-        numberOfRetries: Int = 10,
+        interval: Int = Delays.RECOMPOSE,
+        numberOfRetries: Int = 20,
         successCondition: () -> Boolean
     ) {
         var success = false
