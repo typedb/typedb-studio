@@ -214,9 +214,13 @@ object StudioActions {
 
         clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
 
-        waitForConditionAndRecompose(composeRule, Errors.DATA_WRITE_FAILED) {
+        composeRule.waitUntil {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
+
+//        waitForConditionAndRecompose(composeRule, Errors.DATA_WRITE_FAILED) {
+//            StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
+//        }
     }
 
     suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, address: String, dbName: String, queryFileName: String) {
