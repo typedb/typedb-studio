@@ -92,21 +92,21 @@ class ClientState constructor(
     ) = tryConnectAsync(address, null, onSuccess) { TypeDB.coreClient(address) }
 
     fun tryConnectToTypeDBClusterAsync(
-        address: String, username: String, password: String,
+        addresses: Set<String>, username: String, password: String,
         tlsEnabled: Boolean, onSuccess: () -> Unit
-    ) = tryConnectToTypeDBClusterAsync(address, username, TypeDBCredential(username, password, tlsEnabled), onSuccess)
+    ) = tryConnectToTypeDBClusterAsync(addresses, username, TypeDBCredential(username, password, tlsEnabled), onSuccess)
 
     fun tryConnectToTypeDBClusterAsync(
-        address: String, username: String, password: String,
+        addresses: Set<String>, username: String, password: String,
         caPath: String, onSuccess: () -> Unit
     ) = tryConnectToTypeDBClusterAsync(
-        address, username, TypeDBCredential(username, password, Path.of(caPath)), onSuccess
+        addresses, username, TypeDBCredential(username, password, Path.of(caPath)), onSuccess
     )
 
     private fun tryConnectToTypeDBClusterAsync(
-        address: String, username: String,
+        addresses: Set<String>, username: String,
         credentials: TypeDBCredential, onSuccess: () -> Unit
-    ) = tryConnectAsync(address, username, onSuccess) { TypeDB.clusterClient(address, credentials) }
+    ) = tryConnectAsync(addresses.first(), username, onSuccess) { TypeDB.clusterClient(addresses, credentials) }
 
     private fun tryConnectAsync(
         newAddress: String, newUsername: String?, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient

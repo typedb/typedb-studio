@@ -447,8 +447,7 @@ object Form {
                         if (value.isEmpty()) Text(
                             value = Label.E_G_ + " " + placeholder,
                             textStyle = textStyle.copy(fontStyle = FontStyle.Italic),
-                            color = fadeable(fontColor, true, PLACEHOLDER_OPACITY)
-                        )
+                            color = fadeable(fontColor, true, PLACEHOLDER_OPACITY))
                     }
                     trailingIcon?.let {
                         Spacer(Modifier.width(ICON_SPACING))

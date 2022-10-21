@@ -45,7 +45,6 @@ import com.vaticle.typedb.studio.framework.material.ActionableList
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
-import com.vaticle.typedb.studio.framework.material.Form.Dropdown
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.IconButton
 import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
@@ -70,8 +69,8 @@ import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNEC
 
 object ServerDialog {
 
-    private val WIDTH = 550.dp
-    private val HEIGHT = 400.dp
+    private val WIDTH = 500.dp
+    private val HEIGHT = 340.dp
     private val ADDRESS_MANAGER_WIDTH = 400.dp
     private val ADDRESS_MANAGER_HEIGHT = 500.dp
     private val appData = Service.data.connection
@@ -81,7 +80,7 @@ object ServerDialog {
     private class ConnectServerForm : Form.State {
         var server: Property.Server by mutableStateOf(appData.server ?: Property.Server.TYPEDB)
         var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
-        var clusterAddresses: MutableList<String> = SnapshotStateList<String>().let { it.addAll(appData.clusterAddresses ?: emptyList()); it}
+        var clusterAddresses: MutableList<String> = mutableStateListOf<String>().let { it.addAll(appData.clusterAddresses ?: emptyList()); it}
         var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
@@ -108,12 +107,12 @@ object ServerDialog {
                 TYPEDB_CLUSTER -> {
                     when {
                         caCertificate.isBlank() -> Service.client.tryConnectToTypeDBClusterAsync(
-                            clusterAddresses.first(), username, password, tlsEnabled
+                            clusterAddresses.toSet(), username, password, tlsEnabled
                         ) {
                             Service.client.connectServerDialog.close()
                         }
                         else -> Service.client.tryConnectToTypeDBClusterAsync(
-                            clusterAddresses.first(), username, password, caCertificate
+                            clusterAddresses.toSet(), username, password, caCertificate
                         ) {
                             Service.client.connectServerDialog.close()
                         }
@@ -138,7 +137,6 @@ object ServerDialog {
         , onCloseRequest = {}) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 ServerFormButtons(state)
-                ConfigurationField(state)
                 if (state.server == TYPEDB_CLUSTER) {
                     ClusterAddressesFormField(state, Service.client.isConnected)
                     UsernameFormField(state)
@@ -159,13 +157,6 @@ object ServerDialog {
                     }
                 }
             }
-        }
-    }
-
-    @Composable
-    private fun ConfigurationField(state: ConnectServerForm) {
-        Field(label = "Configuration") {
-            Dropdown(listOf("A", "B", "C"), null, onSelection = {}, modifier = Modifier.fillMaxSize())
         }
     }
 
@@ -215,7 +206,7 @@ object ServerDialog {
         Field(label = Label.ADDRESSES) {
             Row {
                 TextInput(
-                    value = if (state.clusterAddresses.firstOrNull() == null) "" else state.clusterAddresses.first(),
+                    value = state.clusterAddresses.joinToString(", "),
                     placeholder = Label.DEFAULT_SERVER_ADDRESS,
                     onValueChange = { },
                     enabled = false,
@@ -260,7 +251,7 @@ object ServerDialog {
                             description = Sentence.MANAGE_ADDRESSES_MESSAGE
                         )
                     ) {
-                        if (value.isNotBlank()) {
+                        if (value.isNotBlank() && !state.clusterAddresses.contains(value)) {
                             state.clusterAddresses.add(value)
                             value = ""
                         }
@@ -287,9 +278,7 @@ object ServerDialog {
                     icon = Icon.DELETE,
                     color = { Theme.studio.errorStroke },
                     onClick = {
-//                        state.clusterAddresses = state.clusterAddresses.filter { address != it }.toMutableSet()
                         state.clusterAddresses.remove(address)
-//                        println(state.clusterAddresses)
                     }
                 )
             }
