@@ -47,7 +47,7 @@ import com.vaticle.typedb.studio.service.project.FileState
 import com.vaticle.typedb.studio.service.project.PathState
 import mu.KotlinLogging
 
-class ProjectBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
+class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(initOpen, order) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
