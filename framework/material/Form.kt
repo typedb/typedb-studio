@@ -563,16 +563,15 @@ object Form {
 
     @Composable
     fun TextButtonRow(
-        height: Dp = FIELD_HEIGHT,
-        bgColor: Color = Theme.studio.primary,
-        modifier: Modifier = Modifier,
         buttons: List<TextButtonArg>,
-        ) {
+        height: Dp = FIELD_HEIGHT,
+        bgColor: Color = Theme.studio.primary
+    ) {
         @Composable
         fun TextButton(button: TextButtonArg, roundedCorners: RoundedCorners) {
             TextButton(
                 text = button.text,
-                modifier = modifier.height(height),
+                modifier = Modifier.height(height),
                 textColor = button.color(),
                 bgColor = bgColor,
                 roundedCorners = roundedCorners,
