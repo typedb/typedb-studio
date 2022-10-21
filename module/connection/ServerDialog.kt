@@ -118,6 +118,12 @@ object ServerDialog {
                     }
                 }
             }
+            appData.server = server
+            appData.coreAddress = coreAddress
+            appData.username = username
+            appData.clusterAddresses = clusterAddresses
+            appData.tlsEnabled = tlsEnabled
+            appData.caCertificate = caCertificate
         }
     }
 
