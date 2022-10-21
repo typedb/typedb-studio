@@ -133,7 +133,7 @@ object ServerDialog {
             Label.CONNECT_TO_TYPEDB,
             WIDTH,
             HEIGHT
-        , onCloseRequest = {}) {
+        ) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 ServerFormButtons(state)
                 if (state.server == TYPEDB_CLUSTER) {

@@ -36,7 +36,6 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 
 enum class Icon(private val shape: Shape) {
     ADD(Shape.PLUS),
-    ADDRESSES(Shape.ELLIPSIS),
     ATTRIBUTE(Shape.OVAL),
     CLOSE(Shape.XMARK),
     COLLAPSE(Shape.CHEVRONS_UP),
@@ -212,7 +211,6 @@ enum class Icon(private val shape: Shape) {
         SQUARE_BOLT(0xe265u, 13.sp),
         SQUARE_PLUS(0xf0feu),
         STOP(0xf04du, 13.sp),
-        ELLIPSIS(0xf141u),
         TABLE_CELLS_LARGE(0xf009u),
         THUMBTACK(0xf08du),
         TIMER(0xe29eu),

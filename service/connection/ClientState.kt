@@ -50,7 +50,7 @@ import mu.KotlinLogging
 
 class ClientState constructor(
     private val notificationSrv: NotificationService,
-    private val preferenceSrv: PreferenceService
+    preferenceSrv: PreferenceService
 ) {
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
@@ -61,14 +61,10 @@ class ClientState constructor(
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    private val statusAtomic = AtomicReferenceState(DISCONNECTED)
-    private var _client: TypeDBClient? by mutableStateOf(null)
-    private var hasRunningCommandAtomic = AtomicBooleanState(false)
-    private var databaseListRefreshedTime = System.currentTimeMillis()
     val connectServerDialog = DialogState.Base()
     val selectDBDialog = DialogState.Base()
     val manageDatabasesDialog = DialogState.Base()
-    val manageAddressesDialog = DialogManager.Base()
+    val manageAddressesDialog = DialogState.Base()
     val status: Status get() = statusAtomic.state
     val isConnected: Boolean get() = status == CONNECTED
     val isConnecting: Boolean get() = status == CONNECTING
@@ -83,7 +79,11 @@ class ClientState constructor(
     val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     val session = SessionState(this, notificationSrv, preferenceSrv)
-    val isCluster get() = _client is TypeDBClient.Cluster
+    private val statusAtomic = AtomicReferenceState(DISCONNECTED)
+    private var _client: TypeDBClient? by mutableStateOf(null)
+    private var hasRunningCommandAtomic = AtomicBooleanState(false)
+    private var databaseListRefreshedTime = System.currentTimeMillis()
+    internal val isCluster get() = _client is TypeDBClient.Cluster
 
     private val coroutines = CoroutineScope(Dispatchers.Default)
 
