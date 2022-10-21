@@ -140,7 +140,10 @@ object StudioActions {
         StudioState.client.tryConnectToTypeDBAsync(address) {}
         delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
-        waitForConditionAndRecompose(composeRule, Errors.CONNECT_TYPEDB_FAILED) { StudioState.client.isConnected }
+        composeRule.waitUntil {
+            StudioState.client.isConnected
+        }
+//        waitForConditionAndRecompose(composeRule, Errors.CONNECT_TYPEDB_FAILED) { StudioState.client.isConnected }
 
         assertNodeExistsWithText(composeRule, text = address)
     }
@@ -156,11 +159,15 @@ object StudioActions {
 
         StudioState.client.refreshDatabaseList()
 
-        waitForConditionAndRecompose(
-            context = composeRule,
-            failMessage = Errors.CREATE_DATABASE_FAILED,
-            beforeRetry = { StudioState.client.refreshDatabaseList() }
-        ) { StudioState.client.databaseList.contains(dbName) }
+        composeRule.waitUntil {
+            StudioState.client.databaseList.contains(dbName)
+        }
+
+//        waitForConditionAndRecompose(
+//            context = composeRule,
+//            failMessage = Errors.CREATE_DATABASE_FAILED,
+//            beforeRetry = { StudioState.client.refreshDatabaseList() }
+//        ) { StudioState.client.databaseList.contains(dbName) }
     }
 
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
@@ -183,9 +190,12 @@ object StudioActions {
 
         clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
 
-        waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE_FAILED) {
+        composeRule.waitUntil {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
+//        waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE_FAILED) {
+//            StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
+//        }
     }
 
     suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
