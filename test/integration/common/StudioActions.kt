@@ -102,14 +102,15 @@ object StudioActions {
         successCondition: () -> Boolean
     ) {
         var success = false
-        val deadline = System.currentTimeMillis() + 20_000
-        while (!success && System.currentTimeMillis() < deadline) {
+        var deadline = 10_000
+        while (!success && deadline > 0) {
             try {
                 if (successCondition()) {
                     success = true
                 } else {
                     beforeRetry()
                     delayAndRecompose(context, 500)
+                    deadline -= 500
                 }
             } catch (e: Exception) {
                 LOGGER.error(e.stackTraceToString())
