@@ -50,7 +50,6 @@ import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
-import com.vaticle.typedb.studio.framework.material.Form.TextButtonRow
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.SelectFileDialog
@@ -141,7 +140,7 @@ object ServerDialog {
             HEIGHT
         ) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
-                ServerFormButtons(state)
+                ServerFormField(state)
                 if (state.server == TYPEDB_CLUSTER) {
                     ClusterAddressesFormField(state, Service.client.isConnected)
                     UsernameFormField(state)
@@ -166,26 +165,15 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ServerFormButtons(state: ConnectServerForm) {
+    private fun ServerFormField(state: ConnectServerForm) {
         Field(label = Label.SERVER) {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                TextButtonRow(modifier = Modifier.weight(1f), buttons =
-                    listOf(
-                        Form.TextButtonArg(
-                            "TypeDB",
-                            color = { Form.toggleButtonColor(state.server == Property.Server.TYPEDB) },
-                            enabled = Service.client.isDisconnected
-                        )
-                        { state.server = Property.Server.TYPEDB },
-                        Form.TextButtonArg(
-                            "TypeDB Cluster",
-                            color = { Form.toggleButtonColor(state.server == Property.Server.TYPEDB_CLUSTER) },
-                            enabled = Service.client.isDisconnected
-                        )
-                        { state.server = Property.Server.TYPEDB_CLUSTER }
-                    )
-                )
-            }
+            Form.Dropdown(
+                values = Property.Server.values().toList(),
+                selected = state.server,
+                onSelection = { state.server = it!! },
+                modifier = Modifier.fillMaxSize(),
+                enabled = Service.client.isDisconnected
+            )
         }
     }
 
