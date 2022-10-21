@@ -86,7 +86,6 @@ import com.vaticle.typedb.studio.module.project.ProjectDialog
 import com.vaticle.typedb.studio.module.type.TypeBrowser
 import com.vaticle.typedb.studio.module.type.TypeDialog
 import com.vaticle.typedb.studio.module.type.TypePage
-import com.vaticle.typedb.studio.module.user.UserBrowser
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message

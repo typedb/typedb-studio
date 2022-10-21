@@ -272,7 +272,6 @@ object PreferenceDialog {
         val rootPreferenceGroup = PreferenceGroup.Root(entries = preferenceGroups)
 
         override fun cancel() {
-            state.rootPreferenceGroup.resetSelfAndDescendants()
             Service.preference.preferencesDialog.close()
         }
 
@@ -471,7 +470,9 @@ object PreferenceDialog {
 
     @Composable
     private fun Preferences() {
-        Dialog.Layout(Service.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT, padding = 0.dp, onCloseRequest = {state.rootPreferenceGroup.resetSelfAndDescendants()}) {
+        state.rootPreferenceGroup.resetSelfAndDescendants()
+
+        Dialog.Layout(Service.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT, padding = 0.dp) {
             Column {
                 Frame.Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),

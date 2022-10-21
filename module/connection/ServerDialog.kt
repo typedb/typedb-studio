@@ -33,7 +33,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
@@ -212,7 +211,7 @@ object ServerDialog {
                     enabled = false,
                     modifier = modifier.weight(1f),
                 )
-                FormRowSpacer()
+                RowSpacer()
                 IconButton(
                     icon = Icon.ADD,
                     tooltip = Tooltip.Arg(Label.MANAGE_CLUSTER_ADDRESSES)

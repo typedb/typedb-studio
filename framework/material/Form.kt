@@ -47,7 +47,6 @@ import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -95,10 +94,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.toSize
 import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
-import com.vaticle.typedb.studio.framework.common.Util
 import com.vaticle.typedb.studio.framework.common.Util.isMouseHover
 import com.vaticle.typedb.studio.framework.common.Util.italics
 import com.vaticle.typedb.studio.framework.common.Util.toDP
@@ -447,7 +444,8 @@ object Form {
                         if (value.isEmpty()) Text(
                             value = Label.E_G_ + " " + placeholder,
                             textStyle = textStyle.copy(fontStyle = FontStyle.Italic),
-                            color = fadeable(fontColor, true, PLACEHOLDER_OPACITY))
+                            color = fadeable(fontColor, true, PLACEHOLDER_OPACITY)
+                        )
                     }
                     trailingIcon?.let {
                         Spacer(Modifier.width(ICON_SPACING))
