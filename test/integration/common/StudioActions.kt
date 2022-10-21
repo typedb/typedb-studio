@@ -99,18 +99,21 @@ object StudioActions {
         context: ComposeContentTestRule,
         failMessage: String,
         beforeRetry: (() -> Unit) = {},
+        interval: Int = Delays.NETWORK_IO,
+        numberOfRetries: Int = 10,
         successCondition: () -> Boolean
     ) {
         var success = false
-        var deadline = 10_000
-        while (!success && deadline > 0) {
+        var retries = numberOfRetries
+
+        while (!success && numberOfRetries > 0) {
             try {
                 if (successCondition()) {
                     success = true
                 } else {
                     beforeRetry()
-                    delayAndRecompose(context, 500)
-                    deadline -= 500
+                    delayAndRecompose(context, interval)
+                    retries -= 1
                 }
             } catch (e: Exception) {
                 LOGGER.error(e.stackTraceToString())
