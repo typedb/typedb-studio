@@ -168,17 +168,21 @@ object ServerDialog {
     @Composable
     private fun ServerFormButtons(state: ConnectServerForm) {
         Field(label = Label.SERVER) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                TextButtonRow(
+            Row(modifier = Modifier.fillMaxWidth()) {
+                TextButtonRow(modifier = Modifier.weight(1f), buttons =
                     listOf(
-                        Form.TextButtonArg("TypeDB Core",
+                        Form.TextButtonArg(
+                            "TypeDB",
                             color = { Form.toggleButtonColor(state.server == Property.Server.TYPEDB) },
-                            enabled = Service.client.isDisconnected)
-                            {state.server = Property.Server.TYPEDB},
-                        Form.TextButtonArg("TypeDB Cluster",
+                            enabled = Service.client.isDisconnected
+                        )
+                        { state.server = Property.Server.TYPEDB },
+                        Form.TextButtonArg(
+                            "TypeDB Cluster",
                             color = { Form.toggleButtonColor(state.server == Property.Server.TYPEDB_CLUSTER) },
-                            enabled = Service.client.isDisconnected)
-                            { state.server = Property.Server.TYPEDB_CLUSTER}
+                            enabled = Service.client.isDisconnected
+                        )
+                        { state.server = Property.Server.TYPEDB_CLUSTER }
                     )
                 )
             }
