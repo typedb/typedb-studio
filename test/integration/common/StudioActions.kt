@@ -140,7 +140,10 @@ object StudioActions {
         Service.client.tryConnectToTypeDBAsync(address) {}
         delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
-        waitForConditionAndRecompose(
+        composeRule.waitUntil {
+            StudioState.client.isConnected
+        }
+//        waitForConditionAndRecompose(
             composeRule,
             Errors.CONNECT_TYPEDB_FAILED
         ) { Service.client.isConnected }
@@ -159,11 +162,15 @@ object StudioActions {
 
         Service.client.refreshDatabaseList()
 
-        waitForConditionAndRecompose(
-            context = composeRule,
-            failMessage = Errors.CREATE_DATABASE_FAILED,
-            beforeRetry = { Service.client.refreshDatabaseList() }
-        ) { Service.client.databaseList.contains(dbName) }
+        composeRule.waitUntil {
+            StudioState.client.databaseList.contains(dbName)
+        }
+
+//        waitForConditionAndRecompose(
+//            context = composeRule,
+//            failMessage = Errors.CREATE_DATABASE_FAILED,
+//            beforeRetry = { Service.client.refreshDatabaseList() }
+//        ) { Service.client.databaseList.contains(dbName) }
     }
 
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
@@ -187,9 +194,12 @@ object StudioActions {
 
         clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
 
-        waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE_FAILED) {
+        composeRule.waitUntil {
             Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
+//        waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE_FAILED) {
+//            StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
+//        }
     }
 
     suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
