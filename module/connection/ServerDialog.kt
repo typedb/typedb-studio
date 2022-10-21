@@ -78,7 +78,9 @@ object ServerDialog {
     private class ConnectServerForm : Form.State {
         var server: Property.Server by mutableStateOf(appData.server ?: Property.Server.TYPEDB)
         var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
-        var clusterAddresses: MutableList<String> = mutableStateListOf<String>().also { it.addAll(appData.clusterAddresses ?: emptyList())}
+        var clusterAddresses: MutableList<String> = mutableStateListOf<String>().also {
+            it.addAll(appData.clusterAddresses ?: emptyList())
+        }
         var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
