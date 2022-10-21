@@ -140,7 +140,7 @@ object StudioActions {
         Service.client.tryConnectToTypeDBAsync(address) {}
         delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
-        composeRule.waitUntil {
+        composeRule.waitUntil(10_000) {
             StudioState.client.isConnected
         }
 //        waitForConditionAndRecompose(
@@ -162,7 +162,7 @@ object StudioActions {
 
         Service.client.refreshDatabaseList()
 
-        composeRule.waitUntil {
+        composeRule.waitUntil(10_000) {
             StudioState.client.databaseList.contains(dbName)
         }
 
@@ -194,7 +194,7 @@ object StudioActions {
 
         clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
 
-        composeRule.waitUntil {
+        composeRule.waitUntil(10_000) {
             Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
 //        waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE_FAILED) {
@@ -219,7 +219,7 @@ object StudioActions {
 
         clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
 
-        composeRule.waitUntil {
+        composeRule.waitUntil(10_000) {
             Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
 
