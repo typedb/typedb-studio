@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -219,8 +220,7 @@ object PreferenceDialog {
                         value = value,
                         onValueChange = { value = it },
                         onTextLayout = { },
-                        border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {Theme.studio.border},
-                        modifier = Modifier.height(100.dp)
+                        border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {Theme.studio.border}
                     )
                 }
             }
@@ -316,12 +316,12 @@ object PreferenceDialog {
         override val name: String = "",
         override val entries: List<PreferenceGroup> = emptyList(),
         override val parent: Navigable<PreferenceGroup>? = null,
+        override val isExpandable: Boolean = entries.isNotEmpty(),
+        override val isBulkExpandable: Boolean = entries.isNotEmpty(),
         open val preferences: List<PreferenceField> = emptyList(),
     ) : Navigable<PreferenceGroup> {
 
         override val info: String? = null
-        override val isExpandable: Boolean = entries.isNotEmpty()
-        override val isBulkExpandable: Boolean = entries.isNotEmpty()
 
         abstract fun submit()
         abstract fun reset()

@@ -489,7 +489,7 @@ object Form {
     fun MultilineTextInput(
         state: MultilineTextInputState = rememberMultilineTextInputState(),
         value: TextFieldValue,
-        modifier: Modifier,
+        modifier: Modifier = Modifier,
         icon: Icon? = null,
         focusReq: FocusRequester = remember { FocusRequester() },
         onValueChange: (TextFieldValue) -> Unit,
