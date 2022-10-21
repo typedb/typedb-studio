@@ -102,7 +102,7 @@ object StudioActions {
         successCondition: () -> Boolean
     ) {
         var success = false
-        val deadline = System.currentTimeMillis() + 30_000
+        val deadline = System.currentTimeMillis() + 10_000
         while (!success && System.currentTimeMillis() < deadline) {
             try {
                 if (successCondition()) {
