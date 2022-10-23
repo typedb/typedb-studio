@@ -56,6 +56,7 @@ object Label {
     const val COPY = "Copy"
     const val COPY_All = "Copy All"
     const val CREATE = "Create"
+    const val CREATE_ADDRESS = "Create Address"
     const val CREATE_ATTRIBUTE_TYPE = "Create Attribute Type"
     const val CREATE_DATABASE = "Create Database"
     const val CREATE_DIRECTORY = "Create Directory"

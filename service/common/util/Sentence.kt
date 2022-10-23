@@ -75,6 +75,8 @@ object Sentence {
         "Create a new %s type."
     const val CREATE_TYPE_AS_SUBTYPE_OF =
         "Create a new %s type as a subtype of '%s'."
+    const val CREATE_AN_ADDRESS_FOR_CLUSTER =
+        "Create a new address for connecting to your TypeDB Cluster."
     const val EDITING_TYPES_REQUIREMENT_DESCRIPTION =
         "Functionalities for editing schema types are under development and COMING SOON."
 

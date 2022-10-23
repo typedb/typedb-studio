@@ -19,7 +19,6 @@
 package com.vaticle.typedb.studio.module.connection
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -128,6 +127,25 @@ object ServerDialog {
         }
     }
 
+    private object CreateAddressForm : Form.State {
+
+        var value: String by mutableStateOf("")
+
+        override fun cancel() {
+            Service.client.manageAddressesDialog.close()
+        }
+
+        override fun isValid(): Boolean {
+            return value.isNotBlank()
+        }
+
+        override fun trySubmit() {
+            assert(value.isNotBlank())
+            state.clusterAddresses.add(value)
+            value = ""
+        }
+    }
+
     @Composable
     fun MayShowDialogs() {
         if (Service.client.connectServerDialog.isOpen) ConnectServer()
@@ -224,10 +242,6 @@ object ServerDialog {
 
     @Composable
     private fun ManageAddresses() {
-        val focusReq = remember { FocusRequester() }
-
-        var value by mutableStateOf("")
-
         val dialogState = Service.client.manageAddressesDialog
         Dialog.Layout(dialogState, Label.MANAGE_CLUSTER_ADDRESSES, ADDRESS_MANAGER_WIDTH, ADDRESS_MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
@@ -235,27 +249,7 @@ object ServerDialog {
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING))
                 ModifiableAddressList(Modifier.fillMaxWidth().weight(1f))
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING))
-                Row {
-                    TextInput(
-                        value = value,
-                        placeholder = Label.DEFAULT_SERVER_ADDRESS,
-                        onValueChange = { value = it },
-                        modifier = Modifier.weight(1f).focusRequester(focusReq),
-                    )
-                    RowSpacer()
-                    TextButton(
-                        text = Label.CREATE,
-                        tooltip = Tooltip.Arg(
-                            title = Label.ADDRESS,
-                            description = Sentence.MANAGE_ADDRESSES_MESSAGE
-                        )
-                    ) {
-                        if (value.isNotBlank() && !state.clusterAddresses.contains(value)) {
-                            state.clusterAddresses.add(value)
-                            value = ""
-                        }
-                    }
-                }
+                CreateAddressForm()
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING * 2))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
@@ -264,6 +258,31 @@ object ServerDialog {
                 }
             }
         }
+    }
+
+    @Composable
+    private fun CreateAddressForm() {
+        val focusReq = remember { FocusRequester() }
+        Submission(CreateAddressForm, modifier = Modifier.height(Form.FIELD_HEIGHT), showButtons = false) {
+            Row {
+                TextInput(
+                    value = CreateAddressForm.value,
+                    placeholder = Label.DEFAULT_SERVER_ADDRESS,
+                    onValueChange = { CreateAddressForm.value = it },
+                    modifier = Modifier.weight(1f).focusRequester(focusReq),
+                )
+                RowSpacer()
+                TextButton(
+                    text = Label.CREATE,
+                    enabled = CreateAddressForm.isValid(),
+                    tooltip = Tooltip.Arg(
+                        title = Label.CREATE_DATABASE,
+                        description = Sentence.CREATE_DATABASE_BUTTON_DESCRIPTION
+                    )
+                ) { CreateAddressForm.trySubmit() }
+            }
+        }
+        LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @Composable
