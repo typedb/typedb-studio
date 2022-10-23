@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
@@ -96,7 +96,7 @@ object PreferenceDialog {
     private var selectedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root())
     private var state by mutableStateOf(PreferencesForm())
 
-    sealed class PreferenceField(private val label: String, private val caption: String?) {
+    sealed class PreferenceField(private val label: String, private val caption: String?, private val fieldHeight: Dp = Form.FIELD_HEIGHT) {
         abstract fun isValid(): Boolean
 
         @Composable
@@ -106,7 +106,7 @@ object PreferenceDialog {
 
         @Composable
         fun Layout(fieldContent: @Composable () -> Unit) {
-            Field(label) {
+            Field(label, fieldHeight) {
                 fieldContent()
             }
 
@@ -209,7 +209,7 @@ object PreferenceDialog {
         class MultilineTextInput(
             initValue: String, lineHeight: Int,
             label: String, caption: String? = null,
-        ): PreferenceField(label, caption) {
+        ): PreferenceField(label, caption, fieldHeight = Form.FIELD_HEIGHT * lineHeight) {
 
             var value by mutableStateOf(TextFieldValue(initValue))
 
@@ -218,9 +218,10 @@ object PreferenceDialog {
                 Layout {
                     Form.MultilineTextInput(
                         value = value,
-                        onValueChange = { value = it },
+                        onValueChange = { value = it; modified = true },
                         onTextLayout = { },
-                        border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {Theme.studio.border}
+                        textFieldPadding = Form.MULTILINE_INPUT_PADDING,
+                        border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {Theme.studio.border},
                     )
                 }
             }
@@ -410,23 +411,23 @@ object PreferenceDialog {
         }
 
         class Project : PreferenceGroup(PROJECT_MANAGER) {
-            private val ignoredPathsString = preferenceSrv.ignoredPaths.joinToString(", ")
+            private val ignoredPathsString = preferenceSrv.ignoredPaths.joinToString("\n")
             private var ignoredPaths = PreferenceField.MultilineTextInput(
                 initValue = ignoredPathsString,
                 label = PROJECT_IGNORED_PATHS,
                 caption = IGNORED_PATHS_CAPTION,
-                lineHeight = 10,
+                lineHeight = 5,
             )
 
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
 
             override fun submit() {
-                preferenceSrv.ignoredPaths = ignoredPaths.value.text.split(',').map { it.trim() }
+                preferenceSrv.ignoredPaths = ignoredPaths.value.text.split('\n').map { it.trim() }
                 ignoredPaths.modified = false
             }
 
             override fun reset() {
-                ignoredPaths.value = preferenceSrv.ignoredPaths.joinToString(", ").let { TextFieldValue(it) }
+                ignoredPaths.value = preferenceSrv.ignoredPaths.joinToString("\n").let { TextFieldValue(it) }
                 ignoredPaths.modified = false
             }
         }
