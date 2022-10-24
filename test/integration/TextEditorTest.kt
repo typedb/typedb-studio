@@ -38,6 +38,8 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDat
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithIconIsClickable
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextIsClickable
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
@@ -116,13 +118,17 @@ class TextEditorTest: IntegrationTest() {
                 StudioState.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
+                waitUntilNodeWithTextIsClickable(composeRule, Label.SCHEMA.lowercase())
                 clickText(composeRule, Label.SCHEMA.lowercase())
+                waitUntilNodeWithTextIsClickable(composeRule, Label.WRITE.lowercase())
                 clickText(composeRule, Label.WRITE.lowercase())
 
                 StudioState.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!.asFile().tryOpen()
 
-                clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
-                clickIcon(composeRule, Icon.ROLLBACK, delayMillis = Delays.NETWORK_IO)
+                waitUntilNodeWithIconIsClickable(composeRule, Icon.RUN)
+                clickIcon(composeRule, Icon.RUN)
+                waitUntilNodeWithIconIsClickable(composeRule, Icon.ROLLBACK)
+                clickIcon(composeRule, Icon.ROLLBACK)
 
                 assertNodeNotExistsWithText(composeRule, text = "repo-id")
             }

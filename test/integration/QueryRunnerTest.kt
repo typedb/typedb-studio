@@ -23,11 +23,9 @@ package com.vaticle.typedb.studio.test.integration
 
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
@@ -35,6 +33,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolde
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
@@ -63,9 +62,16 @@ class QueryRunnerTest: IntegrationTest() {
                     it.name == SampleGitHubData.collaboratorsQueryFile
                 }!!.asFile().tryOpen()
 
+                waitUntilNodeWithTextExists(composeRule, Label.DATA.lowercase())
                 clickText(composeRule, Label.DATA.lowercase())
+
+                waitUntilNodeWithTextExists(composeRule, Label.READ.lowercase())
                 clickText(composeRule, Label.READ.lowercase())
+
+                waitUntilNodeWithTextExists(composeRule, Label.SNAPSHOT.lowercase())
                 clickText(composeRule, Label.SNAPSHOT.lowercase())
+
+                waitUntilNodeWithTextExists(composeRule, Label.INFER.lowercase())
                 clickText(composeRule, Label.INFER.lowercase())
 
                 StudioState.pages.active?.let { if (it.isRunnable) it.asRunnable().mayOpenAndRun() }
