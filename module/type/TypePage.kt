@@ -73,7 +73,6 @@ import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Table
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.page.Pageable
@@ -273,13 +272,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 items = typeState.ownsAttTypeProperties.sortedBy { it.attributeType.name },
                 modifier = Modifier.weight(1f).height(tableHeight).border(1.dp, Theme.studio.border),
                 rowHeight = TABLE_ROW_HEIGHT,
-                contextMenuFn = {
-                    coroutines.launchAndHandle(typeState.notifications, LOGGER) {
-                        it.attributeType.loadOwnerTypes()
-                        it.overriddenType?.loadOwnerTypes()
-                    }
-                    ownsAttributeTypesContextMenu(it)
-                },
+                contextMenuFn = { ownsAttributeTypesContextMenu(it) },
                 columns = listOf(
                     Table.Column(header = Label.ATTRIBUTE_TYPE, contentAlignment = Alignment.CenterStart) { props ->
                         ClickableText(ConceptDetailedLabel(props.attributeType.conceptType)) {
@@ -291,10 +284,13 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                             ClickableText(ConceptDetailedLabel(ot.conceptType)) { ot.tryOpen() }
                         }
                     },
-                    Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) { MayTickIcon(it.isKey) },
+                    Table.Column(header = Label.EXTENDED_TYPE, contentAlignment = Alignment.CenterStart) { props ->
+                        props.extendedType?.let { ot -> ClickableText(ot.name) { ot.tryOpen() } }
+                    },
                     Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
                         MayTickIcon(it.isInherited)
                     },
+                    Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) { MayTickIcon(it.isKey) },
                 )
             )
         }
@@ -312,16 +308,10 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 enabled = prop.overriddenType != null
             ) { prop.overriddenType?.tryOpen() },
             ContextMenu.Item(
-                label = Label.GO_TO_INHERITED_TYPE,
+                label = Label.GO_TO_EXTENDED_TYPE,
                 icon = Icon.GO_TO,
-                enabled = prop.isInherited || prop.overriddenType != null
-            ) {
-                when {
-                    prop.isInherited -> prop.attributeType
-                    else -> prop.overriddenType!!
-                }.ownerTypeProperties.filter { p -> !p.isInherited }.map { p -> p.ownerType }.toSet()
-                    .intersect(typeState.supertypes.toSet()).firstOrNull()?.tryOpen()
-            }
+                enabled = prop.extendedType != null
+            ) { prop.extendedType?.tryOpen() }
         ),
         listOf(
             ContextMenu.Item(
@@ -402,17 +392,11 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     @Composable
     protected fun PlaysRoleTypesSection() {
         SectionRow { Form.Text(value = Label.PLAYS) }
-        RoleTypesTable(typeState.playsRoleTypeProperties) {
-            coroutines.launchAndHandle(typeState.notifications, LOGGER) {
-                it.roleType.loadPlayerTypes()
-                it.overriddenType?.loadPlayerTypes()
-            }
-            playsRoleTypesContextMenu(it)
-        }
+        RoleTypesTable(typeState.playsRoleTypeProperties) { playsRoleTypesContextMenu(it) }
         PlaysRoleTypeAddition()
     }
 
-    private fun playsRoleTypesContextMenu(prop: TypeState.RoleTypeProperties) = listOf(
+    private fun playsRoleTypesContextMenu(prop: TypeState.PlaysRoleTypeProperties) = listOf(
         listOf(
             ContextMenu.Item(
                 label = Label.GO_TO_ROLE_TYPE,
@@ -424,16 +408,10 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 enabled = prop.overriddenType != null,
             ) { prop.overriddenType?.relationType?.tryOpen() },
             ContextMenu.Item(
-                label = Label.GO_TO_INHERITED_TYPE,
+                label = Label.GO_TO_EXTENDED_TYPE,
                 icon = Icon.GO_TO,
-                enabled = prop.isInherited || prop.overriddenType != null,
-            ) {
-                when {
-                    prop.isInherited -> prop.roleType
-                    else -> prop.overriddenType!!
-                }.playerTypeProperties.filter { p -> !p.isInherited }.map { p -> p.playerType }.toSet()
-                    .intersect(typeState.supertypes.toSet()).firstOrNull()?.tryOpen()
-            }
+                enabled = prop.extendedType != null,
+            ) { prop.extendedType?.tryOpen() }
         ),
         listOf(
             ContextMenu.Item(
@@ -445,9 +423,9 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     )
 
     @Composable
-    protected fun RoleTypesTable(
-        roleTypeProperties: List<TypeState.RoleTypeProperties>,
-        contextMenuFn: (TypeState.RoleTypeProperties) -> List<List<ContextMenu.Item>>,
+    protected fun <T : TypeState.RoleTypeProperties> RoleTypesTable(
+        roleTypeProperties: List<T>,
+        contextMenuFn: (T) -> List<List<ContextMenu.Item>>,
     ) {
         val tableHeight = TABLE_ROW_HEIGHT * (roleTypeProperties.size + 1).coerceAtLeast(2)
         SectionRow {
@@ -463,9 +441,12 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     Table.Column(header = Label.OVERRIDDEN_TYPE, contentAlignment = Alignment.CenterStart) { props ->
                         props.overriddenType?.let { ot -> ClickableText(ot.scopedName) { ot.relationType.tryOpen() } }
                     },
+                    Table.Column(header = Label.EXTENDED_TYPE, contentAlignment = Alignment.CenterStart) { props ->
+                        props.extendedType?.let { ot -> ClickableText(ot.name) { ot.tryOpen() } }
+                    },
                     Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
                         MayTickIcon(it.isInherited)
-                    },
+                    }
                 )
             )
         }
@@ -659,7 +640,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             RelatesRoleTypeAddition()
         }
 
-        private fun relatesRoleTypesContextMenu(props: TypeState.RoleTypeProperties) = listOf(
+        private fun relatesRoleTypesContextMenu(props: TypeState.RelatesRoleTypeProperties) = listOf(
             listOf(
                 ContextMenu.Item(
                     label = Label.GO_TO_ROLE_TYPE,
@@ -670,7 +651,12 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     label = Label.GO_TO_OVERRIDDEN_TYPE,
                     icon = Icon.GO_TO,
                     enabled = props.overriddenType != null,
-                ) { props.overriddenType?.relationType?.tryOpen() }
+                ) { props.overriddenType?.relationType?.tryOpen() },
+                ContextMenu.Item(
+                    label = Label.GO_TO_EXTENDED_TYPE,
+                    icon = Icon.GO_TO,
+                    enabled = props.extendedType != null,
+                ) { props.extendedType?.tryOpen() }
             ),
             listOf(
                 ContextMenu.Item(
@@ -767,14 +753,17 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     modifier = Modifier.weight(1f).height(tableHeight).border(1.dp, Theme.studio.border),
                     rowHeight = TABLE_ROW_HEIGHT,
                     columns = listOf(
-                        Table.Column(header = Label.THING_TYPES, contentAlignment = Alignment.CenterStart) { props ->
+                        Table.Column(header = Label.THING_TYPE, contentAlignment = Alignment.CenterStart) { props ->
                             ClickableText(ConceptDetailedLabel(props.ownerType.conceptType)) { props.ownerType.tryOpen() }
                         },
-                        Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) {
-                            MayTickIcon(it.isKey)
+                        Table.Column(header = Label.EXTENDED_TYPE, contentAlignment = Alignment.CenterStart) { props ->
+                            props.extendedType?.let { ot -> ClickableText(ot.name) { ot.tryOpen() } }
                         },
                         Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
                             MayTickIcon(it.isInherited)
+                        },
+                        Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) {
+                            MayTickIcon(it.isKey)
                         }
                     )
                 )
