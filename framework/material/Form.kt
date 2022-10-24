@@ -35,7 +35,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -173,7 +172,7 @@ object Form {
     fun Field(label: String, fieldHeight: Dp = FIELD_HEIGHT, fieldInput: @Composable RowScope.() -> Unit) {
         Row {
             Column(modifier = LABEL_MODIFIER) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(FIELD_HEIGHT).fillMaxSize()) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(FIELD_HEIGHT)) {
                     Text(value = label)
                 }
             }
@@ -211,13 +210,13 @@ object Form {
     }
 
     @Composable
-    fun RowSpacer() {
-        Spacer(modifier = Modifier.width(INNER_SPACING))
+    fun RowSpacer(multiplier: Int = 1) {
+        Spacer(modifier = Modifier.width(INNER_SPACING * multiplier))
     }
 
     @Composable
-    fun ColumnSpacer() {
-        Spacer(modifier = Modifier.height(INNER_SPACING))
+    fun ColumnSpacer(multiplier: Int = 1) {
+        Spacer(modifier = Modifier.height(INNER_SPACING * multiplier))
     }
 
     @Composable

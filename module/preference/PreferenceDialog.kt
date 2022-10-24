@@ -373,7 +373,7 @@ object PreferenceDialog {
             override fun reset() {}
         }
 
-        class GraphVisualiser(entries: List<PreferenceGroup> = emptyList()) : PreferenceGroup(GRAPH_VISUALISER, entries) {
+        class GraphVisualiser : PreferenceGroup(GRAPH_VISUALISER) {
             private var graphOutput = PreferenceField.Checkbox(
                 initValue = preferenceSrv.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT,
                 caption = PREFERENCES_GRAPH_OUTPUT_CAPTION
@@ -491,7 +491,7 @@ object PreferenceDialog {
 
         Dialog.Layout(
             Service.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT,
-            padding = 0.dp, onCloseRequest = { state.cancel() }
+            padding = 0.dp,
         ) {
             Column {
                 Frame.Row(
@@ -516,15 +516,12 @@ object PreferenceDialog {
                     }
                 )
                 Separator.Horizontal()
-                ColumnSpacer()
-                ColumnSpacer()
+                ColumnSpacer(multiplier = 2)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     ChangeFormButtons(state)
-                    RowSpacer()
-                    RowSpacer()
+                    RowSpacer(multiplier = 2)
                 }
-                ColumnSpacer()
-                ColumnSpacer()
+                ColumnSpacer(multiplier = 2)
             }
         }
     }
