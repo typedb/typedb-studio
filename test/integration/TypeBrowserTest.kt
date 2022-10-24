@@ -26,7 +26,6 @@ import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickAllInstancesOfIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
@@ -34,6 +33,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolde
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
@@ -57,9 +57,9 @@ class TypeBrowserTest : IntegrationTest() {
                 // We can assert that the schema has been written successfully here as the schema
                 // is shown in the type browser.
 
-                assertNodeExistsWithText(composeRule, text = Label.ATTRIBUTE.lowercase())
-                assertNodeExistsWithText(composeRule, text = "commit-date")
-                assertNodeExistsWithText(composeRule, text = "commit-hash")
+                waitUntilNodeWithTextExists(composeRule, text = Label.ATTRIBUTE.lowercase())
+                waitUntilNodeWithTextExists(composeRule, text = "commit-date")
+                waitUntilNodeWithTextExists(composeRule, text = "commit-hash")
             }
         }
     }
@@ -112,7 +112,7 @@ class TypeBrowserTest : IntegrationTest() {
                 clickAllInstancesOfIcon(composeRule, Icon.EXPAND)
                 delayAndRecompose(composeRule)
 
-                assertNodeExistsWithText(composeRule, text = "commit-date")
+                waitUntilNodeWithTextExists(composeRule, text = "commit-date")
             }
         }
     }

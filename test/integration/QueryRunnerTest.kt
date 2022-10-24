@@ -31,6 +31,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolde
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
@@ -62,9 +63,16 @@ class QueryRunnerTest : IntegrationTest() {
                     it.name == SampleGitHubData.collaboratorsQueryFile
                 }!!.asFile().tryOpen()
 
+                waitUntilNodeWithTextExists(composeRule, Label.DATA.lowercase())
                 clickText(composeRule, Label.DATA.lowercase())
+
+                waitUntilNodeWithTextExists(composeRule, Label.READ.lowercase())
                 clickText(composeRule, Label.READ.lowercase())
+
+                waitUntilNodeWithTextExists(composeRule, Label.SNAPSHOT.lowercase())
                 clickText(composeRule, Label.SNAPSHOT.lowercase())
+
+                waitUntilNodeWithTextExists(composeRule, Label.INFER.lowercase())
                 clickText(composeRule, Label.INFER.lowercase())
 
                 Service.pages.active?.let {
