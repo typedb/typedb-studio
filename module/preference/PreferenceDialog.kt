@@ -207,9 +207,9 @@ object PreferenceDialog {
         }
 
         class MultilineTextInput(
-            initValue: String, lineHeight: Int,
+            initValue: String, fieldHeight: Int,
             label: String, caption: String? = null,
-        ): PreferenceField(label, caption, fieldHeight = Form.FIELD_HEIGHT * lineHeight) {
+        ): PreferenceField(label, caption, fieldHeight = Form.FIELD_HEIGHT * fieldHeight) {
 
             var value by mutableStateOf(TextFieldValue(initValue))
 
@@ -223,10 +223,6 @@ object PreferenceDialog {
                         textFieldPadding = Form.MULTILINE_INPUT_PADDING,
                         border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {Theme.studio.border},
                     )
-
-//                    var value by mutableStateOf("test\ntest\ntest")
-//
-//                    BasicTextField(value, onValueChange = {value = it}, textStyle = TextStyle(color = androidx.compose.ui.graphics.Color.White), modifier = Modifier.border(1.dp, color = androidx.compose.ui.graphics.Color.Red).fillMaxSize())
                 }
             }
 
@@ -420,7 +416,7 @@ object PreferenceDialog {
                 initValue = ignoredPathsString,
                 label = PROJECT_IGNORED_PATHS,
                 caption = IGNORED_PATHS_CAPTION,
-                lineHeight = 5,
+                fieldHeight = 5,
             )
 
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
