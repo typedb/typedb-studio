@@ -106,7 +106,7 @@ object Sentence {
                 "parameters interactively. " + BUTTON_ENABLED_WHEN_CONNECTED
     const val MANAGE_ADDRESSES_MESSAGE =
         "Below is the list of addresses for your current cluster connection configuration. You can delete them or " +
-                "add new ones. It is not necessary to input more than two or three addresses."
+                "add new ones."
     const val MANAGE_DATABASES_DESCRIPTION =
         "You can manage your databases by adding or deleting databases from the TypeDB Server you are connected to. " +
                 BUTTON_ENABLED_WHEN_CONNECTED

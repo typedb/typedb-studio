@@ -78,7 +78,7 @@ object ServerDialog {
         var server: Property.Server by mutableStateOf(appData.server ?: Property.Server.TYPEDB)
         var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
         var clusterAddresses: MutableList<String> = mutableStateListOf<String>().also {
-            it.addAll(appData.clusterAddresses ?: emptyList())
+            appData.clusterAddresses?.let { addresses -> it.addAll(addresses) }
         }
         var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
@@ -140,7 +140,7 @@ object ServerDialog {
         }
 
         override fun trySubmit() {
-            assert(value.isNotBlank())
+            assert(isValid())
             state.clusterAddresses.add(value)
             value = ""
         }
@@ -162,7 +162,7 @@ object ServerDialog {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 ServerFormField(state)
                 if (state.server == TYPEDB_CLUSTER) {
-                    ClusterAddressesFormField(state, Service.client.isConnected)
+                    ClusterAddressesFormField(state)
                     UsernameFormField(state)
                     PasswordFormField(state)
                     TLSEnabledFormField(state)
@@ -200,7 +200,7 @@ object ServerDialog {
     @Composable
     private fun CoreAddressFormField(state: ConnectServerForm, shouldFocus: Boolean) {
         var modifier = Modifier.fillMaxSize()
-        val focusReq = if (shouldFocus) FocusRequester() else null
+        val focusReq = if (shouldFocus) remember { FocusRequester() } else null
         focusReq?.let { modifier = modifier.focusRequester(focusReq) }
         Field(label = Label.ADDRESS) {
             TextInput(
@@ -215,11 +215,7 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ClusterAddressesFormField(state: ConnectServerForm, shouldFocus: Boolean) {
-        var modifier = Modifier.fillMaxSize()
-        val focusReq = if (shouldFocus) FocusRequester() else null
-        focusReq?.let { modifier = modifier.focusRequester(focusReq) }
-
+    private fun ClusterAddressesFormField(state: ConnectServerForm) {
         Field(label = Label.ADDRESSES) {
             Row {
                 TextInput(
@@ -227,7 +223,7 @@ object ServerDialog {
                     placeholder = Label.DEFAULT_SERVER_ADDRESS,
                     onValueChange = { },
                     enabled = false,
-                    modifier = modifier.weight(1f),
+                    modifier = Modifier.weight(1f),
                 )
                 RowSpacer()
                 IconButton(
@@ -237,7 +233,6 @@ object ServerDialog {
                 { Service.client.manageAddressesDialog.open() }
             }
         }
-        LaunchedEffect(focusReq) { focusReq?.requestFocus() }
     }
 
     @Composable

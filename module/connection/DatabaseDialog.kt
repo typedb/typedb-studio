@@ -74,7 +74,7 @@ object DatabaseDialog {
         }
 
         override fun trySubmit() {
-            assert(name.isNotBlank())
+            assert(isValid())
             Service.client.tryCreateDatabase(name) { name = "" }
         }
     }
