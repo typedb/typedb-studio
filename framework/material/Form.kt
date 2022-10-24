@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -170,9 +171,15 @@ object Form {
 
     @Composable
     fun Field(label: String, fieldHeight: Dp = FIELD_HEIGHT, fieldInput: @Composable RowScope.() -> Unit) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(value = label, modifier = LABEL_MODIFIER)
-            Row(modifier = INPUT_MODIFIER.height(fieldHeight), horizontalArrangement = Arrangement.spacedBy(INNER_SPACING)) { fieldInput() }
+        Row {
+            Column(modifier = LABEL_MODIFIER) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(FIELD_HEIGHT).fillMaxSize()) {
+                    Text(value = label)
+                }
+            }
+            Column(modifier = INPUT_MODIFIER) {
+                Row(modifier = Modifier.height(fieldHeight)) { fieldInput() }
+            }
         }
     }
 
@@ -517,7 +524,7 @@ object Form {
                         .padding(vertical = MULTILINE_INPUT_PADDING)
                         .horizontalScroll(state.horScroller)
                 ) {
-                    Row(Modifier.align(alignment = Alignment.CenterStart)) {
+                    Row(Modifier.align(alignment = Alignment.TopStart)) {
                         BasicTextField(
                             value = value,
                             onValueChange = { state.updateValue(it); onValueChange(it) },

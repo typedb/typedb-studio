@@ -223,6 +223,10 @@ object PreferenceDialog {
                         textFieldPadding = Form.MULTILINE_INPUT_PADDING,
                         border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {Theme.studio.border},
                     )
+
+//                    var value by mutableStateOf("test\ntest\ntest")
+//
+//                    BasicTextField(value, onValueChange = {value = it}, textStyle = TextStyle(color = androidx.compose.ui.graphics.Color.White), modifier = Modifier.border(1.dp, color = androidx.compose.ui.graphics.Color.Red).fillMaxSize())
                 }
             }
 
