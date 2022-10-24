@@ -737,14 +737,14 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
 
         @Composable
         override fun MainSections() {
-            OwnersSection()
+            OwnerTypesSection()
             Separator()
             SubtypesSection()
             Separator()
         }
 
         @Composable
-        private fun OwnersSection() {
+        private fun OwnerTypesSection() {
             val tableHeight = TABLE_ROW_HEIGHT * (typeState.ownerTypes.size + 1).coerceAtLeast(2)
             SectionRow { Form.Text(value = Label.OWNERS) }
             SectionRow {
@@ -752,8 +752,9 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     items = typeState.ownerTypeProperties.sortedBy { it.ownerType.name },
                     modifier = Modifier.weight(1f).height(tableHeight).border(1.dp, Theme.studio.border),
                     rowHeight = TABLE_ROW_HEIGHT,
+                    contextMenuFn = { ownerTypesContextMenu(it) },
                     columns = listOf(
-                        Table.Column(header = Label.THING_TYPE, contentAlignment = Alignment.CenterStart) { props ->
+                        Table.Column(header = Label.OWNER_TYPE, contentAlignment = Alignment.CenterStart) { props ->
                             ClickableText(ConceptDetailedLabel(props.ownerType.conceptType)) { props.ownerType.tryOpen() }
                         },
                         Table.Column(header = Label.EXTENDED_TYPE, contentAlignment = Alignment.CenterStart) { props ->
@@ -769,5 +770,19 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 )
             }
         }
+
+        private fun ownerTypesContextMenu(props: TypeState.OwnerTypeProperties) = listOf(
+            listOf(
+                ContextMenu.Item(
+                    label = Label.GO_TO_OWNER_TYPE,
+                    icon = Icon.GO_TO,
+                ) { props.ownerType.tryOpen() },
+                ContextMenu.Item(
+                    label = Label.GO_TO_EXTENDED_TYPE,
+                    icon = Icon.GO_TO,
+                    enabled = props.extendedType != null,
+                ) { props.extendedType?.tryOpen() }
+            )
+        )
     }
 }
