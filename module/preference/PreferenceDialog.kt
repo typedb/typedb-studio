@@ -97,7 +97,7 @@ object PreferenceDialog {
     private var state by mutableStateOf(PreferencesForm())
 
     sealed class PreferenceField(private val label: String, private val caption: String?,
-                                 private val fieldHeightMultiplier: Dp = Form.FIELD_HEIGHT) {
+                                 private val fieldHeight: Dp = Form.FIELD_HEIGHT) {
         abstract fun isValid(): Boolean
 
         @Composable
@@ -107,7 +107,7 @@ object PreferenceDialog {
 
         @Composable
         fun Layout(fieldContent: @Composable () -> Unit) {
-            Field(label, fieldHeightMultiplier) {
+            Field(label, fieldHeight) {
                 fieldContent()
             }
 
@@ -210,7 +210,7 @@ object PreferenceDialog {
         class MultilineTextInput(
             initValue: String, fieldHeight: Int,
             label: String, caption: String? = null,
-        ): PreferenceField(label, caption, fieldHeightMultiplier = Form.FIELD_HEIGHT * fieldHeight) {
+        ): PreferenceField(label, caption, fieldHeight = Form.FIELD_HEIGHT * fieldHeight) {
 
             var value by mutableStateOf(TextFieldValue(initValue))
 
