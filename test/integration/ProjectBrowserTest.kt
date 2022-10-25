@@ -20,11 +20,9 @@ package com.vaticle.typedb.studio.test.integration
 
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextNotExists
@@ -43,8 +41,10 @@ class ProjectBrowserTest : IntegrationTest() {
 
             Service.project.current!!.directory.asDirectory()
                 .tryCreateDirectory(createdDirectoryName)
+            delayAndRecompose(composeRule)
 
             Service.project.current!!.reloadEntries()
+            delayAndRecompose(composeRule)
 
             waitUntilNodeWithTextExists(composeRule, text = createdDirectoryName)
         }
@@ -60,8 +60,10 @@ class ProjectBrowserTest : IntegrationTest() {
 
             Service.project.current!!.directory.asDirectory()
                 .tryCreateFile(createdFileName)
+            delayAndRecompose(composeRule)
 
             Service.project.current!!.reloadEntries()
+            delayAndRecompose(composeRule)
 
             waitUntilNodeWithTextExists(composeRule, text = createdFileName)
         }
@@ -78,8 +80,10 @@ class ProjectBrowserTest : IntegrationTest() {
             Service.project.current!!.directory.entries.find { it.name == "file3" }!!
                 .asFile()
                 .tryRename(renamedFileName)
+            delayAndRecompose(composeRule)
 
             Service.project.current!!.reloadEntries()
+            delayAndRecompose(composeRule)
 
             waitUntilNodeWithTextExists(composeRule, text = renamedFileName)
         }
@@ -93,8 +97,10 @@ class ProjectBrowserTest : IntegrationTest() {
 
             Service.project.current!!.directory.entries.find { it.name == "file3" }!!
                 .asFile().tryDelete()
+            delayAndRecompose(composeRule)
 
             Service.project.current!!.reloadEntries()
+            delayAndRecompose(composeRule)
 
             waitUntilNodeWithTextNotExists(composeRule, text = "file3")
         }

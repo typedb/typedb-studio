@@ -26,7 +26,6 @@ import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickAllInstancesOfIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
@@ -34,6 +33,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDat
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextNotExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
@@ -84,7 +84,7 @@ class TypeBrowserTest : IntegrationTest() {
 
                 delayAndRecompose(composeRule)
 
-                assertNodeNotExistsWithText(composeRule, text = "commit-date")
+                waitUntilNodeWithTextNotExists(composeRule, text = "commit-date")
             }
         }
     }
@@ -107,7 +107,7 @@ class TypeBrowserTest : IntegrationTest() {
                 clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
                 delayAndRecompose(composeRule)
 
-                assertNodeNotExistsWithText(composeRule, text = "commit-date")
+                waitUntilNodeWithTextNotExists(composeRule, text = "commit-date")
 
                 clickAllInstancesOfIcon(composeRule, Icon.EXPAND)
                 delayAndRecompose(composeRule)
