@@ -21,7 +21,6 @@
 
 package com.vaticle.typedb.studio.test.integration.common
 
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.hasClickAction
@@ -40,22 +39,19 @@ import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import java.io.File
-import java.lang.AssertionError
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.test.fail
 import kotlinx.coroutines.delay
-import mu.KotlinLogging
+import kotlinx.coroutines.runBlocking
 
 object StudioActions {
-    private val LOGGER = KotlinLogging.logger {}
-
-    fun clickIcon(composeRule: ComposeContentTestRule, icon: Icon) {
+    suspend fun clickIcon(composeRule: ComposeContentTestRule, icon: Icon) {
         clickText(composeRule, icon.unicode)
+        delayAndRecompose(composeRule)
     }
 
     fun clickText(composeRule: ComposeContentTestRule, text: String) {
@@ -73,46 +69,34 @@ object StudioActions {
         clickAllInstancesOfText(composeRule, icon.unicode)
     }
 
-    fun waitUntilNodeWithIconIsClickable(composeRule: ComposeContentTestRule, icon: Icon) {
+    suspend fun waitUntilNodeWithIconIsClickable(composeRule: ComposeContentTestRule, icon: Icon) {
         waitUntilNodeWithTextIsClickable(composeRule, icon.unicode)
     }
 
-    fun waitUntilNodeWithTextIsClickable(composeRule: ComposeContentTestRule, text: String) {
+    suspend fun waitUntilNodeWithTextIsClickable(composeRule: ComposeContentTestRule, text: String) {
         waitUntilAssert(composeRule) { composeRule.onNodeWithText(text).assertHasClickAction() }
     }
 
-    fun waitUntilNodeWithTextExists(composeRule: ComposeContentTestRule, text: String) {
+    suspend fun waitUntilNodeWithTextExists(composeRule: ComposeContentTestRule, text: String) {
         waitUntilAssert(composeRule) { composeRule.onNodeWithText(text).assertExists() }
     }
 
-    fun waitUntilNodeWithTextNotExists(composeRule: ComposeContentTestRule, text: String) {
+    suspend fun waitUntilNodeWithTextNotExists(composeRule: ComposeContentTestRule, text: String) {
         waitUntilAssert(composeRule) { composeRule.onNodeWithText(text).assertDoesNotExist() }
     }
 
-    fun waitUntilAssert(composeRule: ComposeContentTestRule, assertion: () -> Any) {
+    suspend fun waitUntilAssert(composeRule: ComposeContentTestRule, assertion: () -> Any) {
         composeRule.waitUntil(Delays.WAIT_UNTIL_TIMEOUT) {
             try {
                 assertion()
+                runBlocking {
+                    composeRule.awaitIdle()
+                }
                 return@waitUntil true
-            } catch (e: AssertionError) {
+            } catch (e: Exception) {
                 return@waitUntil false
             }
         }
-    }
-
-    fun assertNodeExistsWithText(composeRule: ComposeContentTestRule, text: String) {
-        composeRule.waitUntil(Delays.WAIT_UNTIL_TIMEOUT) {
-            return@waitUntil try {
-                composeRule.onNodeWithText(text).assertExists()
-                true
-            } catch (e: AssertionError) {
-                false
-            }
-        }
-    }
-
-    fun assertNodeNotExistsWithText(composeRule: ComposeContentTestRule, text: String) {
-        return composeRule.onNodeWithText(text).assertDoesNotExist()
     }
 
     fun copyFolder(source: String, destination: String): Path {
@@ -149,7 +133,7 @@ object StudioActions {
             StudioState.client.isConnected
         }
 
-        assertNodeExistsWithText(composeRule, text = address)
+        waitUntilNodeWithTextExists(composeRule, text = address)
     }
 
     suspend fun createDatabase(composeRule: ComposeContentTestRule, dbName: String) {
@@ -163,7 +147,7 @@ object StudioActions {
 
         StudioState.client.refreshDatabaseList()
 
-        composeRule.waitUntil(Delays.WAIT_UNTIL_TIMEOUT) {
+        waitUntilAssert(composeRule) {
             StudioState.client.refreshDatabaseList()
             StudioState.client.databaseList.contains(dbName)
         }
@@ -199,12 +183,8 @@ object StudioActions {
 
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        composeRule.waitUntil(Delays.WAIT_UNTIL_TIMEOUT) {
-            return@waitUntil try {
-                StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
-            } catch (e: NoSuchElementException) {
-                false
-            }
+        waitUntilAssert(composeRule) {
+            StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
 
@@ -232,7 +212,7 @@ object StudioActions {
         waitUntilNodeWithIconIsClickable(composeRule, Icon.COMMIT)
         clickIcon(composeRule, Icon.COMMIT)
 
-        composeRule.waitUntil(Delays.WAIT_UNTIL_TIMEOUT) {
+        waitUntilAssert(composeRule) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }

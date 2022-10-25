@@ -27,7 +27,6 @@ import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickAllInstancesOfIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
@@ -35,6 +34,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDat
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextNotExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import kotlinx.coroutines.runBlocking
@@ -81,7 +81,7 @@ class TypeBrowserTest: IntegrationTest() {
 
                 delayAndRecompose(composeRule)
 
-                assertNodeNotExistsWithText(composeRule, text = "commit-date")
+                waitUntilNodeWithTextNotExists(composeRule, text = "commit-date")
             }
         }
     }
@@ -101,7 +101,7 @@ class TypeBrowserTest: IntegrationTest() {
                 clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
                 delayAndRecompose(composeRule)
 
-                assertNodeNotExistsWithText(composeRule, text = "commit-date")
+                waitUntilNodeWithTextNotExists(composeRule, text = "commit-date")
 
                 clickAllInstancesOfIcon(composeRule, Icon.EXPAND)
                 delayAndRecompose(composeRule)

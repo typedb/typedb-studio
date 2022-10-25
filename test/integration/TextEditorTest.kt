@@ -28,8 +28,6 @@ import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
@@ -39,7 +37,9 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndR
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithIconIsClickable
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextIsClickable
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextNotExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
@@ -86,7 +86,7 @@ class TextEditorTest: IntegrationTest() {
 
                 // We can assert that the schema has been written successfully here as the schema
                 // is shown in the type browser.
-                assertNodeExistsWithText(composeRule, text = "commit-date")
+                waitUntilNodeWithTextExists(composeRule, text = "commit-date")
             }
         }
     }
@@ -130,7 +130,7 @@ class TextEditorTest: IntegrationTest() {
                 waitUntilNodeWithIconIsClickable(composeRule, Icon.ROLLBACK)
                 clickIcon(composeRule, Icon.ROLLBACK)
 
-                assertNodeNotExistsWithText(composeRule, text = "repo-id")
+                waitUntilNodeWithTextNotExists(composeRule, text = "repo-id")
             }
         }
     }
