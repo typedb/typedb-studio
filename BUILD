@@ -190,7 +190,7 @@ checkstyle_test(
     name = "checkstyle",
     include = glob([
         "*",
-        ".grabl/*",
+        ".factory/*",
         ".circleci/**",
     ]),
     exclude = glob([
