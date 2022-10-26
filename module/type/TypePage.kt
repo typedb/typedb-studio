@@ -47,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -690,11 +691,16 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             val isRelatable = isEditable && roleType.isNotEmpty()
             val isOverridable = isEditable && overridableTypeList.isNotEmpty()
 
+            fun submit() = typeState.tryDefineRelatesRoleType(roleType, overriddenType) {
+                roleType = ""
+                overriddenType = null
+            }
+
             SectionRow {
                 Form.TextInput(
                     value = roleType,
                     placeholder = Label.ROLE.lowercase(),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).onKeyEvent { Form.onKeyEventHandler(it, onEnter = { submit() }) },
                     onValueChange = { roleType = it },
                     enabled = isEditable,
                 )
@@ -719,12 +725,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                         Label.DEFINE_RELATES_ROLE_TYPE,
                         Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION
                     ),
-                    onClick = {
-                        typeState.tryDefineRelatesRoleType(roleType, overriddenType) {
-                            roleType = ""
-                            overriddenType = null
-                        }
-                    }
+                    onClick = { submit() }
                 )
             }
         }
