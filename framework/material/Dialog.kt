@@ -20,7 +20,10 @@ package com.vaticle.typedb.studio.framework.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,5 +73,15 @@ object Dialog {
         val bgColor = Theme.studio.backgroundMedium
         val modifier = Modifier.background(bgColor).padding(padding).onKeyEvent { handleKeyEvent(it, state) }
         Box(modifier) { content() }
+    }
+
+    @Composable
+    fun RowSpacer() {
+        Spacer(modifier = Modifier.width(DIALOG_SPACING))
+    }
+
+    @Composable
+    fun ColumnSpacer() {
+        Spacer(modifier = Modifier.height(DIALOG_SPACING))
     }
 }

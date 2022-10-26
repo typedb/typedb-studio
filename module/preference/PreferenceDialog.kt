@@ -51,10 +51,7 @@ import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.CaptionSpacer
-import com.vaticle.typedb.studio.framework.material.Form.ColumnSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Field
-import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.State
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
@@ -118,7 +115,7 @@ object PreferenceDialog {
 
         @Composable
         fun Caption() {
-            CaptionSpacer()
+            Form.CaptionSpacer()
             Row {
                 Text(caption!!, alpha = Color.FADED_OPACITY)
             }
@@ -503,7 +500,7 @@ object PreferenceDialog {
                         initSize = Either.first(NAVIGATOR_INIT_SIZE), minSize = NAVIGATOR_MIN_SIZE
                     ) {
                         Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight)) {
-                            ColumnSpacer()
+                            Form.ColumnSpacer()
                             NavigatorLayout()
                         }
                     },
@@ -517,12 +514,12 @@ object PreferenceDialog {
                     }
                 )
                 Separator.Horizontal()
-                ColumnSpacer(multiplier = 2)
+                Dialog.ColumnSpacer()
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     ChangeFormButtons(state)
-                    RowSpacer(multiplier = 2)
+                    Dialog.RowSpacer()
                 }
-                ColumnSpacer(multiplier = 2)
+                Dialog.ColumnSpacer()
             }
         }
     }
@@ -537,11 +534,11 @@ object PreferenceDialog {
         TextButton(CANCEL) {
             state.cancel()
         }
-        RowSpacer()
+        Form.RowSpacer()
         TextButton(APPLY, enabled = state.isModified() && state.isValid()) {
             state.apply()
         }
-        RowSpacer()
+        Form.RowSpacer()
         TextButton(OK) {
             state.ok()
         }
@@ -558,8 +555,8 @@ object PreferenceDialog {
 
     @Composable
     private fun SpacedHorizontalSeparator() {
-        ColumnSpacer()
+        Form.ColumnSpacer()
         Separator.Horizontal()
-        ColumnSpacer()
+        Form.ColumnSpacer()
     }
 }

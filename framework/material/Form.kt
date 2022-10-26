@@ -210,13 +210,13 @@ object Form {
     }
 
     @Composable
-    fun RowSpacer(multiplier: Int = 1) {
-        Spacer(modifier = Modifier.width(INNER_SPACING * multiplier))
+    fun RowSpacer() {
+        Spacer(modifier = Modifier.width(INNER_SPACING))
     }
 
     @Composable
-    fun ColumnSpacer(multiplier: Int = 1) {
-        Spacer(modifier = Modifier.height(INNER_SPACING * multiplier))
+    fun ColumnSpacer() {
+        Spacer(modifier = Modifier.height(INNER_SPACING))
     }
 
     @Composable
@@ -501,15 +501,11 @@ object Form {
         focusReq: FocusRequester = remember { FocusRequester() },
         onValueChange: (TextFieldValue) -> Unit,
         onTextLayout: (TextLayoutResult) -> Unit,
-        border: Border? = null,
     ) {
-        val mod = border?.let {
-            modifier.border(border.width, fadeable(border.color(), false), border.shape)
-        } ?: modifier
         val density = LocalDensity.current.density
         Row(
             verticalAlignment = Alignment.Top,
-            modifier = mod.fillMaxWidth()
+            modifier = modifier.fillMaxWidth()
                 .background(Theme.studio.surface)
                 .onSizeChanged { state.density = density }
                 .pointerHoverIcon(PointerIconDefaults.Text)
