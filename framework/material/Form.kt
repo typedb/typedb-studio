@@ -908,20 +908,14 @@ object Form {
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
-    private fun onKeyEventHandler(
-        event: KeyEvent,
-        enabled: Boolean = true,
-        onEnter: (() -> Unit)? = null,
-        onSpace: (() -> Unit)? = null
-    ): Boolean {
-        return when {
-            event.awtEvent.id == KEY_PRESSED -> false
-            !enabled -> false
-            else -> when (event.key) {
-                Key.Enter, Key.NumPadEnter -> onEnter?.let { it(); true } ?: false
-                Key.Spacebar -> onSpace?.let { it(); true } ?: false
-                else -> false
-            }
+    fun onKeyEventHandler(
+        event: KeyEvent, onEnter: (() -> Unit)? = null, onSpace: (() -> Unit)? = null
+    ): Boolean = when (event.awtEvent.id) {
+        KEY_PRESSED -> false
+        else -> when (event.key) {
+            Key.Enter, Key.NumPadEnter -> onEnter?.let { it(); true } ?: false
+            Key.Spacebar -> onSpace?.let { it(); true } ?: false
+            else -> false
         }
     }
 }

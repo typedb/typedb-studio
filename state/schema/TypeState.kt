@@ -70,7 +70,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         val canBeUndefined: Boolean,
     )
 
-    data class OwnerTypeProperties(
+    data class OwnerTypeProperties constructor(
         val ownerType: Thing<*, *>,
         val extendedType: Thing<*, *>?,
         val isInherited: Boolean,
