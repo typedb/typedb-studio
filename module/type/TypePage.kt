@@ -40,6 +40,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -291,7 +292,12 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
                         MayTickIcon(it.isInherited)
                     },
-                    Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) { MayTickIcon(it.isKey) },
+                    Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) {
+                        MayTickIcon(it.isKey)
+                    },
+                    Table.Column(header = Label.ABSTRACT, size = Either.second(ICON_COL_WIDTH)) {
+                        MayTickIcon(it.attributeType.isAbstract)
+                    }
                 )
             )
         }
@@ -447,6 +453,9 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     },
                     Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
                         MayTickIcon(it.isInherited)
+                    },
+                    Table.Column(header = Label.ABSTRACT, size = Either.second(ICON_COL_WIDTH)) {
+                        MayTickIcon(it.roleType.isAbstract)
                     }
                 )
             )
