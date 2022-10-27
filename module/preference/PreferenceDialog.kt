@@ -517,7 +517,7 @@ object PreferenceDialog {
                 Dialog.ColumnSpacer()
             }
         }
-        LaunchedEffect(null
+        LaunchedEffect(Unit
         ) {
             state.rootPreferenceGroup.resetSelfAndDescendants()
             selectedPreferenceGroup = state.rootPreferenceGroup.entries.first()
