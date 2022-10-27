@@ -177,7 +177,7 @@ object Form {
                 }
             }
             Column(modifier = INPUT_MODIFIER) {
-                Row(modifier = Modifier.height(fieldHeight)) { fieldInput() }
+                Row(modifier = Modifier.height(fieldHeight), horizontalArrangement = Arrangement.spacedBy(INNER_SPACING)) { fieldInput() }
             }
         }
     }
