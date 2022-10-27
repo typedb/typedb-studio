@@ -516,7 +516,6 @@ object Form {
             Box(Modifier.weight(1f).onSizeChanged { state.boxWidth = toDP(it.width, state.density) }) {
                 Box(
                     modifier = Modifier.fillMaxHeight()
-                        .padding(vertical = MULTILINE_INPUT_PADDING)
                         .horizontalScroll(state.horScroller)
                 ) {
                     BasicTextField(
