@@ -69,8 +69,7 @@ class ClientState constructor(
     val isConnected: Boolean get() = status == CONNECTED
     val isConnecting: Boolean get() = status == CONNECTING
     val isDisconnected: Boolean get() = status == DISCONNECTED
-    var address: String? by mutableStateOf(null)
-    var username: String? by mutableStateOf(null)
+    var connectionName: String? by mutableStateOf(null)
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
@@ -89,9 +88,7 @@ class ClientState constructor(
 
     fun tryConnectToTypeDBAsync(
         address: String, onSuccess: () -> Unit
-    ) = tryConnectAsync(newAddress = address, newUsername = null, onSuccess = onSuccess) {
-        TypeDB.coreClient(address)
-    }
+    ) = tryConnectAsync(newConnectionName = address, onSuccess = onSuccess) { TypeDB.coreClient(address) }
 
     fun tryConnectToTypeDBClusterAsync(
         addresses: Set<String>, username: String, password: String,
@@ -108,18 +105,17 @@ class ClientState constructor(
     private fun tryConnectToTypeDBClusterAsync(
         addresses: Set<String>, username: String,
         credentials: TypeDBCredential, onSuccess: () -> Unit
-    ) = tryConnectAsync(newAddress = addresses.first(), newUsername = username, onSuccess = onSuccess) {
+    ) = tryConnectAsync(newConnectionName = "$username@${addresses.first()}", onSuccess) {
         TypeDB.clusterClient(addresses, credentials)
     }
 
     private fun tryConnectAsync(
-        newAddress: String, newUsername: String?, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient
+        newConnectionName: String, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient
     ) = coroutines.launchAndHandle(notificationSrv, LOGGER) {
         if (isConnecting || isConnected) return@launchAndHandle
         statusAtomic.set(CONNECTING)
         try {
-            address = newAddress
-            username = newUsername
+            connectionName = newConnectionName
             _client = clientConstructor()
             statusAtomic.set(CONNECTED)
             onSuccess()
