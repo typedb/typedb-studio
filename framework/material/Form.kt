@@ -398,11 +398,16 @@ object Form {
         pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
         onTextLayout: (TextLayoutResult) -> Unit = {},
         shape: Shape? = ROUNDED_CORNER_SHAPE,
+        border: Border? = DEFAULT_BORDER,
         trailingIcon: Icon? = null,
         leadingIcon: Icon? = null
     ) {
+        val mod = border?.let {
+            modifier.border(border.width, fadeable(border.color(), !enabled), border.shape)
+        } ?: modifier
+
         BasicTextField(
-            modifier = modifier.height(FIELD_HEIGHT).pointerHoverIcon(pointerHoverIcon)
+            modifier = mod.height(FIELD_HEIGHT).pointerHoverIcon(pointerHoverIcon)
                 .background(fadeable(Theme.studio.surface, !enabled), shape ?: RectangleShape),
             value = value,
             onValueChange = onValueChange,
