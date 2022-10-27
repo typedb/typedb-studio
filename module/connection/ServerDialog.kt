@@ -136,7 +136,7 @@ object ServerDialog {
         }
 
         override fun isValid(): Boolean {
-            return value.isNotBlank() && validAddress() && !state.clusterAddresses.contains(value)
+            return value.isNotBlank() && validAddressFormat() && !state.clusterAddresses.contains(value)
         }
 
         override fun submit() {
@@ -145,7 +145,7 @@ object ServerDialog {
             value = ""
         }
 
-        private fun validAddress(): Boolean {
+        private fun validAddressFormat(): Boolean {
             val addressParts = value.split(":")
             if (addressParts.size == 2 && addressParts[1].toIntOrNull() != null) {
                 val port = addressParts[1].toInt()
