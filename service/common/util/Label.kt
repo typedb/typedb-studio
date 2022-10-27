@@ -72,7 +72,6 @@ object Label {
     const val DATA_SESSION = "Data Session"
     const val DECREASE_TEXT_SIZE = "Decrease Text Size"
     const val DEFAULT_SERVER_ADDRESS = "localhost:1729"
-    const val DEFAULT_SERVER_ADDRESS_CLUSTER = "localhost:1729 (click + to add addresses)"
     const val DEFINE_OWNS_ATTRIBUTE_TYPE = "Define Owns Attribute Type"
     const val DEFINE_PLAYS_ROLE_TYPE = "Define Plays Role Type"
     const val DEFINE_RELATES_ROLE_TYPE = "Define Relates Role Type"

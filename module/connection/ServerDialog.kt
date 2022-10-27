@@ -136,13 +136,24 @@ object ServerDialog {
         }
 
         override fun isValid(): Boolean {
-            return value.isNotBlank()
+            return value.isNotBlank() && validAddress() && !state.clusterAddresses.contains(value)
         }
 
         override fun submit() {
             assert(isValid())
             state.clusterAddresses.add(value)
             value = ""
+        }
+
+        private fun validAddress(): Boolean {
+            val addressParts = value.split(":")
+            if (addressParts.size == 2 && addressParts[1].toIntOrNull() != null) {
+                val port = addressParts[1].toInt()
+                if (port in 1024..65535) {
+                    return true
+                }
+            }
+            return false
         }
     }
 
@@ -221,7 +232,6 @@ object ServerDialog {
             Row {
                 TextInput(
                     value = state.clusterAddresses.joinToString(", "),
-                    placeholder = Label.DEFAULT_SERVER_ADDRESS_CLUSTER,
                     onValueChange = { },
                     enabled = false,
                     modifier = Modifier.weight(1f),

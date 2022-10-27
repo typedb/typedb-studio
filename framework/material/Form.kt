@@ -397,8 +397,8 @@ object Form {
     @Composable
     fun TextInput(
         value: String,
-        placeholder: String,
         onValueChange: (String) -> Unit,
+        placeholder: String? = null,
         singleLine: Boolean = true,
         readOnly: Boolean = false,
         enabled: Boolean = true,
@@ -441,7 +441,7 @@ object Form {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                         innerTextField()
                         if (value.isEmpty()) Text(
-                            value = Label.E_G_ + " " + placeholder,
+                            value = placeholder?.let { Label.E_G_ + " " + it } ?: "",
                             textStyle = textStyle.copy(fontStyle = FontStyle.Italic),
                             color = fadeable(fontColor, true, PLACEHOLDER_OPACITY)
                         )
