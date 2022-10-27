@@ -147,13 +147,7 @@ object ServerDialog {
 
         private fun validAddressFormat(): Boolean {
             val addressParts = value.split(":")
-            if (addressParts.size == 2 && addressParts[1].toIntOrNull() != null) {
-                val port = addressParts[1].toInt()
-                if (port in 1024..65535) {
-                    return true
-                }
-            }
-            return false
+            return addressParts.size == 2 && addressParts[1].toIntOrNull()?.let { it in 1024..65535 } == true
         }
     }
 
