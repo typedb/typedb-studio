@@ -457,7 +457,7 @@ object Navigator {
         state: NavigatorState<T>, item: ItemState<T>, itemHeight: Dp,
         iconArg: ((ItemState<T>) -> IconArg)?, styleArgs: (ItemState<T>) -> List<Typography.Style>,
     ) {
-        val horizontalItemPadding = if (iconArg == null) 0.dp else Dialog.DIALOG_SPACING
+        val horizontalItemPadding = if (iconArg == null) 0.dp else Theme.DIALOG_PADDING
         val styles = styleArgs(item)
         val bgColor = when {
             state.selected == item -> Theme.studio.primary

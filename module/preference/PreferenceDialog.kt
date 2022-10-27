@@ -503,13 +503,13 @@ object PreferenceDialog {
                         id = PreferenceDialog.javaClass.canonicalName + ".secondary",
                         initSize = Either.first(PREFERENCE_GROUP_INIT_SIZE), minSize = PREFERENCE_GROUP_MIN_SIZE
                     ) {
-                        Column(modifier = Modifier.fillMaxHeight().padding(Dialog.DIALOG_SPACING)) {
+                        Column(modifier = Modifier.fillMaxHeight().padding(Theme.DIALOG_PADDING)) {
                             selectedPreferenceGroup.Display()
                         }
                     }
                 )
                 Separator.Horizontal()
-                Row(modifier = Modifier.fillMaxWidth().padding(Dialog.DIALOG_SPACING), horizontalArrangement = Arrangement.End) {
+                Row(modifier = Modifier.fillMaxWidth().padding(Theme.DIALOG_PADDING), horizontalArrangement = Arrangement.End) {
                     ChangeFormButtons(state)
                 }
             }

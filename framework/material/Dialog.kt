@@ -43,9 +43,6 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.service.common.util.DialogState
 
 object Dialog {
-
-    val DIALOG_SPACING = Theme.DIALOG_PADDING
-
     private fun handleKeyEvent(event: KeyEvent, state: DialogState): Boolean = when (event.type) {
         KeyEventType.KeyUp -> false
         else -> KeyMapper.CURRENT.map(event)?.let { executeCommand(it, state) } ?: false

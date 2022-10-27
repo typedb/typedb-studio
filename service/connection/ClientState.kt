@@ -68,7 +68,6 @@ class ClientState constructor(
     val isConnected: Boolean get() = status == CONNECTED
     val isConnecting: Boolean get() = status == CONNECTING
     val isDisconnected: Boolean get() = status == DISCONNECTED
-    var connectionName: String? by mutableStateOf(null)
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
@@ -77,6 +76,7 @@ class ClientState constructor(
     val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     val session = SessionState(this, notificationSrv, preferenceSrv)
+    var connectionName: String? by mutableStateOf(null)
     private val statusAtomic = AtomicReferenceState(DISCONNECTED)
     private var _client: TypeDBClient? by mutableStateOf(null)
     private var hasRunningCommandAtomic = AtomicBooleanState(false)
