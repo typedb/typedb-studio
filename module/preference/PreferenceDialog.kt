@@ -133,9 +133,8 @@ object PreferenceDialog {
             @Composable
             override fun Display() {
                 Layout {
-                    val border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {
-                        if (this.isValid()) Theme.studio.border else Theme.studio.errorStroke
-                    }
+                    val borderColour = if (this.isValid()) Theme.studio.border else Theme.studio.errorStroke
+                    val modifier = Modifier.border(1.dp, borderColour, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS))
                     val positionProvider = rememberComponentRectPositionProvider(
                         anchor = Alignment.TopStart,
                         alignment = Alignment.BottomEnd,
@@ -144,7 +143,7 @@ object PreferenceDialog {
                     Form.TextInput(
                         value = value,
                         placeholder = placeholder,
-                        border = border,
+                        modifier = modifier,
                         onValueChange = { value = it; modified = true }
                     )
                     if (!this.isValid()) {
@@ -190,10 +189,9 @@ object PreferenceDialog {
                     Form.TextInput(
                         value = value,
                         placeholder = placeholder,
-                        border = Form.Border(
-                            1.dp,
-                            RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)
-                        ) { Theme.studio.border },
+                        modifier = Modifier.border(
+                            1.dp,  Theme.studio.border , RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)
+                        ),
                         onValueChange = { value = it; modified = true }
                     )
                 }
@@ -219,7 +217,9 @@ object PreferenceDialog {
                         onValueChange = { value = it; modified = true },
                         onTextLayout = { },
                         textFieldPadding = Form.MULTILINE_INPUT_PADDING,
-                        border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {Theme.studio.border},
+                        modifier = Modifier.border(
+                            1.dp, Theme.studio.border, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)
+                        ),
                     )
                 }
             }
