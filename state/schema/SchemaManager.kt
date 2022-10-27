@@ -28,7 +28,6 @@ import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
-import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_OPEN_WRITE_TX
 import com.vaticle.typedb.studio.state.connection.SessionState
 import com.vaticle.typedb.studio.state.page.Navigable
@@ -182,7 +181,7 @@ class SchemaManager constructor(
             }
             typeStateOf(remote.relationType)?.let { relationType ->
                 roleTypes.computeIfAbsent(roleType) {
-                    TypeState.Role(relationType, roleType, supertype, this)
+                    TypeState.Role(relationType, it, supertype, this)
                 }
             }
         }
@@ -202,9 +201,12 @@ class SchemaManager constructor(
         if (rootAttributeType == null) rootAttributeType = TypeState.Attribute(
             conceptType = tx.concepts().rootAttributeType, supertype = null, schemaMgr = this
         ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
-        (entityTypes.values + attributeTypes.values + relationTypes.values + roleTypes.values).forEach {
+        (entityTypes.values + attributeTypes.values + relationTypes.values).forEach {
             if (tx.concepts().getThingType(it.name) == null) it.purge()
-            else if (it is TypeState.Thing && it.isOpen) it.loadConstraintsAsync()
+            else if (it.isOpen) it.loadConstraintsAsync()
+        }
+        roleTypes.values.forEach {
+            if (it.relationType.conceptType.asRemote(tx).getRelates(it.name) == null) it.purge()
         }
         isOpenAtomic.set(true)
         execOnTypesUpdated()
@@ -279,6 +281,7 @@ class SchemaManager constructor(
             rootEntityType = null
             rootRelationType = null
             rootAttributeType = null
+            rootRoleType = null
             closeWriteTx()
             closeReadTx()
         }
