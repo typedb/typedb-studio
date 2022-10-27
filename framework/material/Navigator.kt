@@ -422,7 +422,6 @@ object Navigator {
         state: NavigatorState<T>,
         modifier: Modifier = Modifier,
         itemHeight: Dp = ITEM_HEIGHT,
-        horizontalItemPadding: Dp = 0.dp,
         bottomSpace: Dp = BOTTOM_SPACE,
         iconArg: ((ItemState<T>) -> IconArg)? = null,
         styleArgs: ((ItemState<T>) -> List<Typography.Style>) = { listOf() },
@@ -442,7 +441,7 @@ object Navigator {
                     .horizontalScroll(state = horScrollState)
                     .pointerMoveFilter(onExit = { state.hovered = null; false })
             ) {
-                state.entries.forEach { item { ItemLayout(state, it, itemHeight, iconArg, styleArgs, horizontalItemPadding) } }
+                state.entries.forEach { item { ItemLayout(state, it, itemHeight, iconArg, styleArgs) } }
                 if (bottomSpace > 0.dp) item { Spacer(Modifier.height(bottomSpace)) }
             }
             Scrollbar.Vertical(verScrollAdapter, Modifier.align(Alignment.CenterEnd), state.areaHeight)
@@ -457,8 +456,8 @@ object Navigator {
     private fun <T : Navigable<T>> ItemLayout(
         state: NavigatorState<T>, item: ItemState<T>, itemHeight: Dp,
         iconArg: ((ItemState<T>) -> IconArg)?, styleArgs: (ItemState<T>) -> List<Typography.Style>,
-        horizontalItemPadding: Dp
     ) {
+        val horizontalItemPadding = if (iconArg == null) 0.dp else Dialog.DIALOG_SPACING
         val styles = styleArgs(item)
         val bgColor = when {
             state.selected == item -> Theme.studio.primary

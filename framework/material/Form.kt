@@ -519,19 +519,17 @@ object Form {
                         .padding(vertical = MULTILINE_INPUT_PADDING)
                         .horizontalScroll(state.horScroller)
                 ) {
-                    Row(Modifier.align(alignment = Alignment.TopStart)) {
-                        BasicTextField(
-                            value = value,
-                            onValueChange = { state.updateValue(it); onValueChange(it) },
-                            onTextLayout = { state.updateLayout(it, value); onTextLayout(it) },
-                            cursorBrush = SolidColor(Theme.studio.secondary),
-                            textStyle = Theme.typography.body1.copy(Theme.studio.onSurface),
-                            modifier = Modifier.focusRequester(focusReq)
-                                .defaultMinSize(minWidth = state.boxWidth - MULTILINE_INPUT_PADDING)
-                                .padding(textFieldPadding)
-                        )
-                        Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
-                    }
+                    BasicTextField(
+                        value = value,
+                        onValueChange = { state.updateValue(it); onValueChange(it) },
+                        onTextLayout = { state.updateLayout(it, value); onTextLayout(it) },
+                        cursorBrush = SolidColor(Theme.studio.secondary),
+                        textStyle = Theme.typography.body1.copy(Theme.studio.onSurface),
+                        modifier = Modifier.focusRequester(focusReq)
+                            .defaultMinSize(minWidth = state.boxWidth - MULTILINE_INPUT_PADDING)
+                            .padding(textFieldPadding)
+                    )
+                    Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
                 }
             }
         }

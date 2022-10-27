@@ -87,6 +87,7 @@ object PreferenceDialog {
     private val PREFERENCE_GROUP_INIT_SIZE = 600.dp
     private val PREFERENCE_GROUP_MIN_SIZE = 500.dp
     private val RESET_BUTTON_HEIGHT = 20.dp
+    private val MULTILINE_FIELD_HEIGHT = Form.FIELD_HEIGHT * 5
 
     private val preferenceSrv = Service.preference
 
@@ -203,10 +204,9 @@ object PreferenceDialog {
         }
 
         class MultilineTextInput(
-            initValue: String, fieldHeight: Int,
+            initValue: String,
             label: String, caption: String? = null,
-        ): PreferenceField(label, caption, fieldHeight = Form.FIELD_HEIGHT * fieldHeight) {
-
+        ): PreferenceField(label, caption, fieldHeight = MULTILINE_FIELD_HEIGHT) {
             var value by mutableStateOf(TextFieldValue(initValue))
 
             @Composable
@@ -414,7 +414,6 @@ object PreferenceDialog {
                 initValue = ignoredPathsString,
                 label = PROJECT_IGNORED_PATHS,
                 caption = IGNORED_PATHS_CAPTION,
-                fieldHeight = 5,
             )
 
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
@@ -468,7 +467,6 @@ object PreferenceDialog {
         Navigator.Layout(
             state = navState,
             modifier = Modifier.fillMaxSize(),
-            horizontalItemPadding = Dialog.DIALOG_SPACING
         )
 
         LaunchedEffect(navState) {
@@ -484,9 +482,6 @@ object PreferenceDialog {
 
     @Composable
     private fun Preferences() {
-        state.rootPreferenceGroup.resetSelfAndDescendants()
-        selectedPreferenceGroup = state.rootPreferenceGroup.entries.first()
-
         Dialog.Layout(
             Service.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT,
             padding = 0.dp,
@@ -521,6 +516,11 @@ object PreferenceDialog {
                 }
                 Dialog.ColumnSpacer()
             }
+        }
+        LaunchedEffect(null
+        ) {
+            state.rootPreferenceGroup.resetSelfAndDescendants()
+            selectedPreferenceGroup = state.rootPreferenceGroup.entries.first()
         }
     }
 
