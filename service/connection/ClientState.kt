@@ -68,8 +68,7 @@ class ClientState constructor(
     val isConnected: Boolean get() = status == CONNECTED
     val isConnecting: Boolean get() = status == CONNECTING
     val isDisconnected: Boolean get() = status == DISCONNECTED
-    var address: String? by mutableStateOf(null)
-    var username: String? by mutableStateOf(null)
+    var connectionName: String? by mutableStateOf(null)
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
@@ -88,7 +87,7 @@ class ClientState constructor(
 
     fun tryConnectToTypeDBAsync(
         address: String, onSuccess: () -> Unit
-    ) = tryConnectAsync(address, null, onSuccess) { TypeDB.coreClient(address) }
+    ) = tryConnectAsync(newConnectionName = address, onSuccess = onSuccess) { TypeDB.coreClient(address) }
 
     fun tryConnectToTypeDBClusterAsync(
         address: String, username: String, password: String,
@@ -105,16 +104,15 @@ class ClientState constructor(
     private fun tryConnectToTypeDBClusterAsync(
         address: String, username: String,
         credentials: TypeDBCredential, onSuccess: () -> Unit
-    ) = tryConnectAsync(address, username, onSuccess) { TypeDB.clusterClient(address, credentials) }
+    ) = tryConnectAsync("$username@$address", onSuccess) { TypeDB.clusterClient(address, credentials) }
 
     private fun tryConnectAsync(
-        newAddress: String, newUsername: String?, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient
+        newConnectionName: String, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient
     ) = coroutines.launchAndHandle(notificationSrv, LOGGER) {
         if (isConnecting || isConnected) return@launchAndHandle
         statusAtomic.set(CONNECTING)
         try {
-            address = newAddress
-            username = newUsername
+            connectionName = newConnectionName
             _client = clientConstructor()
             statusAtomic.set(CONNECTED)
             onSuccess()
