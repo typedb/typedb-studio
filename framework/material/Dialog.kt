@@ -44,7 +44,7 @@ import com.vaticle.typedb.studio.service.common.util.DialogState
 
 object Dialog {
 
-    val DIALOG_SPACING = 16.dp
+    val DIALOG_SPACING = Theme.DIALOG_PADDING
 
     private fun handleKeyEvent(event: KeyEvent, state: DialogState): Boolean = when (event.type) {
         KeyEventType.KeyUp -> false
@@ -73,15 +73,5 @@ object Dialog {
         val bgColor = Theme.studio.backgroundMedium
         val modifier = Modifier.background(bgColor).padding(padding).onKeyEvent { handleKeyEvent(it, state) }
         Box(modifier) { content() }
-    }
-
-    @Composable
-    fun RowSpacer() {
-        Spacer(modifier = Modifier.width(DIALOG_SPACING))
-    }
-
-    @Composable
-    fun ColumnSpacer() {
-        Spacer(modifier = Modifier.height(DIALOG_SPACING))
     }
 }

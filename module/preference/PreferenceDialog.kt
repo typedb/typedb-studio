@@ -509,16 +509,12 @@ object PreferenceDialog {
                     }
                 )
                 Separator.Horizontal()
-                Dialog.ColumnSpacer()
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Row(modifier = Modifier.fillMaxWidth().padding(Dialog.DIALOG_SPACING), horizontalArrangement = Arrangement.End) {
                     ChangeFormButtons(state)
-                    Dialog.RowSpacer()
                 }
-                Dialog.ColumnSpacer()
             }
         }
-        LaunchedEffect(Unit
-        ) {
+        LaunchedEffect(Unit) {
             state.rootPreferenceGroup.resetSelfAndDescendants()
             selectedPreferenceGroup = state.rootPreferenceGroup.entries.first()
         }
