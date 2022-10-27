@@ -159,12 +159,12 @@ object Form {
         val onClick: () -> Unit
     )
 
-    interface State {
-        fun cancel()
-        fun isValid(): Boolean
-        fun trySubmit()
-        fun trySubmitIfValid() {
-            if (isValid()) trySubmit()
+    abstract class State {
+        abstract fun cancel()
+        abstract fun isValid(): Boolean
+        abstract fun submit()
+        fun submitIfValid() {
+            if (isValid()) submit()
         }
     }
 
@@ -204,7 +204,7 @@ object Form {
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
             modifier = modifier.onKeyEvent {
-                onKeyEventHandler(event = it, onEnter = { state.trySubmitIfValid() })
+                onKeyEventHandler(event = it, onEnter = { state.submitIfValid() })
             }
         ) {
             content()
@@ -214,7 +214,7 @@ object Form {
                     Spacer(modifier = Modifier.weight(1f))
                     TextButton(text = Label.CANCEL) { state.cancel() }
                     RowSpacer()
-                    TextButton(text = submitLabel, enabled = state.isValid()) { state.trySubmit() }
+                    TextButton(text = submitLabel, enabled = state.isValid()) { state.submit() }
                 }
             }
         }

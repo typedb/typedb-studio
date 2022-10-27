@@ -74,7 +74,7 @@ object ServerDialog {
 
     private val state by mutableStateOf(ConnectServerForm())
 
-    private class ConnectServerForm : Form.State {
+    private class ConnectServerForm : Form.State() {
         var server: Property.Server by mutableStateOf(appData.server ?: Property.Server.TYPEDB)
         var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
         var clusterAddresses: MutableList<String> = mutableStateListOf<String>().also {
@@ -96,7 +96,7 @@ object ServerDialog {
             }
         }
 
-        override fun trySubmit() {
+        override fun submit() {
             when (server) {
                 TYPEDB ->  {
                     Service.client.tryConnectToTypeDBAsync(coreAddress) {
@@ -127,7 +127,7 @@ object ServerDialog {
         }
     }
 
-    private object CreateAddressForm : Form.State {
+    private object CreateAddressForm : Form.State() {
 
         var value: String by mutableStateOf("")
 
@@ -139,7 +139,7 @@ object ServerDialog {
             return value.isNotBlank()
         }
 
-        override fun trySubmit() {
+        override fun submit() {
             assert(isValid())
             state.clusterAddresses.add(value)
             value = ""
@@ -162,13 +162,13 @@ object ServerDialog {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 ServerFormField(state)
                 if (state.server == TYPEDB_CLUSTER) {
-                    ClusterAddressesFormField(state)
+                    ClusterAddressesFormField(state = state, shouldFocus = Service.client.isDisconnected)
                     UsernameFormField(state)
                     PasswordFormField(state)
                     TLSEnabledFormField(state)
                     if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
                 } else if (state.server == TYPEDB) {
-                    CoreAddressFormField(state, Service.client.isDisconnected)
+                    CoreAddressFormField(state, shouldFocus = Service.client.isDisconnected)
                 }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -215,12 +215,13 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ClusterAddressesFormField(state: ConnectServerForm) {
+    private fun ClusterAddressesFormField(state: ConnectServerForm, shouldFocus: Boolean) {
+        val focusReq = if (shouldFocus) remember { FocusRequester() } else null
         Field(label = Label.ADDRESSES) {
             Row {
                 TextInput(
                     value = state.clusterAddresses.joinToString(", "),
-                    placeholder = Label.DEFAULT_SERVER_ADDRESS,
+                    placeholder = Label.DEFAULT_SERVER_ADDRESS_CLUSTER,
                     onValueChange = { },
                     enabled = false,
                     modifier = Modifier.weight(1f),
@@ -228,11 +229,13 @@ object ServerDialog {
                 RowSpacer()
                 IconButton(
                     icon = Icon.ADD,
-                    tooltip = Tooltip.Arg(Label.MANAGE_CLUSTER_ADDRESSES)
+                    tooltip = Tooltip.Arg(Label.MANAGE_CLUSTER_ADDRESSES),
+                    focusReq = focusReq
                 )
                 { Service.client.manageAddressesDialog.open() }
             }
         }
+        LaunchedEffect(focusReq) { focusReq?.requestFocus() }
     }
 
     @Composable
@@ -274,7 +277,7 @@ object ServerDialog {
                         title = Label.CREATE_DATABASE,
                         description = Sentence.CREATE_DATABASE_BUTTON_DESCRIPTION
                     )
-                ) { CreateAddressForm.trySubmit() }
+                ) { CreateAddressForm.submit() }
             }
         }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
@@ -376,7 +379,7 @@ object ServerDialog {
     private fun DisconnectedFormButtons(state: ConnectServerForm) {
         TextButton(text = Label.CANCEL) { state.cancel() }
         RowSpacer()
-        TextButton(text = Label.CONNECT, enabled = state.isValid()) { state.trySubmit() }
+        TextButton(text = Label.CONNECT, enabled = state.isValid()) { state.submit() }
     }
 
     @Composable

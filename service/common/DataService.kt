@@ -84,7 +84,8 @@ class DataService {
             get() = properties?.getProperty(CONNECTION_CORE_ADDRESS)
             set(value) = value?.let { setProperty(CONNECTION_CORE_ADDRESS, it) } ?: Unit
         var clusterAddresses: MutableList<String>?
-            get() = properties?.getProperty(CONNECTION_CLUSTER_ADDRESSES)?.split(",")?.toMutableList()
+            get() = properties?.getProperty(CONNECTION_CLUSTER_ADDRESSES)?.
+                    split(",")?.filter { it.isNotBlank() }?.toMutableList()
             set(value) = value?.let { setProperty(CONNECTION_CLUSTER_ADDRESSES, it.joinToString(",")) } ?: Unit
         var username: String?
             get() = properties?.getProperty(CONNECTION_USERNAME)

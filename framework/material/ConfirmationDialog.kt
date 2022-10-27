@@ -49,7 +49,7 @@ object ConfirmationDialog {
     private val HEIGHT = 220.dp
     private val WIDTH = 500.dp
 
-    internal class State : Form.State {
+    internal class State : Form.State() {
 
         var verificationInput by mutableStateOf("")
         val hasReject get() = Service.confirmation.hasReject
@@ -71,7 +71,7 @@ object ConfirmationDialog {
             return verificationValue == null || verificationValue == verificationInput
         }
 
-        override fun trySubmit() {
+        override fun submit() {
             Service.confirmation.confirm()
         }
     }
@@ -128,6 +128,6 @@ object ConfirmationDialog {
         if (formState.hasConfirm) TextButton(
             text = formState.confirmLabel ?: Label.CONFIRM,
             enabled = formState.isValid()
-        ) { formState.trySubmitIfValid() }
+        ) { formState.submitIfValid() }
     }
 }

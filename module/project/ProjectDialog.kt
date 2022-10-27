@@ -63,14 +63,14 @@ object ProjectDialog {
         val isValid: ((String) -> Boolean)? = null,
         val onCancel: () -> Unit,
         val onSubmit: (String) -> Unit
-    ) : Form.State {
+    ) : Form.State() {
 
         var field: String by mutableStateOf(initField)
 
         override fun cancel() = onCancel()
         override fun isValid(): Boolean = field.isNotBlank() && isValid?.invoke(field) ?: true
 
-        override fun trySubmit() {
+        override fun submit() {
             assert(field.isNotBlank())
             onSubmit(field)
         }

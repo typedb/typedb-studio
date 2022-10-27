@@ -478,7 +478,7 @@ object Toolbar {
     object Major {
 
         private val connectionName
-            get() = (Service.client.username?.let { "$it@" } ?: "") + Service.client.address
+            get() = (Service.client.username?.let { "$it@" } ?: "") + Service.client.connectionName
 
         @Composable
         internal fun Buttons() {
