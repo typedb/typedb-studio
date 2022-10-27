@@ -68,6 +68,8 @@ class ClientState constructor(
     val isConnected: Boolean get() = status == CONNECTED
     val isConnecting: Boolean get() = status == CONNECTING
     val isDisconnected: Boolean get() = status == DISCONNECTED
+    var address: String? by mutableStateOf(null)
+    var username: String? by mutableStateOf(null)
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
@@ -76,7 +78,6 @@ class ClientState constructor(
     val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     val session = SessionState(this, notificationSrv, preferenceSrv)
-    var connectionName: String? by mutableStateOf(null)
     private val statusAtomic = AtomicReferenceState(DISCONNECTED)
     private var _client: TypeDBClient? by mutableStateOf(null)
     private var hasRunningCommandAtomic = AtomicBooleanState(false)
@@ -87,7 +88,7 @@ class ClientState constructor(
 
     fun tryConnectToTypeDBAsync(
         address: String, onSuccess: () -> Unit
-    ) = tryConnectAsync(newConnectionName = address, onSuccess = onSuccess) { TypeDB.coreClient(address) }
+    ) = tryConnectAsync(address, null, onSuccess) { TypeDB.coreClient(address) }
 
     fun tryConnectToTypeDBClusterAsync(
         address: String, username: String, password: String,
@@ -104,15 +105,16 @@ class ClientState constructor(
     private fun tryConnectToTypeDBClusterAsync(
         address: String, username: String,
         credentials: TypeDBCredential, onSuccess: () -> Unit
-    ) = tryConnectAsync("$username@$address", onSuccess) { TypeDB.clusterClient(address, credentials) }
+    ) = tryConnectAsync(address, username, onSuccess) { TypeDB.clusterClient(address, credentials) }
 
     private fun tryConnectAsync(
-        newConnectionName: String, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient
+        newAddress: String, newUsername: String?, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient
     ) = coroutines.launchAndHandle(notificationSrv, LOGGER) {
         if (isConnecting || isConnected) return@launchAndHandle
         statusAtomic.set(CONNECTING)
         try {
-            connectionName = newConnectionName
+            address = newAddress
+            username = newUsername
             _client = clientConstructor()
             statusAtomic.set(CONNECTED)
             onSuccess()
