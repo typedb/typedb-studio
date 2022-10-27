@@ -477,9 +477,6 @@ object Toolbar {
 
     object Major {
 
-        private val connectionName
-            get() = (Service.client.username?.let { "$it@" } ?: "") + Service.client.address
-
         @Composable
         internal fun Buttons() {
             ToolbarRow {
@@ -527,7 +524,7 @@ object Toolbar {
             when (Service.client.status) {
                 DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
                 CONNECTING -> ConnectionButton(Label.CONNECTING)
-                CONNECTED -> ConnectionButton(connectionName)
+                CONNECTED -> ConnectionButton(Service.client.connectionName!!)
             }
         }
 
