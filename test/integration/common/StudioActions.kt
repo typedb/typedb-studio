@@ -90,7 +90,7 @@ object StudioActions {
     }
 
     suspend fun waitUntilAssert(composeRule: ComposeContentTestRule, assertion: () -> Any) {
-        composeRule.waitUntil(Delays.WAIT_UNTIL_TIMEOUT) {
+        composeRule.waitUntil(Delays.WAIT_TIMEOUT) {
             try {
                 assertion()
                 runBlocking {
@@ -133,7 +133,7 @@ object StudioActions {
         Service.client.tryConnectToTypeDBAsync(address) {}
         delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
-        composeRule.waitUntil(Delays.WAIT_UNTIL_TIMEOUT) {
+        waitUntilAssert(composeRule) {
             Service.client.isConnected
         }
 
@@ -173,7 +173,7 @@ object StudioActions {
         waitUntilNodeWithTextIsClickable(composeRule, Label.WRITE.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
-        composeRule.waitUntil(Delays.WAIT_UNTIL_TIMEOUT) {
+        waitUntilAssert(composeRule) {
             Service.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
         }
 
@@ -205,7 +205,7 @@ object StudioActions {
         waitUntilNodeWithTextIsClickable(composeRule, Label.WRITE.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
-        composeRule.waitUntil(Delays.WAIT_UNTIL_TIMEOUT) {
+        waitUntilAssert(composeRule) {
             Service.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
         }
 
@@ -226,7 +226,7 @@ object StudioActions {
         }
     }
 
-    suspend fun verifyDataWrite(
+    fun verifyDataWrite(
         address: String, dbName: String, queryFileName: String) {
         val queryString = readQueryFileToString(queryFileName)
 
@@ -258,6 +258,6 @@ object StudioActions {
         const val FILE_IO = 750
         const val NETWORK_IO = 1_500
         const val CONNECT_SERVER = 2_500
-        const val WAIT_UNTIL_TIMEOUT: Long = 30_000
+        const val WAIT_TIMEOUT: Long = 30_000
     }
 }
