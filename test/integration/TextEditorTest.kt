@@ -101,7 +101,7 @@ class TextEditorTest: IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
                 writeDataInteractively(composeRule, dbName = testID, SampleGitHubData.dataFile)
-                verifyDataWrite(composeRule, typeDB.address(), dbName = testID, "$testID/${SampleGitHubData.collaboratorsQueryFile}")
+                verifyDataWrite(typeDB.address(), dbName = testID, "$testID/${SampleGitHubData.collaboratorsQueryFile}")
             }
         }
     }
