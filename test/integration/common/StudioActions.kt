@@ -78,18 +78,18 @@ object StudioActions {
     }
 
     suspend fun waitUntilNodeWithTextIsClickable(composeRule: ComposeContentTestRule, text: String) {
-        waitUntilAssert(composeRule) { composeRule.onNodeWithText(text).assertHasClickAction() }
+        waitUntilAssertionIsTrue(composeRule) { composeRule.onNodeWithText(text).assertHasClickAction() }
     }
 
     suspend fun waitUntilNodeWithTextExists(composeRule: ComposeContentTestRule, text: String) {
-        waitUntilAssert(composeRule) { composeRule.onNodeWithText(text).assertExists() }
+        waitUntilAssertionIsTrue(composeRule) { composeRule.onNodeWithText(text).assertExists() }
     }
 
     suspend fun waitUntilNodeWithTextNotExists(composeRule: ComposeContentTestRule, text: String) {
-        waitUntilAssert(composeRule) { composeRule.onNodeWithText(text).assertDoesNotExist() }
+        waitUntilAssertionIsTrue(composeRule) { composeRule.onNodeWithText(text).assertDoesNotExist() }
     }
 
-    suspend fun waitUntilAssert(composeRule: ComposeContentTestRule, assertion: () -> Any) {
+    suspend fun waitUntilAssertionIsTrue(composeRule: ComposeContentTestRule, assertion: () -> Any) {
         composeRule.waitUntil(Delays.WAIT_TIMEOUT) {
             try {
                 assertion()
@@ -133,7 +133,7 @@ object StudioActions {
         StudioState.client.tryConnectToTypeDBAsync(address) {}
         delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
-        waitUntilAssert(composeRule) {
+        waitUntilAssertionIsTrue(composeRule) {
             StudioState.client.isConnected
         }
 
@@ -151,7 +151,7 @@ object StudioActions {
 
         StudioState.client.refreshDatabaseList()
 
-        waitUntilAssert(composeRule) {
+        waitUntilAssertionIsTrue(composeRule) {
             StudioState.client.refreshDatabaseList()
             StudioState.client.databaseList.contains(dbName)
         }
@@ -173,7 +173,7 @@ object StudioActions {
         waitUntilNodeWithTextIsClickable(composeRule, Label.WRITE.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
-        waitUntilAssert(composeRule) {
+        waitUntilAssertionIsTrue(composeRule) {
             StudioState.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
         }
 
@@ -187,7 +187,7 @@ object StudioActions {
 
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        waitUntilAssert(composeRule) {
+        waitUntilAssertionIsTrue(composeRule) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
@@ -205,7 +205,7 @@ object StudioActions {
         waitUntilNodeWithTextIsClickable(composeRule, Label.WRITE.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
-        waitUntilAssert(composeRule) {
+        waitUntilAssertionIsTrue(composeRule) {
             StudioState.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
         }
 
@@ -221,7 +221,7 @@ object StudioActions {
 
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        waitUntilAssert(composeRule) {
+        waitUntilAssertionIsTrue(composeRule) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
