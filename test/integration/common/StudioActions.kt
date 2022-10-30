@@ -47,8 +47,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
 
 object StudioActions {
+    private val LOGGER = KotlinLogging.logger {}
+
+
     suspend fun clickIcon(composeRule: ComposeContentTestRule, icon: Icon) {
         clickText(composeRule, icon.unicode)
         delayAndRecompose(composeRule)
@@ -190,7 +194,8 @@ object StudioActions {
 
     suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
         StudioState.notification.dismissAll()
-        delayAndRecompose(composeRule)
+
+        clickIcon(composeRule, Icon.ADD)
 
         StudioState.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
@@ -209,21 +214,20 @@ object StudioActions {
         waitUntilNodeWithIconIsClickable(composeRule, Icon.RUN)
         clickIcon(composeRule, Icon.RUN)
 
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+
         waitUntilNodeWithIconIsClickable(composeRule, Icon.COMMIT)
         clickIcon(composeRule, Icon.COMMIT)
+
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         waitUntilAssert(composeRule) {
             StudioState.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
 
-    suspend fun verifyDataWrite(composeRule: ComposeContentTestRule, address: String, dbName: String, queryFileName: String) {
+    suspend fun verifyDataWrite(address: String, dbName: String, queryFileName: String) {
         val queryString = readQueryFileToString(queryFileName)
-
-        clickText(composeRule, Label.INFER.lowercase())
-        clickText(composeRule, Label.READ.lowercase())
-
-        delayAndRecompose(composeRule)
 
         TypeDB.coreClient(address).use { client ->
             client.session(dbName, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
