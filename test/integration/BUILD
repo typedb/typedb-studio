@@ -42,10 +42,7 @@ compose_test_libraries = [
     "@maven//:org_jetbrains_kotlin_kotlin_test",
     "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
     "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
-    "@maven//:org_jetbrains_skiko_skiko_awt",
-
-    "@maven//:ch_qos_logback_logback_classic",
-    "@maven//:ch_qos_logback_logback_core",
+    "@maven//:org_jetbrains_skiko_skiko_awt"
 ]
 
 kt_jvm_library(
@@ -67,7 +64,6 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
     ],
-    resources = ["//config/logback:logback-xml"],
 )
 
 typedb_kt_test(
@@ -80,7 +76,6 @@ typedb_kt_test(
     server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
     server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
     server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
-    resources = ["//config/logback:logback-xml"],
 )
 
 typedb_kt_test(
@@ -102,7 +97,6 @@ typedb_kt_test(
     server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
     server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
     server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
-    resources = ["//config/logback:logback-xml"],
 )
 
 kt_jvm_test(
@@ -117,7 +111,6 @@ kt_jvm_test(
         "//state/page",
         "//state/project",
     ],
-    resources = ["//config/logback:logback-xml"],
 )
 
 typedb_kt_test(
@@ -141,7 +134,6 @@ typedb_kt_test(
     server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
     server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
     server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
-    resources = ["//config/logback:logback-xml"],
 )
 
 typedb_kt_test(
@@ -165,7 +157,6 @@ typedb_kt_test(
     server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
     server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
     server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
-    resources = ["//config/logback:logback-xml"],
 )
 
 checkstyle_test(
