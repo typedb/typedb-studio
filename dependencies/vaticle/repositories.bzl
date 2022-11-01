@@ -21,26 +21,26 @@ def vaticle_dependencies():
     git_repository(
         name = "vaticle_dependencies",
         remote = "https://github.com/vaticle/dependencies",
-        commit = "a8b3b714a5e0562d41f4c05ca8f266d48b7d0fd3", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
+        commit = "4464b506ca469f37d3b696fb2f1eda34061cdaa1", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
     )
 
 def vaticle_force_graph():
     git_repository(
         name = "vaticle_force_graph",
-        remote = "https://github.com/vaticle/force-graph",
-        commit = "26b760737078afa08976aecd702ea451df049ced",
+        remote = "https://github.com/jamesreprise/vaticle-force-graph",
+        commit = "41aa1839d6ee1914488669e922e433f30e631d32",
     )
 
 def vaticle_typedb_common():
     git_repository(
         name = "vaticle_typedb_common",
         remote = "https://github.com/vaticle/typedb-common",
-        commit = "3ac0c1069986f8f5dc90aebf06facfb2cb2016f1" # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_common
+        commit = "17c162fe7135db6988d7ac1ae5416568231c8789" # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_common
     )
 
 def vaticle_typedb_client_java():
     git_repository(
         name = "vaticle_typedb_client_java",
         remote = "https://github.com/vaticle/client-java",
-        commit = "68b659021d9e22e349ef2be51ccedabf7cfa6870",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
+        commit = "17c162fe7135db6988d7ac1ae5416568231c8789",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
     )
