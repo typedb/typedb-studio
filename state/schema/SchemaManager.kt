@@ -282,6 +282,10 @@ class SchemaManager constructor(
             rootRelationType = null
             rootAttributeType = null
             rootRoleType = null
+            entityTypes.clear()
+            attributeTypes.clear()
+            relationTypes.clear()
+            roleTypes.clear()
             closeWriteTx()
             closeReadTx()
         }
