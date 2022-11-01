@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.state.schema
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBTransaction
@@ -127,10 +128,10 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
     protected abstract fun isSameEncoding(conceptType: Type): Boolean
     protected abstract fun asSameEncoding(conceptType: Type): T
     protected abstract fun typeStateOf(type: T): TS?
-    protected abstract fun updateConceptType(label: String = name)
     protected abstract fun requestSubtypesExplicit(): List<T>?
-    internal abstract fun loadDependencies()
     protected abstract fun loadInheritables()
+    internal abstract fun loadDependencies()
+    internal abstract fun updateConceptType(label: String = name)
     abstract override fun toString(): String
 
     fun loadSupertypesAsync() = coroutines.launchAndHandle(notifications, LOGGER) { loadSupertypes() }
@@ -672,10 +673,16 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         override val parent: Relation? get() = supertype
         var relatesRoleTypeProperties: List<RelatesRoleTypeProperties> by mutableStateOf(emptyList())
         val relatesRoleTypes: List<Role> get() = relatesRoleTypeProperties.map { it.roleType }
+        val relatesRoleTypesExplicit: List<Role> get() = relatesRoleTypeProperties.filter { !it.isInherited }.map { it.roleType }
 
         override fun isSameEncoding(conceptType: Type) = conceptType.isRelationType
         override fun asSameEncoding(conceptType: Type) = conceptType.asRelationType()!!
         override fun typeStateOf(type: RelationType) = schemaMgr.typeStateOf(type)
+
+        override fun updateConceptType(label: String) {
+            super.updateConceptType(label)
+            relatesRoleTypesExplicit.forEach { it.updateConceptType() }
+        }
 
         override fun requestSubtypesExplicit() = schemaMgr.openOrGetReadTx()?.let {
             conceptType.asRemote(it).subtypesExplicit.toList()
@@ -784,7 +791,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         override fun purge() {
             super.purge()
-            relatesRoleTypes.forEach { it.purge() }
+            relatesRoleTypesExplicit.forEach { it.purge() }
         }
 
         override fun toString(): String = "TypeState.Relation: $conceptType"
@@ -809,9 +816,10 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         override fun typeStateOf(type: RoleType) = schemaMgr.typeStateOf(type)
 
         override fun updateConceptType(label: String) = schemaMgr.openOrGetReadTx()?.let {
-            conceptType = relationType.conceptType.asRemote(it).getRelates(label)!!
-            isAbstract = conceptType.isAbstract
-            name = conceptType.label.name()
+            val newConceptType = relationType.conceptType.asRemote(it).getRelates(label)!!
+            isAbstract = newConceptType.isAbstract
+            name = newConceptType.label.name()
+            conceptType = newConceptType // we need to update the mutable state last
         } ?: Unit
 
         override fun requestSubtypesExplicit() = schemaMgr.openOrGetReadTx()?.let {

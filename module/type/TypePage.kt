@@ -189,6 +189,12 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     }
 
     @Composable
+    protected fun TypeTableCellText(typeState: TypeState<*, *>, onClick: () -> Unit) = ClickableText(
+        value = TypeLabelWithDetails(typeState.conceptType, typeState.isAbstract),
+        onClick = onClick
+    )
+
+    @Composable
     protected fun AdvancedSections(sections: @Composable (separator: @Composable () -> Unit) -> Unit) {
         SectionColumn(mayHighlightBackgroundModifier(showAdvanced)) {
             Separator(showAdvanced)
@@ -236,7 +242,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             Form.Text(value = Label.SUPERTYPE)
             Spacer(Modifier.weight(1f))
             Form.TextButton(
-                text = TypeLabelWithDetails(supertypeState.conceptType),
+                text = TypeLabelWithDetails(supertypeState.conceptType, supertypeState.isAbstract),
                 leadingIcon = icon(supertypeState.conceptType),
                 enabled = !typeState.isRoot,
             ) { supertypeState.tryOpen() }
@@ -276,26 +282,19 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 contextMenuFn = { ownsAttributeTypesContextMenu(it) },
                 columns = listOf(
                     Table.Column(header = Label.ATTRIBUTE_TYPE, contentAlignment = Alignment.CenterStart) { props ->
-                        ClickableText(TypeLabelWithDetails(props.attributeType.conceptType)) {
-                            props.attributeType.tryOpen()
-                        }
+                        TypeTableCellText(props.attributeType) { props.attributeType.tryOpen() }
                     },
                     Table.Column(header = Label.OVERRIDDEN_TYPE, contentAlignment = Alignment.CenterStart) { props ->
-                        props.overriddenType?.let { ot ->
-                            ClickableText(TypeLabelWithDetails(ot.conceptType)) { ot.tryOpen() }
-                        }
+                        props.overriddenType?.let { ot -> TypeTableCellText(ot) { ot.tryOpen() } }
                     },
                     Table.Column(header = Label.EXTENDED_TYPE, contentAlignment = Alignment.CenterStart) { props ->
-                        props.extendedType?.let { ot -> ClickableText(ot.name) { ot.tryOpen() } }
+                        props.extendedType?.let { ot -> TypeTableCellText(ot) { ot.tryOpen() } }
                     },
                     Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
                         MayTickIcon(it.isInherited)
                     },
                     Table.Column(header = Label.KEY, size = Either.second(ICON_COL_WIDTH)) {
                         MayTickIcon(it.isKey)
-                    },
-                    Table.Column(header = Label.ABSTRACT, size = Either.second(ICON_COL_WIDTH)) {
-                        MayTickIcon(it.attributeType.isAbstract)
                     }
                 )
             )
@@ -352,7 +351,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 Form.Dropdown(
                     values = attributeTypeList,
                     selected = attributeType,
-                    displayFn = { TypeLabelWithDetails(it.conceptType) },
+                    displayFn = { TypeLabelWithDetails(it.conceptType, it.isAbstract) },
                     onSelection = { attributeType = it; it?.loadSupertypesAsync() },
                     onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursivelyAsync() },
                     placeholder = Label.ATTRIBUTE_TYPE.hyphenate().lowercase(),
@@ -366,7 +365,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 Form.Dropdown(
                     values = overridableTypeList,
                     selected = overriddenType,
-                    displayFn = { TypeLabelWithDetails(it.conceptType) },
+                    displayFn = { TypeLabelWithDetails(it.conceptType, it.isAbstract) },
                     onSelection = { overriddenType = it },
                     placeholder = Label.OVERRIDDEN_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxWidth(),
@@ -442,19 +441,16 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 contextMenuFn = contextMenuFn,
                 columns = listOf(
                     Table.Column(header = Label.ROLE_TYPE, contentAlignment = Alignment.CenterStart) { props ->
-                        ClickableText(props.roleType.scopedName) { props.roleType.relationType.tryOpen() }
+                        TypeTableCellText(props.roleType) { props.roleType.relationType.tryOpen() }
                     },
                     Table.Column(header = Label.OVERRIDDEN_TYPE, contentAlignment = Alignment.CenterStart) { props ->
-                        props.overriddenType?.let { ot -> ClickableText(ot.scopedName) { ot.relationType.tryOpen() } }
+                        props.overriddenType?.let { ot -> TypeTableCellText(ot) { ot.relationType.tryOpen() } }
                     },
                     Table.Column(header = Label.EXTENDED_TYPE, contentAlignment = Alignment.CenterStart) { props ->
-                        props.extendedType?.let { ot -> ClickableText(ot.name) { ot.tryOpen() } }
+                        props.extendedType?.let { ot -> TypeTableCellText(ot) { ot.tryOpen() } }
                     },
                     Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
                         MayTickIcon(it.isInherited)
-                    },
-                    Table.Column(header = Label.ABSTRACT, size = Either.second(ICON_COL_WIDTH)) {
-                        MayTickIcon(it.roleType.isAbstract)
                     }
                 )
             )
@@ -484,7 +480,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 Form.Dropdown(
                     values = roleTypeList,
                     selected = roleType,
-                    displayFn = { TypeLabelWithDetails(it.conceptType) },
+                    displayFn = { TypeLabelWithDetails(it.conceptType, it.isAbstract) },
                     onSelection = { roleType = it; it?.loadSupertypesAsync() },
                     onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
                     placeholder = Label.ROLE_TYPE.hyphenate().lowercase(),
@@ -498,7 +494,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 Form.Dropdown(
                     values = overridableTypeList,
                     selected = overriddenType,
-                    displayFn = { TypeLabelWithDetails(it.conceptType) },
+                    displayFn = { TypeLabelWithDetails(it.conceptType, it.isAbstract) },
                     onSelection = { overriddenType = it },
                     placeholder = Label.OVERRIDDEN_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxWidth(),
@@ -717,7 +713,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     Form.Dropdown(
                         values = overridableTypeList,
                         selected = overriddenType,
-                        displayFn = { TypeLabelWithDetails(it.conceptType) },
+                        displayFn = { TypeLabelWithDetails(it.conceptType, it.isAbstract) },
                         onSelection = { overriddenType = it },
                         placeholder = Label.OVERRIDDEN_TYPE.hyphenate().lowercase(),
                         modifier = Modifier.fillMaxWidth(),
@@ -764,10 +760,10 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     contextMenuFn = { ownerTypesContextMenu(it) },
                     columns = listOf(
                         Table.Column(header = Label.OWNER_TYPE, contentAlignment = Alignment.CenterStart) { props ->
-                            ClickableText(TypeLabelWithDetails(props.ownerType.conceptType)) { props.ownerType.tryOpen() }
+                            TypeTableCellText(props.ownerType) { props.ownerType.tryOpen() }
                         },
                         Table.Column(header = Label.EXTENDED_TYPE, contentAlignment = Alignment.CenterStart) { props ->
-                            props.extendedType?.let { ot -> ClickableText(ot.name) { ot.tryOpen() } }
+                            props.extendedType?.let { ot -> TypeTableCellText(ot) { ot.tryOpen() } }
                         },
                         Table.Column(header = Label.INHERITED, size = Either.second(ICON_COL_WIDTH)) {
                             MayTickIcon(it.isInherited)

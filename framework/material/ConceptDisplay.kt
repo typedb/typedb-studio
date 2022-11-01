@@ -32,6 +32,7 @@ import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.vaticle.typedb.studio.state.common.util.Label
 import java.time.format.DateTimeFormatter
 
 object ConceptDisplay {
@@ -44,11 +45,17 @@ object ConceptDisplay {
     }
 
     @Composable
-    fun TypeLabelWithDetails(concept: Type, baseFontColor: Color = Theme.studio.onPrimary): AnnotatedString {
-        val valueType = if (concept is AttributeType) concept.valueType.name.lowercase() else null
+    fun TypeLabelWithDetails(
+        concept: Type,
+        isAbstract: Boolean = false,
+        baseFontColor: Color = Theme.studio.onPrimary
+    ): AnnotatedString {
+        val details = mutableListOf<String>()
+        if (concept is AttributeType) details.add(concept.valueType.name.lowercase())
+        if (isAbstract) details.add(Label.ABSTRACT.lowercase())
         return buildAnnotatedString {
             append(concept.label.scopedName())
-            valueType?.let {
+            if (details.isNotEmpty()) details.joinToString(separator = ", ").let {
                 append(" ")
                 withStyle(SpanStyle(baseFontColor.copy(FADED_OPACITY))) { append("(${it})") }
             }
