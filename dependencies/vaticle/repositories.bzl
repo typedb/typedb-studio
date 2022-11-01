@@ -27,8 +27,8 @@ def vaticle_dependencies():
 def vaticle_force_graph():
     git_repository(
         name = "vaticle_force_graph",
-        remote = "https://github.com/jamesreprise/vaticle-force-graph",
-        commit = "41aa1839d6ee1914488669e922e433f30e631d32",
+        remote = "https://github.com/vaticle/force-graph",
+        commit = "dc5e7119fc09bafae0acadab1bdc14241337bc7b",
     )
 
 def vaticle_typedb_common():
@@ -41,6 +41,6 @@ def vaticle_typedb_common():
 def vaticle_typedb_client_java():
     git_repository(
         name = "vaticle_typedb_client_java",
-        remote = "https://github.com/jamesreprise/typedb-client-java",
-        commit = "716b6b1b57439ec793236d17add87f0805ffe7e1",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
+        remote = "https://github.com/vaticle/typedb-client-java",
+        commit = "5f2a12cf977eee9115a09eff63a0c0bb58c13044",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
     )
