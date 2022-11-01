@@ -254,7 +254,7 @@ object TypeDialog {
             }
         }
         Dialog.Layout(dialogState, Label.CHANGE_TYPE_ABSTRACTNESS, DIALOG_WIDTH, DIALOG_HEIGHT) {
-            Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.CREATE) {
+            Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = Label.SAVE) {
                 Form.Text(message, softWrap = true)
                 AbstractField(formState.isAbstract) { formState.isAbstract = it }
             }
