@@ -89,9 +89,10 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     override val hasSecondary: Boolean = false
     override val icon: Form.IconArg = icon(typeState.conceptType)
 
-    protected val isEditable
+    internal val canReadSchema get() = !StudioState.schema.hasRunningTx
+    internal val canWriteSchema
         get() = !typeState.isRoot && StudioState.schema.isWritable &&
-                !StudioState.schema.hasRunningWrite && !StudioState.client.hasRunningCommand
+                !StudioState.schema.hasRunningTx && !StudioState.client.hasRunningCommand
 
     private val focusReq = FocusRequester()
     private val horScroller = ScrollState(0)
@@ -322,7 +323,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             ContextMenu.Item(
                 label = Label.REMOVE,
                 icon = Icon.REMOVE,
-                enabled = isEditable && !prop.isInherited && prop.canBeUndefined
+                enabled = canWriteSchema && !prop.isInherited && prop.canBeUndefined
             ) { typeState.initiateRemoveOwnsAttributeType(prop.attributeType) }
         )
     )
@@ -341,9 +342,9 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             ?.intersect(typeState.supertype!!.ownsAttTypes.toSet())
             ?.sortedBy { it.name } ?: listOf()
 
-        val isOwnable = isEditable && attributeType != null
-        val isOverridable = isEditable && overridableTypeList.isNotEmpty()
-        val isKeyable = isEditable && attributeType?.isKeyable == true
+        val isOwnable = canWriteSchema && attributeType != null
+        val isOverridable = canWriteSchema && overridableTypeList.isNotEmpty()
+        val isKeyable = canWriteSchema && attributeType?.isKeyable == true
         var isKey: Boolean by remember { mutableStateOf(false) }
 
         SectionRow {
@@ -357,7 +358,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     placeholder = Label.ATTRIBUTE_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxSize(),
                     allowNone = true,
-                    enabled = isEditable
+                    enabled = canWriteSchema
                 )
             }
             Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
@@ -422,7 +423,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             ContextMenu.Item(
                 label = Label.REMOVE,
                 icon = Icon.REMOVE,
-                enabled = isEditable && prop.roleType.canBeDeleted
+                enabled = canWriteSchema && prop.roleType.canBeDeleted
             ) { typeState.initiateRemovePlaysRoleType(prop.roleType) }
         )
     )
@@ -472,8 +473,8 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             ?.intersect(typeState.supertype!!.playsRoleTypes.toSet())
             ?.sortedBy { it.scopedName } ?: listOf()
 
-        val isPlayable = isEditable && roleType != null
-        val isOverridable = isEditable && overridableTypeList.isNotEmpty()
+        val isPlayable = canWriteSchema && roleType != null
+        val isOverridable = canWriteSchema && overridableTypeList.isNotEmpty()
 
         SectionRow {
             Box(Modifier.weight(1f)) {
@@ -486,7 +487,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     placeholder = Label.ROLE_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxSize(),
                     allowNone = true,
-                    enabled = isEditable
+                    enabled = canWriteSchema
                 )
             }
             Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
@@ -558,7 +559,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             text = Label.DELETE,
             textColor = Theme.studio.errorStroke,
             leadingIcon = Form.IconArg(Icon.DELETE) { Theme.studio.errorStroke },
-            enabled = isEditable && typeState.canBeDeleted,
+            enabled = canWriteSchema && typeState.canBeDeleted,
             tooltip = Tooltip.Arg(Label.DELETE, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION)
         ) { typeState.initiateDelete() }
     }
@@ -568,7 +569,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         Form.TextButton(
             text = Label.EXPORT,
             leadingIcon = Form.IconArg(Icon.EXPORT),
-            enabled = StudioState.project.current != null,
+            enabled = StudioState.project.current != null && canReadSchema,
             tooltip = Tooltip.Arg(Label.EXPORT_SYNTAX)
         ) {
             typeState.exportSyntaxAsync { syntax ->
@@ -585,6 +586,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         Form.TextButton(
             text = Label.REFRESH,
             leadingIcon = Form.IconArg(Icon.REFRESH),
+            enabled = canReadSchema,
             tooltip = Tooltip.Arg(Label.REFRESH)
         ) {
             StudioState.schema.closeReadTx()
@@ -601,7 +603,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     protected fun EditButton(enabled: Boolean = true, onClick: () -> Unit) {
         Form.IconButton(
             icon = Icon.RENAME,
-            enabled = isEditable && enabled,
+            enabled = canWriteSchema && enabled,
             tooltip = Tooltip.Arg(Label.RENAME, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
             onClick = onClick
         )
@@ -667,19 +669,19 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 ContextMenu.Item(
                     label = Label.RENAME,
                     icon = Icon.RENAME,
-                    enabled = isEditable && !props.isInherited,
+                    enabled = canWriteSchema && !props.isInherited,
                 ) { props.roleType.initiateRename() },
                 ContextMenu.Item(
                     label = Label.CHANGE_OVERRIDDEN_TYPE,
                     icon = Icon.TYPES,
-                    enabled = isEditable && !props.isInherited,
+                    enabled = canWriteSchema && !props.isInherited,
                 ) { props.roleType.initiateChangeOverriddenType() },
             ),
             listOf(
                 ContextMenu.Item(
                     label = Label.DELETE,
                     icon = Icon.DELETE,
-                    enabled = isEditable && !props.isInherited && props.roleType.canBeDeleted
+                    enabled = canWriteSchema && !props.isInherited && props.roleType.canBeDeleted
                 ) { typeState.initiateDeleteRoleType(props.roleType) }
             )
         )
@@ -692,8 +694,8 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 ?.filter { it != StudioState.schema.rootRoleType }
                 ?.sortedBy { it.scopedName } ?: listOf()
 
-            val isRelatable = isEditable && roleType.isNotEmpty()
-            val isOverridable = isEditable && overridableTypeList.isNotEmpty()
+            val isRelatable = canWriteSchema && roleType.isNotEmpty()
+            val isOverridable = canWriteSchema && overridableTypeList.isNotEmpty()
 
             fun submit() = typeState.tryDefineRelatesRoleType(roleType, overriddenType) {
                 roleType = ""
@@ -706,7 +708,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     placeholder = Label.ROLE.lowercase(),
                     modifier = Modifier.weight(1f).onKeyEvent { Form.onKeyEventHandler(it, onEnter = { submit() }) },
                     onValueChange = { roleType = it },
-                    enabled = isEditable,
+                    enabled = canWriteSchema,
                 )
                 Form.Text(value = Label.AS.lowercase(), enabled = isOverridable)
                 Box(Modifier.weight(1f)) {

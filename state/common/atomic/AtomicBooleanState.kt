@@ -23,7 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class AtomicBooleanState(initValue: Boolean) {
+class AtomicBooleanState constructor(initValue: Boolean) {
 
     var state by mutableStateOf(initValue); private set
     val atomic = AtomicBoolean(initValue)

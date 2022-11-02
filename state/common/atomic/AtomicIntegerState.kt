@@ -23,7 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import java.util.concurrent.atomic.AtomicInteger
 
-class AtomicIntegerState(initValue: Int) {
+class AtomicIntegerState constructor(initValue: Int) {
 
     var state by mutableStateOf(initValue); private set
     val atomic = AtomicInteger(initValue)
@@ -33,13 +33,7 @@ class AtomicIntegerState(initValue: Int) {
         state = value
     }
 
-    fun incrementAndGet(): Int {
-        state = atomic.incrementAndGet()
-        return state
-    }
+    fun incrementAndGet(): Int = atomic.incrementAndGet().also { state = it }
 
-    fun decrementAndGet(): Int {
-        state = atomic.decrementAndGet()
-        return state
-    }
+    fun decrementAndGet() = atomic.decrementAndGet().also { state = it }
 }
