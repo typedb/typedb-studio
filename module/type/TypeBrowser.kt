@@ -91,12 +91,13 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
 
     private fun refreshButton(navState: Navigator.NavigatorState<TypeState.Thing<*, *>>) = IconButtonArg(
         icon = Icon.REFRESH,
+        enabled = !StudioState.schema.hasRunningTx,
         tooltip = Tooltip.Arg(title = Label.REFRESH)
     ) { refresh(navState) }
 
     private fun exportButton(navState: Navigator.NavigatorState<TypeState.Thing<*, *>>) = IconButtonArg(
         icon = Icon.EXPORT,
-        enabled = StudioState.project.current != null,
+        enabled = StudioState.project.current != null && !StudioState.schema.hasRunningTx,
         tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
     ) {
         StudioState.schema.exportTypeSchemaAsync { schema ->

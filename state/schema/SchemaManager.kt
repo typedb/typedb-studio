@@ -28,6 +28,8 @@ import com.vaticle.typedb.studio.state.app.DialogManager
 import com.vaticle.typedb.studio.state.app.NotificationManager
 import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
+import com.vaticle.typedb.studio.state.common.atomic.AtomicIntegerState
+import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_OPEN_READ_TX
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_OPEN_WRITE_TX
 import com.vaticle.typedb.studio.state.connection.SessionState
 import com.vaticle.typedb.studio.state.page.Navigable
@@ -79,7 +81,7 @@ class SchemaManager constructor(
         get() = rootEntityType?.let { listOf(it, rootRelationType!!, rootAttributeType!!) } ?: listOf()
 
     val isOpen: Boolean get() = isOpenAtomic.state
-    val hasRunningWrite: Boolean get() = hasRunningWriteAtomic.state
+    val hasRunningTx: Boolean get() = hasRunningWriteAtomic.state || countRunningReadAtomic.state > 0
     var rootEntityType: TypeState.Entity? by mutableStateOf(null); private set
     var rootRelationType: TypeState.Relation? by mutableStateOf(null); private set
     var rootRoleType: TypeState.Role? by mutableStateOf(null); private set
@@ -88,7 +90,7 @@ class SchemaManager constructor(
     val createEntityTypeDialog = TypeDialogManager<TypeState.Entity>()
     val createAttributeTypeDialog = TypeDialogManager<TypeState.Attribute>()
     val createRelationTypeDialog = TypeDialogManager<TypeState.Relation>()
-    val renameTypeDialog = TypeDialogManager<TypeState<*, *>>()
+    val renameTypeDialog = TypeDialogManager<TypeState<*, *>>() // class parameters needed by compiler
     val changeEntitySupertypeDialog = TypeDialogManager<TypeState.Entity>()
     val changeAttributeSupertypeDialog = TypeDialogManager<TypeState.Attribute>()
     val changeRelationSupertypeDialog = TypeDialogManager<TypeState.Relation>()
@@ -103,7 +105,8 @@ class SchemaManager constructor(
     private val roleTypes = ConcurrentHashMap<RoleType, TypeState.Role>()
     private val isOpenAtomic = AtomicBooleanState(false)
     private val onTypesUpdated = LinkedBlockingQueue<() -> Unit>()
-    private var hasRunningWriteAtomic = AtomicBooleanState(false)
+    private var hasRunningWriteAtomic = AtomicBooleanState(initValue = false)
+    private var countRunningReadAtomic = AtomicIntegerState(initValue = 0)
     internal val database: String? get() = session.database
     internal val coroutines = CoroutineScope(Dispatchers.Default)
 
@@ -123,7 +126,7 @@ class SchemaManager constructor(
 
     fun onTypesUpdated(function: () -> Unit) = onTypesUpdated.put(function)
 
-    override fun reloadEntries() = openOrGetReadTx()?.let { tx ->
+    override fun reloadEntries() = mayRunReadTx { tx ->
         // TODO: Implement API to retrieve .hasSubtypes() on TypeDB Type API
         entries.forEach { it.hasSubtypes = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent }
     } ?: Unit
@@ -137,7 +140,7 @@ class SchemaManager constructor(
         else -> throw IllegalStateException("Unrecognised ThingType object")
     }
 
-    internal fun typeStateOf(entityType: EntityType): TypeState.Entity? = openOrGetReadTx()?.let { tx ->
+    internal fun typeStateOf(entityType: EntityType): TypeState.Entity? = mayRunReadTx { tx ->
         val remote = entityType.asRemote(tx)
         entityTypes[entityType] ?: let {
             val supertype = remote.supertype?.let { st ->
@@ -149,7 +152,7 @@ class SchemaManager constructor(
         }
     }
 
-    internal fun typeStateOf(attributeType: AttributeType): TypeState.Attribute? = openOrGetReadTx()?.let { tx ->
+    internal fun typeStateOf(attributeType: AttributeType): TypeState.Attribute? = mayRunReadTx { tx ->
         val remote = attributeType.asRemote(tx)
         attributeTypes[attributeType] ?: let {
             val supertype = remote.supertype?.let { st ->
@@ -161,7 +164,7 @@ class SchemaManager constructor(
         }
     }
 
-    internal fun typeStateOf(relationType: RelationType): TypeState.Relation? = openOrGetReadTx()?.let { tx ->
+    internal fun typeStateOf(relationType: RelationType): TypeState.Relation? = mayRunReadTx { tx ->
         val remote = relationType.asRemote(tx)
         relationTypes[relationType] ?: let {
             val supertype = remote.supertype?.let { st ->
@@ -173,7 +176,7 @@ class SchemaManager constructor(
         }
     }
 
-    internal fun typeStateOf(roleType: RoleType): TypeState.Role? = openOrGetReadTx()?.let { tx ->
+    internal fun typeStateOf(roleType: RoleType): TypeState.Role? = mayRunReadTx { tx ->
         val remote = roleType.asRemote(tx)
         roleTypes[roleType] ?: let {
             val supertype = remote.supertype?.let { st ->
@@ -187,7 +190,7 @@ class SchemaManager constructor(
         }
     }
 
-    private fun refreshTypesAndOpen() = openOrGetReadTx()?.let { tx ->
+    private fun refreshTypesAndOpen() = mayRunReadTx { tx ->
         if (rootEntityType == null) rootEntityType = TypeState.Entity(
             conceptType = tx.concepts().rootEntityType, supertype = null, schemaMgr = this
         ).also { entityTypes[tx.concepts().rootEntityType] = it }
@@ -216,12 +219,31 @@ class SchemaManager constructor(
         session.typeSchema()?.let { onSuccess(it) }
     }
 
-    internal fun mayWriteAsync(function: (TypeDBTransaction) -> Unit) {
+    internal fun mayRunWriteTxAsync(function: (TypeDBTransaction) -> Unit) {
         if (hasRunningWriteAtomic.compareAndSet(expected = false, new = true)) {
             coroutines.launchAndHandle(notification, LOGGER) {
                 openOrGetWriteTx()?.let { function(it) } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_WRITE_TX)
             }.invokeOnCompletion { hasRunningWriteAtomic.set(false) }
         }
+    }
+
+    internal fun <T: Any> mayRunReadTx(function: (TypeDBTransaction) -> T?): T? {
+        fun openOrGetReadTx(): TypeDBTransaction? = synchronized(this) {
+            lastTransactionUse.set(System.currentTimeMillis())
+            if (isWritable && session.transaction.isOpen) return openOrGetWriteTx()
+            if (readTx.get() != null) return readTx.get()
+            readTx.set(session.transaction()?.also {
+                it.onClose { closeReadTx() }
+                scheduleCloseReadTxAsync()
+            })
+            return readTx.get()
+        }
+
+        var result: T? = null
+        countRunningReadAtomic.incrementAndGet()
+        openOrGetReadTx()?.let { result = function(it) } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_READ_TX)
+        countRunningReadAtomic.decrementAndGet()
+        return result
     }
 
     private fun openOrGetWriteTx(): TypeDBTransaction? = synchronized(this) {
@@ -230,17 +252,6 @@ class SchemaManager constructor(
         if (writeTx.get() != null) return writeTx.get()
         writeTx.set(session.transaction.tryOpen()?.also { it.onClose { writeTx.set(null) } })
         return writeTx.get()
-    }
-
-    internal fun openOrGetReadTx(): TypeDBTransaction? = synchronized(this) {
-        lastTransactionUse.set(System.currentTimeMillis())
-        if (isWritable && session.transaction.isOpen) return openOrGetWriteTx()
-        if (readTx.get() != null) return readTx.get()
-        readTx.set(session.transaction()?.also {
-            it.onClose { closeReadTx() }
-            scheduleCloseReadTxAsync()
-        })
-        return readTx.get()
     }
 
     private fun scheduleCloseReadTxAsync() = coroutines.launchAndHandle(notification, LOGGER) {

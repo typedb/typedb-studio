@@ -19,7 +19,6 @@
 package com.vaticle.typedb.studio.state.schema
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBTransaction
@@ -136,7 +135,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
     fun loadSupertypesAsync() = coroutines.launchAndHandle(notifications, LOGGER) { loadSupertypes() }
 
-    fun loadSupertypes(): Unit = schemaMgr.openOrGetReadTx()?.let { tx ->
+    fun loadSupertypes(): Unit = schemaMgr.mayRunReadTx { tx ->
         val typeTx = conceptType.asRemote(tx)
         supertype = typeTx.supertype?.let {
             if (isSameEncoding(it)) typeStateOf(asSameEncoding(it)) else null
@@ -145,7 +144,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         supertypes = supertype?.let { listOf(it) + it.supertypes } ?: listOf()
     } ?: Unit
 
-    protected fun loadHasSubtypes() = schemaMgr.openOrGetReadTx()?.let {
+    protected fun loadHasSubtypes() = schemaMgr.mayRunReadTx {
         // TODO: Implement API to retrieve .hasSubtypes() on TypeDB Type API
         hasSubtypes = conceptType.asRemote(it).subtypesExplicit.findAny().isPresent
     }
@@ -181,7 +180,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
     fun initiateRename() = schemaMgr.renameTypeDialog.open(this)
 
-    fun tryRename(label: String) = schemaMgr.mayWriteAsync {
+    fun tryRename(label: String) = schemaMgr.mayRunWriteTxAsync {
         try {
             conceptType.asRemote(it).setLabel(label)
             schemaMgr.remove(this)
@@ -198,7 +197,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
     protected fun tryChangeSupertype(
         dialogState: SchemaManager.TypeDialogManager<*>, function: (TypeDBTransaction) -> Unit
-    ) = schemaMgr.mayWriteAsync {
+    ) = schemaMgr.mayRunWriteTxAsync {
         try {
             function(it)
             dialogState.onSuccess?.invoke()
@@ -292,7 +291,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         fun onSubtypesUpdated(function: () -> Unit) = callbacks.onSubtypesUpdated.put(function)
 
-        override fun updateConceptType(label: String) = schemaMgr.openOrGetReadTx()?.let {
+        override fun updateConceptType(label: String) = schemaMgr.mayRunReadTx {
             val newConceptType = asSameEncoding(it.concepts().getThingType(label)!!)
             isAbstract = newConceptType.isAbstract
             name = newConceptType.label.name()
@@ -313,14 +312,14 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         }
 
         fun exportSyntaxAsync(onSuccess: (String) -> Unit) = coroutines.launchAndHandle(notifications, LOGGER) {
-            schemaMgr.openOrGetReadTx()?.let { tx -> conceptType.asRemote(tx).syntax?.let { onSuccess(it) } }
+            schemaMgr.mayRunReadTx { tx -> conceptType.asRemote(tx).syntax?.let { onSuccess(it) } }
         }
 
         fun loadConstraintsAsync() = coroutines.launchAndHandle(notifications, LOGGER) {
             loadConstraints()
         }
 
-        fun loadConstraints() {
+        fun loadConstraints() = schemaMgr.mayRunReadTx {
             try {
                 loadSupertypes()
                 loadOtherConstraints()
@@ -329,7 +328,6 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 notifications.userError(
                     LOGGER, Message.Schema.FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN
                 )
-                e.printStackTrace() // TODO: remove this once we fixed random failures post successful commit
             }
         }
 
@@ -353,7 +351,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             loadPlaysRoleTypes()
         }
 
-        private fun loadHasInstancesExplicit() = schemaMgr.openOrGetReadTx()?.let {
+        private fun loadHasInstancesExplicit() = schemaMgr.mayRunReadTx {
             hasInstancesExplicit = conceptType.asRemote(it).instancesExplicit.findAny().isPresent
         }
 
@@ -380,7 +378,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 }
             }
 
-            schemaMgr.openOrGetReadTx()?.let { tx ->
+            schemaMgr.mayRunReadTx { tx ->
                 val typeTx = conceptType.asRemote(tx)
                 typeTx.getOwnsExplicit(true).forEach {
                     load(typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
@@ -417,7 +415,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 }
             }
 
-            schemaMgr.openOrGetReadTx()?.let { tx ->
+            schemaMgr.mayRunReadTx { tx ->
                 val typeTx = conceptType.asRemote(tx)
                 typeTx.playsExplicit.forEach { load(typeTx, it, false) }
                 typeTx.plays.filter { !loaded.contains(it) }.forEach { load(typeTx, it, true) }
@@ -428,9 +426,9 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         protected fun tryCreateSubtype(
             label: String, dialogState: SchemaManager.TypeDialogManager<*>, creatorFn: (TypeDBTransaction) -> Unit
         ) {
-            if (schemaMgr.openOrGetReadTx()?.concepts()?.getThingType(label) != null) notifications.userError(
+            if (schemaMgr.mayRunReadTx { it.concepts()?.getThingType(label) } != null) notifications.userError(
                 LOGGER, FAILED_TO_CREATE_TYPE_DUE_TO_DUPLICATE, encoding.label, label
-            ) else schemaMgr.mayWriteAsync { tx ->
+            ) else schemaMgr.mayRunWriteTxAsync { tx ->
                 try {
                     creatorFn(tx)
                     dialogState.onSuccess?.invoke()
@@ -444,7 +442,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         fun initiateChangeAbstract() = schemaMgr.changeAbstractDialog.open(this)
 
-        fun tryChangeAbstract(isAbstract: Boolean) = schemaMgr.mayWriteAsync { tx ->
+        fun tryChangeAbstract(isAbstract: Boolean) = schemaMgr.mayRunWriteTxAsync { tx ->
             try {
                 conceptType.asRemote(tx).let { if (isAbstract) it.setAbstract() else it.unsetAbstract() }
                 schemaMgr.changeAbstractDialog.close()
@@ -456,7 +454,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         fun tryDefineOwnsAttributeType(
             attributeType: Attribute, overriddenType: Attribute?, isKey: Boolean, onSuccess: () -> Unit
-        ) = schemaMgr.mayWriteAsync { tx ->
+        ) = schemaMgr.mayRunWriteTxAsync { tx ->
             try {
                 overriddenType?.let {
                     conceptType.asRemote(tx).setOwns(attributeType.conceptType, overriddenType.conceptType, isKey)
@@ -477,7 +475,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         fun tryDefinePlaysRoleType(
             roleType: Role, overriddenType: Role?, onSuccess: () -> Unit
-        ) = schemaMgr.mayWriteAsync { tx ->
+        ) = schemaMgr.mayRunWriteTxAsync { tx ->
             try {
                 overriddenType?.let {
                     conceptType.asRemote(tx).setPlays(roleType.conceptType, it.conceptType)
@@ -501,7 +499,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             onConfirm = { this.tryDelete() }
         )
 
-        override fun tryDelete() = schemaMgr.mayWriteAsync {
+        override fun tryDelete() = schemaMgr.mayRunWriteTxAsync {
             try {
                 conceptType.asRemote(it).delete()
                 purge()
@@ -540,7 +538,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         override fun asSameEncoding(conceptType: Type) = conceptType.asEntityType()!!
         override fun typeStateOf(type: EntityType) = schemaMgr.typeStateOf(type)
 
-        override fun requestSubtypesExplicit() = schemaMgr.openOrGetReadTx()?.let {
+        override fun requestSubtypesExplicit() = schemaMgr.mayRunReadTx {
             conceptType.asRemote(it).subtypesExplicit.toList()
         }
 
@@ -589,7 +587,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         override fun asSameEncoding(conceptType: Type) = conceptType.asAttributeType()!!
         override fun typeStateOf(type: AttributeType) = schemaMgr.typeStateOf(type)
 
-        override fun requestSubtypesExplicit() = schemaMgr.openOrGetReadTx()?.let {
+        override fun requestSubtypesExplicit() = schemaMgr.mayRunReadTx {
             conceptType.asRemote(it).subtypesExplicit.toList()
         }
 
@@ -615,7 +613,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 }
             }
 
-            schemaMgr.openOrGetReadTx()?.let { tx ->
+            schemaMgr.mayRunReadTx { tx ->
                 val typeTx = conceptType.asRemote(tx)
                 typeTx.getOwnersExplicit(true).forEach {
                     load(it, isKey = true, isInherited = false)
@@ -684,7 +682,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             relatesRoleTypesExplicit.forEach { it.updateConceptType() }
         }
 
-        override fun requestSubtypesExplicit() = schemaMgr.openOrGetReadTx()?.let {
+        override fun requestSubtypesExplicit() = schemaMgr.mayRunReadTx {
             conceptType.asRemote(it).subtypesExplicit.toList()
         }
 
@@ -727,7 +725,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 }
             }
 
-            schemaMgr.openOrGetReadTx()?.let { tx ->
+            schemaMgr.mayRunReadTx { tx ->
                 val relTypeTx = conceptType.asRemote(tx)
                 relTypeTx.relatesExplicit.forEach { load(relTypeTx, it, false) }
                 relTypeTx.relates.filter { !loaded.contains(it) && !it.isRoot }.forEach { load(relTypeTx, it, true) }
@@ -762,7 +760,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
 
         fun tryDefineRelatesRoleType(
             roleType: String, overriddenType: Role?, onSuccess: (() -> Unit)?
-        ) = schemaMgr.mayWriteAsync { tx ->
+        ) = schemaMgr.mayRunWriteTxAsync { tx ->
             try {
                 overriddenType?.let {
                     conceptType.asRemote(tx).setRelates(roleType, it.name)
@@ -780,7 +778,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             onConfirm = { tryDeleteRoleType(roleType) }
         )
 
-        fun tryDeleteRoleType(roleType: Role) = schemaMgr.mayWriteAsync {
+        fun tryDeleteRoleType(roleType: Role) = schemaMgr.mayRunWriteTxAsync {
             try {
                 conceptType.asRemote(it).unsetRelates(roleType.conceptType)
                 loadConstraintsAsync()
@@ -815,14 +813,14 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
         override fun asSameEncoding(conceptType: Type) = conceptType.asRoleType()!!
         override fun typeStateOf(type: RoleType) = schemaMgr.typeStateOf(type)
 
-        override fun updateConceptType(label: String) = schemaMgr.openOrGetReadTx()?.let {
+        override fun updateConceptType(label: String) = schemaMgr.mayRunReadTx {
             val newConceptType = relationType.conceptType.asRemote(it).getRelates(label)!!
             isAbstract = newConceptType.isAbstract
             name = newConceptType.label.name()
             conceptType = newConceptType // we need to update the mutable state last
         } ?: Unit
 
-        override fun requestSubtypesExplicit() = schemaMgr.openOrGetReadTx()?.let {
+        override fun requestSubtypesExplicit() = schemaMgr.mayRunReadTx {
             conceptType.asRemote(it).subtypesExplicit.toList()
         }
 
@@ -834,7 +832,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
             loadHasPlayerInstances()
         }
 
-        private fun loadHasPlayerInstances() = schemaMgr.openOrGetReadTx()?.let { tx ->
+        private fun loadHasPlayerInstances() = schemaMgr.mayRunReadTx { tx ->
             hasPlayerInstancesExplicit = conceptType.asRemote(tx).playerInstancesExplicit.findAny().isPresent
         }
 
@@ -849,7 +847,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> private constructor(
                 }
             }
 
-            schemaMgr.openOrGetReadTx()?.let { tx ->
+            schemaMgr.mayRunReadTx { tx ->
                 val roleTypeTx = conceptType.asRemote(tx)
                 roleTypeTx.playerTypesExplicit.forEach { load(it, isInherited = false) }
                 roleTypeTx.playerTypes.filter { !loaded.contains(it) }.forEach { load(it, isInherited = true) }

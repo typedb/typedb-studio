@@ -78,7 +78,7 @@ object Toolbar {
     private val isReadyToRunQuery get() = StudioState.client.isReadyToRunQuery
     private val hasRunnablePage get() = StudioState.pages.active?.isRunnable == true
     private val hasRunningQuery get() = StudioState.client.hasRunningQuery
-    private val hasRunningCommand get() = StudioState.client.hasRunningCommand && StudioState.schema.hasRunningWrite
+    private val hasRunningCommand get() = StudioState.client.hasRunningCommand && StudioState.schema.hasRunningTx
     private val hasStopSignal get() = StudioState.client.session.transaction.hasStopSignal
 
     @Composable

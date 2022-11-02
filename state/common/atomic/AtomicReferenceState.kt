@@ -23,7 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import java.util.concurrent.atomic.AtomicReference
 
-class AtomicReferenceState<T : Any>(initValue: T) {
+class AtomicReferenceState<T : Any> constructor(initValue: T) {
 
     var state: T by mutableStateOf(initValue); private set
     val atomic: AtomicReference<T> = AtomicReference(initValue)
