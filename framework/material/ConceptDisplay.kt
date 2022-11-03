@@ -26,17 +26,17 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import com.vaticle.typedb.client.api.concept.thing.Attribute
 import com.vaticle.typedb.client.api.concept.thing.Relation
-import com.vaticle.typedb.client.api.concept.thing.Thing
 import com.vaticle.typedb.client.api.concept.type.AttributeType
-import com.vaticle.typedb.client.api.concept.type.AttributeType.ValueType
 import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.ThingType
+import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import java.time.format.DateTimeFormatter
 
-object Concept {
+object ConceptDisplay {
 
-    fun conceptIcon(concept: com.vaticle.typedb.client.api.concept.Concept) = when (concept) {
+    fun icon(concept: com.vaticle.typedb.client.api.concept.Concept) = when (concept) {
         is Relation, is RelationType -> Form.IconArg(Icon.RELATION) { Theme.graph.vertex.relationType }
         is Attribute<*>, is AttributeType -> Form.IconArg(Icon.ATTRIBUTE) { Theme.graph.vertex.attributeType }
         is ThingType -> Form.IconArg(Icon.THING) { Theme.graph.vertex.entityType }
@@ -44,34 +44,19 @@ object Concept {
     }
 
     @Composable
-    fun ConceptDetailedLabel(
-        concept: com.vaticle.typedb.client.api.concept.Concept,
-        baseFontColor: Color = Theme.studio.onPrimary
-    ): AnnotatedString {
-        val type = if (concept is Thing) concept.type else (concept.asType())
-        val primary = type.label.scopedName()
-        val secondary = if (type is AttributeType) valueTypeString(type.valueType) else null
-        return annotatedString(primary, secondary, baseFontColor)
-    }
-
-    private fun annotatedString(primary: String, secondary: String? = null, baseFontColor: Color): AnnotatedString {
+    fun TypeLabelWithDetails(concept: Type, baseFontColor: Color = Theme.studio.onPrimary): AnnotatedString {
+        val valueType = if (concept is AttributeType) concept.valueType.name.lowercase() else null
         return buildAnnotatedString {
-            append(primary)
-            secondary?.let {
+            append(concept.label.scopedName())
+            valueType?.let {
                 append(" ")
-                withStyle(SpanStyle(baseFontColor.copy(com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY))) {
-                    append(
-                        "(${it})"
-                    )
-                }
+                withStyle(SpanStyle(baseFontColor.copy(FADED_OPACITY))) { append("(${it})") }
             }
         }
     }
 
-    fun attributeValueString(attribute: Attribute<*>) = when (attribute) {
+    fun attributeValue(attribute: Attribute<*>) = when (attribute) {
         is Attribute.DateTime -> attribute.value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
         else -> attribute.value.toString()
     }
-
-    fun valueTypeString(valueType: ValueType) = valueType.name.lowercase()
 }

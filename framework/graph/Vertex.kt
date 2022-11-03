@@ -41,7 +41,7 @@ import com.vaticle.typedb.studio.framework.common.geometry.Geometry.diamondIncom
 import com.vaticle.typedb.studio.framework.common.geometry.Geometry.ellipseIncomingLineIntersect
 import com.vaticle.typedb.studio.framework.common.geometry.Geometry.rectArcIntersectAngles
 import com.vaticle.typedb.studio.framework.common.geometry.Geometry.rectIncomingLineIntersect
-import com.vaticle.typedb.studio.framework.material.Concept.attributeValueString
+import com.vaticle.typedb.studio.framework.material.ConceptDisplay.attributeValue
 import java.awt.Polygon
 import kotlin.math.pow
 
@@ -98,7 +98,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         class Attribute(val attribute: com.vaticle.typedb.client.api.concept.thing.Attribute<*>, graph: Graph) :
             Thing(attribute, graph) {
 
-            override val label = "${attribute.type.label.name()}: ${attributeValueString(attribute)}"
+            override val label = "${attribute.type.label.name()}: ${attributeValue(attribute)}"
             override val geometry = Geometry.Attribute()
         }
     }

@@ -39,9 +39,8 @@ import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Browsers
-import com.vaticle.typedb.studio.framework.material.Concept.ConceptDetailedLabel
-import com.vaticle.typedb.studio.framework.material.Concept.attributeValueString
-import com.vaticle.typedb.studio.framework.material.Concept.conceptIcon
+import com.vaticle.typedb.studio.framework.material.ConceptDisplay
+import com.vaticle.typedb.studio.framework.material.ConceptDisplay.attributeValue
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Table
@@ -100,9 +99,9 @@ class ConceptPreview constructor(
     private fun ConceptTypePreview(concept: Concept) {
         val type = if (concept is Type) concept else concept.asThing().type
         Row(verticalAlignment = Alignment.CenterVertically) {
-            conceptIcon(type).let { Icon.Render(it.icon, it.color()) }
+            ConceptDisplay.icon(type).let { Icon.Render(it.icon, it.color()) }
             Form.ButtonSpacer()
-            Form.Text(ConceptDetailedLabel(type))
+            Form.Text(ConceptDisplay.TypeLabelWithDetails(type))
         }
     }
 
@@ -134,7 +133,7 @@ class ConceptPreview constructor(
         return listOfNotNull(
             Property.Generic(Label.TYPE) { ConceptTypePreview(concept) },
             if (concept is Thing) Property.String(Label.INTERNAL_ID, concept.iid) else null,
-            if (concept is Attribute<*>) Property.String(Label.VALUE, attributeValueString(concept)) else null,
+            if (concept is Attribute<*>) Property.String(Label.VALUE, attributeValue(concept)) else null,
         )
     }
 }

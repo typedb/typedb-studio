@@ -40,7 +40,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -62,8 +61,8 @@ import com.vaticle.typedb.studio.framework.common.Util.hyphenate
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Concept.ConceptDetailedLabel
-import com.vaticle.typedb.studio.framework.material.Concept.conceptIcon
+import com.vaticle.typedb.studio.framework.material.ConceptDisplay.TypeLabelWithDetails
+import com.vaticle.typedb.studio.framework.material.ConceptDisplay.icon
 import com.vaticle.typedb.studio.framework.material.ContextMenu
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.ClickableText
@@ -88,7 +87,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
 ) : Pages.Page() {
 
     override val hasSecondary: Boolean = false
-    override val icon: Form.IconArg = conceptIcon(typeState.conceptType)
+    override val icon: Form.IconArg = icon(typeState.conceptType)
 
     protected val isEditable
         get() = !typeState.isRoot && StudioState.schema.isWritable &&
@@ -222,8 +221,8 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     private fun LabelSection() {
         SectionRow {
             Form.TextBox(
-                text = ConceptDetailedLabel(typeState.conceptType),
-                leadingIcon = conceptIcon(typeState.conceptType)
+                text = TypeLabelWithDetails(typeState.conceptType),
+                leadingIcon = icon(typeState.conceptType)
             )
             EditButton { typeState.initiateRename() }
             Spacer(Modifier.weight(1f))
@@ -237,8 +236,8 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             Form.Text(value = Label.SUPERTYPE)
             Spacer(Modifier.weight(1f))
             Form.TextButton(
-                text = ConceptDetailedLabel(supertypeState.conceptType),
-                leadingIcon = conceptIcon(supertypeState.conceptType),
+                text = TypeLabelWithDetails(supertypeState.conceptType),
+                leadingIcon = icon(supertypeState.conceptType),
                 enabled = !typeState.isRoot,
             ) { supertypeState.tryOpen() }
             EditButton { typeState.initiateChangeSupertype() }
@@ -277,13 +276,13 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 contextMenuFn = { ownsAttributeTypesContextMenu(it) },
                 columns = listOf(
                     Table.Column(header = Label.ATTRIBUTE_TYPE, contentAlignment = Alignment.CenterStart) { props ->
-                        ClickableText(ConceptDetailedLabel(props.attributeType.conceptType)) {
+                        ClickableText(TypeLabelWithDetails(props.attributeType.conceptType)) {
                             props.attributeType.tryOpen()
                         }
                     },
                     Table.Column(header = Label.OVERRIDDEN_TYPE, contentAlignment = Alignment.CenterStart) { props ->
                         props.overriddenType?.let { ot ->
-                            ClickableText(ConceptDetailedLabel(ot.conceptType)) { ot.tryOpen() }
+                            ClickableText(TypeLabelWithDetails(ot.conceptType)) { ot.tryOpen() }
                         }
                     },
                     Table.Column(header = Label.EXTENDED_TYPE, contentAlignment = Alignment.CenterStart) { props ->
@@ -353,7 +352,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 Form.Dropdown(
                     values = attributeTypeList,
                     selected = attributeType,
-                    displayFn = { ConceptDetailedLabel(it.conceptType) },
+                    displayFn = { TypeLabelWithDetails(it.conceptType) },
                     onSelection = { attributeType = it; it?.loadSupertypesAsync() },
                     onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursivelyAsync() },
                     placeholder = Label.ATTRIBUTE_TYPE.hyphenate().lowercase(),
@@ -367,7 +366,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 Form.Dropdown(
                     values = overridableTypeList,
                     selected = overriddenType,
-                    displayFn = { ConceptDetailedLabel(it.conceptType) },
+                    displayFn = { TypeLabelWithDetails(it.conceptType) },
                     onSelection = { overriddenType = it },
                     placeholder = Label.OVERRIDDEN_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxWidth(),
@@ -485,7 +484,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 Form.Dropdown(
                     values = roleTypeList,
                     selected = roleType,
-                    displayFn = { ConceptDetailedLabel(it.conceptType) },
+                    displayFn = { TypeLabelWithDetails(it.conceptType) },
                     onSelection = { roleType = it; it?.loadSupertypesAsync() },
                     onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
                     placeholder = Label.ROLE_TYPE.hyphenate().lowercase(),
@@ -499,7 +498,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                 Form.Dropdown(
                     values = overridableTypeList,
                     selected = overriddenType,
-                    displayFn = { ConceptDetailedLabel(it.conceptType) },
+                    displayFn = { TypeLabelWithDetails(it.conceptType) },
                     onSelection = { overriddenType = it },
                     placeholder = Label.OVERRIDDEN_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxWidth(),
@@ -535,7 +534,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     .background(Theme.studio.backgroundMedium),
                 itemHeight = if (typeState.subtypes.size > 1) Navigator.ITEM_HEIGHT else EMPTY_BOX_HEIGHT,
                 bottomSpace = 0.dp,
-                iconArg = { conceptIcon(it.item.conceptType) }
+                iconArg = { icon(it.item.conceptType) }
             )
         }
         LaunchedEffect(subtypesNavState) {
@@ -718,7 +717,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     Form.Dropdown(
                         values = overridableTypeList,
                         selected = overriddenType,
-                        displayFn = { ConceptDetailedLabel(it.conceptType) },
+                        displayFn = { TypeLabelWithDetails(it.conceptType) },
                         onSelection = { overriddenType = it },
                         placeholder = Label.OVERRIDDEN_TYPE.hyphenate().lowercase(),
                         modifier = Modifier.fillMaxWidth(),
@@ -765,7 +764,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     contextMenuFn = { ownerTypesContextMenu(it) },
                     columns = listOf(
                         Table.Column(header = Label.OWNER_TYPE, contentAlignment = Alignment.CenterStart) { props ->
-                            ClickableText(ConceptDetailedLabel(props.ownerType.conceptType)) { props.ownerType.tryOpen() }
+                            ClickableText(TypeLabelWithDetails(props.ownerType.conceptType)) { props.ownerType.tryOpen() }
                         },
                         Table.Column(header = Label.EXTENDED_TYPE, contentAlignment = Alignment.CenterStart) { props ->
                             props.extendedType?.let { ot -> ClickableText(ot.name) { ot.tryOpen() } }
