@@ -28,7 +28,7 @@ import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.logic.Explanation
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.app.NotificationService
+import com.vaticle.typedb.studio.state.common.NotificationService
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.connection.TransactionState
 import com.vaticle.typeql.lang.TypeQL

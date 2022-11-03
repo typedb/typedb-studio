@@ -21,10 +21,10 @@ package com.vaticle.typedb.studio.state.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.studio.state.app.ConfirmationService
-import com.vaticle.typedb.studio.state.app.DataService
-import com.vaticle.typedb.studio.state.app.NotificationService
-import com.vaticle.typedb.studio.state.app.PreferenceService
+import com.vaticle.typedb.studio.state.common.ConfirmationService
+import com.vaticle.typedb.studio.state.common.DataService
+import com.vaticle.typedb.studio.state.common.NotificationService
+import com.vaticle.typedb.studio.state.common.PreferenceService
 import com.vaticle.typedb.studio.state.common.util.DialogState
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_FILE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_DIRECTORY

@@ -18,12 +18,12 @@
 
 package com.vaticle.typedb.studio.state
 
-import com.vaticle.typedb.studio.state.app.ConfirmationService
-import com.vaticle.typedb.studio.state.app.DataService
-import com.vaticle.typedb.studio.state.app.EditorService
-import com.vaticle.typedb.studio.state.app.NotificationService
-import com.vaticle.typedb.studio.state.app.PreferenceService
-import com.vaticle.typedb.studio.state.app.StatusService
+import com.vaticle.typedb.studio.state.common.ConfirmationService
+import com.vaticle.typedb.studio.state.common.DataService
+import com.vaticle.typedb.studio.state.common.EditorService
+import com.vaticle.typedb.studio.state.common.NotificationService
+import com.vaticle.typedb.studio.state.common.PreferenceService
+import com.vaticle.typedb.studio.state.common.StatusService
 import com.vaticle.typedb.studio.state.connection.ClientState
 import com.vaticle.typedb.studio.state.page.PageService
 import com.vaticle.typedb.studio.state.project.ProjectService

@@ -23,8 +23,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.studio.state.app.NotificationService
-import com.vaticle.typedb.studio.state.app.PreferenceService
+import com.vaticle.typedb.studio.state.common.NotificationService
+import com.vaticle.typedb.studio.state.common.PreferenceService
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN

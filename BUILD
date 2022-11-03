@@ -43,7 +43,6 @@ kt_jvm_library(
         "//module/type:type",
         "//module/user:user",
         "//module:module",
-        "//state/app:app",
         "//state/common:common",
         "//state/connection:connection",
         "//state/project:project",

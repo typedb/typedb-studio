@@ -122,7 +122,6 @@ typedb_kt_test(
     deps = compose_test_libraries + [
         "//framework/material",
         "//state",
-        "//state/app",
         "//state/common",
         "//state/connection",
         "//state/project",
@@ -145,7 +144,6 @@ typedb_kt_test(
     deps = compose_test_libraries + [
         "//framework/material",
         "//state",
-        "//state/app",
         "//state/common",
         "//state/connection",
         "//state/project",

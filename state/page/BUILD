@@ -30,7 +30,6 @@ kt_jvm_library(
     name = "page",
     srcs = glob(["*.kt"]),
     deps = [
-        "//state/app:app",
         "//state/connection:connection",
 
         # External Maven Dependencies

@@ -30,7 +30,6 @@ kt_jvm_library(
     srcs = glob(["*.kt", "*/*.kt"], exclude = ["*/*Test.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
-        "//state/app:app",
         "//state/common:common",
         "//state/page:page",
         "//state:state",

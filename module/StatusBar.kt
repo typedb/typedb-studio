@@ -38,10 +38,10 @@ import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.app.StatusService
-import com.vaticle.typedb.studio.state.app.StatusService.Key.OUTPUT_RESPONSE_TIME
-import com.vaticle.typedb.studio.state.app.StatusService.Key.QUERY_RESPONSE_TIME
-import com.vaticle.typedb.studio.state.app.StatusService.Key.TEXT_CURSOR_POSITION
+import com.vaticle.typedb.studio.state.common.StatusService
+import com.vaticle.typedb.studio.state.common.StatusService.Key.OUTPUT_RESPONSE_TIME
+import com.vaticle.typedb.studio.state.common.StatusService.Key.QUERY_RESPONSE_TIME
+import com.vaticle.typedb.studio.state.common.StatusService.Key.TEXT_CURSOR_POSITION
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 

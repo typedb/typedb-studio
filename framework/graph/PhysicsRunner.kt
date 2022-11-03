@@ -20,7 +20,7 @@ package com.vaticle.typedb.studio.framework.graph
 
 import androidx.compose.runtime.withFrameMillis
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Message
 import kotlinx.coroutines.Job
 import mu.KotlinLogging

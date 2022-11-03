@@ -36,7 +36,6 @@ kt_jvm_library(
         "//framework/material",
         "//framework/common",
         "//state",
-        "//state/app",
         "//state/common",
         "//state/connection",
         "//state/project",

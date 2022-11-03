@@ -18,7 +18,7 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NO_LONGER_EXIST
 import com.vaticle.typedb.studio.state.page.Navigable
 import java.nio.file.Path

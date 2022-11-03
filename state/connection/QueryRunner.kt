@@ -22,9 +22,9 @@ import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.answer.ConceptMapGroup
 import com.vaticle.typedb.client.api.answer.NumericGroup
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.app.NotificationService
-import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.state.app.PreferenceService
+import com.vaticle.typedb.studio.state.common.NotificationService
+import com.vaticle.typedb.studio.state.common.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.common.PreferenceService
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.ERROR
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.INFO
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.SUCCESS

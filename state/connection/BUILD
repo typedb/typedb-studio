@@ -30,7 +30,6 @@ kt_jvm_library(
     name = "connection",
     srcs = glob(["*.kt"]),
     deps = [
-        "//state/app:app",
         "//state/common:common",
 
         # External Vaticle Dependencies

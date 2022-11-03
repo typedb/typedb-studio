@@ -29,7 +29,6 @@ kt_jvm_library(
     name = "state",
     srcs = glob(["*.kt"]),
     deps = [
-        "//state/app:app",
         "//state/common:common",
         "//state/connection:connection",
         "//state/project:project",

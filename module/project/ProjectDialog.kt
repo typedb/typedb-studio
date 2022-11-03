@@ -43,7 +43,7 @@ import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOpt
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.StudioState.notification
-import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.DialogState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence

@@ -26,10 +26,10 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.material.Tabs
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchCompletableFuture
-import com.vaticle.typedb.studio.state.app.StatusService.Key.OUTPUT_RESPONSE_TIME
-import com.vaticle.typedb.studio.state.app.StatusService.Key.QUERY_RESPONSE_TIME
+import com.vaticle.typedb.studio.state.common.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.common.NotificationService.Companion.launchCompletableFuture
+import com.vaticle.typedb.studio.state.common.StatusService.Key.OUTPUT_RESPONSE_TIME
+import com.vaticle.typedb.studio.state.common.StatusService.Key.QUERY_RESPONSE_TIME
 import com.vaticle.typedb.studio.state.connection.QueryRunner
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Stream.ConceptMaps.Source.MATCH
