@@ -37,7 +37,7 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.framework.common.KeyMapper
 import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.state.app.DialogState
+import com.vaticle.typedb.studio.state.common.util.DialogState
 
 object Dialog {
 
@@ -67,9 +67,8 @@ object Dialog {
             size = DpSize(width, height)
         )
     ) {
-        Box(Modifier.background(Theme.studio.backgroundMedium).padding(padding)
-            .onKeyEvent { handleKeyEvent(it, state) }) {
-            content()
-        }
+        val bgColor = Theme.studio.backgroundMedium
+        val modifier = Modifier.background(bgColor).padding(padding).onKeyEvent { handleKeyEvent(it, state) }
+        Box(modifier) { content() }
     }
 }

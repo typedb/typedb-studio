@@ -24,11 +24,11 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.concept.type.*
 import com.vaticle.typedb.studio.state.app.ConfirmationService
-import com.vaticle.typedb.studio.state.app.DialogState
 import com.vaticle.typedb.studio.state.app.NotificationService
 import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.atomic.AtomicIntegerState
+import com.vaticle.typedb.studio.state.common.util.DialogState
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_OPEN_READ_TX
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_OPEN_WRITE_TX
 import com.vaticle.typedb.studio.state.connection.SessionState

@@ -44,6 +44,7 @@ import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.StudioState.notification
 import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.common.util.DialogState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.project.DirectoryState
@@ -126,7 +127,7 @@ object ProjectDialog {
 
     @Composable
     private fun SelectDirectoryDialog(
-        dialog: com.vaticle.typedb.studio.state.app.DialogState,
+        dialog: DialogState,
         formState: PathForm,
         title: String,
         message: String,
@@ -244,7 +245,7 @@ object ProjectDialog {
 
     @Composable
     private fun PathNamingDialog(
-        dialog: com.vaticle.typedb.studio.state.app.DialogState, formState: PathForm,
+        dialog: DialogState, formState: PathForm,
         title: String, message: String, submitLabel: String
     ) {
         Dialog.Layout(dialog, title, DIALOG_WIDTH, DIALOG_HEIGHT) {

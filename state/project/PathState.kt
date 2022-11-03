@@ -18,7 +18,7 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.app.DialogState
+import com.vaticle.typedb.studio.state.common.util.DialogState
 import com.vaticle.typedb.studio.state.page.Navigable
 import java.nio.channels.FileChannel
 import java.nio.file.Path

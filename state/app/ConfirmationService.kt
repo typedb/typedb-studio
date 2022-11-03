@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.state.app
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.studio.state.common.util.DialogState
 
 class ConfirmationService : DialogState() {
 

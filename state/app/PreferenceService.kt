@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.state.app
 
+import com.vaticle.typedb.studio.state.common.util.DialogState
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.relativeTo

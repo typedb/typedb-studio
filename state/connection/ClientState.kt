@@ -28,12 +28,12 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBSession.Type.DATA
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
-import com.vaticle.typedb.studio.state.app.DialogState
 import com.vaticle.typedb.studio.state.app.NotificationService
 import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.app.PreferenceService
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.atomic.AtomicReferenceState
+import com.vaticle.typedb.studio.state.common.util.DialogState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
 import com.vaticle.typedb.studio.state.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
