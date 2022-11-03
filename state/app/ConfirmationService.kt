@@ -22,7 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-class ConfirmationManager : DialogManager() {
+class ConfirmationService : DialogState() {
 
     var title: String? by mutableStateOf(null)
     var message: String? by mutableStateOf(null); private set

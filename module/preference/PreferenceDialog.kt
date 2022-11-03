@@ -89,7 +89,7 @@ object PreferenceDialog {
     private val PREFERENCE_GROUP_MIN_SIZE = 500.dp
     private val RESET_BUTTON_HEIGHT = 20.dp
 
-    private val preferenceMgr = StudioState.preference
+    private val preferenceSrv = StudioState.preference
 
     private var focusedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root(emptyList()))
     private var state by mutableStateOf(PreferencesForm())
@@ -247,7 +247,7 @@ object PreferenceDialog {
         private val preferenceGroups: List<PreferenceGroup> = listOf(
             PreferenceGroup.GraphVisualiser(),
             PreferenceGroup.TextEditor(),
-            PreferenceGroup.ProjectManager(),
+            PreferenceGroup.Project(),
             PreferenceGroup.QueryRunner()
         )
 
@@ -342,47 +342,47 @@ object PreferenceDialog {
 
         class GraphVisualiser : PreferenceGroup(GRAPH_VISUALISER) {
             private var graphOutput = PreferenceField.Checkbox(
-                initValue = preferenceMgr.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT,
+                initValue = preferenceSrv.graphOutputEnabled, label = ENABLE_GRAPH_OUTPUT,
                 caption = PREFERENCES_GRAPH_OUTPUT_CAPTION
             )
 
             override val preferences: List<PreferenceField> = listOf(graphOutput)
 
             override fun submit() {
-                preferenceMgr.graphOutputEnabled = graphOutput.value
+                preferenceSrv.graphOutputEnabled = graphOutput.value
                 graphOutput.modified = false
             }
 
             override fun reset() {
-                graphOutput.value = preferenceMgr.graphOutputEnabled
+                graphOutput.value = preferenceSrv.graphOutputEnabled
                 graphOutput.modified = false
             }
         }
 
         class TextEditor : PreferenceGroup(TEXT_EDITOR) {
             private var autoSave = PreferenceField.Checkbox(
-                initValue = preferenceMgr.autoSave, label = ENABLE_EDITOR_AUTOSAVE
+                initValue = preferenceSrv.autoSave, label = ENABLE_EDITOR_AUTOSAVE
             )
 
             override val preferences: List<PreferenceField> = listOf(autoSave)
 
             override fun submit() {
-                preferenceMgr.autoSave = autoSave.value
+                preferenceSrv.autoSave = autoSave.value
                 autoSave.modified = false
             }
 
             override fun reset() {
-                autoSave.value = preferenceMgr.autoSave
+                autoSave.value = preferenceSrv.autoSave
                 autoSave.modified = false
             }
         }
 
-        class ProjectManager : PreferenceGroup(PROJECT_MANAGER) {
+        class Project : PreferenceGroup(PROJECT_MANAGER) {
             companion object {
                 private const val IGNORED_PATHS_PLACEHOLDER = ".git"
             }
 
-            private val ignoredPathsString = preferenceMgr.ignoredPaths.joinToString(", ")
+            private val ignoredPathsString = preferenceSrv.ignoredPaths.joinToString(", ")
             private var ignoredPaths = PreferenceField.TextInput(
                 initValue = ignoredPathsString,
                 label = PROJECT_IGNORED_PATHS, placeholder = IGNORED_PATHS_PLACEHOLDER,
@@ -392,12 +392,12 @@ object PreferenceDialog {
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
 
             override fun submit() {
-                preferenceMgr.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
+                preferenceSrv.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
                 ignoredPaths.modified = false
             }
 
             override fun reset() {
-                ignoredPaths.value = preferenceMgr.ignoredPaths.joinToString(", ")
+                ignoredPaths.value = preferenceSrv.ignoredPaths.joinToString(", ")
                 ignoredPaths.modified = false
             }
         }
@@ -408,7 +408,7 @@ object PreferenceDialog {
             }
 
             private var matchQueryLimit = PreferenceField.TextInputValidated(
-                initValue = preferenceMgr.matchQueryLimit.toString(),
+                initValue = preferenceSrv.matchQueryLimit.toString(),
                 label = SET_QUERY_LIMIT, placeholder = QUERY_LIMIT_PLACEHOLDER,
                 invalidWarning = Label.PREFERENCE_INTEGER_WARNING, caption = PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
             ) {/* validator = */ it.toLongOrNull() != null && it.toLongOrNull()!! >= 0 }
@@ -416,12 +416,12 @@ object PreferenceDialog {
             override val preferences: List<PreferenceField> = listOf(matchQueryLimit)
 
             override fun submit() {
-                preferenceMgr.matchQueryLimit = matchQueryLimit.value.toLong()
+                preferenceSrv.matchQueryLimit = matchQueryLimit.value.toLong()
                 matchQueryLimit.modified = false
             }
 
             override fun reset() {
-                matchQueryLimit.value = preferenceMgr.matchQueryLimit.toString()
+                matchQueryLimit.value = preferenceSrv.matchQueryLimit.toString()
                 matchQueryLimit.modified = false
             }
         }

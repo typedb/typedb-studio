@@ -83,7 +83,7 @@ import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.framework.material.Form.RawIconButton
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.state.StudioState.notification
-import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Message.Framework.Companion.EXPAND_LIMIT_REACHED
 import com.vaticle.typedb.studio.state.page.Navigable

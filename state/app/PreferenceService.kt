@@ -22,9 +22,9 @@ import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.relativeTo
 
-class PreferenceManager(appData: DataManager) {
-    private val preferences = appData.preferences
-    val preferencesDialog = DialogManager.Base()
+class PreferenceService(dataSrv: DataService) {
+    private val preferences = dataSrv.preferences
+    val preferencesDialog = DialogState.Base()
 
     var autoSave: Boolean = Defaults.autoSave
         get() = preferences.autoSave ?: field

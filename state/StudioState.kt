@@ -18,44 +18,44 @@
 
 package com.vaticle.typedb.studio.state
 
-import com.vaticle.typedb.studio.state.app.ConfirmationManager
-import com.vaticle.typedb.studio.state.app.DataManager
-import com.vaticle.typedb.studio.state.app.EditorManager
-import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.app.StatusManager
-import com.vaticle.typedb.studio.state.app.PreferenceManager
+import com.vaticle.typedb.studio.state.app.ConfirmationService
+import com.vaticle.typedb.studio.state.app.DataService
+import com.vaticle.typedb.studio.state.app.EditorService
+import com.vaticle.typedb.studio.state.app.NotificationService
+import com.vaticle.typedb.studio.state.app.PreferenceService
+import com.vaticle.typedb.studio.state.app.StatusService
 import com.vaticle.typedb.studio.state.connection.ClientState
-import com.vaticle.typedb.studio.state.page.PageManager
-import com.vaticle.typedb.studio.state.project.ProjectManager
-import com.vaticle.typedb.studio.state.schema.SchemaManager
+import com.vaticle.typedb.studio.state.page.PageService
+import com.vaticle.typedb.studio.state.project.ProjectService
+import com.vaticle.typedb.studio.state.schema.SchemaService
 
 object StudioState {
 
-    lateinit var preference: PreferenceManager
-    lateinit var appData: DataManager
-    lateinit var editor: EditorManager
-    lateinit var status: StatusManager
-    lateinit var notification: NotificationManager
-    lateinit var confirmation: ConfirmationManager
-    lateinit var pages: PageManager
+    lateinit var preference: PreferenceService
+    lateinit var data: DataService
+    lateinit var editor: EditorService
+    lateinit var status: StatusService
+    lateinit var notification: NotificationService
+    lateinit var confirmation: ConfirmationService
+    lateinit var pages: PageService
     lateinit var client: ClientState
-    lateinit var project: ProjectManager
-    lateinit var schema: SchemaManager
+    lateinit var project: ProjectService
+    lateinit var schema: SchemaService
 
     init {
         init()
     }
 
     fun init() {
-        appData = DataManager()
-        preference = PreferenceManager(appData)
-        editor = EditorManager()
-        status = StatusManager()
-        notification = NotificationManager()
-        confirmation = ConfirmationManager()
-        pages = PageManager()
+        data = DataService()
+        preference = PreferenceService(data)
+        editor = EditorService()
+        status = StatusService()
+        notification = NotificationService()
+        confirmation = ConfirmationService()
+        pages = PageService()
         client = ClientState(notification, preference)
-        project = ProjectManager(preference, appData, notification, confirmation, client, pages)
-        schema = SchemaManager(client.session, pages, notification, confirmation)
+        project = ProjectService(preference, data, notification, confirmation, client, pages)
+        schema = SchemaService(client.session, pages, notification, confirmation)
     }
 }

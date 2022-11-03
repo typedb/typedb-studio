@@ -121,14 +121,14 @@ object RunOutputArea {
 
     @Composable
     private fun OutputGroupTabs(state: State, modifier: Modifier) {
-        val runnerMgr = state.pageable.runners
-        fun runnerName(runner: QueryRunner): String = "${state.pageable.name} (${runnerMgr.numberOf(runner)})"
+        val runnerSrv = state.pageable.runners
+        fun runnerName(runner: QueryRunner): String = "${state.pageable.name} (${runnerSrv.numberOf(runner)})"
         fun mayCloseRunner(runner: QueryRunner) {
             if (runner.isRunning.get()) StudioState.confirmation.submit(
                 title = Label.QUERY_IS_RUNNING,
                 message = Sentence.STOP_RUNNING_QUERY_BEFORE_CLOSING_OUTPUT_GROUP_TAB_DESCRIPTION,
                 cancelLabel = Label.OK,
-            ) else runnerMgr.close(runner)
+            ) else runnerSrv.close(runner)
         }
         Row(modifier.height(PANEL_BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.width(PANEL_BAR_SPACING))
@@ -137,19 +137,19 @@ object RunOutputArea {
             Box(Modifier.weight(1f)) {
                 Tabs.Horizontal.Layout(
                     state = state.runnerTabs,
-                    tabs = runnerMgr.launched,
+                    tabs = runnerSrv.launched,
                     labelFn = { AnnotatedString(runnerName(it)) },
-                    isActiveFn = { runnerMgr.isActive(it) },
-                    onClick = { runnerMgr.activate(it) },
+                    isActiveFn = { runnerSrv.isActive(it) },
+                    onClick = { runnerSrv.activate(it) },
                     closeButtonFn = { IconButtonArg(icon = Icon.CLOSE) { mayCloseRunner(it) } },
                     leadingButtonFn = {
                         IconButtonArg(
                             icon = Icon.PIN,
-                            color = { Theme.studio.icon.copy(if (runnerMgr.isSaved(it)) 1f else 0.3f) },
+                            color = { Theme.studio.icon.copy(if (runnerSrv.isSaved(it)) 1f else 0.3f) },
                             hoverColor = { Theme.studio.icon },
                             disabledColor = { Theme.studio.icon },
-                            enabled = !runnerMgr.isSaved(it)
-                        ) { if (!runnerMgr.isSaved(it)) runnerMgr.save(it) }
+                            enabled = !runnerSrv.isSaved(it)
+                        ) { if (!runnerSrv.isSaved(it)) runnerSrv.save(it) }
                     }
                 )
             }

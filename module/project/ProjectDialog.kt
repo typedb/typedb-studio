@@ -32,19 +32,18 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.material.Dialog
-import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
-import com.vaticle.typedb.studio.framework.material.SelectFileDialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
 import com.vaticle.typedb.studio.framework.material.Icon
+import com.vaticle.typedb.studio.framework.material.SelectFileDialog
+import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.StudioState.notification
-import com.vaticle.typedb.studio.state.app.DialogManager
-import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 import com.vaticle.typedb.studio.state.project.DirectoryState
@@ -94,13 +93,13 @@ object ProjectDialog {
     @Composable
     private fun OpenProject() {
         val formState = PathForm(
-            initField = StudioState.appData.project.path?.toString() ?: "",
+            initField = StudioState.data.project.path?.toString() ?: "",
             isValid = { it != StudioState.project.current?.path.toString() },
             onCancel = { StudioState.project.openProjectDialog.close() },
             onSubmit = { StudioState.project.tryOpenProject(Path(it)) }
         )
         SelectDirectoryDialog(
-            dialogState = StudioState.project.openProjectDialog,
+            dialog = StudioState.project.openProjectDialog,
             formState = formState,
             title = Label.OPEN_PROJECT_DIRECTORY,
             message = Sentence.SELECT_DIRECTORY_FOR_PROJECT,
@@ -117,7 +116,7 @@ object ProjectDialog {
             onSubmit = { directory.tryMoveTo(Path(it)) }
         )
         SelectDirectoryDialog(
-            dialogState = StudioState.project.moveDirectoryDialog,
+            dialog = StudioState.project.moveDirectoryDialog,
             formState = state,
             title = Label.MOVE_DIRECTORY,
             message = Sentence.SELECT_PARENT_DIRECTORY_TO_MOVE_UNDER.format(directory.path),
@@ -127,9 +126,13 @@ object ProjectDialog {
 
     @Composable
     private fun SelectDirectoryDialog(
-        dialogState: DialogManager, formState: PathForm, title: String, message: String, submitLabel: String
+        dialog: com.vaticle.typedb.studio.state.app.DialogState,
+        formState: PathForm,
+        title: String,
+        message: String,
+        submitLabel: String
     ) {
-        Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
+        Dialog.Layout(dialog, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
                 Text(value = message, softWrap = true)
                 SelectDirectoryField(formState, window, title)
@@ -241,10 +244,10 @@ object ProjectDialog {
 
     @Composable
     private fun PathNamingDialog(
-        dialogState: DialogManager, formState: PathForm,
+        dialog: com.vaticle.typedb.studio.state.app.DialogState, formState: PathForm,
         title: String, message: String, submitLabel: String
     ) {
-        Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
+        Dialog.Layout(dialog, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize(), submitLabel = submitLabel) {
                 Text(value = message, softWrap = true)
                 PathNamingField(formState.field) { formState.field = it }

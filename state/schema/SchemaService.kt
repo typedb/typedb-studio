@@ -23,17 +23,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.concept.type.*
-import com.vaticle.typedb.studio.state.app.ConfirmationManager
-import com.vaticle.typedb.studio.state.app.DialogManager
-import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.app.ConfirmationService
+import com.vaticle.typedb.studio.state.app.DialogState
+import com.vaticle.typedb.studio.state.app.NotificationService
+import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.atomic.AtomicIntegerState
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_OPEN_READ_TX
 import com.vaticle.typedb.studio.state.common.util.Message.Schema.Companion.FAILED_TO_OPEN_WRITE_TX
 import com.vaticle.typedb.studio.state.connection.SessionState
 import com.vaticle.typedb.studio.state.page.Navigable
-import com.vaticle.typedb.studio.state.page.PageManager
+import com.vaticle.typedb.studio.state.page.PageService
 import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
@@ -47,14 +47,14 @@ import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
-class SchemaManager constructor(
+class SchemaService constructor(
     private val session: SessionState,
-    internal val pages: PageManager,
-    internal val notification: NotificationManager,
-    internal val confirmation: ConfirmationManager
+    internal val pages: PageService,
+    internal val notification: NotificationService,
+    internal val confirmation: ConfirmationService
 ) : Navigable<TypeState.Thing<*, *>> {
 
-    class TypeDialogManager<T : TypeState<*, *>> : DialogManager() {
+    class TypeDialogState<T : TypeState<*, *>> : DialogState() {
 
         var typeState: T? by mutableStateOf(null); private set
         var onSuccess: (() -> Unit)? by mutableStateOf(null); private set
@@ -87,15 +87,15 @@ class SchemaManager constructor(
     var rootRoleType: TypeState.Role? by mutableStateOf(null); private set
     var rootAttributeType: TypeState.Attribute? by mutableStateOf(null); private set
     val isWritable: Boolean get() = session.isSchema && session.transaction.isWrite
-    val createEntityTypeDialog = TypeDialogManager<TypeState.Entity>()
-    val createAttributeTypeDialog = TypeDialogManager<TypeState.Attribute>()
-    val createRelationTypeDialog = TypeDialogManager<TypeState.Relation>()
-    val renameTypeDialog = TypeDialogManager<TypeState<*, *>>() // class parameters needed by compiler
-    val changeEntitySupertypeDialog = TypeDialogManager<TypeState.Entity>()
-    val changeAttributeSupertypeDialog = TypeDialogManager<TypeState.Attribute>()
-    val changeRelationSupertypeDialog = TypeDialogManager<TypeState.Relation>()
-    val changeOverriddenRoleTypeDialog = TypeDialogManager<TypeState.Role>()
-    val changeAbstractDialog = TypeDialogManager<TypeState.Thing<*, *>>()
+    val createEntityTypeDialog = TypeDialogState<TypeState.Entity>()
+    val createAttributeTypeDialog = TypeDialogState<TypeState.Attribute>()
+    val createRelationTypeDialog = TypeDialogState<TypeState.Relation>()
+    val renameTypeDialog = TypeDialogState<TypeState<*, *>>() // class parameters needed by compiler
+    val changeEntitySupertypeDialog = TypeDialogState<TypeState.Entity>()
+    val changeAttributeSupertypeDialog = TypeDialogState<TypeState.Attribute>()
+    val changeRelationSupertypeDialog = TypeDialogState<TypeState.Relation>()
+    val changeOverriddenRoleTypeDialog = TypeDialogState<TypeState.Role>()
+    val changeAbstractDialog = TypeDialogState<TypeState.Thing<*, *>>()
     private var writeTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private var readTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private val lastTransactionUse = AtomicLong(0)
@@ -131,7 +131,7 @@ class SchemaManager constructor(
         entries.forEach { it.hasSubtypes = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent }
     } ?: Unit
 
-    override fun compareTo(other: Navigable<TypeState.Thing<*, *>>): Int = if (other is SchemaManager) 0 else -1
+    override fun compareTo(other: Navigable<TypeState.Thing<*, *>>): Int = if (other is SchemaService) 0 else -1
 
     internal fun typeStateOf(type: ThingType): TypeState.Thing<*, *>? = when (type) {
         is EntityType -> typeStateOf(type)
@@ -192,17 +192,17 @@ class SchemaManager constructor(
 
     private fun refreshTypesAndOpen() = mayRunReadTx { tx ->
         if (rootEntityType == null) rootEntityType = TypeState.Entity(
-            conceptType = tx.concepts().rootEntityType, supertype = null, schemaMgr = this
+            conceptType = tx.concepts().rootEntityType, supertype = null, schemaSrv = this
         ).also { entityTypes[tx.concepts().rootEntityType] = it }
         if (rootRelationType == null) rootRelationType = TypeState.Relation(
-            conceptType = tx.concepts().rootRelationType, supertype = null, schemaMgr = this
+            conceptType = tx.concepts().rootRelationType, supertype = null, schemaSrv = this
         ).also { relationTypes[tx.concepts().rootRelationType] = it }
         val conceptRoleType = tx.concepts().rootRelationType.asRemote(tx).relates.findFirst().get()
         if (rootRoleType == null) rootRoleType = TypeState.Role(
-            relationType = rootRelationType!!, conceptType = conceptRoleType, supertype = null, schemaMgr = this
+            relationType = rootRelationType!!, conceptType = conceptRoleType, supertype = null, schemaSrv = this
         ).also { roleTypes[conceptRoleType] = it }
         if (rootAttributeType == null) rootAttributeType = TypeState.Attribute(
-            conceptType = tx.concepts().rootAttributeType, supertype = null, schemaMgr = this
+            conceptType = tx.concepts().rootAttributeType, supertype = null, schemaSrv = this
         ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
         (entityTypes.values + attributeTypes.values + relationTypes.values).forEach {
             if (tx.concepts().getThingType(it.name) == null) it.purge()

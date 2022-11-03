@@ -53,8 +53,8 @@ import mu.KotlinLogging
 class DirectoryState internal constructor(
     path: Path,
     parent: DirectoryState?,
-    projectMgr: ProjectManager,
-) : PathState(parent, path, Type.DIRECTORY, projectMgr) {
+    projectSrv: ProjectService,
+) : PathState(parent, path, Type.DIRECTORY, projectSrv) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -76,11 +76,11 @@ class DirectoryState internal constructor(
 
     override fun reloadEntries() {
         if (!path.exists() || !path.isReadable()) {
-            projectMgr.notification.userError(LOGGER, PATH_NOT_EXIST, path)
+            projectSrv.notification.userError(LOGGER, PATH_NOT_EXIST, path)
             return
         }
         val new = path.listDirectoryEntries().filter {
-            it.isReadable() && !projectMgr.preference.isIgnoredPath(it)
+            it.isReadable() && !projectSrv.preference.isIgnoredPath(it)
         }.toSet()
         val old = entries.map { it.path }.toSet()
         if (new != old) {
@@ -92,8 +92,8 @@ class DirectoryState internal constructor(
     }
 
     private fun pathStateOf(path: Path): PathState {
-        return if (path.isDirectory()) DirectoryState(path, this, projectMgr)
-        else FileState(path, this, projectMgr)
+        return if (path.isDirectory()) DirectoryState(path, this, projectSrv)
+        else FileState(path, this, projectSrv)
     }
 
     fun nextUntitledDirName(): String {
@@ -117,7 +117,7 @@ class DirectoryState internal constructor(
     }
 
     fun initiateCreateDirectory(onSuccess: () -> Unit) {
-        projectMgr.createPathDialog.open(this, Type.DIRECTORY, onSuccess)
+        projectSrv.createPathDialog.open(this, Type.DIRECTORY, onSuccess)
     }
 
     fun tryCreateDirectory(name: String): DirectoryState? = tryCreatePath(
@@ -125,12 +125,12 @@ class DirectoryState internal constructor(
         failureMessage = FAILED_TO_CREATE_DIRECTORY,
         createFn = { it.createDirectory() }
     )?.asDirectory()?.also {
-        projectMgr.createPathDialog.onSuccess?.let { it() }
-        updateContentAndCloseDialog(projectMgr.createPathDialog)
+        projectSrv.createPathDialog.onSuccess?.let { it() }
+        updateContentAndCloseDialog(projectSrv.createPathDialog)
     }
 
     fun initiateCreateFile(onSuccess: () -> Unit) {
-        projectMgr.createPathDialog.open(this, Type.FILE, onSuccess)
+        projectSrv.createPathDialog.open(this, Type.FILE, onSuccess)
     }
 
     fun tryCreateFile(name: String): FileState? = tryCreatePath(
@@ -138,65 +138,65 @@ class DirectoryState internal constructor(
         failureMessage = FAILED_TO_CREATE_FILE,
         createFn = { it.createFile() }
     )?.asFile()?.also {
-        projectMgr.createPathDialog.onSuccess?.let { it() }
-        updateContentAndCloseDialog(projectMgr.createPathDialog)
+        projectSrv.createPathDialog.onSuccess?.let { it() }
+        updateContentAndCloseDialog(projectSrv.createPathDialog)
     }
 
     override fun initiateRename() {
-        projectMgr.renameDirectoryDialog.open(this)
+        projectSrv.renameDirectoryDialog.open(this)
     }
 
     fun tryRename(newName: String): DirectoryState? {
         val newPath = path.resolveSibling(newName)
         if (newPath == path) return this
         val newDir = if (parent?.contains(newName) == true) {
-            projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_DIRECTORY_DUE_TO_DUPLICATE, newPath)
+            projectSrv.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_DIRECTORY_DUE_TO_DUPLICATE, newPath)
             null
         } else try {
             closeRecursive()
             movePathTo(newPath)
-            if (this == projectMgr.current!!.directory) {
-                projectMgr.tryOpenProject(newPath)
-                projectMgr.current!!.directory
+            if (this == projectSrv.current!!.directory) {
+                projectSrv.tryOpenProject(newPath)
+                projectSrv.current!!.directory
             } else find(newPath)?.asDirectory()
         } catch (e: Exception) {
-            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_RENAME_DIRECTORY, newPath, e.message ?: UNKNOWN)
+            projectSrv.notification.systemError(LOGGER, e, FAILED_TO_RENAME_DIRECTORY, newPath, e.message ?: UNKNOWN)
             null
         }
-        return newDir?.also { updateContentAndCloseDialog(projectMgr.renameDirectoryDialog) }
+        return newDir?.also { updateContentAndCloseDialog(projectSrv.renameDirectoryDialog) }
     }
 
     override fun initiateMove() {
-        projectMgr.moveDirectoryDialog.open(this)
+        projectSrv.moveDirectoryDialog.open(this)
     }
 
     fun tryMoveTo(newParent: Path): DirectoryState? {
         val newPath = newParent.resolve(name)
         val newDir = if (newParent == path.parent) {
-            projectMgr.notification.userWarning(LOGGER, FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION, newParent)
+            projectSrv.notification.userWarning(LOGGER, FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION, newParent)
             null
         } else if (newParent.notExists()) {
-            projectMgr.notification.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST, newParent)
+            projectSrv.notification.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST, newParent)
             null
         } else if (newPath.exists()) {
-            projectMgr.notification.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE, newParent)
+            projectSrv.notification.userError(LOGGER, FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE, newParent)
             null
         } else try {
             closeRecursive()
             movePathTo(newPath)
             find(newPath)?.asDirectory()
         } catch (e: Exception) {
-            projectMgr.notification.systemError(LOGGER, e, FAILED_TO_MOVE_DIRECTORY, newParent, e.message ?: UNKNOWN)
+            projectSrv.notification.systemError(LOGGER, e, FAILED_TO_MOVE_DIRECTORY, newParent, e.message ?: UNKNOWN)
             null
         }
-        if (!newParent.startsWith(projectMgr.current!!.path)) {
-            projectMgr.notification.userWarning(LOGGER, DIRECTORY_HAS_BEEN_MOVED_OUT, newParent)
+        if (!newParent.startsWith(projectSrv.current!!.path)) {
+            projectSrv.notification.userWarning(LOGGER, DIRECTORY_HAS_BEEN_MOVED_OUT, newParent)
         }
-        return newDir?.also { updateContentAndCloseDialog(projectMgr.moveDirectoryDialog) }
+        return newDir?.also { updateContentAndCloseDialog(projectSrv.moveDirectoryDialog) }
     }
 
     override fun initiateDelete(onSuccess: () -> Unit) {
-        projectMgr.confirmation.submit(
+        projectSrv.confirmation.submit(
             title = Label.CONFIRM_DIRECTORY_DELETION,
             message = Sentence.CONFIRM_DIRECTORY_DELETION,
             onConfirm = { tryDelete(); onSuccess() }
@@ -205,14 +205,14 @@ class DirectoryState internal constructor(
 
     private fun tryCreatePath(newPath: Path, failureMessage: Message.Project, createFn: (Path) -> Unit): PathState? {
         return if (newPath.exists()) {
-            projectMgr.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
+            projectSrv.notification.userError(LOGGER, FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE, newPath)
             null
         } else try {
             createFn(newPath)
             reloadEntries()
             entries.first { it.name == newPath.name }
         } catch (e: Exception) {
-            projectMgr.notification.systemError(LOGGER, e, failureMessage, newPath, e.message ?: UNKNOWN)
+            projectSrv.notification.systemError(LOGGER, e, failureMessage, newPath, e.message ?: UNKNOWN)
             null
         }
     }
@@ -230,7 +230,7 @@ class DirectoryState internal constructor(
             path.deleteExisting()
             parent?.remove(this)
         } catch (e: Exception) {
-            projectMgr.notification.systemError(LOGGER, e, DIRECTORY_NOT_DELETABLE, path.name)
+            projectSrv.notification.systemError(LOGGER, e, DIRECTORY_NOT_DELETABLE, path.name)
         }
     }
 

@@ -50,10 +50,10 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Form.IconButton
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.app.NotificationManager.Notification
-import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type.ERROR
-import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type.INFO
-import com.vaticle.typedb.studio.state.app.NotificationManager.Notification.Type.WARNING
+import com.vaticle.typedb.studio.state.app.NotificationService.Notification
+import com.vaticle.typedb.studio.state.app.NotificationService.Notification.Type.ERROR
+import com.vaticle.typedb.studio.state.app.NotificationService.Notification.Type.INFO
+import com.vaticle.typedb.studio.state.app.NotificationService.Notification.Type.WARNING
 import com.vaticle.typedb.studio.state.common.util.Label
 
 object Notifications {

@@ -19,40 +19,34 @@
 package com.vaticle.typedb.studio.state.app
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 
-class StatusManager {
+class EditorService {
 
-    /**
-     * The order of keys defined in this enum determine the order in which they
-     * get displayed on the status bar.
-     */
-    enum class Key {
-        TEXT_CURSOR_POSITION,
-        OUTPUT_RESPONSE_TIME,
-        QUERY_RESPONSE_TIME,
+    companion object {
+        const val TEXT_EDITOR_SCALE_MIN = 5 // over 10
+        const val TEXT_EDITOR_SCALE_MAX = 30 // over 10
+        const val TEXT_EDITOR_SCALE_DEFAULT = 10 // over 10
     }
 
-    val statuses: SnapshotStateMap<Key, String> = mutableStateMapOf()
-    var loadingStatus: String by mutableStateOf("")
+    private var _scale: Int by mutableStateOf(TEXT_EDITOR_SCALE_DEFAULT)
+    val scale: Float get() = _scale / 10f
+    val isMaxScale get() = _scale == TEXT_EDITOR_SCALE_MAX
+    val isMinScale get() = _scale == TEXT_EDITOR_SCALE_MIN
+    val isDefaultScale get() = _scale == TEXT_EDITOR_SCALE_DEFAULT
 
-
-    fun publish(key: Key, status: String) {
-        statuses[key] = status
+    fun increaseScale() {
+        if (_scale >= TEXT_EDITOR_SCALE_MAX) return
+        _scale += if (_scale < TEXT_EDITOR_SCALE_DEFAULT) 1 else 2
     }
 
-    fun clear(key: Key) {
-        statuses.remove(key)
+    fun decreaseScale() {
+        if (_scale <= TEXT_EDITOR_SCALE_MIN) return
+        _scale -= if (_scale <= TEXT_EDITOR_SCALE_DEFAULT) 1 else 2
     }
 
-    fun publishLoading(status: String) {
-        loadingStatus = status
-    }
-
-    fun clearLoading() {
-        loadingStatus = ""
+    fun resetScale() {
+        _scale = TEXT_EDITOR_SCALE_DEFAULT
     }
 }

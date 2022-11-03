@@ -24,7 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import mu.KotlinLogging
 
-class PageManager {
+class PageService {
 
     val opened: MutableList<Pageable> = mutableStateListOf()
     var active: Pageable? by mutableStateOf(null); private set

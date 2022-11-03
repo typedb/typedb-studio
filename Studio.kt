@@ -310,7 +310,7 @@ object Studio {
             addShutdownHook()
             setConfigurations()
             Message.loadClasses()
-            StudioState.appData.initialise()
+            StudioState.data.initialise()
             while (!quit) {
                 application { MainWindow(::exitApplication) }
                 error?.let { exception ->

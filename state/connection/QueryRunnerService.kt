@@ -25,7 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import java.util.concurrent.LinkedBlockingQueue
 
-class RunnerManager {
+class QueryRunnerService {
 
     var active: QueryRunner? by mutableStateOf(null)
     val launched: SnapshotStateList<QueryRunner> = mutableStateListOf()
@@ -33,12 +33,12 @@ class RunnerManager {
     private val saved: SnapshotStateList<QueryRunner> = mutableStateListOf()
     private val onLaunch = LinkedBlockingQueue<() -> Unit>()
 
-    fun clone(): RunnerManager {
-        val newRunnerMgr = RunnerManager()
-        newRunnerMgr.active = this.active
-        newRunnerMgr.launched.addAll(this.launched)
-        newRunnerMgr.onLaunch.addAll(onLaunch)
-        return newRunnerMgr
+    fun clone(): QueryRunnerService {
+        val newRunnerSrv = QueryRunnerService()
+        newRunnerSrv.active = this.active
+        newRunnerSrv.launched.addAll(this.launched)
+        newRunnerSrv.onLaunch.addAll(onLaunch)
+        return newRunnerSrv
     }
 
     fun numberOf(runner: QueryRunner): Int {

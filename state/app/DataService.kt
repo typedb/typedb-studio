@@ -45,7 +45,7 @@ import kotlin.io.path.notExists
 import mu.KotlinLogging
 import org.slf4j.LoggerFactory
 
-class DataManager {
+class DataService {
 
     companion object {
         private val DATA_DIR: Path = when (Property.OS.Current) {

@@ -22,9 +22,9 @@ import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.answer.ConceptMapGroup
 import com.vaticle.typedb.client.api.answer.NumericGroup
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
-import com.vaticle.typedb.studio.state.app.PreferenceManager
+import com.vaticle.typedb.studio.state.app.NotificationService
+import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.app.PreferenceService
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.ERROR
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.INFO
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.SUCCESS
@@ -52,8 +52,8 @@ import mu.KotlinLogging
 
 class QueryRunner constructor(
     val transactionState: TransactionState, // TODO: restrict in the future, when TypeDB 3.0 answers return complete info
-    private val notificationMgr: NotificationManager,
-    private val preferenceMgr: PreferenceManager,
+    private val notificationSrv: NotificationService,
+    private val preferenceSrv: PreferenceService,
     private val queries: String,
     private val onComplete: () -> Unit
 ) {
@@ -137,7 +137,7 @@ class QueryRunner constructor(
         responses.put(Response.Message(type, string))
     }
 
-    internal fun launch() = coroutines.launchAndHandle(notificationMgr, LOGGER) {
+    internal fun launch() = coroutines.launchAndHandle(notificationSrv, LOGGER) {
         try {
             isRunning.set(true)
             startTime = System.currentTimeMillis()
@@ -219,7 +219,7 @@ class QueryRunner constructor(
     ) { if (query.modifiers().limit().isPresent) {
             transaction.query().match(query)
         } else {
-            val queryWithLimit = TypeQLMatch.Limited(query, preferenceMgr.matchQueryLimit)
+        val queryWithLimit = TypeQLMatch.Limited(query, preferenceSrv.matchQueryLimit)
             transaction.query().match(queryWithLimit)
         }
      }
