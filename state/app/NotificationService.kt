@@ -35,7 +35,7 @@ import mu.KLogger
 import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
-class NotificationManager {
+class NotificationService {
 
     // not a data class, because each object has to be unique
     class Notification internal constructor(val type: Type, val code: String, val message: String) {
@@ -51,20 +51,20 @@ class NotificationManager {
         private val LOGGER = KotlinLogging.logger {}
 
         fun <T> launchCompletableFuture(
-            notificationMgr: NotificationManager,
+            notificationSrv: NotificationService,
             logger: KLogger,
             function: () -> T
         ): CompletableFuture<T?> = CompletableFuture.supplyAsync {
             return@supplyAsync try {
                 function()
             } catch (e: Throwable) {
-                notificationMgr.systemError(logger, e, UNEXPECTED_ERROR_IN_COROUTINE, e.message ?: UNKNOWN)
+                notificationSrv.systemError(logger, e, UNEXPECTED_ERROR_IN_COROUTINE, e.message ?: UNKNOWN)
                 null
             }
         }
 
         fun CoroutineScope.launchAndHandle(
-            notificationMgr: NotificationManager,
+            notificationSrv: NotificationService,
             logger: KLogger,
             function: suspend () -> Unit
         ) = this.launch(Default) {
@@ -72,7 +72,7 @@ class NotificationManager {
                 function()
             } catch (_: CancellationException) {
             } catch (e: Throwable) {
-                notificationMgr.systemError(logger, e, UNEXPECTED_ERROR_IN_COROUTINE, e.message ?: UNKNOWN)
+                notificationSrv.systemError(logger, e, UNEXPECTED_ERROR_IN_COROUTINE, e.message ?: UNKNOWN)
             }
         }
     }

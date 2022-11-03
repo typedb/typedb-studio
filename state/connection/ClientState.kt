@@ -28,10 +28,10 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBSession.Type.DATA
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
-import com.vaticle.typedb.studio.state.app.DialogManager
-import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
-import com.vaticle.typedb.studio.state.app.PreferenceManager
+import com.vaticle.typedb.studio.state.app.DialogState
+import com.vaticle.typedb.studio.state.app.NotificationService
+import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.app.PreferenceService
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.atomic.AtomicReferenceState
 import com.vaticle.typedb.studio.state.common.util.Message
@@ -49,8 +49,8 @@ import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 
 class ClientState constructor(
-    private val notificationMgr: NotificationManager,
-    private val preferenceMgr: PreferenceManager
+    private val notificationSrv: NotificationService,
+    private val preferenceSrv: PreferenceService
 ) {
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
@@ -61,9 +61,9 @@ class ClientState constructor(
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    val connectServerDialog = DialogManager.Base()
-    val selectDBDialog = DialogManager.Base()
-    val manageDatabasesDialog = DialogManager.Base()
+    val connectServerDialog = DialogState.Base()
+    val selectDBDialog = DialogState.Base()
+    val manageDatabasesDialog = DialogState.Base()
     val status: Status get() = statusAtomic.state
     val isConnected: Boolean get() = status == CONNECTED
     val isConnecting: Boolean get() = status == CONNECTING
@@ -77,7 +77,7 @@ class ClientState constructor(
     val hasRunningCommand get() = hasRunningCommandAtomic.state
     val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
-    val session = SessionState(this, notificationMgr, preferenceMgr)
+    val session = SessionState(this, notificationSrv, preferenceSrv)
     private val statusAtomic = AtomicReferenceState(DISCONNECTED)
     private var _client: TypeDBClient? by mutableStateOf(null)
     private var hasRunningCommandAtomic = AtomicBooleanState(false)
@@ -109,7 +109,7 @@ class ClientState constructor(
 
     private fun tryConnectAsync(
         newAddress: String, newUsername: String?, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient
-    ) = coroutines.launchAndHandle(notificationMgr, LOGGER) {
+    ) = coroutines.launchAndHandle(notificationSrv, LOGGER) {
         if (isConnecting || isConnected) return@launchAndHandle
         statusAtomic.set(CONNECTING)
         try {
@@ -120,16 +120,16 @@ class ClientState constructor(
             onSuccess()
         } catch (e: TypeDBClientException) {
             statusAtomic.set(DISCONNECTED)
-            notificationMgr.userError(LOGGER, UNABLE_TO_CONNECT)
+            notificationSrv.userError(LOGGER, UNABLE_TO_CONNECT)
         } catch (e: java.lang.Exception) {
             statusAtomic.set(DISCONNECTED)
-            notificationMgr.systemError(LOGGER, e, UNEXPECTED_ERROR)
+            notificationSrv.systemError(LOGGER, e, UNEXPECTED_ERROR)
         }
     }
 
     private fun mayRunCommandAsync(function: () -> Unit) {
         if (hasRunningCommandAtomic.compareAndSet(expected = false, new = true)) {
-            coroutines.launchAndHandle(notificationMgr, LOGGER) { function() }.invokeOnCompletion {
+            coroutines.launchAndHandle(notificationSrv, LOGGER) { function() }.invokeOnCompletion {
                 hasRunningCommandAtomic.set(false)
             }
         }
@@ -183,9 +183,9 @@ class ClientState constructor(
                 refreshDatabaseListFn()
                 onSuccess()
             } catch (e: Exception) {
-                notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DATABASE, database, e.message ?: e.toString())
+                notificationSrv.userError(LOGGER, FAILED_TO_CREATE_DATABASE, database, e.message ?: e.toString())
             }
-        } else notificationMgr.userError(LOGGER, FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE, database)
+        } else notificationSrv.userError(LOGGER, FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE, database)
     }
 
     fun tryDeleteDatabase(database: String) = mayRunCommandAsync {
@@ -194,7 +194,7 @@ class ClientState constructor(
             _client?.databases()?.get(database)?.delete()
             refreshDatabaseListFn()
         } catch (e: Exception) {
-            notificationMgr.userWarning(LOGGER, FAILED_TO_DELETE_DATABASE, database, e.message ?: e.toString())
+            notificationSrv.userWarning(LOGGER, FAILED_TO_DELETE_DATABASE, database, e.message ?: e.toString())
         }
     }
 
@@ -206,13 +206,13 @@ class ClientState constructor(
 
     fun rollbackTransaction() = mayRunCommandAsync { session.transaction.rollback() }
 
-    fun closeSession() = coroutines.launchAndHandle(notificationMgr, LOGGER) { session.close() }
+    fun closeSession() = coroutines.launchAndHandle(notificationSrv, LOGGER) { session.close() }
 
     fun closeTransactionAsync(
         message: Message? = null, vararg params: Any
-    ) = coroutines.launchAndHandle(notificationMgr, LOGGER) { session.transaction.close(message, *params) }
+    ) = coroutines.launchAndHandle(notificationSrv, LOGGER) { session.transaction.close(message, *params) }
 
-    fun closeAsync() = coroutines.launchAndHandle(notificationMgr, LOGGER) { close() }
+    fun closeAsync() = coroutines.launchAndHandle(notificationSrv, LOGGER) { close() }
 
     fun close() {
         if (

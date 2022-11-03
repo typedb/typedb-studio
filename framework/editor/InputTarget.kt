@@ -35,7 +35,7 @@ import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Util.subSequenceSafely
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.app.StatusManager.Key.TEXT_CURSOR_POSITION
+import com.vaticle.typedb.studio.state.app.StatusService.Key.TEXT_CURSOR_POSITION
 import kotlin.math.floor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

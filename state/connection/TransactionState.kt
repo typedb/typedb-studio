@@ -23,8 +23,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.studio.state.app.NotificationManager
-import com.vaticle.typedb.studio.state.app.PreferenceManager
+import com.vaticle.typedb.studio.state.app.NotificationService
+import com.vaticle.typedb.studio.state.app.PreferenceService
 import com.vaticle.typedb.studio.state.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.state.common.util.Message
 import com.vaticle.typedb.studio.state.common.util.Message.Companion.UNKNOWN
@@ -40,8 +40,8 @@ import mu.KotlinLogging
 
 class TransactionState constructor(
     private val session: SessionState,
-    private val notificationMgr: NotificationManager,
-    private val preferenceMgr: PreferenceManager
+    private val notificationSrv: NotificationService,
+    private val preferenceSrv: PreferenceService
 ) {
 
     companion object {
@@ -94,7 +94,7 @@ class TransactionState constructor(
 
     fun tryOpen(): TypeDBTransaction? {
         return if (!session.isOpen) {
-            notificationMgr.userError(LOGGER, Message.Connection.SESSION_IS_CLOSED)
+            notificationSrv.userError(LOGGER, Message.Connection.SESSION_IS_CLOSED)
             null
         } else if (isOpen) _transaction
         else try {
@@ -109,7 +109,7 @@ class TransactionState constructor(
                 _transaction = it
             }
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_OPEN_TRANSACTION, e.message ?: UNKNOWN)
+            notificationSrv.userError(LOGGER, FAILED_TO_OPEN_TRANSACTION, e.message ?: UNKNOWN)
             isOpenAtomic.set(false)
             hasRunningQueryAtomic.set(false)
             null
@@ -120,7 +120,7 @@ class TransactionState constructor(
         return if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) try {
             hasStopSignalAtomic.set(false)
             tryOpen()?.let {
-                QueryRunner(this, notificationMgr, preferenceMgr, content) {
+                QueryRunner(this, notificationSrv, preferenceSrv, content) {
                     if (!snapshot.value) close()
                     else if (!isOpen) close(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignalAtomic.set(false)
@@ -129,7 +129,7 @@ class TransactionState constructor(
                 }.also { it.launch() }
             }
         } catch (e: Exception) {
-            notificationMgr.userError(LOGGER, FAILED_TO_RUN_QUERY, e.message ?: e)
+            notificationSrv.userError(LOGGER, FAILED_TO_RUN_QUERY, e.message ?: e)
             hasRunningQueryAtomic.set(false)
             null
         } else null
@@ -145,9 +145,9 @@ class TransactionState constructor(
             try {
                 _transaction?.commit()
                 _transaction = null
-                notificationMgr.info(LOGGER, TRANSACTION_COMMIT_SUCCESSFULLY)
+                notificationSrv.info(LOGGER, TRANSACTION_COMMIT_SUCCESSFULLY)
             } catch (e: Exception) {
-                notificationMgr.userError(LOGGER, TRANSACTION_COMMIT_FAILED, e.message ?: e)
+                notificationSrv.userError(LOGGER, TRANSACTION_COMMIT_FAILED, e.message ?: e)
             } finally {
                 mayExecOnSchemaWriteReset()
             }
@@ -157,7 +157,7 @@ class TransactionState constructor(
     internal fun rollback() {
         sendStopSignal()
         _transaction?.rollback()
-        notificationMgr.userWarning(LOGGER, TRANSACTION_ROLLBACK)
+        notificationSrv.userWarning(LOGGER, TRANSACTION_ROLLBACK)
         mayExecOnSchemaWriteReset()
     }
 
@@ -167,7 +167,7 @@ class TransactionState constructor(
             _transaction?.close()
             _transaction = null
             hasRunningQueryAtomic.set(false)
-            message?.let { notificationMgr.userError(LOGGER, it, *params) }
+            message?.let { notificationSrv.userError(LOGGER, it, *params) }
             mayExecOnSchemaWriteReset()
         }
     }

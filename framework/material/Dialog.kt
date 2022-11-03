@@ -35,48 +35,41 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogWindowScope
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
+import com.vaticle.typedb.studio.framework.common.KeyMapper
 import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.state.app.DialogManager
+import com.vaticle.typedb.studio.state.app.DialogState
 
 object Dialog {
 
     val DIALOG_SPACING = 16.dp
 
-    private fun handleKeyEvent(event: KeyEvent, state: DialogManager): Boolean {
-        return if (event.type == KeyEventType.KeyUp) false
-        else com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.map(event)?.let { executeCommand(it, state) }
-            ?: false
+    private fun handleKeyEvent(event: KeyEvent, state: DialogState): Boolean = when (event.type) {
+        KeyEventType.KeyUp -> false
+        else -> KeyMapper.CURRENT.map(event)?.let { executeCommand(it, state) } ?: false
     }
 
-    private fun executeCommand(
-        command: com.vaticle.typedb.studio.framework.common.KeyMapper.Command,
-        state: DialogManager
-    ): Boolean {
-        return when (command) {
-            com.vaticle.typedb.studio.framework.common.KeyMapper.Command.ESCAPE -> {
-                state.close()
-                true
-            }
-            else -> false
+    private fun executeCommand(command: KeyMapper.Command, state: DialogState): Boolean = when (command) {
+        KeyMapper.Command.ESCAPE -> {
+            state.close()
+            true
         }
+        else -> false
     }
 
     @Composable
     fun Layout(
-        state: DialogManager, title: String, width: Dp, height: Dp,
+        state: DialogState, title: String, width: Dp, height: Dp,
         padding: Dp = Theme.DIALOG_PADDING,
         content: @Composable DialogWindowScope.() -> Unit
+    ) = Dialog(
+        title = title, onCloseRequest = { state.close() }, state = rememberDialogState(
+            position = WindowPosition.Aligned(Alignment.Center),
+            size = DpSize(width, height)
+        )
     ) {
-        Dialog(
-            title = title, onCloseRequest = { state.close() }, state = rememberDialogState(
-                position = WindowPosition.Aligned(Alignment.Center),
-                size = DpSize(width, height)
-            )
-        ) {
-            Box(Modifier.background(Theme.studio.backgroundMedium).padding(padding)
-                .onKeyEvent { handleKeyEvent(it, state) }) {
-                content()
-            }
+        Box(Modifier.background(Theme.studio.backgroundMedium).padding(padding)
+            .onKeyEvent { handleKeyEvent(it, state) }) {
+            content()
         }
     }
 }

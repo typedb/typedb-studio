@@ -18,8 +18,7 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
-import com.vaticle.typedb.studio.state.app.PreferenceManager
+import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NO_LONGER_EXIST
 import com.vaticle.typedb.studio.state.page.Navigable
 import java.nio.file.Path
@@ -34,11 +33,11 @@ import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
-class Project internal constructor(val path: Path, private val projectMgr: ProjectManager) : Navigable<PathState> {
+class Project internal constructor(val path: Path, private val projectSrv: ProjectService) : Navigable<PathState> {
 
     private val isOpen = AtomicBoolean(false)
     private val coroutines = CoroutineScope(Dispatchers.Default)
-    val directory: DirectoryState = DirectoryState(path, null, projectMgr)
+    val directory: DirectoryState = DirectoryState(path, null, projectSrv)
 
     override val name: String get() = "${Project::class.simpleName} (${directory.name})"
     override val info: String? = null
@@ -60,11 +59,11 @@ class Project internal constructor(val path: Path, private val projectMgr: Proje
         if (isOpen.compareAndSet(false, true)) launchWatcher()
     }
 
-    private fun launchWatcher() = coroutines.launchAndHandle(projectMgr.notification, LOGGER) {
+    private fun launchWatcher() = coroutines.launchAndHandle(projectSrv.notification, LOGGER) {
         do {
             if (!path.exists() || !path.isReadable()) {
                 close()
-                projectMgr.notification.userError(LOGGER, PATH_NO_LONGER_EXIST, path)
+                projectSrv.notification.userError(LOGGER, PATH_NO_LONGER_EXIST, path)
             } else delay(WATCHER_REFRESH_RATE)
         } while (isOpen.get())
     }
@@ -72,7 +71,7 @@ class Project internal constructor(val path: Path, private val projectMgr: Proje
     fun close() {
         if (isOpen.compareAndSet(true, false)) {
             directory.closeRecursive()
-            projectMgr.close(this)
+            projectSrv.close(this)
         }
     }
 

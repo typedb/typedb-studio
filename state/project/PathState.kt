@@ -18,7 +18,7 @@
 
 package com.vaticle.typedb.studio.state.project
 
-import com.vaticle.typedb.studio.state.app.DialogManager
+import com.vaticle.typedb.studio.state.app.DialogState
 import com.vaticle.typedb.studio.state.page.Navigable
 import java.nio.channels.FileChannel
 import java.nio.file.Path
@@ -36,7 +36,7 @@ sealed class PathState constructor(
     final override val parent: DirectoryState?,
     val path: Path,
     val type: Type,
-    val projectMgr: ProjectManager,
+    val projectSrv: ProjectService,
 ) : Navigable<PathState> {
 
     enum class Type(val index: Int) {
@@ -56,7 +56,7 @@ sealed class PathState constructor(
     val isSymbolicLink: Boolean = path.isSymbolicLink()
     val isDirectory: Boolean = type == Type.DIRECTORY
     val isFile: Boolean = type == Type.FILE
-    val isProjectData: Boolean by lazy { if (this == projectMgr.dataDir) true else parent?.isProjectData ?: false }
+    val isProjectData: Boolean by lazy { if (this == projectSrv.dataDir) true else parent?.isProjectData ?: false }
 
     abstract val isReadable: Boolean
     abstract val isWritable: Boolean
@@ -75,9 +75,9 @@ sealed class PathState constructor(
     }
 
     internal fun find(newPath: Path): PathState? {
-        if (!newPath.startsWith(projectMgr.current!!.path)) return null
-        var relPath = newPath.relativeTo(projectMgr.current!!.path)
-        var dir: DirectoryState = projectMgr.current!!.directory
+        if (!newPath.startsWith(projectSrv.current!!.path)) return null
+        var relPath = newPath.relativeTo(projectSrv.current!!.path)
+        var dir: DirectoryState = projectSrv.current!!.directory
         while (relPath.nameCount > 1) {
             dir.reloadEntries()
             dir = dir.entries.first { it.name == relPath.first().name }.asDirectory()
@@ -87,8 +87,8 @@ sealed class PathState constructor(
         return dir.entries.first { it.name == relPath.first().name }
     }
 
-    protected fun updateContentAndCloseDialog(dialog: DialogManager) {
-        projectMgr.execContentChange()
+    protected fun updateContentAndCloseDialog(dialog: DialogState) {
+        projectSrv.execContentChange()
         dialog.close()
     }
 

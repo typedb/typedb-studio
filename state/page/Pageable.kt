@@ -18,7 +18,7 @@
 
 package com.vaticle.typedb.studio.state.page
 
-import com.vaticle.typedb.studio.state.connection.RunnerManager
+import com.vaticle.typedb.studio.state.connection.QueryRunnerService
 
 interface Pageable {
 
@@ -57,7 +57,7 @@ interface Pageable {
     interface Runnable : Pageable {
 
         val runContent: String
-        val runners: RunnerManager
+        val runners: QueryRunnerService
         val isRunning: Boolean get() = runners.isRunning
         override val isRunnable: Boolean get() = true
 

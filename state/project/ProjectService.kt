@@ -21,19 +21,19 @@ package com.vaticle.typedb.studio.state.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.studio.state.app.ConfirmationManager
-import com.vaticle.typedb.studio.state.app.DataManager
-import com.vaticle.typedb.studio.state.app.DialogManager
-import com.vaticle.typedb.studio.state.app.NotificationManager
+import com.vaticle.typedb.studio.state.app.ConfirmationService
+import com.vaticle.typedb.studio.state.app.DataService
+import com.vaticle.typedb.studio.state.app.DialogState
+import com.vaticle.typedb.studio.state.app.NotificationService
+import com.vaticle.typedb.studio.state.app.PreferenceService
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FAILED_TO_CREATE_FILE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_DIRECTORY
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_EXIST
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_READABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PATH_NOT_WRITABLE
 import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
-import com.vaticle.typedb.studio.state.app.PreferenceManager
 import com.vaticle.typedb.studio.state.connection.ClientState
-import com.vaticle.typedb.studio.state.page.PageManager
+import com.vaticle.typedb.studio.state.page.PageService
 import java.nio.file.Path
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.io.path.createDirectory
@@ -45,16 +45,16 @@ import kotlin.io.path.isWritable
 import kotlin.io.path.notExists
 import mu.KotlinLogging
 
-class ProjectManager(
-    internal val preference: PreferenceManager,
-    internal val appData: DataManager,
-    internal val notification: NotificationManager,
-    internal val confirmation: ConfirmationManager,
+class ProjectService constructor(
+    internal val preference: PreferenceService,
+    internal val appData: DataService,
+    internal val notification: NotificationService,
+    internal val confirmation: ConfirmationService,
     internal val client: ClientState,
-    internal val pages: PageManager
+    internal val pages: PageService
 ) {
 
-    class CreatePathDialog : DialogManager() {
+    class CreatePathDialogState : DialogState() {
 
         var parent: DirectoryState? by mutableStateOf(null); private set
         var type: PathState.Type? by mutableStateOf(null); private set
@@ -75,7 +75,7 @@ class ProjectManager(
         }
     }
 
-    class ModifyDirectoryDialog : DialogManager() {
+    class ModifyDirectoryDialogState : DialogState() {
 
         var directory: DirectoryState? by mutableStateOf(null); private set
 
@@ -90,7 +90,7 @@ class ProjectManager(
         }
     }
 
-    class ModifyFileDialog : DialogManager() {
+    class ModifyFileDialogState : DialogState() {
 
         var file: FileState? by mutableStateOf(null); private set
         var onSuccess: ((FileState) -> Unit)? by mutableStateOf(null); private set
@@ -117,12 +117,12 @@ class ProjectManager(
     var current: Project? by mutableStateOf(null); private set
     var dataDir: DirectoryState? by mutableStateOf(null); private set
     var unsavedFilesDir: DirectoryState? by mutableStateOf(null); private set
-    val openProjectDialog = DialogManager.Base()
-    val createPathDialog = CreatePathDialog()
-    val moveDirectoryDialog = ModifyDirectoryDialog()
-    val renameDirectoryDialog = ModifyDirectoryDialog()
-    val renameFileDialog = ModifyFileDialog()
-    val saveFileDialog = ModifyFileDialog()
+    val openProjectDialog = DialogState.Base()
+    val createPathDialog = CreatePathDialogState()
+    val moveDirectoryDialog = ModifyDirectoryDialogState()
+    val renameDirectoryDialog = ModifyDirectoryDialogState()
+    val renameFileDialog = ModifyFileDialogState()
+    val saveFileDialog = ModifyFileDialogState()
     private val onProjectChange = LinkedBlockingQueue<(Project) -> Unit>()
     private val onContentChange = LinkedBlockingQueue<() -> Unit>()
     private val onClose = LinkedBlockingQueue<() -> Unit>()

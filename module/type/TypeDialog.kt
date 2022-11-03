@@ -41,7 +41,7 @@ import com.vaticle.typedb.studio.framework.material.Form.TextInput
 import com.vaticle.typedb.studio.state.StudioState
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.schema.SchemaManager
+import com.vaticle.typedb.studio.state.schema.SchemaService
 import com.vaticle.typedb.studio.state.schema.TypeState
 
 object TypeDialog {
@@ -113,7 +113,7 @@ object TypeDialog {
 
     @Composable
     private fun <T : TypeState.Thing<*, T>> CreateThingTypeDialog(
-        dialogState: SchemaManager.TypeDialogManager<T>,
+        dialogState: SchemaService.TypeDialogState<T>,
         rootTypeState: T,
         title: String,
         isValidFn: ((formState: CreateTypeFormState<T>) -> Boolean)? = null,
@@ -188,7 +188,7 @@ object TypeDialog {
 
     @Composable
     private fun <T : TypeState.Thing<*, T>> ChangeSupertypeDialog(
-        title: String, dialogState: SchemaManager.TypeDialogManager<T>, selection: List<T>,
+        title: String, dialogState: SchemaService.TypeDialogState<T>, selection: List<T>,
     ) {
         val typeState = dialogState.typeState!!
         val formState = remember {

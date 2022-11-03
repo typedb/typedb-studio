@@ -26,10 +26,10 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.material.Tabs
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchAndHandle
-import com.vaticle.typedb.studio.state.app.NotificationManager.Companion.launchCompletableFuture
-import com.vaticle.typedb.studio.state.app.StatusManager.Key.OUTPUT_RESPONSE_TIME
-import com.vaticle.typedb.studio.state.app.StatusManager.Key.QUERY_RESPONSE_TIME
+import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.state.app.NotificationService.Companion.launchCompletableFuture
+import com.vaticle.typedb.studio.state.app.StatusService.Key.OUTPUT_RESPONSE_TIME
+import com.vaticle.typedb.studio.state.app.StatusService.Key.QUERY_RESPONSE_TIME
 import com.vaticle.typedb.studio.state.connection.QueryRunner
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
 import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Stream.ConceptMaps.Source.MATCH
@@ -203,7 +203,7 @@ internal class RunOutputGroup constructor(
     }
 
     private suspend fun consumeConceptMapStreamResponse(response: Response.Stream.ConceptMaps) {
-        val notificationMgr = StudioState.notification
+        val notificationSrv = StudioState.notification
         // TODO: enable configuration of displaying GraphOutput for INSERT and UPDATE
         val table = if (response.source != MATCH) null else TableOutput(
             transaction = runner.transactionState, number = tableCount.incrementAndGet()
@@ -213,9 +213,9 @@ internal class RunOutputGroup constructor(
         ).also { outputs.add(it); activate(it) }
 
         consumeStreamResponse(response, onCompleted = { graph?.setCompleted() }) {
-            collectSerial(launchCompletableFuture(notificationMgr, LOGGER) { logOutput.outputFn(it) })
-            table?.let { t -> collectSerial(launchCompletableFuture(notificationMgr, LOGGER) { t.outputFn(it) }) }
-            graph?.let { g -> collectNonSerial(launchCompletableFuture(notificationMgr, LOGGER) { g.output(it) }) }
+            collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { logOutput.outputFn(it) })
+            table?.let { t -> collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { t.outputFn(it) }) }
+            graph?.let { g -> collectNonSerial(launchCompletableFuture(notificationSrv, LOGGER) { g.output(it) }) }
         }
     }
 

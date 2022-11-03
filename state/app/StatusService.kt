@@ -19,25 +19,40 @@
 package com.vaticle.typedb.studio.state.app
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 
-abstract class DialogManager {
+class StatusService {
 
-    var isOpen by mutableStateOf(false)
-
-    fun toggle() {
-        isOpen = !isOpen
+    /**
+     * The order of keys defined in this enum determine the order in which they
+     * get displayed on the status bar.
+     */
+    enum class Key {
+        TEXT_CURSOR_POSITION,
+        OUTPUT_RESPONSE_TIME,
+        QUERY_RESPONSE_TIME,
     }
 
-    open fun close() {
-        isOpen = false
+    val statuses: SnapshotStateMap<Key, String> = mutableStateMapOf()
+    var loadingStatus: String by mutableStateOf("")
+
+
+    fun publish(key: Key, status: String) {
+        statuses[key] = status
     }
 
-    class Base : DialogManager() {
+    fun clear(key: Key) {
+        statuses.remove(key)
+    }
 
-        fun open() {
-            isOpen = true
-        }
+    fun publishLoading(status: String) {
+        loadingStatus = status
+    }
+
+    fun clearLoading() {
+        loadingStatus = ""
     }
 }

@@ -38,10 +38,10 @@ import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.app.StatusManager
-import com.vaticle.typedb.studio.state.app.StatusManager.Key.OUTPUT_RESPONSE_TIME
-import com.vaticle.typedb.studio.state.app.StatusManager.Key.QUERY_RESPONSE_TIME
-import com.vaticle.typedb.studio.state.app.StatusManager.Key.TEXT_CURSOR_POSITION
+import com.vaticle.typedb.studio.state.app.StatusService
+import com.vaticle.typedb.studio.state.app.StatusService.Key.OUTPUT_RESPONSE_TIME
+import com.vaticle.typedb.studio.state.app.StatusService.Key.QUERY_RESPONSE_TIME
+import com.vaticle.typedb.studio.state.app.StatusService.Key.TEXT_CURSOR_POSITION
 import com.vaticle.typedb.studio.state.common.util.Label
 import com.vaticle.typedb.studio.state.common.util.Sentence
 
@@ -54,17 +54,17 @@ object StatusBar {
 
     @Composable
     fun Layout() {
-        val statusMgr = StudioState.status
+        val statusSrv = StudioState.status
         val fontStyle = Theme.typography.body2
         Row(Modifier.fillMaxWidth().height(HEIGHT), verticalAlignment = Alignment.CenterVertically) {
-            if (statusMgr.loadingStatus.isNotEmpty()) {
+            if (statusSrv.loadingStatus.isNotEmpty()) {
                 Spacer(Modifier.width(PADDING))
-                Form.Text(value = statusMgr.loadingStatus, textStyle = fontStyle)
+                Form.Text(value = statusSrv.loadingStatus, textStyle = fontStyle)
             }
             Spacer(Modifier.weight(1f))
             Spacer(Modifier.width(PADDING))
-            StatusManager.Key.values().reversed().forEach {
-                val statusValue = statusMgr.statuses[it]
+            StatusService.Key.values().reversed().forEach {
+                val statusValue = statusSrv.statuses[it]
                 if (!statusValue.isNullOrEmpty()) {
                     Separator.Vertical()
                     StatusDisplay(it, statusValue, fontStyle)
@@ -75,7 +75,7 @@ object StatusBar {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun StatusDisplay(key: StatusManager.Key, value: String, fontStyle: TextStyle) {
+    private fun StatusDisplay(key: StatusService.Key, value: String, fontStyle: TextStyle) {
         val tooltipState: Tooltip.State = Tooltip.State(tooltipArg(key))
         Tooltip.Popup(tooltipState)
         Column(Modifier.pointerMoveFilter(
@@ -93,7 +93,7 @@ object StatusBar {
         }
     }
 
-    private fun tooltipArg(key: StatusManager.Key): Tooltip.Arg {
+    private fun tooltipArg(key: StatusService.Key): Tooltip.Arg {
         return when (key) {
             TEXT_CURSOR_POSITION -> Tooltip.Arg(
                 title = Label.TEXT_CURSOR_POSITION
@@ -109,7 +109,7 @@ object StatusBar {
         }
     }
 
-    private fun icon(key: StatusManager.Key): Icon {
+    private fun icon(key: StatusService.Key): Icon {
         return when (key) {
             TEXT_CURSOR_POSITION -> Icon.CURSOR
             OUTPUT_RESPONSE_TIME -> Icon.RESPONSE_TIME
