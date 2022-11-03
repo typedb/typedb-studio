@@ -23,10 +23,7 @@ package com.vaticle.typedb.studio.test.integration
 
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
-import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
+import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
@@ -41,12 +38,14 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDat
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import java.io.File
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class TextEditorTest: IntegrationTest() {
+class TextEditorTest : IntegrationTest() {
 
     @Test
     fun makeAFileAndSaveIt() {
@@ -59,8 +58,8 @@ class TextEditorTest: IntegrationTest() {
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
             clickIcon(composeRule, Icon.SAVE)
             val file = File("$path/Untitled1.tql")
-            StudioState.project.saveFileDialog.file!!.trySave(file.toPath(), true)
-            StudioState.project.current!!.reloadEntries()
+            com.vaticle.typedb.studio.service.Service.project.saveFileDialog.file!!.trySave(file.toPath(), true)
+            com.vaticle.typedb.studio.service.Service.project.current!!.reloadEntries()
             delayAndRecompose(composeRule, Delays.FILE_IO)
 
             assertTrue(file.exists())
@@ -77,10 +76,13 @@ class TextEditorTest: IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+                com.vaticle.typedb.studio.service.Service.client.session.tryOpen(
+                    database = testID,
+                    TypeDBSession.Type.DATA
+                )
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                StudioState.schema.reloadEntries()
+                com.vaticle.typedb.studio.service.Service.schema.reloadEntries()
 
                 // We can assert that the schema has been written successfully here as the schema
                 // is shown in the type browser.
@@ -91,7 +93,7 @@ class TextEditorTest: IntegrationTest() {
 
     @Test
     fun dataWriteAndCommit() {
-        withTypeDB {typeDB ->  
+        withTypeDB { typeDB ->
             runBlocking {
                 copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
@@ -99,7 +101,12 @@ class TextEditorTest: IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
                 writeDataInteractively(composeRule, dbName = testID, SampleGitHubData.dataFile)
-                verifyDataWrite(composeRule, typeDB.address(), dbName = testID, "$testID/${SampleGitHubData.collaboratorsQueryFile}")
+                verifyDataWrite(
+                    composeRule,
+                    typeDB.address(),
+                    dbName = testID,
+                    "$testID/${SampleGitHubData.collaboratorsQueryFile}"
+                )
             }
         }
     }
@@ -113,13 +120,14 @@ class TextEditorTest: IntegrationTest() {
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
 
-                StudioState.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
+                com.vaticle.typedb.studio.service.Service.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
                 clickText(composeRule, Label.SCHEMA.lowercase())
                 clickText(composeRule, Label.WRITE.lowercase())
 
-                StudioState.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!.asFile().tryOpen()
+                com.vaticle.typedb.studio.service.Service.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!
+                    .asFile().tryOpen()
 
                 clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
                 clickIcon(composeRule, Icon.ROLLBACK, delayMillis = Delays.NETWORK_IO)

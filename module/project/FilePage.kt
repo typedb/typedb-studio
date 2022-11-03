@@ -31,8 +31,8 @@ import com.vaticle.typedb.studio.framework.material.Frame
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Pages
 import com.vaticle.typedb.studio.framework.output.RunOutputArea
-import com.vaticle.typedb.studio.state.page.Pageable
-import com.vaticle.typedb.studio.state.project.FileState
+import com.vaticle.typedb.studio.service.page.Pageable
+import com.vaticle.typedb.studio.service.project.FileState
 
 class FilePage private constructor(
     private var file: FileState,

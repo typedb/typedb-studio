@@ -37,13 +37,12 @@ import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.StatusService
-import com.vaticle.typedb.studio.state.common.StatusService.Key.OUTPUT_RESPONSE_TIME
-import com.vaticle.typedb.studio.state.common.StatusService.Key.QUERY_RESPONSE_TIME
-import com.vaticle.typedb.studio.state.common.StatusService.Key.TEXT_CURSOR_POSITION
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Sentence
+import com.vaticle.typedb.studio.service.common.StatusService
+import com.vaticle.typedb.studio.service.common.StatusService.Key.OUTPUT_RESPONSE_TIME
+import com.vaticle.typedb.studio.service.common.StatusService.Key.QUERY_RESPONSE_TIME
+import com.vaticle.typedb.studio.service.common.StatusService.Key.TEXT_CURSOR_POSITION
+import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Sentence
 
 object StatusBar {
 
@@ -54,7 +53,7 @@ object StatusBar {
 
     @Composable
     fun Layout() {
-        val statusSrv = StudioState.status
+        val statusSrv = com.vaticle.typedb.studio.service.Service.status
         val fontStyle = Theme.typography.body2
         Row(Modifier.fillMaxWidth().height(HEIGHT), verticalAlignment = Alignment.CenterVertically) {
             if (statusSrv.loadingStatus.isNotEmpty()) {

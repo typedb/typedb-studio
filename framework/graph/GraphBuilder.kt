@@ -27,10 +27,9 @@ import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.logic.Explanation
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.NotificationService
-import com.vaticle.typedb.studio.state.common.util.Message
-import com.vaticle.typedb.studio.state.connection.TransactionState
+import com.vaticle.typedb.studio.service.common.NotificationService
+import com.vaticle.typedb.studio.service.common.util.Message
+import com.vaticle.typedb.studio.service.connection.TransactionState
 import com.vaticle.typeql.lang.TypeQL
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
@@ -74,9 +73,13 @@ class GraphBuilder(
                         }
                     }
                 }
-                concept is ThingType && concept.isRoot -> { /* skip root thing types */ }
-                concept is ThingType -> { putVertexIfAbsent(concept) }
-                concept is RoleType -> { /* skip role types */ }
+                concept is ThingType && concept.isRoot -> { /* skip root thing types */
+                }
+                concept is ThingType -> {
+                    putVertexIfAbsent(concept)
+                }
+                concept is RoleType -> { /* skip role types */
+                }
                 else -> throw unsupportedEncodingException(concept)
             }
         }
@@ -86,7 +89,12 @@ class GraphBuilder(
         concept is Thing -> putVertexIfAbsent(concept.iid, concept, newThingVertices, allThingVertices) {
             Vertex.Thing.of(concept, graph)
         }
-        concept is ThingType && !concept.isRoot -> putVertexIfAbsent(concept.label.name(), concept, newTypeVertices, allTypeVertices) {
+        concept is ThingType && !concept.isRoot -> putVertexIfAbsent(
+            concept.label.name(),
+            concept,
+            newTypeVertices,
+            allTypeVertices
+        ) {
             Vertex.Type.of(concept, graph)
         }
         else -> throw unsupportedEncodingException(concept)
@@ -207,12 +215,19 @@ class GraphBuilder(
     }
 
     fun explain(vertex: Vertex.Thing) {
-        NotificationService.launchCompletableFuture(StudioState.notification, LOGGER) {
+        NotificationService.launchCompletableFuture(
+            com.vaticle.typedb.studio.service.Service.notification,
+            LOGGER
+        ) {
             val iterator = graph.reasoning.explanationIterators[vertex]
                 ?: runExplainQuery(vertex).also { graph.reasoning.explanationIterators[vertex] = it }
             fetchNextExplanation(vertex, iterator)
         }.exceptionally { e ->
-            StudioState.notification.systemError(LOGGER, e, Message.Visualiser.UNEXPECTED_ERROR)
+            com.vaticle.typedb.studio.service.Service.notification.systemError(
+                LOGGER,
+                e,
+                Message.Visualiser.UNEXPECTED_ERROR
+            )
         }
     }
 
@@ -228,7 +243,7 @@ class GraphBuilder(
             vertexExplanations += Pair(vertex, explanation)
             loadConceptMap(explanation.condition(), AnswerSource.Explanation(explanation))
         } else {
-            StudioState.notification.info(LOGGER, Message.Visualiser.FULLY_EXPLAINED)
+            com.vaticle.typedb.studio.service.Service.notification.info(LOGGER, Message.Visualiser.FULLY_EXPLAINED)
         }
     }
 

@@ -60,7 +60,7 @@ import com.vaticle.typedb.studio.framework.material.Form.MultilineTextInput
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Label
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime

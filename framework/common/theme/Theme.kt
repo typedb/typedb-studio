@@ -89,7 +89,6 @@ object Theme {
             CornerRadius(bottomRight * density),
             CornerRadius(bottomLeft * density)
         )
-
     }
 
     @OptIn(ExperimentalMaterialApi::class)

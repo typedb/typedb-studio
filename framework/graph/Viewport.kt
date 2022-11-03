@@ -124,7 +124,8 @@ class Viewport(private val graph: Graph) {
 
         override fun run() {
             val vertexAreaApprox = 320f * 320f
-            val baseCapacity = (viewport.physicalSize.height.value * viewport.physicalSize.width.value) / vertexAreaApprox
+            val baseCapacity =
+                (viewport.physicalSize.height.value * viewport.physicalSize.width.value) / vertexAreaApprox
             val requiredCapacity = viewport.graph.vertices.size.coerceAtLeast(10)
             viewport.scale = sqrt(baseCapacity / requiredCapacity)
         }

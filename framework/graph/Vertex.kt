@@ -218,9 +218,10 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
         class Entity : Geometry(ENTITY_SIZE, CONCEPT_SIZE_EXPANDED) {
 
-            private val incomingEdgeTargetRect get() = Rect(
-                Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
-            )
+            private val incomingEdgeTargetRect
+                get() = Rect(
+                    Offset(rect.left - 4, rect.top - 4), Size(rect.width + 8, rect.height + 8)
+                )
 
             override val labelMaxWidth get() = size.width - PADDING
 
@@ -245,10 +246,11 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
             private val drawAsRect get() = !isVisiblyCollapsed && contentOverflowsBaseShape
 
-            override val labelMaxWidth get() = when {
-                drawAsRect -> size.width - PADDING
-                else -> size.width * 0.66f - PADDING
-            }
+            override val labelMaxWidth
+                get() = when {
+                    drawAsRect -> size.width - PADDING
+                    else -> size.width * 0.66f - PADDING
+                }
 
             override val expandSizeMultiplier = Offset(1.6f, 1.2f)
 
@@ -277,10 +279,11 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
 
             private val drawAsRect get() = !isVisiblyCollapsed && contentOverflowsBaseShape
 
-            override val labelMaxWidth get() = when {
-                drawAsRect -> size.width - PADDING
-                else -> size.width * 0.8f - PADDING
-            }
+            override val labelMaxWidth
+                get() = when {
+                    drawAsRect -> size.width - PADDING
+                    else -> size.width * 0.8f - PADDING
+                }
 
             override val expandSizeMultiplier = Offset(2f, 2f)
 

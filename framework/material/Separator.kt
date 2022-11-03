@@ -44,5 +44,4 @@ object Separator {
     fun Vertical(width: Dp = WEIGHT, color: Color = Theme.studio.border, modifier: Modifier = Modifier) {
         Spacer(modifier = modifier.fillMaxHeight().width(width = width).background(color = color))
     }
-
 }

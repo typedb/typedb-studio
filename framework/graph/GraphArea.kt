@@ -47,7 +47,7 @@ import androidx.compose.ui.zIndex
 import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Typography
-import com.vaticle.typedb.studio.state.connection.TransactionState
+import com.vaticle.typedb.studio.service.connection.TransactionState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -281,8 +281,8 @@ class GraphArea(transactionState: TransactionState) {
         }
     }
 
-    class VertexExpandAnimator(private val graphArea: GraphArea, private val coroutines: CoroutineScope)
-        : BackgroundTask(runIntervalMs = 17) {
+    class VertexExpandAnimator(private val graphArea: GraphArea, private val coroutines: CoroutineScope) :
+        BackgroundTask(runIntervalMs = 17) {
 
         private val interactions get() = graphArea.interactions
 

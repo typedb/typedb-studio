@@ -22,7 +22,7 @@ import androidx.compose.runtime.Composable
 import com.vaticle.typedb.studio.framework.material.Browsers
 import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Label
 
 class RoleBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
 
@@ -33,6 +33,5 @@ class RoleBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
 
     @Composable
     override fun Content() {
-
     }
 }

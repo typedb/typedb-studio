@@ -82,11 +82,11 @@ import com.vaticle.typedb.studio.framework.material.Form.IconArg
 import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.framework.material.Form.RawIconButton
 import com.vaticle.typedb.studio.framework.material.Form.Text
-import com.vaticle.typedb.studio.state.StudioState.notification
-import com.vaticle.typedb.studio.state.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Message.Framework.Companion.EXPAND_LIMIT_REACHED
-import com.vaticle.typedb.studio.state.page.Navigable
+import com.vaticle.typedb.studio.service.Service.notification
+import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Message.Framework.Companion.EXPAND_LIMIT_REACHED
+import com.vaticle.typedb.studio.service.page.Navigable
 import java.awt.event.MouseEvent
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -106,11 +106,11 @@ object Navigator {
         val clicksToOpenItem: Int
         val itemsAreFocusable: Boolean
 
-        class Browser(override val clicksToOpenItem: Int = 2): Behaviour {
+        class Browser(override val clicksToOpenItem: Int = 2) : Behaviour {
             override val itemsAreFocusable = true
         }
 
-        class Menu(override val clicksToOpenItem: Int = 1): Behaviour {
+        class Menu(override val clicksToOpenItem: Int = 1) : Behaviour {
             override val itemsAreFocusable = false
         }
     }

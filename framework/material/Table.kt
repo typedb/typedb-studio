@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Label
 
 object Table {
 

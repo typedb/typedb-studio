@@ -41,17 +41,16 @@ import com.vaticle.typedb.studio.framework.editor.TextEditor
 import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Message
-import com.vaticle.typedb.studio.state.common.util.Property
-import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
-import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.ERROR
-import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.INFO
-import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.SUCCESS
-import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Message.Type.TYPEQL
-import com.vaticle.typedb.studio.state.connection.TransactionState
+import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Message
+import com.vaticle.typedb.studio.service.common.util.Property
+import com.vaticle.typedb.studio.service.connection.QueryRunner.Response
+import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.ERROR
+import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.INFO
+import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.SUCCESS
+import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.TYPEQL
+import com.vaticle.typedb.studio.service.connection.TransactionState
 import com.vaticle.typeql.lang.common.TypeQLToken
 import com.vaticle.typeql.lang.common.util.Strings
 import java.util.concurrent.atomic.AtomicBoolean
@@ -124,23 +123,27 @@ internal class LogOutput constructor(
 
     private fun copyToClipboard() {
         editorState.copyContentToClipboard()
-        StudioState.notification.info(LOGGER, Message.Framework.TEXT_COPIED_TO_CLIPBOARD)
+        com.vaticle.typedb.studio.service.Service.notification.info(
+            LOGGER,
+            Message.Framework.TEXT_COPIED_TO_CLIPBOARD
+        )
     }
 
-    private fun launchRunningIndicator() = coroutines.launchAndHandle(StudioState.notification, LOGGER) {
-        var duration = RUNNING_INDICATOR_DELAY
-        while (isCollecting.get()) {
-            delay(duration)
-            if (!isCollecting.get()) return@launchAndHandle
-            val sinceLastResponse = System.currentTimeMillis() - lastOutputTime.get()
-            if (sinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
-                output(INFO, "...")
-                duration = RUNNING_INDICATOR_DELAY
-            } else {
-                duration = RUNNING_INDICATOR_DELAY - Duration.milliseconds(sinceLastResponse)
+    private fun launchRunningIndicator() =
+        coroutines.launchAndHandle(com.vaticle.typedb.studio.service.Service.notification, LOGGER) {
+            var duration = RUNNING_INDICATOR_DELAY
+            while (isCollecting.get()) {
+                delay(duration)
+                if (!isCollecting.get()) return@launchAndHandle
+                val sinceLastResponse = System.currentTimeMillis() - lastOutputTime.get()
+                if (sinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
+                    output(INFO, "...")
+                    duration = RUNNING_INDICATOR_DELAY
+                } else {
+                    duration = RUNNING_INDICATOR_DELAY - Duration.milliseconds(sinceLastResponse)
+                }
             }
         }
-    }
 
     internal fun outputFn(message: Response.Message): () -> Unit = { output(message.type, message.text) }
 

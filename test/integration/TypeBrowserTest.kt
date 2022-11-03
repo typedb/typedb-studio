@@ -23,9 +23,7 @@ package com.vaticle.typedb.studio.test.integration
 
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
+import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
@@ -37,10 +35,11 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndR
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class TypeBrowserTest: IntegrationTest() {
+class TypeBrowserTest : IntegrationTest() {
 
     @Test
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
@@ -74,7 +73,10 @@ class TypeBrowserTest: IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+                com.vaticle.typedb.studio.service.Service.client.session.tryOpen(
+                    database = testID,
+                    TypeDBSession.Type.DATA
+                )
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
                 clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
@@ -96,7 +98,10 @@ class TypeBrowserTest: IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+                com.vaticle.typedb.studio.service.Service.client.session.tryOpen(
+                    database = testID,
+                    TypeDBSession.Type.DATA
+                )
 
                 clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
                 delayAndRecompose(composeRule)

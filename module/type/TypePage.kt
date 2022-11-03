@@ -73,11 +73,10 @@ import com.vaticle.typedb.studio.framework.material.Scrollbar
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Table
 import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.page.Pageable
-import com.vaticle.typedb.studio.state.schema.TypeState
+import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Sentence
+import com.vaticle.typedb.studio.service.page.Pageable
+import com.vaticle.typedb.studio.service.schema.TypeState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
@@ -89,10 +88,10 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     override val hasSecondary: Boolean = false
     override val icon: Form.IconArg = icon(typeState.conceptType)
 
-    internal val canReadSchema get() = !StudioState.schema.hasRunningTx
+    internal val canReadSchema get() = !com.vaticle.typedb.studio.service.Service.schema.hasRunningTx
     internal val canWriteSchema
-        get() = !typeState.isRoot && StudioState.schema.isWritable &&
-                !StudioState.schema.hasRunningTx && !StudioState.client.hasRunningCommand
+        get() = !typeState.isRoot && com.vaticle.typedb.studio.service.Service.schema.isWritable &&
+                !com.vaticle.typedb.studio.service.Service.schema.hasRunningTx && !com.vaticle.typedb.studio.service.Service.client.hasRunningCommand
 
     private val focusReq = FocusRequester()
     private val horScroller = ScrollState(0)
@@ -332,7 +331,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     private fun OwnsAttributeTypeAddition() {
         var attributeType: TypeState.Attribute? by remember { mutableStateOf(null) }
         val definedAttrTypes = (typeState.ownsAttTypes + typeState.supertypes.flatMap { it.ownsAttTypes }).toSet()
-        val attributeTypeList = StudioState.schema.rootAttributeType?.subtypes
+        val attributeTypeList = com.vaticle.typedb.studio.service.Service.schema.rootAttributeType?.subtypes
             ?.filter { !definedAttrTypes.contains(it) }
             ?.sortedBy { it.name }
             ?: listOf()
@@ -354,7 +353,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     selected = attributeType,
                     displayFn = { TypeLabelWithDetails(it.conceptType, it.isAbstract) },
                     onSelection = { attributeType = it; it?.loadSupertypesAsync() },
-                    onExpand = { StudioState.schema.rootAttributeType?.loadSubtypesRecursivelyAsync() },
+                    onExpand = { com.vaticle.typedb.studio.service.Service.schema.rootAttributeType?.loadSubtypesRecursivelyAsync() },
                     placeholder = Label.ATTRIBUTE_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxSize(),
                     allowNone = true,
@@ -462,7 +461,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
     private fun PlaysRoleTypeAddition() {
         var roleType: TypeState.Role? by remember { mutableStateOf(null) }
         val definedRoleTypes = (typeState.playsRoleTypes + typeState.supertypes.flatMap { it.playsRoleTypes }).toSet()
-        val roleTypeList = StudioState.schema.rootRelationType?.subtypes
+        val roleTypeList = com.vaticle.typedb.studio.service.Service.schema.rootRelationType?.subtypes
             ?.flatMap { it.relatesRoleTypes }
             ?.filter { !definedRoleTypes.contains(it) }
             ?.sortedBy { it.scopedName }
@@ -483,7 +482,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
                     selected = roleType,
                     displayFn = { TypeLabelWithDetails(it.conceptType, it.isAbstract) },
                     onSelection = { roleType = it; it?.loadSupertypesAsync() },
-                    onExpand = { StudioState.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
+                    onExpand = { com.vaticle.typedb.studio.service.Service.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
                     placeholder = Label.ROLE_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxSize(),
                     allowNone = true,
@@ -569,11 +568,11 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         Form.TextButton(
             text = Label.EXPORT,
             leadingIcon = Form.IconArg(Icon.EXPORT),
-            enabled = StudioState.project.current != null && canReadSchema,
+            enabled = com.vaticle.typedb.studio.service.Service.project.current != null && canReadSchema,
             tooltip = Tooltip.Arg(Label.EXPORT_SYNTAX)
         ) {
             typeState.exportSyntaxAsync { syntax ->
-                StudioState.project.tryCreateUntitledFile()?.let { file ->
+                com.vaticle.typedb.studio.service.Service.project.tryCreateUntitledFile()?.let { file ->
                     file.content(syntax)
                     file.tryOpen()
                 }
@@ -589,7 +588,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             enabled = canReadSchema,
             tooltip = Tooltip.Arg(Label.REFRESH)
         ) {
-            StudioState.schema.closeReadTx()
+            com.vaticle.typedb.studio.service.Service.schema.closeReadTx()
             typeState.loadConstraintsAsync()
         }
     }
@@ -691,7 +690,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             var roleType: String by remember { mutableStateOf("") }
             var overriddenType: TypeState.Role? by remember { mutableStateOf(null) }
             val overridableTypeList = typeState.supertype?.relatesRoleTypes
-                ?.filter { it != StudioState.schema.rootRoleType }
+                ?.filter { it != com.vaticle.typedb.studio.service.Service.schema.rootRoleType }
                 ?.sortedBy { it.scopedName } ?: listOf()
 
             val isRelatable = canWriteSchema && roleType.isNotEmpty()

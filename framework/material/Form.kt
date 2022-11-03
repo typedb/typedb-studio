@@ -104,7 +104,7 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Theme.ROUNDED_CORNER_SHAPE
 import com.vaticle.typedb.studio.framework.common.theme.Theme.RoundedCorners
 import com.vaticle.typedb.studio.framework.common.theme.Theme.rectangleIndication
-import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Label
 import java.awt.event.KeyEvent.KEY_PRESSED
 import java.net.URL
 import kotlinx.coroutines.CoroutineScope

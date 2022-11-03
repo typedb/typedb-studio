@@ -117,7 +117,6 @@ internal class TextChange(val operations: List<Operation>) {
             if (cache) selection = newSelection
             return newSelection
         }
-
     }
 
     class Insertion constructor(

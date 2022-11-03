@@ -85,12 +85,11 @@ import com.vaticle.typedb.studio.module.project.ProjectDialog
 import com.vaticle.typedb.studio.module.type.TypeBrowser
 import com.vaticle.typedb.studio.module.type.TypeDialog
 import com.vaticle.typedb.studio.module.type.TypePage
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Message
-import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.project.FileState
-import com.vaticle.typedb.studio.state.schema.TypeState
+import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Message
+import com.vaticle.typedb.studio.service.common.util.Sentence
+import com.vaticle.typedb.studio.service.project.FileState
+import com.vaticle.typedb.studio.service.schema.TypeState
 import java.awt.Window
 import java.awt.event.WindowEvent
 import javax.swing.UIManager
@@ -129,7 +128,7 @@ object Studio {
 
     @Composable
     private fun MainWindow(exitApplicationFn: () -> Unit) {
-        fun confirmClose() = StudioState.confirmation.submit(
+        fun confirmClose() = com.vaticle.typedb.studio.service.Service.confirmation.submit(
             title = Label.CONFIRM_QUITTING_APPLICATION,
             message = Sentence.CONFIRM_QUITING_APPLICATION,
             onConfirm = { quit = true; exitApplicationFn() }
@@ -186,8 +185,11 @@ object Studio {
                             initSize = Either.second(1f)
                         ) {
                             Pages.Layout(
-                                enabled = StudioState.project.current != null,
-                                onNewPage = { StudioState.project.tryCreateUntitledFile()?.tryOpen() }
+                                enabled = com.vaticle.typedb.studio.service.Service.project.current != null,
+                                onNewPage = {
+                                    com.vaticle.typedb.studio.service.Service.project.tryCreateUntitledFile()
+                                        ?.tryOpen()
+                                }
                             ) {
                                 when (it) {
                                     is FileState -> FilePage.create(it)
@@ -205,8 +207,8 @@ object Studio {
     }
 
     private fun getMainWindowTitle(): String {
-        val projectName = StudioState.project.current?.directory?.name
-        val pageName = StudioState.pages.active?.windowTitle
+        val projectName = com.vaticle.typedb.studio.service.Service.project.current?.directory?.name
+        val pageName = com.vaticle.typedb.studio.service.Service.pages.active?.windowTitle
         return Label.TYPEDB_STUDIO + ((pageName ?: projectName)?.let { " — $it" } ?: "")
     }
 
@@ -280,7 +282,7 @@ object Studio {
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run(): Unit = runBlocking {
                 LOGGER.info { Label.CLOSING_TYPEDB_STUDIO }
-                StudioState.client.close()
+                com.vaticle.typedb.studio.service.Service.client.close()
             }
         })
     }
@@ -310,7 +312,7 @@ object Studio {
             addShutdownHook()
             setConfigurations()
             Message.loadClasses()
-            StudioState.data.initialise()
+            com.vaticle.typedb.studio.service.Service.data.initialise()
             while (!quit) {
                 application { MainWindow(::exitApplication) }
                 error?.let { exception ->

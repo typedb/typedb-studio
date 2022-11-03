@@ -24,8 +24,8 @@ import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.studio.framework.graph.GraphVisualiser
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.connection.TransactionState
+import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.connection.TransactionState
 
 internal class GraphOutput constructor(transactionState: TransactionState, number: Int) : RunOutput() {
 

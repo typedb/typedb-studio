@@ -32,10 +32,9 @@ import com.vaticle.typedb.studio.framework.editor.TextChange.Deletion
 import com.vaticle.typedb.studio.framework.editor.TextChange.Insertion
 import com.vaticle.typedb.studio.framework.editor.TextChange.ReplayType
 import com.vaticle.typedb.studio.framework.editor.highlighter.SyntaxHighlighter
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Message.Project.Companion.FILE_NOT_WRITABLE
-import com.vaticle.typedb.studio.state.common.util.Property
-import com.vaticle.typedb.studio.state.project.FileState
+import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FILE_NOT_WRITABLE
+import com.vaticle.typedb.studio.service.common.util.Property
+import com.vaticle.typedb.studio.service.project.FileState
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
@@ -108,7 +107,13 @@ internal interface TextProcessor {
         }
 
         private fun mayDisplayWarning() {
-            file?.path?.let { StudioState.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, it) }
+            file?.path?.let {
+                com.vaticle.typedb.studio.service.Service.notification.userWarning(
+                    LOGGER,
+                    FILE_NOT_WRITABLE,
+                    it
+                )
+            }
         }
 
         private fun displayWarningOnStartTyping(): Insertion? {

@@ -27,7 +27,7 @@ import com.vaticle.typedb.studio.framework.material.Browsers
 import com.vaticle.typedb.studio.framework.material.Frame
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Tabs
-import com.vaticle.typedb.studio.state.connection.TransactionState
+import com.vaticle.typedb.studio.service.connection.TransactionState
 
 class GraphVisualiser constructor(transactionState: TransactionState) {
 

@@ -72,7 +72,8 @@ internal class TextRenderer(private val viewport: Viewport) {
                 maxLines = vertex.geometry.labelMaxLines(typography.codeSizeMedium),
                 color = color
             ).also { result ->
-                if (result.isTruncated && vertex.geometry.isVisiblyCollapsed) vertex.geometry.contentOverflowsBaseShape = true
+                if (result.isTruncated && vertex.geometry.isVisiblyCollapsed) vertex.geometry.contentOverflowsBaseShape =
+                    true
             }
         }
     }

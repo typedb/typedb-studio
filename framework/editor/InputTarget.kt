@@ -34,8 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Util.subSequenceSafely
 import com.vaticle.typedb.studio.framework.common.Util.toDP
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.StatusService.Key.TEXT_CURSOR_POSITION
+import com.vaticle.typedb.studio.service.common.StatusService.Key.TEXT_CURSOR_POSITION
 import kotlin.math.floor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -91,7 +90,6 @@ internal class InputTarget constructor(
         override fun toString(): String {
             return "Cursor (row: $row, col: $col)"
         }
-
     }
 
     internal class Selection constructor(val start: Cursor, endInit: Cursor) {
@@ -244,11 +242,14 @@ internal class InputTarget constructor(
     }
 
     internal fun publishStatus() {
-        StudioState.status.publish(TEXT_CURSOR_POSITION, selection?.label() ?: cursor.label())
+        com.vaticle.typedb.studio.service.Service.status.publish(
+            TEXT_CURSOR_POSITION,
+            selection?.label() ?: cursor.label()
+        )
     }
 
     internal fun clearStatus() {
-        StudioState.status.clear(TEXT_CURSOR_POSITION)
+        com.vaticle.typedb.studio.service.Service.status.clear(TEXT_CURSOR_POSITION)
     }
 
     private fun mayScrollToCursor() {

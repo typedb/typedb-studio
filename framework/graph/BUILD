@@ -28,9 +28,9 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
     deps = [
-        "//state/common:common",
-        "//state/connection:connection",
-        "//state:state",
+        "//service/common:common",
+        "//service/connection:connection",
+        "//service:service",
         "//framework/common:common",
         "//framework/material:material",
 

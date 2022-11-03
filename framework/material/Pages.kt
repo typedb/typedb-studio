@@ -46,10 +46,9 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.page.Pageable
+import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Sentence
+import com.vaticle.typedb.studio.service.page.Pageable
 
 object Pages {
 
@@ -97,22 +96,22 @@ object Pages {
         }
 
         private fun saveActivePage(): Boolean {
-            StudioState.pages.active?.initiateSave()
+            com.vaticle.typedb.studio.service.Service.pages.active?.initiateSave()
             return true
         }
 
         private fun showNextPage(): Boolean {
-            StudioState.pages.next.activate()
+            com.vaticle.typedb.studio.service.Service.pages.next.activate()
             return true
         }
 
         private fun showPreviousPage(): Boolean {
-            StudioState.pages.previous.activate()
+            com.vaticle.typedb.studio.service.Service.pages.previous.activate()
             return true
         }
 
         private fun closeActivePage(): Boolean {
-            return StudioState.pages.active?.let { close(it) } ?: false
+            return com.vaticle.typedb.studio.service.Service.pages.active?.let { close(it) } ?: false
         }
 
         internal fun close(pageable: Pageable): Boolean {
@@ -122,11 +121,11 @@ object Pages {
                 pageable.close()
                 if (pageable.isUnsavedPageable) pageable.tryDelete()
             }
-            if (pageable.isRunnable && pageable.asRunnable().isRunning) StudioState.confirmation.submit(
+            if (pageable.isRunnable && pageable.asRunnable().isRunning) com.vaticle.typedb.studio.service.Service.confirmation.submit(
                 title = Label.QUERY_IS_RUNNING,
                 message = Sentence.STOP_RUNNING_QUERY_BEFORE_CLOSING_PAGE_DESCRIPTION,
                 cancelLabel = Label.OK,
-            ) else if (pageable.needSaving) StudioState.confirmation.submit(
+            ) else if (pageable.needSaving) com.vaticle.typedb.studio.service.Service.confirmation.submit(
                 title = Label.SAVE_OR_DELETE,
                 message = Sentence.SAVE_OR_DELETE_FILE,
                 confirmLabel = Label.SAVE,
@@ -166,7 +165,7 @@ object Pages {
         val state = remember { State() }
         val focusReq = remember { FocusRequester() }
         fun mayRequestFocus() {
-            if (StudioState.pages.opened.isEmpty()) focusReq.requestFocus()
+            if (com.vaticle.typedb.studio.service.Service.pages.opened.isEmpty()) focusReq.requestFocus()
         }
         Column(
             modifier = Modifier.fillMaxSize().focusRequester(focusReq).focusable()
@@ -175,17 +174,19 @@ object Pages {
         ) {
             Tabs.Horizontal.Layout(
                 state = state.tabsState,
-                tabs = StudioState.pages.opened,
+                tabs = com.vaticle.typedb.studio.service.Service.pages.opened,
                 iconFn = { state.openedPage(it, createPageFn).icon },
                 labelFn = { tabLabel(it) },
-                isActiveFn = { StudioState.pages.active == it },
+                isActiveFn = { com.vaticle.typedb.studio.service.Service.pages.active == it },
                 onClick = { it.activate() },
                 contextMenuFn = { state.contextMenuFn(it) },
                 closeButtonFn = { IconButtonArg(icon = Icon.CLOSE) { state.close(it) } },
                 buttons = listOf(IconButtonArg(Icon.ADD, enabled = enabled) { onNewPage() })
             )
             Separator.Horizontal()
-            StudioState.pages.active?.let { state.openedPage(it, createPageFn).Layout() }
+            com.vaticle.typedb.studio.service.Service.pages.active?.let {
+                state.openedPage(it, createPageFn).Layout()
+            }
         }
         LaunchedEffect(focusReq) { mayRequestFocus() }
     }

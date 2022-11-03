@@ -44,7 +44,7 @@ import com.vaticle.typedb.studio.framework.material.ConceptDisplay.attributeValu
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Table
-import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Label
 
 class ConceptPreview constructor(
     private val graphArea: GraphArea,

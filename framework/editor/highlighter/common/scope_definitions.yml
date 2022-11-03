@@ -15,24 +15,24 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-comment: [line, block]
+comment: [ line, block ]
 constant:
-  language: []
-  character: [escape]
-  numeric: [integer, float, complex]
+  language: [ ]
+  character: [ escape ]
+  numeric: [ integer, float, complex ]
 entity:
-  name: [class, struct, enum, union, trait, interface, impl, type, function, namespace, constant, label, section, tag]
-invalid: [illegal, deprecated]
+  name: [ class, struct, enum, union, trait, interface, impl, type, function, namespace, constant, label, section, tag ]
+invalid: [ illegal, deprecated ]
 keyword:
-  control: [conditional, import]
-  operator: [assignment, arithmetic, bitwise, logical, word]
-markup: [heading, list, bold, italic, underline, inserted, deleted, quote, raw]
-punctuation: [separator, terminator, accessor]
-source: []
+  control: [ conditional, import ]
+  operator: [ assignment, arithmetic, bitwise, logical, word ]
+markup: [ heading, list, bold, italic, underline, inserted, deleted, quote, raw ]
+punctuation: [ separator, terminator, accessor ]
+source: [ ]
 storage:
-  modifier: []
-  type: [function, class, struct, enum, union, trait, interface, impl]
-string: [quoted, unquoted, regexp]
-support: [constant, function, module, type, class]
-text: [html, xml]
-variable: [language, parameter, function, annotation]
+  modifier: [ ]
+  type: [ function, class, struct, enum, union, trait, interface, impl ]
+string: [ quoted, unquoted, regexp ]
+support: [ constant, function, module, type, class ]
+text: [ html, xml ]
+variable: [ language, parameter, function, annotation ]

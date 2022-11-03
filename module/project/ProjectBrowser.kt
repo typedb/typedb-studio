@@ -40,11 +40,10 @@ import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.project.DirectoryState
-import com.vaticle.typedb.studio.state.project.FileState
-import com.vaticle.typedb.studio.state.project.PathState
+import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.project.DirectoryState
+import com.vaticle.typedb.studio.service.project.FileState
+import com.vaticle.typedb.studio.service.project.PathState
 import mu.KotlinLogging
 
 class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(initOpen, order) {
@@ -55,7 +54,7 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
 
     override val label: String = Label.PROJECT
     override val icon: Icon = Icon.FOLDER
-    override val isActive: Boolean get() = StudioState.project.current != null
+    override val isActive: Boolean get() = com.vaticle.typedb.studio.service.Service.project.current != null
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
     @Composable
@@ -73,14 +72,14 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
             Form.TextButton(
                 text = Label.OPEN_PROJECT,
                 leadingIcon = IconArg(Icon.FOLDER_OPEN)
-            ) { StudioState.project.openProjectDialog.open() }
+            ) { com.vaticle.typedb.studio.service.Service.project.openProjectDialog.open() }
         }
     }
 
     @Composable
     private fun NavigatorLayout() {
         val navState = rememberNavigatorState(
-            container = StudioState.project.current!!,
+            container = com.vaticle.typedb.studio.service.Service.project.current!!,
             title = Label.PROJECT_BROWSER,
             behaviour = Navigator.Behaviour.Browser(),
             initExpandDepth = 1,
@@ -88,9 +87,9 @@ class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(i
             openFn = { openPath(it) },
             contextMenuFn = { contextMenuItems(it) }
         ) { navState ->
-            StudioState.project.onProjectChange { navState.replaceContainer(it) }
-            StudioState.project.onContentChange { navState.reloadEntriesAsync() }
-            StudioState.project.onClose { navState.close() }
+            com.vaticle.typedb.studio.service.Service.project.onProjectChange { navState.replaceContainer(it) }
+            com.vaticle.typedb.studio.service.Service.project.onContentChange { navState.reloadEntriesAsync() }
+            com.vaticle.typedb.studio.service.Service.project.onClose { navState.close() }
         }
         buttons = navState.buttons
         Navigator.Layout(

@@ -46,11 +46,10 @@ import com.vaticle.typedb.studio.framework.material.Frame
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Tabs
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.connection.QueryRunner
-import com.vaticle.typedb.studio.state.page.Pageable
+import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Sentence
+import com.vaticle.typedb.studio.service.connection.QueryRunner
+import com.vaticle.typedb.studio.service.page.Pageable
 import kotlinx.coroutines.delay
 
 object RunOutputArea {
@@ -124,7 +123,7 @@ object RunOutputArea {
         val runnerSrv = state.pageable.runners
         fun runnerName(runner: QueryRunner): String = "${state.pageable.name} (${runnerSrv.numberOf(runner)})"
         fun mayCloseRunner(runner: QueryRunner) {
-            if (runner.isRunning.get()) StudioState.confirmation.submit(
+            if (runner.isRunning.get()) com.vaticle.typedb.studio.service.Service.confirmation.submit(
                 title = Label.QUERY_IS_RUNNING,
                 message = Sentence.STOP_RUNNING_QUERY_BEFORE_CLOSING_OUTPUT_GROUP_TAB_DESCRIPTION,
                 cancelLabel = Label.OK,

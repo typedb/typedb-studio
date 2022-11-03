@@ -55,7 +55,7 @@ import com.vaticle.typedb.studio.framework.material.Form.BORDER_WIDTH
 import com.vaticle.typedb.studio.framework.material.Form.ClickableText
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.URLText
-import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Label
 import java.awt.MouseInfo
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean

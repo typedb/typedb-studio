@@ -38,11 +38,10 @@ import com.vaticle.typedb.studio.framework.material.Form.Checkbox
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.schema.SchemaService
-import com.vaticle.typedb.studio.state.schema.TypeState
+import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Sentence
+import com.vaticle.typedb.studio.service.schema.SchemaService
+import com.vaticle.typedb.studio.service.schema.TypeState
 
 object TypeDialog {
 
@@ -73,35 +72,35 @@ object TypeDialog {
 
     @Composable
     fun MayShowDialogs() {
-        if (StudioState.schema.renameTypeDialog.isOpen) RenameTypeDialog()
-        if (StudioState.schema.createEntityTypeDialog.isOpen) CreateEntityTypeDialog()
-        if (StudioState.schema.createRelationTypeDialog.isOpen) CreateRelationTypeDialog()
-        if (StudioState.schema.createAttributeTypeDialog.isOpen) CreateAttributeTypeDialog()
-        if (StudioState.schema.changeEntitySupertypeDialog.isOpen) ChangeEntitySupertypeDialog()
-        if (StudioState.schema.changeAttributeSupertypeDialog.isOpen) ChangeAttributeSupertypeDialog()
-        if (StudioState.schema.changeRelationSupertypeDialog.isOpen) ChangeRelationSupertypeDialog()
-        if (StudioState.schema.changeOverriddenRoleTypeDialog.isOpen) ChangeRoleOverriddenTypeDialog()
-        if (StudioState.schema.changeAbstractDialog.isOpen) ChangeAbstractDialog()
+        if (com.vaticle.typedb.studio.service.Service.schema.renameTypeDialog.isOpen) RenameTypeDialog()
+        if (com.vaticle.typedb.studio.service.Service.schema.createEntityTypeDialog.isOpen) CreateEntityTypeDialog()
+        if (com.vaticle.typedb.studio.service.Service.schema.createRelationTypeDialog.isOpen) CreateRelationTypeDialog()
+        if (com.vaticle.typedb.studio.service.Service.schema.createAttributeTypeDialog.isOpen) CreateAttributeTypeDialog()
+        if (com.vaticle.typedb.studio.service.Service.schema.changeEntitySupertypeDialog.isOpen) ChangeEntitySupertypeDialog()
+        if (com.vaticle.typedb.studio.service.Service.schema.changeAttributeSupertypeDialog.isOpen) ChangeAttributeSupertypeDialog()
+        if (com.vaticle.typedb.studio.service.Service.schema.changeRelationSupertypeDialog.isOpen) ChangeRelationSupertypeDialog()
+        if (com.vaticle.typedb.studio.service.Service.schema.changeOverriddenRoleTypeDialog.isOpen) ChangeRoleOverriddenTypeDialog()
+        if (com.vaticle.typedb.studio.service.Service.schema.changeAbstractDialog.isOpen) ChangeAbstractDialog()
     }
 
     @Composable
     private fun CreateEntityTypeDialog() = CreateThingTypeDialog(
-        dialogState = StudioState.schema.createEntityTypeDialog,
-        rootTypeState = StudioState.schema.rootEntityType!!,
+        dialogState = com.vaticle.typedb.studio.service.Service.schema.createEntityTypeDialog,
+        rootTypeState = com.vaticle.typedb.studio.service.Service.schema.rootEntityType!!,
         title = Label.CREATE_ENTITY_TYPE
     ) { supertypeState, label, isAbstract, _ -> supertypeState.tryCreateSubtype(label, isAbstract) }
 
     @Composable
     private fun CreateRelationTypeDialog() = CreateThingTypeDialog(
-        dialogState = StudioState.schema.createRelationTypeDialog,
-        rootTypeState = StudioState.schema.rootRelationType!!,
+        dialogState = com.vaticle.typedb.studio.service.Service.schema.createRelationTypeDialog,
+        rootTypeState = com.vaticle.typedb.studio.service.Service.schema.rootRelationType!!,
         title = Label.CREATE_RELATION_TYPE
     ) { supertypeState, label, isAbstract, _ -> supertypeState.tryCreateSubtype(label, isAbstract) }
 
     @Composable
     private fun CreateAttributeTypeDialog() =
-        CreateThingTypeDialog(dialogState = StudioState.schema.createAttributeTypeDialog,
-            rootTypeState = StudioState.schema.rootAttributeType!!,
+        CreateThingTypeDialog(dialogState = com.vaticle.typedb.studio.service.Service.schema.createAttributeTypeDialog,
+            rootTypeState = com.vaticle.typedb.studio.service.Service.schema.rootAttributeType!!,
             title = Label.CREATE_ATTRIBUTE_TYPE,
             isValidFn = { it.valueType != null }) { supertypeState, label, isAbstract, valType ->
             supertypeState.tryCreateSubtype(
@@ -145,7 +144,7 @@ object TypeDialog {
 
     @Composable
     private fun RenameTypeDialog() {
-        val dialogState = StudioState.schema.renameTypeDialog
+        val dialogState = com.vaticle.typedb.studio.service.Service.schema.renameTypeDialog
         val typeState = dialogState.typeState!!
         val formState = remember {
             object : Form.State {
@@ -166,24 +165,24 @@ object TypeDialog {
     @Composable
     private fun ChangeEntitySupertypeDialog() = ChangeSupertypeDialog(
         title = Label.CHANGE_ENTITY_SUPERTYPE,
-        dialogState = StudioState.schema.changeEntitySupertypeDialog,
-        selection = StudioState.schema.rootEntityType!!.subtypesWithSelf
+        dialogState = com.vaticle.typedb.studio.service.Service.schema.changeEntitySupertypeDialog,
+        selection = com.vaticle.typedb.studio.service.Service.schema.rootEntityType!!.subtypesWithSelf
     )
 
     @Composable
     private fun ChangeAttributeSupertypeDialog() = ChangeSupertypeDialog(
         title = Label.CHANGE_ATTRIBUTE_SUPERTYPE,
-        dialogState = StudioState.schema.changeAttributeSupertypeDialog,
-        selection = StudioState.schema.rootAttributeType!!.subtypesWithSelf.filter {
-            it.valueType == StudioState.schema.changeAttributeSupertypeDialog.typeState!!.valueType
-                    || it == StudioState.schema.rootAttributeType
+        dialogState = com.vaticle.typedb.studio.service.Service.schema.changeAttributeSupertypeDialog,
+        selection = com.vaticle.typedb.studio.service.Service.schema.rootAttributeType!!.subtypesWithSelf.filter {
+            it.valueType == com.vaticle.typedb.studio.service.Service.schema.changeAttributeSupertypeDialog.typeState!!.valueType
+                    || it == com.vaticle.typedb.studio.service.Service.schema.rootAttributeType
         })
 
     @Composable
     private fun ChangeRelationSupertypeDialog() = ChangeSupertypeDialog(
         title = Label.CHANGE_RELATION_SUPERTYPE,
-        dialogState = StudioState.schema.changeRelationSupertypeDialog,
-        selection = StudioState.schema.rootRelationType!!.subtypesWithSelf
+        dialogState = com.vaticle.typedb.studio.service.Service.schema.changeRelationSupertypeDialog,
+        selection = com.vaticle.typedb.studio.service.Service.schema.rootRelationType!!.subtypesWithSelf
     )
 
     @Composable
@@ -212,16 +211,16 @@ object TypeDialog {
 
     @Composable
     private fun ChangeRoleOverriddenTypeDialog() {
-        val dialogState = StudioState.schema.changeOverriddenRoleTypeDialog
+        val dialogState = com.vaticle.typedb.studio.service.Service.schema.changeOverriddenRoleTypeDialog
         val typeState = dialogState.typeState!!
         val message = Sentence.CHANGE_OVERRIDDEN_TYPE.format(typeState.encoding.label, typeState.scopedName)
         val selection = typeState.relationType.supertype!!.relatesRoleTypes.filter {
-            it != StudioState.schema.rootRoleType
+            it != com.vaticle.typedb.studio.service.Service.schema.rootRoleType
         }
         val formState = remember {
             object : Form.State {
                 var overriddenType: TypeState.Role? by mutableStateOf(
-                    if (typeState.supertype != StudioState.schema.rootRoleType) typeState.supertype else null
+                    if (typeState.supertype != com.vaticle.typedb.studio.service.Service.schema.rootRoleType) typeState.supertype else null
                 )
 
                 override fun cancel() = dialogState.close()
@@ -242,7 +241,7 @@ object TypeDialog {
 
     @Composable
     private fun ChangeAbstractDialog() {
-        val dialogState = StudioState.schema.changeAbstractDialog
+        val dialogState = com.vaticle.typedb.studio.service.Service.schema.changeAbstractDialog
         val typeState = dialogState.typeState!!
         val message = Sentence.CHANGE_TYPE_ABSTRACTNESS.format(typeState.encoding.label, typeState.name)
         val formState = remember {

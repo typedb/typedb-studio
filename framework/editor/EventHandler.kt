@@ -90,8 +90,7 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.editor.TextProcessor.Companion.normaliseWhiteSpace
 import com.vaticle.typedb.studio.framework.material.ContextMenu
 import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Label
 
 internal class EventHandler constructor(
     private val target: InputTarget,
@@ -175,9 +174,9 @@ internal class EventHandler constructor(
             DUPLICATE -> processor.duplicate()
             UNDO -> processor.undo()
             REDO -> processor.redo()
-            TEXT_SIZE_INCREASE -> StudioState.editor.increaseScale()
-            TEXT_SIZE_DECREASE -> StudioState.editor.decreaseScale()
-            TEXT_SIZE_RESET -> StudioState.editor.resetScale()
+            TEXT_SIZE_INCREASE -> com.vaticle.typedb.studio.service.Service.editor.increaseScale()
+            TEXT_SIZE_DECREASE -> com.vaticle.typedb.studio.service.Service.editor.decreaseScale()
+            TEXT_SIZE_RESET -> com.vaticle.typedb.studio.service.Service.editor.resetScale()
             EMOJI_WINDOW -> {
                 // TODO: https://github.com/JetBrains/compose-jb/issues/1754
                 // androidx.compose.foundation.text.showCharacterPalette()
@@ -224,12 +223,12 @@ internal class EventHandler constructor(
     }
 
     private fun mayRunFile() {
-        if (!StudioState.client.isReadyToRunQuery) return
+        if (!com.vaticle.typedb.studio.service.Service.client.isReadyToRunQuery) return
         processor.file?.mayOpenAndRun()
     }
 
     private fun mayRunSelection() {
-        if (!StudioState.client.isReadyToRunQuery) return
+        if (!com.vaticle.typedb.studio.service.Service.client.isReadyToRunQuery) return
         processor.file?.mayOpenAndRun(target.selectedText().text)
     }
 
@@ -309,7 +308,7 @@ internal class EventHandler constructor(
         icon = Icon.RUN,
         iconColor = { Theme.studio.secondary },
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
-        enabled = processor.file?.isRunnable == true && StudioState.client.isReadyToRunQuery
+        enabled = processor.file?.isRunnable == true && com.vaticle.typedb.studio.service.Service.client.isReadyToRunQuery
     ) { mayRunFile() }
 
     private fun runSelectionMenuItem() = ContextMenu.Item(
@@ -317,27 +316,27 @@ internal class EventHandler constructor(
         icon = Icon.RUN,
         iconColor = { Theme.studio.secondary },
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
-        enabled = processor.file?.isRunnable == true && target.selection != null && StudioState.client.isReadyToRunQuery
+        enabled = processor.file?.isRunnable == true && target.selection != null && com.vaticle.typedb.studio.service.Service.client.isReadyToRunQuery
     ) { mayRunSelection() }
 
     private fun increaseTextSizeMenuItem() = ContextMenu.Item(
         label = Label.INCREASE_TEXT_SIZE,
         icon = Icon.TEXT_SIZE_INCREASE,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + =",
-        enabled = !StudioState.editor.isMaxScale
-    ) { StudioState.editor.increaseScale() }
+        enabled = !com.vaticle.typedb.studio.service.Service.editor.isMaxScale
+    ) { com.vaticle.typedb.studio.service.Service.editor.increaseScale() }
 
     private fun decreaseTextSizeMenuItem() = ContextMenu.Item(
         label = Label.DECREASE_TEXT_SIZE,
         icon = Icon.TEXT_SIZE_DECREASE,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + -",
-        enabled = !StudioState.editor.isMinScale
-    ) { StudioState.editor.decreaseScale() }
+        enabled = !com.vaticle.typedb.studio.service.Service.editor.isMinScale
+    ) { com.vaticle.typedb.studio.service.Service.editor.decreaseScale() }
 
     private fun resetTextSizeMenuItem() = ContextMenu.Item(
         label = Label.RESET_TEXT_SIZE,
         icon = Icon.TEXT_SIZE_RESET,
         info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + 0",
-        enabled = !StudioState.editor.isDefaultScale
-    ) { StudioState.editor.resetScale() }
+        enabled = !com.vaticle.typedb.studio.service.Service.editor.isDefaultScale
+    ) { com.vaticle.typedb.studio.service.Service.editor.resetScale() }
 }

@@ -20,16 +20,11 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
-import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
@@ -38,12 +33,12 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProje
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import kotlin.test.assertEquals
-
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class QueryRunnerTest: IntegrationTest() {
+class QueryRunnerTest : IntegrationTest() {
 
     @Test
     fun toolbarTogglesSetQueryOptionsCorrectly() {
@@ -56,10 +51,13 @@ class QueryRunnerTest: IntegrationTest() {
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
                 writeDataInteractively(composeRule, dbName = testID, SampleGitHubData.dataFile)
 
-                StudioState.client.session.tryOpen(database = testID, TypeDBSession.Type.DATA)
+                com.vaticle.typedb.studio.service.Service.client.session.tryOpen(
+                    database = testID,
+                    TypeDBSession.Type.DATA
+                )
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                StudioState.project.current!!.directory.entries.find {
+                com.vaticle.typedb.studio.service.Service.project.current!!.directory.entries.find {
                     it.name == SampleGitHubData.collaboratorsQueryFile
                 }!!.asFile().tryOpen()
 
@@ -68,15 +66,18 @@ class QueryRunnerTest: IntegrationTest() {
                 clickText(composeRule, Label.SNAPSHOT.lowercase())
                 clickText(composeRule, Label.INFER.lowercase())
 
-                StudioState.pages.active?.let { if (it.isRunnable) it.asRunnable().mayOpenAndRun() }
+                com.vaticle.typedb.studio.service.Service.pages.active?.let {
+                    if (it.isRunnable) it.asRunnable().mayOpenAndRun()
+                }
 
-                val sessionType = StudioState.client.session.type
+                val sessionType = com.vaticle.typedb.studio.service.Service.client.session.type
                 assertEquals(sessionType, TypeDBSession.Type.DATA)
 
-                val transaction = StudioState.client.session.transaction.transaction!!
+                val transaction = com.vaticle.typedb.studio.service.Service.client.session.transaction.transaction!!
                 val transactionType = transaction.type()
                 val transactionIsInfer = transaction.options().infer().get()
-                val transactionIsSnapshot = StudioState.client.session.transaction.snapshot.value
+                val transactionIsSnapshot =
+                    com.vaticle.typedb.studio.service.Service.client.session.transaction.snapshot.value
                 val transactionIsNotExplain = !transaction.options().explain().get()
 
                 assertEquals(transactionType, TypeDBTransaction.Type.READ)

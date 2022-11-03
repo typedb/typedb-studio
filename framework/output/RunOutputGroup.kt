@@ -25,14 +25,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.material.Tabs
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.state.common.NotificationService.Companion.launchCompletableFuture
-import com.vaticle.typedb.studio.state.common.StatusService.Key.OUTPUT_RESPONSE_TIME
-import com.vaticle.typedb.studio.state.common.StatusService.Key.QUERY_RESPONSE_TIME
-import com.vaticle.typedb.studio.state.connection.QueryRunner
-import com.vaticle.typedb.studio.state.connection.QueryRunner.Response
-import com.vaticle.typedb.studio.state.connection.QueryRunner.Response.Stream.ConceptMaps.Source.MATCH
+import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchCompletableFuture
+import com.vaticle.typedb.studio.service.common.StatusService.Key.OUTPUT_RESPONSE_TIME
+import com.vaticle.typedb.studio.service.common.StatusService.Key.QUERY_RESPONSE_TIME
+import com.vaticle.typedb.studio.service.connection.QueryRunner
+import com.vaticle.typedb.studio.service.connection.QueryRunner.Response
+import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.MATCH
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
@@ -99,20 +98,26 @@ internal class RunOutputGroup constructor(
     private fun publishQueryResponseTime() {
         runner.startTime?.let { startTime ->
             val duration = (runner.endTime ?: System.currentTimeMillis()) - startTime
-            StudioState.status.publish(QUERY_RESPONSE_TIME, Duration.milliseconds(duration).toString())
+            com.vaticle.typedb.studio.service.Service.status.publish(
+                QUERY_RESPONSE_TIME,
+                Duration.milliseconds(duration).toString()
+            )
         }
     }
 
     private fun publishOutputResponseTime() {
         runner.endTime?.let { queryEndTime ->
             val duration = (endTime ?: System.currentTimeMillis()) - queryEndTime
-            StudioState.status.publish(OUTPUT_RESPONSE_TIME, Duration.milliseconds(duration).toString())
+            com.vaticle.typedb.studio.service.Service.status.publish(
+                OUTPUT_RESPONSE_TIME,
+                Duration.milliseconds(duration).toString()
+            )
         }
     }
 
     private fun clearStatus() {
-        StudioState.status.clear(QUERY_RESPONSE_TIME)
-        StudioState.status.clear(OUTPUT_RESPONSE_TIME)
+        com.vaticle.typedb.studio.service.Service.status.clear(QUERY_RESPONSE_TIME)
+        com.vaticle.typedb.studio.service.Service.status.clear(OUTPUT_RESPONSE_TIME)
     }
 
     internal fun isActive(runOutput: RunOutput): Boolean {
@@ -135,43 +140,47 @@ internal class RunOutputGroup constructor(
         nonSerialOutputFutures.put(Either.first(future))
     }
 
-    private fun launchSerialOutputConsumer() = coroutines.launchAndHandle(StudioState.notification, LOGGER) {
-        do {
-            val future = serialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
-            if (future.isFirst) future.first().join()?.invoke()
-        } while (future.isFirst)
-        futuresLatch.countDown()
-    }
-
-    private fun launchNonSerialOutputConsumer() = coroutines.launchAndHandle(StudioState.notification, LOGGER) {
-        val futures = mutableListOf<CompletableFuture<Unit?>>()
-        do {
-            val future = nonSerialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
-            if (future.isFirst) futures += future.first()
-        } while (future.isFirst)
-        CompletableFuture.allOf(*futures.toTypedArray()).join()
-        futuresLatch.countDown()
-    }
-
-    private fun launchRunnerConcluder() = coroutines.launchAndHandle(StudioState.notification, LOGGER) {
-        while (futuresLatch.count > 0L) {
-            delay(COUNT_DOWN_LATCH_PERIOD_MS)
+    private fun launchSerialOutputConsumer() =
+        coroutines.launchAndHandle(com.vaticle.typedb.studio.service.Service.notification, LOGGER) {
+            do {
+                val future = serialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
+                if (future.isFirst) future.first().join()?.invoke()
+            } while (future.isFirst)
+            futuresLatch.countDown()
         }
-        runner.setConsumed()
-        logOutput.stop()
-        endTime = System.currentTimeMillis()
-    }
 
-    private fun launchResponseConsumer() = coroutines.launchAndHandle(StudioState.notification, LOGGER) {
-        do {
-            val responses: MutableList<Response> = mutableListOf()
-            delay(CONSUMER_PERIOD_MS)
-            runner.responses.drainTo(responses)
-            if (responses.isNotEmpty()) responses.forEach { consumeResponse(it) }
-        } while (responses.lastOrNull() != Response.Done)
-        serialOutputFutures.add(Either.second(Done))
-        nonSerialOutputFutures.add(Either.second(Done))
-    }
+    private fun launchNonSerialOutputConsumer() =
+        coroutines.launchAndHandle(com.vaticle.typedb.studio.service.Service.notification, LOGGER) {
+            val futures = mutableListOf<CompletableFuture<Unit?>>()
+            do {
+                val future = nonSerialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
+                if (future.isFirst) futures += future.first()
+            } while (future.isFirst)
+            CompletableFuture.allOf(*futures.toTypedArray()).join()
+            futuresLatch.countDown()
+        }
+
+    private fun launchRunnerConcluder() =
+        coroutines.launchAndHandle(com.vaticle.typedb.studio.service.Service.notification, LOGGER) {
+            while (futuresLatch.count > 0L) {
+                delay(COUNT_DOWN_LATCH_PERIOD_MS)
+            }
+            runner.setConsumed()
+            logOutput.stop()
+            endTime = System.currentTimeMillis()
+        }
+
+    private fun launchResponseConsumer() =
+        coroutines.launchAndHandle(com.vaticle.typedb.studio.service.Service.notification, LOGGER) {
+            do {
+                val responses: MutableList<Response> = mutableListOf()
+                delay(CONSUMER_PERIOD_MS)
+                runner.responses.drainTo(responses)
+                if (responses.isNotEmpty()) responses.forEach { consumeResponse(it) }
+            } while (responses.lastOrNull() != Response.Done)
+            serialOutputFutures.add(Either.second(Done))
+            nonSerialOutputFutures.add(Either.second(Done))
+        }
 
     private suspend fun consumeResponse(response: Response) {
         when (response) {
@@ -192,25 +201,34 @@ internal class RunOutputGroup constructor(
 
     private suspend fun consumeNumericGroupStreamResponse(response: Response.Stream.NumericGroups) {
         consumeStreamResponse(response) {
-            collectSerial(launchCompletableFuture(StudioState.notification, LOGGER) { logOutput.outputFn(it) })
+            collectSerial(
+                launchCompletableFuture(
+                    com.vaticle.typedb.studio.service.Service.notification,
+                    LOGGER
+                ) { logOutput.outputFn(it) })
         }
     }
 
     private suspend fun consumeConceptMapGroupStreamResponse(response: Response.Stream.ConceptMapGroups) {
         consumeStreamResponse(response) {
-            collectSerial(launchCompletableFuture(StudioState.notification, LOGGER) { logOutput.outputFn(it) })
+            collectSerial(
+                launchCompletableFuture(
+                    com.vaticle.typedb.studio.service.Service.notification,
+                    LOGGER
+                ) { logOutput.outputFn(it) })
         }
     }
 
     private suspend fun consumeConceptMapStreamResponse(response: Response.Stream.ConceptMaps) {
-        val notificationSrv = StudioState.notification
+        val notificationSrv = com.vaticle.typedb.studio.service.Service.notification
         // TODO: enable configuration of displaying GraphOutput for INSERT and UPDATE
         val table = if (response.source != MATCH) null else TableOutput(
             transaction = runner.transactionState, number = tableCount.incrementAndGet()
         ) // TODO: .also { outputs.add(it) }
-        val graph = if (response.source != MATCH || !StudioState.preference.graphOutputEnabled) null else GraphOutput(
+        val graph =
+            if (response.source != MATCH || !com.vaticle.typedb.studio.service.Service.preference.graphOutputEnabled) null else GraphOutput(
                 transactionState = runner.transactionState, number = graphCount.incrementAndGet()
-        ).also { outputs.add(it); activate(it) }
+            ).also { outputs.add(it); activate(it) }
 
         consumeStreamResponse(response, onCompleted = { graph?.setCompleted() }) {
             collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { logOutput.outputFn(it) })

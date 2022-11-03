@@ -14,7 +14,7 @@ You can utilise Studio like [TypeDB Console](https://docs.vaticle.com/docs/conso
 and [TypeDB Clients](https://docs.vaticle.com/docs/client-api/overview), to connect to your TypeDB instance and perform
 queries.
 
-Studio is an IDE designed for the end-to-end development of TypeDB databases, database queries, and data exploration, 
+Studio is an IDE designed for the end-to-end development of TypeDB databases, database queries, and data exploration,
 via a clean and intuitive UI.
 
 ## Usage
@@ -24,15 +24,15 @@ these choices explicit so that it's always clear what you're working on at any g
 
 ### Manage TypeDB Projects
 
-After connecting to TypeDB and selecting a database, Studio will prompt you to open (or create) a project directory. 
-This is where Studio will load and save query files, but we can also freely edit text files in the project directory 
+After connecting to TypeDB and selecting a database, Studio will prompt you to open (or create) a project directory.
+This is where Studio will load and save query files, but we can also freely edit text files in the project directory
 using Studio. The project browser maintains a live view of the directory contents on the filesystem.
 
 ### Manage Database Schemas
 
 [![Log Output](./images/type_browser_1.png)](./images/type_browser_1.png)
 
-The Type Browser provides a structured tree view of the connected database's type hierarchy. Opening any Type will 
+The Type Browser provides a structured tree view of the connected database's type hierarchy. Opening any Type will
 bring up a page that lists in detail its properties - supertype, roles played, attributes owned, etc.
 
 ### Run TypeQL Queries
@@ -40,10 +40,10 @@ bring up a page that lists in detail its properties - supertype, roles played, a
 [![Log Output](./images/log_output_1.png)](./images/log_output_1.png)
 
 Studio's text editor comes equipped with rich developer tooling, like syntax highlighting
-for TypeQL files (\*.tql), with more advanced features currently under development. Studio's intuitive and 
+for TypeQL files (\*.tql), with more advanced features currently under development. Studio's intuitive and
 self-explanatory interface enables a rapid, iterative workflow.
 
-TypeDB Studio brings session and transaction configuration to the forefront, providing greater visibility to the user 
+TypeDB Studio brings session and transaction configuration to the forefront, providing greater visibility to the user
 about the state of the system. Studio allows you to run any TypeQL query, pretty-printing results
 to the Log Output window which is easily searchable (and supports regex matching.)
 
@@ -64,7 +64,8 @@ how the fact was inferred.
 
 ## Download TypeDB Studio
 
-You can download TypeDB Studio from the [Download Centre](https://vaticle.com/download#typedb-studio) or [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
+You can download TypeDB Studio from the [Download Centre](https://vaticle.com/download#typedb-studio)
+or [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
 
 ## Developer Resources
 
@@ -75,13 +76,18 @@ You can download TypeDB Studio from the [Download Centre](https://vaticle.com/do
 
 ## Compiling and Running TypeDB Studio from Source
 
-> Note: You **DO NOT NEED** to compile TypeDB Studio _"from source code"_ if you just want to use TypeDB Studio. You can simply download TypeDB Studio following section above.
+> Note: You **DO NOT NEED** to compile TypeDB Studio _"from source code"_ if you just want to use TypeDB Studio. You can
+> simply download TypeDB Studio following section above.
 
 1. Make sure you have the following dependencies installed on your machine:
     - Java JDK 11 or higher
-    - [Bazel 5 or higher](http://bazel.build/). We use [Bazelisk](https://github.com/bazelbuild/bazelisk) to manage multiple Bazel versions transparently. Bazelisk runs the appropriate Bazel version for any `bazel` command as specified in [`.bazelversion`](https://github.com/vaticle/typedb/blob/master/.bazelversion) file. In order to install it, follow the platform-specific guide:
-      - MacOS: `brew install bazelbuild/tap/bazelisk`
-      - Linux: `wget https://github.com/bazelbuild/bazelisk/releases/download/v1.4.0/bazelisk-linux-amd64 -O /usr/local/bin/bazel`
+    - [Bazel 5 or higher](http://bazel.build/). We use [Bazelisk](https://github.com/bazelbuild/bazelisk) to manage
+      multiple Bazel versions transparently. Bazelisk runs the appropriate Bazel version for any `bazel` command as
+      specified in [`.bazelversion`](https://github.com/vaticle/typedb/blob/master/.bazelversion) file. In order to
+      install it, follow the platform-specific guide:
+        - MacOS: `brew install bazelbuild/tap/bazelisk`
+        -
+      Linux: `wget https://github.com/bazelbuild/bazelisk/releases/download/v1.4.0/bazelisk-linux-amd64 -O /usr/local/bin/bazel`
 
 2. Depending on your Operating System, you can compile and run TypeDB Studio with either one of the following commands.
    ```sh
@@ -93,14 +99,20 @@ You can download TypeDB Studio from the [Download Centre](https://vaticle.com/do
    ```sh
    $ bazel run //:studio-bin-linux
    ```
-   You can also replace `run` with `build` in the command above, and Bazel will simply produce the JAR for TypeDB Studio under `bazel-bin/studio-bin-<mac|windows|linux>.jar`.
+   You can also replace `run` with `build` in the command above, and Bazel will simply produce the JAR for TypeDB Studio
+   under `bazel-bin/studio-bin-<mac|windows|linux>.jar`.
 
 ## Contributions
 
-TypeDB Studio has been built using various open-source frameworks throughout its evolution. Today TypeDB Studio is built using [Kotlin](https://kotlinlang.org), [Compose Multiplatform](https://github.com/JetBrains/compose-jb), and [Bazel](https://bazel.build). Thank you!
+TypeDB Studio has been built using various open-source frameworks throughout its evolution. Today TypeDB Studio is built
+using [Kotlin](https://kotlinlang.org), [Compose Multiplatform](https://github.com/JetBrains/compose-jb),
+and [Bazel](https://bazel.build). Thank you!
 
 ## Licensing
 
-This software is developed by [Vaticle](https://vaticle.com/).  It's released under the GNU Affero GENERAL PUBLIC LICENSE, Version 3, 19 November 2007. For license information, please see [LICENSE](https://github.com/vaticle/typedb-studio/blob/master/LICENSE). Vaticle also provides a commercial license for TypeDB Studio - get in touch with our team at commercial@vaticle.com.
+This software is developed by [Vaticle](https://vaticle.com/). It's released under the GNU Affero GENERAL PUBLIC
+LICENSE, Version 3, 19 November 2007. For license information, please
+see [LICENSE](https://github.com/vaticle/typedb-studio/blob/master/LICENSE). Vaticle also provides a commercial license
+for TypeDB Studio - get in touch with our team at commercial@vaticle.com.
 
 Copyright (C) 2022 Vaticle

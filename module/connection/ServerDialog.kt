@@ -49,20 +49,19 @@ import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.SelectFileDialog
 import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
 import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Property
-import com.vaticle.typedb.studio.state.common.util.Property.Server.TYPEDB
-import com.vaticle.typedb.studio.state.common.util.Property.Server.TYPEDB_CLUSTER
-import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTED
-import com.vaticle.typedb.studio.state.connection.ClientState.Status.CONNECTING
-import com.vaticle.typedb.studio.state.connection.ClientState.Status.DISCONNECTED
+import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Property
+import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB
+import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_CLUSTER
+import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTED
+import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTING
+import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNECTED
 
 object ServerDialog {
 
     private val WIDTH = 500.dp
     private val HEIGHT = 340.dp
-    private val appData = StudioState.data.connection
+    private val appData = com.vaticle.typedb.studio.service.Service.data.connection
 
     private class ConnectServerForm : Form.State {
         var server: Property.Server by mutableStateOf(appData.server ?: TYPEDB)
@@ -73,7 +72,7 @@ object ServerDialog {
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
 
         override fun cancel() {
-            StudioState.client.connectServerDialog.close()
+            com.vaticle.typedb.studio.service.Service.client.connectServerDialog.close()
         }
 
         override fun isValid(): Boolean {
@@ -85,14 +84,14 @@ object ServerDialog {
 
         override fun trySubmit() {
             when (server) {
-                TYPEDB -> StudioState.client.tryConnectToTypeDBAsync(address) { StudioState.client.connectServerDialog.close() }
+                TYPEDB -> com.vaticle.typedb.studio.service.Service.client.tryConnectToTypeDBAsync(address) { com.vaticle.typedb.studio.service.Service.client.connectServerDialog.close() }
                 TYPEDB_CLUSTER -> when {
-                    caCertificate.isBlank() -> StudioState.client.tryConnectToTypeDBClusterAsync(
+                    caCertificate.isBlank() -> com.vaticle.typedb.studio.service.Service.client.tryConnectToTypeDBClusterAsync(
                         address, username, password, tlsEnabled
-                    ) { StudioState.client.connectServerDialog.close() }
-                    else -> StudioState.client.tryConnectToTypeDBClusterAsync(
+                    ) { com.vaticle.typedb.studio.service.Service.client.connectServerDialog.close() }
+                    else -> com.vaticle.typedb.studio.service.Service.client.tryConnectToTypeDBClusterAsync(
                         address, username, password, caCertificate
-                    ) { StudioState.client.connectServerDialog.close() }
+                    ) { com.vaticle.typedb.studio.service.Service.client.connectServerDialog.close() }
                 }
             }
             appData.server = server
@@ -105,16 +104,21 @@ object ServerDialog {
 
     @Composable
     fun MayShowDialogs() {
-        if (StudioState.client.connectServerDialog.isOpen) ConnectServer()
+        if (com.vaticle.typedb.studio.service.Service.client.connectServerDialog.isOpen) ConnectServer()
     }
 
     @Composable
     private fun ConnectServer() {
         val state = remember { ConnectServerForm() }
-        Dialog.Layout(StudioState.client.connectServerDialog, Label.CONNECT_TO_TYPEDB, WIDTH, HEIGHT) {
+        Dialog.Layout(
+            com.vaticle.typedb.studio.service.Service.client.connectServerDialog,
+            Label.CONNECT_TO_TYPEDB,
+            WIDTH,
+            HEIGHT
+        ) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 ServerFormField(state)
-                AddressFormField(state, StudioState.client.isDisconnected)
+                AddressFormField(state, com.vaticle.typedb.studio.service.Service.client.isDisconnected)
                 if (state.server == TYPEDB_CLUSTER) {
                     UsernameFormField(state)
                     PasswordFormField(state)
@@ -125,7 +129,7 @@ object ServerDialog {
                 Row(verticalAlignment = Alignment.Bottom) {
                     ServerConnectionStatus()
                     Spacer(modifier = Modifier.weight(1f))
-                    when (StudioState.client.status) {
+                    when (com.vaticle.typedb.studio.service.Service.client.status) {
                         DISCONNECTED -> DisconnectedFormButtons(state)
                         CONNECTING -> ConnectingFormButtons()
                         CONNECTED -> ConnectedFormButtons(state)
@@ -143,7 +147,7 @@ object ServerDialog {
                 selected = state.server,
                 onSelection = { state.server = it!! },
                 modifier = Modifier.fillMaxSize(),
-                enabled = StudioState.client.isDisconnected
+                enabled = com.vaticle.typedb.studio.service.Service.client.isDisconnected
             )
         }
     }
@@ -158,7 +162,7 @@ object ServerDialog {
                 value = state.address,
                 placeholder = Property.DEFAULT_SERVER_ADDRESS,
                 onValueChange = { state.address = it },
-                enabled = StudioState.client.isDisconnected,
+                enabled = com.vaticle.typedb.studio.service.Service.client.isDisconnected,
                 modifier = modifier
             )
         }
@@ -172,7 +176,7 @@ object ServerDialog {
                 value = state.username,
                 placeholder = Label.USERNAME.lowercase(),
                 onValueChange = { state.username = it },
-                enabled = StudioState.client.isDisconnected,
+                enabled = com.vaticle.typedb.studio.service.Service.client.isDisconnected,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -185,7 +189,7 @@ object ServerDialog {
                 value = state.password,
                 placeholder = Label.PASSWORD.lowercase(),
                 onValueChange = { state.password = it },
-                enabled = StudioState.client.isDisconnected,
+                enabled = com.vaticle.typedb.studio.service.Service.client.isDisconnected,
                 isPassword = true,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -197,7 +201,7 @@ object ServerDialog {
         Field(label = Label.ENABLE_TLS) {
             Checkbox(
                 value = state.tlsEnabled,
-                enabled = StudioState.client.isDisconnected,
+                enabled = com.vaticle.typedb.studio.service.Service.client.isDisconnected,
             ) { state.tlsEnabled = it }
         }
     }
@@ -209,7 +213,7 @@ object ServerDialog {
                 value = state.caCertificate,
                 placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
                 onValueChange = { state.caCertificate = it },
-                enabled = StudioState.client.isDisconnected,
+                enabled = com.vaticle.typedb.studio.service.Service.client.isDisconnected,
                 modifier = Modifier.weight(1f)
             )
             IconButton(
@@ -228,9 +232,10 @@ object ServerDialog {
 
     @Composable
     private fun ServerConnectionStatus() {
-        val statusText = "${Label.STATUS}: ${StudioState.client.status.name.lowercase()}"
+        val statusText =
+            "${Label.STATUS}: ${com.vaticle.typedb.studio.service.Service.client.status.name.lowercase()}"
         Text(
-            value = statusText, color = when (StudioState.client.status) {
+            value = statusText, color = when (com.vaticle.typedb.studio.service.Service.client.status) {
                 DISCONNECTED -> Theme.studio.errorStroke
                 CONNECTING -> Theme.studio.warningStroke
                 CONNECTED -> Theme.studio.secondary
@@ -248,7 +253,10 @@ object ServerDialog {
     @Composable
     private fun ConnectedFormButtons(state: ConnectServerForm) {
         val focusReq = remember { FocusRequester() }
-        TextButton(text = Label.DISCONNECT, textColor = Theme.studio.errorStroke) { StudioState.client.closeAsync() }
+        TextButton(
+            text = Label.DISCONNECT,
+            textColor = Theme.studio.errorStroke
+        ) { com.vaticle.typedb.studio.service.Service.client.closeAsync() }
         RowSpacer()
         TextButton(text = Label.CLOSE, focusReq = focusReq) { state.cancel() }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
@@ -257,7 +265,10 @@ object ServerDialog {
     @Composable
     private fun ConnectingFormButtons() {
         val focusReq = remember { FocusRequester() }
-        TextButton(text = Label.CANCEL, focusReq = focusReq) { StudioState.client.closeAsync() }
+        TextButton(
+            text = Label.CANCEL,
+            focusReq = focusReq
+        ) { com.vaticle.typedb.studio.service.Service.client.closeAsync() }
         RowSpacer()
         TextButton(text = Label.CONNECTING, enabled = false) {}
         LaunchedEffect(focusReq) { focusReq.requestFocus() }

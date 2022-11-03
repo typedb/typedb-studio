@@ -18,7 +18,6 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
@@ -27,10 +26,11 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDat
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class QuickstartTest: IntegrationTest() {
+class QuickstartTest : IntegrationTest() {
 
     @Test
     fun quickstart() {
@@ -42,7 +42,8 @@ class QuickstartTest: IntegrationTest() {
                 openProject(composeRule, projectDirectory = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
                 writeDataInteractively(composeRule, dbName = testID, SampleGitHubData.dataFile)
-                verifyDataWrite(composeRule,
+                verifyDataWrite(
+                    composeRule,
                     typeDB.address(), dbName = testID, "$testID/${SampleGitHubData.collaboratorsQueryFile}"
                 )
             }

@@ -26,23 +26,32 @@ sealed interface WindowContext {
     var x: Int
     var y: Int
 
-    class Test(override var height: Int, override var width: Int, override var x: Int, override var y: Int): WindowContext
+    class Test(override var height: Int, override var width: Int, override var x: Int, override var y: Int) :
+        WindowContext
 
-    class Compose(val window: ComposeWindow): WindowContext {
+    class Compose(val window: ComposeWindow) : WindowContext {
         override var height: Int
             get() = window.size.height
-            set(value) { value }
+            set(value) {
+                value
+            }
 
         override var width: Int
             get() = window.size.height
-            set(value) { value }
+            set(value) {
+                value
+            }
 
         override var x: Int
             get() = window.x
-            set(value) { value }
+            set(value) {
+                value
+            }
 
         override var y: Int
             get() = window.y
-            set(value) { value }
+            set(value) {
+                value
+            }
     }
 }

@@ -60,25 +60,24 @@ import com.vaticle.typedb.studio.framework.material.Frame
 import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.framework.material.Separator
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Label.APPLY
-import com.vaticle.typedb.studio.state.common.util.Label.CANCEL
-import com.vaticle.typedb.studio.state.common.util.Label.ENABLE_EDITOR_AUTOSAVE
-import com.vaticle.typedb.studio.state.common.util.Label.ENABLE_GRAPH_OUTPUT
-import com.vaticle.typedb.studio.state.common.util.Label.GRAPH_VISUALISER
-import com.vaticle.typedb.studio.state.common.util.Label.MANAGE_PREFERENCES
-import com.vaticle.typedb.studio.state.common.util.Label.OK
-import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_IGNORED_PATHS
-import com.vaticle.typedb.studio.state.common.util.Label.PROJECT_MANAGER
-import com.vaticle.typedb.studio.state.common.util.Label.QUERY_RUNNER
-import com.vaticle.typedb.studio.state.common.util.Label.RESET
-import com.vaticle.typedb.studio.state.common.util.Label.SET_QUERY_LIMIT
-import com.vaticle.typedb.studio.state.common.util.Label.TEXT_EDITOR
-import com.vaticle.typedb.studio.state.common.util.Sentence.IGNORED_PATHS_CAPTION
-import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
-import com.vaticle.typedb.studio.state.common.util.Sentence.PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
-import com.vaticle.typedb.studio.state.page.Navigable
+import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Label.APPLY
+import com.vaticle.typedb.studio.service.common.util.Label.CANCEL
+import com.vaticle.typedb.studio.service.common.util.Label.ENABLE_EDITOR_AUTOSAVE
+import com.vaticle.typedb.studio.service.common.util.Label.ENABLE_GRAPH_OUTPUT
+import com.vaticle.typedb.studio.service.common.util.Label.GRAPH_VISUALISER
+import com.vaticle.typedb.studio.service.common.util.Label.MANAGE_PREFERENCES
+import com.vaticle.typedb.studio.service.common.util.Label.OK
+import com.vaticle.typedb.studio.service.common.util.Label.PROJECT_IGNORED_PATHS
+import com.vaticle.typedb.studio.service.common.util.Label.PROJECT_MANAGER
+import com.vaticle.typedb.studio.service.common.util.Label.QUERY_RUNNER
+import com.vaticle.typedb.studio.service.common.util.Label.RESET
+import com.vaticle.typedb.studio.service.common.util.Label.SET_QUERY_LIMIT
+import com.vaticle.typedb.studio.service.common.util.Label.TEXT_EDITOR
+import com.vaticle.typedb.studio.service.common.util.Sentence.IGNORED_PATHS_CAPTION
+import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
+import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
+import com.vaticle.typedb.studio.service.page.Navigable
 
 object PreferenceDialog {
     private val WIDTH = 800.dp
@@ -89,14 +88,16 @@ object PreferenceDialog {
     private val PREFERENCE_GROUP_MIN_SIZE = 500.dp
     private val RESET_BUTTON_HEIGHT = 20.dp
 
-    private val preferenceSrv = StudioState.preference
+    private val preferenceSrv = com.vaticle.typedb.studio.service.Service.preference
 
     private var focusedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root(emptyList()))
     private var state by mutableStateOf(PreferencesForm())
 
     sealed class PreferenceField(private val label: String, private val caption: String?) {
         abstract fun isValid(): Boolean
-        @Composable abstract fun Display()
+
+        @Composable
+        abstract fun Display()
 
         var modified by mutableStateOf(false)
 
@@ -124,7 +125,7 @@ object PreferenceDialog {
             label: String, caption: String? = null,
             private val placeholder: String, private val invalidWarning: String,
             private val validator: (String) -> Boolean = { true }
-        ): PreferenceField(label, caption) {
+        ) : PreferenceField(label, caption) {
 
             var value by mutableStateOf(initValue)
 
@@ -178,7 +179,7 @@ object PreferenceDialog {
             initValue: String,
             label: String, caption: String? = null,
             private val placeholder: String
-        ): PreferenceField(label, caption) {
+        ) : PreferenceField(label, caption) {
 
             var value by mutableStateOf(initValue)
 
@@ -188,7 +189,10 @@ object PreferenceDialog {
                     Form.TextInput(
                         value = value,
                         placeholder = placeholder,
-                        border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {Theme.studio.border},
+                        border = Form.Border(
+                            1.dp,
+                            RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)
+                        ) { Theme.studio.border },
                         onValueChange = { value = it; modified = true }
                     )
                 }
@@ -201,7 +205,7 @@ object PreferenceDialog {
 
         class Checkbox(
             initValue: Boolean, label: String, caption: String? = null
-        ): PreferenceField(label, caption) {
+        ) : PreferenceField(label, caption) {
 
             var value by mutableStateOf(initValue)
 
@@ -222,7 +226,7 @@ object PreferenceDialog {
 
         class Dropdown<T : Any>(
             initValue: T, val values: List<T>, label: String, caption: String? = null
-        ): PreferenceField(label, caption) {
+        ) : PreferenceField(label, caption) {
 
             private var selected by mutableStateOf(values.find { it == initValue })
 
@@ -254,7 +258,7 @@ object PreferenceDialog {
         val rootPreferenceGroup = PreferenceGroup.Root(entries = preferenceGroups)
 
         override fun cancel() {
-            StudioState.preference.preferencesDialog.close()
+            com.vaticle.typedb.studio.service.Service.preference.preferencesDialog.close()
         }
 
         fun apply() = trySubmit()
@@ -289,7 +293,7 @@ object PreferenceDialog {
         override val isExpandable: Boolean = entries.isNotEmpty(),
         override val isBulkExpandable: Boolean = entries.isNotEmpty(),
         open val preferences: List<PreferenceField> = emptyList(),
-    ): Navigable<PreferenceGroup> {
+    ) : Navigable<PreferenceGroup> {
 
         abstract fun submit()
         abstract fun reset()
@@ -311,7 +315,7 @@ object PreferenceDialog {
 
         fun isValid(): Boolean {
             return preferences.all { it.isValid() } &&
-                entries.all { it.isValid() }
+                    entries.all { it.isValid() }
         }
 
         @Composable
@@ -332,7 +336,7 @@ object PreferenceDialog {
             preferences.forEach { it.Display() }
         }
 
-        class Root(override val entries: List<PreferenceGroup>): PreferenceGroup(entries = entries) {
+        class Root(override val entries: List<PreferenceGroup>) : PreferenceGroup(entries = entries) {
             override val preferences: List<PreferenceField> = emptyList()
 
             override fun submit() {}
@@ -447,14 +451,20 @@ object PreferenceDialog {
 
     @Composable
     fun MayShowDialogs() {
-        if (StudioState.preference.preferencesDialog.isOpen) Preferences()
+        if (com.vaticle.typedb.studio.service.Service.preference.preferencesDialog.isOpen) Preferences()
     }
 
     @Composable
     private fun Preferences() {
         state.rootPreferenceGroup.resetSelfAndDescendants()
 
-        Dialog.Layout(StudioState.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT, padding = 0.dp) {
+        Dialog.Layout(
+            com.vaticle.typedb.studio.service.Service.preference.preferencesDialog,
+            MANAGE_PREFERENCES,
+            WIDTH,
+            HEIGHT,
+            padding = 0.dp
+        ) {
             Column {
                 Frame.Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),

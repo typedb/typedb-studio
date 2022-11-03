@@ -49,12 +49,11 @@ import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Form.IconButton
 import com.vaticle.typedb.studio.framework.material.Form.Text
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.NotificationService.Notification
-import com.vaticle.typedb.studio.state.common.NotificationService.Notification.Type.ERROR
-import com.vaticle.typedb.studio.state.common.NotificationService.Notification.Type.INFO
-import com.vaticle.typedb.studio.state.common.NotificationService.Notification.Type.WARNING
-import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.service.common.NotificationService.Notification
+import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.ERROR
+import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.INFO
+import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.WARNING
+import com.vaticle.typedb.studio.service.common.util.Label
 
 object Notifications {
 
@@ -68,7 +67,7 @@ object Notifications {
 
     @Composable
     fun MayShowPopup() {
-        if (StudioState.notification.isOpen) Layout()
+        if (com.vaticle.typedb.studio.service.Service.notification.isOpen) Layout()
     }
 
     @Composable
@@ -78,8 +77,8 @@ object Notifications {
             Box {
                 Column(Modifier.padding(horizontal = NOTIFICATION_MARGIN).verticalScroll(scrollState)) {
                     Spacer(Modifier.height(NOTIFICATION_MARGIN))
-                    if (StudioState.notification.queue.size > 1) DismissAllButton()
-                    StudioState.notification.queue.forEach { notification ->
+                    if (com.vaticle.typedb.studio.service.Service.notification.queue.size > 1) DismissAllButton()
+                    com.vaticle.typedb.studio.service.Service.notification.queue.forEach { notification ->
                         Notification(notification = notification)
                     }
                     Spacer(Modifier.height(NOTIFICATION_MARGIN))
@@ -91,7 +90,7 @@ object Notifications {
 
     @Composable
     private fun DismissAllButton() {
-        val colorArgs = colorArgsOf(StudioState.notification.queue.first().type)
+        val colorArgs = colorArgsOf(com.vaticle.typedb.studio.service.Service.notification.queue.first().type)
         Row(modifier = Modifier.padding(MESSAGE_PADDING).width(NOTIFICATION_WIDTH)) {
             Spacer(Modifier.weight(1f))
             Form.TextButton(
@@ -99,7 +98,7 @@ object Notifications {
                 textColor = colorArgs.foreground,
                 bgColor = colorArgs.background,
                 trailingIcon = Form.IconArg(Icon.CLOSE) { colorArgs.foreground },
-            ) { StudioState.notification.dismissAll() }
+            ) { com.vaticle.typedb.studio.service.Service.notification.dismissAll() }
         }
     }
 
@@ -125,7 +124,11 @@ object Notifications {
                 height = textHeight.coerceAtLeast(NOTIFICATION_HEIGHT_MIN)
             }
             Column(Modifier.fillMaxHeight()) {
-                Button(Icon.CLOSE, colorArgs) { StudioState.notification.dismiss(notification) }
+                Button(Icon.CLOSE, colorArgs) {
+                    com.vaticle.typedb.studio.service.Service.notification.dismiss(
+                        notification
+                    )
+                }
                 Spacer(Modifier.weight(1f))
                 Button(Icon.COPY, colorArgs) { clipboard.setText(AnnotatedString(notification.message)) }
             }

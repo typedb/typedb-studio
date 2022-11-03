@@ -52,7 +52,7 @@ kt_jvm_library(
     runtime_deps = skiko_runtime_platform,
     deps = [
         "//:studio",
-        "//state",
+        "//service",
         "//framework/common",
 
         # External Maven Dependencies
@@ -86,11 +86,11 @@ typedb_kt_test(
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
         "//framework/material",
-        "//state",
-        "//state/connection",
-        "//state/project",
-        "//state/page",
-        "//state/common",
+        "//service",
+        "//service/connection",
+        "//service/project",
+        "//service/page",
+        "//service/common",
 
         "@vaticle_typedb_client_java//api",
     ],
@@ -107,9 +107,9 @@ kt_jvm_test(
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
         "//framework/material",
-        "//state",
-        "//state/page",
-        "//state/project",
+        "//service",
+        "//service/page",
+        "//service/project",
     ],
 )
 
@@ -121,12 +121,12 @@ typedb_kt_test(
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
         "//framework/material",
-        "//state",
-        "//state/common",
-        "//state/connection",
-        "//state/project",
-        "//state/page",
-        "//state/schema",
+        "//service",
+        "//service/common",
+        "//service/connection",
+        "//service/project",
+        "//service/page",
+        "//service/schema",
 
         "@vaticle_typedb_client_java//api",
     ],
@@ -143,12 +143,12 @@ typedb_kt_test(
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
         "//framework/material",
-        "//state",
-        "//state/common",
-        "//state/connection",
-        "//state/project",
-        "//state/page",
-        "//state/schema",
+        "//service",
+        "//service/common",
+        "//service/connection",
+        "//service/project",
+        "//service/page",
+        "//service/schema",
 
         "@vaticle_typedb_client_java//api",
     ],

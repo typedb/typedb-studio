@@ -25,7 +25,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Selection
-import com.vaticle.typedb.studio.state.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Label
 import java.util.regex.MatchResult
 import java.util.regex.Pattern
 import kotlin.streams.toList

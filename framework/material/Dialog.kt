@@ -37,7 +37,7 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.vaticle.typedb.studio.framework.common.KeyMapper
 import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.state.common.util.DialogState
+import com.vaticle.typedb.studio.service.common.util.DialogState
 
 object Dialog {
 

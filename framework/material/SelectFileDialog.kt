@@ -19,7 +19,7 @@
 package com.vaticle.typedb.studio.framework.material
 
 import androidx.compose.ui.awt.ComposeDialog
-import com.vaticle.typedb.studio.state.common.util.Property.OS
+import com.vaticle.typedb.studio.service.common.util.Property.OS
 import java.awt.FileDialog
 import java.io.File
 import javax.swing.JFileChooser

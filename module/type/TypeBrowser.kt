@@ -41,24 +41,23 @@ import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.state.StudioState
-import com.vaticle.typedb.studio.state.common.util.Label
-import com.vaticle.typedb.studio.state.common.util.Sentence
-import com.vaticle.typedb.studio.state.schema.TypeState
+import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Sentence
+import com.vaticle.typedb.studio.service.schema.TypeState
 
 class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
 
     override val label: String = Label.TYPES
     override val icon: Icon = Icon.TYPES
-    override val isActive: Boolean get() = StudioState.client.isConnected && StudioState.client.session.isOpen
+    override val isActive: Boolean get() = com.vaticle.typedb.studio.service.Service.client.isConnected && com.vaticle.typedb.studio.service.Service.client.session.isOpen
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
-    private val schemaIsWritable get() = StudioState.schema.isWritable
+    private val schemaIsWritable get() = com.vaticle.typedb.studio.service.Service.schema.isWritable
 
     @Composable
     override fun Content() {
-        val client = StudioState.client
-        val schema = StudioState.schema
+        val client = com.vaticle.typedb.studio.service.Service.client
+        val schema = com.vaticle.typedb.studio.service.Service.schema
         if (!client.isConnected) ConnectToServerHelper()
         else if (!client.isInteractiveMode) NonInteractiveModeMessage()
         else if (!client.session.isOpen || client.selectDBDialog.isOpen || !schema.isOpen) SelectDBHelper()
@@ -68,13 +67,13 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
     @Composable
     private fun NavigatorLayout() {
         val navState = rememberNavigatorState(
-            container = StudioState.schema,
+            container = com.vaticle.typedb.studio.service.Service.schema,
             title = Label.TYPE_BROWSER,
             behaviour = Navigator.Behaviour.Browser(),
             initExpandDepth = 1,
             openFn = { it.item.tryOpen() },
             contextMenuFn = { contextMenuItems(it) }
-        ) { StudioState.schema.onTypesUpdated { it.reloadEntriesAsync() } }
+        ) { com.vaticle.typedb.studio.service.Service.schema.onTypesUpdated { it.reloadEntriesAsync() } }
         buttons = listOf(refreshButton(navState), exportButton(navState)) + navState.buttons
         Navigator.Layout(
             state = navState,
@@ -85,24 +84,24 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
     }
 
     private fun refresh(navState: Navigator.NavigatorState<TypeState.Thing<*, *>>) {
-        StudioState.schema.closeReadTx()
+        com.vaticle.typedb.studio.service.Service.schema.closeReadTx()
         navState.reloadEntriesAsync()
     }
 
     private fun refreshButton(navState: Navigator.NavigatorState<TypeState.Thing<*, *>>) = IconButtonArg(
         icon = Icon.REFRESH,
-        enabled = !StudioState.schema.hasRunningTx,
+        enabled = !com.vaticle.typedb.studio.service.Service.schema.hasRunningTx,
         tooltip = Tooltip.Arg(title = Label.REFRESH)
     ) { refresh(navState) }
 
     private fun exportButton(navState: Navigator.NavigatorState<TypeState.Thing<*, *>>) = IconButtonArg(
         icon = Icon.EXPORT,
-        enabled = StudioState.project.current != null && !StudioState.schema.hasRunningTx,
+        enabled = com.vaticle.typedb.studio.service.Service.project.current != null && !com.vaticle.typedb.studio.service.Service.schema.hasRunningTx,
         tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
     ) {
-        StudioState.schema.exportTypeSchemaAsync { schema ->
+        com.vaticle.typedb.studio.service.Service.schema.exportTypeSchemaAsync { schema ->
             refresh(navState)
-            StudioState.project.tryCreateUntitledFile()?.let { file ->
+            com.vaticle.typedb.studio.service.Service.project.tryCreateUntitledFile()?.let { file ->
                 file.content(schema)
                 file.tryOpen()
             }
@@ -147,7 +146,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
             Form.TextButton(
                 text = Label.CONNECT_TO_TYPEDB,
                 leadingIcon = Form.IconArg(Icon.CONNECT_TO_TYPEDB)
-            ) { StudioState.client.connectServerDialog.open() }
+            ) { com.vaticle.typedb.studio.service.Service.client.connectServerDialog.open() }
         }
     }
 
@@ -169,7 +168,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
             Form.TextButton(
                 text = Label.SELECT_DATABASE,
                 leadingIcon = Form.IconArg(Icon.DATABASE)
-            ) { StudioState.client.selectDBDialog.open() }
+            ) { com.vaticle.typedb.studio.service.Service.client.selectDBDialog.open() }
         }
     }
 }

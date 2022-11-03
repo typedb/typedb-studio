@@ -1,11 +1,11 @@
 digraph mygraph {
   node [shape=box];
   "//:studio"
-  "//:studio" -> "//module/project:project\n//module/rule:rule\n//module/user:user\n//module/type:type\n//module/role:role"
+  "//:studio" -> "//module/rule:rule\n//module/type:type\n//module/role:role\n//module/project:project\n//module/user:user\n//module/preference:preference"
   "//:studio" -> "//module:module"
   "//:studio" -> "//module/connection:connection"
-  "//module/project:project\n//module/rule:rule\n//module/user:user\n//module/type:type\n//module/role:role"
   "//module:module"
   "//module:module" -> "//module/connection:connection"
   "//module/connection:connection"
+  "//module/rule:rule\n//module/type:type\n//module/role:role\n//module/project:project\n//module/user:user\n//module/preference:preference"
 }

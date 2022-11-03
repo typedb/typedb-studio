@@ -342,7 +342,7 @@ object Geometry {
         px -= x
         py -= y
 
-        val denominator = sqrt(a*a * py*py + b*b * px*px)
+        val denominator = sqrt(a * a * py * py + b * b * px * px)
         if (denominator == 0F) return null
 
         // compute intersection points: +-(x0, y0)
