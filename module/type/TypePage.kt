@@ -76,12 +76,17 @@ import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.page.Pageable
+import com.vaticle.typedb.studio.service.schema.AttributeTypeState
+import com.vaticle.typedb.studio.service.schema.EntityTypeState
+import com.vaticle.typedb.studio.service.schema.RelationTypeState
+import com.vaticle.typedb.studio.service.schema.RoleTypeState
+import com.vaticle.typedb.studio.service.schema.ThingTypeState
 import com.vaticle.typedb.studio.service.schema.TypeState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 
-sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
+sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     var typeState: TS, showAdvanced: Boolean = false
 ) : Pages.Page() {
 
@@ -123,11 +128,11 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
 
         private val LOGGER = KotlinLogging.logger {}
 
-        fun create(type: TypeState.Thing<*, *>): TypePage<*, *> {
+        fun create(type: ThingTypeState<*, *>): TypePage<*, *> {
             return when (type) {
-                is TypeState.Entity -> Entity(type)
-                is TypeState.Relation -> Relation(type)
-                is TypeState.Attribute -> Attribute(type)
+                is EntityTypeState -> Entity(type)
+                is RelationTypeState -> Relation(type)
+                is AttributeTypeState -> Attribute(type)
             }
         }
     }
@@ -329,15 +334,15 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
 
     @Composable
     private fun OwnsAttributeTypeAddition() {
-        var attributeType: TypeState.Attribute? by remember { mutableStateOf(null) }
+        var attributeType: AttributeTypeState? by remember { mutableStateOf(null) }
         val definedAttrTypes = (typeState.ownsAttTypes + typeState.supertypes.flatMap { it.ownsAttTypes }).toSet()
         val attributeTypeList = com.vaticle.typedb.studio.service.Service.schema.rootAttributeType?.subtypes
             ?.filter { !definedAttrTypes.contains(it) }
             ?.sortedBy { it.name }
             ?: listOf()
 
-        var overriddenType: TypeState.Attribute? by remember { mutableStateOf(null) }
-        val overridableTypeList: List<TypeState.Attribute> = attributeType?.supertypes
+        var overriddenType: AttributeTypeState? by remember { mutableStateOf(null) }
+        val overridableTypeList: List<AttributeTypeState> = attributeType?.supertypes
             ?.intersect(typeState.supertype!!.ownsAttTypes.toSet())
             ?.sortedBy { it.name } ?: listOf()
 
@@ -459,7 +464,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
 
     @Composable
     private fun PlaysRoleTypeAddition() {
-        var roleType: TypeState.Role? by remember { mutableStateOf(null) }
+        var roleType: RoleTypeState? by remember { mutableStateOf(null) }
         val definedRoleTypes = (typeState.playsRoleTypes + typeState.supertypes.flatMap { it.playsRoleTypes }).toSet()
         val roleTypeList = com.vaticle.typedb.studio.service.Service.schema.rootRelationType?.subtypes
             ?.flatMap { it.relatesRoleTypes }
@@ -467,8 +472,8 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
             ?.sortedBy { it.scopedName }
             ?: listOf()
 
-        var overriddenType: TypeState.Role? by remember { mutableStateOf(null) }
-        val overridableTypeList: List<TypeState.Role> = roleType?.supertypes
+        var overriddenType: RoleTypeState? by remember { mutableStateOf(null) }
+        val overridableTypeList: List<RoleTypeState> = roleType?.supertypes
             ?.intersect(typeState.supertype!!.playsRoleTypes.toSet())
             ?.sortedBy { it.scopedName } ?: listOf()
 
@@ -608,7 +613,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         )
     }
 
-    class Entity constructor(typeState: TypeState.Entity) : TypePage<EntityType, TypeState.Entity>(
+    class Entity constructor(typeState: EntityTypeState) : TypePage<EntityType, EntityTypeState>(
         typeState = typeState, showAdvanced = false
     ) {
 
@@ -623,7 +628,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         }
     }
 
-    class Relation constructor(typeState: TypeState.Relation) : TypePage<RelationType, TypeState.Relation>(
+    class Relation constructor(typeState: RelationTypeState) : TypePage<RelationType, RelationTypeState>(
         typeState = typeState, showAdvanced = typeState.playsRoleTypes.isNotEmpty()
     ) {
 
@@ -688,7 +693,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         @Composable
         private fun RelatesRoleTypeAddition() {
             var roleType: String by remember { mutableStateOf("") }
-            var overriddenType: TypeState.Role? by remember { mutableStateOf(null) }
+            var overriddenType: RoleTypeState? by remember { mutableStateOf(null) }
             val overridableTypeList = typeState.supertype?.relatesRoleTypes
                 ?.filter { it != com.vaticle.typedb.studio.service.Service.schema.rootRoleType }
                 ?.sortedBy { it.scopedName } ?: listOf()
@@ -736,7 +741,7 @@ sealed class TypePage<T : ThingType, TS : TypeState.Thing<T, TS>> constructor(
         }
     }
 
-    class Attribute constructor(typeState: TypeState.Attribute) : TypePage<AttributeType, TypeState.Attribute>(
+    class Attribute constructor(typeState: AttributeTypeState) : TypePage<AttributeType, AttributeTypeState>(
         typeState = typeState,
         showAdvanced = typeState.ownsAttTypes.isNotEmpty() || typeState.playsRoleTypes.isNotEmpty()
     ) {

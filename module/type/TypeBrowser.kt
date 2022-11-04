@@ -43,7 +43,7 @@ import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorS
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Sentence
-import com.vaticle.typedb.studio.service.schema.TypeState
+import com.vaticle.typedb.studio.service.schema.ThingTypeState
 
 class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
 
@@ -83,18 +83,18 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
         LaunchedEffect(navState) { navState.launch() }
     }
 
-    private fun refresh(navState: Navigator.NavigatorState<TypeState.Thing<*, *>>) {
+    private fun refresh(navState: Navigator.NavigatorState<ThingTypeState<*, *>>) {
         com.vaticle.typedb.studio.service.Service.schema.closeReadTx()
         navState.reloadEntriesAsync()
     }
 
-    private fun refreshButton(navState: Navigator.NavigatorState<TypeState.Thing<*, *>>) = IconButtonArg(
+    private fun refreshButton(navState: Navigator.NavigatorState<ThingTypeState<*, *>>) = IconButtonArg(
         icon = Icon.REFRESH,
         enabled = !com.vaticle.typedb.studio.service.Service.schema.hasRunningTx,
         tooltip = Tooltip.Arg(title = Label.REFRESH)
     ) { refresh(navState) }
 
-    private fun exportButton(navState: Navigator.NavigatorState<TypeState.Thing<*, *>>) = IconButtonArg(
+    private fun exportButton(navState: Navigator.NavigatorState<ThingTypeState<*, *>>) = IconButtonArg(
         icon = Icon.EXPORT,
         enabled = com.vaticle.typedb.studio.service.Service.project.current != null && !com.vaticle.typedb.studio.service.Service.schema.hasRunningTx,
         tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
@@ -108,7 +108,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
         }
     }
 
-    private fun contextMenuItems(itemState: Navigator.ItemState<TypeState.Thing<*, *>>): List<List<ContextMenu.Item>> {
+    private fun contextMenuItems(itemState: Navigator.ItemState<ThingTypeState<*, *>>): List<List<ContextMenu.Item>> {
         val typeState = itemState.item
         if (!typeState.isOpen) typeState.loadTypeDependenciesAsync()
         return listOf(

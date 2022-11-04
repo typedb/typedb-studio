@@ -89,7 +89,7 @@ import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.project.FileState
-import com.vaticle.typedb.studio.service.schema.TypeState
+import com.vaticle.typedb.studio.service.schema.ThingTypeState
 import java.awt.Window
 import java.awt.event.WindowEvent
 import javax.swing.UIManager
@@ -193,7 +193,7 @@ object Studio {
                             ) {
                                 when (it) {
                                     is FileState -> FilePage.create(it)
-                                    is TypeState.Thing<*, *> -> TypePage.create(it)
+                                    is ThingTypeState<*, *> -> TypePage.create(it)
                                     else -> throw IllegalStateException("Unrecognised pageable type")
                                 }
                             }

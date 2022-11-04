@@ -40,12 +40,15 @@ import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Sentence
+import com.vaticle.typedb.studio.service.schema.AttributeTypeState
+import com.vaticle.typedb.studio.service.schema.RoleTypeState
 import com.vaticle.typedb.studio.service.schema.SchemaService
+import com.vaticle.typedb.studio.service.schema.ThingTypeState
 import com.vaticle.typedb.studio.service.schema.TypeState
 
 object TypeDialog {
 
-    private class CreateTypeFormState<T : TypeState.Thing<*, T>> constructor(
+    private class CreateTypeFormState<T : ThingTypeState<*, T>> constructor(
         supertypeState: T,
         valueType: ValueType? = null,
         val isValid: ((CreateTypeFormState<T>) -> Boolean)? = null,
@@ -111,7 +114,7 @@ object TypeDialog {
         }
 
     @Composable
-    private fun <T : TypeState.Thing<*, T>> CreateThingTypeDialog(
+    private fun <T : ThingTypeState<*, T>> CreateThingTypeDialog(
         dialogState: SchemaService.TypeDialogState<T>,
         rootTypeState: T,
         title: String,
@@ -122,7 +125,7 @@ object TypeDialog {
         val formState = remember {
             CreateTypeFormState(
                 supertypeState = supertypeState,
-                valueType = if (supertypeState is TypeState.Attribute) supertypeState.valueType else null,
+                valueType = if (supertypeState is AttributeTypeState) supertypeState.valueType else null,
                 isValid = isValidFn,
                 onCancel = { dialogState.close() },
                 onSubmit = creatorFn
@@ -133,9 +136,9 @@ object TypeDialog {
                 LabelField(formState.label) { formState.label = it }
                 SupertypeField(formState.supertypeState, (listOf(rootTypeState) + rootTypeState.subtypes).map { it }) {
                     formState.supertypeState = it
-                    if (it is TypeState.Attribute) formState.valueType = it.valueType
+                    if (it is AttributeTypeState) formState.valueType = it.valueType
                 }
-                if (supertypeState is TypeState.Attribute) ValueTypeField(formState)
+                if (supertypeState is AttributeTypeState) ValueTypeField(formState)
                 AbstractField(formState.isAbstract) { formState.isAbstract = it }
             }
         }
@@ -186,7 +189,7 @@ object TypeDialog {
     )
 
     @Composable
-    private fun <T : TypeState.Thing<*, T>> ChangeSupertypeDialog(
+    private fun <T : ThingTypeState<*, T>> ChangeSupertypeDialog(
         title: String, dialogState: SchemaService.TypeDialogState<T>, selection: List<T>,
     ) {
         val typeState = dialogState.typeState!!
@@ -219,7 +222,7 @@ object TypeDialog {
         }
         val formState = remember {
             object : Form.State {
-                var overriddenType: TypeState.Role? by mutableStateOf(
+                var overriddenType: RoleTypeState? by mutableStateOf(
                     if (typeState.supertype != com.vaticle.typedb.studio.service.Service.schema.rootRoleType) typeState.supertype else null
                 )
 
@@ -303,7 +306,7 @@ object TypeDialog {
     }
 
     @Composable
-    private fun <T : TypeState.Thing<*, T>> ValueTypeField(
+    private fun <T : ThingTypeState<*, T>> ValueTypeField(
         formState: CreateTypeFormState<T>
     ) = Field(label = Label.VALUE_TYPE) {
         Form.Dropdown(
