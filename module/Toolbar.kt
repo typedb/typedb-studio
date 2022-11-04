@@ -533,7 +533,7 @@ object Toolbar {
             TextButton(
                 text = text,
                 modifier = Modifier.height(TOOLBAR_BUTTON_SIZE),
-                trailingIcon = Form.IconArg(Icon.CONNECT_TO_TYPEDB),
+                leadingIcon = Form.IconArg(Icon.CONNECT_TO_TYPEDB),
                 tooltip = Tooltip.Arg(title = Label.CONNECT_TO_TYPEDB)
             ) { Service.client.connectServerDialog.open() }
         }

@@ -223,18 +223,13 @@ object ServerDialog {
     private fun ClusterAddressesFormField(state: ConnectServerForm, shouldFocus: Boolean) {
         val focusReq = if (shouldFocus) remember { FocusRequester() } else null
         Field(label = Label.ADDRESSES) {
-            TextInput(
-                value = state.clusterAddresses.joinToString(", "),
-                onValueChange = { },
-                enabled = false,
-                modifier = Modifier.weight(1f),
-            )
-            IconButton(
-                icon = Icon.ADD,
-                tooltip = Tooltip.Arg(Label.MANAGE_CLUSTER_ADDRESSES),
-                focusReq = focusReq
-            )
-            { Service.client.manageAddressesDialog.open() }
+            TextButton(
+                text = Label.MANAGE_CLUSTER_ADDRESSES + " (${state.clusterAddresses.size})",
+                focusReq = focusReq, leadingIcon = Form.IconArg(Icon.CONNECT_TO_TYPEDB),
+                modifier = Modifier.fillMaxWidth(), enabled = Service.client.isDisconnected
+            ) {
+                Service.client.manageAddressesDialog.open()
+            }
         }
         LaunchedEffect(focusReq) { focusReq?.requestFocus() }
     }
