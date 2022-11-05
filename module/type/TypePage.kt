@@ -306,7 +306,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         }
     }
 
-    private fun ownsAttributeTypesContextMenu(prop: TypeState.AttributeTypeProperties) = listOf(
+    private fun ownsAttributeTypesContextMenu(prop: AttributeTypeState.OwnsAttTypeProperties) = listOf(
         listOf(
             ContextMenu.Item(
                 label = Label.GO_TO_ATTRIBUTE_TYPE,
@@ -406,7 +406,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         PlaysRoleTypeAddition()
     }
 
-    private fun playsRoleTypesContextMenu(prop: TypeState.PlaysRoleTypeProperties) = listOf(
+    private fun playsRoleTypesContextMenu(prop: RoleTypeState.PlaysRoleTypeProperties) = listOf(
         listOf(
             ContextMenu.Item(
                 label = Label.GO_TO_ROLE_TYPE,
@@ -433,7 +433,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     )
 
     @Composable
-    protected fun <T : TypeState.RoleTypeProperties> RoleTypesTable(
+    protected fun <T : RoleTypeState.RoleTypeProperties> RoleTypesTable(
         roleTypeProperties: List<T>,
         contextMenuFn: (T) -> List<List<ContextMenu.Item>>,
     ) {
@@ -651,7 +651,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
             RelatesRoleTypeAddition()
         }
 
-        private fun relatesRoleTypesContextMenu(props: TypeState.RelatesRoleTypeProperties) = listOf(
+        private fun relatesRoleTypesContextMenu(props: RoleTypeState.RelatesRoleTypeProperties) = listOf(
             listOf(
                 ContextMenu.Item(
                     label = Label.GO_TO_ROLE_TYPE,
@@ -782,7 +782,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
             }
         }
 
-        private fun ownerTypesContextMenu(props: TypeState.OwnerTypeProperties) = listOf(
+        private fun ownerTypesContextMenu(props: AttributeTypeState.AttTypeOwnerProperties) = listOf(
             listOf(
                 ContextMenu.Item(
                     label = Label.GO_TO_OWNER_TYPE,

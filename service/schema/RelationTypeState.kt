@@ -32,7 +32,9 @@ import kotlin.streams.toList
 import mu.KotlinLogging
 
 class RelationTypeState internal constructor(
-    conceptType: RelationType, supertype: RelationTypeState?, schemaSrv: SchemaService
+    conceptType: RelationType,
+    supertype: RelationTypeState?,
+    schemaSrv: SchemaService
 ) : ThingTypeState<RelationType, RelationTypeState>(conceptType, supertype, Encoding.RELATION_TYPE, schemaSrv) {
 
     companion object {
@@ -40,7 +42,7 @@ class RelationTypeState internal constructor(
     }
 
     override val parent: RelationTypeState? get() = supertype
-    var relatesRoleTypeProperties: List<RelatesRoleTypeProperties> by mutableStateOf(emptyList())
+    var relatesRoleTypeProperties: List<RoleTypeState.RelatesRoleTypeProperties> by mutableStateOf(emptyList())
     val relatesRoleTypes: List<RoleTypeState> get() = relatesRoleTypeProperties.map { it.roleType }
     val relatesRoleTypesExplicit: List<RoleTypeState>
         get() = relatesRoleTypeProperties.filter { !it.isInherited }.map { it.roleType }
@@ -81,7 +83,7 @@ class RelationTypeState internal constructor(
 
     private fun loadRelatesRoleTypes() {
         val loaded = mutableSetOf<RoleType>()
-        val properties = mutableListOf<RelatesRoleTypeProperties>()
+        val properties = mutableListOf<RoleTypeState.RelatesRoleTypeProperties>()
 
         fun load(relTypeTx: RelationType.Remote, roleTypeConcept: RoleType, isInherited: Boolean) {
             loaded.add(roleTypeConcept)
@@ -93,7 +95,14 @@ class RelationTypeState internal constructor(
                     isInherited -> roleType
                     else -> overriddenType
                 }?.relationType
-                properties.add(RelatesRoleTypeProperties(roleType, overriddenType, extendedType, isInherited))
+                properties.add(
+                    RoleTypeState.RelatesRoleTypeProperties(
+                        roleType,
+                        overriddenType,
+                        extendedType,
+                        isInherited
+                    )
+                )
             }
         }
 

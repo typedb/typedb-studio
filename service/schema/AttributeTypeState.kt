@@ -28,8 +28,26 @@ import kotlin.streams.toList
 import mu.KotlinLogging
 
 class AttributeTypeState internal constructor(
-    conceptType: AttributeType, supertype: AttributeTypeState?, schemaSrv: SchemaService
+    conceptType: AttributeType,
+    supertype: AttributeTypeState?,
+    schemaSrv: SchemaService
 ) : ThingTypeState<AttributeType, AttributeTypeState>(conceptType, supertype, Encoding.ATTRIBUTE_TYPE, schemaSrv) {
+
+    data class OwnsAttTypeProperties constructor(
+        val attributeType: AttributeTypeState,
+        val overriddenType: AttributeTypeState?,
+        val extendedType: ThingTypeState<*, *>?,
+        val isInherited: Boolean,
+        val isKey: Boolean,
+        val canBeUndefined: Boolean,
+    )
+
+    data class AttTypeOwnerProperties constructor(
+        val ownerType: ThingTypeState<*, *>,
+        val extendedType: ThingTypeState<*, *>?,
+        val isInherited: Boolean,
+        val isKey: Boolean,
+    )
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -40,7 +58,7 @@ class AttributeTypeState internal constructor(
 
     val valueType: AttributeType.ValueType? = if (!conceptType.isRoot) conceptType.valueType else null
     val isKeyable: Boolean get() = conceptType.valueType.isKeyable
-    var ownerTypeProperties: List<OwnerTypeProperties> by mutableStateOf(listOf())
+    var ownerTypeProperties: List<AttTypeOwnerProperties> by mutableStateOf(listOf())
     val ownerTypes get() = ownerTypeProperties.map { it.ownerType }
     val ownerTypesExplicit get() = ownerTypeProperties.filter { !it.isInherited }.map { it.ownerType }
 
@@ -59,7 +77,7 @@ class AttributeTypeState internal constructor(
 
     fun loadOwnerTypes() {
         val loaded = mutableSetOf<ThingType>()
-        val properties = mutableListOf<OwnerTypeProperties>()
+        val properties = mutableListOf<AttTypeOwnerProperties>()
 
         fun load(ownerTypeConcept: ThingType, isKey: Boolean, isInherited: Boolean) {
             loaded.add(ownerTypeConcept)
@@ -70,7 +88,7 @@ class AttributeTypeState internal constructor(
                         properties.filter { !it.isInherited }.map { it.ownerType }.toSet()
                     ).firstOrNull()
                 } else null
-                properties.add(OwnerTypeProperties(ownerType, extendedType, isInherited, isKey))
+                properties.add(AttTypeOwnerProperties(ownerType, extendedType, isInherited, isKey))
             }
         }
 

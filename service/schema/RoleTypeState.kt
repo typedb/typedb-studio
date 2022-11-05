@@ -28,8 +28,37 @@ import kotlin.streams.toList
 import mu.KotlinLogging
 
 class RoleTypeState constructor(
-    val relationType: RelationTypeState, conceptType: RoleType, supertype: RoleTypeState?, schemaSrv: SchemaService
+    val relationType: RelationTypeState,
+    conceptType: RoleType,
+    supertype: RoleTypeState?,
+    schemaSrv: SchemaService
 ) : TypeState<RoleType, RoleTypeState>(conceptType, supertype, Encoding.ROLE_TYPE, schemaSrv) {
+
+    interface RoleTypeProperties {
+        val roleType: RoleTypeState
+        val overriddenType: RoleTypeState?
+        val extendedType: ThingTypeState<*, *>?
+        val isInherited: Boolean
+    }
+
+    data class RelatesRoleTypeProperties constructor(
+        override val roleType: RoleTypeState,
+        override val overriddenType: RoleTypeState?,
+        override val extendedType: RelationTypeState?,
+        override val isInherited: Boolean,
+    ) : RoleTypeProperties
+
+    data class PlaysRoleTypeProperties constructor(
+        override val roleType: RoleTypeState,
+        override val overriddenType: RoleTypeState?,
+        override val extendedType: ThingTypeState<*, *>?,
+        override val isInherited: Boolean,
+    ) : RoleTypeProperties
+
+    data class PlayerTypeProperties constructor(
+        val playerType: ThingTypeState<*, *>,
+        val isInherited: Boolean,
+    )
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}

@@ -31,7 +31,10 @@ import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FA
 import mu.KotlinLogging
 
 sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(
-    conceptType: T, supertype: TS?, val encoding: Encoding, val schemaSrv: SchemaService
+    conceptType: T,
+    supertype: TS?,
+    val encoding: Encoding,
+    val schemaSrv: SchemaService
 ) {
 
     enum class Encoding(val label: String) {
@@ -40,48 +43,6 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(
         RELATION_TYPE(Label.RELATION.lowercase()),
         ROLE_TYPE(Label.ROLE.lowercase())
     }
-
-    data class AttributeTypeProperties(
-        val attributeType: AttributeTypeState,
-        val overriddenType: AttributeTypeState?,
-        val extendedType: ThingTypeState<*, *>?,
-        val isInherited: Boolean,
-        val isKey: Boolean,
-        val canBeUndefined: Boolean,
-    )
-
-    data class OwnerTypeProperties constructor(
-        val ownerType: ThingTypeState<*, *>,
-        val extendedType: ThingTypeState<*, *>?,
-        val isInherited: Boolean,
-        val isKey: Boolean,
-    )
-
-    interface RoleTypeProperties {
-        val roleType: RoleTypeState
-        val overriddenType: RoleTypeState?
-        val extendedType: ThingTypeState<*, *>?
-        val isInherited: Boolean
-    }
-
-    data class RelatesRoleTypeProperties constructor(
-        override val roleType: RoleTypeState,
-        override val overriddenType: RoleTypeState?,
-        override val extendedType: RelationTypeState?,
-        override val isInherited: Boolean,
-    ) : RoleTypeProperties
-
-    data class PlaysRoleTypeProperties constructor(
-        override val roleType: RoleTypeState,
-        override val overriddenType: RoleTypeState?,
-        override val extendedType: ThingTypeState<*, *>?,
-        override val isInherited: Boolean,
-    ) : RoleTypeProperties
-
-    data class PlayerTypeProperties constructor(
-        val playerType: ThingTypeState<*, *>,
-        val isInherited: Boolean,
-    )
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}

@@ -37,7 +37,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
 
 sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> constructor(
-    conceptType: TT, supertype: TTS?, encoding: Encoding, schemaSrv: SchemaService
+    conceptType: TT,
+    supertype: TTS?,
+    encoding: Encoding,
+    schemaSrv: SchemaService
 ) : TypeState<TT, TTS>(conceptType, supertype, encoding, schemaSrv), Navigable<ThingTypeState<TT, TTS>>, Pageable {
 
     private class Callbacks {
@@ -57,9 +60,9 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    var ownsAttTypeProperties: List<AttributeTypeProperties> by mutableStateOf(emptyList())
+    var ownsAttTypeProperties: List<AttributeTypeState.OwnsAttTypeProperties> by mutableStateOf(emptyList())
     val ownsAttTypes: List<AttributeTypeState> get() = ownsAttTypeProperties.map { it.attributeType }
-    var playsRoleTypeProperties: List<PlaysRoleTypeProperties> by mutableStateOf(emptyList())
+    var playsRoleTypeProperties: List<RoleTypeState.PlaysRoleTypeProperties> by mutableStateOf(emptyList())
     val playsRoleTypes: List<RoleTypeState> get() = playsRoleTypeProperties.map { it.roleType }
 
     private var hasInstancesExplicit: Boolean by mutableStateOf(false)
@@ -167,7 +170,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
     private fun loadOwnsAttributeTypes() {
         val loaded = mutableSetOf<AttributeType>()
-        val properties = mutableListOf<AttributeTypeProperties>()
+        val properties = mutableListOf<AttributeTypeState.OwnsAttTypeProperties>()
 
         fun load(typeTx: ThingType.Remote, attTypeConcept: AttributeType, isKey: Boolean, isInherited: Boolean) {
             loaded.add(attTypeConcept)
@@ -181,7 +184,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                     ?.intersect(supertypes.toSet())?.firstOrNull()
                 val canBeUndefined = false // TODO
                 properties.add(
-                    AttributeTypeProperties(
+                    AttributeTypeState.OwnsAttTypeProperties(
                         attType, overriddenType, extendedType, isInherited, isKey, canBeUndefined
                     )
                 )
@@ -208,7 +211,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
     private fun loadPlaysRoleTypes() {
         val loaded = mutableSetOf<RoleType>()
-        val properties = mutableListOf<PlaysRoleTypeProperties>()
+        val properties = mutableListOf<RoleTypeState.PlaysRoleTypeProperties>()
 
         fun load(typeTx: ThingType.Remote, roleTypeConcept: RoleType, isInherited: Boolean) {
             loaded.add(roleTypeConcept)
@@ -221,7 +224,14 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                 }?.also { it.loadPlayerTypes() }
                 val extendedType = inheritedType?.playerTypesExplicit?.toSet()
                     ?.intersect(supertypes.toSet())?.firstOrNull()
-                properties.add(PlaysRoleTypeProperties(roleType, overriddenType, extendedType, isInherited))
+                properties.add(
+                    RoleTypeState.PlaysRoleTypeProperties(
+                        roleType,
+                        overriddenType,
+                        extendedType,
+                        isInherited
+                    )
+                )
             }
         }
 

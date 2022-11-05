@@ -24,7 +24,9 @@ import kotlin.streams.toList
 import mu.KotlinLogging
 
 class EntityTypeState internal constructor(
-    conceptType: EntityType, supertype: EntityTypeState?, schemaSrv: SchemaService
+    conceptType: EntityType,
+    supertype: EntityTypeState?,
+    schemaSrv: SchemaService
 ) : ThingTypeState<EntityType, EntityTypeState>(conceptType, supertype, Encoding.ENTITY_TYPE, schemaSrv) {
 
     companion object {
