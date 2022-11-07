@@ -73,6 +73,7 @@ import com.vaticle.typedb.studio.framework.material.Scrollbar
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Table
 import com.vaticle.typedb.studio.framework.material.Tooltip
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.page.Pageable
@@ -93,10 +94,10 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     override val hasSecondary: Boolean = false
     override val icon: Form.IconArg = icon(typeState.conceptType)
 
-    internal val canReadSchema get() = !com.vaticle.typedb.studio.service.Service.schema.hasRunningTx
+    internal val canReadSchema get() = !Service.schema.hasRunningTx
     internal val canWriteSchema
-        get() = !typeState.isRoot && com.vaticle.typedb.studio.service.Service.schema.isWritable &&
-                !com.vaticle.typedb.studio.service.Service.schema.hasRunningTx && !com.vaticle.typedb.studio.service.Service.client.hasRunningCommand
+        get() = !typeState.isRoot && Service.schema.isWritable &&
+                !Service.schema.hasRunningTx && !Service.client.hasRunningCommand
 
     private val focusReq = FocusRequester()
     private val horScroller = ScrollState(0)
@@ -336,7 +337,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     private fun OwnsAttributeTypeAddition() {
         var attributeType: AttributeTypeState? by remember { mutableStateOf(null) }
         val definedAttrTypes = (typeState.ownsAttTypes + typeState.supertypes.flatMap { it.ownsAttTypes }).toSet()
-        val attributeTypeList = com.vaticle.typedb.studio.service.Service.schema.rootAttributeType?.subtypes
+        val attributeTypeList = Service.schema.rootAttributeType?.subtypes
             ?.filter { !definedAttrTypes.contains(it) }
             ?.sortedBy { it.name }
             ?: listOf()
@@ -358,7 +359,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                     selected = attributeType,
                     displayFn = { TypeLabelWithDetails(it.conceptType, it.isAbstract) },
                     onSelection = { attributeType = it; it?.loadSupertypesAsync() },
-                    onExpand = { com.vaticle.typedb.studio.service.Service.schema.rootAttributeType?.loadSubtypesRecursivelyAsync() },
+                    onExpand = { Service.schema.rootAttributeType?.loadSubtypesRecursivelyAsync() },
                     placeholder = Label.ATTRIBUTE_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxSize(),
                     allowNone = true,
@@ -466,7 +467,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     private fun PlaysRoleTypeAddition() {
         var roleType: RoleTypeState? by remember { mutableStateOf(null) }
         val definedRoleTypes = (typeState.playsRoleTypes + typeState.supertypes.flatMap { it.playsRoleTypes }).toSet()
-        val roleTypeList = com.vaticle.typedb.studio.service.Service.schema.rootRelationType?.subtypes
+        val roleTypeList = Service.schema.rootRelationType?.subtypes
             ?.flatMap { it.relatesRoleTypes }
             ?.filter { !definedRoleTypes.contains(it) }
             ?.sortedBy { it.scopedName }
@@ -487,7 +488,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                     selected = roleType,
                     displayFn = { TypeLabelWithDetails(it.conceptType, it.isAbstract) },
                     onSelection = { roleType = it; it?.loadSupertypesAsync() },
-                    onExpand = { com.vaticle.typedb.studio.service.Service.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
+                    onExpand = { Service.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
                     placeholder = Label.ROLE_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxSize(),
                     allowNone = true,
@@ -573,11 +574,11 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         Form.TextButton(
             text = Label.EXPORT,
             leadingIcon = Form.IconArg(Icon.EXPORT),
-            enabled = com.vaticle.typedb.studio.service.Service.project.current != null && canReadSchema,
+            enabled = Service.project.current != null && canReadSchema,
             tooltip = Tooltip.Arg(Label.EXPORT_SYNTAX)
         ) {
             typeState.exportSyntaxAsync { syntax ->
-                com.vaticle.typedb.studio.service.Service.project.tryCreateUntitledFile()?.let { file ->
+                Service.project.tryCreateUntitledFile()?.let { file ->
                     file.content(syntax)
                     file.tryOpen()
                 }
@@ -593,7 +594,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
             enabled = canReadSchema,
             tooltip = Tooltip.Arg(Label.REFRESH)
         ) {
-            com.vaticle.typedb.studio.service.Service.schema.closeReadTx()
+            Service.schema.closeReadTx()
             typeState.loadConstraintsAsync()
         }
     }
@@ -695,7 +696,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
             var roleType: String by remember { mutableStateOf("") }
             var overriddenType: RoleTypeState? by remember { mutableStateOf(null) }
             val overridableTypeList = typeState.supertype?.relatesRoleTypes
-                ?.filter { it != com.vaticle.typedb.studio.service.Service.schema.rootRoleType }
+                ?.filter { it != Service.schema.rootRoleType }
                 ?.sortedBy { it.scopedName } ?: listOf()
 
             val isRelatable = canWriteSchema && roleType.isNotEmpty()

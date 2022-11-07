@@ -28,8 +28,10 @@ import com.vaticle.typedb.studio.service.common.NotificationService.Companion.la
 import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.service.common.atomic.AtomicIntegerState
 import com.vaticle.typedb.studio.service.common.util.DialogState
+import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_OPEN_READ_TX
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_OPEN_WRITE_TX
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.service.connection.SessionState
 import com.vaticle.typedb.studio.service.page.Navigable
 import com.vaticle.typedb.studio.service.page.PageService
@@ -239,9 +241,16 @@ class SchemaService constructor(
         }
 
         var result: T? = null
-        countRunningReadAtomic.incrementAndGet()
-        openOrGetReadTx()?.let { result = function(it) } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_READ_TX)
-        countRunningReadAtomic.decrementAndGet()
+        try {
+            countRunningReadAtomic.incrementAndGet()
+            openOrGetReadTx()?.let {
+                result = function(it)
+            } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_READ_TX)
+        } catch (e: Throwable) {
+            notification.systemError(LOGGER, e, UNEXPECTED_ERROR, e.message ?: UNKNOWN)
+        } finally {
+            countRunningReadAtomic.decrementAndGet()
+        }
         return result
     }
 
