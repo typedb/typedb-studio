@@ -38,6 +38,7 @@ import com.vaticle.typedb.studio.framework.material.Form.Checkbox
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.schema.AttributeTypeState
@@ -75,35 +76,35 @@ object TypeDialog {
 
     @Composable
     fun MayShowDialogs() {
-        if (com.vaticle.typedb.studio.service.Service.schema.renameTypeDialog.isOpen) RenameTypeDialog()
-        if (com.vaticle.typedb.studio.service.Service.schema.createEntityTypeDialog.isOpen) CreateEntityTypeDialog()
-        if (com.vaticle.typedb.studio.service.Service.schema.createRelationTypeDialog.isOpen) CreateRelationTypeDialog()
-        if (com.vaticle.typedb.studio.service.Service.schema.createAttributeTypeDialog.isOpen) CreateAttributeTypeDialog()
-        if (com.vaticle.typedb.studio.service.Service.schema.changeEntitySupertypeDialog.isOpen) ChangeEntitySupertypeDialog()
-        if (com.vaticle.typedb.studio.service.Service.schema.changeAttributeSupertypeDialog.isOpen) ChangeAttributeSupertypeDialog()
-        if (com.vaticle.typedb.studio.service.Service.schema.changeRelationSupertypeDialog.isOpen) ChangeRelationSupertypeDialog()
-        if (com.vaticle.typedb.studio.service.Service.schema.changeOverriddenRoleTypeDialog.isOpen) ChangeRoleOverriddenTypeDialog()
-        if (com.vaticle.typedb.studio.service.Service.schema.changeAbstractDialog.isOpen) ChangeAbstractDialog()
+        if (Service.schema.renameTypeDialog.isOpen) RenameTypeDialog()
+        if (Service.schema.createEntityTypeDialog.isOpen) CreateEntityTypeDialog()
+        if (Service.schema.createRelationTypeDialog.isOpen) CreateRelationTypeDialog()
+        if (Service.schema.createAttributeTypeDialog.isOpen) CreateAttributeTypeDialog()
+        if (Service.schema.changeEntitySupertypeDialog.isOpen) ChangeEntitySupertypeDialog()
+        if (Service.schema.changeAttributeSupertypeDialog.isOpen) ChangeAttributeSupertypeDialog()
+        if (Service.schema.changeRelationSupertypeDialog.isOpen) ChangeRelationSupertypeDialog()
+        if (Service.schema.changeOverriddenRoleTypeDialog.isOpen) ChangeRoleOverriddenTypeDialog()
+        if (Service.schema.changeAbstractDialog.isOpen) ChangeAbstractDialog()
     }
 
     @Composable
     private fun CreateEntityTypeDialog() = CreateThingTypeDialog(
-        dialogState = com.vaticle.typedb.studio.service.Service.schema.createEntityTypeDialog,
-        rootTypeState = com.vaticle.typedb.studio.service.Service.schema.rootEntityType!!,
+        dialogState = Service.schema.createEntityTypeDialog,
+        rootTypeState = Service.schema.rootEntityType!!,
         title = Label.CREATE_ENTITY_TYPE
     ) { supertypeState, label, isAbstract, _ -> supertypeState.tryCreateSubtype(label, isAbstract) }
 
     @Composable
     private fun CreateRelationTypeDialog() = CreateThingTypeDialog(
-        dialogState = com.vaticle.typedb.studio.service.Service.schema.createRelationTypeDialog,
-        rootTypeState = com.vaticle.typedb.studio.service.Service.schema.rootRelationType!!,
+        dialogState = Service.schema.createRelationTypeDialog,
+        rootTypeState = Service.schema.rootRelationType!!,
         title = Label.CREATE_RELATION_TYPE
     ) { supertypeState, label, isAbstract, _ -> supertypeState.tryCreateSubtype(label, isAbstract) }
 
     @Composable
     private fun CreateAttributeTypeDialog() =
-        CreateThingTypeDialog(dialogState = com.vaticle.typedb.studio.service.Service.schema.createAttributeTypeDialog,
-            rootTypeState = com.vaticle.typedb.studio.service.Service.schema.rootAttributeType!!,
+        CreateThingTypeDialog(dialogState = Service.schema.createAttributeTypeDialog,
+            rootTypeState = Service.schema.rootAttributeType!!,
             title = Label.CREATE_ATTRIBUTE_TYPE,
             isValidFn = { it.valueType != null }) { supertypeState, label, isAbstract, valType ->
             supertypeState.tryCreateSubtype(
@@ -147,7 +148,7 @@ object TypeDialog {
 
     @Composable
     private fun RenameTypeDialog() {
-        val dialogState = com.vaticle.typedb.studio.service.Service.schema.renameTypeDialog
+        val dialogState = Service.schema.renameTypeDialog
         val typeState = dialogState.typeState!!
         val formState = remember {
             object : Form.State {
@@ -168,24 +169,24 @@ object TypeDialog {
     @Composable
     private fun ChangeEntitySupertypeDialog() = ChangeSupertypeDialog(
         title = Label.CHANGE_ENTITY_SUPERTYPE,
-        dialogState = com.vaticle.typedb.studio.service.Service.schema.changeEntitySupertypeDialog,
-        selection = com.vaticle.typedb.studio.service.Service.schema.rootEntityType!!.subtypesWithSelf
+        dialogState = Service.schema.changeEntitySupertypeDialog,
+        selection = Service.schema.rootEntityType!!.subtypesWithSelf
     )
 
     @Composable
     private fun ChangeAttributeSupertypeDialog() = ChangeSupertypeDialog(
         title = Label.CHANGE_ATTRIBUTE_SUPERTYPE,
-        dialogState = com.vaticle.typedb.studio.service.Service.schema.changeAttributeSupertypeDialog,
-        selection = com.vaticle.typedb.studio.service.Service.schema.rootAttributeType!!.subtypesWithSelf.filter {
-            it.valueType == com.vaticle.typedb.studio.service.Service.schema.changeAttributeSupertypeDialog.typeState!!.valueType
-                    || it == com.vaticle.typedb.studio.service.Service.schema.rootAttributeType
+        dialogState = Service.schema.changeAttributeSupertypeDialog,
+        selection = Service.schema.rootAttributeType!!.subtypesWithSelf.filter {
+            it.valueType == Service.schema.changeAttributeSupertypeDialog.typeState!!.valueType
+                    || it == Service.schema.rootAttributeType
         })
 
     @Composable
     private fun ChangeRelationSupertypeDialog() = ChangeSupertypeDialog(
         title = Label.CHANGE_RELATION_SUPERTYPE,
-        dialogState = com.vaticle.typedb.studio.service.Service.schema.changeRelationSupertypeDialog,
-        selection = com.vaticle.typedb.studio.service.Service.schema.rootRelationType!!.subtypesWithSelf
+        dialogState = Service.schema.changeRelationSupertypeDialog,
+        selection = Service.schema.rootRelationType!!.subtypesWithSelf
     )
 
     @Composable
@@ -214,16 +215,16 @@ object TypeDialog {
 
     @Composable
     private fun ChangeRoleOverriddenTypeDialog() {
-        val dialogState = com.vaticle.typedb.studio.service.Service.schema.changeOverriddenRoleTypeDialog
+        val dialogState = Service.schema.changeOverriddenRoleTypeDialog
         val typeState = dialogState.typeState!!
         val message = Sentence.CHANGE_OVERRIDDEN_TYPE.format(typeState.encoding.label, typeState.scopedName)
         val selection = typeState.relationType.supertype!!.relatesRoleTypes.filter {
-            it != com.vaticle.typedb.studio.service.Service.schema.rootRoleType
+            it != Service.schema.rootRoleType
         }
         val formState = remember {
             object : Form.State {
                 var overriddenType: RoleTypeState? by mutableStateOf(
-                    if (typeState.supertype != com.vaticle.typedb.studio.service.Service.schema.rootRoleType) typeState.supertype else null
+                    if (typeState.supertype != Service.schema.rootRoleType) typeState.supertype else null
                 )
 
                 override fun cancel() = dialogState.close()
@@ -244,7 +245,7 @@ object TypeDialog {
 
     @Composable
     private fun ChangeAbstractDialog() {
-        val dialogState = com.vaticle.typedb.studio.service.Service.schema.changeAbstractDialog
+        val dialogState = Service.schema.changeAbstractDialog
         val typeState = dialogState.typeState!!
         val message = Sentence.CHANGE_TYPE_ABSTRACTNESS.format(typeState.encoding.label, typeState.name)
         val formState = remember {

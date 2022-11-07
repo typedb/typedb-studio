@@ -27,6 +27,7 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.ClipboardManager
+import com.vaticle.typedb.studio.framework.common.KeyMapper
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.COPY
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.CUT
@@ -90,6 +91,7 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.editor.TextProcessor.Companion.normaliseWhiteSpace
 import com.vaticle.typedb.studio.framework.material.ContextMenu
 import com.vaticle.typedb.studio.framework.material.Icon
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 
 internal class EventHandler constructor(
@@ -108,14 +110,14 @@ internal class EventHandler constructor(
                 processor.insertText(event.awtEvent.keyChar.toString())
                 true
             }
-            else -> com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.map(event)
+            else -> KeyMapper.CURRENT.map(event)
                 ?.let { executeEditorCommand(it) } ?: false
         }
     }
 
     internal fun handleToolbarEvent(event: KeyEvent): Boolean {
         return if (event.type == KeyEventType.KeyUp) false
-        else com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.map(event)?.let { executeWindowCommand(it) }
+        else KeyMapper.CURRENT.map(event)?.let { executeWindowCommand(it) }
             ?: false
     }
 
@@ -174,9 +176,9 @@ internal class EventHandler constructor(
             DUPLICATE -> processor.duplicate()
             UNDO -> processor.undo()
             REDO -> processor.redo()
-            TEXT_SIZE_INCREASE -> com.vaticle.typedb.studio.service.Service.editor.increaseScale()
-            TEXT_SIZE_DECREASE -> com.vaticle.typedb.studio.service.Service.editor.decreaseScale()
-            TEXT_SIZE_RESET -> com.vaticle.typedb.studio.service.Service.editor.resetScale()
+            TEXT_SIZE_INCREASE -> Service.editor.increaseScale()
+            TEXT_SIZE_DECREASE -> Service.editor.decreaseScale()
+            TEXT_SIZE_RESET -> Service.editor.resetScale()
             EMOJI_WINDOW -> {
                 // TODO: https://github.com/JetBrains/compose-jb/issues/1754
                 // androidx.compose.foundation.text.showCharacterPalette()
@@ -223,12 +225,12 @@ internal class EventHandler constructor(
     }
 
     private fun mayRunFile() {
-        if (!com.vaticle.typedb.studio.service.Service.client.isReadyToRunQuery) return
+        if (!Service.client.isReadyToRunQuery) return
         processor.file?.mayOpenAndRun()
     }
 
     private fun mayRunSelection() {
-        if (!com.vaticle.typedb.studio.service.Service.client.isReadyToRunQuery) return
+        if (!Service.client.isReadyToRunQuery) return
         processor.file?.mayOpenAndRun(target.selectedText().text)
     }
 
@@ -272,34 +274,34 @@ internal class EventHandler constructor(
     private fun cutSelectionMenuItem() = ContextMenu.Item(
         label = Label.CUT,
         icon = Icon.CUT,
-        info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + X",
+        info = "${KeyMapper.CURRENT.modKey} + X",
         enabled = processor.isWritable && target.selection != null
     ) { cut() }
 
     private fun copySelectionMenuItem() = ContextMenu.Item(
         label = Label.COPY,
         icon = Icon.COPY,
-        info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + C",
+        info = "${KeyMapper.CURRENT.modKey} + C",
         enabled = target.selection != null
     ) { copy() }
 
     private fun pasteTextMenuItem() = ContextMenu.Item(
         label = Label.PASTE,
         icon = Icon.PASTE,
-        info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + V",
+        info = "${KeyMapper.CURRENT.modKey} + V",
         enabled = processor.isWritable && !clipboard.getText().isNullOrBlank()
     ) { paste() }
 
     private fun findTextMenuItem() = ContextMenu.Item(
         label = Label.FIND,
         icon = Icon.FIND,
-        info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + F"
+        info = "${KeyMapper.CURRENT.modKey} + F"
     ) { toolbar.showFinder() }
 
     private fun replaceMenuItem() = ContextMenu.Item(
         label = Label.REPLACE,
         icon = Icon.REPLACE,
-        info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + R",
+        info = "${KeyMapper.CURRENT.modKey} + R",
         enabled = processor.isWritable
     ) { toolbar.mayShowReplacer() }
 
@@ -307,36 +309,36 @@ internal class EventHandler constructor(
         label = Label.RUN_FILE,
         icon = Icon.RUN,
         iconColor = { Theme.studio.secondary },
-        info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
-        enabled = processor.file?.isRunnable == true && com.vaticle.typedb.studio.service.Service.client.isReadyToRunQuery
+        info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
+        enabled = processor.file?.isRunnable == true && Service.client.isReadyToRunQuery
     ) { mayRunFile() }
 
     private fun runSelectionMenuItem() = ContextMenu.Item(
         label = Label.RUN_SELECTION,
         icon = Icon.RUN,
         iconColor = { Theme.studio.secondary },
-        info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
-        enabled = processor.file?.isRunnable == true && target.selection != null && com.vaticle.typedb.studio.service.Service.client.isReadyToRunQuery
+        info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
+        enabled = processor.file?.isRunnable == true && target.selection != null && Service.client.isReadyToRunQuery
     ) { mayRunSelection() }
 
     private fun increaseTextSizeMenuItem() = ContextMenu.Item(
         label = Label.INCREASE_TEXT_SIZE,
         icon = Icon.TEXT_SIZE_INCREASE,
-        info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + =",
-        enabled = !com.vaticle.typedb.studio.service.Service.editor.isMaxScale
-    ) { com.vaticle.typedb.studio.service.Service.editor.increaseScale() }
+        info = "${KeyMapper.CURRENT.modKey} + =",
+        enabled = !Service.editor.isMaxScale
+    ) { Service.editor.increaseScale() }
 
     private fun decreaseTextSizeMenuItem() = ContextMenu.Item(
         label = Label.DECREASE_TEXT_SIZE,
         icon = Icon.TEXT_SIZE_DECREASE,
-        info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + -",
-        enabled = !com.vaticle.typedb.studio.service.Service.editor.isMinScale
-    ) { com.vaticle.typedb.studio.service.Service.editor.decreaseScale() }
+        info = "${KeyMapper.CURRENT.modKey} + -",
+        enabled = !Service.editor.isMinScale
+    ) { Service.editor.decreaseScale() }
 
     private fun resetTextSizeMenuItem() = ContextMenu.Item(
         label = Label.RESET_TEXT_SIZE,
         icon = Icon.TEXT_SIZE_RESET,
-        info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + 0",
-        enabled = !com.vaticle.typedb.studio.service.Service.editor.isDefaultScale
-    ) { com.vaticle.typedb.studio.service.Service.editor.resetScale() }
+        info = "${KeyMapper.CURRENT.modKey} + 0",
+        enabled = !Service.editor.isDefaultScale
+    ) { Service.editor.resetScale() }
 }

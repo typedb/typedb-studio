@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.test.integration
 
 import com.vaticle.typedb.studio.framework.material.Icon
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
@@ -39,11 +40,11 @@ class ProjectBrowserTest : IntegrationTest() {
             copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
-            com.vaticle.typedb.studio.service.Service.project.current!!.directory.asDirectory()
+            Service.project.current!!.directory.asDirectory()
                 .tryCreateDirectory(createdDirectoryName)
             delayAndRecompose(composeRule)
 
-            com.vaticle.typedb.studio.service.Service.project.current!!.reloadEntries()
+            Service.project.current!!.reloadEntries()
             delayAndRecompose(composeRule)
 
             assertNodeExistsWithText(composeRule, text = createdDirectoryName)
@@ -58,11 +59,11 @@ class ProjectBrowserTest : IntegrationTest() {
             copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
-            com.vaticle.typedb.studio.service.Service.project.current!!.directory.asDirectory()
+            Service.project.current!!.directory.asDirectory()
                 .tryCreateFile(createdFileName)
             delayAndRecompose(composeRule)
 
-            com.vaticle.typedb.studio.service.Service.project.current!!.reloadEntries()
+            Service.project.current!!.reloadEntries()
             delayAndRecompose(composeRule)
 
             assertNodeExistsWithText(composeRule, text = createdFileName)
@@ -77,12 +78,12 @@ class ProjectBrowserTest : IntegrationTest() {
             copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
-            com.vaticle.typedb.studio.service.Service.project.current!!.directory.entries.find { it.name == "file3" }!!
+            Service.project.current!!.directory.entries.find { it.name == "file3" }!!
                 .asFile()
                 .tryRename(renamedFileName)
             delayAndRecompose(composeRule)
 
-            com.vaticle.typedb.studio.service.Service.project.current!!.reloadEntries()
+            Service.project.current!!.reloadEntries()
             delayAndRecompose(composeRule)
 
             assertNodeExistsWithText(composeRule, text = renamedFileName)
@@ -95,11 +96,11 @@ class ProjectBrowserTest : IntegrationTest() {
             copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
-            com.vaticle.typedb.studio.service.Service.project.current!!.directory.entries.find { it.name == "file3" }!!
+            Service.project.current!!.directory.entries.find { it.name == "file3" }!!
                 .asFile().tryDelete()
             delayAndRecompose(composeRule)
 
-            com.vaticle.typedb.studio.service.Service.project.current!!.reloadEntries()
+            Service.project.current!!.reloadEntries()
             delayAndRecompose(composeRule)
 
             assertNodeNotExistsWithText(composeRule, text = "file3")

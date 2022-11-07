@@ -41,6 +41,7 @@ import com.vaticle.typedb.studio.framework.editor.TextEditor
 import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Tooltip
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
@@ -123,14 +124,11 @@ internal class LogOutput constructor(
 
     private fun copyToClipboard() {
         editorState.copyContentToClipboard()
-        com.vaticle.typedb.studio.service.Service.notification.info(
-            LOGGER,
-            Message.Framework.TEXT_COPIED_TO_CLIPBOARD
-        )
+        Service.notification.info(LOGGER, Message.Framework.TEXT_COPIED_TO_CLIPBOARD)
     }
 
     private fun launchRunningIndicator() =
-        coroutines.launchAndHandle(com.vaticle.typedb.studio.service.Service.notification, LOGGER) {
+        coroutines.launchAndHandle(Service.notification, LOGGER) {
             var duration = RUNNING_INDICATOR_DELAY
             while (isCollecting.get()) {
                 delay(duration)

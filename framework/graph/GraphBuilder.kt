@@ -27,6 +27,7 @@ import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.logic.Explanation
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typedb.studio.service.connection.TransactionState
@@ -215,15 +216,12 @@ class GraphBuilder(
     }
 
     fun explain(vertex: Vertex.Thing) {
-        NotificationService.launchCompletableFuture(
-            com.vaticle.typedb.studio.service.Service.notification,
-            LOGGER
-        ) {
+        NotificationService.launchCompletableFuture(Service.notification, LOGGER) {
             val iterator = graph.reasoning.explanationIterators[vertex]
                 ?: runExplainQuery(vertex).also { graph.reasoning.explanationIterators[vertex] = it }
             fetchNextExplanation(vertex, iterator)
         }.exceptionally { e ->
-            com.vaticle.typedb.studio.service.Service.notification.systemError(
+            Service.notification.systemError(
                 LOGGER,
                 e,
                 Message.Visualiser.UNEXPECTED_ERROR
@@ -243,7 +241,7 @@ class GraphBuilder(
             vertexExplanations += Pair(vertex, explanation)
             loadConceptMap(explanation.condition(), AnswerSource.Explanation(explanation))
         } else {
-            com.vaticle.typedb.studio.service.Service.notification.info(LOGGER, Message.Visualiser.FULLY_EXPLAINED)
+            Service.notification.info(LOGGER, Message.Visualiser.FULLY_EXPLAINED)
         }
     }
 

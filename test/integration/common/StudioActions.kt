@@ -33,6 +33,7 @@ import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.framework.material.Icon
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typeql.lang.TypeQL
@@ -122,7 +123,7 @@ object StudioActions {
 
     suspend fun openProject(composeRule: ComposeContentTestRule, projectDirectory: String) {
         val projectPath = File(File(projectDirectory).absolutePath).toPath()
-        com.vaticle.typedb.studio.service.Service.project.tryOpenProject(projectPath)
+        Service.project.tryOpenProject(projectPath)
 
         delayAndRecompose(composeRule)
     }
@@ -132,13 +133,13 @@ object StudioActions {
         // clicked.
         composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
-        com.vaticle.typedb.studio.service.Service.client.tryConnectToTypeDBAsync(address) {}
+        Service.client.tryConnectToTypeDBAsync(address) {}
         delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
         waitForConditionAndRecompose(
             composeRule,
             Errors.CONNECT_TYPEDB_FAILED
-        ) { com.vaticle.typedb.studio.service.Service.client.isConnected }
+        ) { Service.client.isConnected }
 
         assertNodeExistsWithText(composeRule, text = address)
     }
@@ -146,36 +147,36 @@ object StudioActions {
     suspend fun createDatabase(composeRule: ComposeContentTestRule, dbName: String) {
         composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
-        com.vaticle.typedb.studio.service.Service.client.tryDeleteDatabase(dbName)
+        Service.client.tryDeleteDatabase(dbName)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        com.vaticle.typedb.studio.service.Service.client.tryCreateDatabase(dbName) {}
+        Service.client.tryCreateDatabase(dbName) {}
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        com.vaticle.typedb.studio.service.Service.client.refreshDatabaseList()
+        Service.client.refreshDatabaseList()
 
         waitForConditionAndRecompose(
             context = composeRule,
             failMessage = Errors.CREATE_DATABASE_FAILED,
-            beforeRetry = { com.vaticle.typedb.studio.service.Service.client.refreshDatabaseList() }
-        ) { com.vaticle.typedb.studio.service.Service.client.databaseList.contains(dbName) }
+            beforeRetry = { Service.client.refreshDatabaseList() }
+        ) { Service.client.databaseList.contains(dbName) }
     }
 
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
-        com.vaticle.typedb.studio.service.Service.notification.dismissAll()
+        Service.notification.dismissAll()
 
         clickIcon(composeRule, Icon.ADD)
 
-        com.vaticle.typedb.studio.service.Service.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
+        Service.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        com.vaticle.typedb.studio.service.Service.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
+        Service.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         clickText(composeRule, Label.SCHEMA.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
-        com.vaticle.typedb.studio.service.Service.project.current!!.directory.entries.find { it.name == schemaFileName }!!
+        Service.project.current!!.directory.entries.find { it.name == schemaFileName }!!
             .asFile().tryOpen()
 
         clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
@@ -183,21 +184,21 @@ object StudioActions {
         clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE_FAILED) {
-            com.vaticle.typedb.studio.service.Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
+            Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
 
     suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
-        com.vaticle.typedb.studio.service.Service.notification.dismissAll()
+        Service.notification.dismissAll()
         delayAndRecompose(composeRule)
 
-        com.vaticle.typedb.studio.service.Service.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
+        Service.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         clickText(composeRule, Label.DATA.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
-        com.vaticle.typedb.studio.service.Service.project.current!!.directory.entries.find { it.name == dataFileName }!!
+        Service.project.current!!.directory.entries.find { it.name == dataFileName }!!
             .asFile().tryOpen()
 
         clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
@@ -205,7 +206,7 @@ object StudioActions {
         clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
 
         waitForConditionAndRecompose(composeRule, Errors.DATA_WRITE_FAILED) {
-            com.vaticle.typedb.studio.service.Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
+            Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
 

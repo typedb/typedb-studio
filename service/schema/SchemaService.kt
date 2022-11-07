@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.concept.type.*
+import com.vaticle.typedb.studio.service.common.ConfirmationService
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
@@ -52,7 +53,7 @@ class SchemaService constructor(
     private val session: SessionState,
     internal val pages: PageService,
     internal val notification: NotificationService,
-    internal val confirmation: com.vaticle.typedb.studio.service.common.ConfirmationService
+    internal val confirmation: ConfirmationService
 ) : Navigable<ThingTypeState<*, *>> {
 
     class TypeDialogState<T : TypeState<*, *>> : DialogState() {

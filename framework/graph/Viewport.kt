@@ -26,6 +26,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
+import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.geometry.Geometry
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.sqrt
@@ -77,7 +78,7 @@ class Viewport(private val graph: Graph) {
 
     fun updatePhysicalDimensions(size: Size, density: Float) {
         this.density = density
-        physicalSize = com.vaticle.typedb.studio.framework.common.Util.toDP(size, density)
+        physicalSize = toDP(size, density)
     }
 
     fun alignWorldCenterWithPhysicalCenter() {

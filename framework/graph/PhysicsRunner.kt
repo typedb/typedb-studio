@@ -19,6 +19,7 @@
 package com.vaticle.typedb.studio.framework.graph
 
 import androidx.compose.runtime.withFrameMillis
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.util.Message
 import kotlinx.coroutines.Job
@@ -35,10 +36,7 @@ class PhysicsRunner constructor(private val graphArea: GraphArea) {
         while (true) {
             withFrameMillis {
                 return@withFrameMillis if (isReadyToStep()) {
-                    graphArea.coroutines.launchAndHandle(
-                        com.vaticle.typedb.studio.service.Service.notification,
-                        LOGGER
-                    ) { step() }
+                    graphArea.coroutines.launchAndHandle(Service.notification, LOGGER) { step() }
                 } else Job()
             }.join()
         }
@@ -53,7 +51,7 @@ class PhysicsRunner constructor(private val graphArea: GraphArea) {
             graphArea.graphBuilder.dumpTo(graphArea.graph)
             graphArea.graph.physics.step()
         } catch (e: Exception) {
-            com.vaticle.typedb.studio.service.Service.notification.systemError(
+            Service.notification.systemError(
                 LOGGER,
                 e,
                 Message.Visualiser.UNEXPECTED_ERROR

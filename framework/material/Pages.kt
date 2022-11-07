@@ -44,8 +44,10 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.framework.common.KeyMapper
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.page.Pageable
@@ -61,20 +63,20 @@ object Pages {
 
         fun handleKeyEvent(event: KeyEvent, onNewPage: () -> Unit): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
-            else com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.map(event)?.let { execute(it, onNewPage) }
+            else KeyMapper.CURRENT.map(event)?.let { execute(it, onNewPage) }
                 ?: false
         }
 
         private fun execute(
-            command: com.vaticle.typedb.studio.framework.common.KeyMapper.Command,
+            command: KeyMapper.Command,
             onNewPage: () -> Unit
         ): Boolean {
             return when (command) {
-                com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SAVE -> saveActivePage()
-                com.vaticle.typedb.studio.framework.common.KeyMapper.Command.CLOSE -> closeActivePage()
-                com.vaticle.typedb.studio.framework.common.KeyMapper.Command.CTRL_TAB -> showNextPage()
-                com.vaticle.typedb.studio.framework.common.KeyMapper.Command.CTRL_TAB_SHIFT -> showPreviousPage()
-                com.vaticle.typedb.studio.framework.common.KeyMapper.Command.NEW_PAGE -> {
+                KeyMapper.Command.SAVE -> saveActivePage()
+                KeyMapper.Command.CLOSE -> closeActivePage()
+                KeyMapper.Command.CTRL_TAB -> showNextPage()
+                KeyMapper.Command.CTRL_TAB_SHIFT -> showPreviousPage()
+                KeyMapper.Command.NEW_PAGE -> {
                     onNewPage()
                     true
                 }
@@ -96,22 +98,22 @@ object Pages {
         }
 
         private fun saveActivePage(): Boolean {
-            com.vaticle.typedb.studio.service.Service.pages.active?.initiateSave()
+            Service.pages.active?.initiateSave()
             return true
         }
 
         private fun showNextPage(): Boolean {
-            com.vaticle.typedb.studio.service.Service.pages.next.activate()
+            Service.pages.next.activate()
             return true
         }
 
         private fun showPreviousPage(): Boolean {
-            com.vaticle.typedb.studio.service.Service.pages.previous.activate()
+            Service.pages.previous.activate()
             return true
         }
 
         private fun closeActivePage(): Boolean {
-            return com.vaticle.typedb.studio.service.Service.pages.active?.let { close(it) } ?: false
+            return Service.pages.active?.let { close(it) } ?: false
         }
 
         internal fun close(pageable: Pageable): Boolean {
@@ -121,11 +123,11 @@ object Pages {
                 pageable.close()
                 if (pageable.isUnsavedPageable) pageable.tryDelete()
             }
-            if (pageable.isRunnable && pageable.asRunnable().isRunning) com.vaticle.typedb.studio.service.Service.confirmation.submit(
+            if (pageable.isRunnable && pageable.asRunnable().isRunning) Service.confirmation.submit(
                 title = Label.QUERY_IS_RUNNING,
                 message = Sentence.STOP_RUNNING_QUERY_BEFORE_CLOSING_PAGE_DESCRIPTION,
                 cancelLabel = Label.OK,
-            ) else if (pageable.needSaving) com.vaticle.typedb.studio.service.Service.confirmation.submit(
+            ) else if (pageable.needSaving) Service.confirmation.submit(
                 title = Label.SAVE_OR_DELETE,
                 message = Sentence.SAVE_OR_DELETE_FILE,
                 confirmLabel = Label.SAVE,
@@ -165,7 +167,7 @@ object Pages {
         val state = remember { State() }
         val focusReq = remember { FocusRequester() }
         fun mayRequestFocus() {
-            if (com.vaticle.typedb.studio.service.Service.pages.opened.isEmpty()) focusReq.requestFocus()
+            if (Service.pages.opened.isEmpty()) focusReq.requestFocus()
         }
         Column(
             modifier = Modifier.fillMaxSize().focusRequester(focusReq).focusable()
@@ -174,19 +176,17 @@ object Pages {
         ) {
             Tabs.Horizontal.Layout(
                 state = state.tabsState,
-                tabs = com.vaticle.typedb.studio.service.Service.pages.opened,
+                tabs = Service.pages.opened,
                 iconFn = { state.openedPage(it, createPageFn).icon },
                 labelFn = { tabLabel(it) },
-                isActiveFn = { com.vaticle.typedb.studio.service.Service.pages.active == it },
+                isActiveFn = { Service.pages.active == it },
                 onClick = { it.activate() },
                 contextMenuFn = { state.contextMenuFn(it) },
                 closeButtonFn = { IconButtonArg(icon = Icon.CLOSE) { state.close(it) } },
                 buttons = listOf(IconButtonArg(Icon.ADD, enabled = enabled) { onNewPage() })
             )
             Separator.Horizontal()
-            com.vaticle.typedb.studio.service.Service.pages.active?.let {
-                state.openedPage(it, createPageFn).Layout()
-            }
+            Service.pages.active?.let { state.openedPage(it, createPageFn).Layout() }
         }
         LaunchedEffect(focusReq) { mayRequestFocus() }
     }

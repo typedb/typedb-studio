@@ -41,6 +41,7 @@ import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.SelectFileDialog
 import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
 import com.vaticle.typedb.studio.framework.material.Tooltip
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.Service.notification
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.util.DialogState
@@ -82,24 +83,24 @@ object ProjectDialog {
 
     @Composable
     fun MayShowDialogs(window: ComposeWindow) {
-        if (com.vaticle.typedb.studio.service.Service.project.createPathDialog.isOpen) CreatePath()
-        if (com.vaticle.typedb.studio.service.Service.project.openProjectDialog.isOpen) OpenProject()
-        if (com.vaticle.typedb.studio.service.Service.project.moveDirectoryDialog.isOpen) MoveDirectory()
-        if (com.vaticle.typedb.studio.service.Service.project.renameDirectoryDialog.isOpen) RenameDirectory()
-        if (com.vaticle.typedb.studio.service.Service.project.renameFileDialog.isOpen) RenameFile()
-        if (com.vaticle.typedb.studio.service.Service.project.saveFileDialog.isOpen) SaveFile(window)
+        if (Service.project.createPathDialog.isOpen) CreatePath()
+        if (Service.project.openProjectDialog.isOpen) OpenProject()
+        if (Service.project.moveDirectoryDialog.isOpen) MoveDirectory()
+        if (Service.project.renameDirectoryDialog.isOpen) RenameDirectory()
+        if (Service.project.renameFileDialog.isOpen) RenameFile()
+        if (Service.project.saveFileDialog.isOpen) SaveFile(window)
     }
 
     @Composable
     private fun OpenProject() {
         val formState = PathForm(
-            initField = com.vaticle.typedb.studio.service.Service.data.project.path?.toString() ?: "",
-            isValid = { it != com.vaticle.typedb.studio.service.Service.project.current?.path.toString() },
-            onCancel = { com.vaticle.typedb.studio.service.Service.project.openProjectDialog.close() },
-            onSubmit = { com.vaticle.typedb.studio.service.Service.project.tryOpenProject(Path(it)) }
+            initField = Service.data.project.path?.toString() ?: "",
+            isValid = { it != Service.project.current?.path.toString() },
+            onCancel = { Service.project.openProjectDialog.close() },
+            onSubmit = { Service.project.tryOpenProject(Path(it)) }
         )
         SelectDirectoryDialog(
-            dialog = com.vaticle.typedb.studio.service.Service.project.openProjectDialog,
+            dialog = Service.project.openProjectDialog,
             formState = formState,
             title = Label.OPEN_PROJECT_DIRECTORY,
             message = Sentence.SELECT_DIRECTORY_FOR_PROJECT,
@@ -109,14 +110,14 @@ object ProjectDialog {
 
     @Composable
     private fun MoveDirectory() {
-        val directory = com.vaticle.typedb.studio.service.Service.project.moveDirectoryDialog.directory!!
+        val directory = Service.project.moveDirectoryDialog.directory!!
         val state = PathForm(
             initField = directory.path.parent.toString(),
-            onCancel = { com.vaticle.typedb.studio.service.Service.project.moveDirectoryDialog.close() },
+            onCancel = { Service.project.moveDirectoryDialog.close() },
             onSubmit = { directory.tryMoveTo(Path(it)) }
         )
         SelectDirectoryDialog(
-            dialog = com.vaticle.typedb.studio.service.Service.project.moveDirectoryDialog,
+            dialog = Service.project.moveDirectoryDialog,
             formState = state,
             title = Label.MOVE_DIRECTORY,
             message = Sentence.SELECT_PARENT_DIRECTORY_TO_MOVE_UNDER.format(directory.path),
@@ -167,7 +168,7 @@ object ProjectDialog {
 
     @Composable
     private fun CreatePath() {
-        when (com.vaticle.typedb.studio.service.Service.project.createPathDialog.type!!) {
+        when (Service.project.createPathDialog.type!!) {
             DIRECTORY -> CreateDirectory()
             FILE -> CreateFile()
         }
@@ -198,7 +199,7 @@ object ProjectDialog {
         initNameFn: (DirectoryState) -> String,
         onSubmit: (DirectoryState, String) -> Unit
     ) {
-        val dialogState = com.vaticle.typedb.studio.service.Service.project.createPathDialog
+        val dialogState = Service.project.createPathDialog
         val parent = dialogState.parent!!
         val formState = remember {
             PathForm(
@@ -212,7 +213,7 @@ object ProjectDialog {
 
     @Composable
     private fun RenameDirectory() {
-        val dialogState = com.vaticle.typedb.studio.service.Service.project.renameDirectoryDialog
+        val dialogState = Service.project.renameDirectoryDialog
         val directory = dialogState.directory!!
         val message = Sentence.RENAME_DIRECTORY.format(directory)
         val formState = remember {
@@ -228,7 +229,7 @@ object ProjectDialog {
 
     @Composable
     private fun RenameFile() {
-        val dialogState = com.vaticle.typedb.studio.service.Service.project.renameFileDialog
+        val dialogState = Service.project.renameFileDialog
         val file = dialogState.file!!
         val message = Sentence.RENAME_FILE.format(file)
         val formState = remember {
@@ -271,9 +272,9 @@ object ProjectDialog {
 
     @Composable
     private fun SaveFile(window: ComposeWindow) = coroutines.launchAndHandle(notification, LOGGER) {
-        val projectFile = com.vaticle.typedb.studio.service.Service.project.saveFileDialog.file!!
+        val projectFile = Service.project.saveFileDialog.file!!
         val fileDialog = FileDialog(window, Label.SAVE_FILE, FileDialog.SAVE).apply {
-            directory = com.vaticle.typedb.studio.service.Service.project.current?.path.toString()
+            directory = Service.project.current?.path.toString()
             file = projectFile.name
             isMultipleMode = false
             isVisible = true
@@ -281,6 +282,6 @@ object ProjectDialog {
         fileDialog.directory?.let {
             val newPath = Path(it).resolve(fileDialog.file)
             projectFile.trySave(newPath, true)
-        } ?: com.vaticle.typedb.studio.service.Service.project.saveFileDialog.close()
+        } ?: Service.project.saveFileDialog.close()
     }
 }

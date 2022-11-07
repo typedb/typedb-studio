@@ -24,6 +24,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import com.vaticle.typedb.client.api.concept.Concept
 import com.vaticle.typedb.client.api.concept.thing.Attribute
 import com.vaticle.typedb.client.api.concept.thing.Relation
 import com.vaticle.typedb.client.api.concept.type.AttributeType
@@ -37,7 +38,7 @@ import java.time.format.DateTimeFormatter
 
 object ConceptDisplay {
 
-    fun icon(concept: com.vaticle.typedb.client.api.concept.Concept) = when (concept) {
+    fun icon(concept: Concept) = when (concept) {
         is Relation, is RelationType -> Form.IconArg(Icon.RELATION) { Theme.graph.vertex.relationType }
         is Attribute<*>, is AttributeType -> Form.IconArg(Icon.ATTRIBUTE) { Theme.graph.vertex.attributeType }
         is ThingType -> Form.IconArg(Icon.THING) { Theme.graph.vertex.entityType }

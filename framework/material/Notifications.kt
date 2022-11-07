@@ -49,6 +49,7 @@ import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Form.IconButton
 import com.vaticle.typedb.studio.framework.material.Form.Text
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.NotificationService.Notification
 import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.ERROR
 import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.INFO
@@ -67,7 +68,7 @@ object Notifications {
 
     @Composable
     fun MayShowPopup() {
-        if (com.vaticle.typedb.studio.service.Service.notification.isOpen) Layout()
+        if (Service.notification.isOpen) Layout()
     }
 
     @Composable
@@ -77,8 +78,8 @@ object Notifications {
             Box {
                 Column(Modifier.padding(horizontal = NOTIFICATION_MARGIN).verticalScroll(scrollState)) {
                     Spacer(Modifier.height(NOTIFICATION_MARGIN))
-                    if (com.vaticle.typedb.studio.service.Service.notification.queue.size > 1) DismissAllButton()
-                    com.vaticle.typedb.studio.service.Service.notification.queue.forEach { notification ->
+                    if (Service.notification.queue.size > 1) DismissAllButton()
+                    Service.notification.queue.forEach { notification ->
                         Notification(notification = notification)
                     }
                     Spacer(Modifier.height(NOTIFICATION_MARGIN))
@@ -90,7 +91,7 @@ object Notifications {
 
     @Composable
     private fun DismissAllButton() {
-        val colorArgs = colorArgsOf(com.vaticle.typedb.studio.service.Service.notification.queue.first().type)
+        val colorArgs = colorArgsOf(Service.notification.queue.first().type)
         Row(modifier = Modifier.padding(MESSAGE_PADDING).width(NOTIFICATION_WIDTH)) {
             Spacer(Modifier.weight(1f))
             Form.TextButton(
@@ -98,7 +99,7 @@ object Notifications {
                 textColor = colorArgs.foreground,
                 bgColor = colorArgs.background,
                 trailingIcon = Form.IconArg(Icon.CLOSE) { colorArgs.foreground },
-            ) { com.vaticle.typedb.studio.service.Service.notification.dismissAll() }
+            ) { Service.notification.dismissAll() }
         }
     }
 
@@ -125,7 +126,7 @@ object Notifications {
             }
             Column(Modifier.fillMaxHeight()) {
                 Button(Icon.CLOSE, colorArgs) {
-                    com.vaticle.typedb.studio.service.Service.notification.dismiss(
+                    Service.notification.dismiss(
                         notification
                     )
                 }

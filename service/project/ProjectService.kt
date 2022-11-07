@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.service.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.studio.service.common.ConfirmationService
 import com.vaticle.typedb.studio.service.common.DataService
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.PreferenceService
@@ -48,7 +49,7 @@ class ProjectService constructor(
     internal val preference: PreferenceService,
     internal val appData: DataService,
     internal val notification: NotificationService,
-    internal val confirmation: com.vaticle.typedb.studio.service.common.ConfirmationService,
+    internal val confirmation: ConfirmationService,
     internal val client: ClientState,
     internal val pages: PageService
 ) {

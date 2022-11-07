@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.TextLayoutResult
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Message.Framework.Companion.UNEXPECTED_ERROR
 import mu.KotlinLogging
 
@@ -77,7 +78,7 @@ internal class TextRendering {
             // at androidx.compose.runtime.snapshots.SnapshotStateList.size(SnapshotStateList.kt:33)
             // at com.vaticle.typedb.studio.framework.editor.TextRendering.hasVersion(TextRendering.kt:65)
             // ...
-            com.vaticle.typedb.studio.service.Service.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
+            Service.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
             false
         }
     }

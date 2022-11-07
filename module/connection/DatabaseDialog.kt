@@ -51,6 +51,7 @@ import com.vaticle.typedb.studio.framework.material.Form.TextButton
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Tooltip
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Sentence
 
@@ -66,7 +67,7 @@ object DatabaseDialog {
         var name: String by mutableStateOf("")
 
         override fun cancel() {
-            com.vaticle.typedb.studio.service.Service.client.manageDatabasesDialog.close()
+            Service.client.manageDatabasesDialog.close()
         }
 
         override fun isValid(): Boolean {
@@ -75,19 +76,19 @@ object DatabaseDialog {
 
         override fun trySubmit() {
             assert(name.isNotBlank())
-            com.vaticle.typedb.studio.service.Service.client.tryCreateDatabase(name) { name = "" }
+            Service.client.tryCreateDatabase(name) { name = "" }
         }
     }
 
     @Composable
     fun MayShowDialogs() {
-        if (com.vaticle.typedb.studio.service.Service.client.manageDatabasesDialog.isOpen) ManageDatabases()
-        if (com.vaticle.typedb.studio.service.Service.client.selectDBDialog.isOpen) SelectDatabase()
+        if (Service.client.manageDatabasesDialog.isOpen) ManageDatabases()
+        if (Service.client.selectDBDialog.isOpen) SelectDatabase()
     }
 
     @Composable
     private fun ManageDatabases() {
-        val dialogState = com.vaticle.typedb.studio.service.Service.client.manageDatabasesDialog
+        val dialogState = Service.client.manageDatabasesDialog
         Dialog.Layout(dialogState, Label.MANAGE_DATABASES, MANAGER_WIDTH, MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
@@ -101,7 +102,7 @@ object DatabaseDialog {
                     TextButton(
                         text = Label.REFRESH,
                         leadingIcon = Form.IconArg(Icon.REFRESH)
-                    ) { com.vaticle.typedb.studio.service.Service.client.refreshDatabaseList() }
+                    ) { Service.client.refreshDatabaseList() }
                     RowSpacer()
                     TextButton(text = Label.CLOSE) { dialogState.close() }
                 }
@@ -112,7 +113,7 @@ object DatabaseDialog {
     @Composable
     private fun DeletableDatabaseList(modifier: Modifier) {
         ActionableList.Layout(
-            items = com.vaticle.typedb.studio.service.Service.client.databaseList,
+            items = Service.client.databaseList,
             modifier = modifier.border(1.dp, Theme.studio.border),
             buttonSide = ActionableList.Side.RIGHT,
             buttonFn = { databaseName ->
@@ -120,13 +121,13 @@ object DatabaseDialog {
                     icon = Icon.DELETE,
                     color = { Theme.studio.errorStroke },
                     onClick = {
-                        com.vaticle.typedb.studio.service.Service.confirmation.submit(
+                        Service.confirmation.submit(
                             title = Label.DELETE_DATABASE,
                             message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
                             verificationValue = databaseName,
                             confirmLabel = Label.DELETE,
                             onConfirm = {
-                                com.vaticle.typedb.studio.service.Service.client.tryDeleteDatabase(
+                                Service.client.tryDeleteDatabase(
                                     databaseName
                                 )
                             }
@@ -164,7 +165,7 @@ object DatabaseDialog {
 
     @Composable
     private fun SelectDatabase() {
-        val dialogState = com.vaticle.typedb.studio.service.Service.client.selectDBDialog
+        val dialogState = Service.client.selectDBDialog
         val focusReq = remember { FocusRequester() }
         Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
@@ -182,13 +183,13 @@ object DatabaseDialog {
     @Composable
     fun DatabaseDropdown(modifier: Modifier = Modifier, focusReq: FocusRequester? = null, enabled: Boolean = true) {
         Dropdown(
-            values = com.vaticle.typedb.studio.service.Service.client.databaseList,
-            selected = com.vaticle.typedb.studio.service.Service.client.session.database,
+            values = Service.client.databaseList,
+            selected = Service.client.session.database,
             onSelection = {
-                it?.let { com.vaticle.typedb.studio.service.Service.client.tryOpenSession(it) }
-                    ?: com.vaticle.typedb.studio.service.Service.client.closeSession()
+                it?.let { Service.client.tryOpenSession(it) }
+                    ?: Service.client.closeSession()
             },
-            onExpand = { com.vaticle.typedb.studio.service.Service.client.refreshDatabaseList() },
+            onExpand = { Service.client.refreshDatabaseList() },
             placeholder = Label.DATABASE.lowercase(),
             modifier = modifier,
             allowNone = true,

@@ -23,6 +23,7 @@ package com.vaticle.typedb.studio.test.integration
 
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
@@ -58,8 +59,8 @@ class TextEditorTest : IntegrationTest() {
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
             clickIcon(composeRule, Icon.SAVE)
             val file = File("$path/Untitled1.tql")
-            com.vaticle.typedb.studio.service.Service.project.saveFileDialog.file!!.trySave(file.toPath(), true)
-            com.vaticle.typedb.studio.service.Service.project.current!!.reloadEntries()
+            Service.project.saveFileDialog.file!!.trySave(file.toPath(), true)
+            Service.project.current!!.reloadEntries()
             delayAndRecompose(composeRule, Delays.FILE_IO)
 
             assertTrue(file.exists())
@@ -76,13 +77,13 @@ class TextEditorTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                com.vaticle.typedb.studio.service.Service.client.session.tryOpen(
+                Service.client.session.tryOpen(
                     database = testID,
                     TypeDBSession.Type.DATA
                 )
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                com.vaticle.typedb.studio.service.Service.schema.reloadEntries()
+                Service.schema.reloadEntries()
 
                 // We can assert that the schema has been written successfully here as the schema
                 // is shown in the type browser.
@@ -120,13 +121,13 @@ class TextEditorTest : IntegrationTest() {
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
 
-                com.vaticle.typedb.studio.service.Service.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
+                Service.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
                 clickText(composeRule, Label.SCHEMA.lowercase())
                 clickText(composeRule, Label.WRITE.lowercase())
 
-                com.vaticle.typedb.studio.service.Service.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!
+                Service.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!
                     .asFile().tryOpen()
 
                 clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)

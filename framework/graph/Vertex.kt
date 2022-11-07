@@ -35,6 +35,7 @@ import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.EntityType
 import com.vaticle.typedb.client.api.concept.type.RelationType
 import com.vaticle.typedb.client.api.concept.type.ThingType
+import com.vaticle.typedb.studio.framework.common.geometry.Geometry
 import com.vaticle.typedb.studio.framework.common.geometry.Geometry.Ellipse
 import com.vaticle.typedb.studio.framework.common.geometry.Geometry.diamondArcIntersectAngles
 import com.vaticle.typedb.studio.framework.common.geometry.Geometry.diamondIncomingLineIntersect

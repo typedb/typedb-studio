@@ -60,6 +60,7 @@ import com.vaticle.typedb.studio.framework.material.Frame
 import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.framework.material.Separator
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Label.APPLY
 import com.vaticle.typedb.studio.service.common.util.Label.CANCEL
@@ -88,7 +89,7 @@ object PreferenceDialog {
     private val PREFERENCE_GROUP_MIN_SIZE = 500.dp
     private val RESET_BUTTON_HEIGHT = 20.dp
 
-    private val preferenceSrv = com.vaticle.typedb.studio.service.Service.preference
+    private val preferenceSrv = Service.preference
 
     private var focusedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root(emptyList()))
     private var state by mutableStateOf(PreferencesForm())
@@ -258,7 +259,7 @@ object PreferenceDialog {
         val rootPreferenceGroup = PreferenceGroup.Root(entries = preferenceGroups)
 
         override fun cancel() {
-            com.vaticle.typedb.studio.service.Service.preference.preferencesDialog.close()
+            Service.preference.preferencesDialog.close()
         }
 
         fun apply() = trySubmit()
@@ -451,7 +452,7 @@ object PreferenceDialog {
 
     @Composable
     fun MayShowDialogs() {
-        if (com.vaticle.typedb.studio.service.Service.preference.preferencesDialog.isOpen) Preferences()
+        if (Service.preference.preferencesDialog.isOpen) Preferences()
     }
 
     @Composable
@@ -459,7 +460,7 @@ object PreferenceDialog {
         state.rootPreferenceGroup.resetSelfAndDescendants()
 
         Dialog.Layout(
-            com.vaticle.typedb.studio.service.Service.preference.preferencesDialog,
+            Service.preference.preferencesDialog,
             MANAGE_PREFERENCES,
             WIDTH,
             HEIGHT,

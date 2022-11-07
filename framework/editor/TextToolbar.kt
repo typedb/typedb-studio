@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
+import com.vaticle.typedb.studio.framework.common.KeyMapper
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.editor.TextToolbar.State.InputType.FINDER
@@ -179,20 +180,20 @@ object TextToolbar {
 
         internal fun handle(event: KeyEvent, focusManager: FocusManager, inputType: InputType): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
-            else com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.map(event)
+            else KeyMapper.CURRENT.map(event)
                 ?.let { execute(it, focusManager, inputType) } ?: false
         }
 
         private fun execute(
-            command: com.vaticle.typedb.studio.framework.common.KeyMapper.Command,
+            command: KeyMapper.Command,
             focusManager: FocusManager,
             inputType: InputType
         ): Boolean {
             return when (command) {
-                com.vaticle.typedb.studio.framework.common.KeyMapper.Command.TAB -> moveFocusNext(focusManager)
-                com.vaticle.typedb.studio.framework.common.KeyMapper.Command.ENTER -> onEnter(inputType)
-                com.vaticle.typedb.studio.framework.common.KeyMapper.Command.ENTER_SHIFT -> onEnterShift(inputType)
-                com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOD_ENTER_SHIFT -> insertNewLine(inputType)
+                KeyMapper.Command.TAB -> moveFocusNext(focusManager)
+                KeyMapper.Command.ENTER -> onEnter(inputType)
+                KeyMapper.Command.ENTER_SHIFT -> onEnterShift(inputType)
+                KeyMapper.Command.MOD_ENTER_SHIFT -> insertNewLine(inputType)
                 else -> false
             }
         }

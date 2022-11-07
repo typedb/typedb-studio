@@ -23,6 +23,7 @@ package com.vaticle.typedb.studio.test.integration
 
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
@@ -73,7 +74,7 @@ class TypeBrowserTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                com.vaticle.typedb.studio.service.Service.client.session.tryOpen(
+                Service.client.session.tryOpen(
                     database = testID,
                     TypeDBSession.Type.DATA
                 )
@@ -98,7 +99,7 @@ class TypeBrowserTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                com.vaticle.typedb.studio.service.Service.client.session.tryOpen(
+                Service.client.session.tryOpen(
                     database = testID,
                     TypeDBSession.Type.DATA
                 )

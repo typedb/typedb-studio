@@ -22,6 +22,7 @@ package com.vaticle.typedb.studio.test.integration
 
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
@@ -51,13 +52,13 @@ class QueryRunnerTest : IntegrationTest() {
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
                 writeDataInteractively(composeRule, dbName = testID, SampleGitHubData.dataFile)
 
-                com.vaticle.typedb.studio.service.Service.client.session.tryOpen(
+                Service.client.session.tryOpen(
                     database = testID,
                     TypeDBSession.Type.DATA
                 )
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                com.vaticle.typedb.studio.service.Service.project.current!!.directory.entries.find {
+                Service.project.current!!.directory.entries.find {
                     it.name == SampleGitHubData.collaboratorsQueryFile
                 }!!.asFile().tryOpen()
 
@@ -66,18 +67,18 @@ class QueryRunnerTest : IntegrationTest() {
                 clickText(composeRule, Label.SNAPSHOT.lowercase())
                 clickText(composeRule, Label.INFER.lowercase())
 
-                com.vaticle.typedb.studio.service.Service.pages.active?.let {
+                Service.pages.active?.let {
                     if (it.isRunnable) it.asRunnable().mayOpenAndRun()
                 }
 
-                val sessionType = com.vaticle.typedb.studio.service.Service.client.session.type
+                val sessionType = Service.client.session.type
                 assertEquals(sessionType, TypeDBSession.Type.DATA)
 
-                val transaction = com.vaticle.typedb.studio.service.Service.client.session.transaction.transaction!!
+                val transaction = Service.client.session.transaction.transaction!!
                 val transactionType = transaction.type()
                 val transactionIsInfer = transaction.options().infer().get()
                 val transactionIsSnapshot =
-                    com.vaticle.typedb.studio.service.Service.client.session.transaction.snapshot.value
+                    Service.client.session.transaction.snapshot.value
                 val transactionIsNotExplain = !transaction.options().explain().get()
 
                 assertEquals(transactionType, TypeDBTransaction.Type.READ)

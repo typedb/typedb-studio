@@ -41,6 +41,7 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog.DIALOG_SPACING
 import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 
 object ConfirmationDialog {
@@ -52,38 +53,38 @@ object ConfirmationDialog {
     internal class State : Form.State {
 
         var verificationInput by mutableStateOf("")
-        val hasReject get() = com.vaticle.typedb.studio.service.Service.confirmation.hasReject
-        val hasConfirm get() = com.vaticle.typedb.studio.service.Service.confirmation.hasConfirm
-        val cancelLabel get() = com.vaticle.typedb.studio.service.Service.confirmation.cancelLabel
-        val rejectLabel get() = com.vaticle.typedb.studio.service.Service.confirmation.rejectLabel
-        val confirmLabel get() = com.vaticle.typedb.studio.service.Service.confirmation.confirmLabel
+        val hasReject get() = Service.confirmation.hasReject
+        val hasConfirm get() = Service.confirmation.hasConfirm
+        val cancelLabel get() = Service.confirmation.cancelLabel
+        val rejectLabel get() = Service.confirmation.rejectLabel
+        val confirmLabel get() = Service.confirmation.confirmLabel
 
         fun reject() {
-            com.vaticle.typedb.studio.service.Service.confirmation.reject()
+            Service.confirmation.reject()
         }
 
         override fun cancel() {
-            com.vaticle.typedb.studio.service.Service.confirmation.close()
+            Service.confirmation.close()
         }
 
         override fun isValid(): Boolean {
-            val verificationValue = com.vaticle.typedb.studio.service.Service.confirmation.verificationValue
+            val verificationValue = Service.confirmation.verificationValue
             return verificationValue == null || verificationValue == verificationInput
         }
 
         override fun trySubmit() {
-            com.vaticle.typedb.studio.service.Service.confirmation.confirm()
+            Service.confirmation.confirm()
         }
     }
 
     @Composable
     fun MayShowDialog() {
-        if (com.vaticle.typedb.studio.service.Service.confirmation.isOpen) Layout()
+        if (Service.confirmation.isOpen) Layout()
     }
 
     @Composable
     private fun Layout() {
-        val dialogState = com.vaticle.typedb.studio.service.Service.confirmation
+        val dialogState = Service.confirmation
         val formState = remember { State() }
         val focusReq = remember { FocusRequester() }
         Dialog.Layout(dialogState, dialogState.title!!, WIDTH, HEIGHT) {

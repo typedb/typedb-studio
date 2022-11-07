@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Util.subSequenceSafely
 import com.vaticle.typedb.studio.framework.common.Util.toDP
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.StatusService.Key.TEXT_CURSOR_POSITION
 import kotlin.math.floor
 import kotlinx.coroutines.CoroutineScope
@@ -191,24 +192,22 @@ internal class InputTarget constructor(
         if (newCursor != cursor) updateCursor(newCursor, true)
     }
 
-    private fun dragSelectionByWord(x: Int, y: Int) {
-        selectionOfWord(createCursor(x, y))?.let { updateSelection(Selection.coverage(selectionDragStart!!, it)) }
+    private fun dragSelectionByWord(x: Int, y: Int) = selectionOfWord(createCursor(x, y))?.let {
+        updateSelection(Selection.coverage(selectionDragStart!!, it))
     }
 
-    private fun dragSelectionByLine(x: Int, y: Int) {
-        updateSelection(Selection.coverage(selectionDragStart!!, selectionOfLineAndBreak(createCursor(x, y))))
-    }
+    private fun dragSelectionByLine(x: Int, y: Int) = updateSelection(
+        Selection.coverage(selectionDragStart!!, selectionOfLineAndBreak(createCursor(x, y)))
+    )
 
-    private fun dragSelectionByLineNumber(x: Int, y: Int) {
-        updateCursor(createCursor(x, y + lineHeight.value.toInt()), true)
-    }
+    private fun dragSelectionByLineNumber(x: Int, y: Int) = updateCursor(
+        createCursor(x, y + lineHeight.value.toInt()), true
+    )
 
-    internal fun updatePosition(newPosition: Either<Cursor, Selection>) {
-        newPosition.apply(
-            { updateCursor(it, false) },
-            { updateSelection(it) }
-        )
-    }
+    internal fun updatePosition(newPosition: Either<Cursor, Selection>) = newPosition.apply(
+        { updateCursor(it, false) },
+        { updateSelection(it) }
+    )
 
     internal fun updateSelection(newSelection: Selection?, mayScroll: Boolean = true) {
         selection = newSelection
@@ -241,16 +240,12 @@ internal class InputTarget constructor(
         publishStatus()
     }
 
-    internal fun publishStatus() {
-        com.vaticle.typedb.studio.service.Service.status.publish(
-            TEXT_CURSOR_POSITION,
-            selection?.label() ?: cursor.label()
-        )
-    }
+    internal fun publishStatus() = Service.status.publish(
+        TEXT_CURSOR_POSITION,
+        selection?.label() ?: cursor.label()
+    )
 
-    internal fun clearStatus() {
-        com.vaticle.typedb.studio.service.Service.status.clear(TEXT_CURSOR_POSITION)
-    }
+    internal fun clearStatus() = Service.status.clear(TEXT_CURSOR_POSITION)
 
     private fun mayScrollToCursor() {
         fun mayScrollToCoordinate(x: Int, y: Int, padding: Int = 0) {
@@ -332,8 +327,7 @@ internal class InputTarget constructor(
     private fun getPrevWordOffset(textLayout: TextLayoutResult, col: Int): Int {
         if (col < 0 || content[cursor.row].isEmpty()) return 0
         val newCol = wordBoundary(textLayout, cursor.row, col).start
-        return if (newCol < col) newCol
-        else getPrevWordOffset(textLayout, col - 1)
+        return if (newCol < col) newCol else getPrevWordOffset(textLayout, col - 1)
     }
 
     internal fun moveCursorNexBytWord(isSelecting: Boolean = false) {
@@ -346,8 +340,7 @@ internal class InputTarget constructor(
     private fun getNextWordOffset(textLayout: TextLayoutResult, col: Int): Int {
         if (col >= content[cursor.row].length) return content[cursor.row].length
         val newCol = wordBoundary(textLayout, cursor.row, col).end
-        return if (newCol > col) newCol
-        else getNextWordOffset(textLayout, col + 1)
+        return if (newCol > col) newCol else getNextWordOffset(textLayout, col + 1)
     }
 
     internal fun moveCursorPrevByParagraph(isSelecting: Boolean = false) {
@@ -411,21 +404,19 @@ internal class InputTarget constructor(
         updateCursor(Cursor(newRow, newCol), isSelecting)
     }
 
-    internal fun moveCursorToStart(isSelecting: Boolean = false, mayScroll: Boolean = true) {
-        updateCursor(Cursor(0, 0), isSelecting, mayScroll)
-    }
+    internal fun moveCursorToStart(isSelecting: Boolean = false, mayScroll: Boolean = true) = updateCursor(
+        Cursor(0, 0), isSelecting, mayScroll
+    )
 
-    internal fun moveCursorToEnd(isSelecting: Boolean = false, mayScroll: Boolean = true) {
-        updateCursor(end, isSelecting, mayScroll)
-    }
+    internal fun moveCursorToEnd(isSelecting: Boolean = false, mayScroll: Boolean = true) = updateCursor(
+        end, isSelecting, mayScroll
+    )
 
-    internal fun selectAll() {
-        updateSelection(Selection(Cursor(0, 0), Cursor(content.size - 1, content.last().length)), false)
-    }
+    internal fun selectAll() = updateSelection(
+        Selection(Cursor(0, 0), Cursor(content.size - 1, content.last().length)), false
+    )
 
-    internal fun selectNone() {
-        updateSelection(null)
-    }
+    internal fun selectNone() = updateSelection(null)
 
     internal fun maySelectWord(x: Int) {
         if (x > lineNumberBorder) {
@@ -435,9 +426,7 @@ internal class InputTarget constructor(
         }
     }
 
-    private fun selectWord() {
-        updateSelection(selectionOfWord(cursor))
-    }
+    private fun selectWord() = updateSelection(selectionOfWord(cursor))
 
     internal fun maySelectLineAndBreak(x: Int) {
         if (x > lineNumberBorder) {
@@ -447,11 +436,9 @@ internal class InputTarget constructor(
         }
     }
 
-    private fun selectionOfWord(cursor: Cursor): Selection? {
-        return rendering.get(cursor.row)?.let {
-            val boundary = wordBoundary(it, cursor.row, cursor.col)
-            Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end))
-        }
+    private fun selectionOfWord(cursor: Cursor): Selection? = rendering.get(cursor.row)?.let {
+        val boundary = wordBoundary(it, cursor.row, cursor.col)
+        Selection(Cursor(cursor.row, boundary.start), Cursor(cursor.row, boundary.end))
     }
 
     internal fun selectionOfLineAndBreak(cursor: Cursor): Selection {
@@ -465,14 +452,14 @@ internal class InputTarget constructor(
         Cursor(selection.max.row, content[selection.max.row].length)
     )
 
-    internal fun selectionOfPreviousLineAndBreak(row: Int): Selection? {
-        return if (row < 1) null
-        else Selection(Cursor(row - 1, 0), Cursor(row, 0))
+    internal fun selectionOfPreviousLineAndBreak(row: Int): Selection? = when {
+        row < 1 -> null
+        else -> Selection(Cursor(row - 1, 0), Cursor(row, 0))
     }
 
-    internal fun selectionOfNextBreakAndLine(row: Int): Selection? {
-        return if (row > content.size - 2) null
-        else Selection(Cursor(row, content[row].length), Cursor(row + 1, content[row + 1].length))
+    internal fun selectionOfNextBreakAndLine(row: Int): Selection? = when {
+        row > content.size - 2 -> null
+        else -> Selection(Cursor(row, content[row].length), Cursor(row + 1, content[row + 1].length))
     }
 
     internal fun selectionShiftedBy(selection: Selection, startShift: Int, endShift: Int) = Selection(

@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.studio.framework.common.URL
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Theme.TOOLBAR_BUTTON_SIZE
 import com.vaticle.typedb.studio.framework.common.theme.Theme.TOOLBAR_SEPARATOR_HEIGHT
@@ -49,6 +50,7 @@ import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.module.connection.DatabaseDialog.DatabaseDropdown
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Property.FileType.Companion.RUNNABLE_EXTENSIONS_STR
 import com.vaticle.typedb.studio.service.common.util.Sentence
@@ -59,26 +61,26 @@ import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNEC
 
 object Toolbar {
 
-    private val isConnected get() = com.vaticle.typedb.studio.service.Service.client.isConnected
-    private val isScript get() = com.vaticle.typedb.studio.service.Service.client.isScriptMode
-    private val isInteractive get() = com.vaticle.typedb.studio.service.Service.client.isInteractiveMode
-    private val hasOpenSession get() = com.vaticle.typedb.studio.service.Service.client.session.isOpen
-    private val hasOpenTx get() = com.vaticle.typedb.studio.service.Service.client.session.transaction.isOpen
-    private val isSchemaSession get() = com.vaticle.typedb.studio.service.Service.client.session.isSchema
-    private val isDataSession get() = com.vaticle.typedb.studio.service.Service.client.session.isData
-    private val isReadTransaction get() = com.vaticle.typedb.studio.service.Service.client.session.transaction.isRead
-    private val isWriteTransaction get() = com.vaticle.typedb.studio.service.Service.client.session.transaction.isWrite
-    private val isSnapshotActivated get() = com.vaticle.typedb.studio.service.Service.client.session.transaction.snapshot.value
-    private val isSnapshotEnabled get() = com.vaticle.typedb.studio.service.Service.client.session.transaction.snapshot.enabled
-    private val isInferActivated get() = com.vaticle.typedb.studio.service.Service.client.session.transaction.infer.value
-    private val isInferEnabled get() = com.vaticle.typedb.studio.service.Service.client.session.transaction.infer.enabled
-    private val isExplainActivated get() = com.vaticle.typedb.studio.service.Service.client.session.transaction.explain.value
-    private val isExplainEnabled get() = com.vaticle.typedb.studio.service.Service.client.session.transaction.explain.enabled
-    private val isReadyToRunQuery get() = com.vaticle.typedb.studio.service.Service.client.isReadyToRunQuery
-    private val hasRunnablePage get() = com.vaticle.typedb.studio.service.Service.pages.active?.isRunnable == true
-    private val hasRunningQuery get() = com.vaticle.typedb.studio.service.Service.client.hasRunningQuery
-    private val hasRunningCommand get() = com.vaticle.typedb.studio.service.Service.client.hasRunningCommand && com.vaticle.typedb.studio.service.Service.schema.hasRunningTx
-    private val hasStopSignal get() = com.vaticle.typedb.studio.service.Service.client.session.transaction.hasStopSignal
+    private val isConnected get() = Service.client.isConnected
+    private val isScript get() = Service.client.isScriptMode
+    private val isInteractive get() = Service.client.isInteractiveMode
+    private val hasOpenSession get() = Service.client.session.isOpen
+    private val hasOpenTx get() = Service.client.session.transaction.isOpen
+    private val isSchemaSession get() = Service.client.session.isSchema
+    private val isDataSession get() = Service.client.session.isData
+    private val isReadTransaction get() = Service.client.session.transaction.isRead
+    private val isWriteTransaction get() = Service.client.session.transaction.isWrite
+    private val isSnapshotActivated get() = Service.client.session.transaction.snapshot.value
+    private val isSnapshotEnabled get() = Service.client.session.transaction.snapshot.enabled
+    private val isInferActivated get() = Service.client.session.transaction.infer.value
+    private val isInferEnabled get() = Service.client.session.transaction.infer.enabled
+    private val isExplainActivated get() = Service.client.session.transaction.explain.value
+    private val isExplainEnabled get() = Service.client.session.transaction.explain.enabled
+    private val isReadyToRunQuery get() = Service.client.isReadyToRunQuery
+    private val hasRunnablePage get() = Service.pages.active?.isRunnable == true
+    private val hasRunningQuery get() = Service.client.hasRunningQuery
+    private val hasRunningCommand get() = Service.client.hasRunningCommand && Service.schema.hasRunningTx
+    private val hasStopSignal get() = Service.client.session.transaction.hasStopSignal
 
     @Composable
     fun Layout() {
@@ -143,14 +145,14 @@ object Toolbar {
         private fun OpenProjectButton() {
             ToolbarIconButton(
                 icon = Icon.FOLDER_OPEN,
-                onClick = { com.vaticle.typedb.studio.service.Service.project.openProjectDialog.open() },
+                onClick = { Service.project.openProjectDialog.open() },
                 tooltip = Tooltip.Arg(title = Label.OPEN_PROJECT_DIRECTORY)
             )
         }
 
         @Composable
         private fun SaveButton() {
-            val activePage = com.vaticle.typedb.studio.service.Service.pages.active
+            val activePage = Service.pages.active
             ToolbarIconButton(
                 icon = Icon.SAVE,
                 onClick = { activePage?.initiateSave() },
@@ -191,8 +193,8 @@ object Toolbar {
                 ToolbarIconButton(
                     icon = Icon.DATABASE,
                     onClick = {
-                        com.vaticle.typedb.studio.service.Service.client.refreshDatabaseList()
-                        com.vaticle.typedb.studio.service.Service.client.manageDatabasesDialog.open()
+                        Service.client.refreshDatabaseList()
+                        Service.client.manageDatabasesDialog.open()
                     },
                     enabled = enabled,
                     tooltip = Tooltip.Arg(
@@ -237,7 +239,7 @@ object Toolbar {
                             TextButtonArg(
                                 text = Label.SCHEMA.lowercase(),
                                 onClick = {
-                                    com.vaticle.typedb.studio.service.Service.client.tryUpdateSessionType(
+                                    Service.client.tryUpdateSessionType(
                                         schema
                                     )
                                 },
@@ -246,13 +248,13 @@ object Toolbar {
                                 tooltip = Tooltip.Arg(
                                     title = Label.SCHEMA_SESSION,
                                     description = Sentence.SESSION_SCHEMA_DESCRIPTION,
-                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_SESSION_SCHEMA
+                                    url = URL.DOCS_SESSION_SCHEMA
                                 )
                             ),
                             TextButtonArg(
                                 text = Label.DATA.lowercase(),
                                 onClick = {
-                                    com.vaticle.typedb.studio.service.Service.client.tryUpdateSessionType(
+                                    Service.client.tryUpdateSessionType(
                                         data
                                     )
                                 },
@@ -261,7 +263,7 @@ object Toolbar {
                                 tooltip = Tooltip.Arg(
                                     title = Label.DATA_SESSION,
                                     description = Sentence.SESSION_DATA_DESCRIPTION,
-                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_SESSION_DATA
+                                    url = URL.DOCS_SESSION_DATA
                                 )
                             )
                         )
@@ -278,7 +280,7 @@ object Toolbar {
                             TextButtonArg(
                                 text = Label.WRITE.lowercase(),
                                 onClick = {
-                                    com.vaticle.typedb.studio.service.Service.client.tryUpdateTransactionType(
+                                    Service.client.tryUpdateTransactionType(
                                         write
                                     )
                                 },
@@ -287,13 +289,13 @@ object Toolbar {
                                 tooltip = Tooltip.Arg(
                                     title = Label.WRITE_TRANSACTION,
                                     description = Sentence.TRANSACTION_WRITE_DESCRIPTION,
-                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_TRANSACTION_WRITE
+                                    url = URL.DOCS_TRANSACTION_WRITE
                                 )
                             ),
                             TextButtonArg(
                                 text = Label.READ.lowercase(),
                                 onClick = {
-                                    com.vaticle.typedb.studio.service.Service.client.tryUpdateTransactionType(
+                                    Service.client.tryUpdateTransactionType(
                                         read
                                     )
                                 },
@@ -302,7 +304,7 @@ object Toolbar {
                                 tooltip = Tooltip.Arg(
                                     title = Label.READ_TRANSACTION,
                                     description = Sentence.TRANSACTION_READ_DESCRIPTION,
-                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_TRANSACTION_READ
+                                    url = URL.DOCS_TRANSACTION_READ
                                 )
                             )
                         )
@@ -316,35 +318,35 @@ object Toolbar {
                         buttons = listOf(
                             TextButtonArg(
                                 text = Label.SNAPSHOT.lowercase(),
-                                onClick = { com.vaticle.typedb.studio.service.Service.client.session.transaction.snapshot.toggle() },
+                                onClick = { Service.client.session.transaction.snapshot.toggle() },
                                 color = { toggleButtonColor(isSnapshotActivated) },
                                 enabled = enabled && isSnapshotEnabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_SNAPSHOT,
                                     description = Sentence.ENABLE_SNAPSHOT_DESCRIPTION,
-                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_ENABLE_SNAPSHOT
+                                    url = URL.DOCS_ENABLE_SNAPSHOT
                                 )
                             ),
                             TextButtonArg(
                                 text = Label.INFER.lowercase(),
-                                onClick = { com.vaticle.typedb.studio.service.Service.client.session.transaction.infer.toggle() },
+                                onClick = { Service.client.session.transaction.infer.toggle() },
                                 color = { toggleButtonColor(isInferActivated) },
                                 enabled = enabled && isInferEnabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_INFERENCE,
                                     description = Sentence.ENABLE_INFERENCE_DESCRIPTION,
-                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_ENABLE_INFERENCE
+                                    url = URL.DOCS_ENABLE_INFERENCE
                                 )
                             ),
                             TextButtonArg(
                                 text = Label.EXPLAIN.lowercase(),
-                                onClick = { com.vaticle.typedb.studio.service.Service.client.session.transaction.explain.toggle() },
+                                onClick = { Service.client.session.transaction.explain.toggle() },
                                 color = { toggleButtonColor(isExplainActivated) },
                                 enabled = enabled && isExplainEnabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_INFERENCE_EXPLANATION,
                                     description = Sentence.ENABLE_INFERENCE_EXPLANATION_DESCRIPTION,
-                                    url = com.vaticle.typedb.studio.framework.common.URL.DOCS_ENABLE_INFERENCE_EXPLANATION,
+                                    url = URL.DOCS_ENABLE_INFERENCE_EXPLANATION,
                                 )
                             )
                         )
@@ -389,13 +391,13 @@ object Toolbar {
                 private fun CloseButton(enabled: Boolean) {
                     ToolbarIconButton(
                         icon = Icon.CLOSE,
-                        onClick = { com.vaticle.typedb.studio.service.Service.client.closeTransactionAsync() },
+                        onClick = { Service.client.closeTransactionAsync() },
                         color = Theme.studio.errorStroke,
                         enabled = enabled,
                         tooltip = Tooltip.Arg(
                             title = Label.CLOSE_TRANSACTION,
                             description = Sentence.TRANSACTION_CLOSE_DESCRIPTION,
-                            url = com.vaticle.typedb.studio.framework.common.URL.DOCS_TRANSACTION_CLOSE,
+                            url = URL.DOCS_TRANSACTION_CLOSE,
                         )
                     )
                 }
@@ -404,13 +406,13 @@ object Toolbar {
                 private fun RollbackButton(enabled: Boolean) {
                     ToolbarIconButton(
                         icon = Icon.ROLLBACK,
-                        onClick = { com.vaticle.typedb.studio.service.Service.client.rollbackTransaction() },
+                        onClick = { Service.client.rollbackTransaction() },
                         color = Theme.studio.warningStroke,
                         enabled = enabled && isWriteTransaction,
                         tooltip = Tooltip.Arg(
                             title = Label.ROLLBACK_TRANSACTION,
                             description = Sentence.TRANSACTION_ROLLBACK_DESCRIPTION,
-                            url = com.vaticle.typedb.studio.framework.common.URL.DOCS_TRANSACTION_ROLLBACK,
+                            url = URL.DOCS_TRANSACTION_ROLLBACK,
                         )
                     )
                 }
@@ -419,13 +421,13 @@ object Toolbar {
                 private fun CommitButton(enabled: Boolean) {
                     ToolbarIconButton(
                         icon = Icon.COMMIT,
-                        onClick = { com.vaticle.typedb.studio.service.Service.client.commitTransaction() },
+                        onClick = { Service.client.commitTransaction() },
                         color = Theme.studio.secondary,
                         enabled = enabled && isWriteTransaction,
                         tooltip = Tooltip.Arg(
                             title = Label.COMMIT_TRANSACTION,
                             description = Sentence.TRANSACTION_COMMIT_DESCRIPTION,
-                            url = com.vaticle.typedb.studio.framework.common.URL.DOCS_TRANSACTION_COMMIT
+                            url = URL.DOCS_TRANSACTION_COMMIT
                         )
                     )
                 }
@@ -449,7 +451,7 @@ object Toolbar {
                 icon = Icon.RUN,
                 color = Theme.studio.secondary,
                 onClick = {
-                    com.vaticle.typedb.studio.service.Service.pages.active?.let {
+                    Service.pages.active?.let {
                         if (it.isRunnable) it.asRunnable().mayOpenAndRun()
                     }
                 },
@@ -466,7 +468,7 @@ object Toolbar {
             ToolbarIconButton(
                 icon = Icon.STOP,
                 color = Theme.studio.errorStroke,
-                onClick = { com.vaticle.typedb.studio.service.Service.client.sendStopSignal() },
+                onClick = { Service.client.sendStopSignal() },
                 enabled = hasRunningQuery && !hasStopSignal,
                 tooltip = Tooltip.Arg(title = Label.STOP_SIGNAL, description = Sentence.STOP_SIGNAL_DESCRIPTION)
             )
@@ -476,8 +478,8 @@ object Toolbar {
     object Major {
 
         private val connectionName
-            get() = (com.vaticle.typedb.studio.service.Service.client.username?.let { "$it@" }
-                ?: "") + com.vaticle.typedb.studio.service.Service.client.address
+            get() = (Service.client.username?.let { "$it@" }
+                ?: "") + Service.client.address
 
         @Composable
         internal fun Buttons() {
@@ -497,24 +499,24 @@ object Toolbar {
                 buttons = listOf(
                     TextButtonArg(
                         text = interactive.name.lowercase(),
-                        onClick = { com.vaticle.typedb.studio.service.Service.client.mode = interactive },
+                        onClick = { Service.client.mode = interactive },
                         color = { toggleButtonColor(isActive = isConnected && isInteractive) },
                         enabled = isConnected,
                         tooltip = Tooltip.Arg(
                             title = Label.INTERACTIVE_MODE,
                             description = Sentence.INTERACTIVE_MODE_DESCRIPTION,
-                            url = com.vaticle.typedb.studio.framework.common.URL.DOCS_MODE_INTERACTIVE,
+                            url = URL.DOCS_MODE_INTERACTIVE,
                         )
                     ),
                     TextButtonArg(
                         text = script.name.lowercase(),
-                        onClick = { com.vaticle.typedb.studio.service.Service.client.mode = script },
+                        onClick = { Service.client.mode = script },
                         color = { toggleButtonColor(isActive = isConnected && isScript) },
                         enabled = isConnected,
                         tooltip = Tooltip.Arg(
                             title = Label.SCRIPT_MODE,
                             description = Sentence.SCRIPT_MODE_DESCRIPTION,
-                            url = com.vaticle.typedb.studio.framework.common.URL.DOCS_MODE_SCRIPT,
+                            url = URL.DOCS_MODE_SCRIPT,
                         )
                     )
                 )
@@ -523,7 +525,7 @@ object Toolbar {
 
         @Composable
         private fun ConnectionButton() {
-            when (com.vaticle.typedb.studio.service.Service.client.status) {
+            when (Service.client.status) {
                 DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
                 CONNECTING -> ConnectionButton(Label.CONNECTING)
                 CONNECTED -> ConnectionButton(connectionName)
@@ -537,14 +539,14 @@ object Toolbar {
                 modifier = Modifier.height(TOOLBAR_BUTTON_SIZE),
                 trailingIcon = Form.IconArg(Icon.CONNECT_TO_TYPEDB),
                 tooltip = Tooltip.Arg(title = Label.CONNECT_TO_TYPEDB)
-            ) { com.vaticle.typedb.studio.service.Service.client.connectServerDialog.open() }
+            ) { Service.client.connectServerDialog.open() }
         }
 
         @Composable
         private fun OpenPreferencesDialogButton() {
             ToolbarIconButton(
                 icon = Icon.PREFERENCES,
-                onClick = { com.vaticle.typedb.studio.service.Service.preference.preferencesDialog.toggle() },
+                onClick = { Service.preference.preferencesDialog.toggle() },
                 tooltip = Tooltip.Arg(title = Label.OPEN_PREFERENCES)
             )
         }

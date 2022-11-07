@@ -32,6 +32,7 @@ import com.vaticle.typedb.studio.framework.editor.TextChange.Deletion
 import com.vaticle.typedb.studio.framework.editor.TextChange.Insertion
 import com.vaticle.typedb.studio.framework.editor.TextChange.ReplayType
 import com.vaticle.typedb.studio.framework.editor.highlighter.SyntaxHighlighter
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FILE_NOT_WRITABLE
 import com.vaticle.typedb.studio.service.common.util.Property
 import com.vaticle.typedb.studio.service.project.FileState
@@ -106,15 +107,9 @@ internal interface TextProcessor {
             this.file = file
         }
 
-        private fun mayDisplayWarning() {
-            file?.path?.let {
-                com.vaticle.typedb.studio.service.Service.notification.userWarning(
-                    LOGGER,
-                    FILE_NOT_WRITABLE,
-                    it
-                )
-            }
-        }
+        private fun mayDisplayWarning() = file?.path?.let {
+            Service.notification.userWarning(LOGGER, FILE_NOT_WRITABLE, it)
+        } ?: Unit
 
         private fun displayWarningOnStartTyping(): Insertion? {
             val currentTime = System.currentTimeMillis()

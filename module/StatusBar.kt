@@ -37,6 +37,7 @@ import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Tooltip
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.StatusService
 import com.vaticle.typedb.studio.service.common.StatusService.Key.OUTPUT_RESPONSE_TIME
 import com.vaticle.typedb.studio.service.common.StatusService.Key.QUERY_RESPONSE_TIME
@@ -53,7 +54,7 @@ object StatusBar {
 
     @Composable
     fun Layout() {
-        val statusSrv = com.vaticle.typedb.studio.service.Service.status
+        val statusSrv = Service.status
         val fontStyle = Theme.typography.body2
         Row(Modifier.fillMaxWidth().height(HEIGHT), verticalAlignment = Alignment.CenterVertically) {
             if (statusSrv.loadingStatus.isNotEmpty()) {

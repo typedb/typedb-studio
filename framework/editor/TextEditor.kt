@@ -78,6 +78,7 @@ import com.vaticle.typedb.studio.framework.editor.highlighter.SyntaxHighlighter.
 import com.vaticle.typedb.studio.framework.material.ContextMenu
 import com.vaticle.typedb.studio.framework.material.Scrollbar
 import com.vaticle.typedb.studio.framework.material.Separator
+import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FILE_CONTENT_CHANGED_ON_DISK
 import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FILE_PERMISSION_CHANGED_ON_DISK
 import com.vaticle.typedb.studio.service.common.util.Property
@@ -167,7 +168,7 @@ object TextEditor {
         file.onDiskChangeContent {
             editor.reloadContent(it)
             editor.processor.clearHistory()
-            com.vaticle.typedb.studio.service.Service.notification.userWarning(
+            Service.notification.userWarning(
                 LOGGER,
                 FILE_CONTENT_CHANGED_ON_DISK,
                 it.path
@@ -190,7 +191,7 @@ object TextEditor {
             editor.toolbar.processor = newProcessor
             editor.handler.processor = newProcessor
             editor.processor = newProcessor
-            com.vaticle.typedb.studio.service.Service.notification.userWarning(
+            Service.notification.userWarning(
                 LOGGER,
                 FILE_PERMISSION_CHANGED_ON_DISK,
                 it.path
@@ -282,7 +283,7 @@ object TextEditor {
     @Composable
     fun Layout(state: State, modifier: Modifier = Modifier, showLine: Boolean = true, onScroll: () -> Unit = {}) {
         if (state.content.isEmpty()) return
-        val textScale = com.vaticle.typedb.studio.service.Service.editor.scale
+        val textScale = Service.editor.scale
         val density = LocalDensity.current.density
         val fontSize = ((state.font.fontSize.value * textScale * 100).roundToInt() / 100f).sp
         val fontStyle = state.font.copy(color = Theme.studio.onBackground, fontSize = fontSize)
