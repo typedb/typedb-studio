@@ -433,7 +433,7 @@ object Navigator {
             modifier = modifier.pointerInput(root) { root?.let { onPointerInput(state, it) } }
                 .onGloballyPositioned { state.density = density; state.updateAreaSize(it.size) }
         ) {
-            state.contextMenuFn?.let { ContextMenu.Popup(state.contextMenu) { it(state.selected!!) } }
+            state.contextMenuFn?.let { fn -> ContextMenu.Popup(state.contextMenu) { fn(state.selected!!) } }
             LazyColumn(
                 state = state.scroller, modifier = Modifier.widthIn(min = state.minWidth)
                     .horizontalScroll(state = horScrollState)

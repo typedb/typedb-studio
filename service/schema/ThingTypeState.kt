@@ -29,9 +29,19 @@ import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
+import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_ABSTRACT
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CREATE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_OWN_ATTRIBUTE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_PLAY_ROLE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_UNDEFINE_PLAYS_ROLE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.page.Navigable
 import com.vaticle.typedb.studio.service.page.Pageable
+import com.vaticle.typeql.lang.TypeQL
+import com.vaticle.typeql.lang.TypeQL.rel
+import com.vaticle.typeql.lang.TypeQL.`var`
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
@@ -139,7 +149,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             loadSubtypesRecursively()
         } catch (e: TypeDBClientException) {
             notifications.userError(
-                LOGGER, Message.Schema.FAILED_TO_LOAD_TYPE, e.message ?: Message.UNKNOWN
+                LOGGER, Message.Schema.FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN
             )
         }
     }
@@ -213,7 +223,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         val loaded = mutableSetOf<RoleType>()
         val properties = mutableListOf<RoleTypeState.PlaysRoleTypeProperties>()
 
-        fun load(typeTx: ThingType.Remote, roleTypeConcept: RoleType, isInherited: Boolean) {
+        fun load(tx: TypeDBTransaction, typeTx: ThingType.Remote, roleTypeConcept: RoleType, isInherited: Boolean) {
             loaded.add(roleTypeConcept)
             schemaSrv.typeStateOf(roleTypeConcept)?.let { roleType ->
                 roleType.loadConstraints()
@@ -224,12 +234,15 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                 }?.also { it.loadPlayerTypes() }
                 val extendedType = inheritedType?.playerTypesExplicit?.toSet()
                     ?.intersect(supertypes.toSet())?.firstOrNull()
+                val canBeUndefined = !tx.query().match(
+                    TypeQL.match(
+                        `var`("x").isa(typeTx.label.name()),
+                        rel(roleTypeConcept.label.name(), "x")
+                    )
+                ).findFirst().isPresent
                 properties.add(
                     RoleTypeState.PlaysRoleTypeProperties(
-                        roleType,
-                        overriddenType,
-                        extendedType,
-                        isInherited
+                        roleType, overriddenType, extendedType, isInherited, canBeUndefined
                     )
                 )
             }
@@ -237,8 +250,8 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
-            typeTx.playsExplicit.forEach { load(typeTx, it, false) }
-            typeTx.plays.filter { !loaded.contains(it) }.forEach { load(typeTx, it, true) }
+            typeTx.playsExplicit.forEach { load(tx, typeTx, it, false) }
+            typeTx.plays.filter { !loaded.contains(it) }.forEach { load(tx, typeTx, it, true) }
         }
         playsRoleTypeProperties = properties
     }
@@ -255,10 +268,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                 dialogState.close()
                 execOnTypesUpdated()
             } catch (e: Exception) {
-                notifications.userError(
-                    LOGGER,
-                    Message.Schema.FAILED_TO_CREATE_TYPE, encoding.label, label, e.message ?: Message.UNKNOWN
-                )
+                notifications.userError(LOGGER, FAILED_TO_CREATE_TYPE, encoding.label, label, e.message ?: UNKNOWN)
             }
         }
     }
@@ -271,10 +281,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             schemaSrv.changeAbstractDialog.close()
             updateConceptType()
         } catch (e: Exception) {
-            notifications.userError(
-                LOGGER,
-                Message.Schema.FAILED_TO_CHANGE_ABSTRACT, encoding.label, e.message ?: Message.UNKNOWN
-            )
+            notifications.userError(LOGGER, FAILED_TO_CHANGE_ABSTRACT, encoding.label, e.message ?: UNKNOWN)
         }
     }
 
@@ -289,13 +296,13 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             onSuccess()
         } catch (e: Exception) {
             notifications.userError(
-                LOGGER, Message.Schema.FAILED_TO_OWN_ATTRIBUTE_TYPE,
-                encoding.label, name, attributeType.name, e.message ?: Message.UNKNOWN
+                LOGGER, FAILED_TO_DEFINE_OWN_ATTRIBUTE_TYPE,
+                encoding.label, name, attributeType.name, e.message ?: UNKNOWN
             )
         }
     }
 
-    fun initiateRemoveOwnsAttributeType(attributeType: AttributeTypeState) {
+    fun tryUndefineOwnsAttributeType(attributeType: AttributeTypeState) {
         // TODO
     }
 
@@ -310,18 +317,21 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             onSuccess()
         } catch (e: Exception) {
             notifications.userError(
-                LOGGER,
-                Message.Schema.FAILED_TO_PLAY_ROLE_TYPE,
-                encoding.label,
-                name,
-                roleType.name,
-                e.message ?: Message.UNKNOWN
+                LOGGER, FAILED_TO_DEFINE_PLAY_ROLE_TYPE, encoding.label, name, roleType.name, e.message ?: UNKNOWN
             )
         }
     }
 
-    fun initiateRemovePlaysRoleType(roleType: RoleTypeState) {
-        // TODO
+    fun tryUndefinePlaysRoleType(roleType: RoleTypeState) = schemaSrv.mayRunWriteTxAsync { tx ->
+        try {
+            conceptType.asRemote(tx).unsetPlays(roleType.conceptType)
+            loadPlaysRoleTypes()
+        } catch (e: Exception) {
+            notifications.userError(
+                LOGGER, FAILED_TO_UNDEFINE_PLAYS_ROLE_TYPE,
+                encoding.label, name, roleType.scopedName, e.message ?: UNKNOWN
+            )
+        }
     }
 
     fun initiateDelete() = schemaSrv.confirmation.submit(
@@ -330,15 +340,14 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         onConfirm = { this.tryDelete() }
     )
 
-    override fun tryDelete() = schemaSrv.mayRunWriteTxAsync {
+    override fun tryDelete() = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
-            conceptType.asRemote(it).delete()
+            conceptType.asRemote(tx).delete()
             purge()
             schemaSrv.execOnTypesUpdated()
         } catch (e: Exception) {
             notifications.userError(
-                LOGGER,
-                Message.Schema.FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: Message.UNKNOWN
+                LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN
             )
         }
     }

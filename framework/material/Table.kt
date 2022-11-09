@@ -163,8 +163,8 @@ object Table {
         var isHover by remember { mutableStateOf(false) }
         Box {
             var modifier = Modifier.fillMaxWidth().height(rowHeight)
-            contextMenuFn?.let {
-                ContextMenu.Popup(contextMenuState) { it(item) }
+            contextMenuFn?.let { fn ->
+                ContextMenu.Popup(contextMenuState) { fn(item) }
                 modifier = modifier.pointerHoverIcon(PointerIconDefaults.Hand)
                     .pointerInput(item) { contextMenuState.onPointerInput(this) }
                     .pointerMoveFilter(

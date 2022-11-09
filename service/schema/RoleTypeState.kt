@@ -53,6 +53,7 @@ class RoleTypeState constructor(
         override val overriddenType: RoleTypeState?,
         override val extendedType: ThingTypeState<*, *>?,
         override val isInherited: Boolean,
+        val canBeUndefined: Boolean,
     ) : RoleTypeProperties
 
     data class PlayerTypeProperties constructor(

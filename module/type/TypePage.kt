@@ -329,7 +329,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                 label = Label.REMOVE,
                 icon = Icon.REMOVE,
                 enabled = canWriteSchema && !prop.isInherited && prop.canBeUndefined
-            ) { typeState.initiateRemoveOwnsAttributeType(prop.attributeType) }
+            ) { typeState.tryUndefineOwnsAttributeType(prop.attributeType) }
         )
     )
 
@@ -407,29 +407,29 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         PlaysRoleTypeAddition()
     }
 
-    private fun playsRoleTypesContextMenu(prop: RoleTypeState.PlaysRoleTypeProperties) = listOf(
+    private fun playsRoleTypesContextMenu(props: RoleTypeState.PlaysRoleTypeProperties) = listOf(
         listOf(
             ContextMenu.Item(
                 label = Label.GO_TO_ROLE_TYPE,
                 icon = Icon.GO_TO,
-            ) { prop.roleType.relationType.tryOpen() },
+            ) { props.roleType.relationType.tryOpen() },
             ContextMenu.Item(
                 label = Label.GO_TO_OVERRIDDEN_TYPE,
                 icon = Icon.GO_TO,
-                enabled = prop.overriddenType != null,
-            ) { prop.overriddenType?.relationType?.tryOpen() },
+                enabled = props.overriddenType != null,
+            ) { props.overriddenType?.relationType?.tryOpen() },
             ContextMenu.Item(
                 label = Label.GO_TO_EXTENDED_TYPE,
                 icon = Icon.GO_TO,
-                enabled = prop.extendedType != null,
-            ) { prop.extendedType?.tryOpen() }
+                enabled = props.extendedType != null,
+            ) { props.extendedType?.tryOpen() }
         ),
         listOf(
             ContextMenu.Item(
                 label = Label.REMOVE,
                 icon = Icon.REMOVE,
-                enabled = canWriteSchema && prop.roleType.canBeDeleted
-            ) { typeState.initiateRemovePlaysRoleType(prop.roleType) }
+                enabled = canWriteSchema && props.canBeUndefined
+            ) { typeState.tryUndefinePlaysRoleType(props.roleType) }
         )
     )
 

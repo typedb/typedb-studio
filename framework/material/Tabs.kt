@@ -246,7 +246,7 @@ object Tabs {
             var width by remember { mutableStateOf(0.dp) }
 
             Box {
-                contextMenuFn?.let { ContextMenu.Popup(contextMenuState) { it(tab) } }
+                contextMenuFn?.let { fn -> ContextMenu.Popup(contextMenuState) { fn(tab) } }
                 Column(Modifier.onSizeChanged { state.initTab(tab, isActive, it.width) }) {
                     if (isActive && position == Position.BOTTOM) ActiveIndicator(width)
                     Row(

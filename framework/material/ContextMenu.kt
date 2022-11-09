@@ -35,6 +35,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -147,7 +148,7 @@ object ContextMenu {
                         .border(Form.BORDER_WIDTH, Theme.studio.border, RectangleShape)
                         .width(IntrinsicSize.Max).verticalScroll(rememberScrollState())
                 ) {
-                    val itemsLists = itemListsFn()
+                    val itemsLists = remember { itemListsFn() }
                     assert(itemsLists.isNotEmpty()) { "You should not pass an empty list in to a context menu" }
                     itemsLists.forEach { list ->
                         list.forEach { item -> Item(item, state) }

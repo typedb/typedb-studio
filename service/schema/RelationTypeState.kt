@@ -26,7 +26,9 @@ import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Message
+import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_RELATE_ROLE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import kotlin.streams.toList
 import mu.KotlinLogging
@@ -96,12 +98,7 @@ class RelationTypeState internal constructor(
                     else -> overriddenType
                 }?.relationType
                 properties.add(
-                    RoleTypeState.RelatesRoleTypeProperties(
-                        roleType,
-                        overriddenType,
-                        extendedType,
-                        isInherited
-                    )
+                    RoleTypeState.RelatesRoleTypeProperties(roleType, overriddenType, extendedType, isInherited)
                 )
             }
         }
@@ -149,10 +146,7 @@ class RelationTypeState internal constructor(
             loadRelatesRoleTypes()
             onSuccess?.let { it() }
         } catch (e: Exception) {
-            notifications.userError(
-                LOGGER,
-                Message.Schema.FAILED_TO_RELATE_ROLE_TYPE, name, roleType, e.message ?: Message.UNKNOWN
-            )
+            notifications.userError(LOGGER, FAILED_TO_DEFINE_RELATE_ROLE_TYPE, name, roleType, e.message ?: UNKNOWN)
         }
     }
 
@@ -167,10 +161,7 @@ class RelationTypeState internal constructor(
             conceptType.asRemote(it).unsetRelates(roleType.conceptType)
             loadConstraintsAsync()
         } catch (e: Exception) {
-            notifications.userError(
-                LOGGER,
-                Message.Schema.FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: Message.UNKNOWN
-            )
+            notifications.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)
         }
     }
 
