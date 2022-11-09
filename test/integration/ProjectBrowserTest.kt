@@ -18,14 +18,16 @@
 
 package com.vaticle.typedb.studio.test.integration
 
+import androidx.compose.ui.test.onNodeWithText
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
+import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextNotExists
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -39,12 +41,9 @@ class ProjectBrowserTest : IntegrationTest() {
             copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
-            Service.project.current!!.directory.asDirectory()
-                .tryCreateDirectory(createdDirectoryName)
-            delayAndRecompose(composeRule)
+            Service.project.current!!.directory.asDirectory().tryCreateDirectory(createdDirectoryName)
 
             Service.project.current!!.reloadEntries()
-            delayAndRecompose(composeRule)
 
             waitUntilNodeWithTextExists(composeRule, text = createdDirectoryName)
         }
@@ -58,12 +57,9 @@ class ProjectBrowserTest : IntegrationTest() {
             copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
-            Service.project.current!!.directory.asDirectory()
-                .tryCreateFile(createdFileName)
-            delayAndRecompose(composeRule)
+            Service.project.current!!.directory.asDirectory().tryCreateFile(createdFileName)
 
             Service.project.current!!.reloadEntries()
-            delayAndRecompose(composeRule)
 
             waitUntilNodeWithTextExists(composeRule, text = createdFileName)
         }
@@ -80,10 +76,8 @@ class ProjectBrowserTest : IntegrationTest() {
             Service.project.current!!.directory.entries.find { it.name == "file3" }!!
                 .asFile()
                 .tryRename(renamedFileName)
-            delayAndRecompose(composeRule)
 
             Service.project.current!!.reloadEntries()
-            delayAndRecompose(composeRule)
 
             waitUntilNodeWithTextExists(composeRule, text = renamedFileName)
         }
@@ -92,46 +86,51 @@ class ProjectBrowserTest : IntegrationTest() {
     @Test
     fun deleteAFile() {
         runBlocking {
+            val deletedFileName = "file3"
             copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
-            Service.project.current!!.directory.entries.find { it.name == "file3" }!!
-                .asFile().tryDelete()
-            delayAndRecompose(composeRule)
+            Service.project.current!!.directory.entries.find { it.name == deletedFileName }!!.asFile().tryDelete()
+
+            delayAndRecompose(composeRule, Delays.FILE_IO)
 
             Service.project.current!!.reloadEntries()
-            delayAndRecompose(composeRule)
 
-            waitUntilNodeWithTextNotExists(composeRule, text = "file3")
+            delayAndRecompose(composeRule, Delays.FILE_IO)
+            composeRule.onNodeWithText(deletedFileName).assertDoesNotExist()
         }
     }
 
     @Test
     fun expandFolders() {
         runBlocking {
+            val fileName = "file0"
             copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
             clickIcon(composeRule, Icon.EXPAND)
 
-            waitUntilNodeWithTextExists(composeRule, text = "file0")
+            waitUntilNodeWithTextExists(composeRule, text = fileName)
         }
     }
 
     @Test
     fun expandThenCollapseFolders() {
         runBlocking {
+            val fileName = "file0"
             copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
             clickIcon(composeRule, Icon.EXPAND)
 
-            waitUntilNodeWithTextExists(composeRule, text = "file0")
+            waitUntilNodeWithTextExists(composeRule, text = fileName)
 
             clickIcon(composeRule, Icon.COLLAPSE)
 
             waitUntilNodeWithTextExists(composeRule, text = testID)
-            waitUntilNodeWithTextNotExists(composeRule, text = "file0")
+
+            delayAndRecompose(composeRule, Delays.FILE_IO)
+            composeRule.onNodeWithText(fileName).assertDoesNotExist()
         }
     }
 }

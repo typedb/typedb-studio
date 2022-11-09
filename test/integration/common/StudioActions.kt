@@ -52,13 +52,13 @@ import mu.KotlinLogging
 object StudioActions {
     private val LOGGER = KotlinLogging.logger {}
 
-
     suspend fun clickIcon(composeRule: ComposeContentTestRule, icon: Icon) {
         clickText(composeRule, icon.unicode)
         delayAndRecompose(composeRule)
     }
 
-    fun clickText(composeRule: ComposeContentTestRule, text: String) {
+    suspend fun clickText(composeRule: ComposeContentTestRule, text: String) {
+        waitUntilNodeWithTextIsClickable(composeRule, text)
         composeRule.onNodeWithText(text).performClick()
     }
 
@@ -73,10 +73,6 @@ object StudioActions {
         clickAllInstancesOfText(composeRule, icon.unicode)
     }
 
-    suspend fun waitUntilNodeWithIconIsClickable(composeRule: ComposeContentTestRule, icon: Icon) {
-        waitUntilNodeWithTextIsClickable(composeRule, icon.unicode)
-    }
-
     suspend fun waitUntilNodeWithTextIsClickable(composeRule: ComposeContentTestRule, text: String) {
         waitUntilAssertionIsTrue(composeRule) { composeRule.onNodeWithText(text).assertHasClickAction() }
     }
@@ -85,17 +81,13 @@ object StudioActions {
         waitUntilAssertionIsTrue(composeRule) { composeRule.onNodeWithText(text).assertExists() }
     }
 
-    suspend fun waitUntilNodeWithTextNotExists(composeRule: ComposeContentTestRule, text: String) {
-        waitUntilAssertionIsTrue(composeRule) { composeRule.onNodeWithText(text).assertDoesNotExist() }
-    }
-
     suspend fun waitUntilAssertionIsTrue(composeRule: ComposeContentTestRule, assertion: () -> Any) {
         composeRule.waitUntil(Delays.WAIT_TIMEOUT) {
             try {
-                assertion()
                 runBlocking {
-                    composeRule.awaitIdle()
+                    delayAndRecompose(composeRule)
                 }
+                assertion()
                 return@waitUntil true
             } catch (e: Exception) {
                 return@waitUntil false
@@ -179,10 +171,7 @@ object StudioActions {
 
         delayAndRecompose(composeRule, Delays.FILE_IO)
 
-        waitUntilNodeWithIconIsClickable(composeRule, Icon.RUN)
         clickIcon(composeRule, Icon.RUN)
-
-        waitUntilNodeWithIconIsClickable(composeRule, Icon.COMMIT)
         clickIcon(composeRule, Icon.COMMIT)
 
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
@@ -200,9 +189,7 @@ object StudioActions {
         Service.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        waitUntilNodeWithTextIsClickable(composeRule, Label.DATA.lowercase())
         clickText(composeRule, Label.DATA.lowercase())
-        waitUntilNodeWithTextIsClickable(composeRule, Label.WRITE.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
         waitUntilAssertionIsTrue(composeRule) {
@@ -211,12 +198,10 @@ object StudioActions {
 
         delayAndRecompose(composeRule, Delays.FILE_IO)
 
-        waitUntilNodeWithIconIsClickable(composeRule, Icon.RUN)
         clickIcon(composeRule, Icon.RUN)
 
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        waitUntilNodeWithIconIsClickable(composeRule, Icon.COMMIT)
         clickIcon(composeRule, Icon.COMMIT)
 
         delayAndRecompose(composeRule, Delays.NETWORK_IO)

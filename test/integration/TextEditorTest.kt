@@ -21,6 +21,7 @@
 
 package com.vaticle.typedb.studio.test.integration
 
+import androidx.compose.ui.test.onNodeWithText
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
@@ -34,10 +35,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDat
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithIconIsClickable
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextIsClickable
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextNotExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
@@ -117,6 +115,7 @@ class TextEditorTest : IntegrationTest() {
     fun schemaWriteAndRollback() {
         withTypeDB { typeDB ->
             runBlocking {
+                val repoIdAttributeName = "repo-id"
                 copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 connectToTypeDB(composeRule, typeDB.address())
@@ -125,20 +124,17 @@ class TextEditorTest : IntegrationTest() {
                 Service.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                waitUntilNodeWithTextIsClickable(composeRule, Label.SCHEMA.lowercase())
                 clickText(composeRule, Label.SCHEMA.lowercase())
-                waitUntilNodeWithTextIsClickable(composeRule, Label.WRITE.lowercase())
                 clickText(composeRule, Label.WRITE.lowercase())
 
                 Service.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!
                     .asFile().tryOpen()
 
-                waitUntilNodeWithIconIsClickable(composeRule, Icon.RUN)
                 clickIcon(composeRule, Icon.RUN)
-                waitUntilNodeWithIconIsClickable(composeRule, Icon.ROLLBACK)
                 clickIcon(composeRule, Icon.ROLLBACK)
 
-                waitUntilNodeWithTextNotExists(composeRule, text = "repo-id")
+                delayAndRecompose(composeRule, Delays.FILE_IO)
+                composeRule.onNodeWithText(repoIdAttributeName).assertDoesNotExist()
             }
         }
     }

@@ -21,6 +21,7 @@
 
 package com.vaticle.typedb.studio.test.integration
 
+import androidx.compose.ui.test.onNodeWithText
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
@@ -33,7 +34,6 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDat
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextNotExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
@@ -68,6 +68,8 @@ class TypeBrowserTest : IntegrationTest() {
     fun collapseTypes() {
         withTypeDB { typeDB ->
             runBlocking {
+                val commitDateAttributeName = "commit-date"
+
                 connectToTypeDB(composeRule, typeDB.address())
                 copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
@@ -82,9 +84,8 @@ class TypeBrowserTest : IntegrationTest() {
 
                 clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
 
-                delayAndRecompose(composeRule)
-
-                waitUntilNodeWithTextNotExists(composeRule, text = "commit-date")
+                delayAndRecompose(composeRule, Delays.NETWORK_IO)
+                composeRule.onNodeWithText(commitDateAttributeName).assertDoesNotExist()
             }
         }
     }
@@ -93,6 +94,8 @@ class TypeBrowserTest : IntegrationTest() {
     fun collapseThenExpandTypes() {
         withTypeDB { typeDB ->
             runBlocking {
+                val commitDateAttributeName = "commit-date"
+
                 connectToTypeDB(composeRule, typeDB.address())
                 copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
@@ -105,12 +108,12 @@ class TypeBrowserTest : IntegrationTest() {
                 )
 
                 clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
-                delayAndRecompose(composeRule)
 
-                waitUntilNodeWithTextNotExists(composeRule, text = "commit-date")
+                delayAndRecompose(composeRule, Delays.NETWORK_IO)
+                composeRule.onNodeWithText(commitDateAttributeName).assertDoesNotExist()
 
                 clickAllInstancesOfIcon(composeRule, Icon.EXPAND)
-                delayAndRecompose(composeRule)
+                delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
                 waitUntilNodeWithTextExists(composeRule, text = "commit-date")
             }
