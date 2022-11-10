@@ -26,6 +26,7 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
@@ -35,6 +36,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDat
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionIsTrue
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
@@ -117,7 +119,8 @@ class TextEditorTest : IntegrationTest() {
     fun schemaWriteAndRollback() {
         withTypeDB { typeDB ->
             runBlocking {
-                val repoIdAttributeName = "repo-id"
+                Service.notification.dismissAll()
+
                 copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 connectToTypeDB(composeRule, typeDB.address())
@@ -133,11 +136,12 @@ class TextEditorTest : IntegrationTest() {
                     .asFile().tryOpen()
 
                 clickIcon(composeRule, Icon.RUN)
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
-                clickIcon(composeRule, Icon.ROLLBACK)
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                composeRule.onNodeWithText(repoIdAttributeName).assertDoesNotExist()
+                clickIcon(composeRule, Icon.ROLLBACK)
+
+                waitUntilAssertionIsTrue(composeRule) {
+                    Service.notification.queue.last().code == Message.Connection.TRANSACTION_ROLLBACK.code()
+                }
             }
         }
     }

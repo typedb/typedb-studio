@@ -83,10 +83,10 @@ object StudioActions {
 
     suspend fun waitUntilAssertionIsTrue(composeRule: ComposeContentTestRule, assertion: () -> Any) {
         composeRule.waitUntil(Delays.WAIT_TIMEOUT) {
+            runBlocking {
+                delayAndRecompose(composeRule)
+            }
             try {
-                runBlocking {
-                    delayAndRecompose(composeRule)
-                }
                 assertion()
                 return@waitUntil true
             } catch (e: Exception) {
@@ -128,8 +128,6 @@ object StudioActions {
         waitUntilAssertionIsTrue(composeRule) {
             Service.client.isConnected
         }
-
-        waitUntilNodeWithTextExists(composeRule, text = address)
     }
 
     suspend fun createDatabase(composeRule: ComposeContentTestRule, dbName: String) {
@@ -155,23 +153,25 @@ object StudioActions {
         clickIcon(composeRule, Icon.ADD)
 
         Service.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
-
         Service.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        waitUntilNodeWithTextIsClickable(composeRule, Label.SCHEMA.lowercase())
         clickText(composeRule, Label.SCHEMA.lowercase())
-        waitUntilNodeWithTextIsClickable(composeRule, Label.WRITE.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
+
+        waitUntilAssertionIsTrue(composeRule) {
+            Service.client.session.type == TypeDBSession.Type.SCHEMA &&
+                    Service.client.session.transaction.type == TypeDBTransaction.Type.WRITE
+        }
 
         waitUntilAssertionIsTrue(composeRule) {
             Service.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
         }
-
         delayAndRecompose(composeRule, Delays.FILE_IO)
 
         clickIcon(composeRule, Icon.RUN)
+
+        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+
         clickIcon(composeRule, Icon.COMMIT)
 
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
@@ -187,15 +187,19 @@ object StudioActions {
         clickIcon(composeRule, Icon.ADD)
 
         Service.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        Service.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
 
         clickText(composeRule, Label.DATA.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
         waitUntilAssertionIsTrue(composeRule) {
-            Service.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
+            Service.client.session.type == TypeDBSession.Type.DATA &&
+                    Service.client.session.transaction.type == TypeDBTransaction.Type.WRITE
         }
 
+        waitUntilAssertionIsTrue(composeRule) {
+            Service.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
+        }
         delayAndRecompose(composeRule, Delays.FILE_IO)
 
         clickIcon(composeRule, Icon.RUN)
