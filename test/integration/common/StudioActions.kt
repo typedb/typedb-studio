@@ -54,41 +54,58 @@ object StudioActions {
 
     suspend fun clickIcon(composeRule: ComposeContentTestRule, icon: Icon) {
         clickText(composeRule, icon.unicode)
-        delayAndRecompose(composeRule)
     }
 
     suspend fun clickText(composeRule: ComposeContentTestRule, text: String) {
         waitUntilNodeWithTextIsClickable(composeRule, text)
         composeRule.onNodeWithText(text).performClick()
+        delayAndRecompose(composeRule)
     }
 
-    fun clickAllInstancesOfText(composeRule: ComposeContentTestRule, text: String) {
+    suspend fun clickAllInstancesOfText(composeRule: ComposeContentTestRule, text: String) {
         val length = composeRule.onAllNodesWithText(text).fetchSemanticsNodes().size
         for (i in 0 until length) {
             composeRule.onAllNodesWithText(text)[i].performClick()
         }
+        delayAndRecompose(composeRule)
     }
 
-    fun clickAllInstancesOfIcon(composeRule: ComposeContentTestRule, icon: Icon) {
+    suspend fun clickAllInstancesOfIcon(composeRule: ComposeContentTestRule, icon: Icon) {
         clickAllInstancesOfText(composeRule, icon.unicode)
     }
 
     suspend fun waitUntilNodeWithTextIsClickable(composeRule: ComposeContentTestRule, text: String) {
-        waitUntilAssertionIsTrue(composeRule) { composeRule.onNodeWithText(text).assertHasClickAction() }
+        waitUntilAssertionIsTrue(composeRule) {
+            assertionDoesNotError {
+                composeRule.onNodeWithText(text).assertHasClickAction()
+            }
+        }
     }
 
     suspend fun waitUntilNodeWithTextExists(composeRule: ComposeContentTestRule, text: String) {
-        waitUntilAssertionIsTrue(composeRule) { composeRule.onNodeWithText(text).assertExists() }
+        waitUntilAssertionIsTrue(composeRule) {
+            assertionDoesNotError {
+                composeRule.onNodeWithText(text).assertExists()
+            }
+        }
     }
 
-    suspend fun waitUntilAssertionIsTrue(composeRule: ComposeContentTestRule, assertion: () -> Any) {
+    private fun assertionDoesNotError(assertion: () -> Any): Boolean {
+        return try {
+            assertion()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun waitUntilAssertionIsTrue(composeRule: ComposeContentTestRule, assertion: () -> Boolean) {
         composeRule.waitUntil(Delays.WAIT_TIMEOUT) {
             runBlocking {
                 delayAndRecompose(composeRule)
             }
             try {
-                assertion()
-                return@waitUntil true
+                return@waitUntil assertion()
             } catch (e: Exception) {
                 return@waitUntil false
             }
@@ -104,7 +121,6 @@ object StudioActions {
         return absoluteDestination.toPath()
     }
 
-    /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
     suspend fun delayAndRecompose(composeRule: ComposeContentTestRule, timeMillis: Int = Delays.RECOMPOSE) {
         delay(timeMillis.toLong())
         composeRule.awaitIdle()
@@ -123,7 +139,6 @@ object StudioActions {
         composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
         Service.client.tryConnectToTypeDBAsync(address) {}
-        delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
         waitUntilAssertionIsTrue(composeRule) {
             Service.client.isConnected
@@ -133,13 +148,8 @@ object StudioActions {
     suspend fun createDatabase(composeRule: ComposeContentTestRule, dbName: String) {
         composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
-        Service.client.tryDeleteDatabase(dbName)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
-
         Service.client.tryCreateDatabase(dbName) {}
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
-
-        Service.client.refreshDatabaseList()
 
         waitUntilAssertionIsTrue(composeRule) {
             Service.client.refreshDatabaseList()
@@ -169,11 +179,9 @@ object StudioActions {
         delayAndRecompose(composeRule, Delays.FILE_IO)
 
         clickIcon(composeRule, Icon.RUN)
-
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         clickIcon(composeRule, Icon.COMMIT)
-
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         waitUntilAssertionIsTrue(composeRule) {
@@ -203,11 +211,9 @@ object StudioActions {
         delayAndRecompose(composeRule, Delays.FILE_IO)
 
         clickIcon(composeRule, Icon.RUN)
-
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         clickIcon(composeRule, Icon.COMMIT)
-
         delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         waitUntilAssertionIsTrue(composeRule) {

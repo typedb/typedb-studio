@@ -74,12 +74,10 @@ class TypeBrowserTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                waitUntilAssertionIsTrue(composeRule) {
-                    Service.client.session.tryOpen(
-                        database = testID,
-                        TypeDBSession.Type.DATA
-                    )
-                }
+                Service.client.session.tryOpen(
+                    database = testID,
+                    TypeDBSession.Type.DATA
+                )
 
                 clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
 
