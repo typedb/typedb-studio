@@ -58,8 +58,8 @@ class RelationTypeState internal constructor(
         relatesRoleTypesExplicit.forEach { it.updateConceptType() }
     }
 
-    override fun requestSubtypesExplicit() = schemaSrv.mayRunReadTx {
-        conceptType.asRemote(it).subtypesExplicit.toList()
+    override fun requestSubtypesExplicit() = schemaSrv.mayRunReadTx { tx ->
+        conceptType.asRemote(tx).subtypesExplicit.toList()
     }
 
     override fun loadInheritables() {

@@ -78,15 +78,15 @@ class RoleTypeState constructor(
     override fun asSameEncoding(conceptType: Type) = conceptType.asRoleType()!!
     override fun typeStateOf(type: RoleType) = schemaSrv.typeStateOf(type)
 
-    override fun updateConceptType(label: String) = schemaSrv.mayRunReadTx {
-        val newConceptType = relationType.conceptType.asRemote(it).getRelates(label)!!
+    override fun updateConceptType(label: String) = schemaSrv.mayRunReadTx { tx ->
+        val newConceptType = relationType.conceptType.asRemote(tx).getRelates(label)!!
         isAbstract = newConceptType.isAbstract
         name = newConceptType.label.name()
         conceptType = newConceptType // we need to update the mutable state last
     } ?: Unit
 
-    override fun requestSubtypesExplicit() = schemaSrv.mayRunReadTx {
-        conceptType.asRemote(it).subtypesExplicit.toList()
+    override fun requestSubtypesExplicit() = schemaSrv.mayRunReadTx { tx ->
+        conceptType.asRemote(tx).subtypesExplicit.toList()
     }
 
     fun loadConstraints() {

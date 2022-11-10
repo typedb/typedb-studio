@@ -85,9 +85,9 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(
         supertypes = supertype?.let { listOf(it) + it.supertypes } ?: listOf()
     } ?: Unit
 
-    protected fun loadHasSubtypes() = schemaSrv.mayRunReadTx {
+    protected fun loadHasSubtypes() = schemaSrv.mayRunReadTx { tx ->
         // TODO: Implement API to retrieve .hasSubtypes() on TypeDB Type API
-        hasSubtypes = conceptType.asRemote(it).subtypesExplicit.findAny().isPresent
+        hasSubtypes = conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent
     }
 
     fun loadSubtypesRecursivelyAsync() = coroutines.launchAndHandle(notifications, LOGGER) {

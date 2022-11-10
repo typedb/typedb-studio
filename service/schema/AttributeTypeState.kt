@@ -66,8 +66,8 @@ class AttributeTypeState internal constructor(
     override fun asSameEncoding(conceptType: Type) = conceptType.asAttributeType()!!
     override fun typeStateOf(type: AttributeType) = schemaSrv.typeStateOf(type)
 
-    override fun requestSubtypesExplicit() = schemaSrv.mayRunReadTx {
-        conceptType.asRemote(it).subtypesExplicit.toList()
+    override fun requestSubtypesExplicit() = schemaSrv.mayRunReadTx { tx ->
+        conceptType.asRemote(tx).subtypesExplicit.toList()
     }
 
     override fun loadOtherConstraints() {

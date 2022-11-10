@@ -114,8 +114,8 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
     fun onSubtypesUpdated(function: () -> Unit) = callbacks.onSubtypesUpdated.put(function)
 
-    override fun updateConceptType(label: String) = schemaSrv.mayRunReadTx {
-        val newConceptType = asSameEncoding(it.concepts().getThingType(label)!!)
+    override fun updateConceptType(label: String) = schemaSrv.mayRunReadTx { tx ->
+        val newConceptType = asSameEncoding(tx.concepts().getThingType(label)!!)
         isAbstract = newConceptType.isAbstract
         name = newConceptType.label.name()
         conceptType = newConceptType // we need to update the mutable state last
@@ -174,8 +174,8 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         loadPlaysRoleTypes()
     }
 
-    private fun loadHasInstancesExplicit() = schemaSrv.mayRunReadTx {
-        hasInstancesExplicit = conceptType.asRemote(it).instancesExplicit.findAny().isPresent
+    private fun loadHasInstancesExplicit() = schemaSrv.mayRunReadTx { tx ->
+        hasInstancesExplicit = conceptType.asRemote(tx).instancesExplicit.findAny().isPresent
     }
 
     private fun loadOwnsAttributeTypes() {
@@ -259,7 +259,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     protected fun tryCreateSubtype(
         label: String, dialogState: SchemaService.TypeDialogState<*>, creatorFn: (TypeDBTransaction) -> Unit
     ) {
-        if (schemaSrv.mayRunReadTx { it.concepts()?.getThingType(label) } != null) notifications.userError(
+        if (schemaSrv.mayRunReadTx { tx -> tx.concepts()?.getThingType(label) } != null) notifications.userError(
             LOGGER, Message.Schema.FAILED_TO_CREATE_TYPE_DUE_TO_DUPLICATE, encoding.label, label
         ) else schemaSrv.mayRunWriteTxAsync { tx ->
             try {
