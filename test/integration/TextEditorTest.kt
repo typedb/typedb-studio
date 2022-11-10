@@ -51,6 +51,7 @@ class TextEditorTest : IntegrationTest() {
     @Test
     fun makeAFileAndSaveIt() {
         runBlocking {
+            val defaultUntitledFileName = "Untitled1.tql"
             val path = copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
@@ -58,7 +59,7 @@ class TextEditorTest : IntegrationTest() {
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
             clickIcon(composeRule, Icon.SAVE)
-            val file = File("$path/Untitled1.tql")
+            val file = File("$path/$defaultUntitledFileName")
             Service.project.saveFileDialog.file!!.trySave(file.toPath(), true)
             Service.project.current!!.reloadEntries()
             delayAndRecompose(composeRule, Delays.FILE_IO)
@@ -71,6 +72,7 @@ class TextEditorTest : IntegrationTest() {
     fun schemaWriteAndCommit() {
         withTypeDB { typeDB ->
             runBlocking {
+                val commitDateAttributeName = "commit-date"
                 copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 connectToTypeDB(composeRule, typeDB.address())
@@ -87,7 +89,7 @@ class TextEditorTest : IntegrationTest() {
 
                 // We can assert that the schema has been written successfully here as the schema
                 // is shown in the type browser.
-                waitUntilNodeWithTextExists(composeRule, text = "commit-date")
+                waitUntilNodeWithTextExists(composeRule, text = commitDateAttributeName)
             }
         }
     }
@@ -131,9 +133,10 @@ class TextEditorTest : IntegrationTest() {
                     .asFile().tryOpen()
 
                 clickIcon(composeRule, Icon.RUN)
+                delayAndRecompose(composeRule, Delays.NETWORK_IO)
                 clickIcon(composeRule, Icon.ROLLBACK)
+                delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                delayAndRecompose(composeRule, Delays.FILE_IO)
                 composeRule.onNodeWithText(repoIdAttributeName).assertDoesNotExist()
             }
         }

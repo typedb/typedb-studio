@@ -33,6 +33,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolde
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionIsTrue
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
@@ -46,20 +47,17 @@ class TypeBrowserTest : IntegrationTest() {
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
         withTypeDB { typeDB ->
             runBlocking {
+                val commitDateAttributeName = "commit-date"
+                val commitHashAttributeName = "commit-hash"
                 connectToTypeDB(composeRule, typeDB.address())
                 copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
-
-                // We can assert that the schema has been written successfully here as the schema
-                // is shown in the type browser.
-
                 waitUntilNodeWithTextExists(composeRule, text = Label.ATTRIBUTE.lowercase())
-                waitUntilNodeWithTextExists(composeRule, text = "commit-date")
-                waitUntilNodeWithTextExists(composeRule, text = "commit-hash")
+                waitUntilNodeWithTextExists(composeRule, text = commitDateAttributeName)
+                waitUntilNodeWithTextExists(composeRule, text = commitHashAttributeName)
             }
         }
     }
@@ -76,11 +74,12 @@ class TypeBrowserTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                Service.client.session.tryOpen(
-                    database = testID,
-                    TypeDBSession.Type.DATA
-                )
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
+                waitUntilAssertionIsTrue(composeRule) {
+                    Service.client.session.tryOpen(
+                        database = testID,
+                        TypeDBSession.Type.DATA
+                    )
+                }
 
                 clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
 
@@ -113,9 +112,8 @@ class TypeBrowserTest : IntegrationTest() {
                 composeRule.onNodeWithText(commitDateAttributeName).assertDoesNotExist()
 
                 clickAllInstancesOfIcon(composeRule, Icon.EXPAND)
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                waitUntilNodeWithTextExists(composeRule, text = "commit-date")
+                waitUntilNodeWithTextExists(composeRule, text = commitDateAttributeName)
             }
         }
     }

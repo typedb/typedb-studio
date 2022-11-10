@@ -63,11 +63,8 @@ class QueryRunnerTest : IntegrationTest() {
                 }!!.asFile().tryOpen()
 
                 clickText(composeRule, Label.DATA.lowercase())
-
                 clickText(composeRule, Label.READ.lowercase())
-
                 clickText(composeRule, Label.SNAPSHOT.lowercase())
-
                 clickText(composeRule, Label.INFER.lowercase())
 
                 Service.pages.active?.let {
