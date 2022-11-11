@@ -42,6 +42,7 @@ import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import java.io.File
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -147,16 +148,22 @@ class TextEditorTest : IntegrationTest() {
 
                 clickIcon(composeRule, Icon.RUN)
 
-                waitUntilTrue(composeRule) {
-                    Service.client.session.transaction.transaction!!
-                        .concepts().getAttributeType(commitDateAttributeName) != null
+                waitUntilAssertionPasses(composeRule) {
+                    assertNotEquals(
+                        Service.client.session.transaction.transaction!!.concepts()
+                            .getAttributeType(commitDateAttributeName),
+                        null
+                    )
                 }
 
                 clickIcon(composeRule, Icon.ROLLBACK)
 
-                waitUntilTrue(composeRule) {
-                    Service.client.session.transaction.transaction!!
-                        .concepts().getAttributeType(commitDateAttributeName) == null
+                waitUntilAssertionPasses(composeRule) {
+                    assertEquals(
+                        Service.client.session.transaction.transaction!!.concepts()
+                            .getAttributeType(commitDateAttributeName),
+                        null
+                    )
                 }
 
                 waitUntilAssertionPasses(composeRule) {
