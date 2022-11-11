@@ -30,6 +30,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndR
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilTrue
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -46,7 +47,7 @@ class ProjectBrowserTest : IntegrationTest() {
             Service.project.current!!.directory.asDirectory().tryCreateDirectory(createdDirectoryName)
 
             val file = File("$path/$createdDirectoryName")
-            StudioActions.waitUntilConditionIsTrue(composeRule) {
+            waitUntilTrue(composeRule) {
                 file.exists()
             }
 
@@ -68,7 +69,7 @@ class ProjectBrowserTest : IntegrationTest() {
             Service.project.current!!.directory.asDirectory().tryCreateFile(createdFileName)
 
             val file = File("$path/$createdFileName")
-            StudioActions.waitUntilConditionIsTrue(composeRule) {
+            waitUntilTrue(composeRule) {
                 file.exists()
             }
 
@@ -92,7 +93,7 @@ class ProjectBrowserTest : IntegrationTest() {
                 .tryRename(renamedFileName)
 
             val file = File("$path/$renamedFileName")
-            StudioActions.waitUntilConditionIsTrue(composeRule) {
+            waitUntilTrue(composeRule) {
                 file.exists()
             }
 
@@ -114,7 +115,7 @@ class ProjectBrowserTest : IntegrationTest() {
             Service.project.current!!.directory.entries.find { it.name == deletedFileName }!!.asFile().tryDelete()
 
             val file = File("$path/$deletedFileName")
-            StudioActions.waitUntilConditionIsTrue(composeRule) {
+            waitUntilTrue(composeRule) {
                 !file.exists()
             }
 

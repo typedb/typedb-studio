@@ -34,7 +34,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDat
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilConditionIsTrue
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilTrue
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
@@ -83,11 +83,11 @@ class TextEditorTest : IntegrationTest() {
                     TypeDBSession.Type.SCHEMA
                 )
 
-                waitUntilConditionIsTrue(composeRule) {
+                waitUntilTrue(composeRule) {
                     Service.client.session.type == TypeDBSession.Type.SCHEMA
                 }
 
-                waitUntilConditionIsTrue(composeRule) {
+                waitUntilTrue(composeRule) {
                     Service.client.session.typeSchema()!!.contains(commitDateAttributeName)
                 }
 
@@ -134,7 +134,7 @@ class TextEditorTest : IntegrationTest() {
 
                 Service.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
 
-                waitUntilConditionIsTrue(composeRule) {
+                waitUntilTrue(composeRule) {
                     Service.client.session.type == TypeDBSession.Type.SCHEMA
                 }
 
@@ -146,14 +146,14 @@ class TextEditorTest : IntegrationTest() {
 
                 clickIcon(composeRule, Icon.RUN)
 
-                waitUntilConditionIsTrue(composeRule) {
+                waitUntilTrue(composeRule) {
                     Service.client.session.transaction.transaction!!
                         .concepts().getAttributeType(commitDateAttributeName) != null
                 }
 
                 clickIcon(composeRule, Icon.ROLLBACK)
 
-                waitUntilConditionIsTrue(composeRule) {
+                waitUntilTrue(composeRule) {
                     Service.client.session.transaction.transaction!!
                         .concepts().getAttributeType(commitDateAttributeName) == null
                 }

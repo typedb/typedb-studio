@@ -34,8 +34,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDat
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilConditionIsTrue
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilTrue
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
@@ -82,7 +81,7 @@ class TypeBrowserTest : IntegrationTest() {
                     TypeDBSession.Type.DATA
                 )
 
-                waitUntilConditionIsTrue(composeRule) {
+                waitUntilTrue(composeRule) {
                     Service.client.session.type == TypeDBSession.Type.DATA
                 }
 
@@ -111,7 +110,7 @@ class TypeBrowserTest : IntegrationTest() {
                     TypeDBSession.Type.DATA
                 )
 
-                waitUntilConditionIsTrue(composeRule) {
+                waitUntilTrue(composeRule) {
                     Service.client.session.type == TypeDBSession.Type.DATA
                 }
 
