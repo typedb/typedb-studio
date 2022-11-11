@@ -41,6 +41,7 @@ import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeD
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import java.io.File
+import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -159,7 +160,7 @@ class TextEditorTest : IntegrationTest() {
                 }
 
                 waitUntilAssertionPasses(composeRule) {
-                    assert(Service.notification.queue.last().code == Message.Connection.TRANSACTION_ROLLBACK.code())
+                    assertEquals(Service.notification.queue.last().code, Message.Connection.TRANSACTION_ROLLBACK.code())
                 }
             }
         }
