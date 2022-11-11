@@ -76,7 +76,7 @@ object StudioActions {
 
     suspend fun waitUntilNodeWithTextIsClickable(composeRule: ComposeContentTestRule, text: String) {
         waitUntilAssertionIsTrue(composeRule) {
-            assertionDoesNotError {
+            assertionDoesNotThrowException {
                 composeRule.onNodeWithText(text).assertHasClickAction()
             }
         }
@@ -84,13 +84,13 @@ object StudioActions {
 
     suspend fun waitUntilNodeWithTextExists(composeRule: ComposeContentTestRule, text: String) {
         waitUntilAssertionIsTrue(composeRule) {
-            assertionDoesNotError {
+            assertionDoesNotThrowException {
                 composeRule.onNodeWithText(text).assertExists()
             }
         }
     }
 
-    private fun assertionDoesNotError(assertion: () -> Any): Boolean {
+    private fun assertionDoesNotThrowException(assertion: () -> Any): Boolean {
         return try {
             assertion()
             true
@@ -130,7 +130,7 @@ object StudioActions {
         val projectPath = File(File(projectDirectory).absolutePath).toPath()
         Service.project.tryOpenProject(projectPath)
 
-        delayAndRecompose(composeRule)
+        delayAndRecompose(composeRule, Delays.FILE_IO)
     }
 
     suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String) {
@@ -157,6 +157,10 @@ object StudioActions {
         }
     }
 
+    suspend fun waitForFileToBeFullyLoaded(composeRule: ComposeContentTestRule) {
+        delayAndRecompose(composeRule, Delays.FILE_IO)
+    }
+
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
         Service.notification.dismissAll()
 
@@ -176,14 +180,14 @@ object StudioActions {
         waitUntilAssertionIsTrue(composeRule) {
             Service.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
         }
-        delayAndRecompose(composeRule, Delays.FILE_IO)
+        waitForFileToBeFullyLoaded(composeRule)
 
         clickIcon(composeRule, Icon.RUN)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        waitUntilAssertionIsTrue(composeRule) {
+            !Service.client.session.transaction.hasRunningQuery
+        }
 
         clickIcon(composeRule, Icon.COMMIT)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
-
         waitUntilAssertionIsTrue(composeRule) {
             Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
@@ -208,14 +212,14 @@ object StudioActions {
         waitUntilAssertionIsTrue(composeRule) {
             Service.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
         }
-        delayAndRecompose(composeRule, Delays.FILE_IO)
+        waitForFileToBeFullyLoaded(composeRule)
 
         clickIcon(composeRule, Icon.RUN)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        waitUntilAssertionIsTrue(composeRule) {
+            !Service.client.session.transaction.hasRunningQuery
+        }
 
         clickIcon(composeRule, Icon.COMMIT)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
-
         waitUntilAssertionIsTrue(composeRule) {
             Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
@@ -252,7 +256,6 @@ object StudioActions {
         const val RECOMPOSE = 500
         const val FILE_IO = 750
         const val NETWORK_IO = 1_500
-        const val CONNECT_SERVER = 2_500
         const val WAIT_TIMEOUT: Long = 30_000
     }
 }

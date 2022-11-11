@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.test.integration
 import androidx.compose.ui.test.onNodeWithText
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
+import com.vaticle.typedb.studio.test.integration.common.StudioActions
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
@@ -28,6 +29,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolde
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
+import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -37,11 +39,15 @@ class ProjectBrowserTest : IntegrationTest() {
     fun createADirectory() {
         runBlocking {
             val createdDirectoryName = "created"
-
-            copyFolder(source = SampleFileStructure.path, destination = testID)
+            val path = copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
             Service.project.current!!.directory.asDirectory().tryCreateDirectory(createdDirectoryName)
+
+            val file = File("$path/$createdDirectoryName")
+            StudioActions.waitUntilAssertionIsTrue(composeRule) {
+                file.exists()
+            }
 
             Service.project.current!!.reloadEntries()
 
@@ -53,11 +59,15 @@ class ProjectBrowserTest : IntegrationTest() {
     fun createAFile() {
         runBlocking {
             val createdFileName = "created"
-
-            copyFolder(source = SampleFileStructure.path, destination = testID)
+            val path = copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
             Service.project.current!!.directory.asDirectory().tryCreateFile(createdFileName)
+
+            val file = File("$path/$createdFileName")
+            StudioActions.waitUntilAssertionIsTrue(composeRule) {
+                file.exists()
+            }
 
             Service.project.current!!.reloadEntries()
 
@@ -69,13 +79,17 @@ class ProjectBrowserTest : IntegrationTest() {
     fun renameAFile() {
         runBlocking {
             val renamedFileName = "renamed"
-
-            copyFolder(source = SampleFileStructure.path, destination = testID)
+            val path = copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
             Service.project.current!!.directory.entries.find { it.name == "file3" }!!
                 .asFile()
                 .tryRename(renamedFileName)
+
+            val file = File("$path/$renamedFileName")
+            StudioActions.waitUntilAssertionIsTrue(composeRule) {
+                file.exists()
+            }
 
             Service.project.current!!.reloadEntries()
 
@@ -87,12 +101,15 @@ class ProjectBrowserTest : IntegrationTest() {
     fun deleteAFile() {
         runBlocking {
             val deletedFileName = "file3"
-            copyFolder(source = SampleFileStructure.path, destination = testID)
+            val path = copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
             Service.project.current!!.directory.entries.find { it.name == deletedFileName }!!.asFile().tryDelete()
 
-            delayAndRecompose(composeRule, Delays.FILE_IO)
+            val file = File("$path/$deletedFileName")
+            StudioActions.waitUntilAssertionIsTrue(composeRule) {
+                !file.exists()
+            }
 
             Service.project.current!!.reloadEntries()
 

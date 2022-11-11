@@ -79,6 +79,10 @@ class TypeBrowserTest : IntegrationTest() {
                     TypeDBSession.Type.DATA
                 )
 
+                waitUntilAssertionIsTrue(composeRule) {
+                    Service.client.session.type == TypeDBSession.Type.DATA
+                }
+
                 clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
 
                 delayAndRecompose(composeRule, Delays.NETWORK_IO)
@@ -103,6 +107,10 @@ class TypeBrowserTest : IntegrationTest() {
                     database = testID,
                     TypeDBSession.Type.DATA
                 )
+
+                waitUntilAssertionIsTrue(composeRule) {
+                    Service.client.session.type == TypeDBSession.Type.DATA
+                }
 
                 clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
 

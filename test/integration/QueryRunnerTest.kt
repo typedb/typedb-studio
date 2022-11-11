@@ -24,13 +24,12 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionIsTrue
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
@@ -56,7 +55,10 @@ class QueryRunnerTest : IntegrationTest() {
                     database = testID,
                     TypeDBSession.Type.DATA
                 )
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
+
+                waitUntilAssertionIsTrue(composeRule) {
+                    Service.client.session.type == TypeDBSession.Type.DATA
+                }
 
                 Service.project.current!!.directory.entries.find {
                     it.name == SampleGitHubData.collaboratorsQueryFile
@@ -72,8 +74,6 @@ class QueryRunnerTest : IntegrationTest() {
                 }
 
                 val sessionType = Service.client.session.type
-                assertEquals(sessionType, TypeDBSession.Type.DATA)
-
                 val transaction = Service.client.session.transaction.transaction!!
                 val transactionType = transaction.type()
                 val transactionIsInfer = transaction.options().infer().get()
@@ -81,6 +81,7 @@ class QueryRunnerTest : IntegrationTest() {
                     Service.client.session.transaction.snapshot.value
                 val transactionIsNotExplain = !transaction.options().explain().get()
 
+                assertEquals(sessionType, TypeDBSession.Type.DATA)
                 assertEquals(transactionType, TypeDBTransaction.Type.READ)
                 assert(transactionIsInfer)
                 assert(transactionIsSnapshot)

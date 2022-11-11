@@ -21,19 +21,16 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import androidx.compose.ui.test.onNodeWithText
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionIsTrue
@@ -44,7 +41,6 @@ import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeD
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import java.io.File
-import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -64,9 +60,11 @@ class TextEditorTest : IntegrationTest() {
             val file = File("$path/$defaultUntitledFileName")
             Service.project.saveFileDialog.file!!.trySave(file.toPath(), true)
             Service.project.current!!.reloadEntries()
-            delayAndRecompose(composeRule, Delays.FILE_IO)
 
-            assertTrue(file.exists())
+            waitUntilAssertionIsTrue(composeRule) {
+                file.exists()
+            }
+//            assertTrue(file.exists())
         }
     }
 
@@ -85,7 +83,10 @@ class TextEditorTest : IntegrationTest() {
                     database = testID,
                     TypeDBSession.Type.DATA
                 )
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
+
+                waitUntilAssertionIsTrue(composeRule) {
+                    Service.client.session.type == TypeDBSession.Type.DATA
+                }
 
                 Service.schema.reloadEntries()
 
@@ -127,7 +128,10 @@ class TextEditorTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
 
                 Service.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
+
+                waitUntilAssertionIsTrue(composeRule) {
+                    Service.client.session.type == TypeDBSession.Type.SCHEMA
+                }
 
                 clickText(composeRule, Label.SCHEMA.lowercase())
                 clickText(composeRule, Label.WRITE.lowercase())
