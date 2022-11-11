@@ -93,9 +93,9 @@ class TextEditorTest : IntegrationTest() {
                 }
 
                 waitUntilAssertionPasses(composeRule) {
-                    assert(
-                        Service.notification.queue.last().code ==
-                            Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
+                    assertEquals(
+                        Service.notification.queue.last().code,
+                        Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
                     )
                 }
             }
