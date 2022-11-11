@@ -21,6 +21,7 @@
 
 package com.vaticle.typedb.studio.test.integration.common
 
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.hasClickAction
@@ -39,12 +40,15 @@ import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import java.io.File
+import java.lang.AssertionError
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.TimeoutException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -100,16 +104,23 @@ object StudioActions {
     }
 
     suspend fun waitUntilAssertionPasses(composeRule: ComposeContentTestRule, assertion: () -> Any) {
-        composeRule.waitUntil(Delays.WAIT_TIMEOUT) {
-            runBlocking {
-                delayAndRecompose(composeRule)
+        var latestAssertionError: AssertionError? = null
+        try {
+            composeRule.waitUntil(Delays.WAIT_TIMEOUT) {
+                runBlocking {
+                    delayAndRecompose(composeRule)
+                }
+                try {
+                    assertion()
+                    return@waitUntil true
+                } catch (e: AssertionError) {
+                    latestAssertionError = e
+                    return@waitUntil false
+                }
             }
-            try {
-                assertion()
-                return@waitUntil true
-            } catch (e: Exception) {
-                return@waitUntil false
-            }
+        } catch (e: ComposeTimeoutException) {
+            throw AssertionError("Timeout of ${Delays.WAIT_TIMEOUT}ms exceeded waiting for assertion " +
+                    "to pass. See the cause for the last assertion failure below.", latestAssertionError)
         }
     }
 
