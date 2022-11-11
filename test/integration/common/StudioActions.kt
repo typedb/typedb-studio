@@ -130,7 +130,9 @@ object StudioActions {
         val projectPath = File(File(projectDirectory).absolutePath).toPath()
         Service.project.tryOpenProject(projectPath)
 
-        delayAndRecompose(composeRule, Delays.FILE_IO)
+        waitUntilAssertionIsTrue(composeRule) {
+            Service.project.current != null
+        }
     }
 
     suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String) {
@@ -149,7 +151,6 @@ object StudioActions {
         composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
         Service.client.tryCreateDatabase(dbName) {}
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         waitUntilAssertionIsTrue(composeRule) {
             Service.client.refreshDatabaseList()
