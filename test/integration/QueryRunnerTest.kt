@@ -29,7 +29,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectTo
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionIsTrue
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilConditionIsTrue
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
@@ -56,7 +56,7 @@ class QueryRunnerTest : IntegrationTest() {
                     TypeDBSession.Type.DATA
                 )
 
-                waitUntilAssertionIsTrue(composeRule) {
+                waitUntilConditionIsTrue(composeRule) {
                     Service.client.session.type == TypeDBSession.Type.DATA
                 }
 

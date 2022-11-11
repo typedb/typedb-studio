@@ -29,6 +29,7 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolde
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -45,13 +46,15 @@ class ProjectBrowserTest : IntegrationTest() {
             Service.project.current!!.directory.asDirectory().tryCreateDirectory(createdDirectoryName)
 
             val file = File("$path/$createdDirectoryName")
-            StudioActions.waitUntilAssertionIsTrue(composeRule) {
+            StudioActions.waitUntilConditionIsTrue(composeRule) {
                 file.exists()
             }
 
             Service.project.current!!.reloadEntries()
 
-            waitUntilNodeWithTextExists(composeRule, text = createdDirectoryName)
+            waitUntilAssertionPasses(composeRule) {
+                composeRule.onNodeWithText(createdDirectoryName).assertExists()
+            }
         }
     }
 
@@ -65,13 +68,15 @@ class ProjectBrowserTest : IntegrationTest() {
             Service.project.current!!.directory.asDirectory().tryCreateFile(createdFileName)
 
             val file = File("$path/$createdFileName")
-            StudioActions.waitUntilAssertionIsTrue(composeRule) {
+            StudioActions.waitUntilConditionIsTrue(composeRule) {
                 file.exists()
             }
 
             Service.project.current!!.reloadEntries()
 
-            waitUntilNodeWithTextExists(composeRule, text = createdFileName)
+            waitUntilAssertionPasses(composeRule) {
+                composeRule.onNodeWithText(createdFileName).assertExists()
+            }
         }
     }
 
@@ -87,13 +92,15 @@ class ProjectBrowserTest : IntegrationTest() {
                 .tryRename(renamedFileName)
 
             val file = File("$path/$renamedFileName")
-            StudioActions.waitUntilAssertionIsTrue(composeRule) {
+            StudioActions.waitUntilConditionIsTrue(composeRule) {
                 file.exists()
             }
 
             Service.project.current!!.reloadEntries()
 
-            waitUntilNodeWithTextExists(composeRule, text = renamedFileName)
+            waitUntilAssertionPasses(composeRule) {
+                composeRule.onNodeWithText(renamedFileName).assertExists()
+            }
         }
     }
 
@@ -107,7 +114,7 @@ class ProjectBrowserTest : IntegrationTest() {
             Service.project.current!!.directory.entries.find { it.name == deletedFileName }!!.asFile().tryDelete()
 
             val file = File("$path/$deletedFileName")
-            StudioActions.waitUntilAssertionIsTrue(composeRule) {
+            StudioActions.waitUntilConditionIsTrue(composeRule) {
                 !file.exists()
             }
 
@@ -127,7 +134,9 @@ class ProjectBrowserTest : IntegrationTest() {
 
             clickIcon(composeRule, Icon.EXPAND)
 
-            waitUntilNodeWithTextExists(composeRule, text = fileName)
+            waitUntilAssertionPasses(composeRule) {
+                composeRule.onNodeWithText(fileName).assertExists()
+            }
         }
     }
 

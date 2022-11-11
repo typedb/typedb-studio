@@ -33,7 +33,8 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolde
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionIsTrue
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilConditionIsTrue
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
@@ -55,9 +56,11 @@ class TypeBrowserTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                waitUntilNodeWithTextExists(composeRule, text = Label.ATTRIBUTE.lowercase())
-                waitUntilNodeWithTextExists(composeRule, text = commitDateAttributeName)
-                waitUntilNodeWithTextExists(composeRule, text = commitHashAttributeName)
+                waitUntilAssertionPasses(composeRule) {
+                    composeRule.onNodeWithText(Label.ATTRIBUTE.lowercase()).assertExists()
+                    composeRule.onNodeWithText(commitDateAttributeName).assertExists()
+                    composeRule.onNodeWithText(commitHashAttributeName).assertExists()
+                }
             }
         }
     }
@@ -79,7 +82,7 @@ class TypeBrowserTest : IntegrationTest() {
                     TypeDBSession.Type.DATA
                 )
 
-                waitUntilAssertionIsTrue(composeRule) {
+                waitUntilConditionIsTrue(composeRule) {
                     Service.client.session.type == TypeDBSession.Type.DATA
                 }
 
@@ -108,7 +111,7 @@ class TypeBrowserTest : IntegrationTest() {
                     TypeDBSession.Type.DATA
                 )
 
-                waitUntilAssertionIsTrue(composeRule) {
+                waitUntilConditionIsTrue(composeRule) {
                     Service.client.session.type == TypeDBSession.Type.DATA
                 }
 
@@ -119,7 +122,9 @@ class TypeBrowserTest : IntegrationTest() {
 
                 clickAllInstancesOfIcon(composeRule, Icon.EXPAND)
 
-                waitUntilNodeWithTextExists(composeRule, text = commitDateAttributeName)
+                waitUntilAssertionPasses(composeRule) {
+                    composeRule.onNodeWithText(commitDateAttributeName).assertExists()
+                }
             }
         }
     }

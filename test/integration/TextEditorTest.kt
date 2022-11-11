@@ -33,8 +33,8 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolde
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionIsTrue
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilConditionIsTrue
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
@@ -61,8 +61,8 @@ class TextEditorTest : IntegrationTest() {
             Service.project.saveFileDialog.file!!.trySave(file.toPath(), true)
             Service.project.current!!.reloadEntries()
 
-            waitUntilAssertionIsTrue(composeRule) {
-                file.exists()
+            waitUntilAssertionPasses(composeRule) {
+                assert(file.exists())
             }
         }
     }
@@ -80,18 +80,23 @@ class TextEditorTest : IntegrationTest() {
 
                 Service.client.session.tryOpen(
                     database = testID,
-                    TypeDBSession.Type.DATA
+                    TypeDBSession.Type.SCHEMA
                 )
 
-                waitUntilAssertionIsTrue(composeRule) {
-                    Service.client.session.type == TypeDBSession.Type.DATA
+                waitUntilConditionIsTrue(composeRule) {
+                    Service.client.session.type == TypeDBSession.Type.SCHEMA
                 }
 
-                Service.schema.reloadEntries()
+                waitUntilConditionIsTrue(composeRule) {
+                    Service.client.session.typeSchema()!!.contains(commitDateAttributeName)
+                }
 
-                // We can assert that the schema has been written successfully here as the schema
-                // is shown in the type browser.
-                waitUntilNodeWithTextExists(composeRule, text = commitDateAttributeName)
+                waitUntilAssertionPasses(composeRule) {
+                    assert(
+                        Service.notification.queue.last().code ==
+                            Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
+                    )
+                }
             }
         }
     }
@@ -121,6 +126,7 @@ class TextEditorTest : IntegrationTest() {
             runBlocking {
                 Service.notification.dismissAll()
 
+                val commitDateAttributeName = "commit-date"
                 copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 connectToTypeDB(composeRule, typeDB.address())
@@ -128,7 +134,7 @@ class TextEditorTest : IntegrationTest() {
 
                 Service.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
 
-                waitUntilAssertionIsTrue(composeRule) {
+                waitUntilConditionIsTrue(composeRule) {
                     Service.client.session.type == TypeDBSession.Type.SCHEMA
                 }
 
@@ -140,10 +146,20 @@ class TextEditorTest : IntegrationTest() {
 
                 clickIcon(composeRule, Icon.RUN)
 
+                waitUntilConditionIsTrue(composeRule) {
+                    Service.client.session.transaction.transaction!!
+                        .concepts().getAttributeType(commitDateAttributeName) != null
+                }
+
                 clickIcon(composeRule, Icon.ROLLBACK)
 
-                waitUntilAssertionIsTrue(composeRule) {
-                    Service.notification.queue.last().code == Message.Connection.TRANSACTION_ROLLBACK.code()
+                waitUntilConditionIsTrue(composeRule) {
+                    Service.client.session.transaction.transaction!!
+                        .concepts().getAttributeType(commitDateAttributeName) == null
+                }
+
+                waitUntilAssertionPasses(composeRule) {
+                    assert(Service.notification.queue.last().code == Message.Connection.TRANSACTION_ROLLBACK.code())
                 }
             }
         }

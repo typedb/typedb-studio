@@ -75,37 +75,38 @@ object StudioActions {
     }
 
     suspend fun waitUntilNodeWithTextIsClickable(composeRule: ComposeContentTestRule, text: String) {
-        waitUntilAssertionIsTrue(composeRule) {
-            assertionDoesNotThrowException {
-                composeRule.onNodeWithText(text).assertHasClickAction()
-            }
+        waitUntilAssertionPasses(composeRule) {
+            composeRule.onNodeWithText(text).assertHasClickAction()
         }
     }
 
     suspend fun waitUntilNodeWithTextExists(composeRule: ComposeContentTestRule, text: String) {
-        waitUntilAssertionIsTrue(composeRule) {
-            assertionDoesNotThrowException {
-                composeRule.onNodeWithText(text).assertExists()
-            }
+        waitUntilAssertionPasses(composeRule) {
+            composeRule.onNodeWithText(text).assertExists()
         }
     }
 
-    private fun assertionDoesNotThrowException(assertion: () -> Any): Boolean {
-        return try {
-            assertion()
-            true
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    suspend fun waitUntilAssertionIsTrue(composeRule: ComposeContentTestRule, assertion: () -> Boolean) {
+    suspend fun waitUntilConditionIsTrue(composeRule: ComposeContentTestRule, condition: () -> Boolean) {
         composeRule.waitUntil(Delays.WAIT_TIMEOUT) {
             runBlocking {
                 delayAndRecompose(composeRule)
             }
             try {
-                return@waitUntil assertion()
+                return@waitUntil condition()
+            } catch (e: Exception) {
+                return@waitUntil false
+            }
+        }
+    }
+
+    suspend fun waitUntilAssertionPasses(composeRule: ComposeContentTestRule, assertion: () -> Any) {
+        composeRule.waitUntil(Delays.WAIT_TIMEOUT) {
+            runBlocking {
+                delayAndRecompose(composeRule)
+            }
+            try {
+                assertion()
+                return@waitUntil true
             } catch (e: Exception) {
                 return@waitUntil false
             }
@@ -130,7 +131,7 @@ object StudioActions {
         val projectPath = File(File(projectDirectory).absolutePath).toPath()
         Service.project.tryOpenProject(projectPath)
 
-        waitUntilAssertionIsTrue(composeRule) {
+        waitUntilConditionIsTrue(composeRule) {
             Service.project.current != null
         }
     }
@@ -142,7 +143,7 @@ object StudioActions {
 
         Service.client.tryConnectToTypeDBAsync(address) {}
 
-        waitUntilAssertionIsTrue(composeRule) {
+        waitUntilConditionIsTrue(composeRule) {
             Service.client.isConnected
         }
     }
@@ -152,7 +153,7 @@ object StudioActions {
 
         Service.client.tryCreateDatabase(dbName) {}
 
-        waitUntilAssertionIsTrue(composeRule) {
+        waitUntilConditionIsTrue(composeRule) {
             Service.client.refreshDatabaseList()
             Service.client.databaseList.contains(dbName)
         }
@@ -173,23 +174,23 @@ object StudioActions {
         clickText(composeRule, Label.SCHEMA.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
-        waitUntilAssertionIsTrue(composeRule) {
+        waitUntilConditionIsTrue(composeRule) {
             Service.client.session.type == TypeDBSession.Type.SCHEMA &&
                     Service.client.session.transaction.type == TypeDBTransaction.Type.WRITE
         }
 
-        waitUntilAssertionIsTrue(composeRule) {
+        waitUntilConditionIsTrue(composeRule) {
             Service.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
         }
         waitForFileToBeFullyLoaded(composeRule)
 
         clickIcon(composeRule, Icon.RUN)
-        waitUntilAssertionIsTrue(composeRule) {
+        waitUntilConditionIsTrue(composeRule) {
             !Service.client.session.transaction.hasRunningQuery
         }
 
         clickIcon(composeRule, Icon.COMMIT)
-        waitUntilAssertionIsTrue(composeRule) {
+        waitUntilConditionIsTrue(composeRule) {
             Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
@@ -205,23 +206,23 @@ object StudioActions {
         clickText(composeRule, Label.DATA.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
-        waitUntilAssertionIsTrue(composeRule) {
+        waitUntilConditionIsTrue(composeRule) {
             Service.client.session.type == TypeDBSession.Type.DATA &&
                     Service.client.session.transaction.type == TypeDBTransaction.Type.WRITE
         }
 
-        waitUntilAssertionIsTrue(composeRule) {
+        waitUntilConditionIsTrue(composeRule) {
             Service.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
         }
         waitForFileToBeFullyLoaded(composeRule)
 
         clickIcon(composeRule, Icon.RUN)
-        waitUntilAssertionIsTrue(composeRule) {
+        waitUntilConditionIsTrue(composeRule) {
             !Service.client.session.transaction.hasRunningQuery
         }
 
         clickIcon(composeRule, Icon.COMMIT)
-        waitUntilAssertionIsTrue(composeRule) {
+        waitUntilConditionIsTrue(composeRule) {
             Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
