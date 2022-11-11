@@ -90,7 +90,7 @@ class TextEditorTest : IntegrationTest() {
                 }
 
                 waitUntilAssertionPasses(composeRule) {
-                    assert(!Service.client.session.typeSchema()!!.contains(commitDateAttributeName))
+                    assert(Service.client.session.typeSchema()!!.contains(commitDateAttributeName))
                 }
 
                 waitUntilAssertionPasses(composeRule) {
