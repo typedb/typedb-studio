@@ -64,7 +64,6 @@ class TextEditorTest : IntegrationTest() {
             waitUntilAssertionIsTrue(composeRule) {
                 file.exists()
             }
-//            assertTrue(file.exists())
         }
     }
 
