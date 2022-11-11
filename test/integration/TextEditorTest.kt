@@ -89,8 +89,8 @@ class TextEditorTest : IntegrationTest() {
                     Service.client.session.type == TypeDBSession.Type.SCHEMA
                 }
 
-                waitUntilTrue(composeRule) {
-                    Service.client.session.typeSchema()!!.contains(commitDateAttributeName)
+                waitUntilAssertionPasses(composeRule) {
+                    assert(Service.client.session.typeSchema()!!.contains(commitDateAttributeName))
                 }
 
                 waitUntilAssertionPasses(composeRule) {
