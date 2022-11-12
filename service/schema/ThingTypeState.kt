@@ -35,6 +35,7 @@ import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FA
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_OWN_ATTRIBUTE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_PLAY_ROLE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_UNDEFINE_OWNS_ATT_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_UNDEFINE_PLAYS_ROLE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.page.Navigable
@@ -182,7 +183,10 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         val loaded = mutableSetOf<AttributeType>()
         val properties = mutableListOf<AttributeTypeState.OwnsAttTypeProperties>()
 
-        fun load(typeTx: ThingType.Remote, attTypeConcept: AttributeType, isKey: Boolean, isInherited: Boolean) {
+        fun load(
+            tx: TypeDBTransaction, typeTx: ThingType.Remote,
+            attTypeConcept: AttributeType, isKey: Boolean, isInherited: Boolean
+        ) {
             loaded.add(attTypeConcept)
             schemaSrv.typeStateOf(attTypeConcept)?.let { attType ->
                 val overriddenType = typeTx.getOwnsOverridden(attTypeConcept)?.let { schemaSrv.typeStateOf(it) }
@@ -192,7 +196,9 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                 }?.also { it.loadOwnerTypes() }
                 val extendedType = inheritedType?.ownerTypesExplicit?.toSet()
                     ?.intersect(supertypes.toSet())?.firstOrNull()
-                val canBeUndefined = false // TODO
+                val canBeUndefined = !tx.query().match(
+                    TypeQL.match(`var`("x").isa(typeTx.label.name()).has(attType.name, `var`("y")))
+                ).findFirst().isPresent
                 properties.add(
                     AttributeTypeState.OwnsAttTypeProperties(
                         attType, overriddenType, extendedType, isInherited, isKey, canBeUndefined
@@ -204,16 +210,16 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
             typeTx.getOwnsExplicit(true).forEach {
-                load(typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
+                load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
             }
             typeTx.getOwnsExplicit(false).filter { !loaded.contains(it) }.forEach {
-                load(typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = false)
+                load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = false)
             }
             typeTx.getOwns(true).filter { !loaded.contains(it) }.forEach {
-                load(typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = true)
+                load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = true)
             }
             typeTx.getOwns(false).filter { !loaded.contains(it) }.forEach {
-                load(typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = true)
+                load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = true)
             }
         }
         ownsAttTypeProperties = properties
@@ -302,8 +308,15 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         }
     }
 
-    fun tryUndefineOwnsAttributeType(attributeType: AttributeTypeState) {
-        // TODO
+    fun tryUndefineOwnsAttributeType(attType: AttributeTypeState) = schemaSrv.mayRunWriteTxAsync { tx ->
+        try {
+            conceptType.asRemote(tx).unsetOwns(attType.conceptType)
+            loadOwnsAttributeTypes()
+        } catch (e: Exception) {
+            notifications.userError(
+                LOGGER, FAILED_TO_UNDEFINE_OWNS_ATT_TYPE, encoding.label, name, attType.name, e.message ?: UNKNOWN
+            )
+        }
     }
 
     fun tryDefinePlaysRoleType(

@@ -213,12 +213,14 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Schema(10, "Failed to change %s type to abstract / not abstract due to: %s.")
             val FAILED_TO_DEFINE_OWN_ATTRIBUTE_TYPE =
                 Schema(11, "Failed to define %s type '%s' to own attribute type '%s' due to: %s.")
+            val FAILED_TO_UNDEFINE_OWNS_ATT_TYPE =
+                Schema(12, "Failed to undefine %s type '%s' from owning attribute type '%s' due to: %s.")
             val FAILED_TO_DEFINE_PLAY_ROLE_TYPE =
-                Schema(12, "Failed to define %s type '%s' to play role type '%s' due to: %s.")
+                Schema(13, "Failed to define %s type '%s' to play role type '%s' due to: %s.")
             val FAILED_TO_UNDEFINE_PLAYS_ROLE_TYPE =
-                Schema(13, "Failed to undefine %s type '%s' from playing role type '%s due to: %s.")
+                Schema(14, "Failed to undefine %s type '%s' from playing role type '%s' due to: %s.")
             val FAILED_TO_DEFINE_RELATE_ROLE_TYPE =
-                Schema(14, "Failed to define relation type '%s' to relate role type '%s' due to: %s.")
+                Schema(15, "Failed to define relation type '%s' to relate role type '%s' due to: %s.")
         }
     }
 
