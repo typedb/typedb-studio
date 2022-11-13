@@ -64,6 +64,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
     ],
+    resources = ["//config/logback:logback-xml"],
 )
 
 typedb_kt_test(
@@ -110,6 +111,7 @@ kt_jvm_test(
         "//service/page",
         "//service/project",
     ],
+    resources = ["//config/logback:logback-xml"],
 )
 
 typedb_kt_test(
@@ -140,6 +142,9 @@ typedb_kt_test(
         # External Maven Dependencies
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
     ],
+    server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
+    server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
+    server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
 )
 
 typedb_kt_test(
