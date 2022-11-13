@@ -21,8 +21,9 @@
 
 package com.vaticle.typedb.studio.test.integration.common
 
-import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.assertAll
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -39,45 +40,88 @@ import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import java.io.File
+import java.lang.AssertionError
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.TimeoutException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.test.fail
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
 object StudioActions {
     private val LOGGER = KotlinLogging.logger {}
 
-    suspend fun clickIcon(composeRule: ComposeContentTestRule, icon: Icon, delayMillis: Int = Delays.RECOMPOSE) {
-        clickText(composeRule, icon.unicode, delayMillis)
+    suspend fun clickIcon(composeRule: ComposeContentTestRule, icon: Icon) {
+        clickText(composeRule, icon.unicode)
     }
 
-    suspend fun clickText(composeRule: ComposeContentTestRule, text: String, delayMillis: Int = Delays.RECOMPOSE) {
+    suspend fun clickText(composeRule: ComposeContentTestRule, text: String) {
+        waitUntilNodeWithTextIsClickable(composeRule, text)
         composeRule.onNodeWithText(text).performClick()
-        delayAndRecompose(composeRule, delayMillis)
+        delayAndRecompose(composeRule)
     }
 
-    fun clickAllInstancesOfText(composeRule: ComposeContentTestRule, text: String) {
+    suspend fun clickAllInstancesOfText(composeRule: ComposeContentTestRule, text: String) {
         val length = composeRule.onAllNodesWithText(text).fetchSemanticsNodes().size
         for (i in 0 until length) {
             composeRule.onAllNodesWithText(text)[i].performClick()
         }
+        delayAndRecompose(composeRule)
     }
 
-    fun clickAllInstancesOfIcon(composeRule: ComposeContentTestRule, icon: Icon) {
+    suspend fun clickAllInstancesOfIcon(composeRule: ComposeContentTestRule, icon: Icon) {
         clickAllInstancesOfText(composeRule, icon.unicode)
     }
 
-    fun assertNodeExistsWithText(composeRule: ComposeContentTestRule, text: String): SemanticsNodeInteraction {
-        return composeRule.onNodeWithText(text).assertExists()
+    suspend fun waitUntilNodeWithTextIsClickable(composeRule: ComposeContentTestRule, text: String) {
+        waitUntilAssertionPasses(composeRule) {
+            composeRule.onNodeWithText(text).assertHasClickAction()
+        }
     }
 
-    fun assertNodeNotExistsWithText(composeRule: ComposeContentTestRule, text: String) {
-        return composeRule.onNodeWithText(text).assertDoesNotExist()
+    suspend fun waitUntilNodeWithTextExists(composeRule: ComposeContentTestRule, text: String) {
+        waitUntilAssertionPasses(composeRule) {
+            composeRule.onNodeWithText(text).assertExists()
+        }
+    }
+
+    suspend fun waitUntilTrue(composeRule: ComposeContentTestRule, condition: () -> Boolean) {
+        composeRule.waitUntil(Delays.WAIT_TIMEOUT) {
+            runBlocking {
+                delayAndRecompose(composeRule)
+            }
+            try {
+                return@waitUntil condition()
+            } catch (e: Exception) {
+                return@waitUntil false
+            }
+        }
+    }
+
+    suspend fun waitUntilAssertionPasses(composeRule: ComposeContentTestRule, assertion: () -> Any) {
+        var latestAssertionError: AssertionError? = null
+        try {
+            composeRule.waitUntil(Delays.WAIT_TIMEOUT) {
+                runBlocking {
+                    delayAndRecompose(composeRule)
+                }
+                try {
+                    assertion()
+                    return@waitUntil true
+                } catch (e: AssertionError) {
+                    latestAssertionError = e
+                    return@waitUntil false
+                }
+            }
+        } catch (e: ComposeTimeoutException) {
+            throw AssertionError("Timeout of ${Delays.WAIT_TIMEOUT}ms exceeded waiting for assertion " +
+                    "to pass. See the cause for the last assertion failure below.", latestAssertionError)
+        }
     }
 
     fun copyFolder(source: String, destination: String): Path {
@@ -89,43 +133,18 @@ object StudioActions {
         return absoluteDestination.toPath()
     }
 
-    /// Wait `timeMillis` milliseconds, then wait for all recompositions to finish.
     suspend fun delayAndRecompose(composeRule: ComposeContentTestRule, timeMillis: Int = Delays.RECOMPOSE) {
         delay(timeMillis.toLong())
-        composeRule.waitForIdle()
-    }
-
-    suspend fun waitForConditionAndRecompose(
-        context: ComposeContentTestRule,
-        failMessage: String,
-        beforeRetry: (() -> Unit) = {},
-        successCondition: () -> Boolean
-    ) {
-        var success = false
-        val deadline = System.currentTimeMillis() + 10_000
-        while (!success && System.currentTimeMillis() < deadline) {
-            try {
-                if (successCondition()) {
-                    success = true
-                } else {
-                    beforeRetry()
-                    delayAndRecompose(context, 500)
-                }
-            } catch (e: Exception) {
-                LOGGER.error(e.stackTraceToString())
-            }
-        }
-
-        if (!successCondition()) {
-            fail(failMessage)
-        }
+        composeRule.awaitIdle()
     }
 
     suspend fun openProject(composeRule: ComposeContentTestRule, projectDirectory: String) {
         val projectPath = File(File(projectDirectory).absolutePath).toPath()
         Service.project.tryOpenProject(projectPath)
 
-        delayAndRecompose(composeRule)
+        waitUntilTrue(composeRule) {
+            Service.project.current != null
+        }
     }
 
     suspend fun connectToTypeDB(composeRule: ComposeContentTestRule, address: String) {
@@ -134,32 +153,25 @@ object StudioActions {
         composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
         Service.client.tryConnectToTypeDBAsync(address) {}
-        delayAndRecompose(composeRule, Delays.CONNECT_SERVER)
 
-        waitForConditionAndRecompose(
-            composeRule,
-            Errors.CONNECT_TYPEDB_FAILED
-        ) { Service.client.isConnected }
-
-        assertNodeExistsWithText(composeRule, text = address)
+        waitUntilTrue(composeRule) {
+            Service.client.isConnected
+        }
     }
 
     suspend fun createDatabase(composeRule: ComposeContentTestRule, dbName: String) {
         composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
-        Service.client.tryDeleteDatabase(dbName)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
-
         Service.client.tryCreateDatabase(dbName) {}
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-        Service.client.refreshDatabaseList()
+        waitUntilTrue(composeRule) {
+            Service.client.refreshDatabaseList()
+            Service.client.databaseList.contains(dbName)
+        }
+    }
 
-        waitForConditionAndRecompose(
-            context = composeRule,
-            failMessage = Errors.CREATE_DATABASE_FAILED,
-            beforeRetry = { Service.client.refreshDatabaseList() }
-        ) { Service.client.databaseList.contains(dbName) }
+    suspend fun waitForFileToBeFullyLoaded(composeRule: ComposeContentTestRule) {
+        delayAndRecompose(composeRule, Delays.FILE_IO)
     }
 
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
@@ -168,60 +180,67 @@ object StudioActions {
         clickIcon(composeRule, Icon.ADD)
 
         Service.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
-
         Service.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
         clickText(composeRule, Label.SCHEMA.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
-        Service.project.current!!.directory.entries.find { it.name == schemaFileName }!!
-            .asFile().tryOpen()
+        waitUntilTrue(composeRule) {
+            Service.client.session.type == TypeDBSession.Type.SCHEMA &&
+                    Service.client.session.transaction.type == TypeDBTransaction.Type.WRITE
+        }
 
-        clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
+        waitUntilTrue(composeRule) {
+            Service.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
+        }
+        waitForFileToBeFullyLoaded(composeRule)
 
-        clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
+        clickIcon(composeRule, Icon.RUN)
+        waitUntilTrue(composeRule) {
+            !Service.client.session.transaction.hasRunningQuery
+        }
 
-        waitForConditionAndRecompose(composeRule, Errors.SCHEMA_WRITE_FAILED) {
+        clickIcon(composeRule, Icon.COMMIT)
+        waitUntilTrue(composeRule) {
             Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
 
     suspend fun writeDataInteractively(composeRule: ComposeContentTestRule, dbName: String, dataFileName: String) {
         Service.notification.dismissAll()
-        delayAndRecompose(composeRule)
+
+        clickIcon(composeRule, Icon.ADD)
 
         Service.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
-        delayAndRecompose(composeRule, Delays.NETWORK_IO)
+        Service.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
 
         clickText(composeRule, Label.DATA.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
-        Service.project.current!!.directory.entries.find { it.name == dataFileName }!!
-            .asFile().tryOpen()
+        waitUntilTrue(composeRule) {
+            Service.client.session.type == TypeDBSession.Type.DATA &&
+                    Service.client.session.transaction.type == TypeDBTransaction.Type.WRITE
+        }
 
-        clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
+        waitUntilTrue(composeRule) {
+            Service.project.current!!.directory.entries.find { it.name == dataFileName }!!.asFile().tryOpen()
+        }
+        waitForFileToBeFullyLoaded(composeRule)
 
-        clickIcon(composeRule, Icon.COMMIT, delayMillis = Delays.NETWORK_IO)
+        clickIcon(composeRule, Icon.RUN)
+        waitUntilTrue(composeRule) {
+            !Service.client.session.transaction.hasRunningQuery
+        }
 
-        waitForConditionAndRecompose(composeRule, Errors.DATA_WRITE_FAILED) {
+        clickIcon(composeRule, Icon.COMMIT)
+        waitUntilTrue(composeRule) {
             Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
         }
     }
 
-    suspend fun verifyDataWrite(
-        composeRule: ComposeContentTestRule,
-        address: String,
-        dbName: String,
-        queryFileName: String
-    ) {
+    fun verifyDataWrite(
+        address: String, dbName: String, queryFileName: String) {
         val queryString = readQueryFileToString(queryFileName)
-
-        clickText(composeRule, Label.INFER.lowercase())
-        clickText(composeRule, Label.READ.lowercase())
-
-        delayAndRecompose(composeRule)
 
         TypeDB.coreClient(address).use { client ->
             client.session(dbName, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
@@ -246,17 +265,10 @@ object StudioActions {
             .joinToString("\n")
     }
 
-    object Errors {
-        private const val CONNECT_TYPEDB_FAILED = "Failed to connect to TypeDB."
-        private const val CREATE_DATABASE_FAILED = "Failed to create the database."
-        private const val DATA_WRITE_FAILED = "Failed to write the data."
-        private const val SCHEMA_WRITE_FAILED = "Failed to write the schema."
-    }
-
     object Delays {
         const val RECOMPOSE = 500
         const val FILE_IO = 750
         const val NETWORK_IO = 1_500
-        const val CONNECT_SERVER = 2_500
+        const val WAIT_TIMEOUT: Long = 30_000
     }
 }

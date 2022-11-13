@@ -21,19 +21,20 @@
 
 package com.vaticle.typedb.studio.test.integration
 
+import androidx.compose.ui.test.onNodeWithText
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickAllInstancesOfIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilTrue
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
@@ -46,20 +47,19 @@ class TypeBrowserTest : IntegrationTest() {
     fun interactiveSchemaWritesAutomaticallyDisplayed() {
         withTypeDB { typeDB ->
             runBlocking {
+                val commitDateAttributeName = "commit-date"
+                val commitHashAttributeName = "commit-hash"
                 connectToTypeDB(composeRule, typeDB.address())
                 copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
-
-                // We can assert that the schema has been written successfully here as the schema
-                // is shown in the type browser.
-
-                assertNodeExistsWithText(composeRule, text = Label.ATTRIBUTE.lowercase())
-                assertNodeExistsWithText(composeRule, text = "commit-date")
-                assertNodeExistsWithText(composeRule, text = "commit-hash")
+                waitUntilAssertionPasses(composeRule) {
+                    composeRule.onNodeWithText(Label.ATTRIBUTE.lowercase()).assertExists()
+                    composeRule.onNodeWithText(commitDateAttributeName).assertExists()
+                    composeRule.onNodeWithText(commitHashAttributeName).assertExists()
+                }
             }
         }
     }
@@ -68,6 +68,8 @@ class TypeBrowserTest : IntegrationTest() {
     fun collapseTypes() {
         withTypeDB { typeDB ->
             runBlocking {
+                val commitDateAttributeName = "commit-date"
+
                 connectToTypeDB(composeRule, typeDB.address())
                 copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
@@ -78,13 +80,15 @@ class TypeBrowserTest : IntegrationTest() {
                     database = testID,
                     TypeDBSession.Type.DATA
                 )
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
+
+                waitUntilTrue(composeRule) {
+                    Service.client.session.type == TypeDBSession.Type.DATA
+                }
 
                 clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
 
-                delayAndRecompose(composeRule)
-
-                assertNodeNotExistsWithText(composeRule, text = "commit-date")
+                delayAndRecompose(composeRule, Delays.NETWORK_IO)
+                composeRule.onNodeWithText(commitDateAttributeName).assertDoesNotExist()
             }
         }
     }
@@ -93,6 +97,8 @@ class TypeBrowserTest : IntegrationTest() {
     fun collapseThenExpandTypes() {
         withTypeDB { typeDB ->
             runBlocking {
+                val commitDateAttributeName = "commit-date"
+
                 connectToTypeDB(composeRule, typeDB.address())
                 copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
@@ -104,15 +110,20 @@ class TypeBrowserTest : IntegrationTest() {
                     TypeDBSession.Type.DATA
                 )
 
-                clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
-                delayAndRecompose(composeRule)
+                waitUntilTrue(composeRule) {
+                    Service.client.session.type == TypeDBSession.Type.DATA
+                }
 
-                assertNodeNotExistsWithText(composeRule, text = "commit-date")
+                clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
+
+                delayAndRecompose(composeRule, Delays.NETWORK_IO)
+                composeRule.onNodeWithText(commitDateAttributeName).assertDoesNotExist()
 
                 clickAllInstancesOfIcon(composeRule, Icon.EXPAND)
-                delayAndRecompose(composeRule)
 
-                assertNodeExistsWithText(composeRule, text = "commit-date")
+                waitUntilAssertionPasses(composeRule) {
+                    composeRule.onNodeWithText(commitDateAttributeName).assertExists()
+                }
             }
         }
     }

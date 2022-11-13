@@ -25,24 +25,24 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeExistsWithText
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.assertNodeNotExistsWithText
+import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilTrue
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
 import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import java.io.File
-import kotlin.test.assertTrue
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -51,6 +51,7 @@ class TextEditorTest : IntegrationTest() {
     @Test
     fun makeAFileAndSaveIt() {
         runBlocking {
+            val defaultUntitledFileName = "Untitled1.tql"
             val path = copyFolder(source = SampleFileStructure.path, destination = testID)
             openProject(composeRule, projectDirectory = testID)
 
@@ -58,12 +59,13 @@ class TextEditorTest : IntegrationTest() {
 
             // This sets saveFileDialog.file!! to the current file, so even though we can't see the window it is useful.
             clickIcon(composeRule, Icon.SAVE)
-            val file = File("$path/Untitled1.tql")
+            val file = File("$path/$defaultUntitledFileName")
             Service.project.saveFileDialog.file!!.trySave(file.toPath(), true)
             Service.project.current!!.reloadEntries()
-            delayAndRecompose(composeRule, Delays.FILE_IO)
 
-            assertTrue(file.exists())
+            waitUntilAssertionPasses(composeRule) {
+                assert(file.exists())
+            }
         }
     }
 
@@ -71,6 +73,7 @@ class TextEditorTest : IntegrationTest() {
     fun schemaWriteAndCommit() {
         withTypeDB { typeDB ->
             runBlocking {
+                val commitDateAttributeName = "commit-date"
                 copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 connectToTypeDB(composeRule, typeDB.address())
@@ -79,15 +82,23 @@ class TextEditorTest : IntegrationTest() {
 
                 Service.client.session.tryOpen(
                     database = testID,
-                    TypeDBSession.Type.DATA
+                    TypeDBSession.Type.SCHEMA
                 )
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
 
-                Service.schema.reloadEntries()
+                waitUntilTrue(composeRule) {
+                    Service.client.session.type == TypeDBSession.Type.SCHEMA
+                }
 
-                // We can assert that the schema has been written successfully here as the schema
-                // is shown in the type browser.
-                assertNodeExistsWithText(composeRule, text = "commit-date")
+                waitUntilAssertionPasses(composeRule) {
+                    assert(Service.client.session.typeSchema()!!.contains(commitDateAttributeName))
+                }
+
+                waitUntilAssertionPasses(composeRule) {
+                    assertEquals(
+                        Service.notification.queue.last().code,
+                        Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
+                    )
+                }
             }
         }
     }
@@ -103,7 +114,6 @@ class TextEditorTest : IntegrationTest() {
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
                 writeDataInteractively(composeRule, dbName = testID, SampleGitHubData.dataFile)
                 verifyDataWrite(
-                    composeRule,
                     typeDB.address(),
                     dbName = testID,
                     "$testID/${SampleGitHubData.collaboratorsQueryFile}"
@@ -116,13 +126,19 @@ class TextEditorTest : IntegrationTest() {
     fun schemaWriteAndRollback() {
         withTypeDB { typeDB ->
             runBlocking {
+                Service.notification.dismissAll()
+
+                val commitDateAttributeName = "commit-date"
                 copyFolder(source = SampleGitHubData.path, destination = testID)
                 openProject(composeRule, projectDirectory = testID)
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
 
                 Service.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
-                delayAndRecompose(composeRule, Delays.NETWORK_IO)
+
+                waitUntilTrue(composeRule) {
+                    Service.client.session.type == TypeDBSession.Type.SCHEMA
+                }
 
                 clickText(composeRule, Label.SCHEMA.lowercase())
                 clickText(composeRule, Label.WRITE.lowercase())
@@ -130,10 +146,29 @@ class TextEditorTest : IntegrationTest() {
                 Service.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!
                     .asFile().tryOpen()
 
-                clickIcon(composeRule, Icon.RUN, delayMillis = Delays.NETWORK_IO)
-                clickIcon(composeRule, Icon.ROLLBACK, delayMillis = Delays.NETWORK_IO)
+                clickIcon(composeRule, Icon.RUN)
 
-                assertNodeNotExistsWithText(composeRule, text = "repo-id")
+                waitUntilAssertionPasses(composeRule) {
+                    assertNotEquals(
+                        Service.client.session.transaction.transaction!!.concepts()
+                            .getAttributeType(commitDateAttributeName),
+                        null
+                    )
+                }
+
+                clickIcon(composeRule, Icon.ROLLBACK)
+
+                waitUntilAssertionPasses(composeRule) {
+                    assertEquals(
+                        Service.client.session.transaction.transaction!!.concepts()
+                            .getAttributeType(commitDateAttributeName),
+                        null
+                    )
+                }
+
+                waitUntilAssertionPasses(composeRule) {
+                    assertEquals(Service.notification.queue.last().code, Message.Connection.TRANSACTION_ROLLBACK.code())
+                }
             }
         }
     }
