@@ -49,7 +49,6 @@ kt_jvm_library(
     name = "test-integration",
     srcs = ["IntegrationTest.kt"],
     kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
-    resources = ["//config/logback:logback-xml"],
     runtime_deps = skiko_runtime_platform,
     deps = [
         "//:studio",
@@ -103,7 +102,6 @@ kt_jvm_test(
     name = "test-projectbrowser",
     srcs = ["ProjectBrowserTest.kt"],
     data = ["//test/integration/data:sample-file-structure-files"],
-    resources = ["//config/logback:logback-xml"],
     test_class = "com.vaticle.typedb.studio.test.integration.ProjectBrowserTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
@@ -122,10 +120,7 @@ typedb_kt_test(
         "//test/integration/data:sample-github-data-files",
     ],
     server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
-    server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
     server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
-    server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
-    server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
     server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
     test_class = "com.vaticle.typedb.studio.test.integration.TextEditorTest",
     runtime_deps = skiko_runtime_platform,
