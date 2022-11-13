@@ -105,7 +105,7 @@ class DataService {
 
         var ignoredPaths: List<String>?
             get() = properties?.getProperty(IGNORED_PATHS)?.split(',')?.map { it.trim() }
-            set(value) = setProperty(IGNORED_PATHS, value!!.joinToString())
+            set(value) = setProperty(IGNORED_PATHS, value!!.joinToString(","))
 
         var matchQueryLimit: String?
             get() = properties?.getProperty(MATCH_QUERY_LIMIT)

@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.ActionableList
 import com.vaticle.typedb.studio.framework.material.Dialog
-import com.vaticle.typedb.studio.framework.material.Dialog.DIALOG_SPACING
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Dropdown
 import com.vaticle.typedb.studio.framework.material.Form.FIELD_HEIGHT
@@ -92,11 +91,11 @@ object DatabaseDialog {
         Dialog.Layout(dialogState, Label.MANAGE_DATABASES, MANAGER_WIDTH, MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
-                Spacer(Modifier.height(DIALOG_SPACING))
+                Spacer(Modifier.height(Theme.DIALOG_PADDING))
                 DeletableDatabaseList(Modifier.fillMaxWidth().weight(1f))
-                Spacer(Modifier.height(DIALOG_SPACING))
+                Spacer(Modifier.height(Theme.DIALOG_PADDING))
                 CreateDatabaseForm()
-                Spacer(Modifier.height(DIALOG_SPACING * 2))
+                Spacer(Modifier.height(Theme.DIALOG_PADDING * 2))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
                     TextButton(

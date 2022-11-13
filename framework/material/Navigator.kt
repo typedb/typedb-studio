@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -33,6 +34,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -102,17 +104,13 @@ import mu.KotlinLogging
 
 object Navigator {
 
-    sealed interface Behaviour {
-        val clicksToOpenItem: Int
+    sealed class Behaviour(
+        val clicksToOpenItem: Int,
         val itemsAreFocusable: Boolean
+    ) {
+        class Browser(clicksToOpenItem: Int = 2): Behaviour(clicksToOpenItem, true)
 
-        class Browser(override val clicksToOpenItem: Int = 2) : Behaviour {
-            override val itemsAreFocusable = true
-        }
-
-        class Menu(override val clicksToOpenItem: Int = 1) : Behaviour {
-            override val itemsAreFocusable = false
-        }
+        class Menu(clicksToOpenItem: Int = 1): Behaviour(clicksToOpenItem, false)
     }
 
     @OptIn(ExperimentalTime::class)
@@ -368,6 +366,10 @@ object Navigator {
             mayScrollToAndFocusOnSelected()
         }
 
+        fun maySelectFirstWithoutFocus() {
+            if (behaviour.itemsAreFocusable) entries.firstOrNull()?.let { selected = it }
+        }
+
         private fun mayScrollToAndFocusOnSelected() {
             var scrollTo = -1
             val layout = scroller.layoutInfo
@@ -453,8 +455,9 @@ object Navigator {
     @Composable
     private fun <T : Navigable<T>> ItemLayout(
         state: NavigatorState<T>, item: ItemState<T>, itemHeight: Dp,
-        iconArg: ((ItemState<T>) -> IconArg)?, styleArgs: (ItemState<T>) -> List<Typography.Style>
+        iconArg: ((ItemState<T>) -> IconArg)?, styleArgs: (ItemState<T>) -> List<Typography.Style>,
     ) {
+        val horizontalItemPadding = if (iconArg == null) Theme.DIALOG_PADDING else 0.dp
         val styles = styleArgs(item)
         val bgColor = when {
             state.selected == item -> Theme.studio.primary
@@ -476,6 +479,7 @@ object Navigator {
                 .widthIn(min = state.minWidth).height(itemHeight)
                 .focusRequester(item.focusReq).focusable()
                 .onKeyEvent { onKeyEvent(it, state, item) }
+                .padding(horizontal = horizontalItemPadding)
                 .pointerHoverIcon(PointerIconDefaults.Hand)
                 .pointerInput(item) { onPointerInput(state, item) }
                 .onPointerEvent(Release) { mayOpenItem(it.awtEvent) }

@@ -117,6 +117,7 @@ object Form {
     val BORDER_WIDTH = 1.dp
     val FIELD_SPACING = 12.dp
     val DEFAULT_BORDER = Border(BORDER_WIDTH, ROUNDED_CORNER_SHAPE)
+    val MULTILINE_INPUT_PADDING = 4.dp
     private const val LABEL_WEIGHT = 1f
     private const val INPUT_WEIGHT = 2.5f
     private const val PLACEHOLDER_OPACITY = 0.75f
@@ -124,13 +125,12 @@ object Form {
     private val INNER_SPACING = 10.dp
     private val TRAILING_ICON_SIZE = 12.dp
     private val TEXT_BUTTON_PADDING = 8.dp
-    private val MULTILINE_INPUT_PADDING = 4.dp
     private val LOADING_SPINNER_SIZE = 14.dp
     private val LOADING_SPINNER_STROKE_WIDTH = 2.dp
     private val ICON_SPACING = 6.dp
 
     private val RowScope.LABEL_MODIFIER: Modifier get() = Modifier.weight(LABEL_WEIGHT)
-    private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT).height(FIELD_HEIGHT)
+    private val RowScope.INPUT_MODIFIER: Modifier get() = Modifier.weight(INPUT_WEIGHT)
 
     data class Border(
         val width: Dp,
@@ -169,10 +169,27 @@ object Form {
     }
 
     @Composable
-    fun Field(label: String, fieldInput: @Composable RowScope.() -> Unit) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(value = label, modifier = LABEL_MODIFIER)
-            Row(modifier = INPUT_MODIFIER, horizontalArrangement = Arrangement.spacedBy(INNER_SPACING)) { fieldInput() }
+    fun Field(label: String, caption: String? = null, fieldHeight: Dp = FIELD_HEIGHT, fieldInput: @Composable RowScope.() -> Unit) {
+        Row {
+            Column(modifier = LABEL_MODIFIER) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(FIELD_HEIGHT)) {
+                    Text(value = label)
+                }
+            }
+            Column(modifier = INPUT_MODIFIER) {
+                Row(modifier = Modifier.height(fieldHeight), horizontalArrangement = Arrangement.spacedBy(INNER_SPACING)) { fieldInput() }
+                if (!caption.isNullOrBlank()) {
+                    Caption(caption)
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun Caption(caption: String) {
+        CaptionSpacer()
+        Row {
+            Text(caption, alpha = com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY)
         }
     }
 
@@ -489,11 +506,12 @@ object Form {
     fun MultilineTextInput(
         state: MultilineTextInputState = rememberMultilineTextInputState(),
         value: TextFieldValue,
-        modifier: Modifier,
+        modifier: Modifier = Modifier,
+        textFieldPadding: Dp = 0.dp,
         icon: Icon? = null,
         focusReq: FocusRequester = remember { FocusRequester() },
         onValueChange: (TextFieldValue) -> Unit,
-        onTextLayout: (TextLayoutResult) -> Unit
+        onTextLayout: (TextLayoutResult) -> Unit,
     ) {
         val density = LocalDensity.current.density
         Row(
@@ -509,21 +527,19 @@ object Form {
             Box(Modifier.weight(1f).onSizeChanged { state.boxWidth = toDP(it.width, state.density) }) {
                 Box(
                     modifier = Modifier.fillMaxHeight()
-                        .padding(vertical = MULTILINE_INPUT_PADDING)
                         .horizontalScroll(state.horScroller)
                 ) {
-                    Row(Modifier.align(alignment = Alignment.CenterStart)) {
-                        BasicTextField(
-                            value = value,
-                            onValueChange = { state.updateValue(it); onValueChange(it) },
-                            onTextLayout = { state.updateLayout(it, value); onTextLayout(it) },
-                            cursorBrush = SolidColor(Theme.studio.secondary),
-                            textStyle = Theme.typography.body1.copy(Theme.studio.onSurface),
-                            modifier = Modifier.focusRequester(focusReq)
-                                .defaultMinSize(minWidth = state.boxWidth - MULTILINE_INPUT_PADDING)
-                        )
-                        Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
-                    }
+                    BasicTextField(
+                        value = value,
+                        onValueChange = { state.updateValue(it); onValueChange(it) },
+                        onTextLayout = { state.updateLayout(it, value); onTextLayout(it) },
+                        cursorBrush = SolidColor(Theme.studio.secondary),
+                        textStyle = Theme.typography.body1.copy(Theme.studio.onSurface),
+                        modifier = Modifier.focusRequester(focusReq)
+                            .defaultMinSize(minWidth = state.boxWidth - MULTILINE_INPUT_PADDING)
+                            .padding(textFieldPadding)
+                    )
+                    Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
                 }
             }
         }

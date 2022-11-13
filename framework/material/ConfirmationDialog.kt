@@ -38,7 +38,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Dialog.DIALOG_SPACING
 import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
 import com.vaticle.typedb.studio.service.Service
@@ -92,7 +91,7 @@ object ConfirmationDialog {
                 Column(Modifier.fillMaxSize()) {
                     dialogState.message?.let { Form.Text(value = it, softWrap = true) }
                     dialogState.verificationValue?.let {
-                        Spacer(Modifier.height(DIALOG_SPACING))
+                        Spacer(Modifier.height(Theme.DIALOG_PADDING))
                         VerificationInputForm(formState, focusReq)
                     }
                     Spacer(Modifier.weight(1f))

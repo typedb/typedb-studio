@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,20 +40,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.rememberComponentRectPositionProvider
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.CaptionSpacer
-import com.vaticle.typedb.studio.framework.material.Form.ColumnSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Field
-import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.State
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
@@ -88,13 +87,15 @@ object PreferenceDialog {
     private val PREFERENCE_GROUP_INIT_SIZE = 600.dp
     private val PREFERENCE_GROUP_MIN_SIZE = 500.dp
     private val RESET_BUTTON_HEIGHT = 20.dp
+    private val MULTILINE_FIELD_HEIGHT = Form.FIELD_HEIGHT * 5
 
     private val preferenceSrv = Service.preference
 
-    private var focusedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root(emptyList()))
+    private var selectedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root())
     private var state by mutableStateOf(PreferencesForm())
 
-    sealed class PreferenceField(private val label: String, private val caption: String?) {
+    sealed class PreferenceField(private val label: String, private val caption: String?,
+                                 private val fieldHeight: Dp = Form.FIELD_HEIGHT) {
         abstract fun isValid(): Boolean
 
         @Composable
@@ -103,27 +104,15 @@ object PreferenceDialog {
         var modified by mutableStateOf(false)
 
         @Composable
-        fun Layout(fieldContent: @Composable () -> Unit) {
-            Field(label) {
+        fun Layout(caption: String?, fieldContent: @Composable () -> Unit) {
+            Field(label, caption, fieldHeight) {
                 fieldContent()
-            }
-
-            if (!caption.isNullOrBlank()) {
-                Caption()
-            }
-        }
-
-        @Composable
-        fun Caption() {
-            CaptionSpacer()
-            Row {
-                Text(caption!!, alpha = Color.FADED_OPACITY)
             }
         }
 
         class TextInputValidated(
             initValue: String,
-            label: String, caption: String? = null,
+            label: String, private val caption: String? = null,
             private val placeholder: String, private val invalidWarning: String,
             private val validator: (String) -> Boolean = { true }
         ) : PreferenceField(label, caption) {
@@ -132,10 +121,9 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                Layout {
-                    val border = Form.Border(1.dp, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)) {
-                        if (this.isValid()) Theme.studio.border else Theme.studio.errorStroke
-                    }
+                Layout(caption) {
+                    val borderColour = if (this.isValid()) Theme.studio.border else Theme.studio.errorStroke
+                    val modifier = Modifier.border(1.dp, borderColour, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS))
                     val positionProvider = rememberComponentRectPositionProvider(
                         anchor = Alignment.TopStart,
                         alignment = Alignment.BottomEnd,
@@ -144,7 +132,7 @@ object PreferenceDialog {
                     Form.TextInput(
                         value = value,
                         placeholder = placeholder,
-                        border = border,
+                        modifier = modifier,
                         onValueChange = { value = it; modified = true }
                     )
                     if (!this.isValid()) {
@@ -178,7 +166,7 @@ object PreferenceDialog {
 
         class TextInput(
             initValue: String,
-            label: String, caption: String? = null,
+            label: String, private val caption: String? = null,
             private val placeholder: String
         ) : PreferenceField(label, caption) {
 
@@ -186,14 +174,13 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                Layout {
+                Layout(caption) {
                     Form.TextInput(
                         value = value,
                         placeholder = placeholder,
-                        border = Form.Border(
-                            1.dp,
-                            RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)
-                        ) { Theme.studio.border },
+                        modifier = Modifier.border(
+                            1.dp,  Theme.studio.border , RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)
+                        ),
                         onValueChange = { value = it; modified = true }
                     )
                 }
@@ -204,15 +191,41 @@ object PreferenceDialog {
             }
         }
 
+        class MultilineTextInput(
+            initValue: String,
+            label: String, private val caption: String? = null,
+        ): PreferenceField(label, caption, fieldHeight = MULTILINE_FIELD_HEIGHT) {
+            var value by mutableStateOf(TextFieldValue(initValue))
+
+            @Composable
+            override fun Display() {
+                Layout(caption) {
+                    Form.MultilineTextInput(
+                        value = value,
+                        onValueChange = { value = it; modified = true },
+                        onTextLayout = { },
+                        textFieldPadding = Form.MULTILINE_INPUT_PADDING,
+                        modifier = Modifier.border(
+                            1.dp, Theme.studio.border, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)
+                        ),
+                    )
+                }
+            }
+
+            override fun isValid(): Boolean {
+                return true
+            }
+        }
+
         class Checkbox(
-            initValue: Boolean, label: String, caption: String? = null
+            initValue: Boolean, label: String, private val caption: String? = null
         ) : PreferenceField(label, caption) {
 
             var value by mutableStateOf(initValue)
 
             @Composable
             override fun Display() {
-                Layout {
+                Layout(caption) {
                     Form.Checkbox(
                         value = value,
                         onChange = { value = it; modified = true }
@@ -226,14 +239,14 @@ object PreferenceDialog {
         }
 
         class Dropdown<T : Any>(
-            initValue: T, val values: List<T>, label: String, caption: String? = null
+            initValue: T, val values: List<T>, label: String, private val caption: String? = null
         ) : PreferenceField(label, caption) {
 
             private var selected by mutableStateOf(values.find { it == initValue })
 
             @Composable
             override fun Display() {
-                Layout {
+                Layout(caption) {
                     Form.Dropdown(
                         values = values,
                         selected = selected,
@@ -289,12 +302,13 @@ object PreferenceDialog {
     abstract class PreferenceGroup(
         override val name: String = "",
         override val entries: List<PreferenceGroup> = emptyList(),
-        override val info: String? = null,
         override val parent: Navigable<PreferenceGroup>? = null,
         override val isExpandable: Boolean = entries.isNotEmpty(),
         override val isBulkExpandable: Boolean = entries.isNotEmpty(),
         open val preferences: List<PreferenceField> = emptyList(),
     ) : Navigable<PreferenceGroup> {
+
+        override val info: String? = null
 
         abstract fun submit()
         abstract fun reset()
@@ -337,7 +351,7 @@ object PreferenceDialog {
             preferences.forEach { it.Display() }
         }
 
-        class Root(override val entries: List<PreferenceGroup>) : PreferenceGroup(entries = entries) {
+        class Root(override val entries: List<PreferenceGroup> = emptyList()) : PreferenceGroup(entries = entries) {
             override val preferences: List<PreferenceField> = emptyList()
 
             override fun submit() {}
@@ -383,26 +397,22 @@ object PreferenceDialog {
         }
 
         class Project : PreferenceGroup(PROJECT_MANAGER) {
-            companion object {
-                private const val IGNORED_PATHS_PLACEHOLDER = ".git"
-            }
-
-            private val ignoredPathsString = preferenceSrv.ignoredPaths.joinToString(", ")
-            private var ignoredPaths = PreferenceField.TextInput(
+            private val ignoredPathsString = preferenceSrv.ignoredPaths.joinToString("\n")
+            private var ignoredPaths = PreferenceField.MultilineTextInput(
                 initValue = ignoredPathsString,
-                label = PROJECT_IGNORED_PATHS, placeholder = IGNORED_PATHS_PLACEHOLDER,
-                caption = IGNORED_PATHS_CAPTION
+                label = PROJECT_IGNORED_PATHS,
+                caption = IGNORED_PATHS_CAPTION,
             )
 
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
 
             override fun submit() {
-                preferenceSrv.ignoredPaths = ignoredPaths.value.split(',').map { it.trim() }
+                preferenceSrv.ignoredPaths = ignoredPaths.value.text.split('\n').map { it.trim() }
                 ignoredPaths.modified = false
             }
 
             override fun reset() {
-                ignoredPaths.value = preferenceSrv.ignoredPaths.joinToString(", ")
+                ignoredPaths.value = preferenceSrv.ignoredPaths.joinToString("\n").let { TextFieldValue(it) }
                 ignoredPaths.modified = false
             }
         }
@@ -439,7 +449,7 @@ object PreferenceDialog {
             title = MANAGE_PREFERENCES,
             behaviour = Navigator.Behaviour.Browser(clicksToOpenItem = 1),
             initExpandDepth = 0,
-            openFn = { focusedPreferenceGroup = it.item },
+            openFn = { selectedPreferenceGroup = it.item },
         )
 
         Navigator.Layout(
@@ -447,7 +457,10 @@ object PreferenceDialog {
             modifier = Modifier.fillMaxSize(),
         )
 
-        LaunchedEffect(navState) { navState.launch() }
+        LaunchedEffect(navState) {
+            navState.launch()
+            navState.maySelectFirstWithoutFocus()
+        }
     }
 
     @Composable
@@ -457,14 +470,9 @@ object PreferenceDialog {
 
     @Composable
     private fun Preferences() {
-        state.rootPreferenceGroup.resetSelfAndDescendants()
-
         Dialog.Layout(
-            Service.preference.preferencesDialog,
-            MANAGE_PREFERENCES,
-            WIDTH,
-            HEIGHT,
-            padding = 0.dp
+            Service.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT,
+            padding = 0.dp,
         ) {
             Column {
                 Frame.Row(
@@ -475,7 +483,7 @@ object PreferenceDialog {
                         initSize = Either.first(NAVIGATOR_INIT_SIZE), minSize = NAVIGATOR_MIN_SIZE
                     ) {
                         Column(modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundLight)) {
-                            ColumnSpacer()
+                            Spacer(Modifier.height(Theme.DIALOG_PADDING))
                             NavigatorLayout()
                         }
                     },
@@ -483,23 +491,20 @@ object PreferenceDialog {
                         id = PreferenceDialog.javaClass.canonicalName + ".secondary",
                         initSize = Either.first(PREFERENCE_GROUP_INIT_SIZE), minSize = PREFERENCE_GROUP_MIN_SIZE
                     ) {
-                        Column(modifier = Modifier.fillMaxHeight().padding(10.dp)) {
-                            if (focusedPreferenceGroup.name.isBlank()) {
-                                focusedPreferenceGroup = state.rootPreferenceGroup.entries.first()
-                            }
-                            focusedPreferenceGroup.Display()
+                        Column(modifier = Modifier.fillMaxHeight().padding(Theme.DIALOG_PADDING)) {
+                            selectedPreferenceGroup.Display()
                         }
                     }
                 )
                 Separator.Horizontal()
-                ColumnSpacer()
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Row(modifier = Modifier.fillMaxWidth().padding(Theme.DIALOG_PADDING), horizontalArrangement = Arrangement.End) {
                     ChangeFormButtons(state)
-                    RowSpacer()
-                    RowSpacer()
                 }
-                ColumnSpacer()
             }
+        }
+        LaunchedEffect(Unit) {
+            state.rootPreferenceGroup.resetSelfAndDescendants()
+            selectedPreferenceGroup = state.rootPreferenceGroup.entries.first()
         }
     }
 
@@ -513,11 +518,11 @@ object PreferenceDialog {
         TextButton(CANCEL) {
             state.cancel()
         }
-        RowSpacer()
+        Form.RowSpacer()
         TextButton(APPLY, enabled = state.isModified() && state.isValid()) {
             state.apply()
         }
-        RowSpacer()
+        Form.RowSpacer()
         TextButton(OK) {
             state.ok()
         }
@@ -534,8 +539,8 @@ object PreferenceDialog {
 
     @Composable
     private fun SpacedHorizontalSeparator() {
-        ColumnSpacer()
+        Form.ColumnSpacer()
         Separator.Horizontal()
-        ColumnSpacer()
+        Form.ColumnSpacer()
     }
 }
