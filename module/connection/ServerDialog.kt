@@ -59,7 +59,7 @@ import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Property
 import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB
 import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_CLUSTER
-import com.vaticle.typedb.studio.state.common.util.Sentence
+import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNECTED
