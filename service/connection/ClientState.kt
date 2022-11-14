@@ -50,7 +50,7 @@ import mu.KotlinLogging
 
 class ClientState constructor(
     private val notificationSrv: NotificationService,
-    private val preferenceSrv: PreferenceService
+    preferenceSrv: PreferenceService
 ) {
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
@@ -64,12 +64,12 @@ class ClientState constructor(
     val connectServerDialog = DialogState.Base()
     val selectDBDialog = DialogState.Base()
     val manageDatabasesDialog = DialogState.Base()
+    val manageAddressesDialog = DialogState.Base()
     val status: Status get() = statusAtomic.state
     val isConnected: Boolean get() = status == CONNECTED
     val isConnecting: Boolean get() = status == CONNECTING
     val isDisconnected: Boolean get() = status == DISCONNECTED
-    var address: String? by mutableStateOf(null)
-    var username: String? by mutableStateOf(null)
+    var connectionName: String? by mutableStateOf(null)
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
@@ -88,33 +88,34 @@ class ClientState constructor(
 
     fun tryConnectToTypeDBAsync(
         address: String, onSuccess: () -> Unit
-    ) = tryConnectAsync(address, null, onSuccess) { TypeDB.coreClient(address) }
+    ) = tryConnectAsync(newConnectionName = address, onSuccess = onSuccess) { TypeDB.coreClient(address) }
 
     fun tryConnectToTypeDBClusterAsync(
-        address: String, username: String, password: String,
+        addresses: Set<String>, username: String, password: String,
         tlsEnabled: Boolean, onSuccess: () -> Unit
-    ) = tryConnectToTypeDBClusterAsync(address, username, TypeDBCredential(username, password, tlsEnabled), onSuccess)
+    ) = tryConnectToTypeDBClusterAsync(addresses, username, TypeDBCredential(username, password, tlsEnabled), onSuccess)
 
     fun tryConnectToTypeDBClusterAsync(
-        address: String, username: String, password: String,
+        addresses: Set<String>, username: String, password: String,
         caPath: String, onSuccess: () -> Unit
     ) = tryConnectToTypeDBClusterAsync(
-        address, username, TypeDBCredential(username, password, Path.of(caPath)), onSuccess
+        addresses, username, TypeDBCredential(username, password, Path.of(caPath)), onSuccess
     )
 
     private fun tryConnectToTypeDBClusterAsync(
-        address: String, username: String,
+        addresses: Set<String>, username: String,
         credentials: TypeDBCredential, onSuccess: () -> Unit
-    ) = tryConnectAsync(address, username, onSuccess) { TypeDB.clusterClient(address, credentials) }
+    ) = tryConnectAsync(newConnectionName = "$username@${addresses.first()}", onSuccess) {
+        TypeDB.clusterClient(addresses, credentials)
+    }
 
     private fun tryConnectAsync(
-        newAddress: String, newUsername: String?, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient
+        newConnectionName: String, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient
     ) = coroutines.launchAndHandle(notificationSrv, LOGGER) {
         if (isConnecting || isConnected) return@launchAndHandle
         statusAtomic.set(CONNECTING)
         try {
-            address = newAddress
-            username = newUsername
+            connectionName = newConnectionName
             _client = clientConstructor()
             statusAtomic.set(CONNECTED)
             onSuccess()

@@ -75,6 +75,8 @@ object Sentence {
         "Create a new %s type."
     const val CREATE_TYPE_AS_SUBTYPE_OF =
         "Create a new %s type as a subtype of '%s'."
+    const val CREATE_AN_ADDRESS_FOR_CLUSTER =
+        "Create a new address for connecting to your TypeDB Cluster."
     const val EDITING_TYPES_REQUIREMENT_DESCRIPTION =
         "Functionalities for editing schema types are under development and COMING SOON."
 
@@ -102,6 +104,9 @@ object Sentence {
                 "transaction that you're connecting in each script you run on TypeDB Server. In 'interactive' mode, you " +
                 "can set on these parameters in the toolbar, and perform queries against the TypeDB server with configured " +
                 "parameters interactively. " + BUTTON_ENABLED_WHEN_CONNECTED
+    const val MANAGE_ADDRESSES_MESSAGE =
+        "Below is the list of addresses for your current cluster connection configuration. You can delete them or " +
+                "add new ones."
     const val MANAGE_DATABASES_DESCRIPTION =
         "You can manage your databases by adding or deleting databases from the TypeDB Server you are connected to. " +
                 BUTTON_ENABLED_WHEN_CONNECTED

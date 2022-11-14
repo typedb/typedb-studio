@@ -20,10 +20,7 @@ package com.vaticle.typedb.studio.framework.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +40,9 @@ import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.service.common.util.DialogState
 
 object Dialog {
+
+    val DIALOG_SPACING = 16.dp
+
     private fun handleKeyEvent(event: KeyEvent, state: DialogState): Boolean = when (event.type) {
         KeyEventType.KeyUp -> false
         else -> KeyMapper.CURRENT.map(event)?.let { executeCommand(it, state) } ?: false
@@ -61,14 +61,17 @@ object Dialog {
         state: DialogState, title: String, width: Dp, height: Dp,
         padding: Dp = Theme.DIALOG_PADDING,
         content: @Composable DialogWindowScope.() -> Unit
-    ) = Dialog(
-        title = title, onCloseRequest = { state.close() }, state = rememberDialogState(
-            position = WindowPosition.Aligned(Alignment.Center),
-            size = DpSize(width, height)
-        )
     ) {
-        val bgColor = Theme.studio.backgroundMedium
-        val modifier = Modifier.background(bgColor).padding(padding).onKeyEvent { handleKeyEvent(it, state) }
-        Box(modifier) { content() }
+        Dialog(
+            title = title, onCloseRequest = { state.close() }, state = rememberDialogState(
+                position = WindowPosition.Aligned(Alignment.Center),
+                size = DpSize(width, height)
+            )
+        ) {
+            Box(Modifier.background(Theme.studio.backgroundMedium).padding(padding)
+                .onKeyEvent { handleKeyEvent(it, state) }) {
+                content()
+            }
+        }
     }
 }

@@ -55,7 +55,7 @@ object TypeDialog {
         val isValid: ((CreateTypeFormState<T>) -> Boolean)? = null,
         val onCancel: () -> Unit,
         val onSubmit: (supertypeState: T, label: String, isAbstract: Boolean, valueType: ValueType?) -> Unit,
-    ) : Form.State {
+    ) : Form.State() {
 
         var supertypeState: T by mutableStateOf(supertypeState)
         var label: String by mutableStateOf(""); internal set
@@ -65,7 +65,7 @@ object TypeDialog {
         override fun cancel() = onCancel()
         override fun isValid(): Boolean = label.isNotEmpty() && isValid?.invoke(this) ?: true
 
-        override fun trySubmit() {
+        override fun submit() {
             assert(isValid())
             onSubmit(supertypeState, label, isAbstract, valueType)
         }
@@ -151,11 +151,11 @@ object TypeDialog {
         val dialogState = Service.schema.renameTypeDialog
         val typeState = dialogState.typeState!!
         val formState = remember {
-            object : Form.State {
+            object : Form.State() {
                 var label: String by mutableStateOf(typeState.name)
                 override fun cancel() = dialogState.close()
                 override fun isValid() = label.isNotEmpty() && label != typeState.name
-                override fun trySubmit() = typeState.tryRename(label)
+                override fun submit() = typeState.tryRename(label)
             }
         }
         Dialog.Layout(dialogState, Label.RENAME_TYPE, DIALOG_WIDTH, DIALOG_HEIGHT) {
@@ -195,10 +195,10 @@ object TypeDialog {
     ) {
         val typeState = dialogState.typeState!!
         val formState = remember {
-            object : Form.State {
+            object : Form.State() {
                 var supertypeState: T by mutableStateOf(typeState.supertype!!)
                 override fun cancel() = dialogState.close()
-                override fun trySubmit() = typeState.tryChangeSupertype(supertypeState)
+                override fun submit() = typeState.tryChangeSupertype(supertypeState)
                 override fun isValid() = true
             }
         }
@@ -222,14 +222,14 @@ object TypeDialog {
             it != Service.schema.rootRoleType
         }
         val formState = remember {
-            object : Form.State {
+            object : Form.State() {
                 var overriddenType: RoleTypeState? by mutableStateOf(
                     if (typeState.supertype != Service.schema.rootRoleType) typeState.supertype else null
                 )
 
                 override fun cancel() = dialogState.close()
                 override fun isValid() = true
-                override fun trySubmit() = typeState.tryChangeOverriddenType(overriddenType)
+                override fun submit() = typeState.tryChangeOverriddenType(overriddenType)
             }
         }
         Dialog.Layout(dialogState, Label.CHANGE_OVERRIDDEN_ROLE_TYPE, DIALOG_WIDTH, DIALOG_HEIGHT) {
@@ -249,10 +249,10 @@ object TypeDialog {
         val typeState = dialogState.typeState!!
         val message = Sentence.CHANGE_TYPE_ABSTRACTNESS.format(typeState.encoding.label, typeState.name)
         val formState = remember {
-            object : Form.State {
+            object : Form.State() {
                 var isAbstract: Boolean by mutableStateOf(typeState.isAbstract)
                 override fun cancel() = dialogState.close()
-                override fun trySubmit() = typeState.tryChangeAbstract(isAbstract)
+                override fun submit() = typeState.tryChangeAbstract(isAbstract)
                 override fun isValid() = true
             }
         }

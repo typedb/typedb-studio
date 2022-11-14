@@ -18,12 +18,17 @@
 
 package com.vaticle.typedb.studio.module.connection
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,10 +39,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.vaticle.typedb.studio.framework.material.ActionableList
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.Checkbox
-import com.vaticle.typedb.studio.framework.material.Form.Dropdown
 import com.vaticle.typedb.studio.framework.material.Form.Field
 import com.vaticle.typedb.studio.framework.material.Form.IconButton
 import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
@@ -54,6 +59,7 @@ import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Property
 import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB
 import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_CLUSTER
+import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNECTED
@@ -62,11 +68,18 @@ object ServerDialog {
 
     private val WIDTH = 500.dp
     private val HEIGHT = 340.dp
+    private val ADDRESS_MANAGER_WIDTH = 400.dp
+    private val ADDRESS_MANAGER_HEIGHT = 500.dp
     private val appData = Service.data.connection
 
-    private class ConnectServerForm : Form.State {
-        var server: Property.Server by mutableStateOf(appData.server ?: TYPEDB)
-        var address: String by mutableStateOf(appData.address ?: "")
+    private val state by mutableStateOf(ConnectServerForm())
+
+    private class ConnectServerForm : Form.State() {
+        var server: Property.Server by mutableStateOf(appData.server ?: Property.Server.TYPEDB)
+        var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
+        var clusterAddresses: MutableList<String> = mutableStateListOf<String>().also {
+            appData.clusterAddresses?.let { addresses -> it.addAll(addresses) }
+        }
         var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
@@ -78,53 +91,89 @@ object ServerDialog {
 
         override fun isValid(): Boolean {
             return when (server) {
-                TYPEDB -> !address.isBlank()
-                TYPEDB_CLUSTER -> !(address.isBlank() || username.isBlank() || password.isBlank())
+                TYPEDB -> coreAddress.isNotBlank()
+                TYPEDB_CLUSTER -> !(clusterAddresses.isEmpty() || username.isBlank() || password.isBlank())
             }
         }
 
-        override fun trySubmit() {
+        override fun submit() {
             when (server) {
-                TYPEDB -> Service.client.tryConnectToTypeDBAsync(address) { Service.client.connectServerDialog.close() }
-                TYPEDB_CLUSTER -> when {
-                    caCertificate.isBlank() -> Service.client.tryConnectToTypeDBClusterAsync(
-                        address, username, password, tlsEnabled
-                    ) { Service.client.connectServerDialog.close() }
-                    else -> Service.client.tryConnectToTypeDBClusterAsync(
-                        address, username, password, caCertificate
-                    ) { Service.client.connectServerDialog.close() }
+                TYPEDB ->  {
+                    Service.client.tryConnectToTypeDBAsync(coreAddress) {
+                        Service.client.connectServerDialog.close()
+                    }
+                }
+                TYPEDB_CLUSTER -> {
+                    when {
+                        caCertificate.isBlank() -> Service.client.tryConnectToTypeDBClusterAsync(
+                            clusterAddresses.toSet(), username, password, tlsEnabled
+                        ) {
+                            Service.client.connectServerDialog.close()
+                        }
+                        else -> Service.client.tryConnectToTypeDBClusterAsync(
+                            clusterAddresses.toSet(), username, password, caCertificate
+                        ) {
+                            Service.client.connectServerDialog.close()
+                        }
+                    }
                 }
             }
             appData.server = server
-            appData.address = address
+            appData.coreAddress = coreAddress
+            appData.clusterAddresses = clusterAddresses
             appData.username = username
             appData.tlsEnabled = tlsEnabled
             appData.caCertificate = caCertificate
         }
     }
 
+    private object CreateAddressForm : Form.State() {
+
+        var value: String by mutableStateOf("")
+
+        override fun cancel() {
+            Service.client.manageAddressesDialog.close()
+        }
+
+        override fun isValid(): Boolean {
+            return value.isNotBlank() && validAddressFormat() && !state.clusterAddresses.contains(value)
+        }
+
+        override fun submit() {
+            assert(isValid())
+            state.clusterAddresses.add(value)
+            value = ""
+        }
+
+        private fun validAddressFormat(): Boolean {
+            val addressParts = value.split(":")
+            return addressParts.size == 2 && addressParts[1].toIntOrNull()?.let { it in 1024..65535 } == true
+        }
+    }
+
     @Composable
     fun MayShowDialogs() {
         if (Service.client.connectServerDialog.isOpen) ConnectServer()
+        if (Service.client.manageAddressesDialog.isOpen) ManageAddresses()
     }
 
     @Composable
     private fun ConnectServer() {
-        val state = remember { ConnectServerForm() }
-        Dialog.Layout(
-            Service.client.connectServerDialog,
+        Dialog.Layout(Service.client.connectServerDialog,
             Label.CONNECT_TO_TYPEDB,
             WIDTH,
             HEIGHT
         ) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 ServerFormField(state)
-                AddressFormField(state, Service.client.isDisconnected)
                 if (state.server == TYPEDB_CLUSTER) {
+                    ClusterAddressesFormField(state = state, shouldFocus = Service.client.isDisconnected)
                     UsernameFormField(state)
                     PasswordFormField(state)
                     TLSEnabledFormField(state)
                     if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
+                } else if (state.server == TYPEDB) {
+                    CoreAddressFormField(state, shouldFocus = Service.client.isDisconnected)
                 }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -143,7 +192,7 @@ object ServerDialog {
     @Composable
     private fun ServerFormField(state: ConnectServerForm) {
         Field(label = Label.SERVER) {
-            Dropdown(
+            Form.Dropdown(
                 values = Property.Server.values().toList(),
                 selected = state.server,
                 onSelection = { state.server = it!! },
@@ -154,20 +203,98 @@ object ServerDialog {
     }
 
     @Composable
-    private fun AddressFormField(state: ConnectServerForm, shouldFocus: Boolean) {
+    private fun CoreAddressFormField(state: ConnectServerForm, shouldFocus: Boolean) {
         var modifier = Modifier.fillMaxSize()
-        val focusReq = if (shouldFocus) FocusRequester() else null
+        val focusReq = if (shouldFocus) remember { FocusRequester() } else null
         focusReq?.let { modifier = modifier.focusRequester(focusReq) }
         Field(label = Label.ADDRESS) {
             TextInput(
-                value = state.address,
-                placeholder = Property.DEFAULT_SERVER_ADDRESS,
-                onValueChange = { state.address = it },
+                value = state.coreAddress,
+                placeholder = Label.DEFAULT_SERVER_ADDRESS,
+                onValueChange = { state.coreAddress = it },
                 enabled = Service.client.isDisconnected,
                 modifier = modifier
             )
         }
         LaunchedEffect(focusReq) { focusReq?.requestFocus() }
+    }
+
+    @Composable
+    private fun ClusterAddressesFormField(state: ConnectServerForm, shouldFocus: Boolean) {
+        val focusReq = if (shouldFocus) remember { FocusRequester() } else null
+        Field(label = Label.ADDRESSES) {
+            TextButton(
+                text = Label.MANAGE_CLUSTER_ADDRESSES + " (${state.clusterAddresses.size})",
+                focusReq = focusReq, leadingIcon = Form.IconArg(Icon.CONNECT_TO_TYPEDB),
+                enabled = Service.client.isDisconnected
+            ) {
+                Service.client.manageAddressesDialog.open()
+            }
+        }
+        LaunchedEffect(focusReq) { focusReq?.requestFocus() }
+    }
+
+    @Composable
+    private fun ManageAddresses() {
+        val dialogState = Service.client.manageAddressesDialog
+        Dialog.Layout(dialogState, Label.MANAGE_CLUSTER_ADDRESSES, ADDRESS_MANAGER_WIDTH, ADDRESS_MANAGER_HEIGHT) {
+            Column(Modifier.fillMaxSize()) {
+                Text(value = Sentence.MANAGE_ADDRESSES_MESSAGE, softWrap = true)
+                Spacer(Modifier.height(Dialog.DIALOG_SPACING))
+                ModifiableAddressList(Modifier.fillMaxWidth().weight(1f))
+                Spacer(Modifier.height(Dialog.DIALOG_SPACING))
+                CreateAddressForm()
+                Spacer(Modifier.height(Dialog.DIALOG_SPACING * 2))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    RowSpacer()
+                    TextButton(text = Label.CLOSE) { dialogState.close() }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun CreateAddressForm() {
+        val focusReq = remember { FocusRequester() }
+        Submission(CreateAddressForm, modifier = Modifier.height(Form.FIELD_HEIGHT), showButtons = false) {
+            Row {
+                TextInput(
+                    value = CreateAddressForm.value,
+                    placeholder = Label.DEFAULT_SERVER_ADDRESS,
+                    onValueChange = { CreateAddressForm.value = it },
+                    modifier = Modifier.weight(1f).focusRequester(focusReq),
+                )
+                RowSpacer()
+                TextButton(
+                    text = Label.CREATE,
+                    enabled = CreateAddressForm.isValid(),
+                    tooltip = Tooltip.Arg(
+                        title = Label.CREATE_DATABASE,
+                        description = Sentence.CREATE_DATABASE_BUTTON_DESCRIPTION
+                    )
+                ) { CreateAddressForm.submit() }
+            }
+        }
+        LaunchedEffect(focusReq) { focusReq.requestFocus() }
+    }
+
+    @Composable
+    private fun ModifiableAddressList(modifier: Modifier) {
+        ActionableList.Layout(
+            items = state.clusterAddresses.toMutableList(),
+            modifier = modifier.border(1.dp, Theme.studio.border),
+            buttonSide = ActionableList.Side.RIGHT,
+            buttonFn = { address ->
+                Form.IconButtonArg(
+                    icon = Icon.DELETE,
+                    color = { Theme.studio.errorStroke },
+                    onClick = {
+                        state.clusterAddresses.remove(address)
+                    }
+                )
+            }
+        )
     }
 
     @Composable
@@ -248,7 +375,7 @@ object ServerDialog {
     private fun DisconnectedFormButtons(state: ConnectServerForm) {
         TextButton(text = Label.CANCEL) { state.cancel() }
         RowSpacer()
-        TextButton(text = Label.CONNECT, enabled = state.isValid()) { state.trySubmit() }
+        TextButton(text = Label.CONNECT, enabled = state.isValid()) { state.submit() }
     }
 
     @Composable

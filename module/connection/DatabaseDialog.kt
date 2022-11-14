@@ -61,7 +61,7 @@ object DatabaseDialog {
     private val SELECTOR_WIDTH = 400.dp
     private val SELECTOR_HEIGHT = 200.dp
 
-    private object CreateDatabaseForm : Form.State {
+    private object CreateDatabaseForm : Form.State() {
 
         var name: String by mutableStateOf("")
 
@@ -73,8 +73,8 @@ object DatabaseDialog {
             return name.isNotBlank()
         }
 
-        override fun trySubmit() {
-            assert(name.isNotBlank())
+        override fun submit() {
+            assert(isValid())
             Service.client.tryCreateDatabase(name) { name = "" }
         }
     }
@@ -156,7 +156,7 @@ object DatabaseDialog {
                         title = Label.CREATE_DATABASE,
                         description = Sentence.CREATE_DATABASE_BUTTON_DESCRIPTION
                     )
-                ) { CreateDatabaseForm.trySubmit() }
+                ) { CreateDatabaseForm.submit() }
             }
         }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }

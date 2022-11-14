@@ -261,7 +261,7 @@ object PreferenceDialog {
         }
     }
 
-    class PreferencesForm : State {
+    class PreferencesForm : State() {
         private val preferenceGroups: List<PreferenceGroup> = listOf(
             PreferenceGroup.GraphVisualiser(),
             PreferenceGroup.TextEditor(),
@@ -275,7 +275,7 @@ object PreferenceDialog {
             Service.preference.preferencesDialog.close()
         }
 
-        fun apply() = trySubmit()
+        fun apply() = submit()
 
         fun ok() {
             apply()
@@ -290,7 +290,7 @@ object PreferenceDialog {
             return rootPreferenceGroup.isValid()
         }
 
-        override fun trySubmit() {
+        override fun submit() {
             if (preferenceGroups.all { it.isValid() }) {
                 preferenceGroups.forEach {
                     it.submit()
@@ -470,10 +470,9 @@ object PreferenceDialog {
 
     @Composable
     private fun Preferences() {
-        Dialog.Layout(
-            Service.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT,
-            padding = 0.dp,
-        ) {
+        state.rootPreferenceGroup.resetSelfAndDescendants()
+
+        Dialog.Layout(Service.preference.preferencesDialog, MANAGE_PREFERENCES, WIDTH, HEIGHT, padding = 0.dp) {
             Column {
                 Frame.Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),
