@@ -79,7 +79,7 @@ or [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
 ## Compiling and Running TypeDB Studio from Source
 
 > Note: You **DO NOT NEED** to compile TypeDB Studio _"from source"_ if you just want to use TypeDB Studio. You can
-> simply download TypeDB Studio following section above.
+> simply download TypeDB Studio following the section above.
 
 1. Make sure you have the following dependencies installed on your machine:
     - Java JDK 11 or higher
