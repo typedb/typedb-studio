@@ -108,7 +108,7 @@ or [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
 
 TypeDB Studio has been built using various open-source frameworks throughout its evolution. Today TypeDB Studio is built
 using [Kotlin](https://kotlinlang.org), [Compose Multiplatform](https://github.com/JetBrains/compose-jb),
-and [Bazel](https://bazel.build). Thank you to the developers of these tools!
+and [Bazel](https://bazel.build). Thank you to the developers!
 
 ## Licensing
 
