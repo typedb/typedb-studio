@@ -404,11 +404,11 @@ internal class InputTarget constructor(
         updateCursor(Cursor(newRow, newCol), isSelecting)
     }
 
-    internal fun moveCursorToStart(isSelecting: Boolean = false, mayScroll: Boolean = true) = updateCursor(
+    internal fun moveCursorToStartOfFile(isSelecting: Boolean = false, mayScroll: Boolean = true) = updateCursor(
         Cursor(0, 0), isSelecting, mayScroll
     )
 
-    internal fun moveCursorToEnd(isSelecting: Boolean = false, mayScroll: Boolean = true) = updateCursor(
+    internal fun moveCursorToEndOfFile(isSelecting: Boolean = false, mayScroll: Boolean = true) = updateCursor(
         end, isSelecting, mayScroll
     )
 
