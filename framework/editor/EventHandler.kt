@@ -137,8 +137,8 @@ internal class EventHandler constructor(
             MOVE_LINE_DOWN -> target.moveCursorDownByLine()
             MOVE_PAGE_UP -> target.moveCursorUpByPage()
             MOVE_PAGE_DOWN -> target.moveCursorDownByPage()
-            MOVE_HOME -> target.moveCursorToStart()
-            MOVE_END -> target.moveCursorToEnd()
+            MOVE_HOME -> target.moveCursorToStartOfFile()
+            MOVE_END -> target.moveCursorToEndOfFile()
             SELECT_CHAR_LEFT -> target.moveCursorPrevByChar(true) // because we only display left to right
             SELECT_CHAR_RIGHT -> target.moveCursorNextByChar(true) // because we only display left to right
             SELECT_WORD_LEFT -> target.moveCursorPrevByWord(true) // because we only display left to right

@@ -271,7 +271,7 @@ object TextEditor {
 
         fun jumpToTop() {
             target.verScroller.scrollToTop()
-            target.moveCursorToStart(isSelecting = false, mayScroll = false)
+            target.moveCursorToStartOfFile(isSelecting = false, mayScroll = false)
         }
 
         fun onScrollToBottom(function: () -> Unit) {
