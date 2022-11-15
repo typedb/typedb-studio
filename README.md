@@ -1,4 +1,4 @@
-[![Grabl](https://grabl.io/api/status/vaticle/typedb/badge.svg)](https://grabl.io/vaticle/typedb-studio)
+[![Factory](https://factory.vaticle.com/api/status/vaticle/typedb-studio/badge.svg)](https://factory.vaticle.com/vaticle/typedb-studio)
 [![Discord](https://img.shields.io/discord/665254494820368395?color=7389D8&label=chat&logo=discord&logoColor=ffffff)](https://vaticle.com/discord)
 [![Discussion Forum](https://img.shields.io/discourse/https/forum.vaticle.com/topics.svg)](https://forum.vaticle.com)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typedb-796de3.svg)](https://stackoverflow.com/questions/tagged/typedb)
@@ -8,32 +8,34 @@
 
 [![TypeDB Studio](./images/studio_full_1.png)](./images/studio_full_1.png)
 
-TypeDB Studio is TypeDB's Integrated Development Environment to perform knowledge engineering.
+TypeDB Studio is a fully-featured Integrated Development Environment (IDE) for TypeDB.
 
-You can utilise Studio like [TypeDB Console](https://docs.vaticle.com/docs/console/console)
-and [TypeDB Clients](https://docs.vaticle.com/docs/client-api/overview), to connect to your TypeDB instance and perform
+You can utilise Studio as you would [TypeDB Console](https://docs.vaticle.com/docs/console/console)
+and the [TypeDB Clients](https://docs.vaticle.com/docs/client-api/overview): to connect to your TypeDB instance and perform
 queries.
 
 Studio is an IDE designed for the end-to-end development of TypeDB databases, database queries, and data exploration,
-via a clean and intuitive UI.
+via a clean and intuitive UI that gives you a top-down view of your entire database.
 
 ## Usage
 
-Upon launching Studio, you'll be asked for your TypeDB server details and to choose or create a database. Studio makes
-these choices explicit so that it's always clear what you're working on at any given time.
+### Connect to TypeDB
+
+Upon launching Studio, you'll be asked for your TypeDB server details and to choose or create a database.
 
 ### Manage TypeDB Projects
 
 After connecting to TypeDB and selecting a database, Studio will prompt you to open (or create) a project directory.
-This is where Studio will load and save query files, but we can also freely edit text files in the project directory
+This is where Studio will load and save query files, but you can also freely edit text files in the project directory
 using Studio. The project browser maintains a live view of the directory contents on the filesystem.
 
 ### Manage Database Schemas
 
 [![Log Output](./images/type_browser_1.png)](./images/type_browser_1.png)
 
-The Type Browser provides a structured tree view of the connected database's type hierarchy. Opening any Type will
-bring up a page that lists in detail its properties - supertype, roles played, attributes owned, etc.
+The Type Browser provides a structured tree view of the connected database's type hierarchy. Double-clicking on any of 
+the listed types will bring up a page that lists their properties in detail — supertype, roles played, attributes owned
+and more.
 
 ### Run TypeQL Queries
 
@@ -76,8 +78,8 @@ or [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
 
 ## Compiling and Running TypeDB Studio from Source
 
-> Note: You **DO NOT NEED** to compile TypeDB Studio _"from source code"_ if you just want to use TypeDB Studio. You can
-> simply download TypeDB Studio following section above.
+> Note: You **DO NOT NEED** to compile TypeDB Studio _"from source"_ if you just want to use TypeDB Studio. You can
+> simply download TypeDB Studio following the section above.
 
 1. Make sure you have the following dependencies installed on your machine:
     - Java JDK 11 or higher
@@ -106,7 +108,7 @@ or [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
 
 TypeDB Studio has been built using various open-source frameworks throughout its evolution. Today TypeDB Studio is built
 using [Kotlin](https://kotlinlang.org), [Compose Multiplatform](https://github.com/JetBrains/compose-jb),
-and [Bazel](https://bazel.build). Thank you!
+and [Bazel](https://bazel.build). Thank you to the developers!
 
 ## Licensing
 
