@@ -301,11 +301,7 @@ object TextEditor {
                     .focusRequester(state.focusReq).focusable()
                     .onGloballyPositioned { state.density = density }
                     .onKeyEvent { state.handler.handleEditorEvent(it) }
-                    .onPointerEvent(Move) {
-                        if (it.changes.first().position != it.changes.first().previousPosition) {
-                            state.target.dragSelection(it.awtEvent.x, it.awtEvent.y)
-                        }
-                    }
+                    .onPointerEvent(Move) { state.target.dragSelection(it.awtEvent.x, it.awtEvent.y) }
                     .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.target.stopDragSelection() }
                     .pointerInput(state) { onPointerInput(state) }
                 ) {
