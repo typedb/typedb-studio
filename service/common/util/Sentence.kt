@@ -44,8 +44,18 @@ object Sentence {
                 "while no other query is running. " + RUNNABLE_FILE_EXTENSIONS
     const val CANNOT_BE_UNDONE =
         "This action cannot be undone."
-    const val CHANGE_OVERRIDDEN_TYPE =
-        "Change the overridden %s type of '%s'."
+    const val CHANGE_OVERRIDDEN_OWNS_ATT_TYPE =
+        "Change the %s type '%s' owning attribute type '%s' from overriding attribute type '%s'."
+    const val CHANGE_OVERRIDDEN_OWNS_ATT_TYPE_TO_SET =
+        "Change the %s type '%s' owning attribute type '%s' to override an attribute type."
+    const val CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE =
+        "Change the %s type '%s' playing role type '%s' from overriding role type '%s'."
+    const val CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE_TO_SET =
+        "Change the %s type '%s' playing role type '%s' to override a role type."
+    const val CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE =
+        "Change the relation type '%s' relating role type '%s' from overriding role type '%s'."
+    const val CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE_TO_SET =
+        "Change the relation type '%s' relating role type '%s' to override a role type."
     const val CHANGE_SUPERTYPE =
         "Change the supertype of the %s type '%s'."
     const val CHANGE_TYPE_ABSTRACTNESS =

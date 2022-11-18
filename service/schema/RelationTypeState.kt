@@ -27,8 +27,10 @@ import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_RELATE_ROLE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE_TO_REMOVE
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import kotlin.streams.toList
 import mu.KotlinLogging
@@ -61,6 +63,10 @@ class RelationTypeState internal constructor(
     override fun requestSubtypesExplicit() = schemaSrv.mayRunReadTx { tx ->
         conceptType.asRemote(tx).subtypesExplicit.toList()
     }
+
+    fun overridableRelatedRoleTypes() = supertype?.relatesRoleTypes
+        ?.filter { it != schemaSrv.rootRoleType }
+        ?.sortedBy { it.scopedName } ?: listOf()
 
     override fun loadInheritables() {
         super.loadInheritables()
@@ -147,6 +153,30 @@ class RelationTypeState internal constructor(
             onSuccess?.let { it() }
         } catch (e: Exception) {
             notifications.userError(LOGGER, FAILED_TO_DEFINE_RELATE_ROLE_TYPE, name, roleType, e.message ?: UNKNOWN)
+        }
+    }
+
+    fun initiateChangeOverriddenRelatesRoleType(
+        props: RoleTypeState.RelatesRoleTypeProperties
+    ) = schemaSrv.changeOverriddenRelatesRoleTypeDialog.open(this, props)
+
+    fun tryChangeOverriddenRelatesRoleType(
+        roleType: RoleTypeState, overriddenType: RoleTypeState?
+    ) = schemaSrv.mayRunWriteTxAsync { tx ->
+        try {
+            conceptType.asRemote(tx).let { r ->
+                overriddenType?.let { o -> r.setRelates(roleType.name, o.conceptType) }
+                    ?: r.setRelates(roleType.name)
+            }
+            loadRelatesRoleTypes()
+            schemaSrv.changeOverriddenRelatesRoleTypeDialog.close()
+        } catch (e: Exception) {
+            overriddenType?.let {
+                notifications.userError(
+                    LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE,
+                    name, roleType.name, overriddenType.name
+                )
+            } ?: notifications.userError(LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE_TO_REMOVE, name, roleType.name)
         }
     }
 

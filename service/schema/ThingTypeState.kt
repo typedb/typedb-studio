@@ -31,10 +31,16 @@ import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_ABSTRACT
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_OWNS_ATT_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_OWNS_ATT_TYPE_TO_REMOVE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE_TO_REMOVE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_SUPERTYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CREATE_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_OWN_ATTRIBUTE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_OWN_ATT_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_PLAY_ROLE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_LOAD_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_UNDEFINE_OWNS_ATT_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_UNDEFINE_PLAYS_ROLE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Sentence
@@ -135,6 +141,14 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         loadConstraintsAsync()
     }
 
+    fun overridableOwnedAttributeTypes(attributeType: AttributeTypeState) = attributeType.supertypes
+        .intersect(supertype!!.ownsAttTypes.toSet())
+        .sortedBy { it.name }
+
+    fun overridablePlayedRoleTypes(roleType: RoleTypeState) = roleType.supertypes
+        .intersect(supertype!!.playsRoleTypes.toSet())
+        .sortedBy { it.scopedName }
+
     fun exportSyntaxAsync(onSuccess: (String) -> Unit) = coroutines.launchAndHandle(notifications, LOGGER) {
         schemaSrv.mayRunReadTx { tx -> conceptType.asRemote(tx).syntax?.let { onSuccess(it) } }
     }
@@ -149,9 +163,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             loadOtherConstraints()
             loadSubtypesRecursively()
         } catch (e: TypeDBClientException) {
-            notifications.userError(
-                LOGGER, Message.Schema.FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN
-            )
+            notifications.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN)
         }
     }
 
@@ -279,6 +291,21 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         }
     }
 
+    protected fun tryChangeSupertype(
+        dialogState: SchemaService.TypeDialogState<*>, function: (TypeDBTransaction) -> Unit
+    ) = schemaSrv.mayRunWriteTxAsync {
+        try {
+            function(it)
+            dialogState.onSuccess?.invoke()
+            dialogState.close()
+            loadConstraints()
+        } catch (e: Exception) {
+            notifications.userError(
+                LOGGER, FAILED_TO_CHANGE_SUPERTYPE, encoding.label, conceptType.label, e.message ?: UNKNOWN
+            )
+        }
+    }
+
     fun initiateChangeAbstract() = schemaSrv.changeAbstractDialog.open(this)
 
     fun tryChangeAbstract(isAbstract: Boolean) = schemaSrv.mayRunWriteTxAsync { tx ->
@@ -302,7 +329,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             onSuccess()
         } catch (e: Exception) {
             notifications.userError(
-                LOGGER, FAILED_TO_DEFINE_OWN_ATTRIBUTE_TYPE,
+                LOGGER, FAILED_TO_DEFINE_OWN_ATT_TYPE,
                 encoding.label, name, attributeType.name, e.message ?: UNKNOWN
             )
         }
@@ -315,6 +342,31 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         } catch (e: Exception) {
             notifications.userError(
                 LOGGER, FAILED_TO_UNDEFINE_OWNS_ATT_TYPE, encoding.label, name, attType.name, e.message ?: UNKNOWN
+            )
+        }
+    }
+
+    fun initiateChangeOverriddenOwnsAttributeType(
+        props: AttributeTypeState.OwnsAttTypeProperties
+    ) = schemaSrv.changeOverriddenOwnsAttributeTypeDialog.open(this, props)
+
+    fun tryChangeOverriddenOwnedAttributeType(
+        attType: AttributeTypeState, overriddenType: AttributeTypeState?
+    ) = schemaSrv.mayRunWriteTxAsync { tx ->
+        try {
+            overriddenType?.let {
+                conceptType.asRemote(tx).setOwns(attType.conceptType, overriddenType.conceptType)
+            } ?: conceptType.asRemote(tx).setOwns(attType.conceptType)
+            loadOwnsAttributeTypes()
+            schemaSrv.changeOverriddenOwnsAttributeTypeDialog.close()
+        } catch (e: Exception) {
+            overriddenType?.let {
+                notifications.userError(
+                    LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_OWNS_ATT_TYPE,
+                    encoding.label, name, attType.name, overriddenType.name
+                )
+            } ?: notifications.userError(
+                LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_OWNS_ATT_TYPE_TO_REMOVE, encoding.label, name, attType.name
             )
         }
     }
@@ -347,6 +399,31 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         }
     }
 
+    fun initiateChangeOverriddenPlaysRoleType(
+        props: RoleTypeState.PlaysRoleTypeProperties
+    ) = schemaSrv.changeOverriddenPlaysRoleTypeDialog.open(this, props)
+
+    fun tryChangeOverriddenPlaysRoleType(
+        roleType: RoleTypeState, overriddenType: RoleTypeState?
+    ) = schemaSrv.mayRunWriteTxAsync { tx ->
+        try {
+            overriddenType?.let {
+                conceptType.asRemote(tx).setPlays(roleType.conceptType, overriddenType.conceptType)
+            } ?: conceptType.asRemote(tx).setPlays(roleType.conceptType)
+            loadPlaysRoleTypes()
+            schemaSrv.changeOverriddenPlaysRoleTypeDialog.close()
+        } catch (e: Exception) {
+            overriddenType?.let {
+                notifications.userError(
+                    LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE,
+                    encoding.label, name, roleType.name, overriddenType.name
+                )
+            } ?: notifications.userError(
+                LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE_TO_REMOVE, encoding.label, name, roleType.name
+            )
+        }
+    }
+
     fun initiateDelete() = schemaSrv.confirmation.submit(
         title = Label.CONFIRM_TYPE_DELETION,
         message = Sentence.CONFIRM_TYPE_DELETION.format(encoding.label, name),
@@ -359,9 +436,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             purge()
             schemaSrv.execOnTypesUpdated()
         } catch (e: Exception) {
-            notifications.userError(
-                LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN
-            )
+            notifications.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)
         }
     }
 

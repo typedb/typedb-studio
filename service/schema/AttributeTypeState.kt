@@ -35,12 +35,14 @@ class AttributeTypeState internal constructor(
 
     data class OwnsAttTypeProperties constructor(
         val attributeType: AttributeTypeState,
-        val overriddenType: AttributeTypeState?,
+        override val overriddenType: AttributeTypeState?,
         val extendedType: ThingTypeState<*, *>?,
         val isInherited: Boolean,
         val isKey: Boolean,
         val canBeUndefined: Boolean,
-    )
+    ): OverridingTypeProperties<AttributeTypeState> {
+        override val type: AttributeTypeState get() = attributeType
+    }
 
     data class AttTypeOwnerProperties constructor(
         val ownerType: ThingTypeState<*, *>,

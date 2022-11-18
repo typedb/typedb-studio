@@ -36,6 +36,9 @@ import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.UN
 import com.vaticle.typedb.studio.service.connection.SessionState
 import com.vaticle.typedb.studio.service.page.Navigable
 import com.vaticle.typedb.studio.service.page.PageService
+import com.vaticle.typedb.studio.service.schema.AttributeTypeState.OwnsAttTypeProperties
+import com.vaticle.typedb.studio.service.schema.RoleTypeState.PlaysRoleTypeProperties
+import com.vaticle.typedb.studio.service.schema.RoleTypeState.RelatesRoleTypeProperties
 import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
@@ -74,6 +77,24 @@ class SchemaService constructor(
         }
     }
 
+    class TypePropertiesDialogState<T : ThingTypeState<*, *>, U : TypeState.OverridingTypeProperties<*>>
+        : DialogState() {
+
+        var typeState: T? by mutableStateOf(null); private set
+        var properties: U? by mutableStateOf(null); private set
+
+        internal fun open(typeState: T, properties: U) {
+            isOpen = true
+            this.typeState = typeState
+            this.properties = properties
+        }
+
+        override fun close() {
+            isOpen = false
+            typeState = null
+        }
+    }
+
     override val name: String = TypeQLToken.Type.THING.name.lowercase()
     override val parent: ThingTypeState<*, *>? = null
     override val info: String? = null
@@ -96,7 +117,9 @@ class SchemaService constructor(
     val changeEntitySupertypeDialog = TypeDialogState<EntityTypeState>()
     val changeAttributeSupertypeDialog = TypeDialogState<AttributeTypeState>()
     val changeRelationSupertypeDialog = TypeDialogState<RelationTypeState>()
-    val changeOverriddenRoleTypeDialog = TypeDialogState<RoleTypeState>()
+    val changeOverriddenOwnsAttributeTypeDialog = TypePropertiesDialogState<ThingTypeState<*, *>, OwnsAttTypeProperties>()
+    val changeOverriddenPlaysRoleTypeDialog = TypePropertiesDialogState<ThingTypeState<*, *>, PlaysRoleTypeProperties>()
+    val changeOverriddenRelatesRoleTypeDialog = TypePropertiesDialogState<RelationTypeState, RelatesRoleTypeProperties>()
     val changeAbstractDialog = TypeDialogState<ThingTypeState<*, *>>()
     private var writeTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private var readTx: AtomicReference<TypeDBTransaction?> = AtomicReference()

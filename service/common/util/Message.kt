@@ -95,27 +95,21 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val SESSION_CLOSED_ON_SERVER =
                 Connection(7, "Session was closed on TypeDB Server.")
             val TRANSACTION_CLOSED_ON_SERVER =
-                Connection(8, "Transaction was closed due to: %s.")
+                Connection(8, "Transaction was closed, due to: %s")
             val TRANSACTION_CLOSED_IN_QUERY =
-                Connection(9, "Transaction was closed due to an error in the query.")
+                Connection(9, "Transaction was closed, due to an error in the query.")
             val TRANSACTION_ROLLBACK =
-                Connection(
-                    10,
-                    "Transaction has been rolled back to the opened snapshot, and all uncommitted writes have been deleted."
-                )
+                Connection(10, "Transaction has been rolled back to the opened snapshot, and all uncommitted writes have been deleted.")
             val TRANSACTION_COMMIT_SUCCESSFULLY =
-                Connection(
-                    11,
-                    "Transaction has been successfully committed and closed -- all writes have been persisted."
-                )
+                Connection(11, "Transaction has been successfully committed and closed -- all writes have been persisted.")
             val TRANSACTION_COMMIT_FAILED =
                 Connection(12, "Transaction failed to commit: %s")
             val FAILED_TO_DELETE_DATABASE =
-                Connection(13, "Failed to delete database '%s' due to: %s.")
+                Connection(13, "Failed to delete database '%s', due to: %s")
             val FAILED_TO_CREATE_DATABASE =
-                Connection(14, "Failed to create database '%s' due to: %s.")
+                Connection(14, "Failed to create database '%s', due to: %s")
             val FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE =
-                Connection(15, "Failed to create database '%s' due to duplicate.")
+                Connection(15, "Failed to create database '%s', due to duplicate.")
         }
     }
 
@@ -139,7 +133,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val PATH_NOT_DIRECTORY =
                 Project(6, "Project path '%s' is not a directory.")
             val PROJECT_DATA_DIR_PATH_TAKEN =
-                Project(7, "Project data directory cannot be created due to clashing file: %s.")
+                Project(7, "Project data directory cannot be created, due to clashing file: %s.")
             val FILE_NOT_READABLE =
                 Project(8, "File '%s' is not readable.")
             val FILE_NOT_WRITABLE =
@@ -160,19 +154,19 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE =
                 Project(15, "Failed to move directory to %s, as it already exists.")
             val FAILED_TO_CREATE_DIRECTORY =
-                Project(16, "Failed to create new directory at %s, due to: %s.")
+                Project(16, "Failed to create new directory at %s, due to: %s")
             val FAILED_TO_MOVE_DIRECTORY =
-                Project(17, "Failed to move directory to %s, due to: %s.")
+                Project(17, "Failed to move directory to %s, due to: %s")
             val FAILED_TO_RENAME_DIRECTORY =
-                Project(18, "Failed to rename file to %s, due to: %s.")
+                Project(18, "Failed to rename file to %s, due to: %s")
             val FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE =
                 Project(19, "Failed to create or rename file to %s, as it already exists.")
             val FAILED_TO_CREATE_FILE =
-                Project(20, "Failed to create new file at %s, due to: %s.")
+                Project(20, "Failed to create new file at %s, due to: %s")
             val FAILED_TO_SAVE_FILE =
                 Project(21, "Failed to save file to new location: %s.")
             val FAILED_TO_RENAME_FILE =
-                Project(22, "Failed to rename file to %s, due to: %s.")
+                Project(22, "Failed to rename file to %s, due to: %s")
             val DIRECTORY_HAS_BEEN_MOVED_OUT =
                 Project(23, "Directory has been moved to a location outside of project: %s.")
             val FILE_HAS_BEEN_MOVED_OUT =
@@ -198,29 +192,41 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val FAILED_TO_OPEN_WRITE_TX =
                 Schema(3, "Failed to open write transaction for schema manager.")
             val FAILED_TO_LOAD_TYPE =
-                Schema(4, "Failed to load type properties due to: %s.")
+                Schema(4, "Failed to load type properties, due to: %s")
             val FAILED_TO_DELETE_TYPE =
-                Schema(5, "Failed to delete '%s' type due to: %s.")
+                Schema(5, "Failed to delete '%s' type, due to: %s")
             val FAILED_TO_CREATE_TYPE_DUE_TO_DUPLICATE =
                 Schema(6, "Failed to create %s type with label '%s', as the label is already used.")
             val FAILED_TO_CREATE_TYPE =
-                Schema(7, "Failed to create %s type with label '%s' due to: %s.")
+                Schema(7, "Failed to create %s type with label '%s', due to: %s")
             val FAILED_TO_RENAME_TYPE =
-                Schema(8, "Failed to rename %s type '%s' to '%s' due to: %s.")
+                Schema(8, "Failed to rename %s type '%s' to '%s', due to: %s")
             val FAILED_TO_CHANGE_SUPERTYPE =
-                Schema(9, "Failed to change supertype of %s type '%s' due to: %s.")
+                Schema(9, "Failed to change supertype of %s type '%s', due to: %s")
             val FAILED_TO_CHANGE_ABSTRACT =
-                Schema(10, "Failed to change %s type to abstract / not abstract due to: %s.")
-            val FAILED_TO_DEFINE_OWN_ATTRIBUTE_TYPE =
-                Schema(11, "Failed to define %s type '%s' to own attribute type '%s' due to: %s.")
+                Schema(10, "Failed to change %s type to abstract / not abstract, due to: %s")
+            val FAILED_TO_DEFINE_OWN_ATT_TYPE =
+                Schema(11, "Failed to define %s type '%s' to own attribute type '%s', due to: %s")
             val FAILED_TO_UNDEFINE_OWNS_ATT_TYPE =
-                Schema(12, "Failed to undefine %s type '%s' from owning attribute type '%s' due to: %s.")
+                Schema(12, "Failed to undefine %s type '%s' from owning attribute type '%s', due to: %s")
+            val FAILED_TO_CHANGE_OVERRIDDEN_OWNS_ATT_TYPE =
+                Schema(13, "Failed to change %s type '%s' owning attribute type '%s' to override attribute type '%s', due to: %s")
+            val FAILED_TO_CHANGE_OVERRIDDEN_OWNS_ATT_TYPE_TO_REMOVE =
+                Schema(14, "Failed to change %s type '%s' owning attribute type '%s' to remove overridden attribute type, due to: %s")
             val FAILED_TO_DEFINE_PLAY_ROLE_TYPE =
-                Schema(13, "Failed to define %s type '%s' to play role type '%s' due to: %s.")
+                Schema(15, "Failed to define %s type '%s' to play role type '%s', due to: %s")
             val FAILED_TO_UNDEFINE_PLAYS_ROLE_TYPE =
-                Schema(14, "Failed to undefine %s type '%s' from playing role type '%s' due to: %s.")
+                Schema(16, "Failed to undefine %s type '%s' from playing role type '%s', due to: %s")
+            val FAILED_TO_CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE =
+                Schema(17, "Failed to change %s type '%s' playing role type '%s' to override role type '%s', due to: %s")
+            val FAILED_TO_CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE_TO_REMOVE =
+                Schema(18, "Failed to change %s type '%s' playing role type '%s' to remove overridden role type, due to: %s")
             val FAILED_TO_DEFINE_RELATE_ROLE_TYPE =
-                Schema(15, "Failed to define relation type '%s' to relate role type '%s' due to: %s.")
+                Schema(19, "Failed to define relation type '%s' to relate role type '%s', due to: %s")
+            val FAILED_TO_CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE =
+                Schema(20, "Failed to change relation type '%s' relating role type '%s' to override role type '%s', due to: %s")
+            val FAILED_TO_CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE_TO_REMOVE =
+                Schema(21, "Failed to change relation type '%s' relating role type '%s' to remove overridden role type, due to: %s")
         }
     }
 

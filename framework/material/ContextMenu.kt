@@ -27,8 +27,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -56,9 +57,13 @@ import androidx.compose.ui.input.pointer.consumeDownChange
 import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberCursorPositionProvider
+import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import java.awt.event.MouseEvent
@@ -142,16 +147,23 @@ object ContextMenu {
                 onDismissRequest = { state.isOpen = false },
                 onKeyEvent = { state.onKeyEvent(it) },
             ) {
+                val density = LocalDensity.current.density
+                var width by remember { mutableStateOf(ITEM_WIDTH) }
+                fun mayUpdateWidth(rawWidth: Int) {
+                    val newWidth = toDP(rawWidth, density)
+                    if (newWidth > width) width = newWidth
+                }
                 Column(
                     modifier = Modifier.shadow(POPUP_SHADOW)
                         .background(Theme.studio.surface)
                         .border(Form.BORDER_WIDTH, Theme.studio.border, RectangleShape)
-                        .width(IntrinsicSize.Max).verticalScroll(rememberScrollState())
+                        .width(IntrinsicSize.Max).onSizeChanged { mayUpdateWidth(it.width) }
+                        .verticalScroll(rememberScrollState())
                 ) {
                     val itemsLists = remember { itemListsFn() }
                     assert(itemsLists.isNotEmpty()) { "You should not pass an empty list in to a context menu" }
                     itemsLists.forEach { list ->
-                        list.forEach { item -> Item(item, state) }
+                        list.forEach { item -> Item(state, item, width) }
                         Separator.Horizontal()
                     }
                 }
@@ -161,8 +173,8 @@ object ContextMenu {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun Item(item: Item, state: State) {
-        var modifier = Modifier.sizeIn(minWidth = ITEM_WIDTH, minHeight = ITEM_HEIGHT) // TODO: compute max minWidth
+    private fun Item(state: State, item: Item, minWidth: Dp) {
+        var modifier = Modifier.defaultMinSize(minWidth).height(ITEM_HEIGHT)
         if (item.enabled) modifier = modifier
             .pointerHoverIcon(PointerIconDefaults.Hand)
             .clickable { state.isOpen = false; item.onClick() }
@@ -175,8 +187,8 @@ object ContextMenu {
                 Spacer(Modifier.weight(1f))
                 Spacer(Modifier.width(ITEM_SPACING))
                 Text(value = it, enabled = false)
-                Spacer(Modifier.width(ITEM_PADDING))
             }
+            Spacer(Modifier.width(ITEM_PADDING))
         }
     }
 }

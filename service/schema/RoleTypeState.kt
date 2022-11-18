@@ -34,9 +34,10 @@ class RoleTypeState constructor(
     schemaSrv: SchemaService
 ) : TypeState<RoleType, RoleTypeState>(conceptType, supertype, Encoding.ROLE_TYPE, schemaSrv) {
 
-    interface RoleTypeProperties {
+    interface RoleTypeProperties: OverridingTypeProperties<RoleTypeState> {
         val roleType: RoleTypeState
-        val overriddenType: RoleTypeState?
+        override val type: RoleTypeState get() = roleType
+        override val overriddenType: RoleTypeState?
         val extendedType: ThingTypeState<*, *>?
         val isInherited: Boolean
     }
@@ -119,16 +120,6 @@ class RoleTypeState constructor(
         }
 
         playerTypeProperties = properties
-    }
-
-    fun initiateChangeOverriddenType() = schemaSrv.changeOverriddenRoleTypeDialog.open(this)
-
-    fun tryChangeOverriddenType(
-        overriddenType: RoleTypeState?
-    ) = super.tryChangeSupertype(schemaSrv.changeOverriddenRoleTypeDialog) { tx ->
-        relationType.conceptType.asRemote(tx).let { r ->
-            overriddenType?.let { o -> r.setRelates(name, o.conceptType) } ?: r.setRelates(name)
-        }
     }
 
     override fun toString(): String = "TypeState.Role: $conceptType"

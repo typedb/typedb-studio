@@ -41,8 +41,13 @@ import com.vaticle.typedb.studio.framework.material.Form.TextInput
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Sentence
+import com.vaticle.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_OWNS_ATT_TYPE
+import com.vaticle.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_OWNS_ATT_TYPE_TO_SET
+import com.vaticle.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE_TO_SET
+import com.vaticle.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE_TO_SET
 import com.vaticle.typedb.studio.service.schema.AttributeTypeState
-import com.vaticle.typedb.studio.service.schema.RoleTypeState
 import com.vaticle.typedb.studio.service.schema.SchemaService
 import com.vaticle.typedb.studio.service.schema.ThingTypeState
 import com.vaticle.typedb.studio.service.schema.TypeState
@@ -83,7 +88,9 @@ object TypeDialog {
         if (Service.schema.changeEntitySupertypeDialog.isOpen) ChangeEntitySupertypeDialog()
         if (Service.schema.changeAttributeSupertypeDialog.isOpen) ChangeAttributeSupertypeDialog()
         if (Service.schema.changeRelationSupertypeDialog.isOpen) ChangeRelationSupertypeDialog()
-        if (Service.schema.changeOverriddenRoleTypeDialog.isOpen) ChangeRoleOverriddenTypeDialog()
+        if (Service.schema.changeOverriddenOwnsAttributeTypeDialog.isOpen) ChangeOverriddenOwnsAttributeTypeDialog()
+        if (Service.schema.changeOverriddenPlaysRoleTypeDialog.isOpen) ChangeOverriddenPlaysRoleTypeDialog()
+        if (Service.schema.changeOverriddenRelatesRoleTypeDialog.isOpen) ChangeOverriddenRelatesRoleTypeDialog()
         if (Service.schema.changeAbstractDialog.isOpen) ChangeAbstractDialog()
     }
 
@@ -107,11 +114,7 @@ object TypeDialog {
             rootTypeState = Service.schema.rootAttributeType!!,
             title = Label.CREATE_ATTRIBUTE_TYPE,
             isValidFn = { it.valueType != null }) { supertypeState, label, isAbstract, valType ->
-            supertypeState.tryCreateSubtype(
-                label,
-                isAbstract,
-                valType!!
-            )
+            supertypeState.tryCreateSubtype(label, isAbstract, valType!!)
         }
 
     @Composable
@@ -214,31 +217,86 @@ object TypeDialog {
     }
 
     @Composable
-    private fun ChangeRoleOverriddenTypeDialog() {
-        val dialogState = Service.schema.changeOverriddenRoleTypeDialog
+    private fun ChangeOverriddenOwnsAttributeTypeDialog() {
+        val dialogState = Service.schema.changeOverriddenOwnsAttributeTypeDialog
         val typeState = dialogState.typeState!!
-        val message = Sentence.CHANGE_OVERRIDDEN_TYPE.format(typeState.encoding.label, typeState.scopedName)
-        val selection = typeState.relationType.supertype!!.relatesRoleTypes.filter {
-            it != Service.schema.rootRoleType
+        val props = dialogState.properties!!
+        val attType = props.attributeType
+        val overriddenType = props.overriddenType
+        val title = Label.CHANGE_OVERRIDDEN_OWNED_ATTRIBUTE_TYPE
+        val message = remember {
+            val encoding = typeState.encoding.label
+            overriddenType?.let {
+                CHANGE_OVERRIDDEN_OWNS_ATT_TYPE.format(encoding, typeState.name, attType.name, overriddenType.name)
+            } ?: CHANGE_OVERRIDDEN_OWNS_ATT_TYPE_TO_SET.format(encoding, typeState.name, attType.name)
         }
+        val selection = remember { typeState.overridableOwnedAttributeTypes(attType) }
+        ChangeOverriddenTypeDialog(dialogState, title, message, selection) {
+            typeState.tryChangeOverriddenOwnedAttributeType(attType, it)
+        }
+    }
+
+    @Composable
+    private fun ChangeOverriddenPlaysRoleTypeDialog() {
+        val dialogState = Service.schema.changeOverriddenPlaysRoleTypeDialog
+        val typeState = dialogState.typeState!!
+        val props = dialogState.properties!!
+        val roleType = props.roleType
+        val overriddenType = props.overriddenType
+        val title = Label.CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE
+        val message = remember {
+            val encoding = typeState.encoding.label
+            overriddenType?.let {
+                CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE.format(encoding, typeState.name, roleType.name, overriddenType.name)
+            } ?: CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE_TO_SET.format(encoding, typeState.name, roleType.name)
+        }
+        val selection = remember { typeState.overridablePlayedRoleTypes(roleType) }
+        ChangeOverriddenTypeDialog(dialogState, title, message, selection) {
+            typeState.tryChangeOverriddenPlaysRoleType(roleType, it)
+        }
+    }
+
+    @Composable
+    private fun ChangeOverriddenRelatesRoleTypeDialog() {
+        val dialogState = Service.schema.changeOverriddenRelatesRoleTypeDialog
+        val typeState = dialogState.typeState!!
+        val props = dialogState.properties!!
+        val roleType = props.roleType
+        val title = Label.CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE
+        val message = remember {
+            props.overriddenType?.let {
+                CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE.format(typeState.name, roleType.name, it.name)
+            } ?: CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE_TO_SET.format(typeState.name, roleType.name)
+        }
+        val selection = remember { typeState.overridableRelatedRoleTypes() }
+        ChangeOverriddenTypeDialog(dialogState, title, message, selection) {
+            typeState.tryChangeOverriddenRelatesRoleType(roleType, it)
+        }
+    }
+
+    @Composable
+    private fun <T : ThingTypeState<*, *>, U : TypeState.OverridingTypeProperties<V>, V : TypeState<*, V>>
+            ChangeOverriddenTypeDialog(
+        dialogState: SchemaService.TypePropertiesDialogState<T, U>, title: String, message: String,
+        selection: List<V>, onSubmit: (V?) -> Unit
+    ) {
+        val props = dialogState.properties!!
         val formState = remember {
             object : Form.State() {
-                var overriddenType: RoleTypeState? by mutableStateOf(
-                    if (typeState.supertype != Service.schema.rootRoleType) typeState.supertype else null
-                )
-
+                var overriddenType: V? by mutableStateOf(props.overriddenType)
                 override fun cancel() = dialogState.close()
-                override fun isValid() = true
-                override fun submit() = typeState.tryChangeOverriddenType(overriddenType)
+                override fun isValid() = overriddenType != props.overriddenType
+                override fun submit() {
+                    if (isValid()) onSubmit(overriddenType)
+                }
             }
         }
-        Dialog.Layout(dialogState, Label.CHANGE_OVERRIDDEN_ROLE_TYPE, DIALOG_WIDTH, DIALOG_HEIGHT) {
+        Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
             Submission(state = formState, modifier = Modifier.fillMaxSize()) {
                 Form.Text(message, softWrap = true)
-                OverriddenTypeField(
-                    selected = formState.overriddenType,
-                    values = selection.filter { it != typeState }.sortedBy { it.name }
-                ) { formState.overriddenType = it }
+                OverriddenTypeField(selected = formState.overriddenType, values = selection) {
+                    formState.overriddenType = it
+                }
             }
         }
     }

@@ -447,7 +447,7 @@ object Navigator {
             Scrollbar.Vertical(verScrollAdapter, Modifier.align(Alignment.CenterEnd), state.areaHeight)
             Scrollbar.Horizontal(horScrollAdapter, Modifier.align(Alignment.BottomCenter), state.areaWidth)
         } else Box(modifier, Alignment.Center) {
-            Text(value = "(" + Label.NONE.lowercase() + ")")
+            Text(value = Label.NONE_IN_PARENTHESES.lowercase())
         }
     }
 

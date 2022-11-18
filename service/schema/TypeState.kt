@@ -44,6 +44,11 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(
         ROLE_TYPE(Label.ROLE.lowercase())
     }
 
+    interface OverridingTypeProperties<T : TypeState<*, *>> {
+        val type: T
+        val overriddenType: T?
+    }
+
     companion object {
         private val LOGGER = KotlinLogging.logger {}
     }
@@ -132,24 +137,6 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(
         } catch (e: Exception) {
             notifications.userError(
                 LOGGER, FAILED_TO_RENAME_TYPE, encoding.label, conceptType.label, label, e.message ?: UNKNOWN
-            )
-        }
-    }
-
-    protected fun tryChangeSupertype(
-        dialogState: SchemaService.TypeDialogState<*>, function: (TypeDBTransaction) -> Unit
-    ) = schemaSrv.mayRunWriteTxAsync {
-        try {
-            function(it)
-            dialogState.onSuccess?.invoke()
-            dialogState.close()
-            when (this) {
-                is ThingTypeState -> loadConstraints()
-                is RoleTypeState -> relationType.loadConstraints()
-            }
-        } catch (e: Exception) {
-            notifications.userError(
-                LOGGER, FAILED_TO_CHANGE_SUPERTYPE, encoding.label, conceptType.label, e.message ?: UNKNOWN
             )
         }
     }

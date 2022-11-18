@@ -143,7 +143,7 @@ object Table {
     @Composable
     private fun EmptyRow() {
         Box(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium), Alignment.Center) {
-            Form.Text(value = "(" + Label.NONE.lowercase() + ")")
+            Form.Text(value = Label.NONE_IN_PARENTHESES.lowercase())
         }
     }
 

@@ -874,7 +874,7 @@ object Form {
         val pixelDensity = LocalDensity.current.density
         val state = remember { DropdownState() }
         val placeholderAnnStr = italics(placeholder)
-        val noneAnnStr = italics("(${Label.NONE.lowercase()})")
+        val noneAnnStr = italics(Label.NONE_IN_PARENTHESES.lowercase())
 
         @Composable
         fun MenuItem(i: Int, value: AnnotatedString, color: Color, onClick: () -> Unit) = DropdownMenuItem(

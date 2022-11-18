@@ -307,29 +307,36 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         }
     }
 
-    private fun ownsAttributeTypesContextMenu(prop: AttributeTypeState.OwnsAttTypeProperties) = listOf(
+    private fun ownsAttributeTypesContextMenu(props: AttributeTypeState.OwnsAttTypeProperties) = listOf(
         listOf(
             ContextMenu.Item(
                 label = Label.GO_TO_ATTRIBUTE_TYPE,
                 icon = Icon.GO_TO,
-            ) { prop.attributeType.tryOpen() },
+            ) { props.attributeType.tryOpen() },
             ContextMenu.Item(
                 label = Label.GO_TO_OVERRIDDEN_TYPE,
                 icon = Icon.GO_TO,
-                enabled = prop.overriddenType != null
-            ) { prop.overriddenType?.tryOpen() },
+                enabled = props.overriddenType != null
+            ) { props.overriddenType?.tryOpen() },
             ContextMenu.Item(
                 label = Label.GO_TO_EXTENDED_TYPE,
                 icon = Icon.GO_TO,
-                enabled = prop.extendedType != null
-            ) { prop.extendedType?.tryOpen() }
+                enabled = props.extendedType != null
+            ) { props.extendedType?.tryOpen() }
+        ),
+        listOf(
+            ContextMenu.Item(
+                label = Label.CHANGE_OVERRIDDEN_OWNED_ATTRIBUTE_TYPE,
+                icon = Icon.TYPES,
+                enabled = canWriteSchema
+            ) { typeState.initiateChangeOverriddenOwnsAttributeType(props) }
         ),
         listOf(
             ContextMenu.Item(
                 label = Label.REMOVE,
                 icon = Icon.REMOVE,
-                enabled = canWriteSchema && !prop.isInherited && prop.canBeUndefined
-            ) { typeState.tryUndefineOwnsAttributeType(prop.attributeType) }
+                enabled = canWriteSchema && !props.isInherited && props.canBeUndefined
+            ) { typeState.tryUndefineOwnsAttributeType(props.attributeType) }
         )
     )
 
@@ -343,9 +350,9 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
             ?: listOf()
 
         var overriddenType: AttributeTypeState? by remember { mutableStateOf(null) }
-        val overridableTypeList: List<AttributeTypeState> = attributeType?.supertypes
-            ?.intersect(typeState.supertype!!.ownsAttTypes.toSet())
-            ?.sortedBy { it.name } ?: listOf()
+        val overridableTypeList: List<AttributeTypeState> = attributeType?.let {
+            typeState.overridableOwnedAttributeTypes(it)
+        } ?: listOf()
 
         val isOwnable = canWriteSchema && attributeType != null
         val isOverridable = canWriteSchema && overridableTypeList.isNotEmpty()
@@ -426,6 +433,13 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         ),
         listOf(
             ContextMenu.Item(
+                label = Label.CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE,
+                icon = Icon.TYPES,
+                enabled = canWriteSchema
+            ) { typeState.initiateChangeOverriddenPlaysRoleType(props) }
+        ),
+        listOf(
+            ContextMenu.Item(
                 label = Label.REMOVE,
                 icon = Icon.REMOVE,
                 enabled = canWriteSchema && props.canBeUndefined
@@ -474,9 +488,9 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
             ?: listOf()
 
         var overriddenType: RoleTypeState? by remember { mutableStateOf(null) }
-        val overridableTypeList: List<RoleTypeState> = roleType?.supertypes
-            ?.intersect(typeState.supertype!!.playsRoleTypes.toSet())
-            ?.sortedBy { it.scopedName } ?: listOf()
+        val overridableTypeList: List<RoleTypeState> = roleType?.let {
+            typeState.overridablePlayedRoleTypes(it)
+        } ?: listOf()
 
         val isPlayable = canWriteSchema && roleType != null
         val isOverridable = canWriteSchema && overridableTypeList.isNotEmpty()
@@ -677,10 +691,10 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                     enabled = canWriteSchema && !props.isInherited,
                 ) { props.roleType.initiateRename() },
                 ContextMenu.Item(
-                    label = Label.CHANGE_OVERRIDDEN_TYPE,
+                    label = Label.CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE,
                     icon = Icon.TYPES,
                     enabled = canWriteSchema && !props.isInherited,
-                ) { props.roleType.initiateChangeOverriddenType() },
+                ) { typeState.initiateChangeOverriddenRelatesRoleType(props) },
             ),
             listOf(
                 ContextMenu.Item(
@@ -695,9 +709,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         private fun RelatesRoleTypeAddition() {
             var roleType: String by remember { mutableStateOf("") }
             var overriddenType: RoleTypeState? by remember { mutableStateOf(null) }
-            val overridableTypeList = typeState.supertype?.relatesRoleTypes
-                ?.filter { it != Service.schema.rootRoleType }
-                ?.sortedBy { it.scopedName } ?: listOf()
+            val overridableTypeList = remember { typeState.overridableRelatedRoleTypes() }
 
             val isRelatable = canWriteSchema && roleType.isNotEmpty()
             val isOverridable = canWriteSchema && overridableTypeList.isNotEmpty()
