@@ -167,7 +167,7 @@ internal class InputTarget constructor(
     private fun createCursor(x: Int, y: Int): Cursor {
         val relX = x - textAreaBounds.left + toDP(horScroller.value, density).value
         val relY = y - textAreaBounds.top + verScroller.offset.value
-        val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount - 1)
+        val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount)
         val offsetInLine = Offset(relX * density, (relY - (row * lineHeight.value)) * density)
         val col = rendering.get(row)?.getOffsetForPosition(offsetInLine) ?: 0
         return Cursor(row, col)
@@ -237,7 +237,8 @@ internal class InputTarget constructor(
             else selection!!.end = newCursor
         } else selection = null
         _cursor = newCursor
-        if (mayScroll) mayScrollToCursor()
+        if (mayScroll)
+            mayScrollToCursor()
         publishStatus()
     }
 
