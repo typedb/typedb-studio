@@ -32,26 +32,18 @@ sealed interface WindowContext {
     class Compose(val window: ComposeWindow) : WindowContext {
         override var height: Int
             get() = window.size.height
-            set(value) {
-                value
-            }
+            set(value) { value }
 
         override var width: Int
-            get() = window.size.height
-            set(value) {
-                value
-            }
+            get() = window.size.width
+            set(value) { value }
 
         override var x: Int
             get() = window.x
-            set(value) {
-                value
-            }
+            set(value) { value }
 
         override var y: Int
             get() = window.y
-            set(value) {
-                value
-            }
+            set(value) { value }
     }
 }
