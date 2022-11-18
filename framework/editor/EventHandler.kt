@@ -126,7 +126,7 @@ internal class EventHandler constructor(
             MOVE_CHAR_LEFT -> target.moveCursorPrevByChar() // because we only display left to right
             MOVE_CHAR_RIGHT -> target.moveCursorNextByChar() // because we only display left to right
             MOVE_WORD_LEFT -> target.moveCursorPrevByWord() // because we only display left to right
-            MOVE_WORD_RIGHT -> target.moveCursorNexBytWord() // because we only display left to right
+            MOVE_WORD_RIGHT -> target.moveCursorNextByWord() // because we only display left to right
             MOVE_PARAGRAPH_PREV -> target.moveCursorPrevByParagraph()
             MOVE_PARAGRAPH_NEXT -> target.moveCursorNextByParagraph()
             MOVE_LINE_LEFT -> target.moveCursorToStartOfLine() // because we only display left to right
@@ -142,7 +142,7 @@ internal class EventHandler constructor(
             SELECT_CHAR_LEFT -> target.moveCursorPrevByChar(true) // because we only display left to right
             SELECT_CHAR_RIGHT -> target.moveCursorNextByChar(true) // because we only display left to right
             SELECT_WORD_LEFT -> target.moveCursorPrevByWord(true) // because we only display left to right
-            SELECT_WORD_RIGHT -> target.moveCursorNexBytWord(true) // because we only display left to right
+            SELECT_WORD_RIGHT -> target.moveCursorNextByWord(true) // because we only display left to right
             SELECT_PARAGRAPH_PREV -> target.moveCursorPrevByParagraph(true)
             SELECT_PARAGRAPH_NEXT -> target.moveCursorNextByParagraph(true)
             SELECT_LINE_LEFT -> target.moveCursorToStartOfLine(true) // because we only display left to right
@@ -162,7 +162,7 @@ internal class EventHandler constructor(
             DELETE_CHAR_PREV -> deleteSelectionOr { target.moveCursorPrevByChar(true); processor.deleteSelection() }
             DELETE_CHAR_NEXT -> deleteSelectionOr { target.moveCursorNextByChar(true); processor.deleteSelection() }
             DELETE_WORD_PREV -> deleteSelectionOr { target.moveCursorPrevByWord(true); processor.deleteSelection() }
-            DELETE_WORD_NEXT -> deleteSelectionOr { target.moveCursorNexBytWord(true); processor.deleteSelection() }
+            DELETE_WORD_NEXT -> deleteSelectionOr { target.moveCursorNextByWord(true); processor.deleteSelection() }
             DELETE_LINE_START -> deleteSelectionOr { target.moveCursorToStartOfLine(true); processor.deleteSelection() }
             DELETE_LINE_END -> deleteSelectionOr { target.moveCursorToEndOfLine(true); processor.deleteSelection() }
             TOGGLE_COMMENT -> processor.toggleComment()

@@ -166,7 +166,7 @@ internal class InputTarget constructor(
     private fun createCursor(x: Int, y: Int): Cursor {
         val relX = x - textAreaBounds.left + toDP(horScroller.value, density).value
         val relY = y - textAreaBounds.top + verScroller.offset.value
-        val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount)
+        val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount - 1)
         val offsetInLine = Offset(relX * density, (relY - (row * lineHeight.value)) * density)
         val col = rendering.get(row)?.getOffsetForPosition(offsetInLine) ?: 0
         return Cursor(row, col)
@@ -248,18 +248,20 @@ internal class InputTarget constructor(
     internal fun clearStatus() = Service.status.clear(TEXT_CURSOR_POSITION)
 
     private fun mayScrollToCursor() {
-        fun mayScrollToCoordinate(x: Int, y: Int, padding: Int = 0) {
-            val left = textAreaBounds.left.toInt() + padding
-            val right = textAreaBounds.right.toInt() - padding
-            val top = textAreaBounds.top.toInt() + padding
-            val bottom = textAreaBounds.bottom.toInt() - padding
+        fun mayScrollToCoordinate(x: Int, y: Int) {
+            val left = textAreaBounds.left.toInt()
+            val right = textAreaBounds.right.toInt()
+            val top = textAreaBounds.top.toInt()
+            val bottom = textAreaBounds.bottom.toInt()
             if (x < left) coroutines.launch {
                 horScroller.scrollTo(horScroller.value + ((x - left) * density).toInt())
             } else if (x > right) coroutines.launch {
                 horScroller.scrollTo(horScroller.value + ((x - right) * density).toInt())
             }
-            if (y < top) verScroller.updateOffsetBy((y - top).dp)
-            else if (y > bottom) verScroller.updateOffsetBy((y - bottom).dp)
+            if (y <= top)
+                verScroller.updateOffsetBy((y - top).dp)
+            else if (y >= bottom)
+                verScroller.updateOffsetBy((y - bottom).dp + lineHeight)
         }
 
         val cursorRect = rendering.get(cursor.row)?.let {
@@ -330,7 +332,7 @@ internal class InputTarget constructor(
         return if (newCol < col) newCol else getPrevWordOffset(textLayout, col - 1)
     }
 
-    internal fun moveCursorNexBytWord(isSelecting: Boolean = false) {
+    internal fun moveCursorNextByWord(isSelecting: Boolean = false) {
         val newCursor: Cursor = rendering.get(cursor.row)?.let {
             Cursor(cursor.row, getNextWordOffset(it, cursor.col))
         } ?: Cursor(0, 0)
