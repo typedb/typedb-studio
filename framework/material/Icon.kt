@@ -106,7 +106,6 @@ enum class Icon(private val shape: Shape) {
     val unicode: String = shape.unicode
 
     companion object {
-        private val ICON_DEFAULT_SIZE: TextUnit = 12.sp
         private val FONT_FILE = "resources/icons/fontawesome/font-awesome-6-pro-solid-900.otf"
         private val FONT_AWESOME = FontFamily(Font(FONT_FILE))
 
@@ -136,7 +135,7 @@ enum class Icon(private val shape: Shape) {
 
     enum class Shape(
         hexcode: UShort,
-        val size: TextUnit = ICON_DEFAULT_SIZE,
+        val size: TextUnit = Shape.DEFAULT_SIZE.sp,
         val offset: Offset = Offset(0.dp, 0.dp),
         val rotate: Float = 0f,
         val scale: Scale = Scale(1f, 1f)
@@ -183,7 +182,7 @@ enum class Icon(private val shape: Shape) {
         EYE(0xf06eu),
         FILE_PLUS(0xf319u),
         FILE_WITH_LINES(0xf15cu),
-        FLOPPY_DISK(0xf0c7u, 13.sp),
+        FLOPPY_DISK(0xf0c7u, size = 13.sp),
         FOLDER_ARROW_DOWN(0xe053u),
         FOLDER_ARROW_UP(0xe054u),
         FOLDER_BLANK(0xe185u),
@@ -208,9 +207,9 @@ enum class Icon(private val shape: Shape) {
         SCISSORS(0xf0c4u),
         SERVER(0xf233u),
         SITEMAP(0xf0e8u),
-        SQUARE_BOLT(0xe265u, 13.sp),
+        SQUARE_BOLT(0xe265u, size = 13.sp),
         SQUARE_PLUS(0xf0feu),
-        STOP(0xf04du, 13.sp),
+        STOP(0xf04du, size = 13.sp),
         TABLE_CELLS_LARGE(0xf009u),
         THUMBTACK(0xf08du),
         TIMER(0xe29eu),
@@ -218,8 +217,12 @@ enum class Icon(private val shape: Shape) {
         USER(0xf007u),
         USERS(0xf0c0u),
         USER_GROUP(0xf500u),
-        XMARK(0xf00du, 13.sp);
+        XMARK(0xf00du, size = 13.sp);
 
         val unicode: String = Char(hexcode).toString()
+
+        companion object {
+            private const val DEFAULT_SIZE = 12
+        }
     }
 }
