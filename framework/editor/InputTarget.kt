@@ -166,7 +166,7 @@ internal class InputTarget constructor(
     private fun createCursor(x: Int, y: Int): Cursor {
         val relX = x - textAreaBounds.left + toDP(horScroller.value, density).value
         val relY = y - textAreaBounds.top + verScroller.offset.value
-        val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount - 1)
+        val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount)
         val offsetInLine = Offset(relX * density, (relY - (row * lineHeight.value)) * density)
         val col = rendering.get(row)?.getOffsetForPosition(offsetInLine) ?: 0
         return Cursor(row, col)
@@ -236,7 +236,8 @@ internal class InputTarget constructor(
             else selection!!.end = newCursor
         } else selection = null
         _cursor = newCursor
-        if (mayScroll) mayScrollToCursor()
+        if (mayScroll)
+            mayScrollToCursor()
         publishStatus()
     }
 
@@ -267,7 +268,7 @@ internal class InputTarget constructor(
         } ?: Rect(0f, 0f, 0f, 0f)
         val x = textAreaBounds.left + toDP(cursorRect.left - horScroller.value, density).value
         val y = textAreaBounds.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
-        mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight.value.toInt() * 2)
+        mayScrollToCoordinate(x.toInt(), y.toInt())
     }
 
     internal fun moveCursorPrevByChar(isSelecting: Boolean = false) {
@@ -426,11 +427,12 @@ internal class InputTarget constructor(
         }
     }
 
-    private fun selectWord() = updateSelection(selectionOfWord(cursor))
+    private fun selectWord() = updateSelection(selectionOfWord(cursor), mayScroll = false)
+    private fun selectLineAndBreak() = updateSelection(selectionOfLineAndBreak(cursor))
 
     internal fun maySelectLineAndBreak(x: Int) {
         if (x > lineNumberBorder) {
-            updateSelection(selectionOfLineAndBreak(cursor))
+            selectLineAndBreak()
             selectionDragStart = selection
             mayDragSelectByLine = true
         }

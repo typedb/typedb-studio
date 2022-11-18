@@ -46,10 +46,10 @@ import java.util.concurrent.LinkedBlockingQueue
 import kotlin.math.floor
 
 /**
- * LazyLines is a custom variant of of Compose' native
+ * LazyLines is a custom variant of Compose' native
  * [androidx.compose.foundation.lazy.LazyColumn]. This library is different from
  * that of Compose' in that it is much simpler and lightweight: every entry in
- * the column has the same, fixed height, and uses the same lambda to produced a
+ * the column has the same, fixed height, and uses the same lambda to produce a
  * [androidx.compose.runtime.Composable]
  */
 internal object LazyLines {
