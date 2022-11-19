@@ -33,14 +33,14 @@ class AttributeTypeState internal constructor(
     schemaSrv: SchemaService
 ) : ThingTypeState<AttributeType, AttributeTypeState>(conceptType, supertype, Encoding.ATTRIBUTE_TYPE, schemaSrv) {
 
-    data class OwnsAttTypeProperties constructor(
+    data class OwnedAttTypeProperties constructor(
         val attributeType: AttributeTypeState,
         override val overriddenType: AttributeTypeState?,
         val extendedType: ThingTypeState<*, *>?,
         val isInherited: Boolean,
         val isKey: Boolean,
         val canBeUndefined: Boolean,
-    ): OverridingTypeProperties<AttributeTypeState> {
+    ) : OverridingTypeProperties<AttributeTypeState> {
         override val type: AttributeTypeState get() = attributeType
     }
 

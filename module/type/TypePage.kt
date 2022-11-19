@@ -271,21 +271,21 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     }
 
     @Composable
-    protected fun OwnsAttributeTypesSection() {
+    protected fun OwnedAttributeTypesSection() {
         SectionRow { Form.Text(value = Label.OWNS) }
-        OwnsAttributeTypesTable()
-        OwnsAttributeTypeAddition()
+        OwnedAttributeTypesTable()
+        DefineOwnsAttributeType()
     }
 
     @Composable
-    private fun OwnsAttributeTypesTable() {
-        val tableHeight = TABLE_ROW_HEIGHT * (typeState.ownsAttTypes.size + 1).coerceAtLeast(2)
+    private fun OwnedAttributeTypesTable() {
+        val tableHeight = TABLE_ROW_HEIGHT * (typeState.ownedAttTypes.size + 1).coerceAtLeast(2)
         SectionRow {
             Table.Layout(
-                items = typeState.ownsAttTypeProperties.sortedBy { it.attributeType.name },
+                items = typeState.ownedAttTypeProperties.sortedBy { it.attributeType.name },
                 modifier = Modifier.weight(1f).height(tableHeight).border(1.dp, Theme.studio.border),
                 rowHeight = TABLE_ROW_HEIGHT,
-                contextMenuFn = { ownsAttributeTypesContextMenu(it) },
+                contextMenuFn = { ownedAttributeTypesContextMenu(it) },
                 columns = listOf(
                     Table.Column(header = Label.ATTRIBUTE_TYPE, contentAlignment = Alignment.CenterStart) { props ->
                         TypeTableCellText(props.attributeType) { props.attributeType.tryOpen() }
@@ -307,7 +307,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         }
     }
 
-    private fun ownsAttributeTypesContextMenu(props: AttributeTypeState.OwnsAttTypeProperties) = listOf(
+    private fun ownedAttributeTypesContextMenu(props: AttributeTypeState.OwnedAttTypeProperties) = listOf(
         listOf(
             ContextMenu.Item(
                 label = Label.GO_TO_ATTRIBUTE_TYPE,
@@ -329,21 +329,21 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                 label = Label.CHANGE_OVERRIDDEN_OWNED_ATTRIBUTE_TYPE,
                 icon = Icon.TYPES,
                 enabled = canWriteSchema
-            ) { typeState.initiateChangeOverriddenOwnsAttributeType(props) }
+            ) { typeState.initiateChangeOverriddenOwnedAttributeType(props) }
         ),
         listOf(
             ContextMenu.Item(
                 label = Label.REMOVE,
                 icon = Icon.REMOVE,
                 enabled = canWriteSchema && !props.isInherited && props.canBeUndefined
-            ) { typeState.tryUndefineOwnsAttributeType(props.attributeType) }
+            ) { typeState.tryUndefineOwnedAttributeType(props.attributeType) }
         )
     )
 
     @Composable
-    private fun OwnsAttributeTypeAddition() {
+    private fun DefineOwnsAttributeType() {
         var attributeType: AttributeTypeState? by remember { mutableStateOf(null) }
-        val definedAttrTypes = (typeState.ownsAttTypes + typeState.supertypes.flatMap { it.ownsAttTypes }).toSet()
+        val definedAttrTypes = (typeState.ownedAttTypes + typeState.supertypes.flatMap { it.ownedAttTypes }).toSet()
         val attributeTypeList = Service.schema.rootAttributeType?.subtypes
             ?.filter { !definedAttrTypes.contains(it) }
             ?.sortedBy { it.name }
@@ -408,13 +408,13 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     }
 
     @Composable
-    protected fun PlaysRoleTypesSection() {
+    protected fun PlayedRoleTypesSection() {
         SectionRow { Form.Text(value = Label.PLAYS) }
-        RoleTypesTable(typeState.playsRoleTypeProperties) { playsRoleTypesContextMenu(it) }
-        PlaysRoleTypeAddition()
+        RoleTypesTable(typeState.playedRoleTypeProperties) { playedRoleTypesContextMenu(it) }
+        DefinePlaysRoleType()
     }
 
-    private fun playsRoleTypesContextMenu(props: RoleTypeState.PlaysRoleTypeProperties) = listOf(
+    private fun playedRoleTypesContextMenu(props: RoleTypeState.PlayedRoleTypeProperties) = listOf(
         listOf(
             ContextMenu.Item(
                 label = Label.GO_TO_ROLE_TYPE,
@@ -436,14 +436,14 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                 label = Label.CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE,
                 icon = Icon.TYPES,
                 enabled = canWriteSchema
-            ) { typeState.initiateChangeOverriddenPlaysRoleType(props) }
+            ) { typeState.initiateChangeOverriddenPlayedRoleType(props) }
         ),
         listOf(
             ContextMenu.Item(
                 label = Label.REMOVE,
                 icon = Icon.REMOVE,
                 enabled = canWriteSchema && props.canBeUndefined
-            ) { typeState.tryUndefinePlaysRoleType(props.roleType) }
+            ) { typeState.tryUndefinePlayedRoleType(props.roleType) }
         )
     )
 
@@ -478,11 +478,11 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     }
 
     @Composable
-    private fun PlaysRoleTypeAddition() {
+    private fun DefinePlaysRoleType() {
         var roleType: RoleTypeState? by remember { mutableStateOf(null) }
-        val definedRoleTypes = (typeState.playsRoleTypes + typeState.supertypes.flatMap { it.playsRoleTypes }).toSet()
+        val definedRoleTypes = (typeState.playedRoleTypes + typeState.supertypes.flatMap { it.playedRoleTypes }).toSet()
         val roleTypeList = Service.schema.rootRelationType?.subtypes
-            ?.flatMap { it.relatesRoleTypes }
+            ?.flatMap { it.relatedRoleTypes }
             ?.filter { !definedRoleTypes.contains(it) }
             ?.sortedBy { it.scopedName }
             ?: listOf()
@@ -502,7 +502,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                     selected = roleType,
                     displayFn = { TypeLabelWithDetails(it.conceptType, it.isAbstract) },
                     onSelection = { roleType = it; it?.loadSupertypesAsync() },
-                    onExpand = { Service.schema.rootRelationType?.loadRelatesRoleTypesRecursivelyAsync() },
+                    onExpand = { Service.schema.rootRelationType?.loadRelatedRoleTypesRecursivelyAsync() },
                     placeholder = Label.ROLE_TYPE.hyphenate().lowercase(),
                     modifier = Modifier.fillMaxSize(),
                     allowNone = true,
@@ -634,9 +634,9 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
 
         @Composable
         override fun MainSections() {
-            OwnsAttributeTypesSection()
+            OwnedAttributeTypesSection()
             Separator()
-            PlaysRoleTypesSection()
+            PlayedRoleTypesSection()
             Separator()
             SubtypesSection()
             Separator()
@@ -644,29 +644,29 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     }
 
     class Relation constructor(typeState: RelationTypeState) : TypePage<RelationType, RelationTypeState>(
-        typeState = typeState, showAdvanced = typeState.playsRoleTypes.isNotEmpty()
+        typeState = typeState, showAdvanced = typeState.playedRoleTypes.isNotEmpty()
     ) {
 
         @Composable
         override fun MainSections() {
-            RelatesRoleTypesSection()
+            RelatedRoleTypesSection()
             Separator()
-            OwnsAttributeTypesSection()
+            OwnedAttributeTypesSection()
             Separator()
             SubtypesSection()
             AdvancedSections {
-                PlaysRoleTypesSection()
+                PlayedRoleTypesSection()
             }
         }
 
         @Composable
-        private fun RelatesRoleTypesSection() {
+        private fun RelatedRoleTypesSection() {
             SectionRow { Form.Text(value = Label.RELATES) }
-            RoleTypesTable(typeState.relatesRoleTypeProperties) { relatesRoleTypesContextMenu(it) }
-            RelatesRoleTypeAddition()
+            RoleTypesTable(typeState.relatedRoleTypeProperties) { relatedRoleTypesContextMenu(it) }
+            DefineRelatesRoleType()
         }
 
-        private fun relatesRoleTypesContextMenu(props: RoleTypeState.RelatesRoleTypeProperties) = listOf(
+        private fun relatedRoleTypesContextMenu(props: RoleTypeState.RelatedRoleTypeProperties) = listOf(
             listOf(
                 ContextMenu.Item(
                     label = Label.GO_TO_ROLE_TYPE,
@@ -694,7 +694,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                     label = Label.CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE,
                     icon = Icon.TYPES,
                     enabled = canWriteSchema && !props.isInherited,
-                ) { typeState.initiateChangeOverriddenRelatesRoleType(props) },
+                ) { typeState.initiateChangeOverriddenRelatedRoleType(props) },
             ),
             listOf(
                 ContextMenu.Item(
@@ -706,7 +706,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         )
 
         @Composable
-        private fun RelatesRoleTypeAddition() {
+        private fun DefineRelatesRoleType() {
             var roleType: String by remember { mutableStateOf("") }
             var overriddenType: RoleTypeState? by remember { mutableStateOf(null) }
             val overridableTypeList = typeState.overridableRelatedRoleTypes()
@@ -756,7 +756,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
 
     class Attribute constructor(typeState: AttributeTypeState) : TypePage<AttributeType, AttributeTypeState>(
         typeState = typeState,
-        showAdvanced = typeState.ownsAttTypes.isNotEmpty() || typeState.playsRoleTypes.isNotEmpty()
+        showAdvanced = typeState.ownedAttTypes.isNotEmpty() || typeState.playedRoleTypes.isNotEmpty()
     ) {
 
         @Composable

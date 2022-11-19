@@ -36,9 +36,9 @@ import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.UN
 import com.vaticle.typedb.studio.service.connection.SessionState
 import com.vaticle.typedb.studio.service.page.Navigable
 import com.vaticle.typedb.studio.service.page.PageService
-import com.vaticle.typedb.studio.service.schema.AttributeTypeState.OwnsAttTypeProperties
-import com.vaticle.typedb.studio.service.schema.RoleTypeState.PlaysRoleTypeProperties
-import com.vaticle.typedb.studio.service.schema.RoleTypeState.RelatesRoleTypeProperties
+import com.vaticle.typedb.studio.service.schema.AttributeTypeState.OwnedAttTypeProperties
+import com.vaticle.typedb.studio.service.schema.RoleTypeState.PlayedRoleTypeProperties
+import com.vaticle.typedb.studio.service.schema.RoleTypeState.RelatedRoleTypeProperties
 import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
@@ -117,9 +117,12 @@ class SchemaService constructor(
     val changeEntitySupertypeDialog = TypeDialogState<EntityTypeState>()
     val changeAttributeSupertypeDialog = TypeDialogState<AttributeTypeState>()
     val changeRelationSupertypeDialog = TypeDialogState<RelationTypeState>()
-    val changeOverriddenOwnsAttributeTypeDialog = TypePropertiesDialogState<ThingTypeState<*, *>, OwnsAttTypeProperties>()
-    val changeOverriddenPlaysRoleTypeDialog = TypePropertiesDialogState<ThingTypeState<*, *>, PlaysRoleTypeProperties>()
-    val changeOverriddenRelatesRoleTypeDialog = TypePropertiesDialogState<RelationTypeState, RelatesRoleTypeProperties>()
+    val changeOverriddenOwnedAttributeTypeDialog =
+        TypePropertiesDialogState<ThingTypeState<*, *>, OwnedAttTypeProperties>()
+    val changeOverriddenPlayedRoleTypeDialog =
+        TypePropertiesDialogState<ThingTypeState<*, *>, PlayedRoleTypeProperties>()
+    val changeOverriddenRelatedRoleTypeDialog =
+        TypePropertiesDialogState<RelationTypeState, RelatedRoleTypeProperties>()
     val changeAbstractDialog = TypeDialogState<ThingTypeState<*, *>>()
     private var writeTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
     private var readTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
