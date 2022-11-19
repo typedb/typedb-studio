@@ -27,10 +27,10 @@ import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_RELATE_ROLE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE_TO_REMOVE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_RELATES_ROLE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE_TO_REMOVE
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import kotlin.streams.toList
 import mu.KotlinLogging
@@ -46,10 +46,10 @@ class RelationTypeState internal constructor(
     }
 
     override val parent: RelationTypeState? get() = supertype
-    var relatesRoleTypeProperties: List<RoleTypeState.RelatesRoleTypeProperties> by mutableStateOf(emptyList())
-    val relatesRoleTypes: List<RoleTypeState> get() = relatesRoleTypeProperties.map { it.roleType }
-    val relatesRoleTypesExplicit: List<RoleTypeState>
-        get() = relatesRoleTypeProperties.filter { !it.isInherited }.map { it.roleType }
+    var relatedRoleTypeProperties: List<RoleTypeState.RelatedRoleTypeProperties> by mutableStateOf(emptyList())
+    val relatedRoleTypes: List<RoleTypeState> get() = relatedRoleTypeProperties.map { it.roleType }
+    val relatedRoleTypesExplicit: List<RoleTypeState>
+        get() = relatedRoleTypeProperties.filter { !it.isInherited }.map { it.roleType }
 
     override fun isSameEncoding(conceptType: Type) = conceptType.isRelationType
     override fun asSameEncoding(conceptType: Type) = conceptType.asRelationType()!!
@@ -57,41 +57,41 @@ class RelationTypeState internal constructor(
 
     override fun updateConceptType(label: String) {
         super.updateConceptType(label)
-        relatesRoleTypesExplicit.forEach { it.updateConceptType() }
+        relatedRoleTypesExplicit.forEach { it.updateConceptType() }
     }
 
     override fun requestSubtypesExplicit() = schemaSrv.mayRunReadTx { tx ->
         conceptType.asRemote(tx).subtypesExplicit.toList()
     }
 
-    fun overridableRelatedRoleTypes() = supertype?.relatesRoleTypes
+    fun overridableRelatedRoleTypes() = supertype?.relatedRoleTypes
         ?.filter { it != schemaSrv.rootRoleType }
         ?.sortedBy { it.scopedName } ?: listOf()
 
     override fun loadInheritables() {
         super.loadInheritables()
-        loadRelatesRoleTypes()
-        relatesRoleTypes.forEach { it.loadPlayerTypes() }
+        loadRelatedRoleTypes()
+        relatedRoleTypes.forEach { it.loadPlayerTypes() }
     }
 
     override fun loadOtherConstraints() {
         super.loadOtherConstraints()
-        loadRelatesRoleTypes()
-        relatesRoleTypes.forEach { it.loadSupertypes() }
+        loadRelatedRoleTypes()
+        relatedRoleTypes.forEach { it.loadSupertypes() }
     }
 
-    fun loadRelatesRoleTypesRecursivelyAsync() = coroutines.launchAndHandle(notifications, LOGGER) {
-        loadRelatesRoleTypesRecursively()
+    fun loadRelatedRoleTypesRecursivelyAsync() = coroutines.launchAndHandle(notifications, LOGGER) {
+        loadRelatedRoleTypesRecursively()
     }
 
-    private fun loadRelatesRoleTypesRecursively() {
-        loadRelatesRoleTypes()
-        subtypesExplicit.forEach { it.loadRelatesRoleTypesRecursively() }
+    private fun loadRelatedRoleTypesRecursively() {
+        loadRelatedRoleTypes()
+        subtypesExplicit.forEach { it.loadRelatedRoleTypesRecursively() }
     }
 
-    private fun loadRelatesRoleTypes() {
+    private fun loadRelatedRoleTypes() {
         val loaded = mutableSetOf<RoleType>()
-        val properties = mutableListOf<RoleTypeState.RelatesRoleTypeProperties>()
+        val properties = mutableListOf<RoleTypeState.RelatedRoleTypeProperties>()
 
         fun load(relTypeTx: RelationType.Remote, roleTypeConcept: RoleType, isInherited: Boolean) {
             loaded.add(roleTypeConcept)
@@ -104,7 +104,7 @@ class RelationTypeState internal constructor(
                     else -> overriddenType
                 }?.relationType
                 properties.add(
-                    RoleTypeState.RelatesRoleTypeProperties(roleType, overriddenType, extendedType, isInherited)
+                    RoleTypeState.RelatedRoleTypeProperties(roleType, overriddenType, extendedType, isInherited)
                 )
             }
         }
@@ -114,7 +114,7 @@ class RelationTypeState internal constructor(
             relTypeTx.relatesExplicit.forEach { load(relTypeTx, it, false) }
             relTypeTx.relates.filter { !loaded.contains(it) && !it.isRoot }.forEach { load(relTypeTx, it, true) }
         }
-        relatesRoleTypeProperties = properties
+        relatedRoleTypeProperties = properties
     }
 
     override fun initiateCreateSubtype(onSuccess: () -> Unit) =
@@ -149,18 +149,18 @@ class RelationTypeState internal constructor(
             overriddenType?.let {
                 conceptType.asRemote(tx).setRelates(roleType, it.name)
             } ?: conceptType.asRemote(tx).setRelates(roleType)
-            loadRelatesRoleTypes()
+            loadRelatedRoleTypes()
             onSuccess?.let { it() }
         } catch (e: Exception) {
-            notifications.userError(LOGGER, FAILED_TO_DEFINE_RELATE_ROLE_TYPE, name, roleType, e.message ?: UNKNOWN)
+            notifications.userError(LOGGER, FAILED_TO_DEFINE_RELATES_ROLE_TYPE, name, roleType, e.message ?: UNKNOWN)
         }
     }
 
-    fun initiateChangeOverriddenRelatesRoleType(
-        props: RoleTypeState.RelatesRoleTypeProperties
-    ) = schemaSrv.changeOverriddenRelatesRoleTypeDialog.open(this, props)
+    fun initiateChangeOverriddenRelatedRoleType(
+        props: RoleTypeState.RelatedRoleTypeProperties
+    ) = schemaSrv.changeOverriddenRelatedRoleTypeDialog.open(this, props)
 
-    fun tryChangeOverriddenRelatesRoleType(
+    fun tryChangeOverriddenRelatedRoleType(
         roleType: RoleTypeState, overriddenType: RoleTypeState?
     ) = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
@@ -168,15 +168,20 @@ class RelationTypeState internal constructor(
                 overriddenType?.let { o -> r.setRelates(roleType.name, o.conceptType) }
                     ?: r.setRelates(roleType.name)
             }
-            loadRelatesRoleTypes()
-            schemaSrv.changeOverriddenRelatesRoleTypeDialog.close()
+            loadRelatedRoleTypes()
+            schemaSrv.changeOverriddenRelatedRoleTypeDialog.close()
         } catch (e: Exception) {
             overriddenType?.let {
                 notifications.userError(
-                    LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE,
+                    LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE,
                     name, roleType.name, overriddenType.name
                 )
-            } ?: notifications.userError(LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE_TO_REMOVE, name, roleType.name)
+            } ?: notifications.userError(
+                LOGGER,
+                FAILED_TO_CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE_TO_REMOVE,
+                name,
+                roleType.name
+            )
         }
     }
 
@@ -197,7 +202,7 @@ class RelationTypeState internal constructor(
 
     override fun purge() {
         super.purge()
-        relatesRoleTypesExplicit.forEach { it.purge() }
+        relatedRoleTypesExplicit.forEach { it.purge() }
     }
 
     override fun toString(): String = "TypeState.Relation: $conceptType"

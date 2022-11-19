@@ -31,18 +31,18 @@ import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_ABSTRACT
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_OWNS_ATT_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_OWNS_ATT_TYPE_TO_REMOVE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE_TO_REMOVE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_OWNED_ATT_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_OWNED_ATT_TYPE_TO_REMOVE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE_TO_REMOVE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_SUPERTYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CREATE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_OWN_ATT_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_PLAY_ROLE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_LOAD_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_UNDEFINE_OWNS_ATT_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_UNDEFINE_PLAYS_ROLE_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_UNDEFINE_OWNED_ATT_TYPE
+import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_UNDEFINE_PLAYED_ROLE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.page.Navigable
 import com.vaticle.typedb.studio.service.page.Pageable
@@ -77,10 +77,10 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    var ownsAttTypeProperties: List<AttributeTypeState.OwnsAttTypeProperties> by mutableStateOf(emptyList())
-    val ownsAttTypes: List<AttributeTypeState> get() = ownsAttTypeProperties.map { it.attributeType }
-    var playsRoleTypeProperties: List<RoleTypeState.PlaysRoleTypeProperties> by mutableStateOf(emptyList())
-    val playsRoleTypes: List<RoleTypeState> get() = playsRoleTypeProperties.map { it.roleType }
+    var ownedAttTypeProperties: List<AttributeTypeState.OwnedAttTypeProperties> by mutableStateOf(emptyList())
+    val ownedAttTypes: List<AttributeTypeState> get() = ownedAttTypeProperties.map { it.attributeType }
+    var playedRoleTypeProperties: List<RoleTypeState.PlayedRoleTypeProperties> by mutableStateOf(emptyList())
+    val playedRoleTypes: List<RoleTypeState> get() = playedRoleTypeProperties.map { it.roleType }
 
     private var hasInstancesExplicit: Boolean by mutableStateOf(false)
     override val canBeDeleted get() = !hasSubtypes && !hasInstancesExplicit
@@ -142,11 +142,11 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     }
 
     fun overridableOwnedAttributeTypes(attributeType: AttributeTypeState) = attributeType.supertypes
-        .intersect(supertype!!.ownsAttTypes.toSet())
+        .intersect(supertype!!.ownedAttTypes.toSet())
         .sortedBy { it.name }
 
     fun overridablePlayedRoleTypes(roleType: RoleTypeState) = roleType.supertypes
-        .intersect(supertype!!.playsRoleTypes.toSet())
+        .intersect(supertype!!.playedRoleTypes.toSet())
         .sortedBy { it.scopedName }
 
     fun exportSyntaxAsync(onSuccess: (String) -> Unit) = coroutines.launchAndHandle(notifications, LOGGER) {
@@ -177,23 +177,23 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     }
 
     override fun loadInheritables() {
-        loadOwnsAttributeTypes()
-        loadPlaysRoleTypes()
+        loadOwnedAttributeTypes()
+        loadPlayedRoleTypes()
     }
 
     open fun loadOtherConstraints() {
         loadHasInstancesExplicit()
-        loadOwnsAttributeTypes()
-        loadPlaysRoleTypes()
+        loadOwnedAttributeTypes()
+        loadPlayedRoleTypes()
     }
 
     private fun loadHasInstancesExplicit() = schemaSrv.mayRunReadTx { tx ->
         hasInstancesExplicit = conceptType.asRemote(tx).instancesExplicit.findAny().isPresent
     }
 
-    private fun loadOwnsAttributeTypes() {
+    private fun loadOwnedAttributeTypes() {
         val loaded = mutableSetOf<AttributeType>()
-        val properties = mutableListOf<AttributeTypeState.OwnsAttTypeProperties>()
+        val properties = mutableListOf<AttributeTypeState.OwnedAttTypeProperties>()
 
         fun load(
             tx: TypeDBTransaction, typeTx: ThingType.Remote,
@@ -212,7 +212,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                     TypeQL.match(`var`("x").isa(typeTx.label.name()).has(attType.name, `var`("y")))
                 ).findFirst().isPresent
                 properties.add(
-                    AttributeTypeState.OwnsAttTypeProperties(
+                    AttributeTypeState.OwnedAttTypeProperties(
                         attType, overriddenType, extendedType, isInherited, isKey, canBeUndefined
                     )
                 )
@@ -234,12 +234,12 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                 load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = true)
             }
         }
-        ownsAttTypeProperties = properties
+        ownedAttTypeProperties = properties
     }
 
-    private fun loadPlaysRoleTypes() {
+    private fun loadPlayedRoleTypes() {
         val loaded = mutableSetOf<RoleType>()
-        val properties = mutableListOf<RoleTypeState.PlaysRoleTypeProperties>()
+        val properties = mutableListOf<RoleTypeState.PlayedRoleTypeProperties>()
 
         fun load(tx: TypeDBTransaction, typeTx: ThingType.Remote, roleTypeConcept: RoleType, isInherited: Boolean) {
             loaded.add(roleTypeConcept)
@@ -259,7 +259,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                     )
                 ).findFirst().isPresent
                 properties.add(
-                    RoleTypeState.PlaysRoleTypeProperties(
+                    RoleTypeState.PlayedRoleTypeProperties(
                         roleType, overriddenType, extendedType, isInherited, canBeUndefined
                     )
                 )
@@ -271,7 +271,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             typeTx.playsExplicit.forEach { load(tx, typeTx, it, false) }
             typeTx.plays.filter { !loaded.contains(it) }.forEach { load(tx, typeTx, it, true) }
         }
-        playsRoleTypeProperties = properties
+        playedRoleTypeProperties = properties
     }
 
     protected fun tryCreateSubtype(
@@ -325,7 +325,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             overriddenType?.let {
                 conceptType.asRemote(tx).setOwns(attributeType.conceptType, overriddenType.conceptType, isKey)
             } ?: conceptType.asRemote(tx).setOwns(attributeType.conceptType, isKey)
-            loadOwnsAttributeTypes()
+            loadOwnedAttributeTypes()
             onSuccess()
         } catch (e: Exception) {
             notifications.userError(
@@ -335,20 +335,20 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         }
     }
 
-    fun tryUndefineOwnsAttributeType(attType: AttributeTypeState) = schemaSrv.mayRunWriteTxAsync { tx ->
+    fun tryUndefineOwnedAttributeType(attType: AttributeTypeState) = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
             conceptType.asRemote(tx).unsetOwns(attType.conceptType)
-            loadOwnsAttributeTypes()
+            loadOwnedAttributeTypes()
         } catch (e: Exception) {
             notifications.userError(
-                LOGGER, FAILED_TO_UNDEFINE_OWNS_ATT_TYPE, encoding.label, name, attType.name, e.message ?: UNKNOWN
+                LOGGER, FAILED_TO_UNDEFINE_OWNED_ATT_TYPE, encoding.label, name, attType.name, e.message ?: UNKNOWN
             )
         }
     }
 
-    fun initiateChangeOverriddenOwnsAttributeType(
-        props: AttributeTypeState.OwnsAttTypeProperties
-    ) = schemaSrv.changeOverriddenOwnsAttributeTypeDialog.open(this, props)
+    fun initiateChangeOverriddenOwnedAttributeType(
+        props: AttributeTypeState.OwnedAttTypeProperties
+    ) = schemaSrv.changeOverriddenOwnedAttributeTypeDialog.open(this, props)
 
     fun tryChangeOverriddenOwnedAttributeType(
         attType: AttributeTypeState, overriddenType: AttributeTypeState?
@@ -357,16 +357,16 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             overriddenType?.let {
                 conceptType.asRemote(tx).setOwns(attType.conceptType, overriddenType.conceptType)
             } ?: conceptType.asRemote(tx).setOwns(attType.conceptType)
-            loadOwnsAttributeTypes()
-            schemaSrv.changeOverriddenOwnsAttributeTypeDialog.close()
+            loadOwnedAttributeTypes()
+            schemaSrv.changeOverriddenOwnedAttributeTypeDialog.close()
         } catch (e: Exception) {
             overriddenType?.let {
                 notifications.userError(
-                    LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_OWNS_ATT_TYPE,
+                    LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_OWNED_ATT_TYPE,
                     encoding.label, name, attType.name, overriddenType.name
                 )
             } ?: notifications.userError(
-                LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_OWNS_ATT_TYPE_TO_REMOVE, encoding.label, name, attType.name
+                LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_OWNED_ATT_TYPE_TO_REMOVE, encoding.label, name, attType.name
             )
         }
     }
@@ -378,7 +378,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             overriddenType?.let {
                 conceptType.asRemote(tx).setPlays(roleType.conceptType, it.conceptType)
             } ?: conceptType.asRemote(tx).setPlays(roleType.conceptType)
-            loadPlaysRoleTypes()
+            loadPlayedRoleTypes()
             onSuccess()
         } catch (e: Exception) {
             notifications.userError(
@@ -387,39 +387,39 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         }
     }
 
-    fun tryUndefinePlaysRoleType(roleType: RoleTypeState) = schemaSrv.mayRunWriteTxAsync { tx ->
+    fun tryUndefinePlayedRoleType(roleType: RoleTypeState) = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
             conceptType.asRemote(tx).unsetPlays(roleType.conceptType)
-            loadPlaysRoleTypes()
+            loadPlayedRoleTypes()
         } catch (e: Exception) {
             notifications.userError(
-                LOGGER, FAILED_TO_UNDEFINE_PLAYS_ROLE_TYPE,
+                LOGGER, FAILED_TO_UNDEFINE_PLAYED_ROLE_TYPE,
                 encoding.label, name, roleType.scopedName, e.message ?: UNKNOWN
             )
         }
     }
 
-    fun initiateChangeOverriddenPlaysRoleType(
-        props: RoleTypeState.PlaysRoleTypeProperties
-    ) = schemaSrv.changeOverriddenPlaysRoleTypeDialog.open(this, props)
+    fun initiateChangeOverriddenPlayedRoleType(
+        props: RoleTypeState.PlayedRoleTypeProperties
+    ) = schemaSrv.changeOverriddenPlayedRoleTypeDialog.open(this, props)
 
-    fun tryChangeOverriddenPlaysRoleType(
+    fun tryChangeOverriddenPlayedRoleType(
         roleType: RoleTypeState, overriddenType: RoleTypeState?
     ) = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
             overriddenType?.let {
                 conceptType.asRemote(tx).setPlays(roleType.conceptType, overriddenType.conceptType)
             } ?: conceptType.asRemote(tx).setPlays(roleType.conceptType)
-            loadPlaysRoleTypes()
-            schemaSrv.changeOverriddenPlaysRoleTypeDialog.close()
+            loadPlayedRoleTypes()
+            schemaSrv.changeOverriddenPlayedRoleTypeDialog.close()
         } catch (e: Exception) {
             overriddenType?.let {
                 notifications.userError(
-                    LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE,
+                    LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE,
                     encoding.label, name, roleType.name, overriddenType.name
                 )
             } ?: notifications.userError(
-                LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE_TO_REMOVE, encoding.label, name, roleType.name
+                LOGGER, FAILED_TO_CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE_TO_REMOVE, encoding.label, name, roleType.name
             )
         }
     }

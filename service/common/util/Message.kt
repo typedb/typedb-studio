@@ -207,26 +207,44 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Schema(10, "Failed to change %s type to abstract / not abstract, due to: %s")
             val FAILED_TO_DEFINE_OWN_ATT_TYPE =
                 Schema(11, "Failed to define %s type '%s' to own attribute type '%s', due to: %s")
-            val FAILED_TO_UNDEFINE_OWNS_ATT_TYPE =
+            val FAILED_TO_UNDEFINE_OWNED_ATT_TYPE =
                 Schema(12, "Failed to undefine %s type '%s' from owning attribute type '%s', due to: %s")
-            val FAILED_TO_CHANGE_OVERRIDDEN_OWNS_ATT_TYPE =
-                Schema(13, "Failed to change %s type '%s' owning attribute type '%s' to override attribute type '%s', due to: %s")
-            val FAILED_TO_CHANGE_OVERRIDDEN_OWNS_ATT_TYPE_TO_REMOVE =
-                Schema(14, "Failed to change %s type '%s' owning attribute type '%s' to remove overridden attribute type, due to: %s")
+            val FAILED_TO_CHANGE_OVERRIDDEN_OWNED_ATT_TYPE =
+                Schema(
+                    13,
+                    "Failed to change %s type '%s' owning attribute type '%s' to override attribute type '%s', due to: %s"
+                )
+            val FAILED_TO_CHANGE_OVERRIDDEN_OWNED_ATT_TYPE_TO_REMOVE =
+                Schema(
+                    14,
+                    "Failed to change %s type '%s' owning attribute type '%s' to remove overridden attribute type, due to: %s"
+                )
             val FAILED_TO_DEFINE_PLAY_ROLE_TYPE =
                 Schema(15, "Failed to define %s type '%s' to play role type '%s', due to: %s")
-            val FAILED_TO_UNDEFINE_PLAYS_ROLE_TYPE =
+            val FAILED_TO_UNDEFINE_PLAYED_ROLE_TYPE =
                 Schema(16, "Failed to undefine %s type '%s' from playing role type '%s', due to: %s")
-            val FAILED_TO_CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE =
-                Schema(17, "Failed to change %s type '%s' playing role type '%s' to override role type '%s', due to: %s")
-            val FAILED_TO_CHANGE_OVERRIDDEN_PLAYS_ROLE_TYPE_TO_REMOVE =
-                Schema(18, "Failed to change %s type '%s' playing role type '%s' to remove overridden role type, due to: %s")
-            val FAILED_TO_DEFINE_RELATE_ROLE_TYPE =
+            val FAILED_TO_CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE =
+                Schema(
+                    17,
+                    "Failed to change %s type '%s' playing role type '%s' to override role type '%s', due to: %s"
+                )
+            val FAILED_TO_CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE_TO_REMOVE =
+                Schema(
+                    18,
+                    "Failed to change %s type '%s' playing role type '%s' to remove overridden role type, due to: %s"
+                )
+            val FAILED_TO_DEFINE_RELATES_ROLE_TYPE =
                 Schema(19, "Failed to define relation type '%s' to relate role type '%s', due to: %s")
-            val FAILED_TO_CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE =
-                Schema(20, "Failed to change relation type '%s' relating role type '%s' to override role type '%s', due to: %s")
-            val FAILED_TO_CHANGE_OVERRIDDEN_RELATES_ROLE_TYPE_TO_REMOVE =
-                Schema(21, "Failed to change relation type '%s' relating role type '%s' to remove overridden role type, due to: %s")
+            val FAILED_TO_CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE =
+                Schema(
+                    20,
+                    "Failed to change relation type '%s' relating role type '%s' to override role type '%s', due to: %s"
+                )
+            val FAILED_TO_CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE_TO_REMOVE =
+                Schema(
+                    21,
+                    "Failed to change relation type '%s' relating role type '%s' to remove overridden role type, due to: %s"
+                )
         }
     }
 

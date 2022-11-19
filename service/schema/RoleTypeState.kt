@@ -42,14 +42,14 @@ class RoleTypeState constructor(
         val isInherited: Boolean
     }
 
-    data class RelatesRoleTypeProperties constructor(
+    data class RelatedRoleTypeProperties constructor(
         override val roleType: RoleTypeState,
         override val overriddenType: RoleTypeState?,
         override val extendedType: RelationTypeState?,
         override val isInherited: Boolean,
     ) : RoleTypeProperties
 
-    data class PlaysRoleTypeProperties constructor(
+    data class PlayedRoleTypeProperties constructor(
         override val roleType: RoleTypeState,
         override val overriddenType: RoleTypeState?,
         override val extendedType: ThingTypeState<*, *>?,
