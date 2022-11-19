@@ -709,7 +709,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         private fun RelatesRoleTypeAddition() {
             var roleType: String by remember { mutableStateOf("") }
             var overriddenType: RoleTypeState? by remember { mutableStateOf(null) }
-            val overridableTypeList = remember { typeState.overridableRelatedRoleTypes() }
+            val overridableTypeList = typeState.overridableRelatedRoleTypes()
 
             val isRelatable = canWriteSchema && roleType.isNotEmpty()
             val isOverridable = canWriteSchema && overridableTypeList.isNotEmpty()
