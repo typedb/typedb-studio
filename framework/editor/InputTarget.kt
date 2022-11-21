@@ -258,10 +258,8 @@ internal class InputTarget constructor(
             } else if (x > right) coroutines.launch {
                 horScroller.scrollTo(horScroller.value + ((x - right) * density).toInt())
             }
-            if (y <= top)
-                verScroller.updateOffsetBy((y - top).dp)
-            else if (y >= bottom)
-                verScroller.updateOffsetBy((y - bottom).dp + lineHeight)
+            if (y <= top) verScroller.updateOffsetBy((y - top).dp)
+            else if (y >= bottom) verScroller.updateOffsetBy((y - bottom).dp + lineHeight)
         }
 
         val cursorRect = rendering.get(cursor.row)?.let {
