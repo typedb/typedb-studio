@@ -237,8 +237,7 @@ internal class InputTarget constructor(
             else selection!!.end = newCursor
         } else selection = null
         _cursor = newCursor
-        if (mayScroll)
-            mayScrollToCursor()
+        if (mayScroll) mayScrollToCursor()
         publishStatus()
     }
 
