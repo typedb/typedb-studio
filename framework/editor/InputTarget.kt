@@ -248,7 +248,7 @@ internal class InputTarget constructor(
     internal fun clearStatus() = Service.status.clear(TEXT_CURSOR_POSITION)
 
     private fun mayScrollToCursor() {
-        fun mayScrollToCoordinate(x: Int, y: Int) {
+        fun mayScrollToCoordinate(x: Int, y: Int, padding: Dp = 0.dp) {
             val left = textAreaBounds.left.toInt()
             val right = textAreaBounds.right.toInt()
             val top = textAreaBounds.top.toInt()
@@ -258,8 +258,8 @@ internal class InputTarget constructor(
             } else if (x > right) coroutines.launch {
                 horScroller.scrollTo(horScroller.value + ((x - right) * density).toInt())
             }
-            if (y <= top) verScroller.updateOffsetBy((y - top).dp)
-            else if (y >= bottom) verScroller.updateOffsetBy((y - bottom).dp + lineHeight)
+            if (y <= top) verScroller.updateOffsetBy((y - top).dp - padding)
+            else if (y >= bottom) verScroller.updateOffsetBy((y - bottom).dp + padding)
         }
 
         val cursorRect = rendering.get(cursor.row)?.let {
@@ -267,7 +267,7 @@ internal class InputTarget constructor(
         } ?: Rect(0f, 0f, 0f, 0f)
         val x = textAreaBounds.left + toDP(cursorRect.left - horScroller.value, density).value
         val y = textAreaBounds.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
-        mayScrollToCoordinate(x.toInt(), y.toInt())
+        mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight)
     }
 
     internal fun moveCursorPrevByChar(isSelecting: Boolean = false) {

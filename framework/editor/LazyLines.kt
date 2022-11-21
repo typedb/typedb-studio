@@ -142,7 +142,7 @@ internal object LazyLines {
             .mouseScrollFilter { event, _ -> onScroll(); state.scroller.updateOffset(event) }
             .onSizeChanged { state.scroller.viewHeight = toDP(it.height, density) }) {
             if (state.lines.isNotEmpty()) {
-                val lastVisibleIndex = min(state.scroller.lastVisibleIndexPossible, state.scroller.lineCount() - 1)
+                val lastVisibleIndex = min(state.scroller.lastVisibleIndexPossible + 1, state.scroller.lineCount() - 1)
                 (state.scroller.firstVisibleIndex..lastVisibleIndex).forEach { i ->
                     val indexInView = i - state.scroller.firstVisibleIndex
                     val offset = state.scroller.lineHeight * indexInView - state.scroller.firstVisibleOffset
