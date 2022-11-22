@@ -271,8 +271,9 @@ internal class InputTarget constructor(
     internal fun moveCursorPrevByChar(isSelecting: Boolean = false) {
         if (!isSelecting && selection != null) updateCursor(selection!!.min, false)
         else {
+            val rowText = content[cursor.row].text
             var newRow = cursor.row
-            var newCol = cursor.col - 1
+            var newCol = rowText.offsetByCodePoints(0, rowText.codePoint(cursor.col))
             if (newCol < 0) {
                 newRow -= 1
                 if (newRow < 0) {
