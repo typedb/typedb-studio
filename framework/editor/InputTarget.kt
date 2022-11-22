@@ -249,8 +249,8 @@ internal class InputTarget constructor(
 
     private fun mayScrollToCursor() {
         fun mayScrollToCoordinate(x: Int, y: Int, padding: Dp = 0.dp) {
-            val left = textAreaBounds.left.toInt()
-            val right = textAreaBounds.right.toInt()
+            val left = textAreaBounds.left.toInt() + padding.value.toInt()
+            val right = textAreaBounds.right.toInt() - padding.value.toInt()
             val top = textAreaBounds.top.toInt()
             val bottom = textAreaBounds.bottom.toInt()
             if (x < left) coroutines.launch {
