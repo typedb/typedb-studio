@@ -328,6 +328,9 @@ class SchemaService constructor(
             rootRelationType = null
             rootAttributeType = null
             rootRoleType = null
+            entityTypes.values.forEach { it.close() }
+            attributeTypes.values.forEach { it.close() }
+            relationTypes.values.forEach { it.close() }
             entityTypes.clear()
             attributeTypes.clear()
             relationTypes.clear()
