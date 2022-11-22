@@ -56,6 +56,6 @@ object Service {
         pages = PageService()
         client = ClientState(notification, preference)
         project = ProjectService(preference, data, notification, confirmation, client, pages)
-        schema = SchemaService(client.session, pages, notification, confirmation)
+        schema = SchemaService(client.session, pages, notification, confirmation, status)
     }
 }

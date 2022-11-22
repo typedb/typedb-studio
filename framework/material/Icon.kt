@@ -101,7 +101,8 @@ enum class Icon(private val shape: Shape) {
     THING(Shape.RECTANGLE),
     TICK(Shape.CHECK),
     TYPES(Shape.SITEMAP),
-    USERS(Shape.USERS);
+    USERS(Shape.USERS),
+    ALERT(Shape.CIRCLE_EXCLAMATION);
 
     val unicode: String = shape.unicode
 
@@ -170,6 +171,7 @@ enum class Icon(private val shape: Shape) {
         CHEVRON_RIGHT(0xf054u),
         CHEVRON_UP(0xf077u),
         CIRCLE(0xf111u),
+        CIRCLE_EXCLAMATION(0xf06au),
         CLOCK(0xf017u),
         CODE_FILE(0xe322u),
         CURSOR(0xf246u),

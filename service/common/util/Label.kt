@@ -203,6 +203,7 @@ object Label {
     const val SAVE_FILE = "Save File"
     const val SAVE_OR_DELETE = "Save or Delete"
     const val SCHEMA = "Schema"
+    const val SCHEMA_EXCEPTIONS = "Schema Exceptions"
     const val SCHEMA_SESSION = "Schema Session"
     const val SCRIPT_MODE = "Script Mode"
     const val SELECT_ATTRIBUTE_TYPE = "Select Attribute Type"

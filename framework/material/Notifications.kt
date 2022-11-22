@@ -43,8 +43,10 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
+import com.vaticle.typedb.studio.framework.common.Util.fromDP
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Form.IconButton
@@ -55,10 +57,11 @@ import com.vaticle.typedb.studio.service.common.NotificationService.Notification
 import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.INFO
 import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.WARNING
 import com.vaticle.typedb.studio.service.common.util.Label
+import kotlin.math.roundToInt
 
 object Notifications {
 
-    private val NOTIFICATION_MARGIN = 30.dp
+    private val NOTIFICATION_MARGIN = 22.dp
     private val NOTIFICATION_WIDTH = 360.dp
     private val NOTIFICATION_HEIGHT_MIN = 56.dp
     private val MESSAGE_PADDING = 8.dp
@@ -74,7 +77,8 @@ object Notifications {
     @Composable
     private fun Layout() {
         val scrollState = rememberScrollState()
-        Popup(alignment = Alignment.BottomEnd) {
+        val margin = fromDP(NOTIFICATION_MARGIN, LocalDensity.current.density).roundToInt()
+        Popup(alignment = Alignment.BottomEnd, offset = IntOffset(0, -margin)) {
             Box {
                 Column(Modifier.padding(horizontal = NOTIFICATION_MARGIN).verticalScroll(scrollState)) {
                     Spacer(Modifier.height(NOTIFICATION_MARGIN))

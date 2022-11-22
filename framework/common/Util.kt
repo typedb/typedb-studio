@@ -42,6 +42,8 @@ object Util {
         bottom = toDP(rawRectangle.bottom, density).value
     )
 
+    fun fromDP(dp: Dp, density: Float): Float = dp.value * density
+
     fun toDP(pixel: Number, density: Float): Dp {
         return (pixel.toDouble() / density).roundToInt().dp
     }

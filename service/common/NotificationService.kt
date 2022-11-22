@@ -20,6 +20,9 @@ package com.vaticle.typedb.studio.service.common
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.ERROR
+import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.INFO
+import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.WARNING
 import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.UNEXPECTED_ERROR_IN_COROUTINE
@@ -37,8 +40,8 @@ import mu.KotlinLogging
 @OptIn(ExperimentalTime::class)
 class NotificationService {
 
-    // not a data class, because each object has to be unique
-    class Notification internal constructor(val type: Type, val code: String, val message: String) {
+    // Not a data class, because each object has to be unique
+    class Notification constructor(val type: Type, val code: String, val message: String) {
         enum class Type { INFO, WARNING, ERROR }
     }
 
@@ -79,7 +82,7 @@ class NotificationService {
 
     fun info(logger: KLogger, message: Message, vararg params: Any) {
         logger.info { message }
-        val notification = Notification(Notification.Type.INFO, message.code(), stringOf(message, *params))
+        val notification = Notification(INFO, message.code(), stringOf(message, *params))
         queue += notification
         coroutines.launchAndHandle(this, LOGGER) {
             delay(HIDE_DELAY)
@@ -88,19 +91,19 @@ class NotificationService {
     }
 
     fun userError(logger: KLogger, message: Message, vararg params: Any) = userNotification(
-        logger, Notification.Type.ERROR, message.code(), stringOf(message, *params)
+        logger, ERROR, message.code(), stringOf(message, *params)
     )
 
     fun userWarning(logger: KLogger, message: Message, vararg params: Any) = userNotification(
-        logger, Notification.Type.WARNING, message.code(), stringOf(message, *params)
+        logger, WARNING, message.code(), stringOf(message, *params)
     )
 
     fun systemWarning(logger: KLogger, cause: Throwable, message: Message, vararg params: Any) = systemNotification(
-        logger, cause, Notification.Type.WARNING, message.code(), stringOf(message, *params)
+        logger, cause, WARNING, message.code(), stringOf(message, *params)
     )
 
     fun systemError(logger: KLogger, cause: Throwable, message: Message, vararg params: Any) = systemNotification(
-        logger, cause, Notification.Type.ERROR, message.code(), stringOf(message, *params)
+        logger, cause, ERROR, message.code(), stringOf(message, *params)
     )
 
     fun dismiss(notification: Notification) {
@@ -111,22 +114,28 @@ class NotificationService {
         queue.clear()
     }
 
-    private fun userNotification(logger: KLogger, type: Notification.Type, code: String, message: String) {
-        when (type) {
-            Notification.Type.INFO -> logger.info { message }
-            Notification.Type.WARNING -> logger.warn { message }
-            Notification.Type.ERROR -> logger.error { message }
+    private fun userNotification(
+        logger: KLogger, type: Notification.Type, code: String, message: String
+    ) = userNotification(logger, Notification(type, code, message))
+
+    fun userNotification(logger: KLogger? = null, notification: Notification) {
+        logger?.let { l ->
+            when (notification.type) {
+                INFO -> l.info { notification.message }
+                WARNING -> l.warn { notification.message }
+                ERROR -> l.error { notification.message }
+            }
         }
-        queue += Notification(type, code, message)
+        queue += notification
     }
 
     private fun systemNotification(
         logger: KLogger, cause: Throwable, type: Notification.Type, code: String, message: String
     ) {
         when (type) {
-            Notification.Type.INFO -> logger.info { message }
-            Notification.Type.WARNING -> logger.warn { message }
-            Notification.Type.ERROR -> {
+            INFO -> logger.info { message }
+            WARNING -> logger.warn { message }
+            ERROR -> {
                 logger.error { message }
                 logger.error { cause.stackTraceToString() }
             }
