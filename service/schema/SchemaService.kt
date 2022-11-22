@@ -26,9 +26,14 @@ import com.vaticle.typedb.client.api.concept.type.*
 import com.vaticle.typedb.studio.service.common.ConfirmationService
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.service.common.NotificationService.Notification
+import com.vaticle.typedb.studio.service.common.StatusService
+import com.vaticle.typedb.studio.service.common.StatusService.Key.SCHEMA_EXCEPTIONS
+import com.vaticle.typedb.studio.service.common.StatusService.Status.Type.WARNING
 import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.service.common.atomic.AtomicIntegerState
 import com.vaticle.typedb.studio.service.common.util.DialogState
+import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_OPEN_READ_TX
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_OPEN_WRITE_TX
@@ -52,11 +57,12 @@ import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
 @OptIn(ExperimentalTime::class)
-class SchemaService constructor(
+class SchemaService(
     private val session: SessionState,
     internal val pages: PageService,
     internal val notification: NotificationService,
-    internal val confirmation: ConfirmationService
+    internal val confirmation: ConfirmationService,
+    private val status: StatusService
 ) : Navigable<ThingTypeState<*, *>> {
 
     class TypeDialogState<T : TypeState<*, *>> : DialogState() {
@@ -135,6 +141,8 @@ class SchemaService constructor(
     private val onTypesUpdated = LinkedBlockingQueue<() -> Unit>()
     private var hasRunningWriteAtomic = AtomicBooleanState(initValue = false)
     private var countRunningReadAtomic = AtomicIntegerState(initValue = 0)
+    private var currentSchemaExceptions = listOf<Notification>()
+    private var viewedSchemaExceptions = listOf<Notification>()
     internal val database: String? get() = session.database
     internal val coroutines = CoroutineScope(Dispatchers.Default)
 
@@ -149,6 +157,7 @@ class SchemaService constructor(
         session.transaction.onSchemaWriteReset {
             closeReadTx()
             refreshTypesAndOpen()
+            updateSchemaExceptionsStatus()
         }
     }
 
@@ -237,7 +246,9 @@ class SchemaService constructor(
             else if (it.isOpen) it.loadConstraintsAsync()
         }
         roleTypes.values.forEach {
-            if (it.relationType.conceptType.asRemote(tx).getRelates(it.name) == null) it.purge()
+            val exists = tx.concepts().getThingType(it.relationType.name)
+                ?.asRelationType()?.asRemote(tx)?.getRelates(it.name) == null
+            if (exists) it.purge()
         }
         isOpenAtomic.set(true)
         execOnTypesUpdated()
@@ -250,7 +261,10 @@ class SchemaService constructor(
     internal fun mayRunWriteTxAsync(function: (TypeDBTransaction) -> Unit) {
         if (hasRunningWriteAtomic.compareAndSet(expected = false, new = true)) {
             coroutines.launchAndHandle(notification, LOGGER) {
-                openOrGetWriteTx()?.let { function(it) } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_WRITE_TX)
+                openOrGetWriteTx()?.let { tx ->
+                    function(tx)
+                    updateSchemaExceptionsStatus()
+                } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_WRITE_TX)
             }.invokeOnCompletion { hasRunningWriteAtomic.set(false) }
         }
     }
@@ -298,6 +312,23 @@ class SchemaService constructor(
                 closeReadTx()
                 break
             } else duration = TX_IDLE_TIME - Duration.milliseconds(sinceLastUse)
+        }
+    }
+
+    private fun updateSchemaExceptionsStatus() = mayRunReadTx { tx ->
+        val exceptions = tx.concepts().schemaExceptions
+        currentSchemaExceptions = exceptions.map {
+            Notification(Notification.Type.WARNING, it.code, it.message)
+        }.toList()
+        if (exceptions.isEmpty()) status.clear(SCHEMA_EXCEPTIONS)
+        else status.publish(
+            key = SCHEMA_EXCEPTIONS,
+            status = exceptions.size.toString() + " " + Label.SCHEMA_EXCEPTIONS,
+            type = WARNING
+        ) {
+            viewedSchemaExceptions.forEach { e -> notification.dismiss(e) }
+            currentSchemaExceptions.forEach { e -> notification.userNotification(notification = e) }
+            viewedSchemaExceptions = currentSchemaExceptions
         }
     }
 

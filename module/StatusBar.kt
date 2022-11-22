@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -41,7 +42,11 @@ import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.StatusService
 import com.vaticle.typedb.studio.service.common.StatusService.Key.OUTPUT_RESPONSE_TIME
 import com.vaticle.typedb.studio.service.common.StatusService.Key.QUERY_RESPONSE_TIME
+import com.vaticle.typedb.studio.service.common.StatusService.Key.SCHEMA_EXCEPTIONS
 import com.vaticle.typedb.studio.service.common.StatusService.Key.TEXT_CURSOR_POSITION
+import com.vaticle.typedb.studio.service.common.StatusService.Status.Type.ERROR
+import com.vaticle.typedb.studio.service.common.StatusService.Status.Type.INFO
+import com.vaticle.typedb.studio.service.common.StatusService.Status.Type.WARNING
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Sentence
 
@@ -55,19 +60,19 @@ object StatusBar {
     @Composable
     fun Layout() {
         val statusSrv = Service.status
-        val fontStyle = Theme.typography.body2
+        val textStyle = Theme.typography.body2
         Row(Modifier.fillMaxWidth().height(HEIGHT), verticalAlignment = Alignment.CenterVertically) {
             if (statusSrv.loadingStatus.isNotEmpty()) {
                 Spacer(Modifier.width(PADDING))
-                Form.Text(value = statusSrv.loadingStatus, textStyle = fontStyle)
+                Form.Text(value = statusSrv.loadingStatus, textStyle = textStyle)
             }
             Spacer(Modifier.weight(1f))
             Spacer(Modifier.width(PADDING))
             StatusService.Key.values().reversed().forEach {
-                val statusValue = statusSrv.statuses[it]
-                if (!statusValue.isNullOrEmpty()) {
+                val status = statusSrv.statuses[it]
+                if (status != null) {
                     Separator.Vertical()
-                    StatusDisplay(it, statusValue, fontStyle)
+                    StatusDisplay(status, textStyle)
                 }
             }
         }
@@ -75,8 +80,8 @@ object StatusBar {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun StatusDisplay(key: StatusService.Key, value: String, fontStyle: TextStyle) {
-        val tooltipState: Tooltip.State = Tooltip.State(tooltipArg(key))
+    private fun StatusDisplay(status: StatusService.Status, textStyle: TextStyle) {
+        val tooltipState: Tooltip.State = Tooltip.State(tooltipArg(status.key))
         Tooltip.Popup(tooltipState)
         Column(Modifier.pointerMoveFilter(
             onEnter = { tooltipState.mayShowOnTargetHover(); false },
@@ -84,36 +89,57 @@ object StatusBar {
         )) {
             Row(Modifier.height(HEIGHT), verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.width(PADDING))
-                Icon.Render(icon = icon(key), size = ICON_SIZE)
+                Icon.Render(icon = icon(status.key), color = iconColor(status.type), size = ICON_SIZE)
                 Spacer(Modifier.width(SPACING))
-                Form.Text(value = value, textStyle = fontStyle)
+                if (status.onClick != null) status.onClick!!.let { fn ->
+                    val textColor = textColor(status.type)
+                    Form.ClickableText(
+                        value = status.message, color = textColor, hoverColor = textColor,
+                        textStyle = textStyle, onClick = fn
+                    )
+                } else Form.Text(value = status.message, textStyle = textStyle)
                 Spacer(Modifier.width(PADDING))
             }
             Spacer(Modifier.height(2.dp))
         }
     }
 
-    private fun tooltipArg(key: StatusService.Key): Tooltip.Arg {
-        return when (key) {
-            TEXT_CURSOR_POSITION -> Tooltip.Arg(
-                title = Label.TEXT_CURSOR_POSITION
-            )
-            OUTPUT_RESPONSE_TIME -> Tooltip.Arg(
-                title = Label.OUTPUT_RESPONSE_TIME,
-                description = Sentence.QUERY_RESPONSE_TIME_DESCRIPTION,
-            )
-            QUERY_RESPONSE_TIME -> Tooltip.Arg(
-                title = Label.QUERY_RESPONSE_TIME,
-                description = Sentence.OUTPUT_RESPONSE_TIME_DESCRIPTION,
-            )
-        }
+    private fun tooltipArg(key: StatusService.Key) = when (key) {
+        TEXT_CURSOR_POSITION -> Tooltip.Arg(
+            title = Label.TEXT_CURSOR_POSITION
+        )
+        OUTPUT_RESPONSE_TIME -> Tooltip.Arg(
+            title = Label.OUTPUT_RESPONSE_TIME,
+            description = Sentence.QUERY_RESPONSE_TIME_DESCRIPTION,
+        )
+        QUERY_RESPONSE_TIME -> Tooltip.Arg(
+            title = Label.QUERY_RESPONSE_TIME,
+            description = Sentence.OUTPUT_RESPONSE_TIME_DESCRIPTION,
+        )
+        SCHEMA_EXCEPTIONS -> Tooltip.Arg(
+            title = Label.SCHEMA_EXCEPTIONS,
+            description = Sentence.SCHEMA_EXCEPTIONS_DESCRIPTION,
+        )
     }
 
-    private fun icon(key: StatusService.Key): Icon {
-        return when (key) {
-            TEXT_CURSOR_POSITION -> Icon.CURSOR
-            OUTPUT_RESPONSE_TIME -> Icon.RESPONSE_TIME
-            QUERY_RESPONSE_TIME -> Icon.RESPONSE_TIME
-        }
+    private fun icon(key: StatusService.Key) = when (key) {
+        TEXT_CURSOR_POSITION -> Icon.CURSOR
+        OUTPUT_RESPONSE_TIME -> Icon.RESPONSE_TIME
+        QUERY_RESPONSE_TIME -> Icon.RESPONSE_TIME
+        SCHEMA_EXCEPTIONS -> Icon.ALERT
+    }
+
+    @Composable
+    private fun iconColor(type: StatusService.Status.Type): Color = when (type) {
+        INFO -> Theme.studio.icon
+        WARNING -> Theme.studio.warningStroke
+        ERROR -> Theme.studio.errorStroke
+    }
+
+    @Composable
+    private fun textColor(type: StatusService.Status.Type): Color = when (type) {
+        INFO -> Theme.studio.onPrimary
+        WARNING -> Theme.studio.warningStroke
+        ERROR -> Theme.studio.errorStroke
     }
 }

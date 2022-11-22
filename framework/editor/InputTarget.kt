@@ -241,8 +241,7 @@ internal class InputTarget constructor(
     }
 
     internal fun publishStatus() = Service.status.publish(
-        TEXT_CURSOR_POSITION,
-        selection?.label() ?: cursor.label()
+        key = TEXT_CURSOR_POSITION, status = selection?.label() ?: cursor.label()
     )
 
     internal fun clearStatus() = Service.status.clear(TEXT_CURSOR_POSITION)

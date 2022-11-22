@@ -140,6 +140,8 @@ object Sentence {
                 "This button will only be enabled if the currently opened file needs saving."
     const val SAVE_OR_DELETE_FILE =
         "Would you like to save this file before closing it? Closing it without saving would delete this file and its content."
+    const val SCHEMA_EXCEPTIONS_DESCRIPTION =
+        "Unresolved schema exceptions that you should resolve before committing the changes in the current transaction."
     const val SCRIPT_MODE_DESCRIPTION =
         "Running TypeDB Studio in 'script' mode (as opposed to 'interactive' mode), means that you can an end-to-end workflow " +
                 "on TypeDB server through a script. In 'interactive' mode, you have to configure the user, database, session, " +

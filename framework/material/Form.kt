@@ -328,8 +328,9 @@ object Form {
         value: String,
         color: Color = Theme.studio.onPrimary,
         hoverColor: Color = Theme.studio.secondary,
+        textStyle: TextStyle = Theme.typography.body1,
         onClick: () -> Unit
-    ) = ClickableText(AnnotatedString(value), color, hoverColor, onClick)
+    ) = ClickableText(AnnotatedString(value), color, hoverColor, textStyle, onClick)
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
@@ -337,6 +338,7 @@ object Form {
         value: AnnotatedString,
         color: Color = Theme.studio.onPrimary,
         hoverColor: Color = Theme.studio.secondary,
+        textStyle: TextStyle = Theme.typography.body1,
         onClick: () -> Unit
     ) {
         var isHover by remember { mutableStateOf(false) }
@@ -346,7 +348,7 @@ object Form {
                 onEnter = { isHover = true; false },
                 onExit = { isHover = false; false }
             ),
-            style = Theme.typography.body1.copy(if (isHover) hoverColor else color),
+            style = textStyle.copy(if (isHover) hoverColor else color),
             onClick = { onClick() }
         )
     }
