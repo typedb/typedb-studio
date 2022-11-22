@@ -243,12 +243,15 @@ class SchemaService(
         ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
         (entityTypes.values + attributeTypes.values + relationTypes.values).forEach {
             if (tx.concepts().getThingType(it.name) == null) it.purge()
-            else if (it.isOpen) it.loadConstraintsAsync()
+            else {
+                it.updateConceptType()
+                if (it.isOpen) it.loadConstraintsAsync()
+            }
         }
         roleTypes.values.forEach {
             val exists = tx.concepts().getThingType(it.relationType.name)
-                ?.asRelationType()?.asRemote(tx)?.getRelates(it.name) == null
-            if (exists) it.purge()
+                ?.asRelationType()?.asRemote(tx)?.getRelates(it.name) != null
+            if (!exists) it.purge() else it.updateConceptType()
         }
         isOpenAtomic.set(true)
         execOnTypesUpdated()
