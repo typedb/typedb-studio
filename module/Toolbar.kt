@@ -79,7 +79,7 @@ object Toolbar {
     private val isReadyToRunQuery get() = Service.client.isReadyToRunQuery
     private val hasRunnablePage get() = Service.pages.active?.isRunnable == true
     private val hasRunningQuery get() = Service.client.hasRunningQuery
-    private val hasRunningCommand get() = Service.client.hasRunningCommand && Service.schema.hasRunningTx
+    private val hasRunningCommand get() = Service.client.hasRunningCommand || Service.schema.hasRunningTx
     private val hasStopSignal get() = Service.client.session.transaction.hasStopSignal
 
     @Composable
