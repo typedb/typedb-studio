@@ -61,25 +61,18 @@ object Pages {
         private val openedPages: MutableMap<Pageable, Page> = mutableMapOf()
         internal val tabsState = Tabs.Horizontal.State<Pageable>()
 
-        fun handleKeyEvent(event: KeyEvent, onNewPage: () -> Unit): Boolean {
+        fun handleKeyEvent(event: KeyEvent): Boolean {
             return if (event.type == KeyEventType.KeyUp) false
-            else KeyMapper.CURRENT.map(event)?.let { execute(it, onNewPage) }
+            else KeyMapper.CURRENT.map(event)?.let { execute(it) }
                 ?: false
         }
 
-        private fun execute(
-            command: KeyMapper.Command,
-            onNewPage: () -> Unit
-        ): Boolean {
+        private fun execute(command: KeyMapper.Command): Boolean {
             return when (command) {
-                KeyMapper.Command.SAVE -> saveActivePage()
-                KeyMapper.Command.CLOSE -> closeActivePage()
-                KeyMapper.Command.CTRL_TAB -> showNextPage()
-                KeyMapper.Command.CTRL_TAB_SHIFT -> showPreviousPage()
-                KeyMapper.Command.NEW_PAGE -> {
-                    onNewPage()
-                    true
-                }
+                KeyMapper.Command.SAVE -> maySaveActivePage()
+                KeyMapper.Command.CLOSE -> mayCloseActivePage()
+                KeyMapper.Command.CTRL_TAB -> mayShowNextPage()
+                KeyMapper.Command.CTRL_TAB_SHIFT -> mayShowPreviousPage()
                 else -> false
             }
         }
@@ -97,24 +90,22 @@ object Pages {
             }
         }
 
-        private fun saveActivePage(): Boolean {
-            Service.pages.active?.initiateSave()
-            return true
-        }
+        private fun maySaveActivePage(): Boolean = Service.pages.active?.let {
+            it.initiateSave()
+            true
+        } ?: false
 
-        private fun showNextPage(): Boolean {
+        private fun mayShowNextPage(): Boolean = if (Service.pages.opened.size > 1) {
             Service.pages.next.activate()
-            return true
-        }
+            true
+        } else false
 
-        private fun showPreviousPage(): Boolean {
+        private fun mayShowPreviousPage(): Boolean = if (Service.pages.opened.size > 1) {
             Service.pages.previous.activate()
-            return true
-        }
+            true
+        } else false
 
-        private fun closeActivePage(): Boolean {
-            return Service.pages.active?.let { close(it) } ?: false
-        }
+        private fun mayCloseActivePage(): Boolean = Service.pages.active?.let { close(it) } ?: false
 
         internal fun close(pageable: Pageable): Boolean {
             pageable.execBeforeClose()
@@ -150,20 +141,20 @@ object Pages {
         private fun closeMenuItem(pageable: Pageable) = ContextMenu.Item(
             label = Label.CLOSE,
             icon = Icon.CLOSE,
-            info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + W"
+            info = "${KeyMapper.CURRENT.modKey} + W"
         ) { close(pageable) }
 
         private fun saveMenuItem(pageable: Pageable) = ContextMenu.Item(
             label = Label.SAVE,
             icon = Icon.SAVE,
-            info = "${com.vaticle.typedb.studio.framework.common.KeyMapper.CURRENT.modKey} + S",
+            info = "${KeyMapper.CURRENT.modKey} + S",
             enabled = pageable.hasUnsavedChanges || pageable.isUnsavedPageable
         ) { pageable.initiateSave() }
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Layout(enabled: Boolean, onNewPage: () -> Unit, createPageFn: @Composable (Pageable) -> Page) {
+    fun Layout(enabled: Boolean, createPageFn: @Composable (Pageable) -> Page) {
         val state = remember { State() }
         val focusReq = remember { FocusRequester() }
         fun mayRequestFocus() {
@@ -172,7 +163,7 @@ object Pages {
         Column(
             modifier = Modifier.fillMaxSize().focusRequester(focusReq).focusable()
                 .onPointerEvent(Press) { if (it.buttons.isPrimaryPressed) mayRequestFocus() }
-                .onKeyEvent { state.handleKeyEvent(it, onNewPage) }
+                .onKeyEvent { state.handleKeyEvent(it) }
         ) {
             Tabs.Horizontal.Layout(
                 state = state.tabsState,
@@ -183,7 +174,9 @@ object Pages {
                 onClick = { it.activate() },
                 contextMenuFn = { state.contextMenuFn(it) },
                 closeButtonFn = { IconButtonArg(icon = Icon.CLOSE) { state.close(it) } },
-                buttons = listOf(IconButtonArg(Icon.ADD, enabled = enabled) { onNewPage() })
+                buttons = listOf(IconButtonArg(Icon.ADD, enabled = enabled) {
+                    Service.project.tryCreateUntitledFile()?.tryOpen()
+                })
             )
             Separator.Horizontal()
             Service.pages.active?.let { state.openedPage(it, createPageFn).Layout() }
