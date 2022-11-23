@@ -88,7 +88,7 @@ object Sentence {
     const val CREATE_AN_ADDRESS_FOR_CLUSTER =
         "Create a new address for connecting to your TypeDB Cluster."
     const val EDITING_TYPES_REQUIREMENT_DESCRIPTION =
-        "Functionalities for editing schema types are under development and COMING SOON."
+        "To add/delete/edit type definitions in the database schema, you must be on a 'schema' session and 'write' transaction."
 
     //TODO: "To edit types in the schema, you need to have a 'schema' session and a 'write' transaction'."
     const val ENABLE_INFERENCE_DESCRIPTION =
