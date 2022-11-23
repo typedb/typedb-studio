@@ -98,7 +98,7 @@ object ServerDialog {
 
         override fun submit() {
             when (server) {
-                TYPEDB ->  {
+                TYPEDB -> {
                     Service.client.tryConnectToTypeDBAsync(coreAddress) {
                         Service.client.connectServerDialog.close()
                     }
@@ -159,10 +159,11 @@ object ServerDialog {
 
     @Composable
     private fun ConnectServer() {
-        Dialog.Layout(Service.client.connectServerDialog,
-            Label.CONNECT_TO_TYPEDB,
-            WIDTH,
-            HEIGHT
+        Dialog.Layout(
+            state = Service.client.connectServerDialog,
+            title = Label.CONNECT_TO_TYPEDB,
+            width = WIDTH,
+            height = HEIGHT
         ) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 ServerFormField(state)

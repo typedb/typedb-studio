@@ -169,7 +169,12 @@ object Form {
     }
 
     @Composable
-    fun Field(label: String, caption: String? = null, fieldHeight: Dp = FIELD_HEIGHT, fieldInput: @Composable RowScope.() -> Unit) {
+    fun Field(
+        label: String,
+        caption: String? = null,
+        fieldHeight: Dp = FIELD_HEIGHT,
+        fieldInput: @Composable RowScope.() -> Unit
+    ) {
         Row {
             Column(modifier = LABEL_MODIFIER) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(FIELD_HEIGHT)) {
@@ -177,7 +182,10 @@ object Form {
                 }
             }
             Column(modifier = INPUT_MODIFIER) {
-                Row(modifier = Modifier.height(fieldHeight), horizontalArrangement = Arrangement.spacedBy(INNER_SPACING)) { fieldInput() }
+                Row(
+                    modifier = Modifier.height(fieldHeight),
+                    horizontalArrangement = Arrangement.spacedBy(INNER_SPACING)
+                ) { fieldInput() }
                 if (!caption.isNullOrBlank()) {
                     Caption(caption)
                 }

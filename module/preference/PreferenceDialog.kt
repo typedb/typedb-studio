@@ -94,8 +94,11 @@ object PreferenceDialog {
     private var selectedPreferenceGroup by mutableStateOf<PreferenceGroup>(PreferenceGroup.Root())
     private var state by mutableStateOf(PreferencesForm())
 
-    sealed class PreferenceField(private val label: String, private val caption: String?,
-                                 private val fieldHeight: Dp = Form.FIELD_HEIGHT) {
+    sealed class PreferenceField(
+        private val label: String,
+        private val caption: String?,
+        private val fieldHeight: Dp = Form.FIELD_HEIGHT
+    ) {
         abstract fun isValid(): Boolean
 
         @Composable
@@ -179,7 +182,7 @@ object PreferenceDialog {
                         value = value,
                         placeholder = placeholder,
                         modifier = Modifier.border(
-                            1.dp,  Theme.studio.border , RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)
+                            1.dp, Theme.studio.border, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS)
                         ),
                         onValueChange = { value = it; modified = true }
                     )
@@ -192,9 +195,8 @@ object PreferenceDialog {
         }
 
         class MultilineTextInput(
-            initValue: String,
-            label: String, private val caption: String? = null,
-        ): PreferenceField(label, caption, fieldHeight = MULTILINE_FIELD_HEIGHT) {
+            initValue: String, label: String, private val caption: String? = null,
+        ) : PreferenceField(label, caption, fieldHeight = MULTILINE_FIELD_HEIGHT) {
             var value by mutableStateOf(TextFieldValue(initValue))
 
             @Composable
@@ -496,7 +498,10 @@ object PreferenceDialog {
                     }
                 )
                 Separator.Horizontal()
-                Row(modifier = Modifier.fillMaxWidth().padding(Theme.DIALOG_PADDING), horizontalArrangement = Arrangement.End) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(Theme.DIALOG_PADDING),
+                    horizontalArrangement = Arrangement.End
+                ) {
                     ChangeFormButtons(state)
                 }
             }

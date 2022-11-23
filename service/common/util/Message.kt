@@ -99,9 +99,15 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val TRANSACTION_CLOSED_IN_QUERY =
                 Connection(9, "Transaction was closed, due to an error in the query.")
             val TRANSACTION_ROLLBACK =
-                Connection(10, "Transaction has been rolled back to the opened snapshot, and all uncommitted writes have been deleted.")
+                Connection(
+                    10,
+                    "Transaction has been rolled back to the opened snapshot, and all uncommitted writes have been deleted."
+                )
             val TRANSACTION_COMMIT_SUCCESSFULLY =
-                Connection(11, "Transaction has been successfully committed and closed -- all writes have been persisted.")
+                Connection(
+                    11,
+                    "Transaction has been successfully committed and closed -- all writes have been persisted."
+                )
             val TRANSACTION_COMMIT_FAILED =
                 Connection(12, "Transaction failed to commit, due to:\n%s")
             val FAILED_TO_DELETE_DATABASE =
