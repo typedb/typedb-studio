@@ -94,10 +94,10 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     override val hasSecondary: Boolean = false
     override val icon: Form.IconArg = icon(typeState.conceptType)
 
-    internal val canReadSchema get() = !Service.schema.hasRunningTx
+    internal val canReadSchema get() = !Service.schema.hasRunningCommand
     internal val canWriteSchema
         get() = !typeState.isRoot && Service.schema.isWritable &&
-                !Service.schema.hasRunningTx && !Service.client.hasRunningCommand
+                !Service.schema.hasRunningCommand && !Service.client.hasRunningCommand
 
     private val focusReq = FocusRequester()
     private val horScroller = ScrollState(0)
