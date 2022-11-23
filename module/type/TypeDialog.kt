@@ -202,7 +202,7 @@ object TypeDialog {
                 var supertypeState: T by mutableStateOf(typeState.supertype!!)
                 override fun cancel() = dialogState.close()
                 override fun submit() = typeState.tryChangeSupertype(supertypeState)
-                override fun isValid() = true
+                override fun isValid() = supertypeState != typeState.supertype
             }
         }
         Dialog.Layout(dialogState, title, DIALOG_WIDTH, DIALOG_HEIGHT) {
@@ -311,7 +311,7 @@ object TypeDialog {
                 var isAbstract: Boolean by mutableStateOf(typeState.isAbstract)
                 override fun cancel() = dialogState.close()
                 override fun submit() = typeState.tryChangeAbstract(isAbstract)
-                override fun isValid() = true
+                override fun isValid() = isAbstract != typeState.isAbstract
             }
         }
         Dialog.Layout(dialogState, Label.CHANGE_TYPE_ABSTRACTNESS, DIALOG_WIDTH, DIALOG_HEIGHT) {
