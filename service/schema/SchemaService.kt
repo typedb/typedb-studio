@@ -110,7 +110,7 @@ class SchemaService(
         get() = rootEntityType?.let { listOf(it, rootRelationType!!, rootAttributeType!!) } ?: listOf()
 
     val isOpen: Boolean get() = isOpenAtomic.state
-    val hasRunningTx: Boolean get() = hasRunningWriteAtomic.state || countRunningReadAtomic.state > 0
+    val hasRunningCommand: Boolean get() = hasRunningWriteAtomic.state || countRunningReadAtomic.state > 0
     var rootEntityType: EntityTypeState? by mutableStateOf(null); private set
     var rootRelationType: RelationTypeState? by mutableStateOf(null); private set
     var rootRoleType: RoleTypeState? by mutableStateOf(null); private set
