@@ -11,8 +11,8 @@
 TypeDB Studio is a fully-featured Integrated Development Environment (IDE) for TypeDB.
 
 You can utilise Studio as you would [TypeDB Console](https://docs.vaticle.com/docs/console/console)
-and the [TypeDB Clients](https://docs.vaticle.com/docs/client-api/overview): to connect to your TypeDB instance and perform
-queries.
+and the [TypeDB Clients](https://docs.vaticle.com/docs/client-api/overview): to connect to your TypeDB instance and
+perform queries.
 
 Studio is an IDE designed for the end-to-end development of TypeDB databases, database queries, and data exploration,
 via a clean and intuitive UI that gives you a top-down view of your entire database.
@@ -33,7 +33,7 @@ using Studio. The project browser maintains a live view of the directory content
 
 [![Log Output](./images/type_browser_1.png)](./images/type_browser_1.png)
 
-The Type Browser provides a structured tree view of the connected database's type hierarchy. Double-clicking on any of 
+The Type Browser provides a structured tree view of the connected database's type hierarchy. Double-clicking on any of
 the listed types will bring up a page that lists their properties in detail — supertype, roles played, attributes owned
 and more.
 

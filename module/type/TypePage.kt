@@ -264,7 +264,9 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                 Form.Text(value = Label.ABSTRACT)
                 Spacer(Modifier.weight(1f))
                 Form.TextBox(((if (typeState.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
-                EditButton(Label.CHANGE_TYPE_ABSTRACTNESS, typeState.canBeAbstract) { typeState.initiateChangeAbstract() }
+                EditButton(Label.CHANGE_TYPE_ABSTRACTNESS, typeState.canBeAbstract) {
+                    typeState.initiateChangeAbstract()
+                }
             }
             Separator(typeState.isAbstract)
         }

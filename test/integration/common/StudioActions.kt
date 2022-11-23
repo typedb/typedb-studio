@@ -40,15 +40,12 @@ import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLMatch
 import java.io.File
-import java.lang.AssertionError
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.TimeoutException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -119,8 +116,10 @@ object StudioActions {
                 }
             }
         } catch (e: ComposeTimeoutException) {
-            throw AssertionError("Timeout of ${Delays.WAIT_TIMEOUT}ms exceeded waiting for assertion " +
-                    "to pass. See the cause for the last assertion failure below.", latestAssertionError)
+            throw AssertionError(
+                "Timeout of ${Delays.WAIT_TIMEOUT}ms exceeded waiting for assertion " +
+                        "to pass. See the cause for the last assertion failure below.", latestAssertionError
+            )
         }
     }
 
@@ -239,7 +238,8 @@ object StudioActions {
     }
 
     fun verifyDataWrite(
-        address: String, dbName: String, queryFileName: String) {
+        address: String, dbName: String, queryFileName: String
+    ) {
         val queryString = readQueryFileToString(queryFileName)
 
         TypeDB.coreClient(address).use { client ->

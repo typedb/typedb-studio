@@ -34,7 +34,7 @@ class RoleTypeState constructor(
     schemaSrv: SchemaService
 ) : TypeState<RoleType, RoleTypeState>(conceptType, supertype, Encoding.ROLE_TYPE, schemaSrv) {
 
-    interface RoleTypeProperties: OverridingTypeProperties<RoleTypeState> {
+    interface RoleTypeProperties : OverridingTypeProperties<RoleTypeState> {
         val roleType: RoleTypeState
         override val type: RoleTypeState get() = roleType
         override val overriddenType: RoleTypeState?

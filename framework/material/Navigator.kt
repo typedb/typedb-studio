@@ -34,7 +34,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -108,9 +107,9 @@ object Navigator {
         val clicksToOpenItem: Int,
         val itemsAreFocusable: Boolean
     ) {
-        class Browser(clicksToOpenItem: Int = 2): Behaviour(clicksToOpenItem, true)
+        class Browser(clicksToOpenItem: Int = 2) : Behaviour(clicksToOpenItem, true)
 
-        class Menu(clicksToOpenItem: Int = 1): Behaviour(clicksToOpenItem, false)
+        class Menu(clicksToOpenItem: Int = 1) : Behaviour(clicksToOpenItem, false)
     }
 
     @OptIn(ExperimentalTime::class)
