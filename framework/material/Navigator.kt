@@ -201,7 +201,7 @@ object Navigator {
                 val updatedEntries = entries.filter { !deleted.contains(it.item) } +
                         added.map { ItemState(it, this, navState, coroutines) }.toList()
                 entries = updatedEntries.sorted()
-            }
+            } else entries = entries.sorted()
             navState.recomputeList()
             entries.filter { it.isExpanded }.forEach {
                 coroutines.launchAndHandle(notification, LOGGER) { it.reloadEntries() }
