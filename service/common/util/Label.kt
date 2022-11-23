@@ -37,6 +37,7 @@ object Label {
     const val CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE = "Change Overridden Related Role Type"
     const val CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE = "Change Overridden Played Role Type"
     const val CHANGE_RELATION_SUPERTYPE = "Change Relation Supertype"
+    const val CHANGE_SUPERTYPE = "Change Supertype"
     const val CHANGE_TYPE_ABSTRACTNESS = "Change Type Abstractness"
     const val CLOSE = "Close"
     const val CLOSE_TRANSACTION = "Close Transaction"

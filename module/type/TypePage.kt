@@ -236,7 +236,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                 text = TypeLabelWithDetails(typeState.conceptType),
                 leadingIcon = icon(typeState.conceptType)
             )
-            EditButton { typeState.initiateRename() }
+            EditButton(Label.RENAME) { typeState.initiateRename() }
             Spacer(Modifier.weight(1f))
         }
     }
@@ -252,7 +252,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                 leadingIcon = icon(supertypeState.conceptType),
                 enabled = !typeState.isRoot,
             ) { supertypeState.tryOpen() }
-            EditButton { typeState.initiateChangeSupertype() }
+            EditButton(Label.CHANGE_SUPERTYPE) { typeState.initiateChangeSupertype() }
         }
     }
 
@@ -264,7 +264,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                 Form.Text(value = Label.ABSTRACT)
                 Spacer(Modifier.weight(1f))
                 Form.TextBox(((if (typeState.isAbstract) "" else Label.NOT + " ") + Label.ABSTRACT).lowercase())
-                EditButton(typeState.canBeAbstract) { typeState.initiateChangeAbstract() }
+                EditButton(Label.CHANGE_TYPE_ABSTRACTNESS, typeState.canBeAbstract) { typeState.initiateChangeAbstract() }
             }
             Separator(typeState.isAbstract)
         }
@@ -619,11 +619,11 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     }
 
     @Composable
-    protected fun EditButton(enabled: Boolean = true, onClick: () -> Unit) {
+    protected fun EditButton(title: String, enabled: Boolean = true, onClick: () -> Unit) {
         Form.IconButton(
             icon = Icon.RENAME,
             enabled = canWriteSchema && enabled,
-            tooltip = Tooltip.Arg(Label.RENAME, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
+            tooltip = Tooltip.Arg(title, Sentence.EDITING_TYPES_REQUIREMENT_DESCRIPTION),
             onClick = onClick
         )
     }
