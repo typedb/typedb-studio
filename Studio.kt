@@ -143,7 +143,8 @@ object Studio {
             title = getMainWindowTitle(),
             state = rememberWindowState(WindowPlacement.Maximized),
             icon = painterResource(VATICLE_BOT_ICON),
-            onPreviewKeyEvent = { handleKeyEvent(it, ::confirmClose) },
+            onPreviewKeyEvent = { handlePreviewKeyEvent(it, ::confirmClose) },
+            onKeyEvent = { handleKeyEvent(it) },
             onCloseRequest = { if (error != null) exitApplicationFn() else confirmClose() },
         ) {
             CompositionLocalProvider(LocalWindow provides window) {
@@ -186,13 +187,7 @@ object Studio {
                             minSize = Pages.MIN_WIDTH,
                             initSize = Either.second(1f)
                         ) {
-                            Pages.Layout(
-                                enabled = Service.project.current != null,
-                                onNewPage = {
-                                    Service.project.tryCreateUntitledFile()
-                                        ?.tryOpen()
-                                }
-                            ) {
+                            Pages.Layout(enabled = Service.project.current != null) {
                                 when (it) {
                                     is FileState -> FilePage.create(it)
                                     is ThingTypeState<*, *> -> TypePage.create(it)
@@ -214,17 +209,29 @@ object Studio {
         return Label.TYPEDB_STUDIO + ((pageName ?: projectName)?.let { " — $it" } ?: "")
     }
 
-    private fun handleKeyEvent(event: KeyEvent, onClose: () -> Unit): Boolean {
-        return if (event.type == KeyEventType.KeyUp) false
-        else KeyMapper.CURRENT.map(event)?.let {
-            when (it) {
-                KeyMapper.Command.QUIT -> {
-                    onClose()
-                    true
-                }
-                else -> false
+    private fun handlePreviewKeyEvent(event: KeyEvent, onClose: () -> Unit): Boolean = handleEvent(event) {
+        when (it) {
+            KeyMapper.Command.QUIT -> {
+                onClose()
+                true
             }
-        } ?: false
+            else -> false
+        }
+    }
+
+    private fun handleKeyEvent(event: KeyEvent): Boolean = handleEvent(event) {
+        when (it) {
+            KeyMapper.Command.NEW_PAGE -> {
+                Service.project.tryCreateUntitledFile()?.tryOpen()
+                true
+            }
+            else -> false
+        }
+    }
+
+    private fun handleEvent(event: KeyEvent, function: (KeyMapper.Command) -> Boolean): Boolean {
+        return if (event.type == KeyEventType.KeyUp) false
+        else KeyMapper.CURRENT.map(event)?.let { function(it) } ?: false
     }
 
     @Composable

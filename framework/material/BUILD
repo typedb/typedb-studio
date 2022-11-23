@@ -32,6 +32,7 @@ kt_jvm_library(
     deps = [
         "//service/common:common",
         "//service/page:page",
+        "//service/project:project",
         "//service:service",
         "//framework/common:common",
 
