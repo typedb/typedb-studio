@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vaticle.typedb.studio.framework.common.Util.getCursorRectSafely
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.framework.common.theme.Theme
@@ -430,12 +431,11 @@ object TextEditor {
         length: Int, fontWidth: Dp
     ) {
         assert(selection.min.row <= index && selection.max.row >= index)
+        val density = state.density
         val start = if (selection.min.row < index) 0 else selection.min.col
         val end = if (selection.max.row > index) state.content[index].length else selection.max.col
-        var startPos = textLayout?.let { toDP(it.getCursorRect(start).left, state.density) } ?: (fontWidth * start)
-        var endPos = textLayout?.let {
-            toDP(it.getCursorRect(end.coerceAtMost(it.getLineEnd(0))).right, state.density)
-        } ?: (fontWidth * end)
+        var startPos = textLayout?.let { toDP(it.getCursorRectSafely(start).left, density) } ?: (fontWidth * start)
+        var endPos = textLayout?.let { toDP(it.getCursorRectSafely(end).right, density) } ?: (fontWidth * end)
         if (selection.min.row < index) startPos -= AREA_PADDING_HOR
         if (selection.max.row > index && length > 0) endPos += AREA_PADDING_HOR
         Box(Modifier.offset(x = startPos).width(endPos - startPos).height(state.lineHeight).background(color))
@@ -449,7 +449,7 @@ object TextEditor {
         val cursor = state.target.cursor
         var visible by remember { mutableStateOf(true) }
         val offsetX = textLayout?.let {
-            toDP(it.getCursorRect(cursor.col.coerceAtMost(it.getLineEnd(0))).left, state.density)
+            toDP(it.getCursorRectSafely(cursor.col).left, state.density)
         } ?: (fontWidth * cursor.col)
         val width = textLayout?.let {
             if (cursor.col >= it.multiParagraph.intrinsics.annotatedString.length) fontWidth
