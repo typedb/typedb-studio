@@ -11,13 +11,9 @@ brew install --cask vaticle/tap/typedb-studio
 
 ### TypeDB Server Compatible Versions
 
-- 2.10.0 and above
+See the [compatibility table](https://docs.vaticle.com/docs/studio/overview#version-compatibility) at our Studio documentation for which versions of Studio are compatible with which versions of TypeDB.
 
 ---
 
 { release notes }
 
----
-
-Please refer to [full release notes of 2.10.0-alpha](https://github.com/vaticle/typedb-studio/releases/tag/2.10.0-alpha)
-to see the changes in 2.10.0.
