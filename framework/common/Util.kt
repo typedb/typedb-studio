@@ -23,6 +23,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -75,4 +76,7 @@ object Util {
         val coercedStart = start.coerceIn(0, length)
         return this.subSequence(coercedStart, end.coerceIn(coercedStart, length))
     }
+
+    // TODO: Investigate usages of this method -- why were they needed to begin with. Most likely is race condition.
+    fun TextLayoutResult.getCursorRectSafely(i: Int) = this.getCursorRect(i.coerceAtMost(this.getLineEnd(0)))
 }

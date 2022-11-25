@@ -95,6 +95,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
+import com.vaticle.typedb.studio.framework.common.Util.getCursorRectSafely
 import com.vaticle.typedb.studio.framework.common.Util.isMouseHover
 import com.vaticle.typedb.studio.framework.common.Util.italics
 import com.vaticle.typedb.studio.framework.common.Util.toDP
@@ -498,7 +499,7 @@ object Form {
         }
 
         private fun mayScrollHorizontally() {
-            val cursorOffset = toDP(layout?.getCursorRect(value.selection.end)?.left ?: 0f, density)
+            val cursorOffset = toDP(layout?.getCursorRectSafely(value.selection.end)?.left ?: 0f, density)
             val scrollOffset = toDP(horScroller.value, density)
             val viewPadding = MULTILINE_INPUT_PADDING * 2
             if (boxWidth + scrollOffset - viewPadding < cursorOffset) {

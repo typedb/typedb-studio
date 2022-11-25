@@ -32,6 +32,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
+import com.vaticle.typedb.studio.framework.common.Util.getCursorRectSafely
 import com.vaticle.typedb.studio.framework.common.Util.subSequenceSafely
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.service.Service
@@ -261,9 +262,7 @@ internal class InputTarget constructor(
             else if (y >= bottom) verScroller.updateOffsetBy((y - bottom).dp + padding)
         }
 
-        val cursorRect = rendering.get(cursor.row)?.let {
-            it.getCursorRect(cursor.col.coerceAtMost(it.getLineEnd(0)))
-        } ?: Rect(0f, 0f, 0f, 0f)
+        val cursorRect = rendering.get(cursor.row)?.getCursorRectSafely(cursor.col) ?: Rect(0f, 0f, 0f, 0f)
         val x = textAreaBounds.left + toDP(cursorRect.left - horScroller.value, density).value
         val y = textAreaBounds.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
         mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight)
