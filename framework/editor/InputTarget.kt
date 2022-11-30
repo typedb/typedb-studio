@@ -134,7 +134,7 @@ internal class InputTarget constructor(
             verScroller.stickToBottom = value
         }
 
-    private var _cursor: Cursor by mutableStateOf(Cursor(0, 0)); private set
+    private var _cursor: Cursor by mutableStateOf(Cursor(0, 0));
     private var mayDragSelectByChar: Boolean by mutableStateOf(false)
     private var mayDragSelectByWord: Boolean by mutableStateOf(false)
     private var mayDragSelectByLine: Boolean by mutableStateOf(false)
@@ -271,9 +271,8 @@ internal class InputTarget constructor(
     internal fun moveCursorPrevByChar(isSelecting: Boolean = false) {
         if (!isSelecting && selection != null) updateCursor(selection!!.min, false)
         else {
-            val rowText = content[cursor.row].text
             var newRow = cursor.row
-            var newCol = rowText.offsetByCodePoints(0, rowText.codePoint(cursor.col))
+            var newCol = cursor.col - 1
             if (newCol < 0) {
                 newRow -= 1
                 if (newRow < 0) {

@@ -464,13 +464,13 @@ internal interface TextProcessor {
         }
     }
 
-//    object Codepoints {
-//        fun codepointsToString(codepoints: IntStream): String {
-//            codepoints.toString()
-//        }
-//
-//        fun stringToCodePoints(string: String): IntStream {
-//            string.codePoints()
-//        }
-//    }
+    object Codepoints {
+        fun codepointsToString(codepoints: IntStream): String {
+            return codepoints.toString()
+        }
+
+        fun stringToCodePoints(string: String): IntStream {
+            return string.codePoints()
+        }
+    }
 }
