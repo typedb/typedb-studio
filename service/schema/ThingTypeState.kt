@@ -129,7 +129,6 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     } ?: Unit
 
     override fun tryOpen(): Boolean {
-        schemaSrv.loadedState.reset()
         isOpenAtomic.set(true)
         callbacks.onReopen.forEach { it(this) }
         schemaSrv.pages.opened(this)
