@@ -160,7 +160,6 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
     fun loadConstraints() = schemaSrv.mayRunReadTx {
         try {
-            println("loadConstraints() for ${conceptType.asRemote(it).label.name()}")
             loadSupertypes()
             loadOtherConstraints()
             loadSubtypesRecursively()
@@ -179,10 +178,6 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     }
 
     override fun loadInheritables() {
-        schemaSrv.mayRunReadTx { tx ->
-            val typeTx = conceptType.asRemote(tx)
-            println("loadInheritables() for ${typeTx.label.name()}")
-        }
         loadOwnedAttributeTypes()
         loadPlayedRoleTypes()
     }
@@ -207,7 +202,6 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             attTypeConcept: AttributeType, isKey: Boolean, isInherited: Boolean
         ) {
             loaded.add(attTypeConcept)
-            println("${typeTx.label.name()} owns attribute type ${attTypeConcept.asType().label.name()}")
             schemaSrv.typeStateOf(attTypeConcept)?.let { attType ->
                 val overriddenType = typeTx.getOwnsOverridden(attTypeConcept)?.let { schemaSrv.typeStateOf(it) }
                 val inheritedType = when {
@@ -230,9 +224,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
             val typeName = typeTx.label.name()
-            println("loadOwnedAttributeTypes() for ${typeName}")
             if (!schemaSrv.loadedState.contains(ownedAttTypes, typeName)) {
-                println("We haven't loaded ownedAttTypes for ${typeName}")
                 schemaSrv.loadedState.append(ownedAttTypes, typeName)
                 typeTx.getOwnsExplicit(true).forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
@@ -247,8 +239,6 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = true)
                 }
                 ownedAttTypeProperties = properties
-            } else {
-                println("We have already loaded ownedAttTypes for ${typeName}")
             }
         }
     }

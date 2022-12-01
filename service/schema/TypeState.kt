@@ -81,10 +81,9 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(
 
     fun loadSupertypes(): Unit = schemaSrv.mayRunReadTx { tx ->
         val typeTx = conceptType.asRemote(tx)
-        println("loadSupertypes() for ${typeTx.label.name()}")
         supertype = typeTx.supertype?.let {
             if (isSameEncoding(it)) typeStateOf(asSameEncoding(it)) else null
-        }?.also { println("${typeTx.label.name()} has supertype ${supertype?.name}"); it.loadInheritables() }
+        }?.also { it.loadInheritables() }
         supertype?.loadSupertypes()
         supertypes = supertype?.let { listOf(it) + it.supertypes } ?: listOf()
     } ?: Unit

@@ -28,7 +28,6 @@ class LoadedStateService {
     }
 
     fun reset() {
-        println("resetting and clearing loaded state service")
         loadedState.clear()
         for (name in LoadedTypeState.values()) {
             loadedState[name] = mutableListOf()
