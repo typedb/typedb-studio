@@ -161,7 +161,6 @@ class SchemaService(
             refreshTypesAndOpen()
             updateSchemaExceptionsStatus()
         }
-        loadedState.reset()
     }
 
     fun onTypesUpdated(function: () -> Unit) = onTypesUpdated.put(function)
