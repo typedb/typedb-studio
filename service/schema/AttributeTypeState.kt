@@ -98,8 +98,8 @@ class AttributeTypeState internal constructor(
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
             val typeName = typeTx.label.name()
-            if (!schemaSrv.loadedState.contains(ownerTypes, typeName)) {
-                schemaSrv.loadedState.append(ownerTypes, typeName)
+            if (!schemaSrv.loadedState.contains(typeName, ownerTypes)) {
+                schemaSrv.loadedState.append(typeName, ownerTypes)
                 typeTx.getOwnersExplicit(true).forEach {
                     load(it, isKey = true, isInherited = false)
                 }

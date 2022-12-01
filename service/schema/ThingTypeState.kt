@@ -223,8 +223,8 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
             val typeName = typeTx.label.name()
-            if (!schemaSrv.loadedState.contains(ownedAttTypes, typeName)) {
-                schemaSrv.loadedState.append(ownedAttTypes, typeName)
+            if (!schemaSrv.loadedState.contains(typeName, ownedAttTypes)) {
+                schemaSrv.loadedState.append(typeName, ownedAttTypes)
                 typeTx.getOwnsExplicit(true).forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
                 }
@@ -275,8 +275,8 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
             val typeName = typeTx.label.name()
-            if (!schemaSrv.loadedState.contains(playedRoleTypes, typeName)) {
-                schemaSrv.loadedState.append(playedRoleTypes, typeName)
+            if (!schemaSrv.loadedState.contains(typeName, playedRoleTypes)) {
+                schemaSrv.loadedState.append(typeName, playedRoleTypes)
                 typeTx.playsExplicit.forEach { load(tx, typeTx, it, false) }
                 typeTx.plays.filter { !loaded.contains(it) }.forEach { load(tx, typeTx, it, true) }
                 playedRoleTypeProperties = properties

@@ -113,8 +113,8 @@ class RelationTypeState internal constructor(
         schemaSrv.mayRunReadTx { tx ->
             val relTypeTx = conceptType.asRemote(tx)
             val typeName = relTypeTx.label.name()
-            if (!schemaSrv.loadedState.contains(relatedRoleTypes, typeName)) {
-                schemaSrv.loadedState.append(relatedRoleTypes, typeName)
+            if (!schemaSrv.loadedState.contains(typeName, relatedRoleTypes)) {
+                schemaSrv.loadedState.append(typeName, relatedRoleTypes)
                 relTypeTx.relatesExplicit.forEach { load(relTypeTx, it, false) }
                 relTypeTx.relates.filter { !loaded.contains(it) && !it.isRoot }.forEach { load(relTypeTx, it, true) }
                 relatedRoleTypeProperties = properties

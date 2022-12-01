@@ -21,7 +21,7 @@ package com.vaticle.typedb.studio.service.schema
 import java.util.concurrent.ConcurrentHashMap
 
 class LoadedStateService {
-    val loadedState = ConcurrentHashMap<LoadedTypeState, MutableList<String>>()
+    private val loadedState = ConcurrentHashMap<String, MutableList<LoadedTypeState>>()
 
     init {
         reset()
@@ -29,27 +29,16 @@ class LoadedStateService {
 
     fun reset() {
         loadedState.clear()
-        for (name in LoadedTypeState.values()) {
-            loadedState[name] = mutableListOf()
-        }
     }
 
-    fun get(key: LoadedTypeState): List<String> {
-        return loadedState[key]!!
+    fun contains(key: String, value: LoadedTypeState): Boolean {
+        return loadedState[key]?.contains(value) ?: false
     }
 
-    fun set(key: LoadedTypeState, value: MutableList<String>) {
-        loadedState[key] = value
-    }
-
-    fun contains(type: LoadedTypeState, value: String): Boolean {
-        return loadedState[type]!!.contains(value)
-    }
-
-    fun append(key: LoadedTypeState, value: String) {
-        val loadedList = loadedState[key]!!
-        loadedList.add(value)
-        loadedState[key] = loadedList
+    fun append(key: String, value: LoadedTypeState) {
+        val loadedKeys = loadedState[key] ?: mutableListOf()
+        loadedKeys.add(value)
+        loadedState[key] = loadedKeys
     }
 
     enum class LoadedTypeState {

@@ -117,8 +117,8 @@ class RoleTypeState constructor(
         schemaSrv.mayRunReadTx { tx ->
             val roleTypeTx = conceptType.asRemote(tx)
             val typeName = roleTypeTx.label.name()
-            if (!schemaSrv.loadedState.contains(playerTypes, typeName)) {
-                schemaSrv.loadedState.append(playerTypes, typeName)
+            if (!schemaSrv.loadedState.contains(typeName, playerTypes)) {
+                schemaSrv.loadedState.append(typeName, playerTypes)
                 roleTypeTx.playerTypesExplicit.forEach { load(it, isInherited = false) }
                 roleTypeTx.playerTypes.filter { !loaded.contains(it) }.forEach { load(it, isInherited = true) }
                 playerTypeProperties = properties
