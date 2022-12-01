@@ -129,6 +129,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     } ?: Unit
 
     override fun tryOpen(): Boolean {
+        schemaSrv.loadedState.reset()
         isOpenAtomic.set(true)
         callbacks.onReopen.forEach { it(this) }
         schemaSrv.pages.opened(this)
@@ -159,6 +160,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
     fun loadConstraints() = schemaSrv.mayRunReadTx {
         try {
+            println("loadConstraints() for ${conceptType.asRemote(it).label.name()}")
             loadSupertypes()
             loadOtherConstraints()
             loadSubtypesRecursively()
@@ -177,6 +179,10 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     }
 
     override fun loadInheritables() {
+        schemaSrv.mayRunReadTx { tx ->
+            val typeTx = conceptType.asRemote(tx)
+            println("loadInheritables() for ${typeTx.label.name()}")
+        }
         loadOwnedAttributeTypes()
         loadPlayedRoleTypes()
     }
@@ -194,12 +200,14 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     private fun loadOwnedAttributeTypes() {
         val loaded = mutableSetOf<AttributeType>()
         val properties = mutableListOf<AttributeTypeState.OwnedAttTypeProperties>()
+        val ownedAttTypes = LoadedStateService.LoadedTypeState.OwnedAttributeTypes
 
         fun load(
             tx: TypeDBTransaction, typeTx: ThingType.Remote,
             attTypeConcept: AttributeType, isKey: Boolean, isInherited: Boolean
         ) {
             loaded.add(attTypeConcept)
+            println("${typeTx.label.name()} owns attribute type ${attTypeConcept.asType().label.name()}")
             schemaSrv.typeStateOf(attTypeConcept)?.let { attType ->
                 val overriddenType = typeTx.getOwnsOverridden(attTypeConcept)?.let { schemaSrv.typeStateOf(it) }
                 val inheritedType = when {
@@ -221,25 +229,34 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
-            typeTx.getOwnsExplicit(true).forEach {
-                load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
-            }
-            typeTx.getOwnsExplicit(false).filter { !loaded.contains(it) }.forEach {
-                load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = false)
-            }
-            typeTx.getOwns(true).filter { !loaded.contains(it) }.forEach {
-                load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = true)
-            }
-            typeTx.getOwns(false).filter { !loaded.contains(it) }.forEach {
-                load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = true)
+            val typeName = typeTx.label.name()
+            println("loadOwnedAttributeTypes() for ${typeName}")
+            if (!schemaSrv.loadedState.contains(ownedAttTypes, typeName)) {
+                println("We haven't loaded ownedAttTypes for ${typeName}")
+                schemaSrv.loadedState.append(ownedAttTypes, typeName)
+                typeTx.getOwnsExplicit(true).forEach {
+                    load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
+                }
+                typeTx.getOwnsExplicit(false).filter { !loaded.contains(it) }.forEach {
+                    load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = false)
+                }
+                typeTx.getOwns(true).filter { !loaded.contains(it) }.forEach {
+                    load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = true)
+                }
+                typeTx.getOwns(false).filter { !loaded.contains(it) }.forEach {
+                    load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = true)
+                }
+                ownedAttTypeProperties = properties
+            } else {
+                println("We have already loaded ownedAttTypes for ${typeName}")
             }
         }
-        ownedAttTypeProperties = properties
     }
 
     private fun loadPlayedRoleTypes() {
         val loaded = mutableSetOf<RoleType>()
         val properties = mutableListOf<RoleTypeState.PlayedRoleTypeProperties>()
+        val playedRoleTypes = LoadedStateService.LoadedTypeState.PlayedRoleTypes
 
         fun load(tx: TypeDBTransaction, typeTx: ThingType.Remote, roleTypeConcept: RoleType, isInherited: Boolean) {
             loaded.add(roleTypeConcept)
@@ -268,10 +285,14 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
-            typeTx.playsExplicit.forEach { load(tx, typeTx, it, false) }
-            typeTx.plays.filter { !loaded.contains(it) }.forEach { load(tx, typeTx, it, true) }
+            val typeName = typeTx.label.name()
+            if (!schemaSrv.loadedState.contains(playedRoleTypes, typeName)) {
+                schemaSrv.loadedState.append(playedRoleTypes, typeName)
+                typeTx.playsExplicit.forEach { load(tx, typeTx, it, false) }
+                typeTx.plays.filter { !loaded.contains(it) }.forEach { load(tx, typeTx, it, true) }
+                playedRoleTypeProperties = properties
+            }
         }
-        playedRoleTypeProperties = properties
     }
 
     protected fun tryCreateSubtype(

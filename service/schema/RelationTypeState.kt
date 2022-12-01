@@ -92,6 +92,7 @@ class RelationTypeState internal constructor(
     private fun loadRelatedRoleTypes() {
         val loaded = mutableSetOf<RoleType>()
         val properties = mutableListOf<RoleTypeState.RelatedRoleTypeProperties>()
+        val relatedRoleTypes = LoadedStateService.LoadedTypeState.RelatedRoleTypes
 
         fun load(relTypeTx: RelationType.Remote, roleTypeConcept: RoleType, isInherited: Boolean) {
             loaded.add(roleTypeConcept)
@@ -111,10 +112,14 @@ class RelationTypeState internal constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val relTypeTx = conceptType.asRemote(tx)
-            relTypeTx.relatesExplicit.forEach { load(relTypeTx, it, false) }
-            relTypeTx.relates.filter { !loaded.contains(it) && !it.isRoot }.forEach { load(relTypeTx, it, true) }
+            val typeName = relTypeTx.label.name()
+            if (!schemaSrv.loadedState.contains(relatedRoleTypes, typeName)) {
+                schemaSrv.loadedState.append(relatedRoleTypes, typeName)
+                relTypeTx.relatesExplicit.forEach { load(relTypeTx, it, false) }
+                relTypeTx.relates.filter { !loaded.contains(it) && !it.isRoot }.forEach { load(relTypeTx, it, true) }
+                relatedRoleTypeProperties = properties
+            }
         }
-        relatedRoleTypeProperties = properties
     }
 
     override fun initiateCreateSubtype(onSuccess: () -> Unit) =

@@ -105,6 +105,7 @@ class RoleTypeState constructor(
     fun loadPlayerTypes() {
         val loaded = mutableSetOf<ThingType>()
         val properties = mutableListOf<PlayerTypeProperties>()
+        val playerTypes = LoadedStateService.LoadedTypeState.PlayerTypes
 
         fun load(playerType: ThingType, isInherited: Boolean) {
             loaded.add(playerType)
@@ -115,11 +116,14 @@ class RoleTypeState constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val roleTypeTx = conceptType.asRemote(tx)
-            roleTypeTx.playerTypesExplicit.forEach { load(it, isInherited = false) }
-            roleTypeTx.playerTypes.filter { !loaded.contains(it) }.forEach { load(it, isInherited = true) }
+            val typeName = roleTypeTx.label.name()
+            if (!schemaSrv.loadedState.contains(playerTypes, typeName)) {
+                schemaSrv.loadedState.append(playerTypes, typeName)
+                roleTypeTx.playerTypesExplicit.forEach { load(it, isInherited = false) }
+                roleTypeTx.playerTypes.filter { !loaded.contains(it) }.forEach { load(it, isInherited = true) }
+                playerTypeProperties = properties
+            }
         }
-
-        playerTypeProperties = properties
     }
 
     override fun toString(): String = "TypeState.Role: $conceptType"

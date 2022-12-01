@@ -80,6 +80,7 @@ class AttributeTypeState internal constructor(
     fun loadOwnerTypes() {
         val loaded = mutableSetOf<ThingType>()
         val properties = mutableListOf<AttTypeOwnerProperties>()
+        val ownerTypes = LoadedStateService.LoadedTypeState.OwnerTypes
 
         fun load(ownerTypeConcept: ThingType, isKey: Boolean, isInherited: Boolean) {
             loaded.add(ownerTypeConcept)
@@ -96,21 +97,25 @@ class AttributeTypeState internal constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
-            typeTx.getOwnersExplicit(true).forEach {
-                load(it, isKey = true, isInherited = false)
-            }
-            typeTx.getOwnersExplicit(false).filter { !loaded.contains(it) }.forEach {
-                load(it, isKey = false, isInherited = false)
-            }
-            typeTx.getOwners(true).filter { !loaded.contains(it) }.forEach {
-                load(it, isKey = true, isInherited = true)
-            }
-            typeTx.getOwners(false).filter { !loaded.contains(it) }.forEach {
-                load(it, isKey = false, isInherited = true)
+            val typeName = typeTx.label.name()
+            if (!schemaSrv.loadedState.contains(ownerTypes, typeName)) {
+                schemaSrv.loadedState.append(ownerTypes, typeName)
+                println("loadOwnerTypes() for ${typeTx.label.name()}")
+                typeTx.getOwnersExplicit(true).forEach {
+                    load(it, isKey = true, isInherited = false)
+                }
+                typeTx.getOwnersExplicit(false).filter { !loaded.contains(it) }.forEach {
+                    load(it, isKey = false, isInherited = false)
+                }
+                typeTx.getOwners(true).filter { !loaded.contains(it) }.forEach {
+                    load(it, isKey = true, isInherited = true)
+                }
+                typeTx.getOwners(false).filter { !loaded.contains(it) }.forEach {
+                    load(it, isKey = false, isInherited = true)
+                }
+                ownerTypeProperties = properties
             }
         }
-
-        ownerTypeProperties = properties
     }
 
     override fun initiateCreateSubtype(onSuccess: () -> Unit) =
