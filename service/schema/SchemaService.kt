@@ -115,7 +115,7 @@ class SchemaService(
     var rootRelationType: RelationTypeState? by mutableStateOf(null); private set
     var rootRoleType: RoleTypeState? by mutableStateOf(null); private set
     var rootAttributeType: AttributeTypeState? by mutableStateOf(null); private set
-    var loadedTypeState = LoadedTypeStateService()
+    val loadedTypeState = LoadedTypeStateService()
     val isWritable: Boolean get() = session.isSchema && session.transaction.isWrite
     val createEntityTypeDialog = TypeDialogState<EntityTypeState>()
     val createAttributeTypeDialog = TypeDialogState<AttributeTypeState>()

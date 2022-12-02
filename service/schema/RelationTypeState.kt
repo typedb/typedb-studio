@@ -32,6 +32,7 @@ import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FA
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_RELATES_ROLE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Sentence
+import com.vaticle.typedb.studio.service.schema.LoadedTypeStateService.ConnectedTypes.RelatedRole
 import kotlin.streams.toList
 import mu.KotlinLogging
 
@@ -92,7 +93,6 @@ class RelationTypeState internal constructor(
     private fun loadRelatedRoleTypes() {
         val loaded = mutableSetOf<RoleType>()
         val properties = mutableListOf<RoleTypeState.RelatedRoleTypeProperties>()
-        val relatedRoleTypes = LoadedTypeStateService.LoadedTypeState.RelatedRoleTypes
 
         fun load(relTypeTx: RelationType.Remote, roleTypeConcept: RoleType, isInherited: Boolean) {
             loaded.add(roleTypeConcept)
@@ -112,9 +112,9 @@ class RelationTypeState internal constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val relTypeTx = conceptType.asRemote(tx)
-            val typeName = relTypeTx.label.name()
-            if (!schemaSrv.loadedTypeState.contains(typeName, relatedRoleTypes)) {
-                schemaSrv.loadedTypeState.append(typeName, relatedRoleTypes)
+            val typeLabel = relTypeTx.label.name()
+            if (!schemaSrv.loadedTypeState.contains(typeLabel, RelatedRole)) {
+                schemaSrv.loadedTypeState.append(typeLabel, RelatedRole)
                 relTypeTx.relatesExplicit.forEach { load(relTypeTx, it, false) }
                 relTypeTx.relates.filter { !loaded.contains(it) && !it.isRoot }.forEach { load(relTypeTx, it, true) }
                 relatedRoleTypeProperties = properties

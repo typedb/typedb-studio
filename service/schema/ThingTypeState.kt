@@ -46,6 +46,8 @@ import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FA
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.page.Navigable
 import com.vaticle.typedb.studio.service.page.Pageable
+import com.vaticle.typedb.studio.service.schema.LoadedTypeStateService.ConnectedTypes.OwnedAttribute
+import com.vaticle.typedb.studio.service.schema.LoadedTypeStateService.ConnectedTypes.PlayedRole
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.TypeQL.rel
 import com.vaticle.typeql.lang.TypeQL.`var`
@@ -194,7 +196,6 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     private fun loadOwnedAttributeTypes() {
         val loaded = mutableSetOf<AttributeType>()
         val properties = mutableListOf<AttributeTypeState.OwnedAttTypeProperties>()
-        val ownedAttTypes = LoadedTypeStateService.LoadedTypeState.OwnedAttributeTypes
 
         fun load(
             tx: TypeDBTransaction, typeTx: ThingType.Remote,
@@ -223,8 +224,8 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
             val typeName = typeTx.label.name()
-            if (!schemaSrv.loadedTypeState.contains(typeName, ownedAttTypes)) {
-                schemaSrv.loadedTypeState.append(typeName, ownedAttTypes)
+            if (!schemaSrv.loadedTypeState.contains(typeName, OwnedAttribute)) {
+                schemaSrv.loadedTypeState.append(typeName, OwnedAttribute)
                 typeTx.getOwnsExplicit(true).forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
                 }
@@ -245,7 +246,6 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     private fun loadPlayedRoleTypes() {
         val loaded = mutableSetOf<RoleType>()
         val properties = mutableListOf<RoleTypeState.PlayedRoleTypeProperties>()
-        val playedRoleTypes = LoadedTypeStateService.LoadedTypeState.PlayedRoleTypes
 
         fun load(tx: TypeDBTransaction, typeTx: ThingType.Remote, roleTypeConcept: RoleType, isInherited: Boolean) {
             loaded.add(roleTypeConcept)
@@ -275,8 +275,8 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
             val typeName = typeTx.label.name()
-            if (!schemaSrv.loadedTypeState.contains(typeName, playedRoleTypes)) {
-                schemaSrv.loadedTypeState.append(typeName, playedRoleTypes)
+            if (!schemaSrv.loadedTypeState.contains(typeName, PlayedRole)) {
+                schemaSrv.loadedTypeState.append(typeName, PlayedRole)
                 typeTx.playsExplicit.forEach { load(tx, typeTx, it, false) }
                 typeTx.plays.filter { !loaded.contains(it) }.forEach { load(tx, typeTx, it, true) }
                 playedRoleTypeProperties = properties

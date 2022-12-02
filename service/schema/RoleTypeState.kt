@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.studio.service.schema.LoadedTypeStateService.ConnectedTypes
 import kotlin.streams.toList
 import mu.KotlinLogging
 
@@ -68,7 +69,7 @@ class RoleTypeState constructor(
 
     val scopedName get() = relationType.name + ":" + name
     var playerTypeProperties: List<PlayerTypeProperties> by mutableStateOf(emptyList())
-    val playerTypes get() = playerTypeProperties.map { it.playerType }
+    val Player get() = playerTypeProperties.map { it.playerType }
     val playerTypesExplicit get() = playerTypeProperties.filter { !it.isInherited }.map { it.playerType }
     private var hasPlayerInstancesExplicit: Boolean by mutableStateOf(false)
     override val canBeDeleted: Boolean get() = !hasSubtypes && !hasPlayerInstancesExplicit
@@ -105,7 +106,6 @@ class RoleTypeState constructor(
     fun loadPlayerTypes() {
         val loaded = mutableSetOf<ThingType>()
         val properties = mutableListOf<PlayerTypeProperties>()
-        val playerTypes = LoadedTypeStateService.LoadedTypeState.PlayerTypes
 
         fun load(playerType: ThingType, isInherited: Boolean) {
             loaded.add(playerType)
@@ -116,9 +116,9 @@ class RoleTypeState constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val roleTypeTx = conceptType.asRemote(tx)
-            val typeName = roleTypeTx.label.name()
-            if (!schemaSrv.loadedTypeState.contains(typeName, playerTypes)) {
-                schemaSrv.loadedTypeState.append(typeName, playerTypes)
+            val typeLabel = roleTypeTx.label.name()
+            if (!schemaSrv.loadedTypeState.contains(typeLabel, ConnectedTypes.Player)) {
+                schemaSrv.loadedTypeState.append(typeLabel, ConnectedTypes.Player)
                 roleTypeTx.playerTypesExplicit.forEach { load(it, isInherited = false) }
                 roleTypeTx.playerTypes.filter { !loaded.contains(it) }.forEach { load(it, isInherited = true) }
                 playerTypeProperties = properties

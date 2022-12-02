@@ -21,31 +21,25 @@ package com.vaticle.typedb.studio.service.schema
 import java.util.concurrent.ConcurrentHashMap
 
 class LoadedTypeStateService {
-    private val loadedTypeState = ConcurrentHashMap<String, MutableList<LoadedTypeState>>()
-
-    init {
-        reset()
-    }
+    private val loadedTypeState = ConcurrentHashMap<String, MutableList<ConnectedTypes>>()
 
     fun reset() {
         loadedTypeState.clear()
     }
 
-    fun contains(key: String, value: LoadedTypeState): Boolean {
-        return loadedTypeState[key]?.contains(value) ?: false
+    fun contains(typeLabel: String, connectedTypes: ConnectedTypes): Boolean {
+        return loadedTypeState[typeLabel]?.contains(connectedTypes) ?: false
     }
 
-    fun append(key: String, value: LoadedTypeState) {
-        val loadedKeys = loadedTypeState[key] ?: mutableListOf()
-        loadedKeys.add(value)
-        loadedTypeState[key] = loadedKeys
+    fun append(typeLabel: String, connectedTypes: ConnectedTypes) {
+        loadedTypeState.getOrPut(typeLabel, defaultValue = { mutableListOf() }).add(connectedTypes)
     }
 
-    enum class LoadedTypeState {
-        OwnerTypes,
-        OwnedAttributeTypes,
-        PlayedRoleTypes,
-        PlayerTypes,
-        RelatedRoleTypes,
+    enum class ConnectedTypes {
+        Owner,
+        OwnedAttribute,
+        PlayedRole,
+        Player,
+        RelatedRole,
     }
 }

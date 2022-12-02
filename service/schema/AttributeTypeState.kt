@@ -25,6 +25,7 @@ import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
 import kotlin.streams.toList
+import com.vaticle.typedb.studio.service.schema.LoadedTypeStateService.ConnectedTypes.Owner
 import mu.KotlinLogging
 
 class AttributeTypeState internal constructor(
@@ -80,7 +81,6 @@ class AttributeTypeState internal constructor(
     fun loadOwnerTypes() {
         val loaded = mutableSetOf<ThingType>()
         val properties = mutableListOf<AttTypeOwnerProperties>()
-        val ownerTypes = LoadedTypeStateService.LoadedTypeState.OwnerTypes
 
         fun load(ownerTypeConcept: ThingType, isKey: Boolean, isInherited: Boolean) {
             loaded.add(ownerTypeConcept)
@@ -97,9 +97,9 @@ class AttributeTypeState internal constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
-            val typeName = typeTx.label.name()
-            if (!schemaSrv.loadedTypeState.contains(typeName, ownerTypes)) {
-                schemaSrv.loadedTypeState.append(typeName, ownerTypes)
+            val typeLabel = typeTx.label.name()
+            if (!schemaSrv.loadedTypeState.contains(typeLabel, Owner)) {
+                schemaSrv.loadedTypeState.append(typeLabel, Owner)
                 typeTx.getOwnersExplicit(true).forEach {
                     load(it, isKey = true, isInherited = false)
                 }
