@@ -92,7 +92,7 @@ class RelationTypeState internal constructor(
     private fun loadRelatedRoleTypes() {
         val loaded = mutableSetOf<RoleType>()
         val properties = mutableListOf<RoleTypeState.RelatedRoleTypeProperties>()
-        val relatedRoleTypes = LoadedStateService.LoadedTypeState.RelatedRoleTypes
+        val relatedRoleTypes = LoadedTypeStateService.LoadedTypeState.RelatedRoleTypes
 
         fun load(relTypeTx: RelationType.Remote, roleTypeConcept: RoleType, isInherited: Boolean) {
             loaded.add(roleTypeConcept)
@@ -113,8 +113,8 @@ class RelationTypeState internal constructor(
         schemaSrv.mayRunReadTx { tx ->
             val relTypeTx = conceptType.asRemote(tx)
             val typeName = relTypeTx.label.name()
-            if (!schemaSrv.loadedState.contains(typeName, relatedRoleTypes)) {
-                schemaSrv.loadedState.append(typeName, relatedRoleTypes)
+            if (!schemaSrv.loadedTypeState.contains(typeName, relatedRoleTypes)) {
+                schemaSrv.loadedTypeState.append(typeName, relatedRoleTypes)
                 relTypeTx.relatesExplicit.forEach { load(relTypeTx, it, false) }
                 relTypeTx.relates.filter { !loaded.contains(it) && !it.isRoot }.forEach { load(relTypeTx, it, true) }
                 relatedRoleTypeProperties = properties

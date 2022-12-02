@@ -45,7 +45,6 @@ import com.vaticle.typedb.studio.service.schema.AttributeTypeState.OwnedAttTypeP
 import com.vaticle.typedb.studio.service.schema.RoleTypeState.PlayedRoleTypeProperties
 import com.vaticle.typedb.studio.service.schema.RoleTypeState.RelatedRoleTypeProperties
 import com.vaticle.typeql.lang.common.TypeQLToken
-import com.vaticle.typedb.common.collection.ConcurrentSet;
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicLong
@@ -116,7 +115,7 @@ class SchemaService(
     var rootRelationType: RelationTypeState? by mutableStateOf(null); private set
     var rootRoleType: RoleTypeState? by mutableStateOf(null); private set
     var rootAttributeType: AttributeTypeState? by mutableStateOf(null); private set
-    var loadedState = LoadedStateService()
+    var loadedTypeState = LoadedTypeStateService()
     val isWritable: Boolean get() = session.isSchema && session.transaction.isWrite
     val createEntityTypeDialog = TypeDialogState<EntityTypeState>()
     val createAttributeTypeDialog = TypeDialogState<AttributeTypeState>()
@@ -268,7 +267,7 @@ class SchemaService(
             coroutines.launchAndHandle(notification, LOGGER) {
                 openOrGetWriteTx()?.let { tx ->
                     function(tx)
-                    loadedState.reset()
+                    loadedTypeState.reset()
                     updateSchemaExceptionsStatus()
                 } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_WRITE_TX)
             }.invokeOnCompletion { hasRunningWriteAtomic.set(false) }
@@ -281,7 +280,7 @@ class SchemaService(
             if (isWritable && session.transaction.isOpen) return openOrGetWriteTx()
             if (readTx.get() != null) return readTx.get()
             readTx.set(session.transaction()?.also {
-                loadedState.reset()
+                loadedTypeState.reset()
                 it.onClose { closeReadTx() }
                 scheduleCloseReadTxAsync()
             })
@@ -307,7 +306,7 @@ class SchemaService(
         if (readTx.get() != null) closeReadTx()
         if (writeTx.get() != null) return writeTx.get()
         writeTx.set(session.transaction.tryOpen()?.also { it.onClose { writeTx.set(null) } })
-        loadedState.reset()
+        loadedTypeState.reset()
         return writeTx.get()
     }
 

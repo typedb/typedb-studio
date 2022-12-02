@@ -80,7 +80,7 @@ class AttributeTypeState internal constructor(
     fun loadOwnerTypes() {
         val loaded = mutableSetOf<ThingType>()
         val properties = mutableListOf<AttTypeOwnerProperties>()
-        val ownerTypes = LoadedStateService.LoadedTypeState.OwnerTypes
+        val ownerTypes = LoadedTypeStateService.LoadedTypeState.OwnerTypes
 
         fun load(ownerTypeConcept: ThingType, isKey: Boolean, isInherited: Boolean) {
             loaded.add(ownerTypeConcept)
@@ -98,8 +98,8 @@ class AttributeTypeState internal constructor(
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
             val typeName = typeTx.label.name()
-            if (!schemaSrv.loadedState.contains(typeName, ownerTypes)) {
-                schemaSrv.loadedState.append(typeName, ownerTypes)
+            if (!schemaSrv.loadedTypeState.contains(typeName, ownerTypes)) {
+                schemaSrv.loadedTypeState.append(typeName, ownerTypes)
                 typeTx.getOwnersExplicit(true).forEach {
                     load(it, isKey = true, isInherited = false)
                 }
