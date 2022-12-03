@@ -199,7 +199,6 @@ checkstyle_test(
         ".circleci/windows/*",
         "LICENSE",
         "VERSION",
-        "docs/*",
     ]),
     license_type = "agpl-header",
 )

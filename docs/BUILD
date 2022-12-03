@@ -19,7 +19,7 @@ load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*"]),
-    exclude = glob(["*.png"]),
+    include = glob(["*", "*/*"]),
+    exclude = glob(["*/*.png", "*/*.dot"]),
     license_type = "agpl-header",
 )
