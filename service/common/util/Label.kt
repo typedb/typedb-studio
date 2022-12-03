@@ -20,6 +20,7 @@ package com.vaticle.typedb.studio.service.common.util
 
 object Label {
     const val ABSTRACT = "Abstract"
+    const val ADD = "Add"
     const val ADDRESS = "Address"
     const val ADDRESSES = "Addresses"
     const val ADVANCED = "Advanced"

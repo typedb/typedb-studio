@@ -78,22 +78,17 @@ object ServerDialog {
         var server: Property.Server by mutableStateOf(appData.server ?: Property.Server.TYPEDB)
         var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
         var clusterAddresses: MutableList<String> = mutableStateListOf<String>().also {
-            appData.clusterAddresses?.let { addresses -> it.addAll(addresses) }
+            appData.clusterAddresses?.let { saved -> it.addAll(saved) }
         }
         var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
 
-        override fun cancel() {
-            Service.client.connectServerDialog.close()
-        }
-
-        override fun isValid(): Boolean {
-            return when (server) {
-                TYPEDB -> coreAddress.isNotBlank()
-                TYPEDB_CLUSTER -> !(clusterAddresses.isEmpty() || username.isBlank() || password.isBlank())
-            }
+        override fun cancel() = Service.client.connectServerDialog.close()
+        override fun isValid(): Boolean = when (server) {
+            TYPEDB -> coreAddress.isNotBlank()
+            TYPEDB_CLUSTER -> !(clusterAddresses.isEmpty() || username.isBlank() || password.isBlank())
         }
 
         override fun submit() {
@@ -127,17 +122,10 @@ object ServerDialog {
         }
     }
 
-    private object CreateAddressForm : Form.State() {
-
+    private object AddAddressForm : Form.State() {
         var value: String by mutableStateOf("")
-
-        override fun cancel() {
-            Service.client.manageAddressesDialog.close()
-        }
-
-        override fun isValid(): Boolean {
-            return value.isNotBlank() && validAddressFormat() && !state.clusterAddresses.contains(value)
-        }
+        override fun cancel() = Service.client.manageAddressesDialog.close()
+        override fun isValid() = value.isNotBlank() && validAddressFormat() && !state.clusterAddresses.contains(value)
 
         override fun submit() {
             assert(isValid())
@@ -154,53 +142,49 @@ object ServerDialog {
     @Composable
     fun MayShowDialogs() {
         if (Service.client.connectServerDialog.isOpen) ConnectServer()
-        if (Service.client.manageAddressesDialog.isOpen) ManageAddresses()
+        if (Service.client.manageAddressesDialog.isOpen) ManageClusterAddresses()
     }
 
     @Composable
-    private fun ConnectServer() {
-        Dialog.Layout(
-            state = Service.client.connectServerDialog,
-            title = Label.CONNECT_TO_TYPEDB,
-            width = WIDTH,
-            height = HEIGHT
-        ) {
-            Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
-                ServerFormField(state)
-                if (state.server == TYPEDB_CLUSTER) {
-                    ClusterAddressesFormField(state = state, shouldFocus = Service.client.isDisconnected)
-                    UsernameFormField(state)
-                    PasswordFormField(state)
-                    TLSEnabledFormField(state)
-                    if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
-                } else if (state.server == TYPEDB) {
-                    CoreAddressFormField(state, shouldFocus = Service.client.isDisconnected)
-                }
-                Spacer(Modifier.weight(1f))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    ServerConnectionStatus()
-                    Spacer(modifier = Modifier.weight(1f))
-                    when (Service.client.status) {
-                        DISCONNECTED -> DisconnectedFormButtons(state)
-                        CONNECTING -> ConnectingFormButtons()
-                        CONNECTED -> ConnectedFormButtons(state)
-                    }
+    private fun ConnectServer() = Dialog.Layout(
+        state = Service.client.connectServerDialog,
+        title = Label.CONNECT_TO_TYPEDB,
+        width = WIDTH,
+        height = HEIGHT
+    ) {
+        Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
+            ServerFormField(state)
+            if (state.server == TYPEDB_CLUSTER) {
+                ManageClusterAddressesButton(state = state, shouldFocus = Service.client.isDisconnected)
+                UsernameFormField(state)
+                PasswordFormField(state)
+                TLSEnabledFormField(state)
+                if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
+            } else if (state.server == TYPEDB) {
+                CoreAddressFormField(state, shouldFocus = Service.client.isDisconnected)
+            }
+            Spacer(Modifier.weight(1f))
+            Row(verticalAlignment = Alignment.Bottom) {
+                ServerConnectionStatus()
+                Spacer(modifier = Modifier.weight(1f))
+                when (Service.client.status) {
+                    DISCONNECTED -> DisconnectedFormButtons(state)
+                    CONNECTING -> ConnectingFormButtons()
+                    CONNECTED -> ConnectedFormButtons(state)
                 }
             }
         }
     }
 
     @Composable
-    private fun ServerFormField(state: ConnectServerForm) {
-        Field(label = Label.SERVER) {
-            Form.Dropdown(
-                values = Property.Server.values().toList(),
-                selected = state.server,
-                onSelection = { state.server = it!! },
-                modifier = Modifier.fillMaxSize(),
-                enabled = Service.client.isDisconnected
-            )
-        }
+    private fun ServerFormField(state: ConnectServerForm) = Field(label = Label.SERVER) {
+        Form.Dropdown(
+            values = Property.Server.values().toList(),
+            selected = state.server,
+            onSelection = { state.server = it!! },
+            modifier = Modifier.fillMaxSize(),
+            enabled = Service.client.isDisconnected
+        )
     }
 
     @Composable
@@ -221,7 +205,7 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ClusterAddressesFormField(state: ConnectServerForm, shouldFocus: Boolean) {
+    private fun ManageClusterAddressesButton(state: ConnectServerForm, shouldFocus: Boolean) {
         val focusReq = if (shouldFocus) remember { FocusRequester() } else null
         Field(label = Label.ADDRESSES) {
             TextButton(
@@ -236,15 +220,15 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ManageAddresses() {
+    private fun ManageClusterAddresses() {
         val dialogState = Service.client.manageAddressesDialog
         Dialog.Layout(dialogState, Label.MANAGE_CLUSTER_ADDRESSES, ADDRESS_MANAGER_WIDTH, ADDRESS_MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Text(value = Sentence.MANAGE_ADDRESSES_MESSAGE, softWrap = true)
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING))
-                ModifiableAddressList(Modifier.fillMaxWidth().weight(1f))
+                ClusterAddressList(Modifier.fillMaxWidth().weight(1f))
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING))
-                CreateAddressForm()
+                AddClusterAddressForm()
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING * 2))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
@@ -256,113 +240,90 @@ object ServerDialog {
     }
 
     @Composable
-    private fun CreateAddressForm() {
+    private fun AddClusterAddressForm() {
         val focusReq = remember { FocusRequester() }
-        Submission(CreateAddressForm, modifier = Modifier.height(Form.FIELD_HEIGHT), showButtons = false) {
+        Submission(AddAddressForm, modifier = Modifier.height(Form.FIELD_HEIGHT), showButtons = false) {
             Row {
                 TextInput(
-                    value = CreateAddressForm.value,
+                    value = AddAddressForm.value,
                     placeholder = Label.DEFAULT_SERVER_ADDRESS,
-                    onValueChange = { CreateAddressForm.value = it },
+                    onValueChange = { AddAddressForm.value = it },
                     modifier = Modifier.weight(1f).focusRequester(focusReq),
                 )
                 RowSpacer()
-                TextButton(
-                    text = Label.CREATE,
-                    enabled = CreateAddressForm.isValid(),
-                    tooltip = Tooltip.Arg(
-                        title = Label.CREATE_DATABASE,
-                        description = Sentence.CREATE_DATABASE_BUTTON_DESCRIPTION
-                    )
-                ) { CreateAddressForm.submit() }
+                TextButton(text = Label.ADD, enabled = AddAddressForm.isValid()) { AddAddressForm.submit() }
             }
         }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
     }
 
     @Composable
-    private fun ModifiableAddressList(modifier: Modifier) {
-        ActionableList.Layout(
-            items = state.clusterAddresses.toMutableList(),
-            modifier = modifier.border(1.dp, Theme.studio.border),
-            buttonSide = ActionableList.Side.RIGHT,
-            buttonFn = { address ->
-                Form.IconButtonArg(
-                    icon = Icon.DELETE,
-                    color = { Theme.studio.errorStroke },
-                    onClick = {
-                        state.clusterAddresses.remove(address)
-                    }
-                )
-            }
+    private fun ClusterAddressList(modifier: Modifier) = ActionableList.Layout(
+        items = state.clusterAddresses.toMutableList(),
+        modifier = modifier.border(1.dp, Theme.studio.border),
+        buttonSide = ActionableList.Side.RIGHT,
+        buttonFn = { address ->
+            Form.IconButtonArg(
+                icon = Icon.REMOVE,
+                color = { Theme.studio.errorStroke },
+                onClick = { state.clusterAddresses.remove(address) }
+            )
+        }
+    )
+
+    @Composable
+    private fun UsernameFormField(state: ConnectServerForm) = Field(label = Label.USERNAME) {
+        TextInput(
+            value = state.username,
+            placeholder = Label.USERNAME.lowercase(),
+            onValueChange = { state.username = it },
+            enabled = Service.client.isDisconnected,
+            modifier = Modifier.fillMaxSize()
         )
     }
 
     @Composable
-    private fun UsernameFormField(state: ConnectServerForm) {
-        Field(label = Label.USERNAME) {
-            TextInput(
-                value = state.username,
-                placeholder = Label.USERNAME.lowercase(),
-                onValueChange = { state.username = it },
-                enabled = Service.client.isDisconnected,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+    private fun PasswordFormField(state: ConnectServerForm) = Field(label = Label.PASSWORD) {
+        TextInput(
+            value = state.password,
+            placeholder = Label.PASSWORD.lowercase(),
+            onValueChange = { state.password = it },
+            enabled = Service.client.isDisconnected,
+            isPassword = true,
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 
     @Composable
-    private fun PasswordFormField(state: ConnectServerForm) {
-        Field(label = Label.PASSWORD) {
-            TextInput(
-                value = state.password,
-                placeholder = Label.PASSWORD.lowercase(),
-                onValueChange = { state.password = it },
-                enabled = Service.client.isDisconnected,
-                isPassword = true,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+    private fun TLSEnabledFormField(state: ConnectServerForm) = Field(label = Label.ENABLE_TLS) {
+        Checkbox(value = state.tlsEnabled, enabled = Service.client.isDisconnected) { state.tlsEnabled = it }
     }
 
     @Composable
-    private fun TLSEnabledFormField(state: ConnectServerForm) {
-        Field(label = Label.ENABLE_TLS) {
-            Checkbox(
-                value = state.tlsEnabled,
-                enabled = Service.client.isDisconnected,
-            ) { state.tlsEnabled = it }
-        }
-    }
-
-    @Composable
-    private fun CACertificateFormField(state: ConnectServerForm, dialogWindow: ComposeDialog) {
-        Field(label = Label.CA_CERTIFICATE) {
-            TextInput(
-                value = state.caCertificate,
-                placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
-                onValueChange = { state.caCertificate = it },
-                enabled = Service.client.isDisconnected,
-                modifier = Modifier.weight(1f)
+    private fun CACertificateFormField(
+        state: ConnectServerForm, dialogWindow: ComposeDialog
+    ) = Field(label = Label.CA_CERTIFICATE) {
+        TextInput(
+            value = state.caCertificate,
+            placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
+            onValueChange = { state.caCertificate = it },
+            enabled = Service.client.isDisconnected,
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(
+            icon = Icon.FOLDER_OPEN,
+            tooltip = Tooltip.Arg(Label.SELECT_CERTIFICATE_FILE)
+        ) {
+            val (selectedFilePath) = SelectFileDialog.open(
+                dialogWindow, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY
             )
-            IconButton(
-                icon = Icon.FOLDER_OPEN,
-                tooltip = Tooltip.Arg(Label.SELECT_CERTIFICATE_FILE)
-            ) {
-                val (selectedFilePath) = SelectFileDialog.open(
-                    dialogWindow, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY
-                )
-                if (selectedFilePath != null) {
-                    state.caCertificate = selectedFilePath
-                }
-            }
+            if (selectedFilePath != null) state.caCertificate = selectedFilePath
         }
     }
 
     @Composable
     private fun ServerConnectionStatus() {
-        val statusText =
-            "${Label.STATUS}: ${Service.client.status.name.lowercase()}"
+        val statusText = "${Label.STATUS}: ${Service.client.status.name.lowercase()}"
         Text(
             value = statusText, color = when (Service.client.status) {
                 DISCONNECTED -> Theme.studio.errorStroke
@@ -394,10 +355,7 @@ object ServerDialog {
     @Composable
     private fun ConnectingFormButtons() {
         val focusReq = remember { FocusRequester() }
-        TextButton(
-            text = Label.CANCEL,
-            focusReq = focusReq
-        ) { Service.client.closeAsync() }
+        TextButton(text = Label.CANCEL, focusReq = focusReq) { Service.client.closeAsync() }
         RowSpacer()
         TextButton(text = Label.CONNECTING, enabled = false) {}
         LaunchedEffect(focusReq) { focusReq.requestFocus() }

@@ -62,17 +62,9 @@ object DatabaseDialog {
     private val SELECTOR_HEIGHT = 200.dp
 
     private object CreateDatabaseForm : Form.State() {
-
         var name: String by mutableStateOf("")
-
-        override fun cancel() {
-            Service.client.manageDatabasesDialog.close()
-        }
-
-        override fun isValid(): Boolean {
-            return name.isNotBlank()
-        }
-
+        override fun cancel() = Service.client.manageDatabasesDialog.close()
+        override fun isValid(): Boolean = name.isNotBlank()
         override fun submit() {
             assert(isValid())
             Service.client.tryCreateDatabase(name) { name = "" }
@@ -86,56 +78,51 @@ object DatabaseDialog {
     }
 
     @Composable
-    private fun ManageDatabases() {
-        val dialogState = Service.client.manageDatabasesDialog
-        Dialog.Layout(dialogState, Label.MANAGE_DATABASES, MANAGER_WIDTH, MANAGER_HEIGHT) {
-            Column(Modifier.fillMaxSize()) {
-                Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
-                Spacer(Modifier.height(Theme.DIALOG_PADDING))
-                DeletableDatabaseList(Modifier.fillMaxWidth().weight(1f))
-                Spacer(Modifier.height(Theme.DIALOG_PADDING))
-                CreateDatabaseForm()
-                Spacer(Modifier.height(Theme.DIALOG_PADDING * 2))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    TextButton(
-                        text = Label.REFRESH,
-                        leadingIcon = Form.IconArg(Icon.REFRESH)
-                    ) { Service.client.refreshDatabaseList() }
-                    RowSpacer()
-                    TextButton(text = Label.CLOSE) { dialogState.close() }
+    private fun ManageDatabases() = Dialog.Layout(
+        state = Service.client.manageDatabasesDialog,
+        title = Label.MANAGE_DATABASES,
+        width = MANAGER_WIDTH,
+        height = MANAGER_HEIGHT
+    ) {
+        Column(Modifier.fillMaxSize()) {
+            Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
+            Spacer(Modifier.height(Theme.DIALOG_PADDING))
+            DeletableDatabaseList(Modifier.fillMaxWidth().weight(1f))
+            Spacer(Modifier.height(Theme.DIALOG_PADDING))
+            CreateDatabaseForm()
+            Spacer(Modifier.height(Theme.DIALOG_PADDING * 2))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(text = Label.REFRESH, leadingIcon = Form.IconArg(Icon.REFRESH)) {
+                    Service.client.refreshDatabaseList()
                 }
+                RowSpacer()
+                TextButton(text = Label.CLOSE) { Service.client.manageDatabasesDialog.close() }
             }
         }
     }
 
     @Composable
-    private fun DeletableDatabaseList(modifier: Modifier) {
-        ActionableList.Layout(
-            items = Service.client.databaseList,
-            modifier = modifier.border(1.dp, Theme.studio.border),
-            buttonSide = ActionableList.Side.RIGHT,
-            buttonFn = { databaseName ->
-                IconButtonArg(
-                    icon = Icon.DELETE,
-                    color = { Theme.studio.errorStroke },
-                    onClick = {
-                        Service.confirmation.submit(
-                            title = Label.DELETE_DATABASE,
-                            message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
-                            verificationValue = databaseName,
-                            confirmLabel = Label.DELETE,
-                            onConfirm = {
-                                Service.client.tryDeleteDatabase(
-                                    databaseName
-                                )
-                            }
-                        )
-                    }
-                )
-            }
-        )
-    }
+    private fun DeletableDatabaseList(modifier: Modifier) = ActionableList.Layout(
+        items = Service.client.databaseList,
+        modifier = modifier.border(1.dp, Theme.studio.border),
+        buttonSide = ActionableList.Side.RIGHT,
+        buttonFn = { databaseName ->
+            IconButtonArg(
+                icon = Icon.DELETE,
+                color = { Theme.studio.errorStroke },
+                onClick = {
+                    Service.confirmation.submit(
+                        title = Label.DELETE_DATABASE,
+                        message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
+                        verificationValue = databaseName,
+                        confirmLabel = Label.DELETE,
+                        onConfirm = { Service.client.tryDeleteDatabase(databaseName) }
+                    )
+                }
+            )
+        }
+    )
 
     @Composable
     private fun CreateDatabaseForm() {
@@ -180,24 +167,23 @@ object DatabaseDialog {
     }
 
     @Composable
-    fun DatabaseDropdown(modifier: Modifier = Modifier, focusReq: FocusRequester? = null, enabled: Boolean = true) {
-        Dropdown(
-            values = Service.client.databaseList,
-            selected = Service.client.session.database,
-            onSelection = {
-                it?.let { Service.client.tryOpenSession(it) }
-                    ?: Service.client.closeSession()
-            },
-            onExpand = { Service.client.refreshDatabaseList() },
-            placeholder = Label.DATABASE.lowercase(),
-            modifier = modifier,
-            allowNone = true,
-            enabled = enabled,
-            focusReq = focusReq,
-            tooltip = Tooltip.Arg(
-                title = Label.SELECT_DATABASE,
-                description = Sentence.SELECT_DATABASE_DESCRIPTION
-            )
+    fun DatabaseDropdown(
+        modifier: Modifier = Modifier,
+        focusReq: FocusRequester? = null,
+        enabled: Boolean = true
+    ) = Dropdown(
+        values = Service.client.databaseList,
+        selected = Service.client.session.database,
+        onSelection = { it?.let { Service.client.tryOpenSession(it) } ?: Service.client.closeSession() },
+        onExpand = { Service.client.refreshDatabaseList() },
+        placeholder = Label.DATABASE.lowercase(),
+        modifier = modifier,
+        allowNone = true,
+        enabled = enabled,
+        focusReq = focusReq,
+        tooltip = Tooltip.Arg(
+            title = Label.SELECT_DATABASE,
+            description = Sentence.SELECT_DATABASE_DESCRIPTION
         )
-    }
+    )
 }

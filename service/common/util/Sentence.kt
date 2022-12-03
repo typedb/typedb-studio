@@ -115,7 +115,7 @@ object Sentence {
                 "can set on these parameters in the toolbar, and perform queries against the TypeDB server with configured " +
                 "parameters interactively. " + BUTTON_ENABLED_WHEN_CONNECTED
     const val MANAGE_ADDRESSES_MESSAGE =
-        "Below is the list of addresses for your current cluster connection configuration. You can delete them or " +
+        "Below is the list of server addresses of your TypeDB Cluster. You can remove them from the list below and/or " +
                 "add new ones."
     const val MANAGE_DATABASES_DESCRIPTION =
         "You can manage your databases by adding or deleting databases from the TypeDB Server you are connected to. " +
