@@ -6,7 +6,7 @@
 
 ## TypeDB Studio
 
-[![TypeDB Studio](./images/studio_full_1.png)](./images/studio_full_1.png)
+[![TypeDB Studio](./images/studio-full-1.png)](./images/studio-full-1.png)
 
 TypeDB Studio is a fully-featured Integrated Development Environment (IDE) for TypeDB.
 
@@ -31,7 +31,7 @@ using Studio. The project browser maintains a live view of the directory content
 
 ### Manage Database Schemas
 
-[![Log Output](./images/type_browser_1.png)](./images/type_browser_1.png)
+[![Log Output](./images/type-browser-1.png)](./images/type-browser-1.png)
 
 The Type Browser provides a structured tree view of the connected database's type hierarchy. Double-clicking on any of
 the listed types will bring up a page that lists their properties in detail — supertype, roles played, attributes owned
@@ -39,7 +39,7 @@ and more.
 
 ### Run TypeQL Queries
 
-[![Log Output](./images/log_output_1.png)](./images/log_output_1.png)
+[![Log Output](./images/log-output-1.png)](./images/log-output-1.png)
 
 Studio's text editor comes equipped with rich developer tooling, like syntax highlighting
 for TypeQL files (\*.tql), with more advanced features currently under development. Studio's intuitive and
@@ -51,7 +51,7 @@ to the Log Output window which is easily searchable (and supports regex matching
 
 ### Graph Visualisation
 
-[![Graph Visualisation](./images/graph_vis_1.png)](./images/graph_vis_1.png)
+[![Graph Visualisation](./images/graph-vis-1.png)](./images/graph-vis-1.png)
 
 Reasoning about text outputs in [TypeDB Console](https://docs.vaticle.com/docs/console/console) or through
 the various [TypeDB Clients](https://docs.vaticle.com/docs/client-api/overview) can be difficult to do for large
@@ -59,7 +59,7 @@ datasets. Studio's advanced force-graph visualisation makes the underlying struc
 
 ### Reasoning and Explanations
 
-[![Inference Visualisation](./images/infer_vis_1.png)](./images/infer_vis_1.png)
+[![Inference Visualisation](./images/infer-vis-1.png)](./images/infer-vis-1.png)
 
 Select infer and explain, then double-click highlighted inferred concepts to retrieve their explanations and visualise
 how the fact was inferred.

@@ -16,10 +16,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-# RUN COMMAND #1: ./docs/deps.sh service-package-structure //service/...
-# RUN COMMAND #2: ./docs/deps.sh framework-package-structure //framework/... //service
-# RUN COMMAND #3: ./docs/deps.sh module-package-structure //:studio //framework //service
-# RUN COMMAND #4: ./docs/deps.sh global-package-structure //...
+# RUN COMMAND #1: ./docs/packages/deps.sh service-package-structure //service/...
+# RUN COMMAND #2: ./docs/packages/deps.sh framework-package-structure //framework/... //service
+# RUN COMMAND #3: ./docs/packages/deps.sh module-package-structure //:studio //framework //service
+# RUN COMMAND #4: ./docs/packages/deps.sh global-package-structure //...
 
 popd > /dev/null
 
