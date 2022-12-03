@@ -60,15 +60,14 @@ import java.awt.MouseInfo
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@OptIn(kotlin.time.ExperimentalTime::class)
 object Tooltip {
 
-    @OptIn(ExperimentalTime::class)
     private val TOOLTIP_DELAY = Duration.Companion.milliseconds(800)
     private val TOOLTIP_WIDTH = 250.dp
     private val TOOLTIP_OFFSET = 24.dp
@@ -76,7 +75,6 @@ object Tooltip {
 
     data class Arg(val title: String, val description: String? = null, val url: URL? = null)
 
-    @OptIn(ExperimentalTime::class)
     class State(internal val arg: Arg) {
 
         internal var isOpen by mutableStateOf(false)
@@ -130,14 +128,12 @@ object Tooltip {
         }
 
         @OptIn(ExperimentalComposeUiApi::class)
-        internal fun onKeyEvent(event: KeyEvent): Boolean {
-            return when (event.key) {
-                Key.Escape -> {
-                    isOpen = false
-                    true
-                }
-                else -> false
+        internal fun onKeyEvent(event: KeyEvent) = when (event.key) {
+            Key.Escape -> {
+                isOpen = false
+                true
             }
+            else -> false
         }
     }
 

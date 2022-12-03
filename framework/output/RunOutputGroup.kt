@@ -39,13 +39,12 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
-@OptIn(ExperimentalTime::class)
+@OptIn(kotlin.time.ExperimentalTime::class)
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
     private val logOutput: LogOutput
@@ -70,9 +69,9 @@ internal class RunOutputGroup constructor(
         private val LOGGER = KotlinLogging.logger {}
 
         @Composable
-        fun createAndLaunch(runner: QueryRunner): RunOutputGroup {
-            return RunOutputGroup(runner, LogOutput.create(runner.transactionState)).also { it.launch() }
-        }
+        fun createAndLaunch(runner: QueryRunner) = RunOutputGroup(
+            runner = runner, logOutput = LogOutput.create(runner.transactionState)
+        ).also { it.launch() }
 
         private suspend fun <E> LinkedBlockingQueue<E>.takeNonBlocking(periodMS: Long): E {
             while (true) {
@@ -96,104 +95,85 @@ internal class RunOutputGroup constructor(
         publishOutputResponseTime()
     }
 
-    private fun publishQueryResponseTime() {
-        runner.startTime?.let { startTime ->
-            val duration = (runner.endTime ?: System.currentTimeMillis()) - startTime
-            Service.status.publish(
-                QUERY_RESPONSE_TIME,
-                Duration.milliseconds(duration).toString()
-            )
-        }
-    }
+    private fun publishQueryResponseTime() = runner.startTime?.let { startTime ->
+        val duration = (runner.endTime ?: System.currentTimeMillis()) - startTime
+        Service.status.publish(
+            QUERY_RESPONSE_TIME,
+            Duration.milliseconds(duration).toString()
+        )
+    } ?: Unit
 
-    private fun publishOutputResponseTime() {
-        runner.endTime?.let { queryEndTime ->
-            val duration = (endTime ?: System.currentTimeMillis()) - queryEndTime
-            Service.status.publish(
-                OUTPUT_RESPONSE_TIME,
-                Duration.milliseconds(duration).toString()
-            )
-        }
-    }
+    private fun publishOutputResponseTime() = runner.endTime?.let { queryEndTime ->
+        val duration = (endTime ?: System.currentTimeMillis()) - queryEndTime
+        Service.status.publish(OUTPUT_RESPONSE_TIME, Duration.milliseconds(duration).toString())
+    } ?: Unit
 
     private fun clearStatus() {
         Service.status.clear(QUERY_RESPONSE_TIME)
         Service.status.clear(OUTPUT_RESPONSE_TIME)
     }
 
-    internal fun isActive(runOutput: RunOutput): Boolean {
-        return active == runOutput
-    }
+    internal fun isActive(runOutput: RunOutput): Boolean = active == runOutput
 
     internal fun activate(runOutput: RunOutput) {
         active = runOutput
     }
 
-    private fun collectSerial(outputFn: () -> Unit) {
-        collectSerial(CompletableFuture.completedFuture(outputFn))
+    private fun collectSerial(outputFn: () -> Unit) = collectSerial(CompletableFuture.completedFuture(outputFn))
+
+    private fun collectSerial(
+        outputFnFuture: CompletableFuture<(() -> Unit)?>
+    ) = serialOutputFutures.put(Either.first(outputFnFuture))
+
+    private fun collectNonSerial(future: CompletableFuture<Unit?>) = nonSerialOutputFutures.put(Either.first(future))
+
+    private fun launchSerialOutputConsumer() = coroutines.launchAndHandle(Service.notification, LOGGER) {
+        do {
+            val future = serialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
+            if (future.isFirst) future.first().join()?.invoke()
+        } while (future.isFirst)
+        futuresLatch.countDown()
     }
 
-    private fun collectSerial(outputFnFuture: CompletableFuture<(() -> Unit)?>) {
-        serialOutputFutures.put(Either.first(outputFnFuture))
+    private fun launchNonSerialOutputConsumer() = coroutines.launchAndHandle(Service.notification, LOGGER) {
+        val futures = mutableListOf<CompletableFuture<Unit?>>()
+        do {
+            val future = nonSerialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
+            if (future.isFirst) futures += future.first()
+        } while (future.isFirst)
+        CompletableFuture.allOf(*futures.toTypedArray()).join()
+        futuresLatch.countDown()
     }
 
-    private fun collectNonSerial(future: CompletableFuture<Unit?>) {
-        nonSerialOutputFutures.put(Either.first(future))
+    private fun launchRunnerConcluder() = coroutines.launchAndHandle(Service.notification, LOGGER) {
+        while (futuresLatch.count > 0L) {
+            delay(COUNT_DOWN_LATCH_PERIOD_MS)
+        }
+        runner.setConsumed()
+        logOutput.stop()
+        endTime = System.currentTimeMillis()
     }
 
-    private fun launchSerialOutputConsumer() =
-        coroutines.launchAndHandle(Service.notification, LOGGER) {
-            do {
-                val future = serialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
-                if (future.isFirst) future.first().join()?.invoke()
-            } while (future.isFirst)
-            futuresLatch.countDown()
-        }
+    private fun launchResponseConsumer() = coroutines.launchAndHandle(Service.notification, LOGGER) {
+        do {
+            val responses: MutableList<Response> = mutableListOf()
+            delay(CONSUMER_PERIOD_MS)
+            runner.responses.drainTo(responses)
+            if (responses.isNotEmpty()) responses.forEach { consumeResponse(it) }
+        } while (responses.lastOrNull() != Response.Done)
+        serialOutputFutures.add(Either.second(Done))
+        nonSerialOutputFutures.add(Either.second(Done))
+    }
 
-    private fun launchNonSerialOutputConsumer() =
-        coroutines.launchAndHandle(Service.notification, LOGGER) {
-            val futures = mutableListOf<CompletableFuture<Unit?>>()
-            do {
-                val future = nonSerialOutputFutures.takeNonBlocking(COUNT_DOWN_LATCH_PERIOD_MS)
-                if (future.isFirst) futures += future.first()
-            } while (future.isFirst)
-            CompletableFuture.allOf(*futures.toTypedArray()).join()
-            futuresLatch.countDown()
+    private suspend fun consumeResponse(response: Response) = when (response) {
+        is Response.Message -> consumeMessageResponse(response)
+        is Response.Numeric -> consumeNumericResponse(response)
+        is Response.Stream<*> -> when (response) {
+            is Response.Stream.NumericGroups -> consumeNumericGroupStreamResponse(response)
+            is Response.Stream.ConceptMapGroups -> consumeConceptMapGroupStreamResponse(response)
+            is Response.Stream.ConceptMaps -> consumeConceptMapStreamResponse(response)
         }
-
-    private fun launchRunnerConcluder() =
-        coroutines.launchAndHandle(Service.notification, LOGGER) {
-            while (futuresLatch.count > 0L) {
-                delay(COUNT_DOWN_LATCH_PERIOD_MS)
-            }
-            runner.setConsumed()
-            logOutput.stop()
-            endTime = System.currentTimeMillis()
-        }
-
-    private fun launchResponseConsumer() =
-        coroutines.launchAndHandle(Service.notification, LOGGER) {
-            do {
-                val responses: MutableList<Response> = mutableListOf()
-                delay(CONSUMER_PERIOD_MS)
-                runner.responses.drainTo(responses)
-                if (responses.isNotEmpty()) responses.forEach { consumeResponse(it) }
-            } while (responses.lastOrNull() != Response.Done)
-            serialOutputFutures.add(Either.second(Done))
-            nonSerialOutputFutures.add(Either.second(Done))
-        }
-
-    private suspend fun consumeResponse(response: Response) {
-        when (response) {
-            is Response.Message -> consumeMessageResponse(response)
-            is Response.Numeric -> consumeNumericResponse(response)
-            is Response.Stream<*> -> when (response) {
-                is Response.Stream.NumericGroups -> consumeNumericGroupStreamResponse(response)
-                is Response.Stream.ConceptMapGroups -> consumeConceptMapGroupStreamResponse(response)
-                is Response.Stream.ConceptMaps -> consumeConceptMapStreamResponse(response)
-            }
-            is Response.Done -> {}
-        }
+        is Response.Done -> {}
     }
 
     private fun consumeMessageResponse(response: Response.Message) = collectSerial(logOutput.outputFn(response))
@@ -210,14 +190,10 @@ internal class RunOutputGroup constructor(
         }
     }
 
-    private suspend fun consumeConceptMapGroupStreamResponse(response: Response.Stream.ConceptMapGroups) {
-        consumeStreamResponse(response) {
-            collectSerial(
-                launchCompletableFuture(
-                    Service.notification,
-                    LOGGER
-                ) { logOutput.outputFn(it) })
-        }
+    private suspend fun consumeConceptMapGroupStreamResponse(
+        response: Response.Stream.ConceptMapGroups
+    ) = consumeStreamResponse(response) {
+        collectSerial(launchCompletableFuture(Service.notification, LOGGER) { logOutput.outputFn(it) })
     }
 
     private suspend fun consumeConceptMapStreamResponse(response: Response.Stream.ConceptMaps) {

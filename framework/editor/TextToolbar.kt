@@ -64,13 +64,12 @@ import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.service.common.util.Label
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalTime::class)
+@OptIn(kotlin.time.ExperimentalTime::class)
 object TextToolbar {
 
     private val INPUT_MAX_WIDTH = 740.dp
@@ -178,10 +177,9 @@ object TextToolbar {
             return height.coerceIn(INPUT_MIN_HEIGHT, INPUT_MAX_HEIGHT)
         }
 
-        internal fun handle(event: KeyEvent, focusManager: FocusManager, inputType: InputType): Boolean {
-            return if (event.type == KeyEventType.KeyUp) false
-            else KeyMapper.CURRENT.map(event)
-                ?.let { execute(it, focusManager, inputType) } ?: false
+        internal fun handle(event: KeyEvent, focusManager: FocusManager, inputType: InputType) = when (event.type) {
+            KeyEventType.KeyUp -> false
+            else -> KeyMapper.CURRENT.map(event)?.let { execute(it, focusManager, inputType) } ?: false
         }
 
         private fun execute(
@@ -269,7 +267,6 @@ object TextToolbar {
             else if (findText.text.isEmpty()) finder.reset()
         }
 
-        @OptIn(ExperimentalTime::class)
         private fun delayedFindText() {
             changeCount.incrementAndGet()
             coroutines.launch {

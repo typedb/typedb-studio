@@ -38,7 +38,7 @@ import java.time.format.DateTimeFormatter
 
 object ConceptDisplay {
 
-    fun icon(concept: Concept) = when (concept) {
+    fun iconOf(concept: Concept) = when (concept) {
         is Relation, is RelationType -> Form.IconArg(Icon.RELATION) { Theme.graph.vertex.relationType }
         is Attribute<*>, is AttributeType -> Form.IconArg(Icon.ATTRIBUTE) { Theme.graph.vertex.attributeType }
         is ThingType -> Form.IconArg(Icon.THING) { Theme.graph.vertex.entityType }

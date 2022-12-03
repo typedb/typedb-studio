@@ -33,7 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Browsers
-import com.vaticle.typedb.studio.framework.material.ConceptDisplay.icon
+import com.vaticle.typedb.studio.framework.material.ConceptDisplay.iconOf
 import com.vaticle.typedb.studio.framework.material.ContextMenu
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
@@ -79,7 +79,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
         Navigator.Layout(
             state = navState,
             modifier = Modifier.fillMaxSize(),
-            iconArg = { icon(it.item.conceptType) }
+            iconArg = { iconOf(it.item.conceptType) }
         )
         LaunchedEffect(navState) { navState.launch() }
     }

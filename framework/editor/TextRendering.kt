@@ -68,19 +68,17 @@ internal class TextRendering {
         versions[int] = version
     }
 
-    fun hasVersion(int: Int, version: Int): Boolean {
-        return try {
-            if (int >= 0 && int < versions.size) versions[int] == version else false
-        } catch (e: Exception) {
-            // TODO: Find out why there could be an exception here at all. Last error was:
-            // java.lang.IllegalStateException: Reading a state that was created after the snapshot was taken or in a snapshot that has not yet been applied
-            // ...
-            // at androidx.compose.runtime.snapshots.SnapshotStateList.size(SnapshotStateList.kt:33)
-            // at com.vaticle.typedb.studio.framework.editor.TextRendering.hasVersion(TextRendering.kt:65)
-            // ...
-            Service.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
-            false
-        }
+    fun hasVersion(int: Int, version: Int): Boolean = try {
+        if (int >= 0 && int < versions.size) versions[int] == version else false
+    } catch (e: Exception) {
+        // TODO: Find out why there could be an exception here at all. Last error was:
+        // java.lang.IllegalStateException: Reading a state that was created after the snapshot was taken or in a snapshot that has not yet been applied
+        // ...
+        // at androidx.compose.runtime.snapshots.SnapshotStateList.size(SnapshotStateList.kt:33)
+        // at com.vaticle.typedb.studio.framework.editor.TextRendering.hasVersion(TextRendering.kt:65)
+        // ...
+        Service.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
+        false
     }
 
     fun removeRange(startInc: Int, endExc: Int) {

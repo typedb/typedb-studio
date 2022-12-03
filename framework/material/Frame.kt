@@ -293,7 +293,7 @@ object Frame {
     private fun RowPaneResizer(pane: PaneState, separatorWidth: Dp?) {
         if (!pane.isFrozen) {
             val density = LocalDensity.current.density
-            val window = LocalWindowContext.current!!
+            val windowCtx = LocalWindowContext.current!!
             val titleBarHeight = LocalTitleBarHeight.current
             Box(
                 modifier = Modifier.fillMaxHeight()
@@ -304,7 +304,7 @@ object Frame {
                         pane.updatePosition(toDP(bounds.left, density), toDP(bounds.right, density))
                     }.draggable(orientation = Orientation.Horizontal, state = rememberDraggableState {
                         pane.frame.isManuallyResized = true
-                        pane.dragResizerBy(toDP(it, density), mousePoint(window, titleBarHeight).x.dp)
+                        pane.dragResizerBy(toDP(it, density), mousePoint(windowCtx, titleBarHeight).x.dp)
                     })
             )
         } else if (separatorWidth != null) Box(modifier = Modifier.fillMaxHeight().width(separatorWidth))
@@ -314,7 +314,7 @@ object Frame {
     private fun ColumnPaneResizer(pane: PaneState, separatorHeight: Dp?) {
         if (!pane.isFrozen) {
             val density = LocalDensity.current.density
-            val window = LocalWindowContext.current!!
+            val windowCtx = LocalWindowContext.current!!
             val titleBarHeight = LocalTitleBarHeight.current
             Box(
                 modifier = Modifier.fillMaxWidth()
@@ -325,7 +325,7 @@ object Frame {
                         pane.updatePosition(toDP(bounds.top, density), toDP(bounds.bottom, density))
                     }.draggable(orientation = Orientation.Vertical, state = rememberDraggableState {
                         pane.frame.isManuallyResized = true
-                        pane.dragResizerBy(toDP(it, density), mousePoint(window, titleBarHeight).y.dp)
+                        pane.dragResizerBy(toDP(it, density), mousePoint(windowCtx, titleBarHeight).y.dp)
                     })
             )
         } else if (separatorHeight != null) Box(modifier = Modifier.fillMaxWidth().height(separatorHeight))

@@ -62,7 +62,7 @@ import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.ConceptDisplay.TypeLabelWithDetails
-import com.vaticle.typedb.studio.framework.material.ConceptDisplay.icon
+import com.vaticle.typedb.studio.framework.material.ConceptDisplay.iconOf
 import com.vaticle.typedb.studio.framework.material.ContextMenu
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Form.ClickableText
@@ -92,7 +92,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
 ) : Pages.Page() {
 
     override val hasSecondary: Boolean = false
-    override val icon: Form.IconArg = icon(typeState.conceptType)
+    override val icon: Form.IconArg = iconOf(typeState.conceptType)
 
     internal val canReadSchema get() = !Service.schema.hasRunningCommand
     internal val canWriteSchema
@@ -138,6 +138,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun updatePageable(pageable: Pageable) {
         typeState = pageable as TS
     }
@@ -234,7 +235,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         SectionRow {
             Form.TextBox(
                 text = TypeLabelWithDetails(typeState.conceptType),
-                leadingIcon = icon(typeState.conceptType)
+                leadingIcon = iconOf(typeState.conceptType)
             )
             EditButton(Label.RENAME) { typeState.initiateRename() }
             Spacer(Modifier.weight(1f))
@@ -249,7 +250,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
             Spacer(Modifier.weight(1f))
             Form.TextButton(
                 text = TypeLabelWithDetails(supertypeState.conceptType, supertypeState.isAbstract),
-                leadingIcon = icon(supertypeState.conceptType),
+                leadingIcon = iconOf(supertypeState.conceptType),
                 enabled = !typeState.isRoot,
             ) { supertypeState.tryOpen() }
             EditButton(Label.CHANGE_SUPERTYPE) { typeState.initiateChangeSupertype() }
@@ -552,7 +553,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                     .background(Theme.studio.backgroundMedium),
                 itemHeight = if (typeState.subtypes.size > 1) Navigator.ITEM_HEIGHT else EMPTY_BOX_HEIGHT,
                 bottomSpace = 0.dp,
-                iconArg = { icon(it.item.conceptType) }
+                iconArg = { iconOf(it.item.conceptType) }
             )
         }
         LaunchedEffect(subtypesNavState) {

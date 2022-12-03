@@ -54,6 +54,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEvent
@@ -100,6 +101,7 @@ import com.vaticle.typedb.studio.framework.common.Util.isMouseHover
 import com.vaticle.typedb.studio.framework.common.Util.italics
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.Util.toRectDP
+import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.framework.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Theme.ROUNDED_CORNER_SHAPE
@@ -175,31 +177,20 @@ object Form {
         caption: String? = null,
         fieldHeight: Dp = FIELD_HEIGHT,
         fieldInput: @Composable RowScope.() -> Unit
-    ) {
-        Row {
-            Column(modifier = LABEL_MODIFIER) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(FIELD_HEIGHT)) {
-                    Text(value = label)
-                }
-            }
-            Column(modifier = INPUT_MODIFIER) {
-                Row(
-                    modifier = Modifier.height(fieldHeight),
-                    horizontalArrangement = Arrangement.spacedBy(INNER_SPACING)
-                ) { fieldInput() }
-                if (!caption.isNullOrBlank()) {
-                    Caption(caption)
-                }
-            }
+    ) = Row {
+        Column(LABEL_MODIFIER) {
+            Row(Modifier.height(FIELD_HEIGHT), verticalAlignment = CenterVertically) { Text(value = label) }
+        }
+        Column(modifier = INPUT_MODIFIER) {
+            Row(Modifier.height(fieldHeight), Arrangement.spacedBy(INNER_SPACING)) { fieldInput() }
+            if (!caption.isNullOrBlank()) Caption(caption)
         }
     }
 
     @Composable
     fun Caption(caption: String) {
         CaptionSpacer()
-        Row {
-            Text(caption, alpha = com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY)
-        }
+        Row { Text(caption, alpha = FADED_OPACITY) }
     }
 
     @Composable
@@ -212,9 +203,7 @@ object Form {
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(FIELD_SPACING),
-            modifier = modifier.onKeyEvent {
-                onKeyEventHandler(event = it, onEnter = { state.submitIfValid() })
-            }
+            modifier = modifier.onKeyEvent { onKeyEventHandler(event = it, onEnter = { state.submitIfValid() }) }
         ) {
             content()
             if (showButtons) {
@@ -262,12 +251,10 @@ object Form {
         softWrap: Boolean = false,
         enabled: Boolean = true,
         onTextLayout: (TextLayoutResult) -> Unit = {},
-    ) {
-        Text(
-            AnnotatedString(value), textStyle, fontStyle, fontWeight, textDecoration,
-            color, alpha, align, modifier, overflow, softWrap, enabled, onTextLayout
-        )
-    }
+    ) = Text(
+        AnnotatedString(value), textStyle, fontStyle, fontWeight, textDecoration,
+        color, alpha, align, modifier, overflow, softWrap, enabled, onTextLayout
+    )
 
     @Composable
     fun Text(
@@ -284,21 +271,19 @@ object Form {
         softWrap: Boolean = false,
         enabled: Boolean = true,
         onTextLayout: (TextLayoutResult) -> Unit = {},
-    ) {
-        androidx.compose.material.Text(
-            text = value,
-            style = textStyle,
-            fontStyle = fontStyle,
-            fontWeight = fontWeight,
-            textDecoration = textDecoration,
-            color = fadeable(alpha?.let { color.copy(alpha = it) } ?: color, !enabled),
-            modifier = modifier,
-            overflow = overflow,
-            softWrap = softWrap,
-            textAlign = align,
-            onTextLayout = onTextLayout
-        )
-    }
+    ) = androidx.compose.material.Text(
+        text = value,
+        style = textStyle,
+        fontStyle = fontStyle,
+        fontWeight = fontWeight,
+        textDecoration = textDecoration,
+        color = fadeable(alpha?.let { color.copy(alpha = it) } ?: color, !enabled),
+        modifier = modifier,
+        overflow = overflow,
+        softWrap = softWrap,
+        textAlign = align,
+        onTextLayout = onTextLayout
+    )
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
@@ -309,18 +294,16 @@ object Form {
         singleLine: Boolean = false,
         modifier: Modifier = Modifier,
         onTextLayout: (TextLayoutResult) -> Unit = {},
-    ) {
-        BasicTextField(
-            modifier = modifier.pointerHoverIcon(icon = PointerIconDefaults.Hand),
-            value = value,
-            onValueChange = {},
-            readOnly = true,
-            cursorBrush = SolidColor(Theme.studio.secondary),
-            singleLine = singleLine,
-            textStyle = style.copy(color = color),
-            onTextLayout = onTextLayout
-        )
-    }
+    ) = BasicTextField(
+        modifier = modifier.pointerHoverIcon(icon = PointerIconDefaults.Hand),
+        value = value,
+        onValueChange = {},
+        readOnly = true,
+        cursorBrush = SolidColor(Theme.studio.secondary),
+        singleLine = singleLine,
+        textStyle = style.copy(color = color),
+        onTextLayout = onTextLayout
+    )
 
     @Composable
     fun URLText(url: URL, text: String? = null) {
@@ -371,9 +354,7 @@ object Form {
         trailingIcon: IconArg? = null,
         leadingIcon: IconArg? = null,
         roundedCorners: RoundedCorners = RoundedCorners.ALL
-    ) {
-        TextBox(AnnotatedString(text), modifier, textColor, bgColor, trailingIcon, leadingIcon, roundedCorners)
-    }
+    ) = TextBox(AnnotatedString(text), modifier, textColor, bgColor, trailingIcon, leadingIcon, roundedCorners)
 
     @Composable
     fun TextBox(
@@ -384,23 +365,20 @@ object Form {
         trailingIcon: IconArg? = null,
         leadingIcon: IconArg? = null,
         roundedCorners: RoundedCorners = RoundedCorners.ALL
+    ) = Row(
+        modifier.height(FIELD_HEIGHT).background(bgColor, roundedCorners.shape(LocalDensity.current.density)),
+        verticalAlignment = CenterVertically
     ) {
-        val density = LocalDensity.current.density
-        Row(
-            modifier = modifier.height(FIELD_HEIGHT).background(bgColor, roundedCorners.shape(density)),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            leadingIcon?.let {
-                ButtonSpacer()
-                Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.icon, it.color()) }
-            }
+        leadingIcon?.let {
             ButtonSpacer()
-            Text(text, textStyle = Theme.typography.body1, color = textColor)
+            Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.icon, it.color()) }
+        }
+        ButtonSpacer()
+        Text(text, textStyle = Theme.typography.body1, color = textColor)
+        ButtonSpacer()
+        trailingIcon?.let {
+            Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.icon, it.color()) }
             ButtonSpacer()
-            trailingIcon?.let {
-                Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) { Icon.Render(it.icon, it.color()) }
-                ButtonSpacer()
-            }
         }
     }
 
@@ -441,10 +419,7 @@ object Form {
             visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
             onTextLayout = onTextLayout,
             decorationBox = { innerTextField ->
-                Row(
-                    Modifier.padding(horizontal = MULTILINE_INPUT_PADDING),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(Modifier.padding(horizontal = MULTILINE_INPUT_PADDING), verticalAlignment = CenterVertically) {
                     leadingIcon?.let {
                         Icon.Render(icon = it)
                         Spacer(Modifier.width(ICON_SPACING))
@@ -536,10 +511,7 @@ object Form {
                 Box(Modifier.size(FIELD_HEIGHT)) { Icon.Render(icon = it, modifier = Modifier.align(Alignment.Center)) }
             } ?: Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
             Box(Modifier.weight(1f).onSizeChanged { state.boxWidth = toDP(it.width, state.density) }) {
-                Box(
-                    modifier = Modifier.fillMaxHeight()
-                        .horizontalScroll(state.horScroller)
-                ) {
+                Box(modifier = Modifier.fillMaxHeight().horizontalScroll(state.horScroller)) {
                     BasicTextField(
                         value = value,
                         onValueChange = { state.updateValue(it); onValueChange(it) },
@@ -557,14 +529,12 @@ object Form {
     }
 
     @Composable
-    fun LoadingIndicator(modifier: Modifier) {
-        Box(modifier.size(FIELD_HEIGHT), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(LOADING_SPINNER_SIZE),
-                color = Theme.studio.secondary,
-                strokeWidth = LOADING_SPINNER_STROKE_WIDTH
-            )
-        }
+    fun LoadingIndicator(modifier: Modifier) = Box(modifier.size(FIELD_HEIGHT), Alignment.Center) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(LOADING_SPINNER_SIZE),
+            color = Theme.studio.secondary,
+            strokeWidth = LOADING_SPINNER_STROKE_WIDTH
+        )
     }
 
     @Composable
@@ -671,8 +641,8 @@ object Form {
             bgColor = bgColor, focusReq = focusReq, roundedCorners = roundedCorners,
             enabled = enabled, tooltip = tooltip, onClick = onClick
         ) {
-            Row(modifier.height(FIELD_HEIGHT), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier.height(FIELD_HEIGHT), Arrangement.SpaceBetween, CenterVertically) {
+                Row(verticalAlignment = CenterVertically) {
                     leadingIcon?.let {
                         ButtonSpacer()
                         Box(Modifier.size(TRAILING_ICON_SIZE), Alignment.Center) {

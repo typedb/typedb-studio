@@ -58,13 +58,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.stream.Collectors
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
-@OptIn(ExperimentalTime::class)
+@OptIn(kotlin.time.ExperimentalTime::class)
 internal class LogOutput constructor(
     private val editorState: TextEditor.State,
     private val transactionState: TransactionState,
@@ -127,21 +126,20 @@ internal class LogOutput constructor(
         Service.notification.info(LOGGER, Message.Framework.TEXT_COPIED_TO_CLIPBOARD)
     }
 
-    private fun launchRunningIndicator() =
-        coroutines.launchAndHandle(Service.notification, LOGGER) {
-            var duration = RUNNING_INDICATOR_DELAY
-            while (isCollecting.get()) {
-                delay(duration)
-                if (!isCollecting.get()) return@launchAndHandle
-                val sinceLastResponse = System.currentTimeMillis() - lastOutputTime.get()
-                if (sinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
-                    output(INFO, "...")
-                    duration = RUNNING_INDICATOR_DELAY
-                } else {
-                    duration = RUNNING_INDICATOR_DELAY - Duration.milliseconds(sinceLastResponse)
-                }
+    private fun launchRunningIndicator() = coroutines.launchAndHandle(Service.notification, LOGGER) {
+        var duration = RUNNING_INDICATOR_DELAY
+        while (isCollecting.get()) {
+            delay(duration)
+            if (!isCollecting.get()) return@launchAndHandle
+            val sinceLastResponse = System.currentTimeMillis() - lastOutputTime.get()
+            if (sinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
+                output(INFO, "...")
+                duration = RUNNING_INDICATOR_DELAY
+            } else {
+                duration = RUNNING_INDICATOR_DELAY - Duration.milliseconds(sinceLastResponse)
             }
         }
+    }
 
     internal fun outputFn(message: Response.Message): () -> Unit = { output(message.type, message.text) }
 
