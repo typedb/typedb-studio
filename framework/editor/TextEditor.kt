@@ -88,11 +88,10 @@ import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.log10
 import kotlin.math.roundToInt
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
-@OptIn(kotlin.time.ExperimentalTime::class)
 object TextEditor {
 
     private const val LINE_HEIGHT = 1.56f
@@ -102,7 +101,7 @@ object TextEditor {
     private val RIGHT_PADDING = 32.dp
     private val DEFAULT_FONT_WIDTH = 7.dp
     private val CURSOR_LINE_PADDING = 0.dp
-    private val BLINKING_FREQUENCY = Duration.milliseconds(500)
+    private val BLINKING_FREQUENCY = 500.milliseconds
     private val END_OF_FILE_SPACE = 100.dp
     private val MAX_LINE_MIN_WIDTH: Dp = 100_000.dp // we need this cause Compose can't render components too large
     private val LOGGER = KotlinLogging.logger {}

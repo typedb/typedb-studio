@@ -49,7 +49,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -147,7 +148,7 @@ class SchemaService(
     internal val coroutines = CoroutineScope(Dispatchers.Default)
 
     companion object {
-        private val TX_IDLE_TIME = Duration.seconds(16)
+        private val TX_IDLE_TIME = 16.seconds
         private val LOGGER = KotlinLogging.logger {}
     }
 
@@ -318,7 +319,7 @@ class SchemaService(
             if (sinceLastUse >= TX_IDLE_TIME.inWholeMilliseconds) {
                 closeReadTx()
                 break
-            } else duration = TX_IDLE_TIME - Duration.milliseconds(sinceLastUse)
+            } else duration = TX_IDLE_TIME - sinceLastUse.milliseconds
         }
     }
 

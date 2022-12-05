@@ -59,16 +59,15 @@ import com.vaticle.typedb.studio.service.common.util.Label
 import java.awt.MouseInfo
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(kotlin.time.ExperimentalTime::class)
 object Tooltip {
 
-    private val TOOLTIP_DELAY = Duration.Companion.milliseconds(800)
+    private val TOOLTIP_DELAY = 800.milliseconds
     private val TOOLTIP_WIDTH = 250.dp
     private val TOOLTIP_OFFSET = 24.dp
     private val TOOLTIP_SPACE = 8.dp

@@ -94,13 +94,12 @@ import java.lang.Integer.min
 import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.floor
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-@OptIn(kotlin.time.ExperimentalTime::class)
 object Navigator {
 
     sealed class Behaviour(val clicksToOpenItem: Int, val itemsAreFocusable: Boolean) {
@@ -109,7 +108,7 @@ object Navigator {
     }
 
     val ITEM_HEIGHT = 26.dp
-    private val LIVE_UPDATE_REFRESH_RATE = Duration.seconds(1)
+    private val LIVE_UPDATE_REFRESH_RATE = 1.seconds
     private val ICON_WIDTH = 20.dp
     private val TEXT_SPACING = 4.dp
     private val AREA_PADDING = 8.dp

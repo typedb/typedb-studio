@@ -28,7 +28,7 @@ import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.UNEXPECTED_ERROR_IN_COROUTINE
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.delay
@@ -47,9 +47,8 @@ class NotificationService {
     val isOpen: Boolean get() = queue.isNotEmpty()
     private val coroutines = CoroutineScope(Default)
 
-    @OptIn(kotlin.time.ExperimentalTime::class)
     companion object {
-        private val HIDE_DELAY = Duration.seconds(10)
+        private val HIDE_DELAY = 10.seconds
         private val LOGGER = KotlinLogging.logger {}
 
         fun <T> launchCompletableFuture(
