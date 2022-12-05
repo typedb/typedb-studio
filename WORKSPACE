@@ -53,6 +53,7 @@ kotlin_repositories(
 )
 load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
 kt_register_toolchains()
+register_toolchains("//:kotlin_toolchain_strict_deps")
 
 # Load //builder/antlr (required by typedb_client_java > typeql)
 load("@vaticle_dependencies//builder/antlr:deps.bzl", antlr_deps = "deps", "antlr_version")
