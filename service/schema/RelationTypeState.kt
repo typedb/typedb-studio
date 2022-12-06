@@ -32,7 +32,8 @@ import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FA
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_RELATES_ROLE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Sentence
-import com.vaticle.typedb.studio.service.schema.LoadedTypeStateService.ConnectedTypes.RelatedRole
+import java.util.concurrent.atomic.AtomicBoolean
+//import com.vaticle.typedb.studio.service.schema.LoadedConnectedTypesService.ConnectedTypes.RelatedRole
 import kotlin.streams.toList
 import mu.KotlinLogging
 
@@ -51,6 +52,8 @@ class RelationTypeState internal constructor(
     val relatedRoleTypes: List<RoleTypeState> get() = relatedRoleTypeProperties.map { it.roleType }
     val relatedRoleTypesExplicit: List<RoleTypeState>
         get() = relatedRoleTypeProperties.filter { !it.isInherited }.map { it.roleType }
+
+    val loadedRelatedRoleTypeProperties: AtomicBoolean = AtomicBoolean(false)
 
     override fun isSameEncoding(conceptType: Type) = conceptType.isRelationType
     override fun asSameEncoding(conceptType: Type) = conceptType.asRelationType()!!
@@ -112,14 +115,18 @@ class RelationTypeState internal constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val relTypeTx = conceptType.asRemote(tx)
-            val typeLabel = relTypeTx.label.name()
-            if (!schemaSrv.loadedTypeState.contains(typeLabel, RelatedRole)) {
-                schemaSrv.loadedTypeState.append(typeLabel, RelatedRole)
+            if (!loadedRelatedRoleTypeProperties.get()) {
+                loadedRelatedRoleTypeProperties.set(true)
                 relTypeTx.relatesExplicit.forEach { load(relTypeTx, it, false) }
                 relTypeTx.relates.filter { !loaded.contains(it) && !it.isRoot }.forEach { load(relTypeTx, it, true) }
                 relatedRoleTypeProperties = properties
             }
         }
+    }
+
+    override fun resetLoadedConnectedTypes() {
+        super.resetLoadedConnectedTypes()
+        loadedRelatedRoleTypeProperties.set(false)
     }
 
     override fun initiateCreateSubtype(onSuccess: () -> Unit) =

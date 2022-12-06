@@ -25,7 +25,7 @@ import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
 import kotlin.streams.toList
-import com.vaticle.typedb.studio.service.schema.LoadedTypeStateService.ConnectedTypes.Owner
+import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
 
 class AttributeTypeState internal constructor(
@@ -65,6 +65,8 @@ class AttributeTypeState internal constructor(
     val ownerTypes get() = ownerTypeProperties.map { it.ownerType }
     val ownerTypesExplicit get() = ownerTypeProperties.filter { !it.isInherited }.map { it.ownerType }
 
+    val loadedOwnerTypeProperties: AtomicBoolean = AtomicBoolean(false)
+
     override fun isSameEncoding(conceptType: Type) = conceptType.isAttributeType
     override fun asSameEncoding(conceptType: Type) = conceptType.asAttributeType()!!
     override fun typeStateOf(type: AttributeType) = schemaSrv.typeStateOf(type)
@@ -97,9 +99,8 @@ class AttributeTypeState internal constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
-            val typeLabel = typeTx.label.name()
-            if (!schemaSrv.loadedTypeState.contains(typeLabel, Owner)) {
-                schemaSrv.loadedTypeState.append(typeLabel, Owner)
+            if (!loadedOwnerTypeProperties.get()) {
+                loadedOwnerTypeProperties.set(true)
                 typeTx.getOwnersExplicit(true).forEach {
                     load(it, isKey = true, isInherited = false)
                 }
@@ -115,6 +116,11 @@ class AttributeTypeState internal constructor(
                 ownerTypeProperties = properties
             }
         }
+    }
+
+    override fun resetLoadedConnectedTypes() {
+        super.resetLoadedConnectedTypes()
+        loadedOwnerTypeProperties.set(false)
     }
 
     override fun initiateCreateSubtype(onSuccess: () -> Unit) =

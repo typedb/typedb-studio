@@ -115,7 +115,7 @@ class SchemaService(
     var rootRelationType: RelationTypeState? by mutableStateOf(null); private set
     var rootRoleType: RoleTypeState? by mutableStateOf(null); private set
     var rootAttributeType: AttributeTypeState? by mutableStateOf(null); private set
-    val loadedTypeState = LoadedTypeStateService()
+//    val loadedConnectedTypes = LoadedConnectedTypesService()
     val isWritable: Boolean get() = session.isSchema && session.transaction.isWrite
     val createEntityTypeDialog = TypeDialogState<EntityTypeState>()
     val createAttributeTypeDialog = TypeDialogState<AttributeTypeState>()
@@ -267,7 +267,7 @@ class SchemaService(
             coroutines.launchAndHandle(notification, LOGGER) {
                 openOrGetWriteTx()?.let { tx ->
                     function(tx)
-                    loadedTypeState.reset()
+                    resetLoadedConnectedTypes()
                     updateSchemaExceptionsStatus()
                 } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_WRITE_TX)
             }.invokeOnCompletion { hasRunningWriteAtomic.set(false) }
@@ -280,7 +280,7 @@ class SchemaService(
             if (isWritable && session.transaction.isOpen) return openOrGetWriteTx()
             if (readTx.get() != null) return readTx.get()
             readTx.set(session.transaction()?.also {
-                loadedTypeState.reset()
+                resetLoadedConnectedTypes()
                 it.onClose { closeReadTx() }
                 scheduleCloseReadTxAsync()
             })
@@ -306,7 +306,7 @@ class SchemaService(
         if (readTx.get() != null) closeReadTx()
         if (writeTx.get() != null) return writeTx.get()
         writeTx.set(session.transaction.tryOpen()?.also { it.onClose { writeTx.set(null) } })
-        loadedTypeState.reset()
+        resetLoadedConnectedTypes()
         return writeTx.get()
     }
 
@@ -344,6 +344,22 @@ class SchemaService(
     fun closeWriteTx() = synchronized(this) { writeTx.getAndSet(null)?.close() }
 
     fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
+
+    private fun resetLoadedConnectedTypes() {
+        for (typeState in entityTypes.values) {
+            typeState.resetLoadedConnectedTypes()
+        }
+        for (typeState in attributeTypes.values) {
+            typeState.resetLoadedConnectedTypes()
+        }
+        for (typeState in relationTypes.values) {
+            typeState.resetLoadedConnectedTypes()
+        }
+        for (typeState in roleTypes.values) {
+            typeState.resetLoadedConnectedTypes()
+        }
+    }
+
 
     fun register(typeState: TypeState<*, *>) = when (typeState) {
         is EntityTypeState -> entityTypes[typeState.conceptType] = typeState
