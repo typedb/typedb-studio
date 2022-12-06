@@ -30,8 +30,8 @@ kt_jvm_library(
     deps = [
         "//service/common:common",
         "//service/connection:connection",
-        "//service/project:project",
         "//service/page:page",
+        "//service/project:project",
         "//service:service",
         "//framework/common:common",
         "//framework/editor/highlighter:highlighter",

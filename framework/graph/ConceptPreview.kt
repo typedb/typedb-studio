@@ -99,7 +99,7 @@ class ConceptPreview constructor(
     private fun ConceptTypePreview(concept: Concept) {
         val type = if (concept is Type) concept else concept.asThing().type
         Row(verticalAlignment = Alignment.CenterVertically) {
-            ConceptDisplay.icon(type).let { Icon.Render(it.icon, it.color()) }
+            ConceptDisplay.iconOf(type).let { Icon.Render(it.icon, it.color()) }
             Form.ButtonSpacer()
             Form.Text(ConceptDisplay.TypeLabelWithDetails(type))
         }

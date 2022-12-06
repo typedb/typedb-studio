@@ -95,26 +95,21 @@ import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.floor
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
+@OptIn(kotlin.time.ExperimentalTime::class)
 object Navigator {
 
-    sealed class Behaviour(
-        val clicksToOpenItem: Int,
-        val itemsAreFocusable: Boolean
-    ) {
+    sealed class Behaviour(val clicksToOpenItem: Int, val itemsAreFocusable: Boolean) {
         class Browser(clicksToOpenItem: Int = 2) : Behaviour(clicksToOpenItem, true)
-
         class Menu(clicksToOpenItem: Int = 1) : Behaviour(clicksToOpenItem, false)
     }
 
-    @OptIn(ExperimentalTime::class)
-    private val LIVE_UPDATE_REFRESH_RATE = Duration.seconds(1)
     val ITEM_HEIGHT = 26.dp
+    private val LIVE_UPDATE_REFRESH_RATE = Duration.seconds(1)
     private val ICON_WIDTH = 20.dp
     private val TEXT_SPACING = 4.dp
     private val AREA_PADDING = 8.dp
@@ -281,7 +276,6 @@ object Navigator {
             watchUpdate.set(false)
         }
 
-        @OptIn(ExperimentalTime::class)
         private fun launchWatcher(root: ItemState<T>) = coroutines.launchAndHandle(notification, LOGGER) {
             do {
                 root.checkForUpdate(true)
@@ -537,13 +531,11 @@ object Navigator {
 
     private suspend fun <T : Navigable<T>> PointerInputScope.onPointerInput(
         state: NavigatorState<T>, item: ItemState<T>
-    ) {
-        state.contextMenu.onPointerInput(
-            pointerInputScope = this,
-            onSinglePrimaryPressed = { state.maySelect(item) },
-            onSecondaryClick = { state.maySelect(item) }
-        )
-    }
+    ) = state.contextMenu.onPointerInput(
+        pointerInputScope = this,
+        onSinglePrimaryPressed = { state.maySelect(item) },
+        onSecondaryClick = { state.maySelect(item) }
+    )
 
     @OptIn(ExperimentalComposeUiApi::class)
     private fun <T : Navigable<T>> onKeyEvent(

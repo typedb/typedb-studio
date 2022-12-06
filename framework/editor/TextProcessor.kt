@@ -41,7 +41,6 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.floor
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -426,7 +425,7 @@ internal interface TextProcessor {
             target.updateCursor(insertion.selection().max, false)
         }
 
-        @OptIn(ExperimentalTime::class)
+        @OptIn(kotlin.time.ExperimentalTime::class)
         private fun queueChangeStack(change: TextChange) {
             redoStack.clear()
             changeQueue.put(change)

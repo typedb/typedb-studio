@@ -71,9 +71,9 @@ internal class TextRenderer(private val viewport: Viewport) {
                 maxWidth = vertex.geometry.labelMaxWidth * density,
                 maxLines = vertex.geometry.labelMaxLines(typography.codeSizeMedium),
                 color = color
-            ).also { result ->
-                if (result.isTruncated && vertex.geometry.isVisiblyCollapsed) vertex.geometry.contentOverflowsBaseShape =
-                    true
+            ).also { r ->
+                if (r.isTruncated && vertex.geometry.isVisiblyCollapsed)
+                    vertex.geometry.contentOverflowsBaseShape = true
             }
         }
     }
@@ -148,12 +148,7 @@ internal class TextRenderer(private val viewport: Viewport) {
     }
 
     private data class LineBreak(val index: Int, val reason: Reason) {
-        enum class Reason {
-            WHITESPACE,
-            WORD_BREAK,
-            BLOCK_START,
-            OVERFLOW
-        }
+        enum class Reason { WHITESPACE, WORD_BREAK, BLOCK_START, OVERFLOW }
     }
 
     private fun Char.isWordBreakSymbol() = this in "-/|"

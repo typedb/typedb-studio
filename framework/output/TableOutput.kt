@@ -27,10 +27,7 @@ import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.connection.TransactionState
 
-internal class TableOutput constructor(
-    val transaction: TransactionState,
-    number: Int
-) : RunOutput() {
+internal class TableOutput constructor(val transaction: TransactionState, number: Int) : RunOutput() {
 
     override val name: String = Label.TABLE + " ($number)"
     override val icon: Icon = Icon.TABLE

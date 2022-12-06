@@ -21,8 +21,8 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library", "kt_jvm_test
 package(default_visibility = [
     "//module:__subpackages__",
     "//framework:__subpackages__",
+    "//test/integration:__subpackages__",
     "//:__pkg__",
-    "//test/integration:__subpackages__"
 ])
 
 kt_jvm_library(

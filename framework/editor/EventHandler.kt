@@ -110,15 +110,13 @@ internal class EventHandler constructor(
                 processor.insertText(event.awtEvent.keyChar.toString())
                 true
             }
-            else -> KeyMapper.CURRENT.map(event)
-                ?.let { executeEditorCommand(it) } ?: false
+            else -> KeyMapper.CURRENT.map(event)?.let { executeEditorCommand(it) } ?: false
         }
     }
 
     internal fun handleToolbarEvent(event: KeyEvent): Boolean {
         return if (event.type == KeyEventType.KeyUp) false
-        else KeyMapper.CURRENT.map(event)?.let { executeWindowCommand(it) }
-            ?: false
+        else KeyMapper.CURRENT.map(event)?.let { executeWindowCommand(it) } ?: false
     }
 
     private fun executeEditorCommand(command: Command): Boolean {
@@ -137,8 +135,8 @@ internal class EventHandler constructor(
             MOVE_LINE_DOWN -> target.moveCursorDownByLine()
             MOVE_PAGE_UP -> target.moveCursorUpByPage()
             MOVE_PAGE_DOWN -> target.moveCursorDownByPage()
-            MOVE_HOME -> target.moveCursorToStartOfFile()
-            MOVE_END -> target.moveCursorToEndOfFile()
+            MOVE_HOME -> target.moveCursorToStartOfContent()
+            MOVE_END -> target.moveCursorToEndOfContent()
             SELECT_CHAR_LEFT -> target.moveCursorPrevByChar(true) // because we only display left to right
             SELECT_CHAR_RIGHT -> target.moveCursorNextByChar(true) // because we only display left to right
             SELECT_WORD_LEFT -> target.moveCursorPrevByWord(true) // because we only display left to right
@@ -153,8 +151,8 @@ internal class EventHandler constructor(
             SELECT_LINE_DOWN -> target.moveCursorDownByLine(true)
             SELECT_PAGE_UP -> target.moveCursorUpByPage(true)
             SELECT_PAGE_DOWN -> target.moveCursorDownByPage(true)
-            SELECT_HOME -> target.moveCursorToStartOfLine(true)
-            SELECT_END -> target.moveCursorToEndOfLine(true)
+            SELECT_HOME -> target.moveCursorToStartOfContent(true)
+            SELECT_END -> target.moveCursorToEndOfContent(true)
             SELECT_ALL -> target.selectAll()
             SELECT_NONE -> target.selectNone()
             REORDER_LINES_UP -> processor.reorderLinesUp()

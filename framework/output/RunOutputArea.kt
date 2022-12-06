@@ -69,13 +69,11 @@ object RunOutputArea {
         }
 
         @Composable
-        internal fun outputGroup(runner: QueryRunner): RunOutputGroup {
-            return outputGroup.getOrPut(runner) { RunOutputGroup.createAndLaunch(runner) }
+        internal fun outputGroup(runner: QueryRunner) = outputGroup.getOrPut(runner) {
+            RunOutputGroup.createAndLaunch(runner)
         }
 
-        internal fun toggle() {
-            toggle(!isOpen)
-        }
+        internal fun toggle() = toggle(!isOpen)
 
         private fun toggle(isOpen: Boolean) {
             this.isOpen = isOpen
@@ -94,30 +92,26 @@ object RunOutputArea {
     }
 
     @Composable
-    fun Layout(state: State) {
-        Column(Modifier.fillMaxSize()) {
-            Row(Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT)) {
-                OutputGroupTabs(state, Modifier.weight(1f))
-                ToggleButton(state)
-            }
-            if (state.isOpen) {
-                Separator.Horizontal()
-                state.pageable.runners.active?.let { runner ->
-                    OutputGroup(state, runner, Modifier.fillMaxSize())
-                }
+    fun Layout(state: State) = Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().height(PANEL_BAR_HEIGHT)) {
+            OutputGroupTabs(state, Modifier.weight(1f))
+            ToggleButton(state)
+        }
+        if (state.isOpen) {
+            Separator.Horizontal()
+            state.pageable.runners.active?.let { runner ->
+                OutputGroup(state, runner, Modifier.fillMaxSize())
             }
         }
     }
 
     @Composable
-    private fun ToggleButton(state: State) {
-        Form.IconButton(
-            icon = if (state.isOpen) Icon.HIDE else Icon.SHOW,
-            modifier = Modifier.size(PANEL_BAR_HEIGHT),
-            bgColor = Color.Transparent,
-            roundedCorners = Theme.RoundedCorners.NONE,
-        ) { state.toggle() }
-    }
+    private fun ToggleButton(state: State) = Form.IconButton(
+        icon = if (state.isOpen) Icon.HIDE else Icon.SHOW,
+        modifier = Modifier.size(PANEL_BAR_HEIGHT),
+        bgColor = Color.Transparent,
+        roundedCorners = Theme.RoundedCorners.NONE,
+    ) { state.toggle() }
 
     @Composable
     private fun OutputGroupTabs(state: State, modifier: Modifier) {
@@ -173,22 +167,22 @@ object RunOutputArea {
     }
 
     @Composable
-    private fun OutputTabs(outputGroup: RunOutputGroup, modifier: Modifier) {
-        Row(modifier.height(PANEL_BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
-            Spacer(Modifier.width(PANEL_BAR_SPACING))
-            Form.Text(value = Label.OUTPUT + ":")
-            Spacer(Modifier.width(PANEL_BAR_SPACING))
-            Box(Modifier.weight(1f)) {
-                Tabs.Horizontal.Layout(
-                    state = outputGroup.tabsState,
-                    tabs = outputGroup.outputs,
-                    position = Tabs.Horizontal.Position.BOTTOM,
-                    iconFn = { Form.IconArg(it.icon) },
-                    labelFn = { AnnotatedString(it.name) },
+    private fun OutputTabs(
+        outputGroup: RunOutputGroup, modifier: Modifier
+    ) = Row(modifier.height(PANEL_BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
+        Spacer(Modifier.width(PANEL_BAR_SPACING))
+        Form.Text(value = Label.OUTPUT + ":")
+        Spacer(Modifier.width(PANEL_BAR_SPACING))
+        Box(Modifier.weight(1f)) {
+            Tabs.Horizontal.Layout(
+                state = outputGroup.tabsState,
+                tabs = outputGroup.outputs,
+                position = Tabs.Horizontal.Position.BOTTOM,
+                iconFn = { Form.IconArg(it.icon) },
+                labelFn = { AnnotatedString(it.name) },
                     isActiveFn = { outputGroup.isActive(it) },
                     onClick = { outputGroup.activate(it) },
                 )
             }
         }
-    }
 }

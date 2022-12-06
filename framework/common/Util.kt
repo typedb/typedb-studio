@@ -53,9 +53,9 @@ object Util {
         return DpSize(size.width.dp / density, size.height.dp / density)
     }
 
-    fun mousePoint(window: WindowContext, titleBarHeight: Dp): Point {
+    fun mousePoint(windowCtx: WindowContext, titleBarHeight: Dp): Point {
         val raw = MouseInfo.getPointerInfo().location
-        return Point(raw.x - window.x, raw.y - window.y - titleBarHeight.value.toInt())
+        return Point(raw.x - windowCtx.x, raw.y - windowCtx.y - titleBarHeight.value.toInt())
     }
 
     fun isMouseHover(area: Rect, window: WindowContext, titleBarHeight: Dp): Boolean {

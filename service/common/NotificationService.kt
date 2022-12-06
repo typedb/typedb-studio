@@ -29,7 +29,6 @@ import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.UN
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.delay
@@ -37,7 +36,6 @@ import kotlinx.coroutines.launch
 import mu.KLogger
 import mu.KotlinLogging
 
-@OptIn(ExperimentalTime::class)
 class NotificationService {
 
     // Not a data class, because each object has to be unique
@@ -49,6 +47,7 @@ class NotificationService {
     val isOpen: Boolean get() = queue.isNotEmpty()
     private val coroutines = CoroutineScope(Default)
 
+    @OptIn(kotlin.time.ExperimentalTime::class)
     companion object {
         private val HIDE_DELAY = Duration.seconds(10)
         private val LOGGER = KotlinLogging.logger {}

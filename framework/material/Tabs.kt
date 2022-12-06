@@ -286,41 +286,35 @@ object Tabs {
         )
 
         @Composable
-        private fun <T : Any> PreviousTabsButton(state: State<T>) {
-            Form.IconButton(
-                icon = Icon.PREVIOUS_LEFT,
-                modifier = Modifier.size(HEIGHT),
-                bgColor = Color.Transparent,
-                roundedCorners = Theme.RoundedCorners.NONE,
-                enabled = state.scroller.value > 0
-            ) { state.scrollTabsBy(-TAB_SCROLL_DELTA) }
-        }
+        private fun <T : Any> PreviousTabsButton(state: State<T>) = Form.IconButton(
+            icon = Icon.PREVIOUS_LEFT,
+            modifier = Modifier.size(HEIGHT),
+            bgColor = Color.Transparent,
+            roundedCorners = Theme.RoundedCorners.NONE,
+            enabled = state.scroller.value > 0
+        ) { state.scrollTabsBy(-TAB_SCROLL_DELTA) }
 
         @Composable
-        private fun <T : Any> NextTabsButton(state: State<T>) {
-            Form.IconButton(
-                icon = Icon.NEXT_RIGHT,
-                modifier = Modifier.size(HEIGHT),
-                bgColor = Color.Transparent,
-                roundedCorners = Theme.RoundedCorners.NONE,
-                enabled = state.scroller.value < state.scroller.maxValue
-            ) { state.scrollTabsBy(TAB_SCROLL_DELTA) }
-        }
+        private fun <T : Any> NextTabsButton(state: State<T>) = Form.IconButton(
+            icon = Icon.NEXT_RIGHT,
+            modifier = Modifier.size(HEIGHT),
+            bgColor = Color.Transparent,
+            roundedCorners = Theme.RoundedCorners.NONE,
+            enabled = state.scroller.value < state.scroller.maxValue
+        ) { state.scrollTabsBy(TAB_SCROLL_DELTA) }
 
         @Composable
-        private fun Button(buttonArg: IconButtonArg) {
-            Form.IconButton(
-                icon = buttonArg.icon,
-                hoverIcon = buttonArg.hoverIcon,
-                modifier = Modifier.size(HEIGHT),
-                iconColor = buttonArg.color(),
-                iconHoverColor = buttonArg.hoverColor?.invoke(),
-                disabledColor = buttonArg.disabledColor?.invoke(),
-                bgColor = Color.Transparent,
-                roundedCorners = Theme.RoundedCorners.NONE,
-                enabled = buttonArg.enabled,
-                onClick = buttonArg.onClick,
-            )
-        }
+        private fun Button(buttonArg: IconButtonArg) = Form.IconButton(
+            icon = buttonArg.icon,
+            hoverIcon = buttonArg.hoverIcon,
+            modifier = Modifier.size(HEIGHT),
+            iconColor = buttonArg.color(),
+            iconHoverColor = buttonArg.hoverColor?.invoke(),
+            disabledColor = buttonArg.disabledColor?.invoke(),
+            bgColor = Color.Transparent,
+            roundedCorners = Theme.RoundedCorners.NONE,
+            enabled = buttonArg.enabled,
+            onClick = buttonArg.onClick,
+        )
     }
 }

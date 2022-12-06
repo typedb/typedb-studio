@@ -87,29 +87,25 @@ object Table {
         verCellPadding: Dp = CELL_PADDING_VERTICAL,
         contextMenuFn: ((item: T) -> List<List<ContextMenu.Item>>)? = null,
         columns: List<Column<T>>,
-    ) {
-        Column(modifier.background(Theme.studio.backgroundMedium)) {
-            if (showHeader) Header(rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
-            Body(items, rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns, contextMenuFn)
-        }
+    ) = Column(modifier.background(Theme.studio.backgroundMedium)) {
+        if (showHeader) Header(rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns)
+        Body(items, rowHeight, columnBorderSize, horCellPadding, verCellPadding, columns, contextMenuFn)
     }
 
     @Composable
     private fun <T> Header(
         rowHeight: Dp, columnBorderSize: Dp,
         horCellPadding: Dp, verCellPadding: Dp, columns: List<Column<T>>
+    ) = Row(
+        modifier = Modifier.fillMaxWidth().height(rowHeight).background(Theme.studio.backgroundDark),
+        horizontalArrangement = Arrangement.spacedBy(columnBorderSize)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().height(rowHeight).background(Theme.studio.backgroundDark),
-            horizontalArrangement = Arrangement.spacedBy(columnBorderSize)
-        ) {
-            columns.forEach { col ->
-                Box(
-                    contentAlignment = col.headerAlignment,
-                    modifier = col.size.apply({ Modifier.weight(it) }, { Modifier.width(it) })
-                        .fillMaxHeight().padding(horCellPadding, verCellPadding)
-                ) { col.header?.let { Form.Text(it) } }
-            }
+        columns.forEach { col ->
+            Box(
+                contentAlignment = col.headerAlignment,
+                modifier = col.size.apply({ Modifier.weight(it) }, { Modifier.width(it) })
+                    .fillMaxHeight().padding(horCellPadding, verCellPadding)
+            ) { col.header?.let { Form.Text(it) } }
         }
     }
 
@@ -141,11 +137,10 @@ object Table {
     }
 
     @Composable
-    private fun EmptyRow() {
-        Box(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium), Alignment.Center) {
-            Form.Text(value = Label.NONE_IN_PARENTHESES.lowercase())
-        }
-    }
+    private fun EmptyRow() = Box(
+        modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundMedium),
+        contentAlignment = Alignment.Center
+    ) { Form.Text(value = Label.NONE_IN_PARENTHESES.lowercase()) }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable

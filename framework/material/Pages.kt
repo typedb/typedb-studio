@@ -61,33 +61,30 @@ object Pages {
         private val openedPages: MutableMap<Pageable, Page> = mutableMapOf()
         internal val tabsState = Tabs.Horizontal.State<Pageable>()
 
-        fun handleKeyEvent(event: KeyEvent): Boolean {
-            return if (event.type == KeyEventType.KeyUp) false
-            else KeyMapper.CURRENT.map(event)?.let { execute(it) }
-                ?: false
+        fun handleKeyEvent(event: KeyEvent): Boolean = when (event.type) {
+            KeyEventType.KeyUp -> false
+            else -> KeyMapper.CURRENT.map(event)?.let { execute(it) } ?: false
         }
 
-        private fun execute(command: KeyMapper.Command): Boolean {
-            return when (command) {
-                KeyMapper.Command.SAVE -> maySaveActivePage()
-                KeyMapper.Command.CLOSE -> mayCloseActivePage()
-                KeyMapper.Command.CTRL_TAB -> mayShowNextPage()
-                KeyMapper.Command.CTRL_TAB_SHIFT -> mayShowPreviousPage()
-                else -> false
-            }
+        private fun execute(command: KeyMapper.Command): Boolean = when (command) {
+            KeyMapper.Command.SAVE -> maySaveActivePage()
+            KeyMapper.Command.CLOSE -> mayCloseActivePage()
+            KeyMapper.Command.CTRL_TAB -> mayShowNextPage()
+            KeyMapper.Command.CTRL_TAB_SHIFT -> mayShowPreviousPage()
+            else -> false
         }
 
         @Composable
-        internal fun openedPage(pageable: Pageable, createPageFn: @Composable (Pageable) -> Page): Page {
-            return openedPages.getOrPut(pageable) {
-                val page = createPageFn(pageable)
-                pageable.onClose { openedPages.remove(it) }
-                pageable.onReopen {
-                    page.updatePageable(it)
-                    openedPages[it] = page
-                }
-                page
+        internal fun openedPage(
+            pageable: Pageable, createPageFn: @Composable (Pageable) -> Page
+        ) = openedPages.getOrPut(pageable) {
+            val page = createPageFn(pageable)
+            pageable.onClose { openedPages.remove(it) }
+            pageable.onReopen {
+                page.updatePageable(it)
+                openedPages[it] = page
             }
+            page
         }
 
         private fun maySaveActivePage(): Boolean = Service.pages.active?.let {
@@ -129,14 +126,12 @@ object Pages {
             return true
         }
 
-        internal fun contextMenuFn(pageable: Pageable): List<List<ContextMenu.Item>> {
-            return listOf(
-                listOf(
-                    saveMenuItem(pageable),
-                    closeMenuItem(pageable)
-                )
+        internal fun contextMenuFn(pageable: Pageable) = listOf(
+            listOf(
+                saveMenuItem(pageable),
+                closeMenuItem(pageable)
             )
-        }
+        )
 
         private fun closeMenuItem(pageable: Pageable) = ContextMenu.Item(
             label = Label.CLOSE,
@@ -185,22 +180,20 @@ object Pages {
     }
 
     @Composable
-    private fun tabLabel(pageable: Pageable): AnnotatedString {
-        return if (pageable.isWritable) {
-            val changedIndicator = " *"
-            AnnotatedString(pageable.name) + when {
-                pageable.needSaving -> AnnotatedString(changedIndicator)
-                else -> AnnotatedString(changedIndicator, SpanStyle(color = Color.Transparent))
-            }
-        } else {
-            val builder = AnnotatedString.Builder()
-            val style = SpanStyle(color = Theme.studio.onPrimary.copy(alpha = 0.6f))
-            builder.append(pageable.name)
-            builder.pushStyle(style)
-            builder.append(" -- (${Label.READ_ONLY.lowercase()})")
-            builder.pop()
-            builder.toAnnotatedString()
+    private fun tabLabel(pageable: Pageable) = if (pageable.isWritable) {
+        val changedIndicator = " *"
+        AnnotatedString(pageable.name) + when {
+            pageable.needSaving -> AnnotatedString(changedIndicator)
+            else -> AnnotatedString(changedIndicator, SpanStyle(color = Color.Transparent))
         }
+    } else {
+        val builder = AnnotatedString.Builder()
+        val style = SpanStyle(color = Theme.studio.onPrimary.copy(alpha = 0.6f))
+        builder.append(pageable.name)
+        builder.pushStyle(style)
+        builder.append(" -- (${Label.READ_ONLY.lowercase()})")
+        builder.pop()
+        builder.toAnnotatedString()
     }
 
     abstract class Page {

@@ -141,22 +141,18 @@ object Notifications {
     }
 
     @Composable
-    private fun Button(closeIcon: Icon, colorArgs: ColorArgs, onClick: () -> Unit) {
-        IconButton(
-            icon = closeIcon,
-            modifier = Modifier.size(MESSAGE_CLOSE_SIZE),
-            iconColor = colorArgs.foreground,
-            bgColor = Color.Transparent,
-            onClick = onClick
-        )
-    }
+    private fun Button(closeIcon: Icon, colorArgs: ColorArgs, onClick: () -> Unit) = IconButton(
+        icon = closeIcon,
+        modifier = Modifier.size(MESSAGE_CLOSE_SIZE),
+        iconColor = colorArgs.foreground,
+        bgColor = Color.Transparent,
+        onClick = onClick
+    )
 
     @Composable
-    private fun colorArgsOf(type: Notification.Type): ColorArgs {
-        return when (type) {
-            INFO -> ColorArgs(Theme.studio.border, Theme.studio.onSurface)
-            WARNING -> ColorArgs(Theme.studio.warningBackground, Theme.studio.onError)
-            ERROR -> ColorArgs(Theme.studio.errorBackground, Theme.studio.onError)
-        }
+    private fun colorArgsOf(type: Notification.Type): ColorArgs = when (type) {
+        INFO -> ColorArgs(Theme.studio.border, Theme.studio.onSurface)
+        WARNING -> ColorArgs(Theme.studio.warningBackground, Theme.studio.onError)
+        ERROR -> ColorArgs(Theme.studio.errorBackground, Theme.studio.onError)
     }
 }

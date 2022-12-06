@@ -29,7 +29,8 @@ import com.vaticle.typedb.client.api.logic.Explanation
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.NotificationService
-import com.vaticle.typedb.studio.service.common.util.Message
+import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.FULLY_EXPLAINED
+import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.service.connection.TransactionState
 import com.vaticle.typeql.lang.TypeQL
 import java.util.Collections
@@ -87,17 +88,12 @@ class GraphBuilder(
     }
 
     private fun putVertexIfAbsent(concept: Concept): PutVertexResult = when {
-        concept is Thing -> putVertexIfAbsent(concept.iid, concept, newThingVertices, allThingVertices) {
-            Vertex.Thing.of(concept, graph)
-        }
+        concept is Thing -> putVertexIfAbsent(
+            concept.iid, concept, newThingVertices, allThingVertices
+        ) { Vertex.Thing.of(concept, graph) }
         concept is ThingType && !concept.isRoot -> putVertexIfAbsent(
-            concept.label.name(),
-            concept,
-            newTypeVertices,
-            allTypeVertices
-        ) {
-            Vertex.Type.of(concept, graph)
-        }
+            concept.label.name(), concept, newTypeVertices, allTypeVertices
+        ) { Vertex.Type.of(concept, graph) }
         else -> throw unsupportedEncodingException(concept)
     }
 
@@ -220,13 +216,7 @@ class GraphBuilder(
             val iterator = graph.reasoning.explanationIterators[vertex]
                 ?: runExplainQuery(vertex).also { graph.reasoning.explanationIterators[vertex] = it }
             fetchNextExplanation(vertex, iterator)
-        }.exceptionally { e ->
-            Service.notification.systemError(
-                LOGGER,
-                e,
-                Message.Visualiser.UNEXPECTED_ERROR
-            )
-        }
+        }.exceptionally { e -> Service.notification.systemError(LOGGER, e, UNEXPECTED_ERROR) }
     }
 
     private fun runExplainQuery(vertex: Vertex.Thing): Iterator<Explanation> {
@@ -240,9 +230,7 @@ class GraphBuilder(
             val explanation = iterator.next()
             vertexExplanations += Pair(vertex, explanation)
             loadConceptMap(explanation.condition(), AnswerSource.Explanation(explanation))
-        } else {
-            Service.notification.info(LOGGER, Message.Visualiser.FULLY_EXPLAINED)
-        }
+        } else Service.notification.info(LOGGER, FULLY_EXPLAINED)
     }
 
     fun unsupportedEncodingException(concept: Concept): IllegalStateException {

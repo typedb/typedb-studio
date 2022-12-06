@@ -89,11 +89,10 @@ import kotlin.math.ceil
 import kotlin.math.log10
 import kotlin.math.roundToInt
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
-@OptIn(ExperimentalTime::class)
+@OptIn(kotlin.time.ExperimentalTime::class)
 object TextEditor {
 
     private const val LINE_HEIGHT = 1.56f
@@ -169,11 +168,7 @@ object TextEditor {
         file.onDiskChangeContent {
             editor.reloadContent(it)
             editor.processor.clearHistory()
-            Service.notification.userWarning(
-                LOGGER,
-                FILE_CONTENT_CHANGED_ON_DISK,
-                it.path
-            )
+            Service.notification.userWarning(LOGGER, FILE_CONTENT_CHANGED_ON_DISK, it.path)
         }
         file.onDiskChangePermission {
             editor.reloadContent(it)
@@ -192,11 +187,7 @@ object TextEditor {
             editor.toolbar.processor = newProcessor
             editor.handler.processor = newProcessor
             editor.processor = newProcessor
-            Service.notification.userWarning(
-                LOGGER,
-                FILE_PERMISSION_CHANGED_ON_DISK,
-                it.path
-            )
+            Service.notification.userWarning(LOGGER, FILE_PERMISSION_CHANGED_ON_DISK, it.path)
         }
     }
 
@@ -272,7 +263,7 @@ object TextEditor {
 
         fun jumpToTop() {
             target.verScroller.scrollToTop()
-            target.moveCursorToStartOfFile(isSelecting = false, mayScroll = false)
+            target.moveCursorToStartOfContent(isSelecting = false, mayScroll = false)
         }
 
         fun onScrollToBottom(function: () -> Unit) {
@@ -441,7 +432,6 @@ object TextEditor {
         Box(Modifier.offset(x = startPos).width(endPos - startPos).height(state.lineHeight).background(color))
     }
 
-    @OptIn(ExperimentalTime::class)
     @Composable
     private fun Cursor(
         state: State, text: AnnotatedString, textLayout: TextLayoutResult?, font: TextStyle, fontWidth: Dp, lineGap: Dp

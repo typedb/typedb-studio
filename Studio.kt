@@ -148,9 +148,9 @@ object Studio {
             onCloseRequest = { if (error != null) exitApplicationFn() else confirmClose() },
         ) {
             CompositionLocalProvider(LocalWindow provides window) {
-                val windowContext = WindowContext.Compose(window)
-                MainWindowContent(windowContext)
-                CompositionLocalProvider(LocalWindowContext provides windowContext) {
+                val windowCtx = WindowContext.Compose(window)
+                MainWindowContent(windowCtx)
+                CompositionLocalProvider(LocalWindowContext provides windowCtx) {
                     Notifications.MayShowPopup()
                     ConfirmationDialog.MayShowDialog()
                     ServerDialog.MayShowDialogs()
@@ -164,13 +164,13 @@ object Studio {
     }
 
     @Composable
-    private fun MainWindowContent(window: WindowContext) {
+    private fun MainWindowContent(windowCtx: WindowContext) {
         var titleBarHeight by remember { mutableStateOf(0.dp) }
         val density = LocalDensity.current.density
         Column(Modifier.fillMaxSize().background(Theme.studio.backgroundMedium).onGloballyPositioned {
-            titleBarHeight = window.height.dp - toDP(it.size.height, density)
+            titleBarHeight = windowCtx.height.dp - toDP(it.size.height, density)
         }) {
-            CompositionLocalProvider(LocalWindowContext provides window) {
+            CompositionLocalProvider(LocalWindowContext provides windowCtx) {
                 CompositionLocalProvider(LocalTitleBarHeight provides titleBarHeight) {
                     Toolbar.Layout()
                     Separator.Horizontal()
@@ -256,8 +256,7 @@ object Studio {
                 "${Label.TITLE}: ${exception.message}\n${Label.TRACE}: ${exception.stackTraceToString()}"
 
             CompositionLocalProvider(LocalWindow provides window) {
-                val windowContext = WindowContext.Compose(window)
-                CompositionLocalProvider(LocalWindowContext provides windowContext) {
+                CompositionLocalProvider(LocalWindowContext provides WindowContext.Compose(window)) {
                     Column(
                         modifier = Modifier.fillMaxSize().background(Theme.studio.backgroundMedium)
                             .padding(DIALOG_PADDING),

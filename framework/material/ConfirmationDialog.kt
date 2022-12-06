@@ -58,21 +58,13 @@ object ConfirmationDialog {
         val rejectLabel get() = Service.confirmation.rejectLabel
         val confirmLabel get() = Service.confirmation.confirmLabel
 
-        fun reject() {
-            Service.confirmation.reject()
-        }
-
-        override fun cancel() {
-            Service.confirmation.close()
-        }
+        fun reject() = Service.confirmation.reject()
+        override fun cancel() = Service.confirmation.close()
+        override fun submit() = Service.confirmation.confirm()
 
         override fun isValid(): Boolean {
             val verificationValue = Service.confirmation.verificationValue
             return verificationValue == null || verificationValue == verificationInput
-        }
-
-        override fun submit() {
-            Service.confirmation.confirm()
         }
     }
 

@@ -53,7 +53,6 @@ import kotlin.io.path.isWritable
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -66,7 +65,7 @@ class FileState internal constructor(
     projectSrv: ProjectService,
 ) : PathState(parent, path, Type.FILE, projectSrv), Pageable.Runnable {
 
-    @OptIn(ExperimentalTime::class)
+    @OptIn(kotlin.time.ExperimentalTime::class)
     companion object {
         private val LIVE_UPDATE_REFRESH_RATE: Duration = Duration.seconds(1)
         private val LOGGER = KotlinLogging.logger {}
@@ -227,7 +226,6 @@ class FileState internal constructor(
         if (projectSrv.preference.autoSave) saveContent()
     }
 
-    @OptIn(ExperimentalTime::class)
     private fun launchWatcher() = coroutines.launchAndHandle(projectSrv.notification, LOGGER) {
         try {
             do {

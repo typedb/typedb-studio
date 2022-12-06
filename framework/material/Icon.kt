@@ -109,6 +109,7 @@ enum class Icon(private val shape: Shape) {
     companion object {
         private val FONT_FILE = "resources/icons/fontawesome/font-awesome-6-pro-solid-900.otf"
         private val FONT_AWESOME = FontFamily(Font(FONT_FILE))
+        private const val DEFAULT_SIZE = 12
 
         @Composable
         fun Render(
@@ -118,25 +119,23 @@ enum class Icon(private val shape: Shape) {
             size: TextUnit = icon.shape.size,
             modifier: Modifier = Modifier,
             enabled: Boolean = true
-        ) {
-            Text(
-                text = icon.shape.unicode,
-                color = if (!enabled && disabledColor != null) disabledColor else fadeable(color, !enabled),
-                fontSize = size,
-                fontFamily = FONT_AWESOME,
-                modifier = modifier.rotate(icon.shape.rotate)
-                    .offset(icon.shape.offset.x, icon.shape.offset.y)
-                    .scale(icon.shape.scale.x, icon.shape.scale.y)
-            )
-        }
+        ) = Text(
+            text = icon.shape.unicode,
+            color = if (!enabled && disabledColor != null) disabledColor else fadeable(color, !enabled),
+            fontSize = size,
+            fontFamily = FONT_AWESOME,
+            modifier = modifier.rotate(icon.shape.rotate)
+                .offset(icon.shape.offset.x, icon.shape.offset.y)
+                .scale(icon.shape.scale.x, icon.shape.scale.y)
+        )
     }
 
     data class Offset(val x: Dp, val y: Dp)
     data class Scale(val x: Float, val y: Float)
 
-    enum class Shape(
+    private enum class Shape(
         hexcode: UShort,
-        val size: TextUnit = Shape.DEFAULT_SIZE.sp,
+        val size: TextUnit = DEFAULT_SIZE.sp,
         val offset: Offset = Offset(0.dp, 0.dp),
         val rotate: Float = 0f,
         val scale: Scale = Scale(1f, 1f)
@@ -222,9 +221,5 @@ enum class Icon(private val shape: Shape) {
         XMARK(0xf00du, size = 13.sp);
 
         val unicode: String = Char(hexcode).toString()
-
-        companion object {
-            private const val DEFAULT_SIZE = 12
-        }
     }
 }
