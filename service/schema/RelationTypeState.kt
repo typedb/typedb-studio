@@ -33,7 +33,6 @@ import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FA
 import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import java.util.concurrent.atomic.AtomicBoolean
-//import com.vaticle.typedb.studio.service.schema.LoadedConnectedTypesService.ConnectedTypes.RelatedRole
 import kotlin.streams.toList
 import mu.KotlinLogging
 
