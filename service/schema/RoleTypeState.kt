@@ -69,7 +69,7 @@ class RoleTypeState constructor(
 
     val scopedName get() = relationType.name + ":" + name
     var playerTypeProperties: List<PlayerTypeProperties> by mutableStateOf(emptyList())
-    val Player get() = playerTypeProperties.map { it.playerType }
+    val playerTypes get() = playerTypeProperties.map { it.playerType }
     val playerTypesExplicit get() = playerTypeProperties.filter { !it.isInherited }.map { it.playerType }
     private var hasPlayerInstancesExplicit: Boolean by mutableStateOf(false)
     override val canBeDeleted: Boolean get() = !hasSubtypes && !hasPlayerInstancesExplicit
