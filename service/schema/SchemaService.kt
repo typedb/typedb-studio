@@ -266,7 +266,7 @@ class SchemaService(
             coroutines.launchAndHandle(notification, LOGGER) {
                 openOrGetWriteTx()?.let { tx ->
                     function(tx)
-                    resetLoadedConnectedTypes()
+                    resetLoadedConnectedTypes(reload = true)
                     updateSchemaExceptionsStatus()
                 } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_WRITE_TX)
             }.invokeOnCompletion { hasRunningWriteAtomic.set(false) }
@@ -344,18 +344,18 @@ class SchemaService(
 
     fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
 
-    private fun resetLoadedConnectedTypes() {
+    private fun resetLoadedConnectedTypes(reload: Boolean = false) {
         for (typeState in entityTypes.values) {
-            typeState.resetLoadedConnectedTypes()
+            typeState.resetLoadedConnectedTypes(reload)
         }
         for (typeState in attributeTypes.values) {
-            typeState.resetLoadedConnectedTypes()
+            typeState.resetLoadedConnectedTypes(reload)
         }
         for (typeState in relationTypes.values) {
-            typeState.resetLoadedConnectedTypes()
+            typeState.resetLoadedConnectedTypes(reload)
         }
         for (typeState in roleTypes.values) {
-            typeState.resetLoadedConnectedTypes()
+            typeState.resetLoadedConnectedTypes(reload)
         }
     }
 

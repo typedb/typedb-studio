@@ -27,6 +27,7 @@ import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
@@ -82,8 +83,8 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     var playedRoleTypeProperties: List<RoleTypeState.PlayedRoleTypeProperties> by mutableStateOf(emptyList())
     val playedRoleTypes: List<RoleTypeState> get() = playedRoleTypeProperties.map { it.roleType }
 
-    private val loadedOwnedAttTypePropsAtomic = AtomicBoolean(false)
-    private val loadedPlayedRoleTypePropsAtomic = AtomicBoolean(false)
+    private val loadedOwnedAttTypePropsAtomic = AtomicBooleanState(false)
+    private val loadedPlayedRoleTypePropsAtomic = AtomicBooleanState(false)
 
     private var hasInstancesExplicit: Boolean by mutableStateOf(false)
     override val canBeDeleted get() = !hasSubtypes && !hasInstancesExplicit
@@ -224,7 +225,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
-            if (!loadedOwnedAttTypePropsAtomic.get()) {
+            if (!loadedOwnedAttTypePropsAtomic.state) {
                 loadedOwnedAttTypePropsAtomic.set(true)
                 typeTx.getOwnsExplicit(true).forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
@@ -274,7 +275,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
-            if (!loadedPlayedRoleTypePropsAtomic.get()) {
+            if (!loadedPlayedRoleTypePropsAtomic.state) {
                 loadedPlayedRoleTypePropsAtomic.set(true)
                 typeTx.playsExplicit.forEach { load(tx, typeTx, it, false) }
                 typeTx.plays.filter { !loaded.contains(it) }.forEach { load(tx, typeTx, it, true) }
@@ -283,9 +284,12 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         }
     }
 
-    open fun resetLoadedConnectedTypes() {
+    open fun resetLoadedConnectedTypes(reload: Boolean = false) {
         loadedPlayedRoleTypePropsAtomic.set(false)
+        playedRoleTypeProperties = emptyList()
         loadedOwnedAttTypePropsAtomic.set(false)
+        ownedAttTypeProperties = emptyList()
+        if (reload) loadConstraints()
     }
 
     protected fun tryCreateSubtype(

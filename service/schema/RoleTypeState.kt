@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 import mu.KotlinLogging
@@ -74,7 +75,7 @@ class RoleTypeState constructor(
     var hasPlayerInstancesExplicit: Boolean by mutableStateOf(false)
     override val canBeDeleted: Boolean get() = !hasSubtypes && !hasPlayerInstancesExplicit
     override val canBeAbstract get() = !hasPlayerInstancesExplicit
-    private val loadedPlayerTypePropsAtomic = AtomicBoolean(false)
+    private val loadedPlayerTypePropsAtomic = AtomicBooleanState(false)
 
     override fun loadInheritables() {}
     override fun isSameEncoding(conceptType: Type) = conceptType.isRoleType
@@ -117,7 +118,7 @@ class RoleTypeState constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val roleTypeTx = conceptType.asRemote(tx)
-            if (!loadedPlayerTypePropsAtomic.get()) {
+            if (!loadedPlayerTypePropsAtomic.state) {
                 loadedPlayerTypePropsAtomic.set(true)
                 roleTypeTx.playerTypesExplicit.forEach { load(it, isInherited = false) }
                 roleTypeTx.playerTypes.filter { !loaded.contains(it) }.forEach { load(it, isInherited = true) }
@@ -126,8 +127,10 @@ class RoleTypeState constructor(
         }
     }
 
-    fun resetLoadedConnectedTypes() {
+    fun resetLoadedConnectedTypes(reload: Boolean = false) {
         loadedPlayerTypePropsAtomic.set(false)
+        playerTypeProperties = emptyList()
+        if (reload) loadConstraints()
     }
 
     override fun toString(): String = "TypeState.Role: $conceptType"
