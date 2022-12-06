@@ -71,10 +71,10 @@ class RoleTypeState constructor(
     var playerTypeProperties: List<PlayerTypeProperties> by mutableStateOf(emptyList())
     val playerTypes get() = playerTypeProperties.map { it.playerType }
     val playerTypesExplicit get() = playerTypeProperties.filter { !it.isInherited }.map { it.playerType }
-    val loadedPlayerTypeProperties: AtomicBoolean = AtomicBoolean(false)
     var hasPlayerInstancesExplicit: Boolean by mutableStateOf(false)
     override val canBeDeleted: Boolean get() = !hasSubtypes && !hasPlayerInstancesExplicit
     override val canBeAbstract get() = !hasPlayerInstancesExplicit
+    private val loadedPlayerTypePropsAtomic = AtomicBoolean(false)
 
     override fun loadInheritables() {}
     override fun isSameEncoding(conceptType: Type) = conceptType.isRoleType
@@ -117,8 +117,8 @@ class RoleTypeState constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val roleTypeTx = conceptType.asRemote(tx)
-            if (!loadedPlayerTypeProperties.get()) {
-                loadedPlayerTypeProperties.set(true)
+            if (!loadedPlayerTypePropsAtomic.get()) {
+                loadedPlayerTypePropsAtomic.set(true)
                 roleTypeTx.playerTypesExplicit.forEach { load(it, isInherited = false) }
                 roleTypeTx.playerTypes.filter { !loaded.contains(it) }.forEach { load(it, isInherited = true) }
                 playerTypeProperties = properties
@@ -127,7 +127,7 @@ class RoleTypeState constructor(
     }
 
     fun resetLoadedConnectedTypes() {
-        loadedPlayerTypeProperties.set(false)
+        loadedPlayerTypePropsAtomic.set(false)
     }
 
     override fun toString(): String = "TypeState.Role: $conceptType"

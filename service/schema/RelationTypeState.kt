@@ -52,7 +52,7 @@ class RelationTypeState internal constructor(
     val relatedRoleTypesExplicit: List<RoleTypeState>
         get() = relatedRoleTypeProperties.filter { !it.isInherited }.map { it.roleType }
 
-    val loadedRelatedRoleTypeProperties: AtomicBoolean = AtomicBoolean(false)
+    private val loadedRelatedRoleTypePropsAtomic = AtomicBoolean(false)
 
     override fun isSameEncoding(conceptType: Type) = conceptType.isRelationType
     override fun asSameEncoding(conceptType: Type) = conceptType.asRelationType()!!
@@ -114,8 +114,8 @@ class RelationTypeState internal constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val relTypeTx = conceptType.asRemote(tx)
-            if (!loadedRelatedRoleTypeProperties.get()) {
-                loadedRelatedRoleTypeProperties.set(true)
+            if (!loadedRelatedRoleTypePropsAtomic.get()) {
+                loadedRelatedRoleTypePropsAtomic.set(true)
                 relTypeTx.relatesExplicit.forEach { load(relTypeTx, it, false) }
                 relTypeTx.relates.filter { !loaded.contains(it) && !it.isRoot }.forEach { load(relTypeTx, it, true) }
                 relatedRoleTypeProperties = properties
@@ -125,7 +125,7 @@ class RelationTypeState internal constructor(
 
     override fun resetLoadedConnectedTypes() {
         super.resetLoadedConnectedTypes()
-        loadedRelatedRoleTypeProperties.set(false)
+        loadedRelatedRoleTypePropsAtomic.set(false)
     }
 
     override fun initiateCreateSubtype(onSuccess: () -> Unit) =

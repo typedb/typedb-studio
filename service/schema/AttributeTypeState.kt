@@ -65,7 +65,7 @@ class AttributeTypeState internal constructor(
     val ownerTypes get() = ownerTypeProperties.map { it.ownerType }
     val ownerTypesExplicit get() = ownerTypeProperties.filter { !it.isInherited }.map { it.ownerType }
 
-    val loadedOwnerTypeProperties: AtomicBoolean = AtomicBoolean(false)
+    private val loadedOwnerTypePropsAtomic = AtomicBoolean(false)
 
     override fun isSameEncoding(conceptType: Type) = conceptType.isAttributeType
     override fun asSameEncoding(conceptType: Type) = conceptType.asAttributeType()!!
@@ -99,8 +99,8 @@ class AttributeTypeState internal constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
-            if (!loadedOwnerTypeProperties.get()) {
-                loadedOwnerTypeProperties.set(true)
+            if (!loadedOwnerTypePropsAtomic.get()) {
+                loadedOwnerTypePropsAtomic.set(true)
                 typeTx.getOwnersExplicit(true).forEach {
                     load(it, isKey = true, isInherited = false)
                 }
@@ -120,7 +120,7 @@ class AttributeTypeState internal constructor(
 
     override fun resetLoadedConnectedTypes() {
         super.resetLoadedConnectedTypes()
-        loadedOwnerTypeProperties.set(false)
+        loadedOwnerTypePropsAtomic.set(false)
     }
 
     override fun initiateCreateSubtype(onSuccess: () -> Unit) =
