@@ -24,3 +24,34 @@ config:
 build:
   quality:
     filter:
+      owner: vaticle
+      branch: master
+    dependency-analysis:
+      image: vaticle-ubuntu-22.04
+      command: |
+        bazel run @vaticle_dependencies//factory/analysis:dependency-analysis
+  correctness:
+    build:
+      image: vaticle-ubuntu-22.04
+      command: |
+        bazel build //...
+        bazel run @vaticle_dependencies//tool/checkstyle:test-coverage
+        bazel test $(bazel query 'kind(checkstyle_test, //...)') --test_output=errors
+    test-unit:
+      image: vaticle-ubuntu-22.04
+      command: |
+        bazel test $(bazel query 'kind(kt_jvm_test, //...) except kind(kt_jvm_test, //test/...)') --test_output=errors
+    test-integration:
+      image: vaticle-ubuntu-22.04
+      command: |
+        bazel build //test/integration/...
+        bazel test $(bazel query '//test/integration/... except kind(checkstyle_test, //test/integration/...)') --jobs=1 --spawn_strategy=local --test_output=errors
+
+release:
+  deployment:
+    trigger-release-circleci:
+      image: vaticle-ubuntu-22.04
+      command: |
+        git checkout -b release
+        git push -f origin release
+        echo "Successfully pushed branch 'release', which triggers a release workflow in CircleCI. The progress of the release can be tracked there."
