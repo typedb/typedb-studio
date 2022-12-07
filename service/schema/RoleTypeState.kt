@@ -92,7 +92,7 @@ class RoleTypeState constructor(
         conceptType.asRemote(tx).subtypesExplicit.toList()
     }
 
-    fun loadConstraints() {
+    override fun loadConstraints() {
         loadHasPlayerInstances()
     }
 
@@ -126,7 +126,7 @@ class RoleTypeState constructor(
         }
     }
 
-    fun resetLoadedConnectedTypes() {
+    override fun resetLoadedConnectedTypes() {
         loadedPlayerTypePropsAtomic.set(false)
         playerTypeProperties = emptyList()
     }

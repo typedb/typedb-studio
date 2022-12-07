@@ -346,14 +346,16 @@ class SchemaService(
     fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
 
     private fun resetLoadedConnectedTypes() {
-        (entityTypes.values + attributeTypes.values + relationTypes.values).forEach { it.resetLoadedConnectedTypes() }
-        roleTypes.values.forEach { it.resetLoadedConnectedTypes() }
+        listOf(entityTypes, attributeTypes, relationTypes, roleTypes).forEach { types ->
+            types.values.forEach{ type -> type.resetLoadedConnectedTypes() }
+        }
     }
 
     private fun reloadLoadedConnectedTypes() {
         resetLoadedConnectedTypes()
-        (entityTypes.values + attributeTypes.values + relationTypes.values).forEach { it.loadConstraints() }
-        roleTypes.values.forEach { it.loadConstraints() }
+        listOf(entityTypes, attributeTypes, relationTypes, roleTypes).forEach { types ->
+            types.values.forEach { type -> type.loadConstraints() }
+        }
     }
 
     fun register(typeState: TypeState<*, *>) = when (typeState) {

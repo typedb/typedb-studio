@@ -160,7 +160,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         loadConstraints()
     }
 
-    fun loadConstraints() = schemaSrv.mayRunReadTx {
+    override fun loadConstraints() = schemaSrv.mayRunReadTx {
         try {
             loadSupertypes()
             loadOtherConstraints()
@@ -283,7 +283,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         }
     }
 
-    open fun resetLoadedConnectedTypes() {
+    override fun resetLoadedConnectedTypes() {
         loadedPlayedRoleTypePropsAtomic.set(false)
         playedRoleTypeProperties = emptyList()
         loadedOwnedAttTypePropsAtomic.set(false)
