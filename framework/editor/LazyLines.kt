@@ -46,10 +46,10 @@ import java.util.concurrent.LinkedBlockingQueue
 import kotlin.math.floor
 
 /**
- * LazyLines is a custom variant of of Compose' native
+ * LazyLines is a custom variant of Compose' native
  * [androidx.compose.foundation.lazy.LazyColumn]. This library is different from
  * that of Compose' in that it is much simpler and lightweight: every entry in
- * the column has the same, fixed height, and uses the same lambda to produced a
+ * the column has the same, fixed height, and uses the same lambda to produce a
  * [androidx.compose.runtime.Composable]
  */
 internal object LazyLines {
@@ -142,7 +142,7 @@ internal object LazyLines {
             .mouseScrollFilter { event, _ -> onScroll(); state.scroller.updateOffset(event) }
             .onSizeChanged { state.scroller.viewHeight = toDP(it.height, density) }) {
             if (state.lines.isNotEmpty()) {
-                val lastVisibleIndex = min(state.scroller.lastVisibleIndexPossible, state.scroller.lineCount() - 1)
+                val lastVisibleIndex = min(state.scroller.lastVisibleIndexPossible + 1, state.scroller.lineCount() - 1)
                 (state.scroller.firstVisibleIndex..lastVisibleIndex).forEach { i ->
                     val indexInView = i - state.scroller.firstVisibleIndex
                     val offset = state.scroller.lineHeight * indexInView - state.scroller.firstVisibleOffset
