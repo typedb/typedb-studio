@@ -24,7 +24,7 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
-import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 import mu.KotlinLogging
 
@@ -65,7 +65,7 @@ class AttributeTypeState internal constructor(
     val ownerTypes get() = ownerTypeProperties.map { it.ownerType }
     val ownerTypesExplicit get() = ownerTypeProperties.filter { !it.isInherited }.map { it.ownerType }
 
-    private val loadedOwnerTypePropsAtomic = AtomicBooleanState(false)
+    private val loadedOwnerTypePropsAtomic = AtomicBoolean(false)
 
     override fun isSameEncoding(conceptType: Type) = conceptType.isAttributeType
     override fun asSameEncoding(conceptType: Type) = conceptType.asAttributeType()!!
@@ -99,7 +99,7 @@ class AttributeTypeState internal constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
-            if (!loadedOwnerTypePropsAtomic.state) {
+            if (!loadedOwnerTypePropsAtomic.get()) {
                 loadedOwnerTypePropsAtomic.set(true)
                 typeTx.getOwnersExplicit(true).forEach {
                     load(it, isKey = true, isInherited = false)

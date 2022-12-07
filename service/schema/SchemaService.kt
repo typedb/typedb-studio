@@ -158,7 +158,6 @@ class SchemaService(
             closeReadTx()
             refreshTypesAndOpen()
             updateSchemaExceptionsStatus()
-            resetLoadedConnectedTypes()
             reloadLoadedConnectedTypes()
         }
     }
@@ -268,7 +267,6 @@ class SchemaService(
             coroutines.launchAndHandle(notification, LOGGER) {
                 openOrGetWriteTx()?.let { tx ->
                     function(tx)
-                    resetLoadedConnectedTypes()
                     reloadLoadedConnectedTypes()
                     updateSchemaExceptionsStatus()
                 } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_WRITE_TX)
@@ -348,17 +346,14 @@ class SchemaService(
     fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
 
     private fun resetLoadedConnectedTypes() {
-        for (typeState in entityTypes.values) typeState.resetLoadedConnectedTypes()
-        for (typeState in attributeTypes.values) typeState.resetLoadedConnectedTypes()
-        for (typeState in relationTypes.values) typeState.resetLoadedConnectedTypes()
-        for (typeState in roleTypes.values) typeState.resetLoadedConnectedTypes()
+        (entityTypes.values + attributeTypes.values + relationTypes.values).forEach { it.resetLoadedConnectedTypes() }
+        roleTypes.values.forEach { it.resetLoadedConnectedTypes() }
     }
 
     private fun reloadLoadedConnectedTypes() {
-        for (typeState in entityTypes.values) typeState.loadConstraints()
-        for (typeState in attributeTypes.values) typeState.loadConstraints()
-        for (typeState in relationTypes.values) typeState.loadConstraints()
-        for (typeState in roleTypes.values) typeState.loadConstraints()
+        resetLoadedConnectedTypes()
+        (entityTypes.values + attributeTypes.values + relationTypes.values).forEach { it.loadConstraints() }
+        roleTypes.values.forEach { it.loadConstraints() }
     }
 
     fun register(typeState: TypeState<*, *>) = when (typeState) {
