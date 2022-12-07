@@ -160,13 +160,15 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         loadConstraints()
     }
 
-    override fun loadConstraints() = schemaSrv.mayRunReadTx {
-        try {
-            loadSupertypes()
-            loadOtherConstraints()
-            loadSubtypesRecursively()
-        } catch (e: TypeDBClientException) {
-            notifications.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN)
+    override fun loadConstraints() {
+        schemaSrv.mayRunReadTx {
+            try {
+                loadSupertypes()
+                loadOtherConstraints()
+                loadSubtypesRecursively()
+            } catch (e: TypeDBClientException) {
+                notifications.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN)
+            }
         }
     }
 

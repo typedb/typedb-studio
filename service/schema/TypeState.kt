@@ -73,7 +73,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(
     protected abstract fun typeStateOf(type: T): TS?
     protected abstract fun requestSubtypesExplicit(): List<T>?
     protected abstract fun loadInheritables()
-    internal abstract fun loadConstraints(): Unit?
+    internal abstract fun loadConstraints()
     internal abstract fun loadDependencies()
     internal abstract fun updateConceptType(label: String = name)
     internal abstract fun resetLoadedConnectedTypes()
