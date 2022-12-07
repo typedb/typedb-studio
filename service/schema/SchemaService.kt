@@ -348,33 +348,17 @@ class SchemaService(
     fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
 
     private fun resetLoadedConnectedTypes() {
-        for (typeState in entityTypes.values) {
-            typeState.resetLoadedConnectedTypes()
-        }
-        for (typeState in attributeTypes.values) {
-            typeState.resetLoadedConnectedTypes()
-        }
-        for (typeState in relationTypes.values) {
-            typeState.resetLoadedConnectedTypes()
-        }
-        for (typeState in roleTypes.values) {
-            typeState.resetLoadedConnectedTypes()
-        }
+        for (typeState in entityTypes.values) typeState.resetLoadedConnectedTypes()
+        for (typeState in attributeTypes.values) typeState.resetLoadedConnectedTypes()
+        for (typeState in relationTypes.values) typeState.resetLoadedConnectedTypes()
+        for (typeState in roleTypes.values) typeState.resetLoadedConnectedTypes()
     }
 
     private fun reloadLoadedConnectedTypes() {
-        for (typeState in entityTypes.values) {
-            typeState.loadConstraints()
-        }
-        for (typeState in attributeTypes.values) {
-            typeState.loadConstraints()
-        }
-        for (typeState in relationTypes.values) {
-            typeState.loadConstraints()
-        }
-        for (typeState in roleTypes.values) {
-            typeState.loadConstraints()
-        }
+        for (typeState in entityTypes.values) typeState.loadConstraints()
+        for (typeState in attributeTypes.values) typeState.loadConstraints()
+        for (typeState in relationTypes.values) typeState.loadConstraints()
+        for (typeState in roleTypes.values) typeState.loadConstraints()
     }
 
     fun register(typeState: TypeState<*, *>) = when (typeState) {
