@@ -284,12 +284,11 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         }
     }
 
-    open fun resetLoadedConnectedTypes(reload: Boolean = false) {
+    open fun resetLoadedConnectedTypes() {
         loadedPlayedRoleTypePropsAtomic.set(false)
         playedRoleTypeProperties = emptyList()
         loadedOwnedAttTypePropsAtomic.set(false)
         ownedAttTypeProperties = emptyList()
-        if (reload) loadConstraints()
     }
 
     protected fun tryCreateSubtype(

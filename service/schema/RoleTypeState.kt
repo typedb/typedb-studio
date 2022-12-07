@@ -127,10 +127,9 @@ class RoleTypeState constructor(
         }
     }
 
-    fun resetLoadedConnectedTypes(reload: Boolean = false) {
+    fun resetLoadedConnectedTypes() {
         loadedPlayerTypePropsAtomic.set(false)
         playerTypeProperties = emptyList()
-        if (reload) loadConstraints()
     }
 
     override fun toString(): String = "TypeState.Role: $conceptType"

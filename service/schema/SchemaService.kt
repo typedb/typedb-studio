@@ -158,6 +158,8 @@ class SchemaService(
             closeReadTx()
             refreshTypesAndOpen()
             updateSchemaExceptionsStatus()
+            resetLoadedConnectedTypes()
+            reloadLoadedConnectedTypes()
         }
     }
 
@@ -266,7 +268,8 @@ class SchemaService(
             coroutines.launchAndHandle(notification, LOGGER) {
                 openOrGetWriteTx()?.let { tx ->
                     function(tx)
-                    resetLoadedConnectedTypes(reload = true)
+                    resetLoadedConnectedTypes()
+                    reloadLoadedConnectedTypes()
                     updateSchemaExceptionsStatus()
                 } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_WRITE_TX)
             }.invokeOnCompletion { hasRunningWriteAtomic.set(false) }
@@ -344,21 +347,35 @@ class SchemaService(
 
     fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
 
-    private fun resetLoadedConnectedTypes(reload: Boolean = false) {
+    private fun resetLoadedConnectedTypes() {
         for (typeState in entityTypes.values) {
-            typeState.resetLoadedConnectedTypes(reload)
+            typeState.resetLoadedConnectedTypes()
         }
         for (typeState in attributeTypes.values) {
-            typeState.resetLoadedConnectedTypes(reload)
+            typeState.resetLoadedConnectedTypes()
         }
         for (typeState in relationTypes.values) {
-            typeState.resetLoadedConnectedTypes(reload)
+            typeState.resetLoadedConnectedTypes()
         }
         for (typeState in roleTypes.values) {
-            typeState.resetLoadedConnectedTypes(reload)
+            typeState.resetLoadedConnectedTypes()
         }
     }
 
+    private fun reloadLoadedConnectedTypes() {
+        for (typeState in entityTypes.values) {
+            typeState.loadConstraints()
+        }
+        for (typeState in attributeTypes.values) {
+            typeState.loadConstraints()
+        }
+        for (typeState in relationTypes.values) {
+            typeState.loadConstraints()
+        }
+        for (typeState in roleTypes.values) {
+            typeState.loadConstraints()
+        }
+    }
 
     fun register(typeState: TypeState<*, *>) = when (typeState) {
         is EntityTypeState -> entityTypes[typeState.conceptType] = typeState

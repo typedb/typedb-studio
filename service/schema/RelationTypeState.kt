@@ -123,10 +123,10 @@ class RelationTypeState internal constructor(
         }
     }
 
-    override fun resetLoadedConnectedTypes(reload: Boolean) {
+    override fun resetLoadedConnectedTypes() {
         loadedRelatedRoleTypePropsAtomic.set(false)
         relatedRoleTypeProperties = emptyList()
-        super.resetLoadedConnectedTypes(reload)
+        super.resetLoadedConnectedTypes()
     }
 
     override fun initiateCreateSubtype(onSuccess: () -> Unit) =

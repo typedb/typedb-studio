@@ -26,7 +26,6 @@ import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
 import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
 import kotlin.streams.toList
-import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
 
 class AttributeTypeState internal constructor(
@@ -119,10 +118,10 @@ class AttributeTypeState internal constructor(
         }
     }
 
-    override fun resetLoadedConnectedTypes(reload: Boolean) {
+    override fun resetLoadedConnectedTypes() {
         loadedOwnerTypePropsAtomic.set(false)
         ownerTypeProperties = emptyList()
-        super.resetLoadedConnectedTypes(reload)
+        super.resetLoadedConnectedTypes()
     }
 
     override fun initiateCreateSubtype(onSuccess: () -> Unit) =
