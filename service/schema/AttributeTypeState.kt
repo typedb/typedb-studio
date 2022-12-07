@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 import mu.KotlinLogging
 
@@ -64,6 +65,8 @@ class AttributeTypeState internal constructor(
     val ownerTypes get() = ownerTypeProperties.map { it.ownerType }
     val ownerTypesExplicit get() = ownerTypeProperties.filter { !it.isInherited }.map { it.ownerType }
 
+    private val loadedOwnerTypePropsAtomic = AtomicBoolean(false)
+
     override fun isSameEncoding(conceptType: Type) = conceptType.isAttributeType
     override fun asSameEncoding(conceptType: Type) = conceptType.asAttributeType()!!
     override fun typeStateOf(type: AttributeType) = schemaSrv.typeStateOf(type)
@@ -96,21 +99,29 @@ class AttributeTypeState internal constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
-            typeTx.getOwnersExplicit(true).forEach {
-                load(it, isKey = true, isInherited = false)
-            }
-            typeTx.getOwnersExplicit(false).filter { !loaded.contains(it) }.forEach {
-                load(it, isKey = false, isInherited = false)
-            }
-            typeTx.getOwners(true).filter { !loaded.contains(it) }.forEach {
-                load(it, isKey = true, isInherited = true)
-            }
-            typeTx.getOwners(false).filter { !loaded.contains(it) }.forEach {
-                load(it, isKey = false, isInherited = true)
+            if (!loadedOwnerTypePropsAtomic.get()) {
+                loadedOwnerTypePropsAtomic.set(true)
+                typeTx.getOwnersExplicit(true).forEach {
+                    load(it, isKey = true, isInherited = false)
+                }
+                typeTx.getOwnersExplicit(false).filter { !loaded.contains(it) }.forEach {
+                    load(it, isKey = false, isInherited = false)
+                }
+                typeTx.getOwners(true).filter { !loaded.contains(it) }.forEach {
+                    load(it, isKey = true, isInherited = true)
+                }
+                typeTx.getOwners(false).filter { !loaded.contains(it) }.forEach {
+                    load(it, isKey = false, isInherited = true)
+                }
+                ownerTypeProperties = properties
             }
         }
+    }
 
-        ownerTypeProperties = properties
+    override fun resetLoadedConnectedTypes() {
+        loadedOwnerTypePropsAtomic.set(false)
+        ownerTypeProperties = emptyList()
+        super.resetLoadedConnectedTypes()
     }
 
     override fun initiateCreateSubtype(onSuccess: () -> Unit) =

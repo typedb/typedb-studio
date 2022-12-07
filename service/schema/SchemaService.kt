@@ -158,6 +158,7 @@ class SchemaService(
             closeReadTx()
             refreshTypesAndOpen()
             updateSchemaExceptionsStatus()
+            reloadLoadedConnectedTypes()
         }
     }
 
@@ -266,6 +267,7 @@ class SchemaService(
             coroutines.launchAndHandle(notification, LOGGER) {
                 openOrGetWriteTx()?.let { tx ->
                     function(tx)
+                    reloadLoadedConnectedTypes()
                     updateSchemaExceptionsStatus()
                 } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_WRITE_TX)
             }.invokeOnCompletion { hasRunningWriteAtomic.set(false) }
@@ -278,6 +280,7 @@ class SchemaService(
             if (isWritable && session.transaction.isOpen) return openOrGetWriteTx()
             if (readTx.get() != null) return readTx.get()
             readTx.set(session.transaction()?.also {
+                resetLoadedConnectedTypes()
                 it.onClose { closeReadTx() }
                 scheduleCloseReadTxAsync()
             })
@@ -303,6 +306,7 @@ class SchemaService(
         if (readTx.get() != null) closeReadTx()
         if (writeTx.get() != null) return writeTx.get()
         writeTx.set(session.transaction.tryOpen()?.also { it.onClose { writeTx.set(null) } })
+        resetLoadedConnectedTypes()
         return writeTx.get()
     }
 
@@ -340,6 +344,19 @@ class SchemaService(
     fun closeWriteTx() = synchronized(this) { writeTx.getAndSet(null)?.close() }
 
     fun closeReadTx() = synchronized(this) { readTx.getAndSet(null)?.close() }
+
+    private fun resetLoadedConnectedTypes() {
+        listOf(entityTypes, attributeTypes, relationTypes, roleTypes).forEach { types ->
+            types.values.forEach{ type -> type.resetLoadedConnectedTypes() }
+        }
+    }
+
+    private fun reloadLoadedConnectedTypes() {
+        resetLoadedConnectedTypes()
+        listOf(entityTypes, attributeTypes, relationTypes, roleTypes).forEach { types ->
+            types.values.forEach { type -> type.loadConstraints() }
+        }
+    }
 
     fun register(typeState: TypeState<*, *>) = when (typeState) {
         is EntityTypeState -> entityTypes[typeState.conceptType] = typeState

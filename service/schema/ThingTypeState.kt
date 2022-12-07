@@ -82,6 +82,9 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     var playedRoleTypeProperties: List<RoleTypeState.PlayedRoleTypeProperties> by mutableStateOf(emptyList())
     val playedRoleTypes: List<RoleTypeState> get() = playedRoleTypeProperties.map { it.roleType }
 
+    private val loadedOwnedAttTypePropsAtomic = AtomicBoolean(false)
+    private val loadedPlayedRoleTypePropsAtomic = AtomicBoolean(false)
+
     private var hasInstancesExplicit: Boolean by mutableStateOf(false)
     override val canBeDeleted get() = !hasSubtypes && !hasInstancesExplicit
     override val canBeAbstract get() = !hasInstancesExplicit
@@ -157,13 +160,15 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         loadConstraints()
     }
 
-    fun loadConstraints() = schemaSrv.mayRunReadTx {
-        try {
-            loadSupertypes()
-            loadOtherConstraints()
-            loadSubtypesRecursively()
-        } catch (e: TypeDBClientException) {
-            notifications.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN)
+    override fun loadConstraints() {
+        schemaSrv.mayRunReadTx {
+            try {
+                loadSupertypes()
+                loadOtherConstraints()
+                loadSubtypesRecursively()
+            } catch (e: TypeDBClientException) {
+                notifications.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN)
+            }
         }
     }
 
@@ -221,20 +226,23 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
-            typeTx.getOwnsExplicit(true).forEach {
-                load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
-            }
-            typeTx.getOwnsExplicit(false).filter { !loaded.contains(it) }.forEach {
-                load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = false)
-            }
-            typeTx.getOwns(true).filter { !loaded.contains(it) }.forEach {
-                load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = true)
-            }
-            typeTx.getOwns(false).filter { !loaded.contains(it) }.forEach {
-                load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = true)
+            if (!loadedOwnedAttTypePropsAtomic.get()) {
+                loadedOwnedAttTypePropsAtomic.set(true)
+                typeTx.getOwnsExplicit(true).forEach {
+                    load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
+                }
+                typeTx.getOwnsExplicit(false).filter { !loaded.contains(it) }.forEach {
+                    load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = false)
+                }
+                typeTx.getOwns(true).filter { !loaded.contains(it) }.forEach {
+                    load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = true)
+                }
+                typeTx.getOwns(false).filter { !loaded.contains(it) }.forEach {
+                    load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = true)
+                }
+                ownedAttTypeProperties = properties
             }
         }
-        ownedAttTypeProperties = properties
     }
 
     private fun loadPlayedRoleTypes() {
@@ -268,10 +276,20 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
         schemaSrv.mayRunReadTx { tx ->
             val typeTx = conceptType.asRemote(tx)
-            typeTx.playsExplicit.forEach { load(tx, typeTx, it, false) }
-            typeTx.plays.filter { !loaded.contains(it) }.forEach { load(tx, typeTx, it, true) }
+            if (!loadedPlayedRoleTypePropsAtomic.get()) {
+                loadedPlayedRoleTypePropsAtomic.set(true)
+                typeTx.playsExplicit.forEach { load(tx, typeTx, it, false) }
+                typeTx.plays.filter { !loaded.contains(it) }.forEach { load(tx, typeTx, it, true) }
+                playedRoleTypeProperties = properties
+            }
         }
-        playedRoleTypeProperties = properties
+    }
+
+    override fun resetLoadedConnectedTypes() {
+        loadedPlayedRoleTypePropsAtomic.set(false)
+        playedRoleTypeProperties = emptyList()
+        loadedOwnedAttTypePropsAtomic.set(false)
+        ownedAttTypeProperties = emptyList()
     }
 
     protected fun tryCreateSubtype(

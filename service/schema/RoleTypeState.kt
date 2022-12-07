@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 import mu.KotlinLogging
 
@@ -70,9 +71,10 @@ class RoleTypeState constructor(
     var playerTypeProperties: List<PlayerTypeProperties> by mutableStateOf(emptyList())
     val playerTypes get() = playerTypeProperties.map { it.playerType }
     val playerTypesExplicit get() = playerTypeProperties.filter { !it.isInherited }.map { it.playerType }
-    private var hasPlayerInstancesExplicit: Boolean by mutableStateOf(false)
+    var hasPlayerInstancesExplicit: Boolean by mutableStateOf(false)
     override val canBeDeleted: Boolean get() = !hasSubtypes && !hasPlayerInstancesExplicit
     override val canBeAbstract get() = !hasPlayerInstancesExplicit
+    private val loadedPlayerTypePropsAtomic = AtomicBoolean(false)
 
     override fun loadInheritables() {}
     override fun isSameEncoding(conceptType: Type) = conceptType.isRoleType
@@ -90,7 +92,7 @@ class RoleTypeState constructor(
         conceptType.asRemote(tx).subtypesExplicit.toList()
     }
 
-    fun loadConstraints() {
+    override fun loadConstraints() {
         loadHasPlayerInstances()
     }
 
@@ -115,11 +117,18 @@ class RoleTypeState constructor(
 
         schemaSrv.mayRunReadTx { tx ->
             val roleTypeTx = conceptType.asRemote(tx)
-            roleTypeTx.playerTypesExplicit.forEach { load(it, isInherited = false) }
-            roleTypeTx.playerTypes.filter { !loaded.contains(it) }.forEach { load(it, isInherited = true) }
+            if (!loadedPlayerTypePropsAtomic.get()) {
+                loadedPlayerTypePropsAtomic.set(true)
+                roleTypeTx.playerTypesExplicit.forEach { load(it, isInherited = false) }
+                roleTypeTx.playerTypes.filter { !loaded.contains(it) }.forEach { load(it, isInherited = true) }
+                playerTypeProperties = properties
+            }
         }
+    }
 
-        playerTypeProperties = properties
+    override fun resetLoadedConnectedTypes() {
+        loadedPlayerTypePropsAtomic.set(false)
+        playerTypeProperties = emptyList()
     }
 
     override fun toString(): String = "TypeState.Role: $conceptType"
