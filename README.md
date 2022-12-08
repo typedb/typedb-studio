@@ -6,7 +6,7 @@
 
 ## TypeDB Studio
 
-[![TypeDB Studio](./images/studio-full-1.png)](./images/studio-full-1.png)
+[![TypeDB Studio](./docs/images/studio-full-1.png)](./docs/images/studio-full-1.png)
 
 TypeDB Studio is a fully-featured Integrated Development Environment (IDE) for TypeDB.
 
@@ -31,7 +31,7 @@ using Studio. The project browser maintains a live view of the directory content
 
 ### Manage Database Schemas
 
-[![Log Output](./images/type-browser-1.png)](./images/type-browser-1.png)
+[![Manage Database Schemas](./docs/images/type-browser-1.gif)](./docs/images/type-browser-1.gif)
 
 The Type Browser provides a structured tree view of the connected database's type hierarchy. Double-clicking on any of
 the listed types will bring up a page that lists their properties in detail — supertype, roles played, attributes owned
@@ -39,7 +39,7 @@ and more.
 
 ### Run TypeQL Queries
 
-[![Log Output](./images/log-output-1.png)](./images/log-output-1.png)
+[![Log Output](./docs/images/log-output-1.gif)](./docs/images/log-output-1.gif)
 
 Studio's text editor comes equipped with rich developer tooling, like syntax highlighting
 for TypeQL files (\*.tql), with more advanced features currently under development. Studio's intuitive and
@@ -51,7 +51,7 @@ to the Log Output window which is easily searchable (and supports regex matching
 
 ### Graph Visualisation
 
-[![Graph Visualisation](./images/graph-vis-1.png)](./images/graph-vis-1.png)
+[![Graph Visualisation](./docs/images/graph-vis-1.gif)](./docs/images/graph-vis-1.gif)
 
 Reasoning about text outputs in [TypeDB Console](https://docs.vaticle.com/docs/console/console) or through
 the various [TypeDB Clients](https://docs.vaticle.com/docs/client-api/overview) can be difficult to do for large
@@ -59,7 +59,7 @@ datasets. Studio's advanced force-graph visualisation makes the underlying struc
 
 ### Reasoning and Explanations
 
-[![Inference Visualisation](./images/infer-vis-1.png)](./images/infer-vis-1.png)
+[![Inference Visualisation](./docs/images/infer-vis-1.gif)](./docs/images/infer-vis-1.gif)
 
 Select infer and explain, then double-click highlighted inferred concepts to retrieve their explanations and visualise
 how the fact was inferred.
