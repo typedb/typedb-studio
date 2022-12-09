@@ -131,7 +131,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             override val geometry = Geometry.Entity()
         }
 
-        class Relation(relationType: RelationType, graph: Graph) : Type(relationType, graph) {
+        class Relation(val relationType: RelationType, graph: Graph) : Type(relationType, graph) {
             override val geometry = Geometry.Relation()
         }
 

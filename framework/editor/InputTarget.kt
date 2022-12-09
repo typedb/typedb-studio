@@ -134,7 +134,7 @@ internal class InputTarget constructor(
             verScroller.stickToBottom = value
         }
 
-    private var _cursor: Cursor by mutableStateOf(Cursor(0, 0));
+    private var _cursor: Cursor by mutableStateOf(Cursor(0, 0)); private set
     private var mayDragSelectByChar: Boolean by mutableStateOf(false)
     private var mayDragSelectByWord: Boolean by mutableStateOf(false)
     private var mayDragSelectByLine: Boolean by mutableStateOf(false)
