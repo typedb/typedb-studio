@@ -26,7 +26,7 @@ package(default_visibility = [
 kt_jvm_library(
     name = "user",
     srcs = glob(["*.kt"]),
-    plugins = ["//:org_jetbrains_compose_compiler_plugin"],
+    plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
     tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-module-user:{pom_version}"],
     deps = [
         "//service",

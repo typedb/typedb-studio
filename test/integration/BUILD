@@ -48,7 +48,7 @@ compose_test_libraries = [
 kt_jvm_library(
     name = "test-integration",
     srcs = ["IntegrationTest.kt"],
-    plugins = ["//:org_jetbrains_compose_compiler_plugin"],
+    plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
     runtime_deps = skiko_runtime_platform,
     deps = [
         "//:studio",

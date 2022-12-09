@@ -24,7 +24,6 @@ load("@vaticle_bazel_distribution//common/tgz2zip:rules.bzl", "tgz2zip")
 load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_library")
-load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
 load("@vaticle_typedb_common//test:rules.bzl", "native_typedb_artifact")
@@ -34,7 +33,7 @@ package(default_visibility = ["//test/integration:__subpackages__"])
 kt_jvm_library(
     name = "studio",
     srcs = glob(["*.kt"]),
-    plugins = ["//:org_jetbrains_compose_compiler_plugin"],
+    plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
     deps = [
         "//module/connection:connection",
         "//module/preference:preference",
@@ -70,16 +69,6 @@ kt_jvm_library(
     ],
     resources = ["//resources/icons/vaticle:vaticle-bot-32px"],
     tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio:{pom_version}"],
-)
-
-kt_compiler_plugin(
-    name = "org_jetbrains_compose_compiler_plugin",
-    id = "jetbrains.compose.compiler",
-    target_embedded_compiler = True,
-    visibility = ["//visibility:public"],
-    deps = [
-        "@maven//:org_jetbrains_compose_compiler_compiler",
-    ],
 )
 
 load("@io_bazel_rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")

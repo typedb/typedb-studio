@@ -26,7 +26,7 @@ package(default_visibility = [
 kt_jvm_library(
     name = "role",
     srcs = glob(["*.kt"]),
-    plugins = ["//:org_jetbrains_compose_compiler_plugin"],
+    plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
     deps = [
         "//service/common:common",
         "//framework/common:common",

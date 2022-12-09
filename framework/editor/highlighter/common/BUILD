@@ -23,7 +23,7 @@ package(default_visibility = ["//framework/editor/highlighter:__subpackages__"])
 kt_jvm_library(
     name = "common",
     srcs = glob(["*.kt"]),
-    plugins = ["//:org_jetbrains_compose_compiler_plugin"],
+    plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
     deps = [
         "//framework/common:common",
 
