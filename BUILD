@@ -202,6 +202,7 @@ deploy_brew(
     formula = "//config/brew:typedb-studio.rb",
 #    checksum = "//:checksum",
     version_file = "//:VERSION",
+    type = "cask",
 )
 
 checkstyle_test(
