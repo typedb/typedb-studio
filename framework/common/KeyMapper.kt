@@ -238,8 +238,8 @@ interface KeyMapper {
                     Keys.DirectionDown -> Command.MOVE_LINE_DOWN
                     Keys.PageUp -> Command.MOVE_PAGE_UP
                     Keys.PageDown -> Command.MOVE_PAGE_DOWN
-                    Keys.MoveHome -> Command.MOVE_LINE_START
-                    Keys.MoveEnd -> Command.MOVE_LINE_END
+                    Keys.MoveHome -> Command.MOVE_HOME
+                    Keys.MoveEnd -> Command.MOVE_END
                     Keys.Enter, Keys.EnterNumPad -> Command.ENTER
                     Keys.Backspace -> Command.DELETE_CHAR_PREV
                     Keys.Delete -> Command.DELETE_CHAR_NEXT
