@@ -106,8 +106,6 @@ object Sentence {
                 "Enabling snapshot in a 'read' transaction allows you to query for explanations of inferred concept answers. " +
                 "The transaction will be opened on the latest snapshot when the first query is ran. " +
                 BUTTON_ENABLED_WHEN_SESSION_OPEN
-    const val PREFERENCES_GRAPH_OUTPUT_CAPTION =
-        "When running a match query, display a graph output."
     const val INTERACTIVE_MODE_DESCRIPTION =
         "Running TypeDB Studio in 'interactive' mode (as opposed to 'script' mode), means that you can interact with a " +
                 "TypeDB server interactively. In 'script' mode, you have to declare the user, database, session, and " +
@@ -124,9 +122,13 @@ object Sentence {
         "Below is the list of databases on your TypeDB Server. You can delete them individually, or create new ones. "
     const val OUTPUT_RESPONSE_TIME_DESCRIPTION =
         "Duration to collect all answers of the query from the server."
+    const val PREFERENCES_GRAPH_OUTPUT_CAPTION =
+        "When running a match query, display a graph output."
+    const val PREFERENCES_IGNORED_PATHS_CAPTION = "Ignore files matching glob expressions. Separate entries by line."
     const val PREFERENCES_MATCH_QUERY_LIMIT_CAPTION =
         "When running a match query, limit the number of results to this value."
-    const val IGNORED_PATHS_CAPTION = "Ignore files matching glob expressions. Separate entries by line."
+    const val PREFERENCES_TRANSACTION_TIMEOUT_CAPTION =
+        "Set the timeout of transactions (in minutes) to this value."
     const val QUERY_RESPONSE_TIME_DESCRIPTION =
         "Duration to collect auxiliary information/concepts to display informative log & graph output."
     const val RENAME_DIRECTORY =

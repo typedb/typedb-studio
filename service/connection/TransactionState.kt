@@ -45,7 +45,6 @@ class TransactionState constructor(
 ) {
 
     companion object {
-        const val ONE_HOUR_IN_MILLIS = 60 * 60 * 1_000
         private val LOGGER = KotlinLogging.logger {}
     }
 
@@ -101,7 +100,6 @@ class TransactionState constructor(
             val options = typeDBOptions()
                 .infer(infer.value)
                 .explain(explain.value)
-                .transactionTimeoutMillis(ONE_HOUR_IN_MILLIS)
             session.transaction(type, options)!!.apply {
                 onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN) }
             }.also {
@@ -173,6 +171,14 @@ class TransactionState constructor(
     }
 
     internal fun typeDBOptions(): TypeDBOptions {
-        return if (session.client.isCluster) TypeDBOptions.cluster() else TypeDBOptions.core()
+        val transactionTimeoutMillis = (preferenceSrv.transactionTimeoutMins * 60 * 1_000).toInt()
+
+        return if (session.client.isCluster) {
+            TypeDBOptions.cluster()
+                .transactionTimeoutMillis(transactionTimeoutMillis)
+        } else {
+            TypeDBOptions.core()
+                .transactionTimeoutMillis(transactionTimeoutMillis)
+        }
     }
 }
