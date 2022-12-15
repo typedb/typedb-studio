@@ -47,10 +47,13 @@ import androidx.compose.ui.zIndex
 import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Typography
+import com.vaticle.typedb.studio.service.Service
+import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.EXPLAIN_NOT_ENABLED
 import com.vaticle.typedb.studio.service.connection.TransactionState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import mu.KotlinLogging
 
 class GraphArea(transactionState: TransactionState) {
 
@@ -63,6 +66,7 @@ class GraphArea(transactionState: TransactionState) {
     var theme: Color.GraphTheme? = null
     var typography: Typography.Theme? = null
     internal val textRenderer = TextRenderer(viewport)
+    private val LOGGER = KotlinLogging.logger {}
 
     companion object {
         val MIN_WIDTH = 120.dp
@@ -269,7 +273,13 @@ class GraphArea(transactionState: TransactionState) {
                         onDoubleTap = { point ->
                             graphArea.viewport.findVertexAt(point, graphArea.interactions)?.let {
                                 // TODO: this should require SHIFT-doubleclick, not doubleclick
-                                if (it is Vertex.Thing && it.thing.isInferred) graphArea.graphBuilder.explain(it)
+                                if (it is Vertex.Thing && it.thing.isInferred) {
+                                    if (!graphArea.graphBuilder.transactionState.explain.enabled) {
+                                        Service.notification.userWarning(graphArea.LOGGER, EXPLAIN_NOT_ENABLED)
+                                    } else {
+                                        graphArea.graphBuilder.explain(it)
+                                    }
+                                }
                             }
                         }
                     ) /* onTap = */ { point ->
