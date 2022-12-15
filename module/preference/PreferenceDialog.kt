@@ -441,10 +441,8 @@ object PreferenceDialog {
                 invalidWarning = Label.PREFERENCE_TRANSACTION_TIMEOUT_MINS_INPUT_WARNING,
                 caption = PREFERENCES_TRANSACTION_TIMEOUT_CAPTION
             ) {/* validator = */
-                val transactionTimeoutMinsOrNull = it.toLongOrNull()
-                transactionTimeoutMinsOrNull != null
-                        && transactionTimeoutMinsOrNull >= 0
-                        && transactionTimeoutMinsOrNull <= 10000
+                val transactionTimeoutMins = it.toLongOrNull() ?: false
+                transactionTimeoutMins in 0..10000
             }
 
             override val preferences: List<PreferenceField> = listOf(matchQueryLimit, transactionTimeoutMins)
