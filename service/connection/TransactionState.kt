@@ -174,10 +174,6 @@ class TransactionState constructor(
     }
 
     internal fun defaultTypeDBOptions(): TypeDBOptions {
-        return if (session.client.isCluster) {
-            TypeDBOptions.core()
-        } else {
-            TypeDBOptions.cluster()
-        }
+        return if (session.client.isCluster) TypeDBOptions.cluster() else TypeDBOptions.core()
     }
 }
