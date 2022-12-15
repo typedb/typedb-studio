@@ -200,7 +200,7 @@ class QueryRunner constructor(
         noResultMsg = INSERT_QUERY_NO_RESULT,
         queryStr = query.toString(),
         stream = Response.Stream.ConceptMaps(INSERT)
-    ) { transaction.query().insert(query, transactionState.typeDBOptions().prefetch(true)) }
+    ) { transaction.query().insert(query, transactionState.defaultTypeDBOptions().prefetch(true)) }
 
     private fun runUpdateQuery(query: TypeQLUpdate) = runStreamingQuery(
         name = UPDATE_QUERY,
@@ -208,7 +208,7 @@ class QueryRunner constructor(
         noResultMsg = UPDATE_QUERY_NO_RESULT,
         queryStr = query.toString(),
         stream = Response.Stream.ConceptMaps(UPDATE)
-    ) { transaction.query().update(query, transactionState.typeDBOptions().prefetch(true)) }
+    ) { transaction.query().update(query, transactionState.defaultTypeDBOptions().prefetch(true)) }
 
     private fun runMatchQuery(query: TypeQLMatch) = runStreamingQuery(
         name = MATCH_QUERY,

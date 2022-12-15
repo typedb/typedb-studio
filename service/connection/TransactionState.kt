@@ -97,9 +97,12 @@ class TransactionState constructor(
             null
         } else if (isOpen) _transaction
         else try {
-            val options = typeDBOptions()
+            val transactionTimeoutMillis = preferenceSrv.transactionTimeoutMins * 60 * 1_000
+
+            val options = defaultTypeDBOptions()
                 .infer(infer.value)
                 .explain(explain.value)
+                .transactionTimeoutMillis(transactionTimeoutMillis.toInt())
             session.transaction(type, options)!!.apply {
                 onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN) }
             }.also {
@@ -170,15 +173,11 @@ class TransactionState constructor(
         }
     }
 
-    internal fun typeDBOptions(): TypeDBOptions {
-        val transactionTimeoutMillis = (preferenceSrv.transactionTimeoutMins * 60 * 1_000).toInt()
-
+    internal fun defaultTypeDBOptions(): TypeDBOptions {
         return if (session.client.isCluster) {
-            TypeDBOptions.cluster()
-                .transactionTimeoutMillis(transactionTimeoutMillis)
-        } else {
             TypeDBOptions.core()
-                .transactionTimeoutMillis(transactionTimeoutMillis)
+        } else {
+            TypeDBOptions.cluster()
         }
     }
 }
