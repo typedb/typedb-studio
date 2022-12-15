@@ -36,12 +36,12 @@ class PreferenceService(dataSrv: DataService) {
         set(value) = run { preferences.graphOutputEnabled = value }
 
     var matchQueryLimit: Long = Defaults.matchQueryLimit
-        get() = preferences.matchQueryLimit?.toLong() ?: field
-        set(value) = run { preferences.matchQueryLimit = value.toString() }
+        get() = preferences.matchQueryLimit ?: field
+        set(value) = run { preferences.matchQueryLimit = value }
 
     var transactionTimeoutMins: Long = Defaults.transactionTimeoutMins
-        get() = preferences.transactionTimeoutMins?.toLong() ?: field
-        set(value) = run { preferences.transactionTimeoutMins = value.toString() }
+        get() = preferences.transactionTimeoutMins ?: field
+        set(value) = run { preferences.transactionTimeoutMins = value }
 
     var ignoredPaths: List<String> = Defaults.ignoredPaths
         get() = preferences.ignoredPaths ?: field

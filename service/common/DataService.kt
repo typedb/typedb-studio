@@ -113,17 +113,17 @@ class DataService {
             get() = properties?.getProperty(IGNORED_PATHS)?.split(',')?.map { it.trim() }
             set(value) = setProperty(IGNORED_PATHS, value!!.joinToString(","))
 
-        var matchQueryLimit: String?
-            get() = properties?.getProperty(MATCH_QUERY_LIMIT)
-            set(value) = setProperty(MATCH_QUERY_LIMIT, value!!)
+        var matchQueryLimit: Long?
+            get() = properties?.getProperty(MATCH_QUERY_LIMIT)?.toLong()
+            set(value) = setProperty(MATCH_QUERY_LIMIT, value!!.toString())
+
+        var transactionTimeoutMins: Long?
+            get() = properties?.getProperty(TRANSACTION_TIMEOUT_MINS)?.toLong()
+            set(value) = setProperty(TRANSACTION_TIMEOUT_MINS, value!!.toString())
 
         var graphOutputEnabled: Boolean?
             get() = properties?.getProperty(GRAPH_OUTPUT)?.toBoolean()
             set(value) = setProperty(GRAPH_OUTPUT, value.toString())
-
-        var transactionTimeoutMins: String?
-            get() = properties?.getProperty(TRANSACTION_TIMEOUT_MINS)
-            set(value) = setProperty(TRANSACTION_TIMEOUT_MINS, value!!)
     }
 
     var properties: Properties? by mutableStateOf(null)
