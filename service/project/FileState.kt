@@ -188,7 +188,7 @@ class FileState internal constructor(
     }
 
     override fun mayOpenAndRun(content: String) {
-        if (!isRunnable || (!isOpen && !tryOpen())) return
+        if (!isOpen && !tryOpen()) return
         projectSrv.client.run(content)?.let { runners.launched(it) }
     }
 
