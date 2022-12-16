@@ -229,7 +229,7 @@ internal class EventHandler constructor(
 
     private fun mayRunSelection() {
         if (!Service.client.isReadyToRunQuery) return
-        processor.file?.mayOpenAndRun(target.selectedText().text)
+        processor.file?.mayRunSnippet(target.selectedText().text)
     }
 
     private fun hideToolbar(): Boolean {
@@ -316,7 +316,7 @@ internal class EventHandler constructor(
         icon = Icon.RUN,
         iconColor = { Theme.studio.secondary },
         info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
-        enabled = processor.file?.isRunnable == true && target.selection != null && Service.client.isReadyToRunQuery
+        enabled = target.selection != null && Service.client.isReadyToRunQuery
     ) { mayRunSelection() }
 
     private fun increaseTextSizeMenuItem() = ContextMenu.Item(
