@@ -229,7 +229,7 @@ internal class EventHandler constructor(
 
     private fun mayRunSelection() {
         if (!Service.client.isReadyToRunQuery) return
-        processor.file?.mayOpenAndRun(target.selectedText().text)
+        processor.file?.mayRunSnippet(target.selectedText().text)
     }
 
     private fun hideToolbar(): Boolean {

@@ -61,7 +61,7 @@ interface Pageable {
         val isRunning: Boolean get() = runners.isRunning
         override val isRunnable: Boolean get() = true
 
-        fun mayOpenAndRun(content: String = runContent)
+        fun mayOpenAndRun()
 
         override fun asRunnable(): Runnable {
             return this

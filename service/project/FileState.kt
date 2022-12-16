@@ -187,9 +187,14 @@ class FileState internal constructor(
         watchFileSystem.set(false)
     }
 
-    override fun mayOpenAndRun(content: String) {
+    override fun mayOpenAndRun() {
+        if (!isRunnable || (!isOpen && !tryOpen())) return
+        mayRunSnippet(runContent)
+    }
+
+    fun mayRunSnippet(snippet: String) {
         if (!isOpen && !tryOpen()) return
-        projectSrv.client.run(content)?.let { runners.launched(it) }
+        projectSrv.client.run(snippet)?.let { runners.launched(it) }
     }
 
     fun isChanged() {
