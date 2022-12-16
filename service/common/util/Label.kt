@@ -158,7 +158,7 @@ object Label {
     const val POPULATE_REQUIRED_FIELDS = "Populate Required Fields"
     const val PREFERENCE_INTEGER_WARNING = "Please enter a positive integer."
     const val PREFERENCE_TRANSACTION_TIMEOUT_MINS_INPUT_WARNING =
-        "Please enter an integer between 0 and 10000."
+        "Please enter an integer between 1 and 10000."
     const val PREVIEW = "Preview"
     const val PREVIOUS_OCCURRENCE = "Previous Occurrence"
     const val PROJECT = "Project"
