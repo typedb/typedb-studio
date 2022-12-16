@@ -274,7 +274,9 @@ class GraphArea(transactionState: TransactionState) {
                             graphArea.viewport.findVertexAt(point, graphArea.interactions)?.let {
                                 // TODO: this should require SHIFT-doubleclick, not doubleclick
                                 if (it is Vertex.Thing && it.thing.isInferred) {
-                                    if (!graphArea.graphBuilder.transactionState.explain.enabled) {
+                                    val transaction = graphArea.graphBuilder.transactionState.transaction
+                                    val explain = transaction?.options()?.explain()?.get() ?: false
+                                    if (!explain) {
                                         Service.notification.userWarning(graphArea.LOGGER, EXPLAIN_NOT_ENABLED)
                                     } else {
                                         graphArea.graphBuilder.explain(it)

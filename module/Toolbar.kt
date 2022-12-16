@@ -70,12 +70,12 @@ object Toolbar {
     private val isDataSession get() = Service.client.session.isData
     private val isReadTransaction get() = Service.client.session.transaction.isRead
     private val isWriteTransaction get() = Service.client.session.transaction.isWrite
-    private val isSnapshotActivated get() = Service.client.session.transaction.snapshot.value
-    private val isSnapshotEnabled get() = Service.client.session.transaction.snapshot.enabled
-    private val isInferActivated get() = Service.client.session.transaction.infer.value
-    private val isInferEnabled get() = Service.client.session.transaction.infer.enabled
-    private val isExplainActivated get() = Service.client.session.transaction.explain.value
-    private val isExplainEnabled get() = Service.client.session.transaction.explain.enabled
+    private val isSnapshotButtonActivated get() = Service.client.session.transaction.snapshot.value
+    private val isSnapshotButtonEnabled get() = Service.client.session.transaction.snapshot.canToggle
+    private val isInferButtonActivated get() = Service.client.session.transaction.infer.value
+    private val isInferButtonEnabled get() = Service.client.session.transaction.infer.canToggle
+    private val isExplainButtonActivated get() = Service.client.session.transaction.explain.value
+    private val isExplainButtonEnabled get() = Service.client.session.transaction.explain.canToggle
     private val isReadyToRunQuery get() = Service.client.isReadyToRunQuery
     private val hasRunnablePage get() = Service.pages.active?.isRunnable == true
     private val hasRunningQuery get() = Service.client.hasRunningQuery
@@ -319,8 +319,8 @@ object Toolbar {
                             TextButtonArg(
                                 text = Label.SNAPSHOT.lowercase(),
                                 onClick = { Service.client.session.transaction.snapshot.toggle() },
-                                color = { toggleButtonColor(isSnapshotActivated) },
-                                enabled = enabled && isSnapshotEnabled,
+                                color = { toggleButtonColor(isSnapshotButtonActivated) },
+                                enabled = enabled && isSnapshotButtonEnabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_SNAPSHOT,
                                     description = Sentence.ENABLE_SNAPSHOT_DESCRIPTION,
@@ -330,8 +330,8 @@ object Toolbar {
                             TextButtonArg(
                                 text = Label.INFER.lowercase(),
                                 onClick = { Service.client.session.transaction.infer.toggle() },
-                                color = { toggleButtonColor(isInferActivated) },
-                                enabled = enabled && isInferEnabled,
+                                color = { toggleButtonColor(isInferButtonActivated) },
+                                enabled = enabled && isInferButtonEnabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_INFERENCE,
                                     description = Sentence.ENABLE_INFERENCE_DESCRIPTION,
@@ -341,8 +341,8 @@ object Toolbar {
                             TextButtonArg(
                                 text = Label.EXPLAIN.lowercase(),
                                 onClick = { Service.client.session.transaction.explain.toggle() },
-                                color = { toggleButtonColor(isExplainActivated) },
-                                enabled = enabled && isExplainEnabled,
+                                color = { toggleButtonColor(isExplainButtonActivated) },
+                                enabled = enabled && isExplainButtonEnabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.ENABLE_INFERENCE_EXPLANATION,
                                     description = Sentence.ENABLE_INFERENCE_EXPLANATION_DESCRIPTION,
