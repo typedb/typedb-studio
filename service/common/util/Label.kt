@@ -156,7 +156,9 @@ object Label {
     const val PATH_TO_CA_CERTIFICATE = "/path/to/ca/certificate"
     const val PLAYS = "Plays"
     const val POPULATE_REQUIRED_FIELDS = "Populate Required Fields"
-    const val PREFERENCE_INTEGER_WARNING = "Please input a positive integer."
+    const val PREFERENCE_INTEGER_WARNING = "Please enter a positive integer."
+    const val PREFERENCE_TRANSACTION_TIMEOUT_MINS_INPUT_WARNING =
+        "Please enter an integer between 1 and 10000."
     const val PREVIEW = "Preview"
     const val PREVIOUS_OCCURRENCE = "Previous Occurrence"
     const val PROJECT = "Project"
@@ -232,6 +234,7 @@ object Label {
     const val TITLE = "Title"
     const val TRACE = "Trace"
     const val TRANSACTION_STATUS = "Transaction Status"
+    const val TRANSACTION_TIMEOUT_MINS = "Transaction Timeout (mins)"
     const val TRANSACTION_TYPE = "Transaction Type"
     const val TYPE = "Type"
     const val TYPEDB_STUDIO = "TypeDB Studio"

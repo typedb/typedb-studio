@@ -99,9 +99,10 @@ class DataService {
     }
 
     inner class Preferences {
-        private val AUTO_SAVE = "editor.autosave"
-        private val IGNORED_PATHS = "project.ignoredpaths"
-        private val MATCH_QUERY_LIMIT = "query.matchlimit"
+        private val AUTO_SAVE = "editor.auto-save"
+        private val IGNORED_PATHS = "project.ignored-paths"
+        private val MATCH_QUERY_LIMIT = "query.match-limit"
+        private val TRANSACTION_TIMEOUT_MINS = "query.transaction-timeout-mins"
         private val GRAPH_OUTPUT = "graph.output"
 
         var autoSave: Boolean?
@@ -112,9 +113,13 @@ class DataService {
             get() = properties?.getProperty(IGNORED_PATHS)?.split(',')?.map { it.trim() }
             set(value) = setProperty(IGNORED_PATHS, value!!.joinToString(","))
 
-        var matchQueryLimit: String?
-            get() = properties?.getProperty(MATCH_QUERY_LIMIT)
-            set(value) = setProperty(MATCH_QUERY_LIMIT, value!!)
+        var matchQueryLimit: Long?
+            get() = properties?.getProperty(MATCH_QUERY_LIMIT)?.toLong()
+            set(value) = setProperty(MATCH_QUERY_LIMIT, value!!.toString())
+
+        var transactionTimeoutMins: Long?
+            get() = properties?.getProperty(TRANSACTION_TIMEOUT_MINS)?.toLong()
+            set(value) = setProperty(TRANSACTION_TIMEOUT_MINS, value!!.toString())
 
         var graphOutputEnabled: Boolean?
             get() = properties?.getProperty(GRAPH_OUTPUT)?.toBoolean()

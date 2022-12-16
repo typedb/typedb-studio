@@ -51,7 +51,9 @@ import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
+import com.vaticle.typedb.studio.framework.material.Form.ColumnSpacer
 import com.vaticle.typedb.studio.framework.material.Form.Field
+import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
 import com.vaticle.typedb.studio.framework.material.Form.State
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
@@ -74,9 +76,11 @@ import com.vaticle.typedb.studio.service.common.util.Label.QUERY_RUNNER
 import com.vaticle.typedb.studio.service.common.util.Label.RESET
 import com.vaticle.typedb.studio.service.common.util.Label.SET_QUERY_LIMIT
 import com.vaticle.typedb.studio.service.common.util.Label.TEXT_EDITOR
-import com.vaticle.typedb.studio.service.common.util.Sentence.IGNORED_PATHS_CAPTION
+import com.vaticle.typedb.studio.service.common.util.Label.TRANSACTION_TIMEOUT_MINS
 import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
+import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_IGNORED_PATHS_CAPTION
 import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
+import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_TRANSACTION_TIMEOUT_CAPTION
 import com.vaticle.typedb.studio.service.page.Navigable
 
 object PreferenceDialog {
@@ -350,7 +354,7 @@ object PreferenceDialog {
                 }
             }
             SpacedHorizontalSeparator()
-            preferences.forEach { it.Display() }
+            preferences.forEach { it.Display(); ColumnSpacer() }
         }
 
         class Root(override val entries: List<PreferenceGroup> = emptyList()) : PreferenceGroup(entries = entries) {
@@ -403,7 +407,7 @@ object PreferenceDialog {
             private var ignoredPaths = PreferenceField.MultilineTextInput(
                 initValue = ignoredPathsString,
                 label = PROJECT_IGNORED_PATHS,
-                caption = IGNORED_PATHS_CAPTION,
+                caption = PREFERENCES_IGNORED_PATHS_CAPTION,
             )
 
             override val preferences: List<PreferenceField> = listOf(ignoredPaths)
@@ -422,6 +426,7 @@ object PreferenceDialog {
         class QueryRunner : PreferenceGroup(QUERY_RUNNER) {
             companion object {
                 private const val QUERY_LIMIT_PLACEHOLDER = "1000"
+                private const val TRANSACTION_TIMEOUT_MINS_PLACEHOLDER = "5"
             }
 
             private var matchQueryLimit = PreferenceField.TextInputValidated(
@@ -430,16 +435,30 @@ object PreferenceDialog {
                 invalidWarning = Label.PREFERENCE_INTEGER_WARNING, caption = PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
             ) {/* validator = */ it.toLongOrNull() != null && it.toLongOrNull()!! >= 0 }
 
-            override val preferences: List<PreferenceField> = listOf(matchQueryLimit)
+            private var transactionTimeoutMins = PreferenceField.TextInputValidated(
+                initValue = preferenceSrv.transactionTimeoutMins.toString(),
+                label = TRANSACTION_TIMEOUT_MINS, placeholder = TRANSACTION_TIMEOUT_MINS_PLACEHOLDER,
+                invalidWarning = Label.PREFERENCE_TRANSACTION_TIMEOUT_MINS_INPUT_WARNING,
+                caption = PREFERENCES_TRANSACTION_TIMEOUT_CAPTION
+            ) {/* validator = */
+                val transactionTimeoutMins = it.toLongOrNull() ?: return@TextInputValidated false
+                transactionTimeoutMins in 1..10000
+            }
+
+            override val preferences: List<PreferenceField> = listOf(matchQueryLimit, transactionTimeoutMins)
 
             override fun submit() {
                 preferenceSrv.matchQueryLimit = matchQueryLimit.value.toLong()
+                preferenceSrv.transactionTimeoutMins = transactionTimeoutMins.value.toLong()
                 matchQueryLimit.modified = false
+                transactionTimeoutMins.modified = false
             }
 
             override fun reset() {
                 matchQueryLimit.value = preferenceSrv.matchQueryLimit.toString()
+                transactionTimeoutMins.value = preferenceSrv.transactionTimeoutMins.toString()
                 matchQueryLimit.modified = false
+                transactionTimeoutMins.modified = false
             }
         }
     }
@@ -522,11 +541,11 @@ object PreferenceDialog {
         TextButton(CANCEL) {
             state.cancel()
         }
-        Form.RowSpacer()
+        RowSpacer()
         TextButton(APPLY, enabled = state.isModified() && state.isValid()) {
             state.apply()
         }
-        Form.RowSpacer()
+        RowSpacer()
         TextButton(OK) {
             state.ok()
         }
@@ -543,8 +562,8 @@ object PreferenceDialog {
 
     @Composable
     private fun SpacedHorizontalSeparator() {
-        Form.ColumnSpacer()
+        ColumnSpacer()
         Separator.Horizontal()
-        Form.ColumnSpacer()
+        ColumnSpacer()
     }
 }
