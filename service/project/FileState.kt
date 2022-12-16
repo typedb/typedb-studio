@@ -193,7 +193,6 @@ class FileState internal constructor(
     }
 
     fun mayRunSnippet(snippet: String) {
-        if (!isOpen && !tryOpen()) return
         projectSrv.client.run(snippet)?.let { runners.launched(it) }
     }
 
