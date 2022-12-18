@@ -56,9 +56,10 @@ class GraphBuilder(
     private val explainables = ConcurrentHashMap<Vertex.Thing, ConceptMap.Explainable>()
     private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
     private val lock = ReentrantReadWriteLock(true)
-    private val txCode = transactionState.transaction.hashCode()
+    private val graphTransactionHashCode = transactionState.transaction.hashCode()
     val transaction: TypeDBTransaction?
-        get() = if (transactionState.transaction?.hashCode() == txCode) transactionState.transaction else null
+        get() = if (transactionState.transaction?.hashCode() == graphTransactionHashCode) transactionState.transaction
+        else null
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
