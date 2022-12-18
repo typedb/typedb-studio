@@ -18,6 +18,7 @@
 
 package com.vaticle.typedb.studio.framework.graph
 
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.concept.Concept
 import com.vaticle.typedb.client.api.concept.thing.Attribute
@@ -55,6 +56,9 @@ class GraphBuilder(
     private val explainables = ConcurrentHashMap<Vertex.Thing, ConceptMap.Explainable>()
     private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
     private val lock = ReentrantReadWriteLock(true)
+    private val txCode = transactionState.transaction.hashCode()
+    val transaction: TypeDBTransaction?
+        get() = if (transactionState.transaction?.hashCode() == txCode) transactionState.transaction else null
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -67,7 +71,7 @@ class GraphBuilder(
                     val (added, vertex) = putVertexIfAbsent(concept)
                     if (added) {
                         vertex as Vertex.Thing
-                        if (transactionState.explain.value && concept.isInferred) {
+                        if (transaction?.options()?.explain()?.get() == true && concept.isInferred) {
                             addExplainables(concept, vertex, conceptMap.explainables(), varName)
                         }
                         if (answerSource is AnswerSource.Explanation) {
@@ -221,7 +225,7 @@ class GraphBuilder(
 
     private fun runExplainQuery(vertex: Vertex.Thing): Iterator<Explanation> {
         val explainable = graph.reasoning.explainables[vertex] ?: throw IllegalStateException("Not explainable")
-        return transactionState.transaction?.query()?.explain(explainable)?.iterator()
+        return transaction?.query()?.explain(explainable)?.iterator()
             ?: Collections.emptyIterator()
     }
 
@@ -302,7 +306,7 @@ class GraphBuilder(
             private val thingVertex: Vertex.Thing,
             private val ctx: GraphBuilder
         ) : EdgeBuilder(ctx) {
-            private val remoteThing get() = ctx.transactionState.transaction?.let { thing.asRemote(it) }
+            private val remoteThing get() = ctx.transaction?.let { thing.asRemote(it) }
 
             override fun build() {
                 loadIsaEdge()
@@ -323,7 +327,7 @@ class GraphBuilder(
                 // test for ability to own attributes, to ensure query will not throw during type inference
                 if (!canOwnAttributes()) return
                 val (x, attr) = Pair("x", "attr")
-                graphBuilder.transactionState.transaction?.query()
+                graphBuilder.transaction?.query()
                     ?.match(TypeQL.match(TypeQL.`var`(x).iid(thing.iid).has(TypeQL.`var`(attr))))
                     ?.forEach { answer ->
                         val attribute = answer.get(attr).asAttribute()
@@ -342,7 +346,7 @@ class GraphBuilder(
                 val typeLabel = thing.type.label.name()
                 return graphBuilder.schema.typeAttributeOwnershipMap.getOrPut(typeLabel) {
                     // non-atomic update as Concept API call is idempotent and cheaper than locking the map
-                    graphBuilder.transactionState.transaction?.let {
+                    graphBuilder.transaction?.let {
                         thing.type.asRemote(it).owns.findAny().isPresent
                     } ?: false
                 }
@@ -380,7 +384,7 @@ class GraphBuilder(
             private val typeVertex: Vertex.Type,
             private val ctx: GraphBuilder
         ) : EdgeBuilder(ctx) {
-            private val remoteThingType get() = ctx.transactionState.transaction?.let { thingType.asRemote(it) }
+            private val remoteThingType get() = ctx.transaction?.let { thingType.asRemote(it) }
 
             override fun build() {
                 loadSubEdge()

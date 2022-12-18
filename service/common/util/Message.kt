@@ -266,8 +266,8 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val FULLY_EXPLAINED =
                 Visualiser(2, "This concept has been fully explained.")
             val EXPLAIN_NOT_ENABLED =
-                Visualiser(3, "Explanations are not enabled. You must toggle 'explain' before " +
-                        "attempting to explain inferences.")
+                Visualiser(3, "Explanations are not enabled. You must toggle 'explain' and " +
+                        "re-run the query.")
         }
     }
 }
