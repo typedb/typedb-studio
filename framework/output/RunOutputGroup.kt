@@ -38,9 +38,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -97,13 +95,13 @@ internal class RunOutputGroup constructor(
     }
 
     private fun publishQueryResponseTime() = runner.startTime?.let { startTime ->
-            val duration = (runner.endTime ?: System.currentTimeMillis()) - startTime
-            Service.status.publish(QUERY_RESPONSE_TIME, duration.milliseconds.toString())
+            val responseTime = (runner.endTime ?: System.currentTimeMillis()) - startTime
+            Service.status.publish(QUERY_RESPONSE_TIME, responseTime.milliseconds.toString())
     } ?: Unit
 
     private fun publishOutputResponseTime() = runner.endTime?.let { queryEndTime ->
-            val duration = (endTime ?: System.currentTimeMillis()) - queryEndTime
-            Service.status.publish(OUTPUT_RESPONSE_TIME, duration.milliseconds.toString())
+            val responseTime = (endTime ?: System.currentTimeMillis()) - queryEndTime
+            Service.status.publish(OUTPUT_RESPONSE_TIME, responseTime.milliseconds.toString())
     } ?: Unit
 
     private fun clearStatus() {

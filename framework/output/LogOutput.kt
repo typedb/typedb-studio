@@ -131,12 +131,12 @@ internal class LogOutput constructor(
         while (isCollecting.get()) {
             delay(duration)
             if (!isCollecting.get()) return@launchAndHandle
-            val sinceLastResponse = System.currentTimeMillis() - lastOutputTime.get()
-            if (sinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
+            val timeSinceLastResponse = System.currentTimeMillis() - lastOutputTime.get()
+            if (timeSinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
                 output(INFO, "...")
                 duration = RUNNING_INDICATOR_DELAY
             } else {
-                duration = RUNNING_INDICATOR_DELAY - sinceLastResponse.milliseconds
+                duration = RUNNING_INDICATOR_DELAY - timeSinceLastResponse.milliseconds
             }
         }
     }

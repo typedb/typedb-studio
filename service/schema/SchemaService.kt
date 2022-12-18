@@ -315,11 +315,11 @@ class SchemaService(
         var duration = TX_IDLE_TIME
         while (true) {
             delay(duration)
-            val sinceLastUse = System.currentTimeMillis() - lastTransactionUse.get()
-            if (sinceLastUse >= TX_IDLE_TIME.inWholeMilliseconds) {
+            val timeSinceLastUse = System.currentTimeMillis() - lastTransactionUse.get()
+            if (timeSinceLastUse >= TX_IDLE_TIME.inWholeMilliseconds) {
                 closeReadTx()
                 break
-            } else duration = TX_IDLE_TIME - sinceLastUse.milliseconds
+            } else duration = TX_IDLE_TIME - timeSinceLastUse.milliseconds
         }
     }
 
