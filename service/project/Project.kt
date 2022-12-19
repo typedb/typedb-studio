@@ -25,7 +25,7 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
 import kotlin.io.path.isReadable
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -44,10 +44,9 @@ class Project internal constructor(val path: Path, private val projectSrv: Proje
     override val isExpandable: Boolean = true
     override val isBulkExpandable: Boolean = true
 
-    @OptIn(kotlin.time.ExperimentalTime::class)
     companion object {
         private val LOGGER = KotlinLogging.logger {}
-        private val WATCHER_REFRESH_RATE = Duration.seconds(1)
+        private val WATCHER_REFRESH_RATE = 1.seconds
     }
 
     override fun reloadEntries() {

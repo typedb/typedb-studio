@@ -63,13 +63,12 @@ import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.service.common.util.Label
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(kotlin.time.ExperimentalTime::class)
 object TextToolbar {
 
     private val INPUT_MAX_WIDTH = 740.dp
@@ -81,7 +80,7 @@ object TextToolbar {
     private val BUTTON_AREA_WIDTH = 300.dp
     private val BUTTON_HEIGHT = 23.dp
     private val BUTTON_SPACING = 4.dp
-    private val FIND_TEXT_DELAY = Duration.milliseconds(200)
+    private val FIND_TEXT_DELAY = 200.milliseconds
 
     internal class State(
         private val finder: TextFinder,

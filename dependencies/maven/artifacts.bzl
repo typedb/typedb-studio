@@ -21,6 +21,7 @@ artifacts = [
     "io.github.microutils:kotlin-logging-jvm",
     "junit:junit",
     "org.antlr:antlr4-runtime",
+    "org.jetbrains.compose.compiler:compiler",
     "org.jetbrains.compose.animation:animation-core-desktop",
     "org.jetbrains.compose.desktop:desktop-jvm",
     "org.jetbrains.compose.foundation:foundation-desktop",

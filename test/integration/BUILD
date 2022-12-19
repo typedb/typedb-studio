@@ -16,7 +16,7 @@
 #
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library", "kt_jvm_test")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library", "kt_jvm_test")
 load("@vaticle_typedb_common//test:rules.bzl", "typedb_kt_test")
 
 package(default_visibility = ["//:__pkg__"])
@@ -48,7 +48,7 @@ compose_test_libraries = [
 kt_jvm_library(
     name = "test-integration",
     srcs = ["IntegrationTest.kt"],
-    kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
+    plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
     runtime_deps = skiko_runtime_platform,
     deps = [
         "//:studio",

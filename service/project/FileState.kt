@@ -53,6 +53,7 @@ import kotlin.io.path.isWritable
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -65,9 +66,8 @@ class FileState internal constructor(
     projectSrv: ProjectService,
 ) : PathState(parent, path, Type.FILE, projectSrv), Pageable.Runnable {
 
-    @OptIn(kotlin.time.ExperimentalTime::class)
     companion object {
-        private val LIVE_UPDATE_REFRESH_RATE: Duration = Duration.seconds(1)
+        private val LIVE_UPDATE_REFRESH_RATE: Duration = 1.seconds
         private val LOGGER = KotlinLogging.logger {}
     }
 

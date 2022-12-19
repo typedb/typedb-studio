@@ -57,13 +57,13 @@ import com.vaticle.typeql.lang.common.util.Strings
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.stream.Collectors
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
-@OptIn(kotlin.time.ExperimentalTime::class)
 internal class LogOutput constructor(
     private val editorState: TextEditor.State,
     private val transactionState: TransactionState,
@@ -72,7 +72,7 @@ internal class LogOutput constructor(
 
     companion object {
         private val END_OF_OUTPUT_SPACE = 20.dp
-        private val RUNNING_INDICATOR_DELAY = Duration.seconds(3)
+        private val RUNNING_INDICATOR_DELAY = 3.seconds
         private val LOGGER = KotlinLogging.logger {}
 
         @Composable
@@ -131,12 +131,12 @@ internal class LogOutput constructor(
         while (isCollecting.get()) {
             delay(duration)
             if (!isCollecting.get()) return@launchAndHandle
-            val sinceLastResponse = System.currentTimeMillis() - lastOutputTime.get()
-            if (sinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
+            val timeSinceLastResponse = System.currentTimeMillis() - lastOutputTime.get()
+            if (timeSinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
                 output(INFO, "...")
                 duration = RUNNING_INDICATOR_DELAY
             } else {
-                duration = RUNNING_INDICATOR_DELAY - Duration.milliseconds(sinceLastResponse)
+                duration = RUNNING_INDICATOR_DELAY - timeSinceLastResponse.milliseconds
             }
         }
     }

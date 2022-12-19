@@ -16,14 +16,14 @@
 #
 
 load("//:deployment.bzl", deployment_github = "deployment")
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_binary", "kt_jvm_library")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@vaticle_bazel_distribution//common:rules.bzl", "checksum", "assemble_targz", "assemble_zip", "java_deps", "assemble_versioned")
+load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz", "assemble_versioned", "assemble_zip", "checksum", "java_deps")
 load("@vaticle_bazel_distribution//common/tgz2zip:rules.bzl", "tgz2zip")
 load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_library")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
 load("@vaticle_typedb_common//test:rules.bzl", "native_typedb_artifact")
@@ -33,7 +33,7 @@ package(default_visibility = ["//test/integration:__subpackages__"])
 kt_jvm_library(
     name = "studio",
     srcs = glob(["*.kt"]),
-    kotlin_compiler_plugin = "@org_jetbrains_compose_compiler//file",
+    plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
     deps = [
         "//module/connection:connection",
         "//module/preference:preference",
@@ -69,6 +69,14 @@ kt_jvm_library(
     ],
     resources = ["//resources/icons/vaticle:vaticle-bot-32px"],
     tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio:{pom_version}"],
+)
+
+load("@io_bazel_rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
+define_kt_toolchain(
+    name = "kotlin_toolchain_strict_deps",
+    api_version = "1.7",
+    language_version = "1.7",
+    experimental_strict_kotlin_deps = "error",
 )
 
 java_binary(
