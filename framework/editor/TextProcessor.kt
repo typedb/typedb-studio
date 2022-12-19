@@ -39,7 +39,6 @@ import com.vaticle.typedb.studio.service.project.FileState
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.stream.IntStream
 import kotlin.math.floor
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
