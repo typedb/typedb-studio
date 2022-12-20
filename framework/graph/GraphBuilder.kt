@@ -44,7 +44,7 @@ import kotlinx.coroutines.CoroutineScope
 import mu.KotlinLogging
 
 class GraphBuilder(
-    val graph: Graph, val transactionState: TransactionState, val coroutines: CoroutineScope,
+    val graph: Graph, private val transactionState: TransactionState, val coroutines: CoroutineScope,
     val schema: Schema = Schema()
 ) {
     private val newThingVertices = ConcurrentHashMap<String, Vertex.Thing>()
@@ -56,10 +56,6 @@ class GraphBuilder(
     private val explainables = ConcurrentHashMap<Vertex.Thing, ConceptMap.Explainable>()
     private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
     private val lock = ReentrantReadWriteLock(true)
-    private val graphTransactionHashCode = transactionState.transaction.hashCode()
-    val transaction: TypeDBTransaction?
-        get() = if (transactionState.transaction?.hashCode() == graphTransactionHashCode) transactionState.transaction
-        else null
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -72,7 +68,7 @@ class GraphBuilder(
                     val (added, vertex) = putVertexIfAbsent(concept)
                     if (added) {
                         vertex as Vertex.Thing
-                        if (transaction?.options()?.explain()?.get() == true && concept.isInferred) {
+                        if (transactionState.transaction?.options()?.explain()?.get() == true && concept.isInferred) {
                             addExplainables(concept, vertex, conceptMap.explainables(), varName)
                         }
                         if (answerSource is AnswerSource.Explanation) {
@@ -226,7 +222,7 @@ class GraphBuilder(
 
     private fun runExplainQuery(vertex: Vertex.Thing): Iterator<Explanation> {
         val explainable = graph.reasoning.explainables[vertex] ?: throw IllegalStateException("Not explainable")
-        return transaction?.query()?.explain(explainable)?.iterator()
+        return transactionState.transaction?.query()?.explain(explainable)?.iterator()
             ?: Collections.emptyIterator()
     }
 

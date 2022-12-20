@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Typography
@@ -55,7 +56,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-class GraphArea(transactionState: TransactionState) {
+class GraphArea(val transactionState: TransactionState) {
 
     val interactions = Interactions(this)
     val graph = Graph(interactions)
@@ -65,6 +66,8 @@ class GraphArea(transactionState: TransactionState) {
     val physicsRunner = PhysicsRunner(this)
     var theme: Color.GraphTheme? = null
     var typography: Typography.Theme? = null
+    val snapshotEnabled = transactionState.snapshot.value
+    val transactionSnapshot: TypeDBTransaction? = if (snapshotEnabled) transactionState.transaction else null
     internal val textRenderer = TextRenderer(viewport)
     private val LOGGER = KotlinLogging.logger {}
 
