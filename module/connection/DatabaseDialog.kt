@@ -87,7 +87,7 @@ object DatabaseDialog {
         Column(Modifier.fillMaxSize()) {
             Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
             Spacer(Modifier.height(Theme.DIALOG_PADDING))
-            DeletableDatabaseList(Modifier.fillMaxWidth().weight(1f))
+            ManageDatabaseList(Modifier.fillMaxWidth().weight(1f))
             Spacer(Modifier.height(Theme.DIALOG_PADDING))
             CreateDatabaseForm()
             Spacer(Modifier.height(Theme.DIALOG_PADDING * 2))
@@ -103,25 +103,12 @@ object DatabaseDialog {
     }
 
     @Composable
-    private fun DeletableDatabaseList(modifier: Modifier) = ActionableList.Layout(
+    private fun ManageDatabaseList(modifier: Modifier) = ActionableList.Layout(
         items = Service.client.databaseList,
         modifier = modifier.border(1.dp, Theme.studio.border),
         buttonSide = ActionableList.Side.RIGHT,
         buttonsFn = { databaseName ->
             listOf(
-                IconButtonArg(
-                    icon = Icon.DELETE,
-                    color = { Theme.studio.errorStroke },
-                    onClick = {
-                        Service.confirmation.submit(
-                            title = Label.DELETE_DATABASE,
-                            message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
-                            verificationValue = databaseName,
-                            confirmLabel = Label.DELETE,
-                            onConfirm = { Service.client.tryDeleteDatabase(databaseName) }
-                        )
-                    }
-                ),
                 IconButtonArg(
                     icon = Icon.EXPORT,
                     enabled = Service.project.current != null && !Service.schema.hasRunningCommand,
@@ -133,6 +120,18 @@ object DatabaseDialog {
                             file.tryOpen()
                         }
                     }
+                },
+                IconButtonArg(
+                    icon = Icon.DELETE,
+                    color = { Theme.studio.errorStroke }
+                ) {
+                    Service.confirmation.submit(
+                        title = Label.DELETE_DATABASE,
+                        message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
+                        verificationValue = databaseName,
+                        confirmLabel = Label.DELETE,
+                        onConfirm = { Service.client.tryDeleteDatabase(databaseName) }
+                    )
                 }
             )
         }
