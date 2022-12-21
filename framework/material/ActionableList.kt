@@ -60,7 +60,7 @@ object ActionableList {
         itemHeight: Dp = ITEM_HEIGHT,
         modifier: Modifier,
         buttonSide: Side,
-        buttonFn: (T) -> Form.IconButtonArg
+        buttonFn: (T) -> List<Form.IconButtonArg>
     ) {
         val scrollState = rememberScrollState()
 
@@ -115,13 +115,13 @@ object ActionableList {
 
     @Composable
     private fun <T : Any> ActionColumn(
-        items: List<T>, itemHeight: Dp, buttonFn: (T) -> Form.IconButtonArg, scrollState: ScrollState? = null
+        items: List<T>, itemHeight: Dp, buttonFn: (T) -> List<Form.IconButtonArg>, scrollState: ScrollState? = null
     ) {
         val density = LocalDensity.current.density
         var minWidth by remember { mutableStateOf(0.dp) }
         Column(Modifier.defaultMinSize(minWidth = minWidth)) {
             items.forEachIndexed { i, item ->
-                val button = buttonFn(item)
+                val buttons = buttonFn(item)
                 Row(
                     Modifier.height(itemHeight)
                         .defaultMinSize(minWidth = minWidth)
@@ -130,17 +130,20 @@ object ActionableList {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RowSpacer()
-                    IconButton(
-                        icon = button.icon,
-                        hoverIcon = button.hoverIcon,
-                        modifier = Modifier.size(BUTTON_SIZE),
-                        iconColor = button.color(),
-                        iconHoverColor = button.hoverColor?.invoke(),
-                        disabledColor = button.disabledColor?.invoke(),
-                        tooltip = button.tooltip,
-                        onClick = button.onClick
-                    )
-                    RowSpacer()
+                    buttons.forEach {
+                        IconButton(
+                            icon = it.icon,
+                            hoverIcon = it.hoverIcon,
+                            modifier = Modifier.size(BUTTON_SIZE),
+                            iconColor = it.color(),
+                            iconHoverColor = it.hoverColor?.invoke(),
+                            disabledColor = it.disabledColor?.invoke(),
+                            tooltip = it.tooltip,
+                            onClick = it.onClick,
+                            enabled = it.enabled,
+                        )
+                        RowSpacer()
+                    }
                     scrollState?.let { if (it.maxValue > 0 && it.maxValue < Int.MAX_VALUE) RowSpacer() }
                 }
             }

@@ -119,7 +119,8 @@ object Sentence {
         "You can manage your databases by adding or deleting databases from the TypeDB Server you are connected to. " +
                 BUTTON_ENABLED_WHEN_CONNECTED
     const val MANAGE_DATABASES_MESSAGE =
-        "Below is the list of databases on your TypeDB Server. You can delete them individually, or create new ones. "
+        "Below is the list of databases on your TypeDB Server. You can delete them individually, or create new ones. " +
+                "Additionally, you can export a database's schema."
     const val OUTPUT_RESPONSE_TIME_DESCRIPTION =
         "Duration to collect all answers of the query from the server."
     const val PREFERENCES_GRAPH_OUTPUT_CAPTION =

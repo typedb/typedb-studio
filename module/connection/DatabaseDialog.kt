@@ -108,17 +108,31 @@ object DatabaseDialog {
         modifier = modifier.border(1.dp, Theme.studio.border),
         buttonSide = ActionableList.Side.RIGHT,
         buttonFn = { databaseName ->
-            IconButtonArg(
-                icon = Icon.DELETE,
-                color = { Theme.studio.errorStroke },
-                onClick = {
-                    Service.confirmation.submit(
-                        title = Label.DELETE_DATABASE,
-                        message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
-                        verificationValue = databaseName,
-                        confirmLabel = Label.DELETE,
-                        onConfirm = { Service.client.tryDeleteDatabase(databaseName) }
-                    )
+            listOf(
+                IconButtonArg(
+                    icon = Icon.DELETE,
+                    color = { Theme.studio.errorStroke },
+                    onClick = {
+                        Service.confirmation.submit(
+                            title = Label.DELETE_DATABASE,
+                            message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
+                            verificationValue = databaseName,
+                            confirmLabel = Label.DELETE,
+                            onConfirm = { Service.client.tryDeleteDatabase(databaseName) }
+                        )
+                    }
+                ),
+                IconButtonArg(
+                    icon = Icon.EXPORT,
+                    enabled = Service.project.current != null && !Service.schema.hasRunningCommand,
+                    tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
+                ) {
+                    Service.client.fetchSchema(databaseName).let { schema ->
+                        Service.project.tryCreateUntitledFile()?.let { file ->
+                            file.content(schema ?: "")
+                            file.tryOpen()
+                        }
+                    }
                 }
             )
         }

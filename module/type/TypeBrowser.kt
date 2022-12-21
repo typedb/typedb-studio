@@ -98,7 +98,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
     private fun exportButton(navState: Navigator.NavigatorState<ThingTypeState<*, *>>) = IconButtonArg(
         icon = Icon.EXPORT,
         enabled = Service.project.current != null && !Service.schema.hasRunningCommand,
-        tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
+        tooltip = Tooltip.Arg(title = Label.EXPORT_TYPES)
     ) {
         Service.schema.exportTypeSchemaAsync { schema ->
             refresh(navState)

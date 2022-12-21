@@ -263,10 +263,12 @@ object ServerDialog {
         modifier = modifier.border(1.dp, Theme.studio.border),
         buttonSide = ActionableList.Side.RIGHT,
         buttonFn = { address ->
-            Form.IconButtonArg(
-                icon = Icon.REMOVE,
-                color = { Theme.studio.errorStroke },
-                onClick = { state.clusterAddresses.remove(address) }
+            listOf(
+                Form.IconButtonArg(
+                    icon = Icon.REMOVE,
+                    color = { Theme.studio.errorStroke },
+                    onClick = { state.clusterAddresses.remove(address) }
+                )
             )
         }
     )

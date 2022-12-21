@@ -101,6 +101,7 @@ object Label {
     const val EXPORT = "Export"
     const val EXPORT_SCHEMA = "Export Schema"
     const val EXPORT_SYNTAX = "Export Syntax"
+    const val EXPORT_TYPES = "Export Types"
     const val EXTENDED_TYPE = "Extended Type"
     const val E_G_ = "e.g."
     const val FILE_NAME = "File Name"

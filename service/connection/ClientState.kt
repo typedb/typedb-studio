@@ -176,6 +176,8 @@ class ClientState constructor(
         return null // TODO
     }
 
+    fun fetchSchema(database: String): String? = _client?.databases()?.get(database)?.schema()
+
     fun tryCreateDatabase(database: String, onSuccess: () -> Unit) = mayRunCommandAsync {
         refreshDatabaseListFn()
         if (!databaseList.contains(database)) {
