@@ -107,7 +107,7 @@ object DatabaseDialog {
         items = Service.client.databaseList,
         modifier = modifier.border(1.dp, Theme.studio.border),
         buttonSide = ActionableList.Side.RIGHT,
-        buttonFn = { databaseName ->
+        buttonsFn = { databaseName ->
             listOf(
                 IconButtonArg(
                     icon = Icon.DELETE,

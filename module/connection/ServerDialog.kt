@@ -262,7 +262,7 @@ object ServerDialog {
         items = state.clusterAddresses.toMutableList(),
         modifier = modifier.border(1.dp, Theme.studio.border),
         buttonSide = ActionableList.Side.RIGHT,
-        buttonFn = { address ->
+        buttonsFn = { address ->
             listOf(
                 Form.IconButtonArg(
                     icon = Icon.REMOVE,

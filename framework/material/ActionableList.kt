@@ -60,7 +60,7 @@ object ActionableList {
         itemHeight: Dp = ITEM_HEIGHT,
         modifier: Modifier,
         buttonSide: Side,
-        buttonFn: (T) -> List<Form.IconButtonArg>
+        buttonsFn: (T) -> List<Form.IconButtonArg>
     ) {
         val scrollState = rememberScrollState()
 
@@ -72,13 +72,13 @@ object ActionableList {
         Box(modifier) {
             Row(Modifier.verticalScroll(scrollState)) {
                 if (buttonSide == Side.LEFT) {
-                    ActionColumn(items, itemHeight, buttonFn)
+                    ActionColumn(items, itemHeight, buttonsFn)
                     Separator()
                 }
                 ItemColumn(Modifier.weight(1f), items, itemHeight)
                 if (buttonSide == Side.RIGHT) {
                     Separator()
-                    ActionColumn(items, itemHeight, buttonFn, scrollState)
+                    ActionColumn(items, itemHeight, buttonsFn, scrollState)
                 }
             }
             Scrollbar.Vertical(rememberScrollbarAdapter(scrollState), Modifier.align(Alignment.CenterEnd))
@@ -115,13 +115,13 @@ object ActionableList {
 
     @Composable
     private fun <T : Any> ActionColumn(
-        items: List<T>, itemHeight: Dp, buttonFn: (T) -> List<Form.IconButtonArg>, scrollState: ScrollState? = null
+        items: List<T>, itemHeight: Dp, buttonsFn: (T) -> List<Form.IconButtonArg>, scrollState: ScrollState? = null
     ) {
         val density = LocalDensity.current.density
         var minWidth by remember { mutableStateOf(0.dp) }
         Column(Modifier.defaultMinSize(minWidth = minWidth)) {
             items.forEachIndexed { i, item ->
-                val buttons = buttonFn(item)
+                val buttons = buttonsFn(item)
                 Row(
                     Modifier.height(itemHeight)
                         .defaultMinSize(minWidth = minWidth)
