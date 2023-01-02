@@ -143,7 +143,7 @@ object TextEditor {
     private fun createState(
         bottomSpace: Dp,
         processorFn: (
-            content: SnapshotStateList<AnnotatedString>,
+            content: SnapshotStateList<GlyphLine>,
             rendering: TextRendering,
             finder: TextFinder,
             target: InputTarget
@@ -153,7 +153,7 @@ object TextEditor {
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val clipboard = LocalClipboardManager.current
-        val content = SnapshotStateList<AnnotatedString>()
+        val content = SnapshotStateList<GlyphLine>()
         val rendering = TextRendering()
         val finder = TextFinder(content)
         val target = InputTarget(content, rendering, AREA_PADDING_HOR, lineHeight, bottomSpace, currentDensity.density)
@@ -191,7 +191,7 @@ object TextEditor {
     }
 
     class State internal constructor(
-        internal val content: SnapshotStateList<AnnotatedString>,
+        internal val content: SnapshotStateList<GlyphLine>,
         internal val font: TextStyle,
         internal val rendering: TextRendering,
         internal val finder: TextFinder,
@@ -231,16 +231,16 @@ object TextEditor {
 
         internal fun reloadContent(file: FileState) {
             content.clear()
-            content.addAll(highlight(file.readContent().map { normaliseWhiteSpace(it) }, file.fileType))
+            content.addAll(highlight(file.readContent().map { normaliseWhiteSpace(it) }, file.fileType).map { GlyphLine(it) })
             rendering.reinitialize(content.size)
         }
 
         fun addContent(text: String, type: Property.FileType = Property.FileType.UNKNOWN) {
-            content.addAll(text.split("\n").map { highlight(it, type) })
+            content.addAll(text.split("\n").map { GlyphLine(highlight(it, type)) })
         }
 
         fun addContent(text: String, highlighter: (String) -> AnnotatedString) {
-            content.addAll(text.split("\n").map { highlighter(it) })
+            content.addAll(text.split("\n").map { GlyphLine(highlighter(it)) })
         }
 
         fun updateFile(file: FileState) {
@@ -373,7 +373,7 @@ object TextEditor {
 
     @Composable
     private fun TextLine(
-        state: State, index: Int, text: AnnotatedString, font: TextStyle, fontWidth: Dp, lineGap: Dp, showLine: Boolean
+        state: State, index: Int, line: GlyphLine, font: TextStyle, fontWidth: Dp, lineGap: Dp, showLine: Boolean
     ) {
         val cursor = state.target.cursor
         val selection = state.target.selection
@@ -393,24 +393,24 @@ object TextEditor {
             val textLayout = if (isRenderedUpToDate) state.rendering.get(index) else null
             val findColor = Theme.studio.warningStroke.copy(Theme.FIND_SELECTION_ALPHA)
             state.finder.matches(index).forEach {
-                Selection(state, it, index, textLayout, findColor, text.length, fontWidth)
+                Selection(state, it, index, textLayout, findColor, line.length, fontWidth)
             }
             if (selection != null && selection.min.row <= index && selection.max.row >= index) {
                 val color = Theme.studio.tertiary.copy(Theme.TARGET_SELECTION_ALPHA)
-                Selection(state, selection, index, textLayout, color, text.length, fontWidth)
+                Selection(state, selection, index, textLayout, color, line.length, fontWidth)
             }
             Row {
                 Column {
                     Spacer(Modifier.height(lineGap))
                     Text(
-                        text = text, style = font,
+                        text = line.annotatedString, style = font,
                         modifier = Modifier.onSizeChanged { state.target.mayIncreaseTextWidth(it.width) },
                         onTextLayout = { state.rendering.set(index, it, state.processor.version) }
                     )
                 }
                 Spacer(Modifier.width(RIGHT_PADDING))
             }
-            if (cursor.row == index) Cursor(state, text, textLayout, font, fontWidth, lineGap)
+            if (cursor.row == index) Cursor(state, line.annotatedString, textLayout, font, fontWidth, lineGap)
         }
     }
 

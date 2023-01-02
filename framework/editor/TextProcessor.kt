@@ -120,7 +120,7 @@ internal interface TextProcessor {
 
     class Writable constructor(
         override var file: FileState,
-        private val content: SnapshotStateList<AnnotatedString>,
+        private val content: SnapshotStateList<GlyphLine>,
         private val rendering: TextRendering,
         private val finder: TextFinder,
         private val target: InputTarget,
@@ -174,9 +174,9 @@ internal interface TextProcessor {
             finder.mayRecomputeAllMatches()
         }
 
-        private fun indent(strings: List<AnnotatedString>, spaces: Int): List<AnnotatedString> {
+        private fun indent(strings: List<GlyphLine>, spaces: Int): List<GlyphLine> {
             return strings.map {
-                if (spaces > 0) AnnotatedString(" ".repeat(spaces)) + it
+                if (spaces > 0) GlyphLine(AnnotatedString(" ".repeat(spaces)) + it.annotatedString)
                 else if (spaces < 0) it.subSequence((-spaces).coerceAtMost(prefixSpaces(it)), it.length)
                 else it
             }
@@ -203,8 +203,8 @@ internal interface TextProcessor {
             val textLines = target.selectedTextLines()
             val commentToken = fileType.commentToken
 
-            fun commentSelection(oldLines: List<AnnotatedString>) = oldLines.map { AnnotatedString(commentToken) + it }
-            fun uncommentSelection(oldLines: List<AnnotatedString>) = oldLines.map {
+            fun commentSelection(oldLines: List<GlyphLine>) = oldLines.map { AnnotatedString(commentToken) + it }
+            fun uncommentSelection(oldLines: List<GlyphLine>) = oldLines.map {
                 if (it.isEmpty()) it
                 else it.indexOf(commentToken).let { index ->
                     it.subSequence(0, index) + it.subSequence(index + commentToken.length, it.length)
@@ -333,7 +333,7 @@ internal interface TextProcessor {
             target.updatePosition(newPosition)
         }
 
-        private fun asAnnotatedLines(text: String): List<AnnotatedString> {
+        private fun asAnnotatedLines(text: String): List<GlyphLine> {
             return if (text.isEmpty()) listOf() else text.split("\n").map { AnnotatedString(it) }
         }
 
@@ -349,7 +349,7 @@ internal interface TextProcessor {
             return insertText(asAnnotatedLines(text), recomputeFinder)
         }
 
-        private fun insertText(strings: List<AnnotatedString>, recomputeFinder: Boolean = true): Insertion? {
+        private fun insertText(strings: List<GlyphLine>, recomputeFinder: Boolean = true): Insertion? {
             val operations = mutableListOf<TextChange.Operation>()
             if (target.selection != null) operations.add(deletionOperation())
             val insertion: Insertion?
@@ -451,7 +451,7 @@ internal interface TextProcessor {
         }
 
         private fun highlight(lines: IntRange) {
-            lines.forEach { content[it] = SyntaxHighlighter.highlight(content[it].text, fileType) }
+            lines.forEach { content[it] = GlyphLine(SyntaxHighlighter.highlight(content[it].text, fileType)) }
         }
 
         private fun callOnChangeEnd() {

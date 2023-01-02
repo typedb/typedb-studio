@@ -30,7 +30,7 @@ import java.util.regex.MatchResult
 import java.util.regex.Pattern
 import kotlin.streams.toList
 
-internal class TextFinder(private val content: SnapshotStateList<AnnotatedString>) {
+internal class TextFinder(private val content: SnapshotStateList<GlyphLine>) {
 
     data class LineInfo(val start: Int, val length: Int)
 

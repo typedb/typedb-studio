@@ -43,7 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 internal class InputTarget constructor(
-    private val content: SnapshotStateList<AnnotatedString>,
+    private val content: SnapshotStateList<GlyphLine>,
     private val rendering: TextRendering,
     private val horPadding: Dp,
     lineHeightUnscaled: Dp,
@@ -55,12 +55,12 @@ internal class InputTarget constructor(
         // TODO: is this complete?
         private val WORD_BREAK_CHARS = charArrayOf(',', '.', ':', ';', '=', '(', ')', '{', '}')
 
-        fun prefixSpaces(line: AnnotatedString): Int {
+        fun prefixSpaces(line: GlyphLine): Int {
             for (it in line.indices) if (line[it] != ' ') return it
             return line.length
         }
 
-        fun suffixSpaces(line: AnnotatedString): Int {
+        fun suffixSpaces(line: GlyphLine): Int {
             for (it in line.indices.reversed()) if (line[it] != ' ') return line.length - 1 - it
             return line.length
         }
@@ -476,11 +476,11 @@ internal class InputTarget constructor(
         return builder.toAnnotatedString()
     }
 
-    internal fun selectedTextLines(): List<AnnotatedString> {
-        if (selection == null) return listOf(AnnotatedString(""))
+    internal fun selectedTextLines(): List<GlyphLine> {
+        if (selection == null) return listOf(GlyphLine(AnnotatedString("")))
         val start = selection!!.min
         val end = selection!!.max
-        val list = mutableListOf<AnnotatedString>()
+        val list = mutableListOf<GlyphLine>()
         for (i in start.row..end.row) {
             val line = content[i]
             if (i == start.row && end.row > start.row) list.add(line.subSequenceSafely(start.col, line.length))
