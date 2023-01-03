@@ -87,7 +87,7 @@ object DatabaseDialog {
         Column(Modifier.fillMaxSize()) {
             Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
             Spacer(Modifier.height(Theme.DIALOG_PADDING))
-            ManageDatabaseList(Modifier.fillMaxWidth().weight(1f))
+            ManageableDatabaseList(Modifier.fillMaxWidth().weight(1f))
             Spacer(Modifier.height(Theme.DIALOG_PADDING))
             CreateDatabaseForm()
             Spacer(Modifier.height(Theme.DIALOG_PADDING * 2))
@@ -103,7 +103,7 @@ object DatabaseDialog {
     }
 
     @Composable
-    private fun ManageDatabaseList(modifier: Modifier) = ActionableList.Layout(
+    private fun ManageableDatabaseList(modifier: Modifier) = ActionableList.Layout(
         items = Service.client.databaseList,
         modifier = modifier.border(1.dp, Theme.studio.border),
         buttonSide = ActionableList.Side.RIGHT,
