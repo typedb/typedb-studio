@@ -30,6 +30,7 @@ import com.vaticle.typedb.client.api.logic.Explanation
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.NotificationService
+import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.EXPLAIN_NOT_ENABLED
 import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.FULLY_EXPLAINED
 import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.service.connection.TransactionState
@@ -56,6 +57,8 @@ class GraphBuilder(
     private val explainables = ConcurrentHashMap<Vertex.Thing, ConceptMap.Explainable>()
     private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
     private val lock = ReentrantReadWriteLock(true)
+    private val snapshotEnabled = transactionState.snapshot.value
+    private val transactionSnapshot: TypeDBTransaction? = if (snapshotEnabled) transactionState.transaction else null
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -108,7 +111,7 @@ class GraphBuilder(
             if (added) {
                 newRecords[key] = v
                 completeEdges(missingVertex = v)
-                EdgeBuilder.of(concept, v, this).build()
+                EdgeBuilder.of(concept, v, this, transactionState.transaction).build()
             }
             v
         }
@@ -213,16 +216,21 @@ class GraphBuilder(
     }
 
     fun explain(vertex: Vertex.Thing) {
-        NotificationService.launchCompletableFuture(Service.notification, LOGGER) {
-            val iterator = graph.reasoning.explanationIterators[vertex]
-                ?: runExplainQuery(vertex).also { graph.reasoning.explanationIterators[vertex] = it }
-            fetchNextExplanation(vertex, iterator)
-        }.exceptionally { e -> Service.notification.systemError(LOGGER, e, UNEXPECTED_ERROR) }
+        val explain = transactionSnapshot?.options()?.explain()?.get() ?: false
+        if (!explain) {
+            Service.notification.userWarning(LOGGER, EXPLAIN_NOT_ENABLED)
+        } else {
+            NotificationService.launchCompletableFuture(Service.notification, LOGGER) {
+                val iterator = graph.reasoning.explanationIterators[vertex]
+                    ?: runExplainQuery(vertex).also { graph.reasoning.explanationIterators[vertex] = it }
+                fetchNextExplanation(vertex, iterator)
+            }.exceptionally { e -> Service.notification.systemError(LOGGER, e, UNEXPECTED_ERROR) }
+        }
     }
 
     private fun runExplainQuery(vertex: Vertex.Thing): Iterator<Explanation> {
         val explainable = graph.reasoning.explainables[vertex] ?: throw IllegalStateException("Not explainable")
-        return transactionState.transaction?.query()?.explain(explainable)?.iterator()
+        return transactionSnapshot?.query()?.explain(explainable)?.iterator()
             ?: Collections.emptyIterator()
     }
 
@@ -285,13 +293,13 @@ class GraphBuilder(
         abstract fun build()
 
         companion object {
-            fun of(concept: Concept, vertex: Vertex, graphBuilder: GraphBuilder): EdgeBuilder {
+            fun of(concept: Concept, vertex: Vertex, graphBuilder: GraphBuilder, transaction: TypeDBTransaction?): EdgeBuilder {
                 return when (concept) {
                     is com.vaticle.typedb.client.api.concept.thing.Thing -> {
-                        Thing(concept, vertex as Vertex.Thing, graphBuilder)
+                        Thing(concept, vertex as Vertex.Thing, transaction, graphBuilder)
                     }
                     is com.vaticle.typedb.client.api.concept.type.ThingType -> {
-                        ThingType(concept.asThingType(), vertex as Vertex.Type, graphBuilder)
+                        ThingType(concept.asThingType(), vertex as Vertex.Type, transaction, graphBuilder)
                     }
                     else -> throw graphBuilder.unsupportedEncodingException(concept)
                 }
@@ -301,9 +309,10 @@ class GraphBuilder(
         class Thing(
             val thing: com.vaticle.typedb.client.api.concept.thing.Thing,
             private val thingVertex: Vertex.Thing,
-            private val ctx: GraphBuilder
-        ) : EdgeBuilder(ctx) {
-            private val remoteThing get() = ctx.transaction?.let { thing.asRemote(it) }
+            private val transaction: TypeDBTransaction?,
+            ctx: GraphBuilder,
+            ) : EdgeBuilder(ctx) {
+            private val remoteThing get() = transaction?.let { thing.asRemote(it) }
 
             override fun build() {
                 loadIsaEdge()
@@ -324,7 +333,7 @@ class GraphBuilder(
                 // test for ability to own attributes, to ensure query will not throw during type inference
                 if (!canOwnAttributes()) return
                 val (x, attr) = Pair("x", "attr")
-                graphBuilder.transaction?.query()
+                transaction?.query()
                     ?.match(TypeQL.match(TypeQL.`var`(x).iid(thing.iid).has(TypeQL.`var`(attr))))
                     ?.forEach { answer ->
                         val attribute = answer.get(attr).asAttribute()
@@ -343,7 +352,7 @@ class GraphBuilder(
                 val typeLabel = thing.type.label.name()
                 return graphBuilder.schema.typeAttributeOwnershipMap.getOrPut(typeLabel) {
                     // non-atomic update as Concept API call is idempotent and cheaper than locking the map
-                    graphBuilder.transaction?.let {
+                    transaction?.let {
                         thing.type.asRemote(it).owns.findAny().isPresent
                     } ?: false
                 }
@@ -379,9 +388,10 @@ class GraphBuilder(
         class ThingType(
             private val thingType: com.vaticle.typedb.client.api.concept.type.ThingType,
             private val typeVertex: Vertex.Type,
-            private val ctx: GraphBuilder
-        ) : EdgeBuilder(ctx) {
-            private val remoteThingType get() = ctx.transaction?.let { thingType.asRemote(it) }
+            private val transaction: TypeDBTransaction?,
+            ctx: GraphBuilder,
+            ) : EdgeBuilder(ctx) {
+            private val remoteThingType get() = transaction?.let { thingType.asRemote(it) }
 
             override fun build() {
                 loadSubEdge()

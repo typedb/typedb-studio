@@ -44,19 +44,16 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
-import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Typography
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.EXPLAIN_NOT_ENABLED
 import com.vaticle.typedb.studio.service.connection.TransactionState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-class GraphArea(val transactionState: TransactionState) {
+class GraphArea(transactionState: TransactionState) {
 
     val interactions = Interactions(this)
     val graph = Graph(interactions)
@@ -66,8 +63,6 @@ class GraphArea(val transactionState: TransactionState) {
     val physicsRunner = PhysicsRunner(this)
     var theme: Color.GraphTheme? = null
     var typography: Typography.Theme? = null
-    val snapshotEnabled = transactionState.snapshot.value
-    val transactionSnapshot: TypeDBTransaction? = if (snapshotEnabled) transactionState.transaction else null
     internal val textRenderer = TextRenderer(viewport)
     private val LOGGER = KotlinLogging.logger {}
 
@@ -101,7 +96,7 @@ class GraphArea(val transactionState: TransactionState) {
     // TODO: we tried using Composables.key here, but it performs drastically worse (while zooming in/out) than
     //       this explicit Composable with unused parameters - investigate why
     fun Graphics(physicsIteration: Long, density: Float, size: DpSize, scale: Float) {
-        // Take snapshots of vertices and edges so we can iterate them while the source collections are concurrently modified
+        // Take snapshots of vertices and edges, so we can iterate them while the source collections are concurrently modified
         val edges = graph.edges.toList()
         val vertices = graph.vertices.filter { it.readyToCompose && viewport.rectIsVisible(it.geometry.rect) }
         // Since vertices contain MutableStates and are created on a different thread, we need to ensure their lifetime
@@ -277,13 +272,7 @@ class GraphArea(val transactionState: TransactionState) {
                             graphArea.viewport.findVertexAt(point, graphArea.interactions)?.let {
                                 // TODO: this should require SHIFT-doubleclick, not doubleclick
                                 if (it is Vertex.Thing && it.thing.isInferred) {
-                                    val transaction = graphArea.graphBuilder.transaction
-                                    val explain = transaction?.options()?.explain()?.get() ?: false
-                                    if (!explain) {
-                                        Service.notification.userWarning(graphArea.LOGGER, EXPLAIN_NOT_ENABLED)
-                                    } else {
-                                        graphArea.graphBuilder.explain(it)
-                                    }
+                                    graphArea.graphBuilder.explain(it)
                                 }
                             }
                         }
