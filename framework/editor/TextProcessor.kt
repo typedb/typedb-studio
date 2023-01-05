@@ -463,14 +463,4 @@ internal interface TextProcessor {
             drainAndBatchChanges(isFinalChange = true)
         }
     }
-
-    object Codepoints {
-        fun codepointsToString(codepoints: IntStream): String {
-            return codepoints.toString()
-        }
-
-        fun stringToCodePoints(string: String): IntStream {
-            return string.codePoints()
-        }
-    }
 }
