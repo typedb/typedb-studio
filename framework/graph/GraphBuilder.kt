@@ -57,8 +57,11 @@ class GraphBuilder(
     private val explainables = ConcurrentHashMap<Vertex.Thing, ConceptMap.Explainable>()
     private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
     private val lock = ReentrantReadWriteLock(true)
+    private val transactionID = transactionState.transaction?.hashCode()
+    private val isInitialTransaction = transactionState.transaction.hashCode() == transactionID
     private val snapshotEnabled = transactionState.snapshot.value
-    private val transactionSnapshot: TypeDBTransaction? = if (snapshotEnabled) transactionState.transaction else null
+    private val transactionSnapshot: TypeDBTransaction?
+        = if (snapshotEnabled && isInitialTransaction) transactionState.transaction else null
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
