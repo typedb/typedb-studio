@@ -62,6 +62,6 @@ class PreferenceService(dataSrv: DataService) {
         val graphOutputEnabled = true
         val matchQueryLimit = 1000L
         val ignoredPaths = listOf(".git")
-        val transactionTimeoutMins = 5L
+        val transactionTimeoutMins = 60L
     }
 }
