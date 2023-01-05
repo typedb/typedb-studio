@@ -56,12 +56,12 @@ internal class InputTarget constructor(
         private val WORD_BREAK_CHARS = charArrayOf(',', '.', ':', ';', '=', '(', ')', '{', '}')
 
         fun prefixSpaces(line: GlyphLine): Int {
-            for (it in line.indices) if (line[it] != ' ') return it
+            for (it in line.annotatedString.indices) if (line.annotatedString[it] != ' ') return it
             return line.length
         }
 
         fun suffixSpaces(line: GlyphLine): Int {
-            for (it in line.indices.reversed()) if (line[it] != ' ') return line.length - 1 - it
+            for (it in line.annotatedString.indices.reversed()) if (line.annotatedString[it] != ' ') return line.length - 1 - it
             return line.length
         }
     }
@@ -470,7 +470,7 @@ internal class InputTarget constructor(
         val builder = AnnotatedString.Builder()
         val textList = selectedTextLines()
         textList.forEachIndexed { i, text ->
-            builder.append(text)
+            builder.append(text.annotatedString)
             if (textList.size > 1 && i < textList.size - 1) builder.append("\n")
         }
         return builder.toAnnotatedString()
