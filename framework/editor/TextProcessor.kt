@@ -189,7 +189,9 @@ internal interface TextProcessor {
 
         override fun deleteSelection() {
             if (target.selection == null) return
+            println(target.selection)
             val change = TextChange(deletionOperation())
+            println(change)
             applyChange(change)
             queueChangeStack(change)
         }

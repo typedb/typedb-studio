@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Util.getCursorRectSafely
-import com.vaticle.typedb.studio.framework.common.Util.subSequenceSafely
 import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.StatusService.Key.TEXT_CURSOR_POSITION
@@ -116,7 +115,7 @@ internal class InputTarget constructor(
         override fun toString(): String {
             val startStatus = if (start == min) "min" else "max"
             val endStatus = if (end == max) "max" else "min"
-            return "Selection {start: $start [$startStatus], end: $end[$endStatus]}"
+            return "Selection {start: $start [$startStatus], end: $end [$endStatus]}"
         }
     }
 
