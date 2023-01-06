@@ -261,7 +261,7 @@ object ServerDialog {
     private fun ClusterAddressList(modifier: Modifier) = ActionableList.Layout(
         items = state.clusterAddresses.toMutableList(),
         modifier = modifier.border(1.dp, Theme.studio.border),
-        buttonSide = ActionableList.Side.RIGHT,
+        buttonsSide = ActionableList.Side.RIGHT,
         buttonsFn = { address ->
             listOf(
                 Form.IconButtonArg(

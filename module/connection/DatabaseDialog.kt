@@ -106,7 +106,7 @@ object DatabaseDialog {
     private fun ManageableDatabaseList(modifier: Modifier) = ActionableList.Layout(
         items = Service.client.databaseList,
         modifier = modifier.border(1.dp, Theme.studio.border),
-        buttonSide = ActionableList.Side.RIGHT,
+        buttonsSide = ActionableList.Side.RIGHT,
         buttonsFn = { databaseName ->
             listOf(
                 IconButtonArg(

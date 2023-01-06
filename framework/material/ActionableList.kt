@@ -59,7 +59,7 @@ object ActionableList {
         items: List<T>,
         itemHeight: Dp = ITEM_HEIGHT,
         modifier: Modifier,
-        buttonSide: Side,
+        buttonsSide: Side,
         buttonsFn: (T) -> List<Form.IconButtonArg>
     ) {
         val scrollState = rememberScrollState()
@@ -71,12 +71,12 @@ object ActionableList {
 
         Box(modifier) {
             Row(Modifier.verticalScroll(scrollState)) {
-                if (buttonSide == Side.LEFT) {
+                if (buttonsSide == Side.LEFT) {
                     ActionColumn(items, itemHeight, buttonsFn)
                     Separator()
                 }
                 ItemColumn(Modifier.weight(1f), items, itemHeight)
-                if (buttonSide == Side.RIGHT) {
+                if (buttonsSide == Side.RIGHT) {
                     Separator()
                     ActionColumn(items, itemHeight, buttonsFn, scrollState)
                 }
