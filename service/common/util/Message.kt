@@ -117,7 +117,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE =
                 Connection(15, "Failed to create database '%s', due to duplicate.")
             val FAILED_TO_LOAD_SCHEMA =
-                Connection(16, "Failed to fetch schema for database '%s'.")
+                Connection(16, "Failed to fetch schema for database '%s', due to:\n%s")
         }
     }
 

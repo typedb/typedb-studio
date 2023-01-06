@@ -52,6 +52,7 @@ import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_LOAD_SCHEMA
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import mu.KotlinLogging
@@ -117,12 +118,18 @@ object DatabaseDialog {
                     enabled = Service.project.current != null && !Service.schema.hasRunningCommand,
                     tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
                 ) {
-                    Service.client.tryFetchSchema(databaseName).let { schema ->
-                        schema?.let { Service.project.tryCreateUntitledFile()?.let { file ->
-                            file.content(schema)
-                            file.tryOpen()
+                    try {
+                        Service.client.tryFetchSchema(databaseName).let { schema ->
+                            schema?.let {
+                                Service.project.tryCreateUntitledFile()?.let { file ->
+                                    file.content(schema)
+                                    file.tryOpen()
+                                }
+                            }
                         }
-                    } ?: Service.notification.userError(LOGGER, FAILED_TO_LOAD_SCHEMA, databaseName)
+                    } catch (e: Exception) {
+                        Service.notification.systemError(LOGGER, e, FAILED_TO_LOAD_SCHEMA, databaseName, e.message ?: UNKNOWN)
+                        Service.client.refreshDatabaseList()
                     }
                 },
                 IconButtonArg(
