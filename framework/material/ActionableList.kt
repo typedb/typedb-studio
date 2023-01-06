@@ -86,6 +86,15 @@ object ActionableList {
     }
 
     @Composable
+    fun <T: Any> SingleButtonLayout(
+        items: List<T>,
+        itemHeight: Dp = ITEM_HEIGHT,
+        modifier: Modifier,
+        buttonSide: Side,
+        buttonFn: (T) -> Form.IconButtonArg
+    ) = Layout(items, itemHeight, modifier, buttonSide) { listOf(buttonFn(it)) }
+
+    @Composable
     private fun bgColor(i: Int): Color =
         if (i % 2 == 0) Theme.studio.backgroundLight else Theme.studio.backgroundMedium
 

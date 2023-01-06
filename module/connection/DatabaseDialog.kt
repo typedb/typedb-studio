@@ -52,7 +52,9 @@ import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_LOAD_SCHEMA
 import com.vaticle.typedb.studio.service.common.util.Sentence
+import mu.KotlinLogging
 
 object DatabaseDialog {
 
@@ -60,6 +62,7 @@ object DatabaseDialog {
     private val MANAGER_HEIGHT = 500.dp
     private val SELECTOR_WIDTH = 400.dp
     private val SELECTOR_HEIGHT = 200.dp
+    private val LOGGER = KotlinLogging.logger {}
 
     private object CreateDatabaseForm : Form.State() {
         var name: String by mutableStateOf("")
@@ -114,11 +117,12 @@ object DatabaseDialog {
                     enabled = Service.project.current != null && !Service.schema.hasRunningCommand,
                     tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
                 ) {
-                    Service.client.fetchSchema(databaseName).let { schema ->
-                        Service.project.tryCreateUntitledFile()?.let { file ->
-                            file.content(schema ?: "")
+                    Service.client.tryFetchSchema(databaseName).let { schema ->
+                        schema?.let { Service.project.tryCreateUntitledFile()?.let { file ->
+                            file.content(schema)
                             file.tryOpen()
                         }
+                    } ?: Service.notification.userError(LOGGER, FAILED_TO_LOAD_SCHEMA, databaseName)
                     }
                 },
                 IconButtonArg(

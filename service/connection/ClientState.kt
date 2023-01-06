@@ -176,8 +176,6 @@ class ClientState constructor(
         return null // TODO
     }
 
-    fun fetchSchema(database: String): String? = _client?.databases()?.get(database)?.schema()
-
     fun tryCreateDatabase(database: String, onSuccess: () -> Unit) = mayRunCommandAsync {
         refreshDatabaseListFn()
         if (!databaseList.contains(database)) {
@@ -200,6 +198,8 @@ class ClientState constructor(
             notificationSrv.userWarning(LOGGER, FAILED_TO_DELETE_DATABASE, database, e.message ?: e.toString())
         }
     }
+
+    fun tryFetchSchema(database: String): String? = _client?.databases()?.get(database)?.schema()
 
     fun session(database: String, type: TypeDBSession.Type = DATA): TypeDBSession? {
         return _client?.session(database, type)
