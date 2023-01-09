@@ -40,4 +40,9 @@ internal class GlyphLine constructor(val annotatedString: AnnotatedString) {
         val coercedStart = start.coerceIn(0, length)
         return this.subSequence(coercedStart, end.coerceIn(coercedStart, length))
     }
+
+    class Glyph(val codePoint: Int) {
+        // Characters past 65535 (U+FFFF) are double-width, and exceed the 16-bit size that can fit in a Kotlin `Char`.
+        val doubleWidth: Boolean = codePoint >= 65535
+    }
 }
