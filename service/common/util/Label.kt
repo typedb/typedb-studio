@@ -100,7 +100,7 @@ object Label {
     const val EXPLAIN = "Explain"
     const val EXPORT = "Export"
     const val EXPORT_SCHEMA = "Export Schema"
-    const val EXPORT_SCHEMA_TYPES = "Export Type Schema"
+    const val EXPORT_SCHEMA_TYPES = "Export Schema Types"
     const val EXPORT_SYNTAX = "Export Syntax"
     const val EXTENDED_TYPE = "Extended Type"
     const val E_G_ = "e.g."
