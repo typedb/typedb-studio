@@ -98,12 +98,12 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
     private fun exportButton(navState: Navigator.NavigatorState<ThingTypeState<*, *>>) = IconButtonArg(
         icon = Icon.EXPORT,
         enabled = Service.project.current != null && !Service.schema.hasRunningCommand,
-        tooltip = Tooltip.Arg(title = Label.EXPORT_TYPE_SCHEMA)
+        tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA_TYPES)
     ) {
-        Service.schema.exportTypeSchemaAsync { typeSchema ->
+        Service.schema.exportSchemaTypesAsync { schemaTypes ->
             refresh(navState)
             Service.project.tryCreateUntitledFile()?.let { file ->
-                file.content(typeSchema)
+                file.content(schemaTypes)
                 file.tryOpen()
             }
         }
