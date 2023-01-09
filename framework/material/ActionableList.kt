@@ -59,8 +59,8 @@ object ActionableList {
         items: List<T>,
         itemHeight: Dp = ITEM_HEIGHT,
         modifier: Modifier,
-        buttonSide: Side,
-        buttonFn: (T) -> Form.IconButtonArg
+        buttonsSide: Side,
+        buttonsFn: (T) -> List<Form.IconButtonArg>
     ) {
         val scrollState = rememberScrollState()
 
@@ -71,19 +71,28 @@ object ActionableList {
 
         Box(modifier) {
             Row(Modifier.verticalScroll(scrollState)) {
-                if (buttonSide == Side.LEFT) {
-                    ActionColumn(items, itemHeight, buttonFn)
+                if (buttonsSide == Side.LEFT) {
+                    ActionColumn(items, itemHeight, buttonsFn)
                     Separator()
                 }
                 ItemColumn(Modifier.weight(1f), items, itemHeight)
-                if (buttonSide == Side.RIGHT) {
+                if (buttonsSide == Side.RIGHT) {
                     Separator()
-                    ActionColumn(items, itemHeight, buttonFn, scrollState)
+                    ActionColumn(items, itemHeight, buttonsFn, scrollState)
                 }
             }
             Scrollbar.Vertical(rememberScrollbarAdapter(scrollState), Modifier.align(Alignment.CenterEnd))
         }
     }
+
+    @Composable
+    fun <T: Any> SingleButtonLayout(
+        items: List<T>,
+        itemHeight: Dp = ITEM_HEIGHT,
+        modifier: Modifier,
+        buttonSide: Side,
+        buttonFn: (T) -> Form.IconButtonArg
+    ) = Layout(items, itemHeight, modifier, buttonSide) { listOf(buttonFn(it)) }
 
     @Composable
     private fun bgColor(i: Int): Color =
@@ -115,13 +124,13 @@ object ActionableList {
 
     @Composable
     private fun <T : Any> ActionColumn(
-        items: List<T>, itemHeight: Dp, buttonFn: (T) -> Form.IconButtonArg, scrollState: ScrollState? = null
+        items: List<T>, itemHeight: Dp, buttonsFn: (T) -> List<Form.IconButtonArg>, scrollState: ScrollState? = null
     ) {
         val density = LocalDensity.current.density
         var minWidth by remember { mutableStateOf(0.dp) }
         Column(Modifier.defaultMinSize(minWidth = minWidth)) {
             items.forEachIndexed { i, item ->
-                val button = buttonFn(item)
+                val buttons = buttonsFn(item)
                 Row(
                     Modifier.height(itemHeight)
                         .defaultMinSize(minWidth = minWidth)
@@ -130,17 +139,20 @@ object ActionableList {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RowSpacer()
-                    IconButton(
-                        icon = button.icon,
-                        hoverIcon = button.hoverIcon,
-                        modifier = Modifier.size(BUTTON_SIZE),
-                        iconColor = button.color(),
-                        iconHoverColor = button.hoverColor?.invoke(),
-                        disabledColor = button.disabledColor?.invoke(),
-                        tooltip = button.tooltip,
-                        onClick = button.onClick
-                    )
-                    RowSpacer()
+                    buttons.forEach {
+                        IconButton(
+                            icon = it.icon,
+                            hoverIcon = it.hoverIcon,
+                            modifier = Modifier.size(BUTTON_SIZE),
+                            iconColor = it.color(),
+                            iconHoverColor = it.hoverColor?.invoke(),
+                            disabledColor = it.disabledColor?.invoke(),
+                            tooltip = it.tooltip,
+                            onClick = it.onClick,
+                            enabled = it.enabled,
+                        )
+                        RowSpacer()
+                    }
                     scrollState?.let { if (it.maxValue > 0 && it.maxValue < Int.MAX_VALUE) RowSpacer() }
                 }
             }

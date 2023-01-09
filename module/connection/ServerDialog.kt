@@ -258,7 +258,7 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ClusterAddressList(modifier: Modifier) = ActionableList.Layout(
+    private fun ClusterAddressList(modifier: Modifier) = ActionableList.SingleButtonLayout(
         items = state.clusterAddresses.toMutableList(),
         modifier = modifier.border(1.dp, Theme.studio.border),
         buttonSide = ActionableList.Side.RIGHT,

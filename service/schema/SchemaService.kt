@@ -259,7 +259,7 @@ class SchemaService(
         execOnTypesUpdated()
     }
 
-    fun exportTypeSchemaAsync(onSuccess: (String) -> Unit) = coroutines.launchAndHandle(notification, LOGGER) {
+    fun exportSchemaTypesAsync(onSuccess: (String) -> Unit) = coroutines.launchAndHandle(notification, LOGGER) {
         session.typeSchema()?.let { onSuccess(it) }
     }
 

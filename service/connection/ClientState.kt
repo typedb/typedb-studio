@@ -199,6 +199,8 @@ class ClientState constructor(
         }
     }
 
+    fun tryFetchSchema(database: String): String? = _client?.databases()?.get(database)?.schema()
+
     fun session(database: String, type: TypeDBSession.Type = DATA): TypeDBSession? {
         return _client?.session(database, type)
     }

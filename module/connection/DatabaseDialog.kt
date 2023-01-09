@@ -52,7 +52,10 @@ import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
+import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
+import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_LOAD_SCHEMA
 import com.vaticle.typedb.studio.service.common.util.Sentence
+import mu.KotlinLogging
 
 object DatabaseDialog {
 
@@ -60,6 +63,7 @@ object DatabaseDialog {
     private val MANAGER_HEIGHT = 500.dp
     private val SELECTOR_WIDTH = 400.dp
     private val SELECTOR_HEIGHT = 200.dp
+    private val LOGGER = KotlinLogging.logger {}
 
     private object CreateDatabaseForm : Form.State() {
         var name: String by mutableStateOf("")
@@ -87,7 +91,7 @@ object DatabaseDialog {
         Column(Modifier.fillMaxSize()) {
             Form.Text(value = Sentence.MANAGE_DATABASES_MESSAGE, softWrap = true)
             Spacer(Modifier.height(Theme.DIALOG_PADDING))
-            DeletableDatabaseList(Modifier.fillMaxWidth().weight(1f))
+            ManageableDatabaseList(Modifier.fillMaxWidth().weight(1f))
             Spacer(Modifier.height(Theme.DIALOG_PADDING))
             CreateDatabaseForm()
             Spacer(Modifier.height(Theme.DIALOG_PADDING * 2))
@@ -103,15 +107,35 @@ object DatabaseDialog {
     }
 
     @Composable
-    private fun DeletableDatabaseList(modifier: Modifier) = ActionableList.Layout(
+    private fun ManageableDatabaseList(modifier: Modifier) = ActionableList.Layout(
         items = Service.client.databaseList,
         modifier = modifier.border(1.dp, Theme.studio.border),
-        buttonSide = ActionableList.Side.RIGHT,
-        buttonFn = { databaseName ->
-            IconButtonArg(
-                icon = Icon.DELETE,
-                color = { Theme.studio.errorStroke },
-                onClick = {
+        buttonsSide = ActionableList.Side.RIGHT,
+        buttonsFn = { databaseName ->
+            listOf(
+                IconButtonArg(
+                    icon = Icon.EXPORT,
+                    enabled = Service.project.current != null && !Service.schema.hasRunningCommand,
+                    tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
+                ) {
+                    try {
+                        Service.client.tryFetchSchema(databaseName).let { schema ->
+                            schema?.let {
+                                Service.project.tryCreateUntitledFile()?.let { file ->
+                                    file.content(schema)
+                                    file.tryOpen()
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Service.notification.systemError(LOGGER, e, FAILED_TO_LOAD_SCHEMA, databaseName, e.message ?: UNKNOWN)
+                        Service.client.refreshDatabaseList()
+                    }
+                },
+                IconButtonArg(
+                    icon = Icon.DELETE,
+                    color = { Theme.studio.errorStroke }
+                ) {
                     Service.confirmation.submit(
                         title = Label.DELETE_DATABASE,
                         message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
