@@ -441,9 +441,14 @@ object TextEditor {
             toDP(it.getCursorRectSafely(cursor.col).left, state.density)
         } ?: (fontWidth * cursor.col)
         val width = textLayout?.let {
-            if (cursor.col >= it.multiParagraph.intrinsics.annotatedString.length) fontWidth
-            else toDP(it.getBoundingBox(cursor.col).width, state.density)
+            if (text.isEmpty()) DEFAULT_FONT_WIDTH
+            else {
+                val offset = cursor.col.coerceIn(0, text.length - 1)
+                toDP(it.getBoundingBox(offset).width, state.density)
+            }
         } ?: fontWidth
+        println(textLayout)
+        println(width)
 
         if (visible || !state.isFocused) {
             Column(
