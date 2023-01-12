@@ -51,6 +51,7 @@ import com.vaticle.typedb.studio.service.connection.TransactionState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import mu.KotlinLogging
 
 class GraphArea(transactionState: TransactionState) {
 
@@ -63,6 +64,7 @@ class GraphArea(transactionState: TransactionState) {
     var theme: Color.GraphTheme? = null
     var typography: Typography.Theme? = null
     internal val textRenderer = TextRenderer(viewport)
+    private val LOGGER = KotlinLogging.logger {}
 
     companion object {
         val MIN_WIDTH = 120.dp
@@ -94,7 +96,7 @@ class GraphArea(transactionState: TransactionState) {
     // TODO: we tried using Composables.key here, but it performs drastically worse (while zooming in/out) than
     //       this explicit Composable with unused parameters - investigate why
     fun Graphics(physicsIteration: Long, density: Float, size: DpSize, scale: Float) {
-        // Take snapshots of vertices and edges so we can iterate them while the source collections are concurrently modified
+        // Take snapshots of vertices and edges, so we can iterate them while the source collections are concurrently modified
         val edges = graph.edges.toList()
         val vertices = graph.vertices.filter { it.readyToCompose && viewport.rectIsVisible(it.geometry.rect) }
         // Since vertices contain MutableStates and are created on a different thread, we need to ensure their lifetime
@@ -269,7 +271,7 @@ class GraphArea(transactionState: TransactionState) {
                         onDoubleTap = { point ->
                             graphArea.viewport.findVertexAt(point, graphArea.interactions)?.let {
                                 // TODO: this should require SHIFT-doubleclick, not doubleclick
-                                if (it is Vertex.Thing && it.thing.isInferred) graphArea.graphBuilder.explain(it)
+                                if (it is Vertex.Thing && it.thing.isInferred) graphArea.graphBuilder.tryExplain(it)
                             }
                         }
                     ) /* onTap = */ { point ->

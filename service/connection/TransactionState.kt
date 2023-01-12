@@ -50,11 +50,11 @@ class TransactionState constructor(
 
     class ConfigState constructor(
         private val valueFn: (value: Boolean) -> Boolean,
-        private val enabledFn: () -> Boolean
+        private val canToggleFn: () -> Boolean
     ) {
         private var _value by mutableStateOf(false)
         val value get() = valueFn(_value)
-        val enabled get() = enabledFn()
+        val canToggle get() = canToggleFn()
 
         fun toggle() {
             _value = !_value
@@ -76,15 +76,15 @@ class TransactionState constructor(
 
     val snapshot = ConfigState(
         valueFn = { it || type.isWrite },
-        enabledFn = { session.isOpen && !type.isWrite }
+        canToggleFn = { session.isOpen && !type.isWrite }
     )
     val infer = ConfigState(
         valueFn = { it && !type.isWrite },
-        enabledFn = { session.isOpen && !type.isWrite }
+        canToggleFn = { session.isOpen && !type.isWrite }
     )
     val explain = ConfigState(
         valueFn = { it && infer.value && snapshot.value },
-        enabledFn = { session.isOpen && infer.value && snapshot.value }
+        canToggleFn = { session.isOpen && infer.value && snapshot.value }
     )
 
     fun onSchemaWriteReset(function: () -> Unit) = onSchemaWriteReset.put(function)
