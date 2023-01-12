@@ -271,9 +271,7 @@ class GraphArea(transactionState: TransactionState) {
                         onDoubleTap = { point ->
                             graphArea.viewport.findVertexAt(point, graphArea.interactions)?.let {
                                 // TODO: this should require SHIFT-doubleclick, not doubleclick
-                                if (it is Vertex.Thing && it.thing.isInferred) {
-                                    graphArea.graphState.explain(it)
-                                }
+                                if (it is Vertex.Thing && it.thing.isInferred) graphArea.graphState.explain(it)
                             }
                         }
                     ) /* onTap = */ { point ->
