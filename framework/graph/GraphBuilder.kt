@@ -219,9 +219,9 @@ class GraphBuilder(
         vertexExplanations.clear()
     }
 
-    fun explain(vertex: Vertex.Thing) {
-        val explain = transactionSnapshot?.options()?.explain()?.get() ?: false
-        if (!explain) {
+    fun tryExplain(vertex: Vertex.Thing) {
+        val canExplain = transactionSnapshot?.options()?.explain()?.get() ?: false
+        if (!canExplain) {
             Service.notification.userWarning(LOGGER, EXPLAIN_NOT_ENABLED)
         } else {
             NotificationService.launchCompletableFuture(Service.notification, LOGGER) {
