@@ -48,7 +48,7 @@ class PhysicsRunner constructor(private val graphArea: GraphArea) {
 
     private fun step() {
         try {
-            graphArea.graphBuilder.dumpTo(graphArea.graph)
+            graphArea.graphState.dumpTo(graphArea.graph)
             graphArea.graph.physics.step()
         } catch (e: Exception) {
             Service.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)

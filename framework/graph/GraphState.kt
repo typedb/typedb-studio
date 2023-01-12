@@ -44,7 +44,7 @@ import kotlin.concurrent.withLock
 import kotlinx.coroutines.CoroutineScope
 import mu.KotlinLogging
 
-class GraphBuilder(
+class GraphState(
     val graph: Graph, private val transactionState: TransactionState, val coroutines: CoroutineScope,
     val schema: Schema = Schema()
 ) {
@@ -58,10 +58,11 @@ class GraphBuilder(
     private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
     private val lock = ReentrantReadWriteLock(true)
     private val transactionID = transactionState.transaction?.hashCode()
-    private val isInitialTransaction = transactionState.transaction.hashCode() == transactionID
     private val snapshotEnabled = transactionState.snapshot.value
+    private val isInitialTransaction: Boolean
+        get() = transactionState.transaction?.hashCode() == transactionID
     private val transactionSnapshot: TypeDBTransaction?
-        = if (snapshotEnabled && isInitialTransaction) transactionState.transaction else null
+        get() = if (snapshotEnabled && isInitialTransaction) transactionState.transaction else null
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -291,20 +292,20 @@ class GraphBuilder(
 
     class Schema(val typeAttributeOwnershipMap: ConcurrentMap<String, Boolean> = ConcurrentHashMap())
 
-    sealed class EdgeBuilder(val graphBuilder: GraphBuilder) {
+    sealed class EdgeBuilder(val graphState: GraphState) {
 
         abstract fun build()
 
         companion object {
-            fun of(concept: Concept, vertex: Vertex, graphBuilder: GraphBuilder, transaction: TypeDBTransaction?): EdgeBuilder {
+            fun of(concept: Concept, vertex: Vertex, graphState: GraphState, transaction: TypeDBTransaction?): EdgeBuilder {
                 return when (concept) {
                     is com.vaticle.typedb.client.api.concept.thing.Thing -> {
-                        Thing(concept, vertex as Vertex.Thing, transaction, graphBuilder)
+                        Thing(concept, vertex as Vertex.Thing, transaction, graphState)
                     }
                     is com.vaticle.typedb.client.api.concept.type.ThingType -> {
-                        ThingType(concept.asThingType(), vertex as Vertex.Type, transaction, graphBuilder)
+                        ThingType(concept.asThingType(), vertex as Vertex.Type, transaction, graphState)
                     }
-                    else -> throw graphBuilder.unsupportedEncodingException(concept)
+                    else -> throw graphState.unsupportedEncodingException(concept)
                 }
             }
         }
@@ -313,7 +314,7 @@ class GraphBuilder(
             val thing: com.vaticle.typedb.client.api.concept.thing.Thing,
             private val thingVertex: Vertex.Thing,
             private val transaction: TypeDBTransaction?,
-            ctx: GraphBuilder,
+            ctx: GraphState,
             ) : EdgeBuilder(ctx) {
             private val remoteThing get() = transaction?.let { thing.asRemote(it) }
 
@@ -325,9 +326,9 @@ class GraphBuilder(
 
             private fun loadIsaEdge() {
                 thing.type.let { type ->
-                    val typeVertex = graphBuilder.allTypeVertices[type.label.name()]
-                    if (typeVertex != null) graphBuilder.addEdge(Edge.Isa(thingVertex, typeVertex))
-                    else graphBuilder.addEdgeCandidate(EdgeCandidate.Isa(thingVertex, type.label.name()))
+                    val typeVertex = graphState.allTypeVertices[type.label.name()]
+                    if (typeVertex != null) graphState.addEdge(Edge.Isa(thingVertex, typeVertex))
+                    else graphState.addEdgeCandidate(EdgeCandidate.Isa(thingVertex, type.label.name()))
                 }
             }
 
@@ -342,18 +343,18 @@ class GraphBuilder(
                         val attribute = answer.get(attr).asAttribute()
                         val isEdgeInferred =
                             attributeIsExplainable(attr, answer) || ownershipIsExplainable(attr, answer)
-                        val attributeVertex = graphBuilder.allThingVertices[attribute.iid] as? Vertex.Thing.Attribute
+                        val attributeVertex = graphState.allThingVertices[attribute.iid] as? Vertex.Thing.Attribute
                         if (attributeVertex != null) {
-                            graphBuilder.addEdge(Edge.Has(thingVertex, attributeVertex, isEdgeInferred))
+                            graphState.addEdge(Edge.Has(thingVertex, attributeVertex, isEdgeInferred))
                         } else {
-                            graphBuilder.addEdgeCandidate(EdgeCandidate.Has(thingVertex, attribute.iid, isEdgeInferred))
+                            graphState.addEdgeCandidate(EdgeCandidate.Has(thingVertex, attribute.iid, isEdgeInferred))
                         }
                     }
             }
 
             private fun canOwnAttributes(): Boolean {
                 val typeLabel = thing.type.label.name()
-                return graphBuilder.schema.typeAttributeOwnershipMap.getOrPut(typeLabel) {
+                return graphState.schema.typeAttributeOwnershipMap.getOrPut(typeLabel) {
                     // non-atomic update as Concept API call is idempotent and cheaper than locking the map
                     transaction?.let {
                         thing.type.asRemote(it).owns.findAny().isPresent
@@ -370,7 +371,7 @@ class GraphBuilder(
             }
 
             private fun loadRoleplayerEdgesAndVertices() {
-                graphBuilder.apply {
+                graphState.apply {
                     remoteThing?.asRelation()?.playersByRoleType?.entries?.forEach { (roleType, roleplayers) ->
                         roleplayers.forEach { rp ->
                             val result = putVertexIfAbsent(rp.iid, rp, newThingVertices, allThingVertices) {
@@ -392,7 +393,7 @@ class GraphBuilder(
             private val thingType: com.vaticle.typedb.client.api.concept.type.ThingType,
             private val typeVertex: Vertex.Type,
             private val transaction: TypeDBTransaction?,
-            ctx: GraphBuilder,
+            ctx: GraphState,
             ) : EdgeBuilder(ctx) {
             private val remoteThingType get() = transaction?.let { thingType.asRemote(it) }
 
@@ -404,18 +405,18 @@ class GraphBuilder(
 
             private fun loadSubEdge() {
                 remoteThingType?.supertype?.let { supertype ->
-                    val supertypeVertex = graphBuilder.allTypeVertices[supertype.label.name()]
-                    if (supertypeVertex != null) graphBuilder.addEdge(Edge.Sub(typeVertex, supertypeVertex))
-                    else graphBuilder.addEdgeCandidate(EdgeCandidate.Sub(typeVertex, supertype.label.name()))
+                    val supertypeVertex = graphState.allTypeVertices[supertype.label.name()]
+                    if (supertypeVertex != null) graphState.addEdge(Edge.Sub(typeVertex, supertypeVertex))
+                    else graphState.addEdgeCandidate(EdgeCandidate.Sub(typeVertex, supertype.label.name()))
                 }
             }
 
             private fun loadOwnsEdges() {
                 remoteThingType?.owns?.forEach { attrType ->
                     val attrTypeLabel = attrType.label.name()
-                    val attrTypeVertex = graphBuilder.allTypeVertices[attrTypeLabel] as? Vertex.Type.Attribute
-                    if (attrTypeVertex != null) graphBuilder.addEdge(Edge.Owns(typeVertex, attrTypeVertex))
-                    else graphBuilder.addEdgeCandidate(EdgeCandidate.Owns(typeVertex, attrTypeLabel))
+                    val attrTypeVertex = graphState.allTypeVertices[attrTypeLabel] as? Vertex.Type.Attribute
+                    if (attrTypeVertex != null) graphState.addEdge(Edge.Owns(typeVertex, attrTypeVertex))
+                    else graphState.addEdgeCandidate(EdgeCandidate.Owns(typeVertex, attrTypeLabel))
                 }
             }
 
@@ -423,11 +424,11 @@ class GraphBuilder(
                 remoteThingType?.plays?.forEach { roleType ->
                     val relationTypeLabel = roleType.label.scope().get()
                     val roleLabel = roleType.label.name()
-                    val relationTypeVertex = graphBuilder.allTypeVertices[relationTypeLabel] as? Vertex.Type.Relation
+                    val relationTypeVertex = graphState.allTypeVertices[relationTypeLabel] as? Vertex.Type.Relation
                     if (relationTypeVertex != null) {
-                        graphBuilder.addEdge(Edge.Plays(relationTypeVertex, typeVertex, roleLabel))
+                        graphState.addEdge(Edge.Plays(relationTypeVertex, typeVertex, roleLabel))
                     } else {
-                        graphBuilder.addEdgeCandidate(EdgeCandidate.Plays(relationTypeLabel, typeVertex, roleLabel))
+                        graphState.addEdgeCandidate(EdgeCandidate.Plays(relationTypeLabel, typeVertex, roleLabel))
                     }
                 }
             }
