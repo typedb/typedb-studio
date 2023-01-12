@@ -58,7 +58,7 @@ class GraphArea(transactionState: TransactionState) {
     val interactions = Interactions(this)
     val graph = Graph(interactions)
     val coroutines = CoroutineScope(Dispatchers.Default)
-    val graphState = GraphState(graph, transactionState, coroutines)
+    val graphBuilder = GraphBuilder(graph, transactionState, coroutines)
     val viewport = Viewport(graph)
     val physicsRunner = PhysicsRunner(this)
     var theme: Color.GraphTheme? = null
@@ -271,7 +271,7 @@ class GraphArea(transactionState: TransactionState) {
                         onDoubleTap = { point ->
                             graphArea.viewport.findVertexAt(point, graphArea.interactions)?.let {
                                 // TODO: this should require SHIFT-doubleclick, not doubleclick
-                                if (it is Vertex.Thing && it.thing.isInferred) graphArea.graphState.explain(it)
+                                if (it is Vertex.Thing && it.thing.isInferred) graphArea.graphBuilder.explain(it)
                             }
                         }
                     ) /* onTap = */ { point ->

@@ -56,10 +56,10 @@ class GraphVisualiser constructor(transactionState: TransactionState) {
     }
 
     fun output(conceptMap: ConceptMap) {
-        graphArea.graphState.loadConceptMap(conceptMap)
+        graphArea.graphBuilder.loadConceptMap(conceptMap)
     }
 
     fun setCompleted() {
-        graphArea.graphState.completeAllEdges()
+        graphArea.graphBuilder.completeAllEdges()
     }
 }
