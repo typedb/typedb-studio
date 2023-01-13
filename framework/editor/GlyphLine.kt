@@ -58,6 +58,23 @@ internal class GlyphLine constructor(val annotatedString: AnnotatedString) {
         }
     }
 
+    fun offsetToOffset(offset: Int): Int {
+        var offset = offset
+        var offset2 = 0
+        for (code in codepoints) {
+            if (code >= 65535) {
+                offset -= 2
+            } else {
+                offset -= 1
+            }
+            offset2 += 1
+            if (offset == 0) {
+                return offset2
+            }
+        }
+        return 0
+    }
+
     class Glyph(val codePoint: Int) {
         // Characters past 65535 (U+FFFF) are double-width, and exceed the 16-bit size that can fit in a Kotlin `Char`.
         val doubleWidth: Boolean = codePoint >= 65535

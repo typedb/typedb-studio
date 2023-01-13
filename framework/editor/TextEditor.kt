@@ -424,8 +424,8 @@ object TextEditor {
         val density = state.density
         val start = if (selection.min.row < index) 0 else selection.min.col
         val end = if (selection.max.row > index) state.content[index].length else selection.max.col
-        var startPos = textLayout?.let { toDP(it.getCursorRectSafely(start).left, density) } ?: (fontWidth * start)
-        var endPos = textLayout?.let { toDP(it.getCursorRectSafely(end).right, density) } ?: (fontWidth * end)
+        var startPos = textLayout?.let { toDP(it.getCursorRectSafely(state.content[selection.min.row].getOffset(start)).left, density) } ?: (fontWidth * start)
+        var endPos = textLayout?.let { toDP(it.getCursorRectSafely(state.content[selection.max.row].getOffset(end)).right, density) } ?: (fontWidth * end)
         if (selection.min.row < index) startPos -= AREA_PADDING_HOR
         if (selection.max.row > index && length > 0) endPos += AREA_PADDING_HOR
         Box(Modifier.offset(x = startPos).width(endPos - startPos).height(state.lineHeight).background(color))
