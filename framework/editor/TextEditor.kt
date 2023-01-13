@@ -437,18 +437,21 @@ object TextEditor {
     ) {
         val cursor = state.target.cursor
         var visible by remember { mutableStateOf(true) }
-        val offsetX = textLayout?.let {
-            toDP(it.getCursorRectSafely(cursor.col).left, state.density)
-        } ?: (fontWidth * cursor.col)
         val width = textLayout?.let {
             if (text.isEmpty()) DEFAULT_FONT_WIDTH
             else {
-                val offset = cursor.col.coerceIn(0, text.length - 1)
+                val offset = GlyphLine(text).getOffset(cursor.col.coerceIn(0, GlyphLine(text).length - 1))
                 toDP(it.getBoundingBox(offset).width, state.density)
             }
         } ?: fontWidth
-        println(textLayout)
-        println(width)
+//        println(text)
+//        for (i in 0..GlyphLine(text).codepoints.size) {
+//            println(textLayout?.getCursorRectSafely(GlyphLine(text).getOffset(i))?.left)
+//        }
+
+        val offsetX = textLayout?.let {
+            toDP(it.getCursorRectSafely(GlyphLine(text).getOffset(cursor.col)).left, state.density)
+        } ?: (width * cursor.col)
 
         if (visible || !state.isFocused) {
             Column(
@@ -460,7 +463,7 @@ object TextEditor {
                 Text(
                     text = AnnotatedString.Builder(
                         if (cursor.col >= text.length) AnnotatedString("")
-                        else text.subSequence(cursor.col, cursor.col + 1)
+                        else GlyphLine(text).subSequenceSafely(cursor.col, cursor.col + 1).annotatedString
                     ).also { it.addStyle(SpanStyle(Theme.studio.backgroundDark), 0, 1) }.toAnnotatedString(),
                     modifier = Modifier.offset(y = -CURSOR_LINE_PADDING),
                     style = font

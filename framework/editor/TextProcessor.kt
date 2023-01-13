@@ -177,7 +177,7 @@ internal interface TextProcessor {
         private fun indent(strings: List<GlyphLine>, spaces: Int): List<GlyphLine> {
             return strings.map {
                 if (spaces > 0) GlyphLine(AnnotatedString(" ".repeat(spaces)) + it.annotatedString)
-                else if (spaces < 0) it.subSequence((-spaces).coerceAtMost(prefixSpaces(it)), it.length)
+                else if (spaces < 0) it.subSequenceSafely((-spaces).coerceAtMost(prefixSpaces(it)), it.length)
                 else it
             }
         }
@@ -209,7 +209,7 @@ internal interface TextProcessor {
             fun uncommentSelection(oldLines: List<GlyphLine>) = oldLines.map {
                 if (it.isEmpty()) it
                 else it.annotatedString.indexOf(commentToken).let { index ->
-                    GlyphLine(it.subSequence(0, index).annotatedString + it.subSequence(index + commentToken.length, it.length).annotatedString)
+                    GlyphLine(it.subSequenceSafely(0, index).annotatedString + it.subSequenceSafely(index + commentToken.length, it.length).annotatedString)
                 }
             }
 
