@@ -389,8 +389,8 @@ object TextEditor {
                 .defaultMinSize(minWidth = minWidth).height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HOR)
         ) {
-            val isRenderedUpToDate = state.rendering.hasVersion(index, state.processor.version)
-            val textLayout = if (isRenderedUpToDate) state.rendering.get(index) else null
+//            val isRenderedUpToDate = state.rendering.hasVersion(index, state.processor.version)
+            val textLayout = state.rendering.get(index)
             val findColor = Theme.studio.warningStroke.copy(Theme.FIND_SELECTION_ALPHA)
             state.finder.matches(index).forEach {
                 Selection(state, it, index, textLayout, findColor, line.length, fontWidth)
@@ -440,8 +440,8 @@ object TextEditor {
         val width = textLayout?.let {
             if (text.isEmpty()) DEFAULT_FONT_WIDTH
             else {
-                val offset = GlyphLine(text).getOffset(cursor.col.coerceIn(0, GlyphLine(text).length - 1))
-                toDP(it.getBoundingBox(offset).width, state.density)
+                val offset = GlyphLine(textLayout.layoutInput.text).getOffset(cursor.col.coerceIn(0, textLayout.layoutInput.text.length - 1))
+                toDP(it.getBoundingBox(offset.coerceIn(0, textLayout.layoutInput.text.length - 1)).width, state.density)
             }
         } ?: fontWidth
 
