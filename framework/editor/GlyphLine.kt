@@ -23,20 +23,26 @@ import kotlin.streams.toList
 
 internal class GlyphLine constructor(val annotatedString: AnnotatedString) {
 
+    constructor(text: String) : this(AnnotatedString(text))
+
     val text = annotatedString.text
     val codepoints = annotatedString.codePoints().toList()
     val length = codepoints.size
     fun isEmpty(): Boolean = length == 0
 
-    fun subSequence(start: Int, end: Int): GlyphLine {
+    private fun subSequence(start: Int, end: Int): GlyphLine {
         val codepoints = annotatedString.codePoints().toList()
         val codepointSubsequence = codepoints.subList(start, end)
         val text = codepointSubsequence.joinToString("") { Character.toString(it) }
-        return GlyphLine(AnnotatedString(text))
+        return GlyphLine(text)
+    }
+
+    operator fun plus(glyphLine: GlyphLine): GlyphLine {
+        return GlyphLine(this.text + glyphLine.text)
     }
 
     fun subSequenceSafely(start: Int, end: Int): GlyphLine {
-        if (isEmpty()) return GlyphLine(AnnotatedString(""))
+        if (isEmpty()) return GlyphLine("")
         val coercedStart = start.coerceIn(0, length)
         val coercedEnd = end.coerceIn(coercedStart, length)
         return this.subSequence(coercedStart, coercedEnd)
@@ -73,10 +79,5 @@ internal class GlyphLine constructor(val annotatedString: AnnotatedString) {
             }
         }
         return 0
-    }
-
-    class Glyph(val codePoint: Int) {
-        // Characters past 65535 (U+FFFF) are double-width, and exceed the 16-bit size that can fit in a Kotlin `Char`.
-        val doubleWidth: Boolean = codePoint >= 65535
     }
 }

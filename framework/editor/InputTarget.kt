@@ -475,7 +475,7 @@ internal class InputTarget constructor(
     }
 
     internal fun selectedTextLines(): List<GlyphLine> {
-        if (selection == null) return listOf(GlyphLine(AnnotatedString("")))
+        if (selection == null) return listOf(GlyphLine(""))
         val start = selection!!.min
         val end = selection!!.max
         val list = mutableListOf<GlyphLine>()

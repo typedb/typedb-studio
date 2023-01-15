@@ -95,7 +95,6 @@ import com.vaticle.typedb.studio.service.schema.ThingTypeState
 import java.awt.Window
 import java.awt.event.WindowEvent
 import javax.swing.UIManager
-import kotlin.streams.toList
 import kotlin.system.exitProcess
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging

@@ -24,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.common.Util.subSequenceSafely
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Companion.prefixSpaces
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Selection
@@ -176,7 +175,7 @@ internal interface TextProcessor {
 
         private fun indent(strings: List<GlyphLine>, spaces: Int): List<GlyphLine> {
             return strings.map {
-                if (spaces > 0) GlyphLine(AnnotatedString(" ".repeat(spaces)) + it.annotatedString)
+                if (spaces > 0) GlyphLine(" ".repeat(spaces) + it.annotatedString)
                 else if (spaces < 0) it.subSequenceSafely((-spaces).coerceAtMost(prefixSpaces(it)), it.length)
                 else it
             }
@@ -189,9 +188,7 @@ internal interface TextProcessor {
 
         override fun deleteSelection() {
             if (target.selection == null) return
-            println(target.selection)
             val change = TextChange(deletionOperation())
-            println(change)
             applyChange(change)
             queueChangeStack(change)
         }
@@ -205,7 +202,7 @@ internal interface TextProcessor {
             val textLines = target.selectedTextLines()
             val commentToken = fileType.commentToken
 
-            fun commentSelection(oldLines: List<GlyphLine>) = oldLines.map { GlyphLine(AnnotatedString(commentToken) + it.annotatedString) }
+            fun commentSelection(oldLines: List<GlyphLine>) = oldLines.map { GlyphLine(commentToken + it.annotatedString) }
             fun uncommentSelection(oldLines: List<GlyphLine>) = oldLines.map {
                 if (it.isEmpty()) it
                 else it.annotatedString.indexOf(commentToken).let { index ->
@@ -302,7 +299,7 @@ internal interface TextProcessor {
             } else {
                 target.updateCursor(Cursor(maxRow, content[maxRow].length), false)
                 insertText("\n")
-                insertText(lineAndBreak.first().annotatedString)
+                insertText(lineAndBreak.first())
             }
             target.updatePosition(newPosition)
         }
@@ -324,7 +321,7 @@ internal interface TextProcessor {
                 insertText(breakAndLine)
             } else {
                 target.updateCursor(Cursor(minRow, 0), false)
-                insertText(breakAndLine.last().annotatedString)
+                insertText(breakAndLine.last())
                 insertText("\n")
             }
 
@@ -335,16 +332,12 @@ internal interface TextProcessor {
             target.updatePosition(newPosition)
         }
 
-        private fun asAnnotatedLines(text: String): List<GlyphLine> {
-            return if (text.isEmpty()) listOf() else text.split("\n").map { GlyphLine(AnnotatedString(it)) }
+        private fun asGlyphLines(text: String): List<GlyphLine> {
+            return if (text.isEmpty()) listOf() else text.split("\n").map { GlyphLine(it) }
         }
 
         override fun insertText(text: String): Insertion? {
             return insertText(text, recomputeFinder = true)
-        }
-
-        private fun insertText(text: AnnotatedString): Insertion? {
-            return insertText(listOf(GlyphLine(text)))
         }
 
         private fun insertText(text: GlyphLine): Insertion? {
@@ -352,7 +345,7 @@ internal interface TextProcessor {
         }
 
         private fun insertText(text: String, recomputeFinder: Boolean): Insertion? {
-            return insertText(asAnnotatedLines(text), recomputeFinder)
+            return insertText(asGlyphLines(text), recomputeFinder)
         }
 
         private fun insertText(strings: List<GlyphLine>, recomputeFinder: Boolean = true): Insertion? {
@@ -420,8 +413,8 @@ internal interface TextProcessor {
             val prefix = content[cursor.row].subSequenceSafely(0, cursor.col)
             val suffix = content[cursor.row].let { it.subSequenceSafely(cursor.col, it.length) }
             val texts = insertion.text.toMutableList()
-            texts[0] = GlyphLine(prefix.annotatedString + texts[0].annotatedString)
-            texts[texts.size - 1] = GlyphLine(texts[texts.size - 1].annotatedString + suffix.annotatedString)
+            texts[0] = prefix + texts[0]
+            texts[texts.size - 1] = texts[texts.size - 1] + suffix
 
             content[cursor.row] = texts[0]
             if (texts.size > 1) {
