@@ -18,11 +18,11 @@
 
 package com.vaticle.typedb.studio.framework.editor
 
-import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Cursor.Companion.min
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Selection
+import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
 import kotlin.streams.toList
 
 internal class TextChange(val operations: List<Operation>) {

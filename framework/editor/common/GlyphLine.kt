@@ -16,18 +16,22 @@
  *
  */
 
-package com.vaticle.typedb.studio.framework.editor
+package com.vaticle.typedb.studio.framework.editor.common
 
 import androidx.compose.ui.text.AnnotatedString
+import kotlin.math.ceil
+import kotlin.math.log2
 import kotlin.streams.toList
 
-internal class GlyphLine constructor(val annotatedString: AnnotatedString) {
+class GlyphLine constructor(val annotatedString: AnnotatedString) {
 
     constructor(text: String) : this(AnnotatedString(text))
 
+    private val codepoints = annotatedString.codePoints().toList()
+
     val text = annotatedString.text
-    val codepoints = annotatedString.codePoints().toList()
     val length = codepoints.size
+
     fun isEmpty(): Boolean = length == 0
 
     private fun subSequence(start: Int, end: Int): GlyphLine {
@@ -49,33 +53,18 @@ internal class GlyphLine constructor(val annotatedString: AnnotatedString) {
     }
 
     fun getOffset(offset: Int): Int {
-        return if (offset > length) {
-            getOffset(length)
-        } else {
-            var count = 0
-            for (code in codepoints.subList(0, offset)) {
-                count += if (code >= 65535) {
-                    2
-                } else {
-                    1
-                }
-            }
-            count
-        }
+//        val offset = offset.coerceAtMost(length - 1)
+        return codepoints.subList(0, offset).sumOf { ceil(log2(it.toDouble()) / 16).toInt() }
     }
 
-    fun offsetToOffset(offset: Int): Int {
-        var offset = offset
-        var offset2 = 0
+    fun charToGlyphOffset(_charOffset: Int): Int {
+        var charOffset = _charOffset
+        var glyphOffset = 0
         for (code in codepoints) {
-            if (code >= 65535) {
-                offset -= 2
-            } else {
-                offset -= 1
-            }
-            offset2 += 1
-            if (offset == 0) {
-                return offset2
+            charOffset -= ceil(log2(code.toDouble()) / 16).toInt()
+            glyphOffset += 1
+            if (charOffset == 0) {
+                return glyphOffset
             }
         }
         return 0

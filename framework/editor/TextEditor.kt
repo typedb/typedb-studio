@@ -75,6 +75,7 @@ import com.vaticle.typedb.studio.framework.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.framework.editor.TextProcessor.Companion.normaliseWhiteSpace
+import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
 import com.vaticle.typedb.studio.framework.editor.highlighter.SyntaxHighlighter.highlight
 import com.vaticle.typedb.studio.framework.material.ContextMenu
 import com.vaticle.typedb.studio.framework.material.Scrollbar
@@ -231,12 +232,12 @@ object TextEditor {
 
         internal fun reloadContent(file: FileState) {
             content.clear()
-            content.addAll(highlight(file.readContent().map { normaliseWhiteSpace(it) }, file.fileType).map { GlyphLine(it) })
+            content.addAll(highlight(file.readContent().map { normaliseWhiteSpace(it) }, file.fileType))
             rendering.reinitialize(content.size)
         }
 
         fun addContent(text: String, type: Property.FileType = Property.FileType.UNKNOWN) {
-            content.addAll(text.split("\n").map { GlyphLine(highlight(it, type)) })
+            content.addAll(text.split("\n").map { highlight(it, type) })
         }
 
         fun addContent(text: String, highlighter: (String) -> AnnotatedString) {
@@ -410,7 +411,7 @@ object TextEditor {
                 }
                 Spacer(Modifier.width(RIGHT_PADDING))
             }
-            if (cursor.row == index) Cursor(state, line.annotatedString, textLayout, font, fontWidth, lineGap)
+            if (cursor.row == index) Cursor(state, line, textLayout, font, fontWidth, lineGap)
         }
     }
 
@@ -424,8 +425,10 @@ object TextEditor {
         val density = state.density
         val start = if (selection.min.row < index) 0 else selection.min.col
         val end = if (selection.max.row > index) state.content[index].length else selection.max.col
-        var startPos = textLayout?.let { toDP(it.getCursorRectSafely(state.content[index].getOffset(start)).left, density) } ?: (fontWidth * start)
-        var endPos = textLayout?.let { toDP(it.getCursorRectSafely(state.content[index].getOffset(end)).right, density) } ?: (fontWidth * end)
+        val startOffset = state.content[index].getOffset(start)
+        val endOffset = state.content[index].getOffset(end)
+        var startPos = textLayout?.let { toDP(it.getCursorRectSafely(startOffset).left, density) } ?: (fontWidth * start)
+        var endPos = textLayout?.let { toDP(it.getCursorRectSafely(endOffset).right, density) } ?: (fontWidth * end)
         if (selection.min.row < index) startPos -= AREA_PADDING_HOR
         if (selection.max.row > index && length > 0) endPos += AREA_PADDING_HOR
         Box(Modifier.offset(x = startPos).width(endPos - startPos).height(state.lineHeight).background(color))
@@ -433,12 +436,12 @@ object TextEditor {
 
     @Composable
     private fun Cursor(
-        state: State, text: AnnotatedString, textLayout: TextLayoutResult?, font: TextStyle, fontWidth: Dp, lineGap: Dp
+        state: State, line: GlyphLine, textLayout: TextLayoutResult?, font: TextStyle, fontWidth: Dp, lineGap: Dp
     ) {
         val cursor = state.target.cursor
         var visible by remember { mutableStateOf(true) }
         val width = textLayout?.let {
-            if (text.isEmpty()) DEFAULT_FONT_WIDTH
+            if (line.isEmpty()) DEFAULT_FONT_WIDTH
             else {
                 val offset = GlyphLine(textLayout.layoutInput.text).getOffset(cursor.col.coerceIn(0, textLayout.layoutInput.text.length - 1))
                 toDP(it.getBoundingBox(offset.coerceIn(0, textLayout.layoutInput.text.length - 1)).width, state.density)
@@ -446,7 +449,7 @@ object TextEditor {
         } ?: fontWidth
 
         val offsetX = textLayout?.let {
-            toDP(it.getCursorRectSafely(GlyphLine(text).getOffset(cursor.col)).left, state.density)
+            toDP(it.getCursorRectSafely(line.getOffset(cursor.col)).left, state.density)
         } ?: (width * cursor.col)
 
         if (visible || !state.isFocused) {
@@ -458,8 +461,8 @@ object TextEditor {
                 Spacer(Modifier.height(lineGap))
                 Text(
                     text = AnnotatedString.Builder(
-                        if (cursor.col >= text.length) AnnotatedString("")
-                        else GlyphLine(text).subSequenceSafely(cursor.col, cursor.col + 1).annotatedString
+                        if (cursor.col >= line.length) AnnotatedString("")
+                        else line.subSequenceSafely(cursor.col, cursor.col + 1).annotatedString
                     ).also { it.addStyle(SpanStyle(Theme.studio.backgroundDark), 0, 1) }.toAnnotatedString(),
                     modifier = Modifier.offset(y = -CURSOR_LINE_PADDING),
                     style = font

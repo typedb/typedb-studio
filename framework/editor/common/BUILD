@@ -18,29 +18,32 @@
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
-package(default_visibility = ["//framework/editor:__pkg__"])
+package(default_visibility = [
+    "//framework/editor:__pkg__",
+    "//framework/editor/highlighter:__pkg__",
+])
 
 kt_jvm_library(
-    name = "highlighter",
+    name = "common",
     srcs = glob(["*.kt"]),
     plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
     deps = [
-        "//service/common:common",
-        "//service/project:project",
-        "//service/page:page",
-        "//framework/editor/common:common",
-        "//framework/editor/highlighter/common:common",
-        "//framework/editor/highlighter/typeql:typeql",
+        # External Vaticle Dependencies
+        "@vaticle_typedb_common//:common",
 
         # External Maven Dependencies
-        "@maven//:io_github_microutils_kotlin_logging_jvm",
+        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
+        "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
+        "@maven//:org_jetbrains_compose_material_material_desktop",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_desktop",
+        "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
-        "@maven//:org_slf4j_slf4j_api",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-framework-editor-highlighter:{pom_version}"],
+    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-framework-editor-common:{pom_version}"],
 )
 
 checkstyle_test(

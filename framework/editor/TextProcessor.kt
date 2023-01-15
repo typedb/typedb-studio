@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Companion.prefixSpaces
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Cursor
@@ -30,6 +29,7 @@ import com.vaticle.typedb.studio.framework.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.framework.editor.TextChange.Deletion
 import com.vaticle.typedb.studio.framework.editor.TextChange.Insertion
 import com.vaticle.typedb.studio.framework.editor.TextChange.ReplayType
+import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
 import com.vaticle.typedb.studio.framework.editor.highlighter.SyntaxHighlighter
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FILE_NOT_WRITABLE
@@ -206,7 +206,7 @@ internal interface TextProcessor {
             fun uncommentSelection(oldLines: List<GlyphLine>) = oldLines.map {
                 if (it.isEmpty()) it
                 else it.annotatedString.indexOf(commentToken).let { index ->
-                    GlyphLine(it.subSequenceSafely(0, index).annotatedString + it.subSequenceSafely(index + commentToken.length, it.length).annotatedString)
+                    it.subSequenceSafely(0, index)+ it.subSequenceSafely(index + commentToken.length, it.length)
                 }
             }
 
@@ -399,7 +399,7 @@ internal interface TextProcessor {
             val end = deletion.selection().max
             val prefix = content[start.row].subSequenceSafely(0, start.col)
             val suffix = content[end.row].subSequenceSafely(end.col, content[end.row].length)
-            content[start.row] = GlyphLine(prefix.annotatedString + suffix.annotatedString)
+            content[start.row] = prefix + suffix
             if (end.row > start.row) {
                 rendering.removeRange(start.row + 1, end.row + 1)
                 content.removeRange(start.row + 1, end.row + 1)
@@ -450,7 +450,7 @@ internal interface TextProcessor {
         }
 
         private fun highlight(lines: IntRange) {
-            lines.forEach { content[it] = GlyphLine(SyntaxHighlighter.highlight(content[it].text, fileType)) }
+            lines.forEach { content[it] = SyntaxHighlighter.highlight(content[it].text, fileType) }
         }
 
         private fun callOnChangeEnd() {

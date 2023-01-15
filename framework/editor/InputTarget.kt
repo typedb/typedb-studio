@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Util.getCursorRectSafely
 import com.vaticle.typedb.studio.framework.common.Util.toDP
+import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.StatusService.Key.TEXT_CURSOR_POSITION
 import kotlin.math.floor
@@ -168,7 +169,7 @@ internal class InputTarget constructor(
         val relY = y - textAreaBounds.top + verScroller.offset.value
         val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount - 1)
         val offsetInLine = Offset(relX * density, (relY - (row * lineHeight.value)) * density)
-        val col = content[row].offsetToOffset(rendering.get(row)?.getOffsetForPosition(offsetInLine) ?: 0)
+        val col = content[row].charToGlyphOffset(rendering.get(row)?.getOffsetForPosition(offsetInLine) ?: 0)
         return Cursor(row, col)
     }
 
