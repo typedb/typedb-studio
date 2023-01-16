@@ -52,7 +52,7 @@ class GlyphLine constructor(val annotatedString: AnnotatedString) {
         return this.subSequence(coercedStart, coercedEnd)
     }
 
-    fun getOffset(offset: Int): Int {
+    fun glyphToCharOffset(offset: Int): Int {
 //        val offset = offset.coerceAtMost(length - 1)
         return codepoints.subList(0, offset).sumOf { ceil(log2(it.toDouble()) / 16).toInt() }
     }

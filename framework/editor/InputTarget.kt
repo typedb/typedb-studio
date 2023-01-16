@@ -261,7 +261,7 @@ internal class InputTarget constructor(
             if (y <= top) verScroller.updateOffsetBy((y - top).dp - padding)
             else if (y >= bottom) verScroller.updateOffsetBy((y - bottom).dp + padding)
         }
-        val cursorRect = rendering.get(cursor.row)?.getCursorRectSafely(content[cursor.row].getOffset(cursor.col)) ?: Rect(0f, 0f, 0f, 0f)
+        val cursorRect = rendering.get(cursor.row)?.getCursorRectSafely(content[cursor.row].glyphToCharOffset(cursor.col)) ?: Rect(0f, 0f, 0f, 0f)
         val x = textAreaBounds.left + toDP(cursorRect.left - horScroller.value, density).value
         val y = textAreaBounds.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
         mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight)

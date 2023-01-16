@@ -425,8 +425,8 @@ object TextEditor {
         val density = state.density
         val start = if (selection.min.row < index) 0 else selection.min.col
         val end = if (selection.max.row > index) state.content[index].length else selection.max.col
-        val startOffset = state.content[index].getOffset(start)
-        val endOffset = state.content[index].getOffset(end)
+        val startOffset = state.content[index].glyphToCharOffset(start)
+        val endOffset = state.content[index].glyphToCharOffset(end)
         var startPos = textLayout?.let { toDP(it.getCursorRectSafely(startOffset).left, density) } ?: (fontWidth * start)
         var endPos = textLayout?.let { toDP(it.getCursorRectSafely(endOffset).right, density) } ?: (fontWidth * end)
         if (selection.min.row < index) startPos -= AREA_PADDING_HOR
@@ -443,13 +443,13 @@ object TextEditor {
         val width = textLayout?.let {
             if (line.isEmpty()) DEFAULT_FONT_WIDTH
             else {
-                val offset = GlyphLine(textLayout.layoutInput.text).getOffset(cursor.col.coerceIn(0, textLayout.layoutInput.text.length - 1))
+                val offset = GlyphLine(textLayout.layoutInput.text).glyphToCharOffset(cursor.col.coerceIn(0, textLayout.layoutInput.text.length - 1))
                 toDP(it.getBoundingBox(offset.coerceIn(0, textLayout.layoutInput.text.length - 1)).width, state.density)
             }
         } ?: fontWidth
 
         val offsetX = textLayout?.let {
-            toDP(it.getCursorRectSafely(line.getOffset(cursor.col)).left, state.density)
+            toDP(it.getCursorRectSafely(line.glyphToCharOffset(cursor.col)).left, state.density)
         } ?: (width * cursor.col)
 
         if (visible || !state.isFocused) {
