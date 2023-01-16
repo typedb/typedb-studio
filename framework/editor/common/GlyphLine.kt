@@ -52,13 +52,17 @@ class GlyphLine constructor(val annotatedString: AnnotatedString) {
         return this.subSequence(coercedStart, coercedEnd)
     }
 
-    fun glyphToCharOffset(offset: Int): Int {
-//        val offset = offset.coerceAtMost(length - 1)
-        return codepoints.subList(0, offset).sumOf { ceil(log2(it.toDouble()) / 16).toInt() }
+    fun glyphToCharOffset(_glyphOffset: Int): Int {
+        var glyphOffset = _glyphOffset
+        if (_glyphOffset <= 0) return 0
+        if (_glyphOffset > length) glyphOffset = length
+        return codepoints.subList(0, glyphOffset).sumOf { ceil(log2(it.toDouble()) / 16).toInt() }
     }
 
     fun charToGlyphOffset(_charOffset: Int): Int {
         var charOffset = _charOffset
+        if (_charOffset <= 0) return 0
+
         var glyphOffset = 0
         for (code in codepoints) {
             charOffset -= ceil(log2(code.toDouble()) / 16).toInt()
@@ -67,6 +71,6 @@ class GlyphLine constructor(val annotatedString: AnnotatedString) {
                 return glyphOffset
             }
         }
-        return 0
+        return length
     }
 }

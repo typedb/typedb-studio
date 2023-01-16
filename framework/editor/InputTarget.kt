@@ -305,12 +305,14 @@ internal class InputTarget constructor(
         if (content[row].isEmpty()) return TextRange(0, 0)
         val colSafe = col.coerceIn(0, (content[row].length - 1).coerceAtLeast(0))
         val boundary = textLayout.getWordBoundary(colSafe)
-        val word = textLayout.multiParagraph.intrinsics.annotatedString.text.substring(boundary.start, boundary.end)
-        val newStart = word.lastIndexOfAny(WORD_BREAK_CHARS, colSafe - boundary.start)
-        val newEnd = word.indexOfAny(WORD_BREAK_CHARS, colSafe - boundary.start)
+        val start = content[row].charToGlyphOffset(boundary.start)
+        val end = content[row].charToGlyphOffset(boundary.end)
+        val word = content[row].subSequenceSafely(start, end).annotatedString
+        val newStart = word.lastIndexOfAny(WORD_BREAK_CHARS, colSafe - start)
+        val newEnd = word.indexOfAny(WORD_BREAK_CHARS, colSafe - start)
         return TextRange(
-            if (newStart < 0) boundary.start else newStart + boundary.start + 1,
-            if (newEnd < 0) boundary.end else newEnd + boundary.start
+            if (newStart < 0) start else newStart + start + 1,
+            if (newEnd < 0) end else newEnd + start
         )
     }
 
