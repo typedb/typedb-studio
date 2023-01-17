@@ -398,7 +398,7 @@ object TextEditor {
                     Text(
                         text = line.annotatedString, style = font,
                         modifier = Modifier.onSizeChanged { state.target.mayIncreaseTextWidth(it.width) },
-                        onTextLayout = { state.rendering.set(index, it, state.processor.version) }
+                        onTextLayout = { state.rendering.set(index, it) }
                     )
                 }
                 Spacer(Modifier.width(RIGHT_PADDING))

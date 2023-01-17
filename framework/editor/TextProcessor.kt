@@ -48,7 +48,6 @@ import mu.KotlinLogging
 
 internal interface TextProcessor {
 
-    val version: Int
     val isWritable: Boolean
     val file: FileState?
 
@@ -82,7 +81,6 @@ internal interface TextProcessor {
 
     class ReadOnly constructor(override var file: FileState? = null) : TextProcessor {
 
-        override val version: Int = 0
         override val isWritable: Boolean = false
         private var lastTyped by mutableStateOf(System.currentTimeMillis())
 
@@ -127,7 +125,6 @@ internal interface TextProcessor {
         private var onChangeEnd: (List<String>) -> Unit,
     ) : TextProcessor {
 
-        override var version by mutableStateOf(0)
         override val isWritable: Boolean = true
         private val fileType: Property.FileType get() = file.fileType
         private var undoStack: ArrayDeque<TextChange> = ArrayDeque()
@@ -137,7 +134,6 @@ internal interface TextProcessor {
         private val coroutines = CoroutineScope(Dispatchers.Default)
 
         override fun clearHistory() {
-            version = 0
             undoStack.clear()
             redoStack.clear()
             changeQueue.clear()
@@ -389,7 +385,6 @@ internal interface TextProcessor {
                     is Insertion -> applyInsertion(it)
                 }
             }
-            version++
             target.resetTextWidth()
             if (recomputeFinder) finder.mayRecomputeAllMatches()
         }

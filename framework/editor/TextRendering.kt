@@ -39,7 +39,6 @@ import mu.KotlinLogging
 internal class TextRendering {
 
     private var results = initResults(0)
-    private var versions = initVersions(0)
     private var deleted = initDeleted()
 
     companion object {
@@ -49,46 +48,25 @@ internal class TextRendering {
     private fun initResults(initSize: Int): SnapshotStateList<TextLayoutResult?> =
         mutableStateListOf<TextLayoutResult?>().apply { addAll(List(initSize) { null }) }
 
-    private fun initVersions(initSize: Int): SnapshotStateList<Int> =
-        mutableStateListOf<Int>().apply { addAll(List(initSize) { 0 }) }
-
     private fun initDeleted() = mutableStateMapOf<Int, TextLayoutResult?>()
 
     fun reinitialize(initSize: Int) {
         results = initResults(initSize)
-        versions = initVersions(initSize)
-        deleted = initDeleted()
     }
 
     fun get(int: Int): TextLayoutResult? = results.getOrNull(int)
 
-    fun set(int: Int, layout: TextLayoutResult, version: Int) {
+    fun set(int: Int, layout: TextLayoutResult) {
         if (int >= results.size) addNew(results.size, int + 1 - results.size)
         results[int] = layout
-        versions[int] = version
-    }
-
-    fun hasVersion(int: Int, version: Int): Boolean = try {
-        if (int >= 0 && int < versions.size) versions[int] == version else false
-    } catch (e: Exception) {
-        // TODO: Find out why there could be an exception here at all. Last error was:
-        // java.lang.IllegalStateException: Reading a state that was created after the snapshot was taken or in a snapshot that has not yet been applied
-        // ...
-        // at androidx.compose.runtime.snapshots.SnapshotStateList.size(SnapshotStateList.kt:33)
-        // at com.vaticle.typedb.studio.framework.editor.TextRendering.hasVersion(TextRendering.kt:65)
-        // ...
-        Service.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
-        false
     }
 
     fun removeRange(startInc: Int, endExc: Int) {
         for (i in startInc until endExc) deleted[i] = results[i]
         results.removeRange(startInc, endExc)
-        versions.removeRange(startInc, endExc)
     }
 
     fun addNew(index: Int, size: Int) {
-        versions.addAll(index, List(size) { 0 })
         results.addAll(index, List(size) { deleted.remove(index + it) ?: results.getOrNull(index + it) })
     }
 }
