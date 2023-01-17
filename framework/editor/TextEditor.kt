@@ -63,6 +63,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutInput
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
@@ -86,6 +87,7 @@ import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.F
 import com.vaticle.typedb.studio.service.common.util.Property
 import com.vaticle.typedb.studio.service.project.FileState
 import java.awt.event.MouseEvent.BUTTON1
+import java.lang.IllegalArgumentException
 import kotlin.math.ceil
 import kotlin.math.log10
 import kotlin.math.roundToInt
@@ -390,16 +392,6 @@ object TextEditor {
                 .defaultMinSize(minWidth = minWidth).height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HOR)
         ) {
-//            val isRenderedUpToDate = state.rendering.hasVersion(index, state.processor.version)
-            val textLayout = state.rendering.get(index)
-            val findColor = Theme.studio.warningStroke.copy(Theme.FIND_SELECTION_ALPHA)
-            state.finder.matches(index).forEach {
-                Selection(state, it, index, textLayout, findColor, line.length, fontWidth)
-            }
-            if (selection != null && selection.min.row <= index && selection.max.row >= index) {
-                val color = Theme.studio.tertiary.copy(Theme.TARGET_SELECTION_ALPHA)
-                Selection(state, selection, index, textLayout, color, line.length, fontWidth)
-            }
             Row {
                 Column {
                     Spacer(Modifier.height(lineGap))
@@ -410,6 +402,16 @@ object TextEditor {
                     )
                 }
                 Spacer(Modifier.width(RIGHT_PADDING))
+            }
+            val renderedTextLayout = state.rendering.get(index)
+            val textLayout = if (renderedTextLayout?.layoutInput?.text == line.annotatedString) renderedTextLayout else null
+            val findColor = Theme.studio.warningStroke.copy(Theme.FIND_SELECTION_ALPHA)
+            state.finder.matches(index).forEach {
+                Selection(state, it, index, textLayout, findColor, line.length, fontWidth)
+            }
+            if (selection != null && selection.min.row <= index && selection.max.row >= index) {
+                val color = Theme.studio.tertiary.copy(Theme.TARGET_SELECTION_ALPHA)
+                Selection(state, selection, index, textLayout, color, line.length, fontWidth)
             }
             if (cursor.row == index) Cursor(state, line, textLayout, font, fontWidth, lineGap)
         }
@@ -443,8 +445,8 @@ object TextEditor {
         val width = textLayout?.let {
             if (line.isEmpty()) DEFAULT_FONT_WIDTH
             else {
-                val offset = GlyphLine(textLayout.layoutInput.text).glyphToCharOffset(cursor.col.coerceIn(0, textLayout.layoutInput.text.length - 1))
-                toDP(it.getBoundingBox(offset.coerceIn(0, textLayout.layoutInput.text.length - 1)).width, state.density)
+                val offset = line.glyphToCharOffset(cursor.col.coerceIn(0, line.length - 1))
+                toDP(it.getBoundingBox(offset).width, state.density)
             }
         } ?: fontWidth
 
