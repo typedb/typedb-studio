@@ -403,8 +403,7 @@ object TextEditor {
                 }
                 Spacer(Modifier.width(RIGHT_PADDING))
             }
-            val renderedTextLayout = state.rendering.get(index)
-            val textLayout = if (renderedTextLayout?.layoutInput?.text == line.annotatedString) renderedTextLayout else null
+            val textLayout = state.rendering.get(index)
             val findColor = Theme.studio.warningStroke.copy(Theme.FIND_SELECTION_ALPHA)
             state.finder.matches(index).forEach {
                 Selection(state, it, index, textLayout, findColor, line.length, fontWidth)

@@ -385,6 +385,7 @@ internal interface TextProcessor {
                     is Insertion -> applyInsertion(it)
                 }
             }
+            rendering.invalidate(change.target())
             target.resetTextWidth()
             if (recomputeFinder) finder.mayRecomputeAllMatches()
         }
