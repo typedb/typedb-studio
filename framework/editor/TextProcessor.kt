@@ -385,7 +385,12 @@ internal interface TextProcessor {
                     is Insertion -> applyInsertion(it)
                 }
             }
-            rendering.invalidate(change.target())
+            val textChangeTarget = change.target()
+            if (textChangeTarget.isFirst) {
+                rendering.invalidate(textChangeTarget.first().row until textChangeTarget.first().row + 1)
+            } else {
+                rendering.invalidate(textChangeTarget.second().start.row until textChangeTarget.second().end.row + 1)
+            }
             target.resetTextWidth()
             if (recomputeFinder) finder.mayRecomputeAllMatches()
         }

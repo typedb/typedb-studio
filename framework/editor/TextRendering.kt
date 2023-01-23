@@ -22,7 +22,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.TextLayoutResult
-import com.vaticle.typedb.common.collection.Either
 import mu.KotlinLogging
 
 /**
@@ -60,13 +59,9 @@ internal class TextRendering {
         results[int] = layout
     }
 
-    fun invalidate(target: Either<InputTarget.Cursor, InputTarget.Selection>) {
-        if (target.isFirst) {
-            results[target.first().row] = null
-        } else {
-            for (i in target.second().min.row until target.second().max.row + 1) {
-                results[i] = null
-            }
+    fun invalidate(range: IntRange) {
+        for (i in range) {
+            results[i] = null
         }
     }
 
