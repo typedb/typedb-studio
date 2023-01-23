@@ -450,7 +450,8 @@ object TextEditor {
         } ?: fontWidth
 
         val offsetX = textLayout?.let {
-            toDP(it.getCursorRectSafely(line.glyphToCharOffset(cursor.col)).left, state.density)
+            val charOffset = line.glyphToCharOffset(cursor.col)
+            toDP(it.getCursorRectSafely(charOffset).left, state.density)
         } ?: (width * cursor.col)
 
         if (visible || !state.isFocused) {

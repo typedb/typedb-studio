@@ -169,7 +169,8 @@ internal class InputTarget constructor(
         val relY = y - textAreaBounds.top + verScroller.offset.value
         val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount - 1)
         val offsetInLine = Offset(relX * density, (relY - (row * lineHeight.value)) * density)
-        val col = content[row].charToGlyphOffset(rendering.get(row)?.getOffsetForPosition(offsetInLine) ?: 0)
+        val charOffset = rendering.get(row)?.getOffsetForPosition(offsetInLine) ?: 0
+        val col = content[row].charToGlyphOffset(charOffset)
         return Cursor(row, col)
     }
 
