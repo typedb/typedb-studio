@@ -379,17 +379,12 @@ internal interface TextProcessor {
 
         private fun applyChange(change: TextChange, recomputeFinder: Boolean = true) {
             onChangeStart()
+            rendering.invalidate(change)
             change.operations.forEach {
                 when (it) {
                     is Deletion -> applyDeletion(it)
                     is Insertion -> applyInsertion(it)
                 }
-            }
-            val textChangeTarget = change.target()
-            if (textChangeTarget.isFirst) {
-                rendering.invalidate(textChangeTarget.first().row until textChangeTarget.first().row + 1)
-            } else {
-                rendering.invalidate(textChangeTarget.second().start.row until textChangeTarget.second().end.row + 1)
             }
             target.resetTextWidth()
             if (recomputeFinder) finder.mayRecomputeAllMatches()

@@ -59,9 +59,11 @@ internal class TextRendering {
         results[int] = layout
     }
 
-    fun invalidate(range: IntRange) {
-        for (i in range) {
-            results[i] = null
+    fun invalidate(change: TextChange) {
+        for (i in change.lines()) {
+            if (results.size > i) {
+                results[i] = null
+            }
         }
     }
 
