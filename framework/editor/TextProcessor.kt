@@ -30,6 +30,7 @@ import com.vaticle.typedb.studio.framework.editor.TextChange.Deletion
 import com.vaticle.typedb.studio.framework.editor.TextChange.Insertion
 import com.vaticle.typedb.studio.framework.editor.TextChange.ReplayType
 import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
+import com.vaticle.typedb.studio.framework.editor.common.GlyphLine.Companion.toGlyphLines
 import com.vaticle.typedb.studio.framework.editor.highlighter.SyntaxHighlighter
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FILE_NOT_WRITABLE
@@ -201,8 +202,8 @@ internal interface TextProcessor {
             fun commentSelection(oldLines: List<GlyphLine>) = oldLines.map { GlyphLine(commentToken + it.annotatedString) }
             fun uncommentSelection(oldLines: List<GlyphLine>) = oldLines.map {
                 if (it.isEmpty()) it
-                else it.annotatedString.indexOf(commentToken).let { index ->
-                    it.subSequenceSafely(0, index)+ it.subSequenceSafely(index + commentToken.length, it.length)
+                else it.indexOf(commentToken).let { index ->
+                    it.subSequenceSafely(0, index) + it.subSequenceSafely(index + commentToken.length, it.length)
                 }
             }
 
@@ -328,10 +329,6 @@ internal interface TextProcessor {
             target.updatePosition(newPosition)
         }
 
-        private fun asGlyphLines(text: String): List<GlyphLine> {
-            return if (text.isEmpty()) listOf() else text.split("\n").map { GlyphLine(it) }
-        }
-
         override fun insertText(text: String): Insertion? {
             return insertText(text, recomputeFinder = true)
         }
@@ -341,7 +338,7 @@ internal interface TextProcessor {
         }
 
         private fun insertText(text: String, recomputeFinder: Boolean): Insertion? {
-            return insertText(asGlyphLines(text), recomputeFinder)
+            return insertText(text.toGlyphLines(), recomputeFinder)
         }
 
         private fun insertText(strings: List<GlyphLine>, recomputeFinder: Boolean = true): Insertion? {

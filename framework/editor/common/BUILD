@@ -32,16 +32,7 @@ kt_jvm_library(
         "@vaticle_typedb_common//:common",
 
         # External Maven Dependencies
-        "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
-        "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
-        "@maven//:org_jetbrains_compose_material_material_desktop",
-        "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_graphics_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_text_desktop",
-        "@maven//:org_jetbrains_compose_ui_ui_unit_desktop",
-        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
     ],
     tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-framework-editor-common:{pom_version}"],
 )

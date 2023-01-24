@@ -19,8 +19,6 @@
 package com.vaticle.typedb.studio.framework.editor.common
 
 import androidx.compose.ui.text.AnnotatedString
-import kotlin.math.ceil
-import kotlin.math.log2
 import kotlin.streams.toList
 
 class GlyphLine constructor(val annotatedString: AnnotatedString) {
@@ -36,14 +34,17 @@ class GlyphLine constructor(val annotatedString: AnnotatedString) {
     fun isNotEmpty(): Boolean = !isEmpty()
 
     private fun subSequence(start: Int, end: Int): GlyphLine {
-        val codepoints = annotatedString.codePoints().toList()
         val codepointSubsequence = codepoints.subList(start, end)
         val text = codepointSubsequence.joinToString("") { Character.toString(it) }
         return GlyphLine(text)
     }
 
-    operator fun plus(glyphLine: GlyphLine): GlyphLine {
-        return GlyphLine(this.text + glyphLine.text)
+    operator fun plus(other: GlyphLine): GlyphLine {
+        return GlyphLine(this.text + other.text)
+    }
+
+    fun indexOf(element: String): Int {
+        return charToGlyphOffset(annotatedString.indexOf(element))
     }
 
     fun subSequenceSafely(start: Int, end: Int): GlyphLine {
@@ -57,7 +58,7 @@ class GlyphLine constructor(val annotatedString: AnnotatedString) {
         var glyphOffset = _glyphOffset
         if (_glyphOffset <= 0) return 0
         if (_glyphOffset > length) glyphOffset = length
-        return codepoints.subList(0, glyphOffset).sumOf { ceil(log2(it.toDouble()) / 16).toInt() }
+        return codepoints.subList(0, glyphOffset).sumOf { Character.charCount(it) }
     }
 
     fun charToGlyphOffset(_charOffset: Int): Int {
@@ -66,12 +67,18 @@ class GlyphLine constructor(val annotatedString: AnnotatedString) {
 
         var glyphOffset = 0
         for (code in codepoints) {
-            charOffset -= ceil(log2(code.toDouble()) / 16).toInt()
+            charOffset -= Character.charCount(code)
             glyphOffset += 1
             if (charOffset == 0) {
                 return glyphOffset
             }
         }
         return length
+    }
+
+    companion object {
+        fun String.toGlyphLines(): List<GlyphLine> {
+            return if (this.isEmpty()) listOf() else this.split("\n").map { GlyphLine(this) }
+        }
     }
 }

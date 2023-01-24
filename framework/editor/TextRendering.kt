@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.TextLayoutResult
+import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
 import mu.KotlinLogging
 
 /**
@@ -61,10 +62,21 @@ internal class TextRendering {
 
     fun invalidate(change: TextChange) {
         change.operations.forEach {
-            val lines = it.selection().min.row until it.selection().max.row
-            val lineAndText = it.text.zip(lines)
-            lineAndText.forEach { (text, index) ->
-                if (text.isNotEmpty()) results[index] = null
+            val start = it.selection().min.row
+            val end = it.selection().max.row.coerceIn(start, results.size - 1)
+            val lines = start .. end
+            when (it) {
+                is TextChange.Deletion -> lines.forEach { line -> results[line] = null}
+                is TextChange.Insertion -> {
+                    val lineTextPairs = it.text.zip(lines)
+                    lineTextPairs.forEach {(text, line) ->
+                        results[line]?.let { textLayout ->
+                            if (it.cursor.col != GlyphLine(textLayout.layoutInput.text).length || text.isNotEmpty()) {
+                                results[line] = null
+                            }
+                        }
+                    }
+                }
             }
         }
     }
