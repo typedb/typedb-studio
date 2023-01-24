@@ -33,6 +33,7 @@ class GlyphLine constructor(val annotatedString: AnnotatedString) {
     val length = codepoints.size
 
     fun isEmpty(): Boolean = length == 0
+    fun isNotEmpty(): Boolean = !isEmpty()
 
     private fun subSequence(start: Int, end: Int): GlyphLine {
         val codepoints = annotatedString.codePoints().toList()

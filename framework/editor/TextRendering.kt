@@ -60,9 +60,11 @@ internal class TextRendering {
     }
 
     fun invalidate(change: TextChange) {
-        for (i in change.lines()) {
-            if (results.size > i) {
-                results[i] = null
+        change.operations.forEach {
+            val lines = it.selection().min.row until it.selection().max.row
+            val lineAndText = it.text.zip(lines)
+            lineAndText.forEach { (text, index) ->
+                if (text.isNotEmpty()) results[index] = null
             }
         }
     }
