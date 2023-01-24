@@ -83,7 +83,7 @@ internal class TextFinder(private val content: SnapshotStateList<GlyphLine>) {
             else newLineInfo.add(LineInfo(newLineInfo[i - 1].start + newLineInfo[i - 1].length, length))
         }
         lineInfo = newLineInfo
-        contentAsString = content.joinToString(separator = "\n")
+        contentAsString = content.joinToString(separator = "\n") { it.annotatedString }
     }
 
     internal fun findText(text: String, isCaseSensitive: Boolean) {
@@ -129,7 +129,10 @@ internal class TextFinder(private val content: SnapshotStateList<GlyphLine>) {
     }
 
     private fun selection(match: MatchResult): Selection {
-        return Selection(cursor(match.start()), cursor(match.end()))
+        val contentAsGlyphLine = GlyphLine(contentAsString)
+        val matchStart = contentAsGlyphLine.charToGlyphOffset(match.start())
+        val matchEnd = contentAsGlyphLine.charToGlyphOffset(match.end())
+        return Selection(cursor(matchStart), cursor(matchEnd))
     }
 
     private fun cursor(index: Int): Cursor {
