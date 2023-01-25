@@ -245,10 +245,10 @@ object TextEditor {
         }
 
         fun updateFile(file: FileState) {
-            val oldContent = content.map { it.text }
+            val oldContent = content.map { it.annotatedString.text }
             processor.updateFile(file)
             reloadContent(file)
-            val newContent = content.map { it.text }
+            val newContent = content.map { it.annotatedString.text }
             if (oldContent != newContent) processor.clearHistory()
         }
 

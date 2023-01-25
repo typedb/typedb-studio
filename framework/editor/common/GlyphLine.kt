@@ -27,11 +27,9 @@ class GlyphLine constructor(val annotatedString: AnnotatedString) {
 
     private val codepoints = annotatedString.codePoints().toList()
 
-    val text = annotatedString.text
     val length = codepoints.size
 
     fun isEmpty(): Boolean = length == 0
-    fun isNotEmpty(): Boolean = !isEmpty()
 
     private fun subSequence(start: Int, end: Int): GlyphLine {
         val codepointSubsequence = codepoints.subList(start, end)
@@ -40,7 +38,7 @@ class GlyphLine constructor(val annotatedString: AnnotatedString) {
     }
 
     operator fun plus(other: GlyphLine): GlyphLine {
-        return GlyphLine(this.text + other.text)
+        return GlyphLine(this.annotatedString.text + other.annotatedString.text)
     }
 
     fun indexOf(element: String): Int {

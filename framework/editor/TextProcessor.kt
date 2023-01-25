@@ -214,7 +214,10 @@ internal interface TextProcessor {
                 } ?: Either.first(Cursor(oldCursor.row, oldCursor.col + shift))
             }
 
-            val isComment = textLines.all { val text = it.text.trim(); text.isEmpty() || text.startsWith(commentToken) }
+            val isComment = textLines.all {
+                val text = it.annotatedString.text.trim(); text.isEmpty() || text.startsWith(commentToken)
+            }
+
             insertText(if (isComment) uncommentSelection(textLines) else commentSelection(textLines))
             target.updatePosition(newPosition(if (isComment) -1 else 1))
         }
@@ -443,11 +446,11 @@ internal interface TextProcessor {
         }
 
         private fun highlight(lines: IntRange) {
-            lines.forEach { content[it] = SyntaxHighlighter.highlight(content[it].text, fileType) }
+            lines.forEach { content[it] = SyntaxHighlighter.highlight(content[it].annotatedString.text, fileType) }
         }
 
         private fun callOnChangeEnd() {
-            onChangeEnd(content.map { it.text })
+            onChangeEnd(content.map { it.annotatedString.text })
         }
 
         override fun drainChanges() {

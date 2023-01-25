@@ -71,7 +71,7 @@ internal class TextRendering {
                     val lineTextPairs = it.text.zip(lines)
                     lineTextPairs.forEach {(text, line) ->
                         results[line]?.let { textLayout ->
-                            if (it.cursor.col != GlyphLine(textLayout.layoutInput.text).length || text.isNotEmpty()) {
+                            if (it.cursor.col != GlyphLine(textLayout.layoutInput.text).length || !text.isEmpty()) {
                                 results[line] = null
                             }
                         }
