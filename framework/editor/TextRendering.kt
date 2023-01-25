@@ -38,7 +38,6 @@ import mu.KotlinLogging
 internal class TextRendering {
 
     private var results = initResults(0)
-    private var deleted = initDeleted()
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -47,8 +46,6 @@ internal class TextRendering {
     private fun initResults(initSize: Int): SnapshotStateList<TextLayoutResult?> =
         mutableStateListOf<TextLayoutResult?>().apply { addAll(List(initSize) { null }) }
 
-    private fun initDeleted() = mutableStateMapOf<Int, TextLayoutResult?>()
-
     fun reinitialize(initSize: Int) {
         results = initResults(initSize)
     }
@@ -56,7 +53,7 @@ internal class TextRendering {
     fun get(int: Int): TextLayoutResult? = results.getOrNull(int)
 
     fun set(int: Int, layout: TextLayoutResult) {
-        if (int >= results.size) addNew(results.size, int + 1 - results.size)
+        if (int >= results.size) addNewLines(results.size, int + 1 - results.size)
         results[int] = layout
     }
 
@@ -77,11 +74,10 @@ internal class TextRendering {
     }
 
     fun removeRange(startInc: Int, endExc: Int) {
-        for (i in startInc until endExc) deleted[i] = results[i]
         results.removeRange(startInc, endExc)
     }
 
-    fun addNew(index: Int, size: Int) {
-        results.addAll(index, List(size) { deleted.remove(index + it) ?: results.getOrNull(index + it) })
+    fun addNewLines(index: Int, size: Int) {
+        results.addAll(index, List(size) { null })
     }
 }

@@ -416,7 +416,7 @@ internal interface TextProcessor {
             content[cursor.row] = texts[0]
             if (texts.size > 1) {
                 content.addAll(cursor.row + 1, texts.subList(1, texts.size))
-                rendering.addNew(cursor.row + 1, texts.size - 1)
+                rendering.addNewLines(cursor.row + 1, texts.size - 1)
             }
             target.updateCursor(insertion.selection().max, false)
         }
