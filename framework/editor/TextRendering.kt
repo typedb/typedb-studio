@@ -65,16 +65,11 @@ internal class TextRendering {
             val start = it.selection().min.row
             val end = it.selection().max.row.coerceIn(start, results.size - 1)
             val lines = start .. end
-            when (it) {
-                is TextChange.Deletion -> lines.forEach { line -> results[line] = null}
-                is TextChange.Insertion -> {
-                    val lineTextPairs = it.text.zip(lines)
-                    lineTextPairs.forEach {(text, line) ->
-                        results[line]?.let { textLayout ->
-                            if (it.cursor.col != GlyphLine(textLayout.layoutInput.text).length || !text.isEmpty()) {
-                                results[line] = null
-                            }
-                        }
+            val lineTextPairs = it.text.zip(lines)
+            lineTextPairs.forEach { (text, line) ->
+                results[line]?.let { textLayout ->
+                    if (it.cursor.col != GlyphLine(textLayout.layoutInput.text).length || !text.isEmpty()) {
+                        results[line] = null
                     }
                 }
             }

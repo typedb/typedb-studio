@@ -341,7 +341,8 @@ internal interface TextProcessor {
         }
 
         private fun insertText(text: String, recomputeFinder: Boolean): Insertion? {
-            return insertText(text.toGlyphLines(), recomputeFinder)
+            val glyphLines = text.toGlyphLines()
+            return insertText(glyphLines, recomputeFinder)
         }
 
         private fun insertText(strings: List<GlyphLine>, recomputeFinder: Boolean = true): Insertion? {

@@ -76,7 +76,7 @@ class GlyphLine constructor(val annotatedString: AnnotatedString) {
 
     companion object {
         fun String.toGlyphLines(): List<GlyphLine> {
-            return if (this.isEmpty()) listOf() else this.split("\n").map { GlyphLine(this) }
+            return if (this.isEmpty()) listOf() else this.split("\n").map { GlyphLine(it) }
         }
     }
 }
