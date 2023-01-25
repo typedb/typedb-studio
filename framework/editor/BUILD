@@ -35,6 +35,7 @@ kt_jvm_library(
         "//service:service",
         "//framework/common:common",
         "//framework/editor/highlighter:highlighter",
+        "//framework/editor/common:common",
         "//framework/material:material",
 
         # External Vaticle Dependencies

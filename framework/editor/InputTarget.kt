@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Util.getCursorRectSafely
-import com.vaticle.typedb.studio.framework.common.Util.subSequenceSafely
 import com.vaticle.typedb.studio.framework.common.Util.toDP
+import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.StatusService.Key.TEXT_CURSOR_POSITION
 import kotlin.math.floor
@@ -43,7 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 internal class InputTarget constructor(
-    private val content: SnapshotStateList<AnnotatedString>,
+    private val content: SnapshotStateList<GlyphLine>,
     private val rendering: TextRendering,
     private val horPadding: Dp,
     lineHeightUnscaled: Dp,
@@ -55,13 +55,13 @@ internal class InputTarget constructor(
         // TODO: is this complete?
         private val WORD_BREAK_CHARS = charArrayOf(',', '.', ':', ';', '=', '(', ')', '{', '}')
 
-        fun prefixSpaces(line: AnnotatedString): Int {
-            for (it in line.indices) if (line[it] != ' ') return it
+        fun prefixSpaces(line: GlyphLine): Int {
+            for (it in line.annotatedString.indices) if (line.annotatedString[it] != ' ') return it
             return line.length
         }
 
-        fun suffixSpaces(line: AnnotatedString): Int {
-            for (it in line.indices.reversed()) if (line[it] != ' ') return line.length - 1 - it
+        fun suffixSpaces(line: GlyphLine): Int {
+            for (it in line.annotatedString.indices.reversed()) if (line.annotatedString[it] != ' ') return line.length - 1 - it
             return line.length
         }
     }
@@ -116,7 +116,7 @@ internal class InputTarget constructor(
         override fun toString(): String {
             val startStatus = if (start == min) "min" else "max"
             val endStatus = if (end == max) "max" else "min"
-            return "Selection {start: $start [$startStatus], end: $end[$endStatus]}"
+            return "Selection {start: $start [$startStatus], end: $end [$endStatus]}"
         }
     }
 
@@ -169,7 +169,8 @@ internal class InputTarget constructor(
         val relY = y - textAreaBounds.top + verScroller.offset.value
         val row = floor(relY / lineHeight.value).toInt().coerceIn(0, lineCount - 1)
         val offsetInLine = Offset(relX * density, (relY - (row * lineHeight.value)) * density)
-        val col = rendering.get(row)?.getOffsetForPosition(offsetInLine) ?: 0
+        val charOffset = rendering.get(row)?.getOffsetForPosition(offsetInLine) ?: 0
+        val col = content[row].charToGlyphOffset(charOffset)
         return Cursor(row, col)
     }
 
@@ -261,8 +262,7 @@ internal class InputTarget constructor(
             if (y <= top) verScroller.updateOffsetBy((y - top).dp - padding)
             else if (y >= bottom) verScroller.updateOffsetBy((y - bottom).dp + padding)
         }
-
-        val cursorRect = rendering.get(cursor.row)?.getCursorRectSafely(cursor.col) ?: Rect(0f, 0f, 0f, 0f)
+        val cursorRect = rendering.get(cursor.row)?.getCursorRectSafely(content[cursor.row].glyphToCharOffset(cursor.col)) ?: Rect(0f, 0f, 0f, 0f)
         val x = textAreaBounds.left + toDP(cursorRect.left - horScroller.value, density).value
         val y = textAreaBounds.top + (lineHeight.value * (cursor.row + 0.5f)) - verScroller.offset.value
         mayScrollToCoordinate(x.toInt(), y.toInt(), lineHeight)
@@ -306,12 +306,14 @@ internal class InputTarget constructor(
         if (content[row].isEmpty()) return TextRange(0, 0)
         val colSafe = col.coerceIn(0, (content[row].length - 1).coerceAtLeast(0))
         val boundary = textLayout.getWordBoundary(colSafe)
-        val word = textLayout.multiParagraph.intrinsics.annotatedString.text.substring(boundary.start, boundary.end)
-        val newStart = word.lastIndexOfAny(WORD_BREAK_CHARS, colSafe - boundary.start)
-        val newEnd = word.indexOfAny(WORD_BREAK_CHARS, colSafe - boundary.start)
+        val start = content[row].charToGlyphOffset(boundary.start)
+        val end = content[row].charToGlyphOffset(boundary.end)
+        val word = content[row].subSequenceSafely(start, end).annotatedString
+        val newStart = word.lastIndexOfAny(WORD_BREAK_CHARS, colSafe - start)
+        val newEnd = word.indexOfAny(WORD_BREAK_CHARS, colSafe - start)
         return TextRange(
-            if (newStart < 0) boundary.start else newStart + boundary.start + 1,
-            if (newEnd < 0) boundary.end else newEnd + boundary.start
+            if (newStart < 0) start else newStart + start + 1,
+            if (newEnd < 0) end else newEnd + start
         )
     }
 
@@ -470,17 +472,17 @@ internal class InputTarget constructor(
         val builder = AnnotatedString.Builder()
         val textList = selectedTextLines()
         textList.forEachIndexed { i, text ->
-            builder.append(text)
+            builder.append(text.annotatedString)
             if (textList.size > 1 && i < textList.size - 1) builder.append("\n")
         }
         return builder.toAnnotatedString()
     }
 
-    internal fun selectedTextLines(): List<AnnotatedString> {
-        if (selection == null) return listOf(AnnotatedString(""))
+    internal fun selectedTextLines(): List<GlyphLine> {
+        if (selection == null) return listOf(GlyphLine(""))
         val start = selection!!.min
         val end = selection!!.max
-        val list = mutableListOf<AnnotatedString>()
+        val list = mutableListOf<GlyphLine>()
         for (i in start.row..end.row) {
             val line = content[i]
             if (i == start.row && end.row > start.row) list.add(line.subSequenceSafely(start.col, line.length))

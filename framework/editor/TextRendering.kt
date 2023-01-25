@@ -22,8 +22,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.TextLayoutResult
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Message.Framework.Companion.UNEXPECTED_ERROR
+import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
 import mu.KotlinLogging
 
 /**
@@ -39,8 +38,6 @@ import mu.KotlinLogging
 internal class TextRendering {
 
     private var results = initResults(0)
-    private var versions = initVersions(0)
-    private var deleted = initDeleted()
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -49,46 +46,38 @@ internal class TextRendering {
     private fun initResults(initSize: Int): SnapshotStateList<TextLayoutResult?> =
         mutableStateListOf<TextLayoutResult?>().apply { addAll(List(initSize) { null }) }
 
-    private fun initVersions(initSize: Int): SnapshotStateList<Int> =
-        mutableStateListOf<Int>().apply { addAll(List(initSize) { 0 }) }
-
-    private fun initDeleted() = mutableStateMapOf<Int, TextLayoutResult?>()
-
     fun reinitialize(initSize: Int) {
         results = initResults(initSize)
-        versions = initVersions(initSize)
-        deleted = initDeleted()
     }
 
     fun get(int: Int): TextLayoutResult? = results.getOrNull(int)
 
-    fun set(int: Int, layout: TextLayoutResult, version: Int) {
-        if (int >= results.size) addNew(results.size, int + 1 - results.size)
+    fun set(int: Int, layout: TextLayoutResult) {
+        if (int >= results.size) addNewLines(results.size, int + 1 - results.size)
         results[int] = layout
-        versions[int] = version
     }
 
-    fun hasVersion(int: Int, version: Int): Boolean = try {
-        if (int >= 0 && int < versions.size) versions[int] == version else false
-    } catch (e: Exception) {
-        // TODO: Find out why there could be an exception here at all. Last error was:
-        // java.lang.IllegalStateException: Reading a state that was created after the snapshot was taken or in a snapshot that has not yet been applied
-        // ...
-        // at androidx.compose.runtime.snapshots.SnapshotStateList.size(SnapshotStateList.kt:33)
-        // at com.vaticle.typedb.studio.framework.editor.TextRendering.hasVersion(TextRendering.kt:65)
-        // ...
-        Service.notification.systemError(LOGGER, e, UNEXPECTED_ERROR)
-        false
+    fun invalidate(change: TextChange) {
+        change.operations.forEach {
+            val start = it.selection().min.row
+            val end = it.selection().max.row.coerceIn(start, results.size - 1)
+            val lines = start .. end
+            val lineTextPairs = it.text.zip(lines)
+            lineTextPairs.forEach { (text, line) ->
+                results[line]?.let { textLayout ->
+                    if (it.cursor.col != GlyphLine(textLayout.layoutInput.text).length || !text.isEmpty()) {
+                        results[line] = null
+                    }
+                }
+            }
+        }
     }
 
     fun removeRange(startInc: Int, endExc: Int) {
-        for (i in startInc until endExc) deleted[i] = results[i]
         results.removeRange(startInc, endExc)
-        versions.removeRange(startInc, endExc)
     }
 
-    fun addNew(index: Int, size: Int) {
-        versions.addAll(index, List(size) { 0 })
-        results.addAll(index, List(size) { deleted.remove(index + it) ?: results.getOrNull(index + it) })
+    fun addNewLines(index: Int, size: Int) {
+        results.addAll(index, List(size) { null })
     }
 }

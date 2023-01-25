@@ -75,6 +75,7 @@ import com.vaticle.typedb.studio.framework.common.theme.Color.fadeable
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.framework.editor.TextProcessor.Companion.normaliseWhiteSpace
+import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
 import com.vaticle.typedb.studio.framework.editor.highlighter.SyntaxHighlighter.highlight
 import com.vaticle.typedb.studio.framework.material.ContextMenu
 import com.vaticle.typedb.studio.framework.material.Scrollbar
@@ -143,7 +144,7 @@ object TextEditor {
     private fun createState(
         bottomSpace: Dp,
         processorFn: (
-            content: SnapshotStateList<AnnotatedString>,
+            content: SnapshotStateList<GlyphLine>,
             rendering: TextRendering,
             finder: TextFinder,
             target: InputTarget
@@ -153,7 +154,7 @@ object TextEditor {
         val currentDensity = LocalDensity.current
         val lineHeight = with(currentDensity) { font.fontSize.toDp() * LINE_HEIGHT }
         val clipboard = LocalClipboardManager.current
-        val content = SnapshotStateList<AnnotatedString>()
+        val content = SnapshotStateList<GlyphLine>()
         val rendering = TextRendering()
         val finder = TextFinder(content)
         val target = InputTarget(content, rendering, AREA_PADDING_HOR, lineHeight, bottomSpace, currentDensity.density)
@@ -191,7 +192,7 @@ object TextEditor {
     }
 
     class State internal constructor(
-        internal val content: SnapshotStateList<AnnotatedString>,
+        internal val content: SnapshotStateList<GlyphLine>,
         internal val font: TextStyle,
         internal val rendering: TextRendering,
         internal val finder: TextFinder,
@@ -240,14 +241,14 @@ object TextEditor {
         }
 
         fun addContent(text: String, highlighter: (String) -> AnnotatedString) {
-            content.addAll(text.split("\n").map { highlighter(it) })
+            content.addAll(text.split("\n").map { GlyphLine(highlighter(it)) })
         }
 
         fun updateFile(file: FileState) {
-            val oldContent = content.map { it.text }
+            val oldContent = content.map { it.annotatedString.text }
             processor.updateFile(file)
             reloadContent(file)
-            val newContent = content.map { it.text }
+            val newContent = content.map { it.annotatedString.text }
             if (oldContent != newContent) processor.clearHistory()
         }
 
@@ -373,7 +374,7 @@ object TextEditor {
 
     @Composable
     private fun TextLine(
-        state: State, index: Int, text: AnnotatedString, font: TextStyle, fontWidth: Dp, lineGap: Dp, showLine: Boolean
+        state: State, index: Int, line: GlyphLine, font: TextStyle, fontWidth: Dp, lineGap: Dp, showLine: Boolean
     ) {
         val cursor = state.target.cursor
         val selection = state.target.selection
@@ -389,28 +390,27 @@ object TextEditor {
                 .defaultMinSize(minWidth = minWidth).height(state.lineHeight)
                 .padding(horizontal = AREA_PADDING_HOR)
         ) {
-            val isRenderedUpToDate = state.rendering.hasVersion(index, state.processor.version)
-            val textLayout = if (isRenderedUpToDate) state.rendering.get(index) else null
-            val findColor = Theme.studio.warningStroke.copy(Theme.FIND_SELECTION_ALPHA)
-            state.finder.matches(index).forEach {
-                Selection(state, it, index, textLayout, findColor, text.length, fontWidth)
-            }
-            if (selection != null && selection.min.row <= index && selection.max.row >= index) {
-                val color = Theme.studio.tertiary.copy(Theme.TARGET_SELECTION_ALPHA)
-                Selection(state, selection, index, textLayout, color, text.length, fontWidth)
-            }
             Row {
                 Column {
                     Spacer(Modifier.height(lineGap))
                     Text(
-                        text = text, style = font,
+                        text = line.annotatedString, style = font,
                         modifier = Modifier.onSizeChanged { state.target.mayIncreaseTextWidth(it.width) },
-                        onTextLayout = { state.rendering.set(index, it, state.processor.version) }
+                        onTextLayout = { state.rendering.set(index, it) }
                     )
                 }
                 Spacer(Modifier.width(RIGHT_PADDING))
             }
-            if (cursor.row == index) Cursor(state, text, textLayout, font, fontWidth, lineGap)
+            val textLayout = state.rendering.get(index)
+            val findColor = Theme.studio.warningStroke.copy(Theme.FIND_SELECTION_ALPHA)
+            state.finder.matches(index).forEach {
+                Selection(state, it, index, textLayout, findColor, line.length, fontWidth)
+            }
+            if (selection != null && selection.min.row <= index && selection.max.row >= index) {
+                val color = Theme.studio.tertiary.copy(Theme.TARGET_SELECTION_ALPHA)
+                Selection(state, selection, index, textLayout, color, line.length, fontWidth)
+            }
+            if (cursor.row == index) Cursor(state, line, textLayout, font, fontWidth, lineGap)
         }
     }
 
@@ -424,8 +424,10 @@ object TextEditor {
         val density = state.density
         val start = if (selection.min.row < index) 0 else selection.min.col
         val end = if (selection.max.row > index) state.content[index].length else selection.max.col
-        var startPos = textLayout?.let { toDP(it.getCursorRectSafely(start).left, density) } ?: (fontWidth * start)
-        var endPos = textLayout?.let { toDP(it.getCursorRectSafely(end).right, density) } ?: (fontWidth * end)
+        val startOffset = state.content[index].glyphToCharOffset(start)
+        val endOffset = state.content[index].glyphToCharOffset(end)
+        var startPos = textLayout?.let { toDP(it.getCursorRectSafely(startOffset).left, density) } ?: (fontWidth * start)
+        var endPos = textLayout?.let { toDP(it.getCursorRectSafely(endOffset).right, density) } ?: (fontWidth * end)
         if (selection.min.row < index) startPos -= AREA_PADDING_HOR
         if (selection.max.row > index && length > 0) endPos += AREA_PADDING_HOR
         Box(Modifier.offset(x = startPos).width(endPos - startPos).height(state.lineHeight).background(color))
@@ -433,17 +435,23 @@ object TextEditor {
 
     @Composable
     private fun Cursor(
-        state: State, text: AnnotatedString, textLayout: TextLayoutResult?, font: TextStyle, fontWidth: Dp, lineGap: Dp
+        state: State, line: GlyphLine, textLayout: TextLayoutResult?, font: TextStyle, fontWidth: Dp, lineGap: Dp
     ) {
         val cursor = state.target.cursor
         var visible by remember { mutableStateOf(true) }
-        val offsetX = textLayout?.let {
-            toDP(it.getCursorRectSafely(cursor.col).left, state.density)
-        } ?: (fontWidth * cursor.col)
         val width = textLayout?.let {
-            if (cursor.col >= it.multiParagraph.intrinsics.annotatedString.length) fontWidth
-            else toDP(it.getBoundingBox(cursor.col).width, state.density)
+            val textLayoutText = textLayout.layoutInput.text
+            if (line.isEmpty() || textLayoutText.isEmpty()) DEFAULT_FONT_WIDTH
+            else {
+                val offset = line.glyphToCharOffset(cursor.col.coerceIn(0, line.length - 1))
+                toDP(it.getBoundingBox(offset.coerceIn(0, textLayoutText.length - 1)).width, state.density)
+            }
         } ?: fontWidth
+
+        val offsetX = textLayout?.let {
+            val charOffset = line.glyphToCharOffset(cursor.col)
+            toDP(it.getCursorRectSafely(charOffset).left, state.density)
+        } ?: (width * cursor.col)
 
         if (visible || !state.isFocused) {
             Column(
@@ -454,8 +462,8 @@ object TextEditor {
                 Spacer(Modifier.height(lineGap))
                 Text(
                     text = AnnotatedString.Builder(
-                        if (cursor.col >= text.length) AnnotatedString("")
-                        else text.subSequence(cursor.col, cursor.col + 1)
+                        if (cursor.col >= line.length) AnnotatedString("")
+                        else line.subSequenceSafely(cursor.col, cursor.col + 1).annotatedString
                     ).also { it.addStyle(SpanStyle(Theme.studio.backgroundDark), 0, 1) }.toAnnotatedString(),
                     modifier = Modifier.offset(y = -CURSOR_LINE_PADDING),
                     style = font

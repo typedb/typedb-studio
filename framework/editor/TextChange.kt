@@ -18,11 +18,11 @@
 
 package com.vaticle.typedb.studio.framework.editor
 
-import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Cursor.Companion.min
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Selection
+import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
 import kotlin.streams.toList
 
 internal class TextChange(val operations: List<Operation>) {
@@ -91,7 +91,7 @@ internal class TextChange(val operations: List<Operation>) {
 
     sealed class Operation(
         val cursor: Cursor,
-        val text: List<AnnotatedString>,
+        val text: List<GlyphLine>,
         private var selection: Selection? = null
     ) {
 
@@ -121,7 +121,7 @@ internal class TextChange(val operations: List<Operation>) {
 
     class Insertion constructor(
         cursor: Cursor,
-        text: List<AnnotatedString>
+        text: List<GlyphLine>
     ) : Operation(cursor, text) {
 
         override fun invert(): Deletion {
@@ -136,7 +136,7 @@ internal class TextChange(val operations: List<Operation>) {
     // Note that it is not canonical to provide 'selection' as argument, but we provide it for performance
     class Deletion constructor(
         cursor: Cursor,
-        text: List<AnnotatedString>,
+        text: List<GlyphLine>,
         selection: Selection? = null
     ) : Operation(cursor, text, selection) {
 

@@ -22,15 +22,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Selection
+import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
 import com.vaticle.typedb.studio.service.common.util.Label
 import java.util.regex.MatchResult
 import java.util.regex.Pattern
 import kotlin.streams.toList
 
-internal class TextFinder(private val content: SnapshotStateList<AnnotatedString>) {
+internal class TextFinder(private val content: SnapshotStateList<GlyphLine>) {
 
     data class LineInfo(val start: Int, val length: Int)
 
@@ -83,7 +83,7 @@ internal class TextFinder(private val content: SnapshotStateList<AnnotatedString
             else newLineInfo.add(LineInfo(newLineInfo[i - 1].start + newLineInfo[i - 1].length, length))
         }
         lineInfo = newLineInfo
-        contentAsString = content.joinToString(separator = "\n")
+        contentAsString = content.joinToString(separator = "\n") { it.annotatedString }
     }
 
     internal fun findText(text: String, isCaseSensitive: Boolean) {
@@ -129,7 +129,10 @@ internal class TextFinder(private val content: SnapshotStateList<AnnotatedString
     }
 
     private fun selection(match: MatchResult): Selection {
-        return Selection(cursor(match.start()), cursor(match.end()))
+        val contentAsGlyphLine = GlyphLine(contentAsString)
+        val matchStart = contentAsGlyphLine.charToGlyphOffset(match.start())
+        val matchEnd = contentAsGlyphLine.charToGlyphOffset(match.end())
+        return Selection(cursor(matchStart), cursor(matchEnd))
     }
 
     private fun cursor(index: Int): Cursor {

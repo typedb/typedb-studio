@@ -22,15 +22,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.text.AnnotatedString
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.common.Util.subSequenceSafely
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Companion.prefixSpaces
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Cursor
 import com.vaticle.typedb.studio.framework.editor.InputTarget.Selection
 import com.vaticle.typedb.studio.framework.editor.TextChange.Deletion
 import com.vaticle.typedb.studio.framework.editor.TextChange.Insertion
 import com.vaticle.typedb.studio.framework.editor.TextChange.ReplayType
+import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
+import com.vaticle.typedb.studio.framework.editor.common.GlyphLine.Companion.toGlyphLines
 import com.vaticle.typedb.studio.framework.editor.highlighter.SyntaxHighlighter
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FILE_NOT_WRITABLE
@@ -49,7 +49,6 @@ import mu.KotlinLogging
 
 internal interface TextProcessor {
 
-    val version: Int
     val isWritable: Boolean
     val file: FileState?
 
@@ -83,7 +82,6 @@ internal interface TextProcessor {
 
     class ReadOnly constructor(override var file: FileState? = null) : TextProcessor {
 
-        override val version: Int = 0
         override val isWritable: Boolean = false
         private var lastTyped by mutableStateOf(System.currentTimeMillis())
 
@@ -120,7 +118,7 @@ internal interface TextProcessor {
 
     class Writable constructor(
         override var file: FileState,
-        private val content: SnapshotStateList<AnnotatedString>,
+        private val content: SnapshotStateList<GlyphLine>,
         private val rendering: TextRendering,
         private val finder: TextFinder,
         private val target: InputTarget,
@@ -128,7 +126,6 @@ internal interface TextProcessor {
         private var onChangeEnd: (List<String>) -> Unit,
     ) : TextProcessor {
 
-        override var version by mutableStateOf(0)
         override val isWritable: Boolean = true
         private val fileType: Property.FileType get() = file.fileType
         private var undoStack: ArrayDeque<TextChange> = ArrayDeque()
@@ -138,7 +135,6 @@ internal interface TextProcessor {
         private val coroutines = CoroutineScope(Dispatchers.Default)
 
         override fun clearHistory() {
-            version = 0
             undoStack.clear()
             redoStack.clear()
             changeQueue.clear()
@@ -174,10 +170,10 @@ internal interface TextProcessor {
             finder.mayRecomputeAllMatches()
         }
 
-        private fun indent(strings: List<AnnotatedString>, spaces: Int): List<AnnotatedString> {
+        private fun indent(strings: List<GlyphLine>, spaces: Int): List<GlyphLine> {
             return strings.map {
-                if (spaces > 0) AnnotatedString(" ".repeat(spaces)) + it
-                else if (spaces < 0) it.subSequence((-spaces).coerceAtMost(prefixSpaces(it)), it.length)
+                if (spaces > 0) GlyphLine(" ".repeat(spaces) + it.annotatedString)
+                else if (spaces < 0) it.subSequenceSafely((-spaces).coerceAtMost(prefixSpaces(it)), it.length)
                 else it
             }
         }
@@ -203,11 +199,11 @@ internal interface TextProcessor {
             val textLines = target.selectedTextLines()
             val commentToken = fileType.commentToken
 
-            fun commentSelection(oldLines: List<AnnotatedString>) = oldLines.map { AnnotatedString(commentToken) + it }
-            fun uncommentSelection(oldLines: List<AnnotatedString>) = oldLines.map {
+            fun commentSelection(oldLines: List<GlyphLine>) = oldLines.map { GlyphLine(commentToken + it.annotatedString) }
+            fun uncommentSelection(oldLines: List<GlyphLine>) = oldLines.map {
                 if (it.isEmpty()) it
                 else it.indexOf(commentToken).let { index ->
-                    it.subSequence(0, index) + it.subSequence(index + commentToken.length, it.length)
+                    it.subSequenceSafely(0, index) + it.subSequenceSafely(index + commentToken.length, it.length)
                 }
             }
 
@@ -218,7 +214,10 @@ internal interface TextProcessor {
                 } ?: Either.first(Cursor(oldCursor.row, oldCursor.col + shift))
             }
 
-            val isComment = textLines.all { val text = it.text.trim(); text.isEmpty() || text.startsWith(commentToken) }
+            val isComment = textLines.all {
+                val text = it.annotatedString.text.trim(); text.isEmpty() || text.startsWith(commentToken)
+            }
+
             insertText(if (isComment) uncommentSelection(textLines) else commentSelection(textLines))
             target.updatePosition(newPosition(if (isComment) -1 else 1))
         }
@@ -333,23 +332,20 @@ internal interface TextProcessor {
             target.updatePosition(newPosition)
         }
 
-        private fun asAnnotatedLines(text: String): List<AnnotatedString> {
-            return if (text.isEmpty()) listOf() else text.split("\n").map { AnnotatedString(it) }
-        }
-
         override fun insertText(text: String): Insertion? {
             return insertText(text, recomputeFinder = true)
         }
 
-        private fun insertText(text: AnnotatedString): Insertion? {
+        private fun insertText(text: GlyphLine): Insertion? {
             return insertText(listOf(text))
         }
 
         private fun insertText(text: String, recomputeFinder: Boolean): Insertion? {
-            return insertText(asAnnotatedLines(text), recomputeFinder)
+            val glyphLines = text.toGlyphLines()
+            return insertText(glyphLines, recomputeFinder)
         }
 
-        private fun insertText(strings: List<AnnotatedString>, recomputeFinder: Boolean = true): Insertion? {
+        private fun insertText(strings: List<GlyphLine>, recomputeFinder: Boolean = true): Insertion? {
             val operations = mutableListOf<TextChange.Operation>()
             if (target.selection != null) operations.add(deletionOperation())
             val insertion: Insertion?
@@ -384,13 +380,13 @@ internal interface TextProcessor {
 
         private fun applyChange(change: TextChange, recomputeFinder: Boolean = true) {
             onChangeStart()
+            rendering.invalidate(change)
             change.operations.forEach {
                 when (it) {
                     is Deletion -> applyDeletion(it)
                     is Insertion -> applyInsertion(it)
                 }
             }
-            version++
             target.resetTextWidth()
             if (recomputeFinder) finder.mayRecomputeAllMatches()
         }
@@ -420,7 +416,7 @@ internal interface TextProcessor {
             content[cursor.row] = texts[0]
             if (texts.size > 1) {
                 content.addAll(cursor.row + 1, texts.subList(1, texts.size))
-                rendering.addNew(cursor.row + 1, texts.size - 1)
+                rendering.addNewLines(cursor.row + 1, texts.size - 1)
             }
             target.updateCursor(insertion.selection().max, false)
         }
@@ -451,11 +447,11 @@ internal interface TextProcessor {
         }
 
         private fun highlight(lines: IntRange) {
-            lines.forEach { content[it] = SyntaxHighlighter.highlight(content[it].text, fileType) }
+            lines.forEach { content[it] = SyntaxHighlighter.highlight(content[it].annotatedString.text, fileType) }
         }
 
         private fun callOnChangeEnd() {
-            onChangeEnd(content.map { it.text })
+            onChangeEnd(content.map { it.annotatedString.text })
         }
 
         override fun drainChanges() {
