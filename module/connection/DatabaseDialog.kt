@@ -114,25 +114,6 @@ object DatabaseDialog {
         buttonsFn = { databaseName ->
             listOf(
                 IconButtonArg(
-                    icon = Icon.EXPORT,
-                    enabled = Service.project.current != null && !Service.schema.hasRunningCommand,
-                    tooltip = Tooltip.Arg(title = Label.EXPORT_SCHEMA)
-                ) {
-                    try {
-                        Service.client.tryFetchSchema(databaseName).let { schema ->
-                            schema?.let {
-                                Service.project.tryCreateUntitledFile()?.let { file ->
-                                    file.content(schema)
-                                    file.tryOpen()
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        Service.notification.systemError(LOGGER, e, FAILED_TO_LOAD_SCHEMA, databaseName, e.message ?: UNKNOWN)
-                        Service.client.refreshDatabaseList()
-                    }
-                },
-                IconButtonArg(
                     icon = Icon.DELETE,
                     color = { Theme.studio.errorStroke }
                 ) {
