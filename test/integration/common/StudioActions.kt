@@ -51,7 +51,6 @@ import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
 object StudioActions {
-    private val LOGGER = KotlinLogging.logger {}
 
     suspend fun clickIcon(composeRule: ComposeContentTestRule, icon: Icon) {
         clickText(composeRule, icon.unicode)

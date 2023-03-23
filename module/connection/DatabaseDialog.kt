@@ -61,7 +61,6 @@ object DatabaseDialog {
     private val MANAGER_HEIGHT = 500.dp
     private val SELECTOR_WIDTH = 400.dp
     private val SELECTOR_HEIGHT = 200.dp
-    private val LOGGER = KotlinLogging.logger {}
 
     private object CreateDatabaseForm : Form.State() {
         var name: String by mutableStateOf("")

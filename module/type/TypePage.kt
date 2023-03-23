@@ -127,8 +127,6 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         private val EMPTY_BOX_HEIGHT = Table.ROW_HEIGHT
         private const val MAX_VISIBLE_SUBTYPES = 10
 
-        private val LOGGER = KotlinLogging.logger {}
-
         fun create(type: ThingTypeState<*, *>): TypePage<*, *> {
             return when (type) {
                 is EntityTypeState -> Entity(type)

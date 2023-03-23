@@ -63,10 +63,6 @@ class RoleTypeState constructor(
         val isInherited: Boolean,
     )
 
-    companion object {
-        private val LOGGER = KotlinLogging.logger {}
-    }
-
     val scopedName get() = relationType.name + ":" + name
     var playerTypeProperties: List<PlayerTypeProperties> by mutableStateOf(emptyList())
     val playerTypes get() = playerTypeProperties.map { it.playerType }

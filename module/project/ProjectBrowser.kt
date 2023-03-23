@@ -49,10 +49,6 @@ import mu.KotlinLogging
 
 class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(initOpen, order) {
 
-    companion object {
-        private val LOGGER = KotlinLogging.logger {}
-    }
-
     override val label: String = Label.PROJECT
     override val icon: Icon = Icon.FOLDER
     override val isActive: Boolean get() = Service.project.current != null
