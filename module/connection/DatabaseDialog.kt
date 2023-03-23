@@ -52,8 +52,6 @@ import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_LOAD_SCHEMA
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import mu.KotlinLogging
 
