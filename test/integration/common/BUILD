@@ -51,7 +51,6 @@ kt_jvm_library(
         "@vaticle_typeql//java/query:query",
 
         # External Maven Dependencies
-        "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_test_desktop",

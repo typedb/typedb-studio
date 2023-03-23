@@ -52,10 +52,6 @@ class AttributeTypeState internal constructor(
         val isKey: Boolean,
     )
 
-    companion object {
-        private val LOGGER = KotlinLogging.logger {}
-    }
-
     override val info get() = valueType?.name?.lowercase()
     override val parent: AttributeTypeState? get() = supertype
 

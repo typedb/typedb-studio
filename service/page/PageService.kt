@@ -31,10 +31,6 @@ class PageService {
     val next: Pageable get() = opened[(opened.indexOf(active) + 1).mod(opened.size)]
     val previous: Pageable get() = opened[(opened.indexOf(active) - 1).mod(opened.size)]
 
-    companion object {
-        private val LOGGER = KotlinLogging.logger {}
-    }
-
     fun opened(pageable: Pageable, index: Int? = null) {
         val i = index ?: opened.size
         if (pageable !in opened) opened.add(i.coerceIn(0, (opened.size).coerceAtLeast(0)), pageable)

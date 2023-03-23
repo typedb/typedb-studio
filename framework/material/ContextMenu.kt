@@ -76,7 +76,6 @@ object ContextMenu {
     private val ITEM_PADDING = 6.dp
     private val ITEM_SPACING = 20.dp
     private val POPUP_SHADOW = 12.dp
-    private val LOGGER = KotlinLogging.logger {}
 
     data class Item(
         val label: String,

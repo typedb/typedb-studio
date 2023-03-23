@@ -29,10 +29,6 @@ class EntityTypeState internal constructor(
     schemaSrv: SchemaService
 ) : ThingTypeState<EntityType, EntityTypeState>(conceptType, supertype, Encoding.ENTITY_TYPE, schemaSrv) {
 
-    companion object {
-        private val LOGGER = KotlinLogging.logger {}
-    }
-
     override val parent: EntityTypeState? get() = supertype
 
     override fun isSameEncoding(conceptType: Type) = conceptType.isEntityType

@@ -42,7 +42,6 @@ kt_jvm_library(
         "@vaticle_typedb_common//:common",
 
         # External Maven Dependencies
-        "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_jetbrains_compose_animation_animation_core_desktop",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
         "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",

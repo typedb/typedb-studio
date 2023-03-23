@@ -39,10 +39,6 @@ internal class TextRendering {
 
     private var results = initResults(0)
 
-    companion object {
-        private val LOGGER = KotlinLogging.logger {}
-    }
-
     private fun initResults(initSize: Int): SnapshotStateList<TextLayoutResult?> =
         mutableStateListOf<TextLayoutResult?>().apply { addAll(List(initSize) { null }) }
 

@@ -44,10 +44,6 @@ sealed class PathState constructor(
         FILE(1);
     }
 
-    companion object {
-        private val LOGGER = KotlinLogging.logger {}
-    }
-
     private val hash = Objects.hash(path)
     override val name = path.fileName.toString()
     override val info = if (path.isSymbolicLink()) "→ " + path.readSymbolicLink().toString() else null

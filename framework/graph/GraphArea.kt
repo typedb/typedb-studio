@@ -64,7 +64,6 @@ class GraphArea(transactionState: TransactionState) {
     var theme: Color.GraphTheme? = null
     var typography: Typography.Theme? = null
     internal val textRenderer = TextRenderer(viewport)
-    private val LOGGER = KotlinLogging.logger {}
 
     companion object {
         val MIN_WIDTH = 120.dp
