@@ -45,6 +45,7 @@ import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNECTED
 import java.nio.file.Path
+import java.util.Optional
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
@@ -122,9 +123,12 @@ class ClientState constructor(
             statusAtomic.set(CONNECTED)
             onSuccess()
             if (_client?.isCluster == true) {
-                val passwordExpiryDays = _client?.asCluster()?.user()?.passwordExpiryDays()
-                if (passwordExpiryDays?.isPresent == true && passwordExpiryDays.get() <= PASSWORD_EXPIRY_WARN_DAYS) {
-                    notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON, passwordExpiryDays.get())
+                val passwordExpiryDaysOptional: Optional<Long>? = _client?.asCluster()?.user()?.passwordExpiryDays()
+                if (passwordExpiryDaysOptional?.isPresent == true) {
+                    val passwordExpiryDays = passwordExpiryDaysOptional.get()
+                    if (passwordExpiryDays <= PASSWORD_EXPIRY_WARN_DAYS) {
+                    notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON, passwordExpiryDays)
+                }
                 }
             }
         } catch (e: TypeDBClientException) {
