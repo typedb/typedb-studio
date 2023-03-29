@@ -127,8 +127,8 @@ class ClientState constructor(
                 if (passwordExpiryDaysOptional?.isPresent == true) {
                     val passwordExpiryDays = passwordExpiryDaysOptional.get()
                     if (passwordExpiryDays <= PASSWORD_EXPIRY_WARN_DAYS) {
-                    notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON, passwordExpiryDays)
-                }
+                        notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON, passwordExpiryDays)
+                    }
                 }
             }
         } catch (e: TypeDBClientException) {
