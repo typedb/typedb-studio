@@ -35,6 +35,7 @@ import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.service.common.atomic.AtomicReferenceState
 import com.vaticle.typedb.studio.service.common.util.DialogState
 import com.vaticle.typedb.studio.service.common.util.Message
+import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.CREDENTIALS_EXPIRE_SOON
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
@@ -44,6 +45,7 @@ import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNECTED
 import java.nio.file.Path
+import java.util.Optional
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
@@ -57,6 +59,7 @@ class ClientState constructor(
     enum class Mode { SCRIPT, INTERACTIVE }
 
     companion object {
+        private const val PASSWORD_EXPIRY_WARN_DAYS = 7
         private const val DATABASE_LIST_REFRESH_RATE_MS = 100
         private val LOGGER = KotlinLogging.logger {}
     }
@@ -119,6 +122,7 @@ class ClientState constructor(
             _client = clientConstructor()
             statusAtomic.set(CONNECTED)
             onSuccess()
+            mayWarnPasswordExpiry()
         } catch (e: TypeDBClientException) {
             statusAtomic.set(DISCONNECTED)
             notificationSrv.userError(LOGGER, UNABLE_TO_CONNECT)
@@ -132,6 +136,18 @@ class ClientState constructor(
         if (hasRunningCommandAtomic.compareAndSet(expected = false, new = true)) {
             coroutines.launchAndHandle(notificationSrv, LOGGER) { function() }.invokeOnCompletion {
                 hasRunningCommandAtomic.set(false)
+            }
+        }
+    }
+
+    private fun mayWarnPasswordExpiry() {
+        if (_client?.isCluster == true) {
+            val passwordExpiryDaysOptional: Optional<Long>? = _client?.asCluster()?.user()?.passwordExpiryDays()
+            if (passwordExpiryDaysOptional?.isPresent == true) {
+                val passwordExpiryDays = passwordExpiryDaysOptional.get()
+                if (passwordExpiryDays <= PASSWORD_EXPIRY_WARN_DAYS) {
+                    notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON, passwordExpiryDays)
+                }
             }
         }
     }
