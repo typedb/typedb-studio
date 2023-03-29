@@ -122,15 +122,7 @@ class ClientState constructor(
             _client = clientConstructor()
             statusAtomic.set(CONNECTED)
             onSuccess()
-            if (_client?.isCluster == true) {
-                val passwordExpiryDaysOptional: Optional<Long>? = _client?.asCluster()?.user()?.passwordExpiryDays()
-                if (passwordExpiryDaysOptional?.isPresent == true) {
-                    val passwordExpiryDays = passwordExpiryDaysOptional.get()
-                    if (passwordExpiryDays <= PASSWORD_EXPIRY_WARN_DAYS) {
-                        notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON, passwordExpiryDays)
-                    }
-                }
-            }
+            mayWarnPasswordExpiry()
         } catch (e: TypeDBClientException) {
             statusAtomic.set(DISCONNECTED)
             notificationSrv.userError(LOGGER, UNABLE_TO_CONNECT)
@@ -144,6 +136,18 @@ class ClientState constructor(
         if (hasRunningCommandAtomic.compareAndSet(expected = false, new = true)) {
             coroutines.launchAndHandle(notificationSrv, LOGGER) { function() }.invokeOnCompletion {
                 hasRunningCommandAtomic.set(false)
+            }
+        }
+    }
+
+    private fun mayWarnPasswordExpiry() {
+        if (_client?.isCluster == true) {
+            val passwordExpiryDaysOptional: Optional<Long>? = _client?.asCluster()?.user()?.passwordExpiryDays()
+            if (passwordExpiryDaysOptional?.isPresent == true) {
+                val passwordExpiryDays = passwordExpiryDaysOptional.get()
+                if (passwordExpiryDays <= PASSWORD_EXPIRY_WARN_DAYS) {
+                    notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON, passwordExpiryDays)
+                }
             }
         }
     }
