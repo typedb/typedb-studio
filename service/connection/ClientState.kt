@@ -45,6 +45,7 @@ import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTED
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTING
 import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNECTED
 import java.nio.file.Path
+import java.time.Duration
 import java.util.Optional
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,8 +60,8 @@ class ClientState constructor(
     enum class Mode { SCRIPT, INTERACTIVE }
 
     companion object {
-        private const val PASSWORD_EXPIRY_WARN_DAYS = 7
         private const val DATABASE_LIST_REFRESH_RATE_MS = 100
+        private val PASSWORD_EXPIRY_WARN_DURATION = Duration.ofDays(7);
         private val LOGGER = KotlinLogging.logger {}
     }
 
@@ -142,11 +143,11 @@ class ClientState constructor(
 
     private fun mayWarnPasswordExpiry() {
         if (_client?.isCluster == true) {
-            val passwordExpiryDaysOptional: Optional<Long>? = _client?.asCluster()?.user()?.passwordExpiryDays()
-            if (passwordExpiryDaysOptional?.isPresent == true) {
-                val passwordExpiryDays = passwordExpiryDaysOptional.get()
-                if (passwordExpiryDays <= PASSWORD_EXPIRY_WARN_DAYS) {
-                    notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON, passwordExpiryDays)
+            val passwordExpiryDurationOptional: Optional<Duration>? = _client?.asCluster()?.user()?.passwordExpirySeconds()?.map { Duration.ofSeconds(it) }
+            if (passwordExpiryDurationOptional?.isPresent == true) {
+                val passwordExpiryDuration = passwordExpiryDurationOptional.get()
+                if (passwordExpiryDuration.minus(PASSWORD_EXPIRY_WARN_DURATION).isNegative) {
+                    notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON, passwordExpiryDuration.toDays())
                 }
             }
         }
