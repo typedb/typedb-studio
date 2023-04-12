@@ -35,7 +35,7 @@ import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.service.common.atomic.AtomicReferenceState
 import com.vaticle.typedb.studio.service.common.util.DialogState
 import com.vaticle.typedb.studio.service.common.util.Message
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.CREDENTIALS_EXPIRE_SOON
+import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.CREDENTIALS_EXPIRE_SOON_HOURS
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
@@ -147,7 +147,7 @@ class ClientState constructor(
             if (passwordExpiryDurationOptional?.isPresent == true) {
                 val passwordExpiryDuration = passwordExpiryDurationOptional.get()
                 if (passwordExpiryDuration.minus(PASSWORD_EXPIRY_WARN_DURATION).isNegative) {
-                    notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON, passwordExpiryDuration.toDays())
+                    notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON_HOURS, passwordExpiryDuration.toHours())
                 }
             }
         }
