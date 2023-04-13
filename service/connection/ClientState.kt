@@ -142,14 +142,12 @@ class ClientState constructor(
     }
 
     private fun mayWarnPasswordExpiry() {
-        if (_client?.isCluster == true) {
-            val passwordExpiryDurationOptional: Optional<Duration>? = _client?.asCluster()?.user()?.passwordExpirySeconds()?.map { Duration.ofSeconds(it) }
-            if (passwordExpiryDurationOptional?.isPresent == true) {
-                val passwordExpiryDuration = passwordExpiryDurationOptional.get()
-                if (passwordExpiryDuration.minus(PASSWORD_EXPIRY_WARN_DURATION).isNegative) {
-                    notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON_HOURS, passwordExpiryDuration.toHours())
-                }
-            }
+        if (_client?.isCluster == false) return
+        val passwordExpiryDurationOptional: Optional<Duration>? = _client?.asCluster()?.user()?.passwordExpirySeconds()?.map { Duration.ofSeconds(it) }
+        if (passwordExpiryDurationOptional?.isPresent == false) return
+        val passwordExpiryDuration = passwordExpiryDurationOptional?.get()
+        if (passwordExpiryDuration?.minus(PASSWORD_EXPIRY_WARN_DURATION)?.isNegative == true) {
+            notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON_HOURS, passwordExpiryDuration.toHours() + 1)
         }
     }
 

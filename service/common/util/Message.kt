@@ -119,7 +119,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val FAILED_TO_LOAD_SCHEMA =
                 Connection(16, "Failed to fetch schema for database '%s', due to:\n%s")
             val CREDENTIALS_EXPIRE_SOON_HOURS =
-                Connection(17, "Your credentials are expiring within %s hours. Use TypeDB Console to update your password.")
+                Connection(17, "Your credentials are expiring within %s hour(s). Use TypeDB Console to update your password.")
         }
     }
 
