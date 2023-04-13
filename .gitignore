@@ -20,6 +20,8 @@
 
 # Bazel
 bazel-*
+.bazel-remote-cache.rc
+credential.json
 
 # IntelliJ IDEA
 .idea/
