@@ -35,7 +35,7 @@ build:
       image: vaticle-ubuntu-22.04
       command: |
         bazel run @vaticle_dependencies//tool/bazelinstall:remote_cache_setup.sh
-        bazel build //... --no_remote_accept_cached
+        bazel build //... --noremote_accept_cached
         bazel run @vaticle_dependencies//tool/checkstyle:test-coverage
         bazel test $(bazel query 'kind(checkstyle_test, //...)') --test_output=errors
     build-dependency:

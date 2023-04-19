@@ -238,6 +238,5 @@ filegroup(
         "@vaticle_dependencies//distribution/artifact:create-netrc",
         "@vaticle_dependencies//tool/checkstyle:test-coverage",
         "@vaticle_dependencies//tool/release/notes:create",
-        "@vaticle_dependencies//tool/bazelrun:rbe",
     ],
 )
