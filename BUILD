@@ -207,6 +207,8 @@ checkstyle_test(
         ".circleci/windows/*",
         "LICENSE",
         "VERSION",
+        "bazel_cache_credential.json",
+        ".bazel-remote-cache.rc"
     ]),
     license_type = "agpl-header",
 )
