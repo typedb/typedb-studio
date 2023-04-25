@@ -207,6 +207,8 @@ checkstyle_test(
         ".circleci/windows/*",
         "LICENSE",
         "VERSION",
+        ".bazel-cache-credential.json",
+        ".bazel-remote-cache.rc"
     ]),
     license_type = "agpl-header",
 )
@@ -236,8 +238,8 @@ filegroup(
     name = "ci",
     data = [
         "@vaticle_dependencies//distribution/artifact:create-netrc",
+        "@vaticle_dependencies//tool/bazelinstall:remote_cache_setup.sh",
         "@vaticle_dependencies//tool/checkstyle:test-coverage",
         "@vaticle_dependencies//tool/release/notes:create",
-        "@vaticle_dependencies//tool/bazelrun:rbe",
     ],
 )
