@@ -198,14 +198,23 @@ internal class RunOutputGroup constructor(
         val table = if (response.source != MATCH) null else TableOutput(
             transaction = runner.transactionState, number = tableCount.incrementAndGet()
         ) // TODO: .also { outputs.add(it) }
-        val graph =
-            if (response.source != MATCH || !Service.preference.graphOutputEnabled) null else GraphOutput(
-                transactionState = runner.transactionState, number = graphCount.incrementAndGet()
-            ).also { outputs.add(it); activate(it) }
+        var graph: GraphOutput? = null
+        var json: JSONOutput? = null
+        if (response.source == MATCH) {
+            if (Service.preference.graphOutputEnabled) {
+                graph = GraphOutput(
+                    transactionState = runner.transactionState, number = graphCount.incrementAndGet()
+                ).also { outputs.add(it); activate(it) }
+            }
+            json = JSONOutput.create(runner.transactionState)
+            outputs.add(json)
+            activate(json)
+        }
 
         consumeStreamResponse(response, onCompleted = { graph?.setCompleted() }) {
             collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { logOutput.outputFn(it) })
             table?.let { t -> collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { t.outputFn(it) }) }
+            json?.let { j -> collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { j.outputFn(it) }) }
             graph?.let { g -> collectNonSerial(launchCompletableFuture(notificationSrv, LOGGER) { g.output(it) }) }
         }
     }

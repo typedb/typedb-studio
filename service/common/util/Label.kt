@@ -120,6 +120,7 @@ object Label {
     const val INHERITED = "Inherited"
     const val INTERACTIVE_MODE = "Interactive Mode"
     const val INTERNAL_ID = "Internal ID"
+    const val JSON = "JSON"
     const val JUMP_AND_STICK_TO_BOTTOM = "Jump and Stick to Bottom"
     const val JUMP_TO_TOP = "Jump to Top"
     const val KEY = "Key"
