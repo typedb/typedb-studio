@@ -48,7 +48,7 @@ import com.vaticle.typedb.studio.service.schema.ThingTypeState
 
 class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
 
-    override val label: String = Label.TYPES
+    override val label: String = Label.TYPE_BROWSER
     override val icon: Icon = Icon.TYPES
     override val isActive: Boolean get() = Service.client.isConnected && Service.client.session.isOpen
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())

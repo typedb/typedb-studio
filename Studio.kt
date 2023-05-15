@@ -85,7 +85,7 @@ import com.vaticle.typedb.studio.module.project.ProjectBrowser
 import com.vaticle.typedb.studio.module.project.ProjectDialog
 import com.vaticle.typedb.studio.module.type.TypeBrowser
 import com.vaticle.typedb.studio.module.type.TypeDialog
-import com.vaticle.typedb.studio.module.type.TypePage
+import com.vaticle.typedb.studio.module.type.TypeEditor
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
@@ -190,7 +190,7 @@ object Studio {
                             Pages.Layout(enabled = Service.project.current != null) {
                                 when (it) {
                                     is FileState -> FilePage.create(it)
-                                    is ThingTypeState<*, *> -> TypePage.create(it)
+                                    is ThingTypeState<*, *> -> TypeEditor.create(it)
                                     else -> throw IllegalStateException("Unrecognised pageable type")
                                 }
                             }
