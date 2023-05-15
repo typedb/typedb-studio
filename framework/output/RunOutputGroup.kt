@@ -46,12 +46,13 @@ import mu.KotlinLogging
 
 internal class RunOutputGroup constructor(
     private val runner: QueryRunner,
-    private val logOutput: LogOutput
+    private val logOutput: LogOutput,
+    private val jsonOutput: JSONOutput
 ) {
 
     private val graphCount = AtomicInteger(0)
     private val tableCount = AtomicInteger(0)
-    internal val outputs: MutableList<RunOutput> = mutableStateListOf(logOutput)
+    internal val outputs: MutableList<RunOutput> = mutableStateListOf(logOutput, jsonOutput)
     internal var active: RunOutput by mutableStateOf(logOutput)
     private val serialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<(() -> Unit)?>, Done>>()
     private val nonSerialOutputFutures = LinkedBlockingQueue<Either<CompletableFuture<Unit?>, Done>>()
@@ -69,7 +70,8 @@ internal class RunOutputGroup constructor(
 
         @Composable
         fun createAndLaunch(runner: QueryRunner) = RunOutputGroup(
-            runner = runner, logOutput = LogOutput.create(runner.transactionState)
+            runner = runner, logOutput = LogOutput.create(runner.transactionState),
+            jsonOutput = JSONOutput.create(runner.transactionState)
         ).also { it.launch() }
 
         private suspend fun <E> LinkedBlockingQueue<E>.takeNonBlocking(periodMS: Long): E {
@@ -83,6 +85,7 @@ internal class RunOutputGroup constructor(
     internal fun launch() {
         runner.onClose { clearStatus() }
         logOutput.start()
+        jsonOutput.start()
         launchResponseConsumer()
         launchSerialOutputConsumer()
         launchNonSerialOutputConsumer()
@@ -147,6 +150,7 @@ internal class RunOutputGroup constructor(
         }
         runner.setConsumed()
         logOutput.stop()
+        jsonOutput.stop()
         endTime = System.currentTimeMillis()
     }
 
@@ -172,9 +176,15 @@ internal class RunOutputGroup constructor(
         is Response.Done -> {}
     }
 
-    private fun consumeMessageResponse(response: Response.Message) = collectSerial(logOutput.outputFn(response))
+    private fun consumeMessageResponse(response: Response.Message) {
+      collectSerial(logOutput.outputFn(response))
+      collectSerial(jsonOutput.outputFn(response))
+    }
 
-    private fun consumeNumericResponse(response: Response.Numeric) = collectSerial(logOutput.outputFn(response.value))
+    private fun consumeNumericResponse(response: Response.Numeric) {
+        collectSerial(logOutput.outputFn(response.value))
+        collectSerial(jsonOutput.outputFn(response.value))
+    }
 
     private suspend fun consumeNumericGroupStreamResponse(response: Response.Stream.NumericGroups) {
         consumeStreamResponse(response) {
@@ -182,14 +192,14 @@ internal class RunOutputGroup constructor(
                 launchCompletableFuture(
                     Service.notification,
                     LOGGER
-                ) { logOutput.outputFn(it) })
+                ) { logOutput.outputFn(it); jsonOutput.outputFn(it) })
         }
     }
 
     private suspend fun consumeConceptMapGroupStreamResponse(
         response: Response.Stream.ConceptMapGroups
     ) = consumeStreamResponse(response) {
-        collectSerial(launchCompletableFuture(Service.notification, LOGGER) { logOutput.outputFn(it) })
+        collectSerial(launchCompletableFuture(Service.notification, LOGGER) { logOutput.outputFn(it); jsonOutput.outputFn(it) })
     }
 
     private suspend fun consumeConceptMapStreamResponse(response: Response.Stream.ConceptMaps) {
@@ -198,23 +208,15 @@ internal class RunOutputGroup constructor(
         val table = if (response.source != MATCH) null else TableOutput(
             transaction = runner.transactionState, number = tableCount.incrementAndGet()
         ) // TODO: .also { outputs.add(it) }
-        var graph: GraphOutput? = null
-        var json: JSONOutput? = null
-        if (response.source == MATCH) {
-            if (Service.preference.graphOutputEnabled) {
-                graph = GraphOutput(
-                    transactionState = runner.transactionState, number = graphCount.incrementAndGet()
-                ).also { outputs.add(it); activate(it) }
-            }
-            json = JSONOutput.create(runner.transactionState)
-            outputs.add(json)
-            activate(json)
-        }
+        val graph =
+            if (response.source != MATCH || !Service.preference.graphOutputEnabled) null else GraphOutput(
+                transactionState = runner.transactionState, number = graphCount.incrementAndGet()
+            ).also { outputs.add(it); activate(it) }
 
         consumeStreamResponse(response, onCompleted = { graph?.setCompleted() }) {
             collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { logOutput.outputFn(it) })
+            collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { jsonOutput.outputFn(it) })
             table?.let { t -> collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { t.outputFn(it) }) }
-            json?.let { j -> collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { j.outputFn(it) }) }
             graph?.let { g -> collectNonSerial(launchCompletableFuture(notificationSrv, LOGGER) { g.output(it) }) }
         }
     }
