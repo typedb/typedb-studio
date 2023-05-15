@@ -26,6 +26,8 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
+import com.eclipsesource.json.PrettyPrint
+import com.eclipsesource.json.WriterConfig
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.answer.ConceptMapGroup
 import com.vaticle.typedb.client.api.answer.Numeric
@@ -196,7 +198,7 @@ internal class JSONOutput constructor(
     }
 
     private fun loadToString(conceptMap: ConceptMap): String {
-        return conceptMap.toJSON().toString()
+        return conceptMap.toJSON().toString(WriterConfig.PRETTY_PRINT)
     }
 
     private fun loadToString(concept: Concept): String {
