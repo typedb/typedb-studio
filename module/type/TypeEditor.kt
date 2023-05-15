@@ -85,9 +85,8 @@ import com.vaticle.typedb.studio.service.schema.ThingTypeState
 import com.vaticle.typedb.studio.service.schema.TypeState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import mu.KotlinLogging
 
-sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
+sealed class TypeEditor<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     var typeState: TS, showAdvanced: Boolean = false
 ) : Pages.Page() {
 
@@ -127,7 +126,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         private val EMPTY_BOX_HEIGHT = Table.ROW_HEIGHT
         private const val MAX_VISIBLE_SUBTYPES = 10
 
-        fun create(type: ThingTypeState<*, *>): TypePage<*, *> {
+        fun create(type: ThingTypeState<*, *>): TypeEditor<*, *> {
             return when (type) {
                 is EntityTypeState -> Entity(type)
                 is RelationTypeState -> Relation(type)
@@ -629,7 +628,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         )
     }
 
-    class Entity constructor(typeState: EntityTypeState) : TypePage<EntityType, EntityTypeState>(
+    class Entity constructor(typeState: EntityTypeState) : TypeEditor<EntityType, EntityTypeState>(
         typeState = typeState, showAdvanced = false
     ) {
 
@@ -644,7 +643,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         }
     }
 
-    class Relation constructor(typeState: RelationTypeState) : TypePage<RelationType, RelationTypeState>(
+    class Relation constructor(typeState: RelationTypeState) : TypeEditor<RelationType, RelationTypeState>(
         typeState = typeState, showAdvanced = typeState.playedRoleTypes.isNotEmpty()
     ) {
 
@@ -755,7 +754,7 @@ sealed class TypePage<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
         }
     }
 
-    class Attribute constructor(typeState: AttributeTypeState) : TypePage<AttributeType, AttributeTypeState>(
+    class Attribute constructor(typeState: AttributeTypeState) : TypeEditor<AttributeType, AttributeTypeState>(
         typeState = typeState,
         showAdvanced = typeState.ownedAttTypes.isNotEmpty() || typeState.playedRoleTypes.isNotEmpty()
     ) {
