@@ -86,6 +86,7 @@ object Label {
     const val DISCONNECT = "Disconnect"
     const val DISMISS_ALL = "Dismiss All"
     const val EDIT = "Edit"
+    const val ENABLE_CONNECTED_QUERIES = "Enable Connected Queries"
     const val ENABLE_EDITOR_AUTOSAVE = "Enable Autosave"
     const val ENABLE_GRAPH_OUTPUT = "Enable Graph Output"
     const val ENABLE_INFERENCE = "Enable Inference"

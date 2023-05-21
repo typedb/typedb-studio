@@ -123,6 +123,8 @@ object Sentence {
                 "Additionally, you can export a database's schema."
     const val OUTPUT_RESPONSE_TIME_DESCRIPTION =
         "Duration to collect all answers of the query from the server."
+    const val PREFERENCES_CONNECTED_QUERIES_CAPTION =
+        "When running a match query, run extra queries to fully connect the graph."
     const val PREFERENCES_GRAPH_OUTPUT_CAPTION =
         "When running a match query, display a graph output."
     const val PREFERENCES_IGNORED_PATHS_CAPTION = "Ignore files matching glob expressions. Separate entries by line."

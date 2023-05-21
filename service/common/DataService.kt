@@ -104,6 +104,7 @@ class DataService {
         private val MATCH_QUERY_LIMIT = "query.match-limit"
         private val TRANSACTION_TIMEOUT_MINS = "query.transaction-timeout-mins"
         private val GRAPH_OUTPUT = "graph.output"
+        private val CONNECTED_QUERIES = "graph.connected-queries"
 
         var autoSave: Boolean?
             get() = properties?.getProperty(AUTO_SAVE)?.toBoolean()
@@ -124,6 +125,10 @@ class DataService {
         var graphOutputEnabled: Boolean?
             get() = properties?.getProperty(GRAPH_OUTPUT)?.toBoolean()
             set(value) = setProperty(GRAPH_OUTPUT, value.toString())
+
+        var connectedQueries: Boolean?
+            get() = properties?.getProperty(CONNECTED_QUERIES)?.toBoolean()
+            set(value) = setProperty(CONNECTED_QUERIES, value.toString())
     }
 
     var properties: Properties? by mutableStateOf(null)
