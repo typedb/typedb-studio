@@ -35,6 +35,7 @@ import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companio
 import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.service.connection.TransactionState
 import com.vaticle.typeql.lang.TypeQL
+import com.vaticle.typeql.lang.query.TypeQLQuery
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -45,7 +46,7 @@ import kotlinx.coroutines.CoroutineScope
 import mu.KotlinLogging
 
 class GraphBuilder(
-    val graph: Graph, private val transactionState: TransactionState, val coroutines: CoroutineScope,
+    val graph: Graph, val query: TypeQLQuery, private val transactionState: TransactionState, val coroutines: CoroutineScope,
     val schema: Schema = Schema()
 ) {
     private val newThingVertices = ConcurrentHashMap<String, Vertex.Thing>()
@@ -69,6 +70,8 @@ class GraphBuilder(
     }
 
     fun loadConceptMap(conceptMap: ConceptMap, answerSource: AnswerSource = AnswerSource.Query) {
+        val nonAttributeVertices = ConcurrentHashMap<String, Vertex.Thing>()
+        val attributeVertices = ConcurrentHashMap<String, Vertex.Thing>()
         conceptMap.map().entries.forEach { (varName: String, concept: Concept) ->
             when {
                 concept is Thing -> {
@@ -81,6 +84,10 @@ class GraphBuilder(
                         if (answerSource is AnswerSource.Explanation) {
                             vertexExplanations += Pair(vertex, answerSource.explanation)
                         }
+                        when (vertex) {
+                            is Vertex.Thing.Attribute -> attributeVertices[varName] = vertex
+                            else -> nonAttributeVertices[varName] = vertex
+                        }
                     }
                 }
                 concept is ThingType && concept.isRoot -> { /* skip root thing types */
@@ -91,6 +98,15 @@ class GraphBuilder(
                 concept is RoleType -> { /* skip role types */
                 }
                 else -> throw unsupportedEncodingException(concept)
+            }
+        }
+        query.asMatch().conjunction().patterns().forEach {pattern ->
+            val hasser = pattern.asVariable().reference().name()
+            pattern.asVariable().constraints().forEach { constraint ->
+                if (constraint.isThing && constraint.asThing().isHas) {
+                    val hasee = constraint.asThing().asHas().attribute().reference().name()
+                    addEdge(Edge.Has(nonAttributeVertices[hasser]!!, attributeVertices[hasee] as Vertex.Thing.Attribute, false))
+                }
             }
         }
     }

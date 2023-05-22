@@ -200,7 +200,7 @@ internal class RunOutputGroup constructor(
         ) // TODO: .also { outputs.add(it) }
         val graph =
             if (response.source != MATCH || !Service.preference.graphOutputEnabled) null else GraphOutput(
-                transactionState = runner.transactionState, number = graphCount.incrementAndGet()
+                transactionState = runner.transactionState, query = response.query, number = graphCount.incrementAndGet()
             ).also { outputs.add(it); activate(it) }
 
         consumeStreamResponse(response, onCompleted = { graph?.setCompleted() }) {

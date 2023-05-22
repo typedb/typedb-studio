@@ -74,7 +74,7 @@ class QueryRunner constructor(
 
             class ConceptMapGroups : Stream<ConceptMapGroup>()
             class NumericGroups : Stream<NumericGroup>()
-            class ConceptMaps constructor(val source: Source) : Stream<ConceptMap>() {
+            class ConceptMaps constructor(val source: Source, val query: TypeQLQuery) : Stream<ConceptMap>() {
                 enum class Source { INSERT, UPDATE, MATCH }
             }
         }
@@ -199,7 +199,7 @@ class QueryRunner constructor(
         successMsg = INSERT_QUERY_SUCCESS,
         noResultMsg = INSERT_QUERY_NO_RESULT,
         queryStr = query.toString(),
-        stream = Response.Stream.ConceptMaps(INSERT)
+        stream = Response.Stream.ConceptMaps(INSERT, query)
     ) { transaction.query().insert(query, transactionState.defaultTypeDBOptions().prefetch(true)) }
 
     private fun runUpdateQuery(query: TypeQLUpdate) = runStreamingQuery(
@@ -207,7 +207,7 @@ class QueryRunner constructor(
         successMsg = UPDATE_QUERY_SUCCESS,
         noResultMsg = UPDATE_QUERY_NO_RESULT,
         queryStr = query.toString(),
-        stream = Response.Stream.ConceptMaps(UPDATE)
+        stream = Response.Stream.ConceptMaps(UPDATE, query)
     ) { transaction.query().update(query, transactionState.defaultTypeDBOptions().prefetch(true)) }
 
     private fun runMatchQuery(query: TypeQLMatch) = runStreamingQuery(
@@ -215,7 +215,7 @@ class QueryRunner constructor(
         successMsg = MATCH_QUERY_SUCCESS,
         noResultMsg = MATCH_QUERY_NO_RESULT,
         queryStr = query.toString(),
-        stream = Response.Stream.ConceptMaps(MATCH)
+        stream = Response.Stream.ConceptMaps(MATCH, query)
     ) {
         if (query.modifiers().limit().isPresent) {
             transaction.query().match(query)
@@ -265,7 +265,7 @@ class QueryRunner constructor(
         queryFn: () -> Stream<T>
     ) {
         printQueryStart(name, queryStr)
-        collectResponseStream(queryFn(), successMsg, noResultMsg, stream)
+        collectResponseStream(queryFn(), queryStr, successMsg, noResultMsg, stream)
     }
 
     private fun printQueryStart(name: String, queryStr: String) {
@@ -276,6 +276,7 @@ class QueryRunner constructor(
 
     private fun <T : Any> collectResponseStream(
         results: Stream<T>,
+        queryStr: String,
         successMsg: String,
         noResultMsg: String,
         stream: Response.Stream<T>

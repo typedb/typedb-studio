@@ -28,10 +28,11 @@ import com.vaticle.typedb.studio.framework.material.Frame
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.framework.material.Tabs
 import com.vaticle.typedb.studio.service.connection.TransactionState
+import com.vaticle.typeql.lang.query.TypeQLQuery
 
-class GraphVisualiser constructor(transactionState: TransactionState) {
+class GraphVisualiser constructor(transactionState: TransactionState, val query: TypeQLQuery) {
 
-    private val graphArea = GraphArea(transactionState)
+    private val graphArea = GraphArea(transactionState, query)
     private val browsers: List<Browsers.Browser> = listOf(ConceptPreview(graphArea, 0, false))
     private var frameState: Frame.FrameState = Frame.createFrameState(
         separator = Frame.SeparatorArgs(Separator.WEIGHT),

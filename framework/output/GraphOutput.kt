@@ -26,10 +26,11 @@ import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.connection.TransactionState
+import com.vaticle.typeql.lang.query.TypeQLQuery
 
-internal class GraphOutput constructor(transactionState: TransactionState, number: Int) : RunOutput() {
+internal class GraphOutput constructor(transactionState: TransactionState, query: TypeQLQuery, number: Int) : RunOutput() {
 
-    private val graphVisualiser = GraphVisualiser(transactionState)
+    private val graphVisualiser = GraphVisualiser(transactionState, query)
 
     override val name: String = "${Label.GRAPH} ($number)"
     override val icon: Icon = Icon.GRAPH

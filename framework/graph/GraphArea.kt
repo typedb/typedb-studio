@@ -48,17 +48,18 @@ import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Typography
 import com.vaticle.typedb.studio.service.connection.TransactionState
+import com.vaticle.typeql.lang.query.TypeQLQuery
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-class GraphArea(transactionState: TransactionState) {
+class GraphArea(transactionState: TransactionState, val query: TypeQLQuery) {
 
     val interactions = Interactions(this)
     val graph = Graph(interactions)
     val coroutines = CoroutineScope(Dispatchers.Default)
-    val graphBuilder = GraphBuilder(graph, transactionState, coroutines)
+    val graphBuilder = GraphBuilder(graph, query, transactionState, coroutines)
     val viewport = Viewport(graph)
     val physicsRunner = PhysicsRunner(this)
     var theme: Color.GraphTheme? = null
