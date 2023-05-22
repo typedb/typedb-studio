@@ -382,12 +382,16 @@ object PreferenceDialog {
 
             override fun submit() {
                 preferenceSrv.graphOutputEnabled = graphOutput.value
+                preferenceSrv.connectedQueries = connectedQueries.value
                 graphOutput.modified = false
+                connectedQueries.modified = false
             }
 
             override fun reset() {
                 graphOutput.value = preferenceSrv.graphOutputEnabled
+                connectedQueries.value = preferenceSrv.connectedQueries
                 graphOutput.modified = false
+                connectedQueries.modified = false
             }
         }
 

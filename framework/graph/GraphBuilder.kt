@@ -320,7 +320,7 @@ class GraphBuilder(
 
             override fun build() {
                 loadIsaEdge()
-                loadHasEdges()
+                if (Service.preference.connectedQueries) loadHasEdges()
                 if (thing is Relation) loadRoleplayerEdgesAndVertices()
             }
 
