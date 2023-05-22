@@ -100,12 +100,20 @@ class GraphBuilder(
                 else -> throw unsupportedEncodingException(concept)
             }
         }
-        query.asMatch().conjunction().patterns().forEach {pattern ->
-            val hasser = pattern.asVariable().reference().name()
-            pattern.asVariable().constraints().forEach { constraint ->
-                if (constraint.isThing && constraint.asThing().isHas) {
-                    val hasee = constraint.asThing().asHas().attribute().reference().name()
-                    addEdge(Edge.Has(nonAttributeVertices[hasser]!!, attributeVertices[hasee] as Vertex.Thing.Attribute, false))
+        if (!Service.preference.connectedQueries) {
+            query.asMatch().conjunction().patterns().forEach { pattern ->
+                val hasser = pattern.asVariable().reference().name()
+                pattern.asVariable().constraints().forEach { constraint ->
+                    if (constraint.isThing && constraint.asThing().isHas) {
+                        val hasee = constraint.asThing().asHas().attribute().reference().name()
+                        addEdge(
+                            Edge.Has(
+                                nonAttributeVertices[hasser]!!,
+                                attributeVertices[hasee]!! as Vertex.Thing.Attribute,
+                                false
+                            )
+                        )
+                    }
                 }
             }
         }
