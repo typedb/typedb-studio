@@ -73,32 +73,40 @@ class GraphBuilder(
         val nonAttributeVertices = ConcurrentHashMap<String, Vertex.Thing>()
         val attributeVertices = ConcurrentHashMap<String, Vertex.Thing>()
         conceptMap.map().entries.forEach { (varName: String, concept: Concept) ->
-            when {
-                concept is Thing -> {
-                    val (added, vertex) = putVertexIfAbsent(concept)
-                    if (added) {
-                        vertex as Vertex.Thing
-                        if (transactionState.transaction?.options()?.explain()?.get() == true && concept.isInferred) {
-                            addExplainables(concept, vertex, conceptMap.explainables(), varName)
+            if (!varName.startsWith('_')) {
+                when {
+                    concept is Thing -> {
+                        val (added, vertex) = putVertexIfAbsent(concept)
+                        if (added) {
+                            vertex as Vertex.Thing
+                            if (transactionState.transaction?.options()?.explain()
+                                    ?.get() == true && concept.isInferred
+                            ) {
+                                addExplainables(concept, vertex, conceptMap.explainables(), varName)
+                            }
+                            if (answerSource is AnswerSource.Explanation) {
+                                vertexExplanations += Pair(vertex, answerSource.explanation)
+                            }
                         }
-                        if (answerSource is AnswerSource.Explanation) {
-                            vertexExplanations += Pair(vertex, answerSource.explanation)
+                        when (vertex) {
+                            is Vertex.Thing.Attribute -> attributeVertices[varName] = vertex
+                            is Vertex.Thing -> nonAttributeVertices[varName] = vertex
+                            else -> {}
                         }
                     }
-                    when (vertex) {
-                        is Vertex.Thing.Attribute -> attributeVertices[varName] = vertex
-                        is Vertex.Thing -> nonAttributeVertices[varName] = vertex
-                        else -> {}
+
+                    concept is ThingType && concept.isRoot -> { /* skip root thing types */
                     }
+
+                    concept is ThingType -> {
+                        putVertexIfAbsent(concept)
+                    }
+
+                    concept is RoleType -> { /* skip role types */
+                    }
+
+                    else -> throw unsupportedEncodingException(concept)
                 }
-                concept is ThingType && concept.isRoot -> { /* skip root thing types */
-                }
-                concept is ThingType -> {
-                    putVertexIfAbsent(concept)
-                }
-                concept is RoleType -> { /* skip role types */
-                }
-                else -> throw unsupportedEncodingException(concept)
             }
         }
         if (!Service.preference.connectedQueries) {
