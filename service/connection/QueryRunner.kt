@@ -265,7 +265,7 @@ class QueryRunner constructor(
         queryFn: () -> Stream<T>
     ) {
         printQueryStart(name, queryStr)
-        collectResponseStream(queryFn(), queryStr, successMsg, noResultMsg, stream)
+        collectResponseStream(queryFn(), successMsg, noResultMsg, stream)
     }
 
     private fun printQueryStart(name: String, queryStr: String) {
@@ -276,7 +276,6 @@ class QueryRunner constructor(
 
     private fun <T : Any> collectResponseStream(
         results: Stream<T>,
-        queryStr: String,
         successMsg: String,
         noResultMsg: String,
         stream: Response.Stream<T>

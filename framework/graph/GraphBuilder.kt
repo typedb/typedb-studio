@@ -72,8 +72,9 @@ class GraphBuilder(
     fun loadConceptMap(conceptMap: ConceptMap, answerSource: AnswerSource = AnswerSource.Query) {
         val nonAttributeVertices = ConcurrentHashMap<String, Vertex.Thing>()
         val attributeVertices = ConcurrentHashMap<String, Vertex.Thing>()
-        conceptMap.map().entries.forEach { (varName: String, concept: Concept) ->
-            if (!varName.startsWith('_')) {
+        conceptMap.map().entries
+            .filter { (varName: String, _) -> !varName.startsWith('_') }
+            .forEach { (varName: String, concept: Concept) ->
                 when {
                     concept is Thing -> {
                         val (added, vertex) = putVertexIfAbsent(concept)
@@ -108,26 +109,33 @@ class GraphBuilder(
                     else -> throw unsupportedEncodingException(concept)
                 }
             }
+
+        drawHasEdges(query, attributeVertices, nonAttributeVertices)
+    }
+
+    private fun drawHasEdges(query: TypeQLQuery, attributeVertices: ConcurrentHashMap<String, Vertex.Thing>, nonAttributeVertices: ConcurrentHashMap<String, Vertex.Thing>) {
+        if (Service.preference.connectedQueries) {
+            return
         }
-        if (!Service.preference.connectedQueries) {
-            query.asMatch().conjunction().patterns().forEach { pattern ->
-                val hasser = pattern.asVariable().reference().name()
-                pattern.asVariable().constraints().forEach { constraint ->
-                    if (constraint.isThing && constraint.asThing().isHas) {
-                        val hasee = constraint.asThing().asHas().attribute().reference().name()
-                        if (nonAttributeVertices.containsKey(hasser) && attributeVertices.containsKey(hasee)) {
-                            val edge = Edge.Has(
-                                nonAttributeVertices[hasser]!!,
-                                attributeVertices[hasee]!! as Vertex.Thing.Attribute,
-                                false
-                            )
-                            addEdge(edge)
-                        }
+
+        query.asMatch().conjunction().patterns().forEach { pattern ->
+            val nonAttributeVariable = pattern.asVariable().reference().name()
+            pattern.asVariable().constraints()
+                .filter { constraint -> constraint.isThing && constraint.asThing().isHas }
+                .forEach { constraint ->
+                    val attributeVariable = constraint.asThing().asHas().attribute().reference().name()
+                    if (nonAttributeVertices.containsKey(nonAttributeVariable) && attributeVertices.containsKey(attributeVariable)) {
+                        val edge = Edge.Has(
+                            nonAttributeVertices[nonAttributeVariable]!!,
+                            attributeVertices[attributeVariable]!! as Vertex.Thing.Attribute,
+                            false
+                        )
+                        addEdge(edge)
                     }
                 }
-            }
         }
     }
+
 
     private fun putVertexIfAbsent(concept: Concept): PutVertexResult = when {
         concept is Thing -> putVertexIfAbsent(

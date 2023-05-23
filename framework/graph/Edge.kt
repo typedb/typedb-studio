@@ -41,16 +41,16 @@ sealed class Edge(open val source: Vertex, open val target: Vertex) {
     }
 
     // Type edges
-    class Sub(override val source: Vertex.Type, override val target: Vertex.Type) : Edge(source, target) {
+    data class Sub(override val source: Vertex.Type, override val target: Vertex.Type) : Edge(source, target) {
         override val label = Labels.SUB
     }
 
-    class Owns(override val source: Vertex.Type, override val target: Vertex.Type.Attribute) :
+    data class Owns(override val source: Vertex.Type, override val target: Vertex.Type.Attribute) :
         Edge(source, target) {
         override val label = Labels.OWNS
     }
 
-    class Plays(
+    data class Plays(
         override val source: Vertex.Type.Relation, override val target: Vertex.Type, private val role: String
     ) : Edge(source, target) {
         override val label = role
@@ -64,7 +64,7 @@ sealed class Edge(open val source: Vertex, open val target: Vertex) {
         override val label = Labels.HAS
     }
 
-    class Roleplayer(
+    data class Roleplayer(
         override val source: Vertex.Thing.Relation, override val target: Vertex.Thing, val role: String,
         override val isInferred: Boolean = false
     ) : Edge(source, target), Inferrable {
@@ -72,11 +72,11 @@ sealed class Edge(open val source: Vertex, open val target: Vertex) {
     }
 
     // Thing-to-type edges
-    class Isa(override val source: Vertex.Thing, override val target: Vertex.Type) : Edge(source, target) {
+    data class Isa(override val source: Vertex.Thing, override val target: Vertex.Type) : Edge(source, target) {
         override val label = Labels.ISA
     }
 
-    class Geometry(private val edge: Edge) : com.vaticle.force.graph.api.Edge {
+    data class Geometry(private val edge: Edge) : com.vaticle.force.graph.api.Edge {
 
         val isCurved get() = edge.curvePoint != null
         val midpoint
