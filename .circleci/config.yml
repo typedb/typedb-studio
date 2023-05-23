@@ -105,12 +105,6 @@ jobs:
       - checkout
       - install-bazel-linux
       - run:
-          name: "Create GitHub release notes"
-          command: |
-            export NOTES_CREATE_TOKEN=$REPO_GITHUB_TOKEN
-            bazel run @vaticle_dependencies//tool/release/notes:create -- \
-              vaticle $CIRCLE_PROJECT_REPONAME $CIRCLE_SHA1 $(cat VERSION) ./RELEASE_TEMPLATE.md
-      - run:
           name: "Publish Draft Release on GitHub"
           command: |
             wget https://github.com/tcnksm/ghr/releases/download/v0.12.1/ghr_v0.12.1_linux_amd64.tar.gz
