@@ -63,7 +63,7 @@ class PreferenceService(dataSrv: DataService) {
 
     private object Defaults {
         val autoSave = true
-        val connectedQueries = true
+        val connectedQueries = false
         val graphOutputEnabled = true
         val matchQueryLimit = 1000L
         val ignoredPaths = listOf(".git")
