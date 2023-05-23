@@ -84,10 +84,11 @@ class GraphBuilder(
                         if (answerSource is AnswerSource.Explanation) {
                             vertexExplanations += Pair(vertex, answerSource.explanation)
                         }
-                        when (vertex) {
-                            is Vertex.Thing.Attribute -> attributeVertices[varName] = vertex
-                            else -> nonAttributeVertices[varName] = vertex
-                        }
+                    }
+                    when (vertex) {
+                        is Vertex.Thing.Attribute -> attributeVertices[varName] = vertex
+                        is Vertex.Thing -> nonAttributeVertices[varName] = vertex
+                        else -> {}
                     }
                 }
                 concept is ThingType && concept.isRoot -> { /* skip root thing types */
@@ -106,13 +107,14 @@ class GraphBuilder(
                 pattern.asVariable().constraints().forEach { constraint ->
                     if (constraint.isThing && constraint.asThing().isHas) {
                         val hasee = constraint.asThing().asHas().attribute().reference().name()
-                        addEdge(
-                            Edge.Has(
+                        if (nonAttributeVertices.containsKey(hasser) && attributeVertices.containsKey(hasee)) {
+                            val edge = Edge.Has(
                                 nonAttributeVertices[hasser]!!,
                                 attributeVertices[hasee]!! as Vertex.Thing.Attribute,
                                 false
                             )
-                        )
+                            addEdge(edge)
+                        }
                     }
                 }
             }

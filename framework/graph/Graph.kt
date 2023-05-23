@@ -46,7 +46,7 @@ class Graph(private val interactions: Interactions) {
 
     private val _thingVertices: MutableMap<String, Vertex.Thing> = ConcurrentHashMap()
     private val _typeVertices: MutableMap<String, Vertex.Type> = ConcurrentHashMap()
-    private val _edges: MutableList<Edge> = Collections.synchronizedList(mutableListOf())
+    private val _edges: MutableSet<Edge> = Collections.synchronizedSet(mutableSetOf())
 
     val thingVertices: Map<String, Vertex.Thing> get() = _thingVertices
     val typeVertices: Map<String, Vertex.Type> get() = _typeVertices

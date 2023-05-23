@@ -57,7 +57,7 @@ sealed class Edge(open val source: Vertex, open val target: Vertex) {
     }
 
     // Thing edges
-    class Has(
+    data class Has(
         override val source: Vertex.Thing, override val target: Vertex.Thing.Attribute,
         override val isInferred: Boolean = false
     ) : Edge(source, target), Inferrable {
