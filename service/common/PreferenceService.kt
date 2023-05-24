@@ -35,9 +35,9 @@ class PreferenceService(dataSrv: DataService) {
         get() = preferences.graphOutputEnabled ?: field
         set(value) = run { preferences.graphOutputEnabled = value }
 
-    var connectedQueries: Boolean = Defaults.connectedQueries
-        get() = preferences.connectedQueries ?: field
-        set(value) = run { preferences.connectedQueries = value }
+    var extraConnectedQueries: Boolean = Defaults.extraConnectedQueries
+        get() = preferences.extraConnectedQueries ?: field
+        set(value) = run { preferences.extraConnectedQueries = value }
 
     var matchQueryLimit: Long = Defaults.matchQueryLimit
         get() = preferences.matchQueryLimit ?: field
@@ -63,7 +63,7 @@ class PreferenceService(dataSrv: DataService) {
 
     private object Defaults {
         val autoSave = true
-        val connectedQueries = false
+        val extraConnectedQueries = false
         val graphOutputEnabled = true
         val matchQueryLimit = 1000L
         val ignoredPaths = listOf(".git")

@@ -36,6 +36,7 @@ import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companio
 import com.vaticle.typedb.studio.service.connection.TransactionState
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.pattern.Pattern
+import com.vaticle.typeql.lang.query.TypeQLMatch
 import com.vaticle.typeql.lang.query.TypeQLQuery
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
@@ -118,18 +119,24 @@ class GraphBuilder(
     private fun deriveHasEdgesFromRules(answerSource: AnswerSource,
                                         attributeVertices: ConcurrentHashMap<String, Vertex.Thing>,
                                         nonAttributeVertices: ConcurrentHashMap<String, Vertex.Thing>) {
-        if (answerSource is AnswerSource.Explanation) deriveHasEdges(answerSource.explanation.rule().`when`.patterns(), attributeVertices, nonAttributeVertices)
+        if (answerSource is AnswerSource.Explanation) {
+            deriveHasEdgesFromPatterns(answerSource.explanation.rule().`when`.patterns(), attributeVertices, nonAttributeVertices)
+            deriveHasEdgesFromPatterns(answerSource.explanation.rule().then.patterns(), attributeVertices, nonAttributeVertices)
+
+        }
     }
 
     private fun deriveHasEdgesFromQuery(query: TypeQLQuery, attributeVertices: ConcurrentHashMap<String, Vertex.Thing>,
                                         nonAttributeVertices: ConcurrentHashMap<String, Vertex.Thing>) {
-        deriveHasEdges(query.asMatch().conjunction().patterns(), attributeVertices, nonAttributeVertices)
+        if (query is TypeQLMatch) {
+            deriveHasEdgesFromPatterns(query.asMatch().conjunction().patterns(), attributeVertices, nonAttributeVertices)
+        }
     }
 
 
-    private fun deriveHasEdges(patterns: List<Pattern>, attributeVertices: ConcurrentHashMap<String, Vertex.Thing>,
-                               nonAttributeVertices: ConcurrentHashMap<String, Vertex.Thing>) {
-        if (Service.preference.connectedQueries) {
+    private fun deriveHasEdgesFromPatterns(patterns: List<Pattern>, attributeVertices: ConcurrentHashMap<String, Vertex.Thing>,
+                                           nonAttributeVertices: ConcurrentHashMap<String, Vertex.Thing>) {
+        if (Service.preference.extraConnectedQueries) {
             return
         }
 
@@ -379,7 +386,7 @@ class GraphBuilder(
 
             override fun build() {
                 loadIsaEdge()
-                if (Service.preference.connectedQueries) loadHasEdges()
+                if (Service.preference.extraConnectedQueries) loadHasEdges()
                 if (thing is Relation) loadRoleplayerEdgesAndVertices()
             }
 

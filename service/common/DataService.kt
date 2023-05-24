@@ -126,7 +126,7 @@ class DataService {
             get() = properties?.getProperty(GRAPH_OUTPUT)?.toBoolean()
             set(value) = setProperty(GRAPH_OUTPUT, value.toString())
 
-        var connectedQueries: Boolean?
+        var extraConnectedQueries: Boolean?
             get() = properties?.getProperty(CONNECTED_QUERIES)?.toBoolean()
             set(value) = setProperty(CONNECTED_QUERIES, value.toString())
     }

@@ -65,7 +65,7 @@ import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Label.APPLY
 import com.vaticle.typedb.studio.service.common.util.Label.CANCEL
-import com.vaticle.typedb.studio.service.common.util.Label.ENABLE_CONNECTED_QUERIES
+import com.vaticle.typedb.studio.service.common.util.Label.ENABLE_EXTRA_CONNECTED_QUERIES
 import com.vaticle.typedb.studio.service.common.util.Label.ENABLE_EDITOR_AUTOSAVE
 import com.vaticle.typedb.studio.service.common.util.Label.ENABLE_GRAPH_OUTPUT
 import com.vaticle.typedb.studio.service.common.util.Label.GRAPH_VISUALISER
@@ -78,7 +78,7 @@ import com.vaticle.typedb.studio.service.common.util.Label.RESET
 import com.vaticle.typedb.studio.service.common.util.Label.SET_QUERY_LIMIT
 import com.vaticle.typedb.studio.service.common.util.Label.TEXT_EDITOR
 import com.vaticle.typedb.studio.service.common.util.Label.TRANSACTION_TIMEOUT_MINS
-import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_CONNECTED_QUERIES_CAPTION
+import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_EXTRA_CONNECTED_QUERIES_CAPTION
 import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
 import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_IGNORED_PATHS_CAPTION
 import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
@@ -373,25 +373,25 @@ object PreferenceDialog {
                 caption = PREFERENCES_GRAPH_OUTPUT_CAPTION
             )
 
-            private var connectedQueries = PreferenceField.Checkbox(
-                initValue = preferenceSrv.connectedQueries, label = ENABLE_CONNECTED_QUERIES,
-                caption = PREFERENCES_CONNECTED_QUERIES_CAPTION
+            private var extraConnectedQueries = PreferenceField.Checkbox(
+                initValue = preferenceSrv.extraConnectedQueries, label = ENABLE_EXTRA_CONNECTED_QUERIES,
+                caption = PREFERENCES_EXTRA_CONNECTED_QUERIES_CAPTION
             )
 
-            override val preferences: List<PreferenceField> = listOf(graphOutput, connectedQueries)
+            override val preferences: List<PreferenceField> = listOf(graphOutput, extraConnectedQueries)
 
             override fun submit() {
                 preferenceSrv.graphOutputEnabled = graphOutput.value
-                preferenceSrv.connectedQueries = connectedQueries.value
+                preferenceSrv.extraConnectedQueries = extraConnectedQueries.value
                 graphOutput.modified = false
-                connectedQueries.modified = false
+                extraConnectedQueries.modified = false
             }
 
             override fun reset() {
                 graphOutput.value = preferenceSrv.graphOutputEnabled
-                connectedQueries.value = preferenceSrv.connectedQueries
+                extraConnectedQueries.value = preferenceSrv.extraConnectedQueries
                 graphOutput.modified = false
-                connectedQueries.modified = false
+                extraConnectedQueries.modified = false
             }
         }
 
