@@ -32,7 +32,7 @@ import com.vaticle.typedb.studio.service.common.StatusService.Key.OUTPUT_RESPONS
 import com.vaticle.typedb.studio.service.common.StatusService.Key.QUERY_RESPONSE_TIME
 import com.vaticle.typedb.studio.service.connection.QueryRunner
 import com.vaticle.typedb.studio.service.connection.QueryRunner.Response
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.MATCH
+import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMapsWithQuery.Source.MATCH
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
@@ -167,7 +167,7 @@ internal class RunOutputGroup constructor(
         is Response.Stream<*> -> when (response) {
             is Response.Stream.NumericGroups -> consumeNumericGroupStreamResponse(response)
             is Response.Stream.ConceptMapGroups -> consumeConceptMapGroupStreamResponse(response)
-            is Response.Stream.ConceptMaps -> consumeConceptMapStreamResponse(response)
+            is Response.Stream.ConceptMapsWithQuery -> consumeConceptMapStreamResponse(response)
         }
         is Response.Done -> {}
     }
@@ -192,7 +192,7 @@ internal class RunOutputGroup constructor(
         collectSerial(launchCompletableFuture(Service.notification, LOGGER) { logOutput.outputFn(it) })
     }
 
-    private suspend fun consumeConceptMapStreamResponse(response: Response.Stream.ConceptMaps) {
+    private suspend fun consumeConceptMapStreamResponse(response: Response.Stream.ConceptMapsWithQuery) {
         val notificationSrv = Service.notification
         // TODO: enable configuration of displaying GraphOutput for INSERT and UPDATE
         val table = if (response.source != MATCH) null else TableOutput(

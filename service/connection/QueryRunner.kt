@@ -29,9 +29,9 @@ import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message
 import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.INFO
 import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.SUCCESS
 import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.TYPEQL
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.INSERT
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.MATCH
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.UPDATE
+import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMapsWithQuery.Source.INSERT
+import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMapsWithQuery.Source.MATCH
+import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMapsWithQuery.Source.UPDATE
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLDefine
 import com.vaticle.typeql.lang.query.TypeQLDelete
@@ -74,7 +74,7 @@ class QueryRunner constructor(
 
             class ConceptMapGroups : Stream<ConceptMapGroup>()
             class NumericGroups : Stream<NumericGroup>()
-            class ConceptMaps constructor(val source: Source, val query: TypeQLQuery) : Stream<ConceptMap>() {
+            class ConceptMapsWithQuery constructor(val source: Source, val query: TypeQLQuery) : Stream<ConceptMap>() {
                 enum class Source { INSERT, UPDATE, MATCH }
             }
         }
@@ -199,7 +199,7 @@ class QueryRunner constructor(
         successMsg = INSERT_QUERY_SUCCESS,
         noResultMsg = INSERT_QUERY_NO_RESULT,
         queryStr = query.toString(),
-        stream = Response.Stream.ConceptMaps(INSERT, query)
+        stream = Response.Stream.ConceptMapsWithQuery(INSERT, query)
     ) { transaction.query().insert(query, transactionState.defaultTypeDBOptions().prefetch(true)) }
 
     private fun runUpdateQuery(query: TypeQLUpdate) = runStreamingQuery(
@@ -207,7 +207,7 @@ class QueryRunner constructor(
         successMsg = UPDATE_QUERY_SUCCESS,
         noResultMsg = UPDATE_QUERY_NO_RESULT,
         queryStr = query.toString(),
-        stream = Response.Stream.ConceptMaps(UPDATE, query)
+        stream = Response.Stream.ConceptMapsWithQuery(UPDATE, query)
     ) { transaction.query().update(query, transactionState.defaultTypeDBOptions().prefetch(true)) }
 
     private fun runMatchQuery(query: TypeQLMatch) = runStreamingQuery(
@@ -215,7 +215,7 @@ class QueryRunner constructor(
         successMsg = MATCH_QUERY_SUCCESS,
         noResultMsg = MATCH_QUERY_NO_RESULT,
         queryStr = query.toString(),
-        stream = Response.Stream.ConceptMaps(MATCH, query)
+        stream = Response.Stream.ConceptMapsWithQuery(MATCH, query)
     ) {
         if (query.modifiers().limit().isPresent) {
             transaction.query().match(query)

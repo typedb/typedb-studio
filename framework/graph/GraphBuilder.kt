@@ -35,6 +35,7 @@ import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companio
 import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.service.connection.TransactionState
 import com.vaticle.typeql.lang.TypeQL
+import com.vaticle.typeql.lang.pattern.Pattern
 import com.vaticle.typeql.lang.query.TypeQLQuery
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
@@ -110,15 +111,31 @@ class GraphBuilder(
                 }
             }
 
-        drawHasEdges(query, attributeVertices, nonAttributeVertices)
+        deriveHasEdgesFromQuery(query, attributeVertices, nonAttributeVertices)
+        deriveHasEdgesFromRules(answerSource, attributeVertices, nonAttributeVertices)
     }
 
-    private fun drawHasEdges(query: TypeQLQuery, attributeVertices: ConcurrentHashMap<String, Vertex.Thing>, nonAttributeVertices: ConcurrentHashMap<String, Vertex.Thing>) {
+    private fun deriveHasEdgesFromRules(answerSource: AnswerSource,
+                                        attributeVertices: ConcurrentHashMap<String, Vertex.Thing>,
+                                        nonAttributeVertices: ConcurrentHashMap<String, Vertex.Thing>) {
+        if (answerSource is AnswerSource.Explanation) deriveHasEdges(answerSource.explanation.rule().`when`.patterns(), attributeVertices, nonAttributeVertices)
+    }
+
+    private fun deriveHasEdgesFromQuery(query: TypeQLQuery, attributeVertices: ConcurrentHashMap<String, Vertex.Thing>,
+                                        nonAttributeVertices: ConcurrentHashMap<String, Vertex.Thing>) {
+        deriveHasEdges(query.asMatch().conjunction().patterns(), attributeVertices, nonAttributeVertices)
+    }
+
+
+    private fun deriveHasEdges(patterns: List<Pattern>, attributeVertices: ConcurrentHashMap<String, Vertex.Thing>,
+                               nonAttributeVertices: ConcurrentHashMap<String, Vertex.Thing>) {
         if (Service.preference.connectedQueries) {
             return
         }
 
-        query.asMatch().conjunction().patterns().forEach { pattern ->
+       patterns
+            .filter { it.isVariable }
+            .forEach { pattern ->
             val nonAttributeVariable = pattern.asVariable().reference().name()
             pattern.asVariable().constraints()
                 .filter { constraint -> constraint.isThing && constraint.asThing().isHas }
