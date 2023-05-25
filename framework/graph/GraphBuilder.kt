@@ -24,6 +24,7 @@ import com.vaticle.typedb.client.api.concept.Concept
 import com.vaticle.typedb.client.api.concept.thing.Attribute
 import com.vaticle.typedb.client.api.concept.thing.Relation
 import com.vaticle.typedb.client.api.concept.thing.Thing
+import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.logic.Explanation
@@ -399,16 +400,35 @@ class GraphBuilder(
             }
 
             private fun loadOwnsEdges() {
-                remoteThingType?.owns?.forEach { attrType ->
-                    val attrTypeLabel = attrType.label.name()
-                    val attrTypeVertex = graphBuilder.allTypeVertices[attrTypeLabel] as? Vertex.Type.Attribute
-                    if (attrTypeVertex != null) graphBuilder.addEdge(Edge.Owns(typeVertex, attrTypeVertex))
-                    else graphBuilder.addEdgeCandidate(EdgeCandidate.Owns(typeVertex, attrTypeLabel))
+                remoteThingType?.owns
+                    ?.filter { !ownsAttrFromSupertype(it) }
+                    ?.forEach { attrType ->
+                        val attrTypeLabel = attrType.label.name()
+                        val attrTypeVertex = graphBuilder.allTypeVertices[attrTypeLabel] as? Vertex.Type.Attribute
+                        if (attrTypeVertex != null) graphBuilder.addEdge(Edge.Owns(typeVertex, attrTypeVertex))
+                        else graphBuilder.addEdgeCandidate(EdgeCandidate.Owns(typeVertex, attrTypeLabel))
+                    }
+            }
+
+            // For each attribute except if the supertype exists on the graph and already owns
+            // Recursively check supertypes to see if edge should exist for them
+            // Don't do if the above two are true
+            private fun ownsAttrFromSupertype(attrType: AttributeType): Boolean {
+                return if (remoteThingType?.supertype != null) {
+                    remoteThingType?.supertype!!.asRemote(transaction).owns.anyMatch { it.label.name() == attrType.label.name() }
+                } else {
+                    false
                 }
             }
 
+
             private fun loadPlaysEdges() {
-                remoteThingType?.plays?.forEach { roleType ->
+                // For each attribute except if the supertype exists on the graph and already plays
+                // Check the supertype exists
+                // Check the supertype may have this edge
+                remoteThingType?.plays
+                    ?.filter { !playsRoleFromSupertype(it) }
+                    ?.forEach { roleType ->
                     val relationTypeLabel = roleType.label.scope().get()
                     val roleLabel = roleType.label.name()
                     val relationTypeVertex = graphBuilder.allTypeVertices[relationTypeLabel] as? Vertex.Type.Relation
@@ -417,6 +437,14 @@ class GraphBuilder(
                     } else {
                         graphBuilder.addEdgeCandidate(EdgeCandidate.Plays(relationTypeLabel, typeVertex, roleLabel))
                     }
+                }
+            }
+
+            private fun playsRoleFromSupertype(roleType: RoleType): Boolean {
+                return if (remoteThingType?.supertype != null) {
+                    remoteThingType?.supertype!!.asRemote(transaction).plays.anyMatch { it.label.name() == roleType.label.name() }
+                } else {
+                    false
                 }
             }
         }
