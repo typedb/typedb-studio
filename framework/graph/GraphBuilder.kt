@@ -34,7 +34,6 @@ import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companio
 import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.FULLY_EXPLAINED
 import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.service.connection.TransactionState
-import com.vaticle.typeql.lang.TypeQL
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -336,20 +335,16 @@ class GraphBuilder(
                 // construct TypeQL query so that reasoning can run
                 // test for ability to own attributes, to ensure query will not throw during type inference
                 if (!canOwnAttributes()) return
-                val (x, attr) = Pair("x", "attr")
-                transaction?.query()
-                    ?.match(TypeQL.match(TypeQL.`var`(x).iid(thing.iid).has(TypeQL.`var`(attr))))
-                    ?.forEach { answer ->
-                        val attribute = answer.get(attr).asAttribute()
-                        val isEdgeInferred =
-                            attributeIsExplainable(attr, answer) || ownershipIsExplainable(attr, answer)
-                        val attributeVertex = graphBuilder.allThingVertices[attribute.iid] as? Vertex.Thing.Attribute
+                graphBuilder.apply {
+                    remoteThing?.getHas()?.forEach {
+                        val attributeVertex = graphBuilder.allThingVertices[it.iid] as? Vertex.Thing.Attribute
                         if (attributeVertex != null) {
-                            graphBuilder.addEdge(Edge.Has(thingVertex, attributeVertex, isEdgeInferred))
+                            addEdge(Edge.Has(thingVertex, attributeVertex, it.isInferred))
                         } else {
-                            graphBuilder.addEdgeCandidate(EdgeCandidate.Has(thingVertex, attribute.iid, isEdgeInferred))
+                            addEdgeCandidate(EdgeCandidate.Has(thingVertex, it.iid, it.isInferred))
                         }
                     }
+                }
             }
 
             private fun canOwnAttributes(): Boolean {
@@ -360,14 +355,6 @@ class GraphBuilder(
                         thing.type.asRemote(it).owns.findAny().isPresent
                     } ?: false
                 }
-            }
-
-            private fun attributeIsExplainable(attributeVarName: String, conceptMap: ConceptMap): Boolean {
-                return attributeVarName in conceptMap.explainables().attributes().keys
-            }
-
-            private fun ownershipIsExplainable(attributeVarName: String, conceptMap: ConceptMap): Boolean {
-                return attributeVarName in conceptMap.explainables().ownerships().keys.map { it.second() }
             }
 
             private fun loadRoleplayerEdgesAndVertices() {
