@@ -55,6 +55,8 @@ class GraphBuilder(
     private val edges = ConcurrentLinkedQueue<Edge>()
     private val edgeCandidates = ConcurrentHashMap<String, Collection<EdgeCandidate>>()
     private val explainables = ConcurrentHashMap<Vertex.Thing, ConceptMap.Explainable>()
+    private val ownsScopedEdgeCandidates = ConcurrentHashMap<String, ScopedEdgeCandidate.Owns>()
+    private val playsRoleScopedEdgeCandidate = ConcurrentHashMap<String, ScopedEdgeCandidate.Plays>()
     private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
     private val lock = ReentrantReadWriteLock(true)
     private val transactionID = transactionState.transaction?.hashCode()
@@ -255,6 +257,37 @@ class GraphBuilder(
         class Explanation(val explanation: com.vaticle.typedb.client.api.logic.Explanation) : AnswerSource()
     }
 
+    sealed class ScopedEdgeCandidate {
+        abstract var supertypes: Set<ThingType>
+        abstract fun toEdge(target: Vertex): Edge
+        open fun rescope(supertype: Vertex.Type.Thing) {
+            this.supertypes = this.supertypes.apply {
+                take(this.indexOf(supertype.type) + 1)
+            }
+        }
+        fun hasSupertype(supertype: ThingType) = supertypes.contains(supertype)
+
+        class Owns(var source: Vertex, val targetIID: String, override var supertypes: Set<ThingType>) : ScopedEdgeCandidate() {
+            override fun toEdge(target: Vertex) =
+                Edge.Owns(source as Vertex.Type, target as Vertex.Type.Attribute)
+
+            override fun rescope(supertype: Vertex.Type.Thing) {
+                super.rescope(supertype)
+                this.source = supertype
+            }
+        }
+
+        class Plays(val source: Vertex.Type.Relation, var targetLabel: String, val role: RoleType, override var supertypes: Set<ThingType>) : ScopedEdgeCandidate() {
+            override fun toEdge(target: Vertex) =
+                Edge.Plays(source, target as Vertex.Type, role.label.name())
+
+            override fun rescope(supertype: Vertex.Type.Thing) {
+                super.rescope(supertype)
+                this.targetLabel = supertype.label
+            }
+        }
+    }
+
     sealed class EdgeCandidate {
 
         interface Inferrable {
@@ -441,7 +474,7 @@ class GraphBuilder(
             }
 
             private fun playsRoleFromSupertype(roleType: RoleType): Boolean {
-                return if (remoteThingType?.supertype != null) {
+                return if (remoteThingType?.supertypes != null) {
                     remoteThingType?.supertype!!.asRemote(transaction).plays.anyMatch { it.label.name() == roleType.label.name() }
                 } else {
                     false
