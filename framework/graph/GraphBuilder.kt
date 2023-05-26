@@ -24,9 +24,9 @@ import com.vaticle.typedb.client.api.concept.Concept
 import com.vaticle.typedb.client.api.concept.thing.Attribute
 import com.vaticle.typedb.client.api.concept.thing.Relation
 import com.vaticle.typedb.client.api.concept.thing.Thing
-import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.RoleType
 import com.vaticle.typedb.client.api.concept.type.ThingType
+import com.vaticle.typedb.client.api.concept.type.ThingType.Remote
 import com.vaticle.typedb.client.api.logic.Explanation
 import com.vaticle.typedb.client.common.exception.TypeDBClientException
 import com.vaticle.typedb.studio.service.Service
@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
+import kotlin.streams.toList
 import kotlinx.coroutines.CoroutineScope
 import mu.KotlinLogging
 
@@ -56,7 +57,7 @@ class GraphBuilder(
     private val edgeCandidates = ConcurrentHashMap<String, Collection<EdgeCandidate>>()
     private val explainables = ConcurrentHashMap<Vertex.Thing, ConceptMap.Explainable>()
     private val ownsScopedEdgeCandidates = ConcurrentHashMap<String, ScopedEdgeCandidate.Owns>()
-    private val playsRoleScopedEdgeCandidate = ConcurrentHashMap<String, ScopedEdgeCandidate.Plays>()
+    private val playsRoleScopedEdgeCandidate = ConcurrentHashMap<Pair<String, String>, Collection<ScopedEdgeCandidate.Plays>>()
     private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
     private val lock = ReentrantReadWriteLock(true)
     private val transactionID = transactionState.transaction?.hashCode()
@@ -154,7 +155,15 @@ class GraphBuilder(
     fun completeAllEdges() {
         // Since there is no protection against an edge candidate, and the vertex that completes it, being added
         // concurrently, we do a final sanity check once all vertices + edges have been loaded.
-        lock.readLock().withLock { (graph.thingVertices + graph.typeVertices).values.forEach { completeEdges(it) } }
+        lock.readLock().withLock {
+            (graph.thingVertices + graph.typeVertices).values.forEach { completeEdges(it) }
+            ownsScopedEdgeCandidates.forEach { (_, u) ->
+                edges.add(u.toEdge(allTypeVertices[u.targetLabel] as Vertex))
+            }
+            ownsScopedEdgeCandidates.clear()
+            playsRoleScopedEdgeCandidate.forEach { (_, u) -> u.forEach { edges.add(it.toEdge(allTypeVertices[it.sourceLabel] as Vertex)) } }
+            playsRoleScopedEdgeCandidate.clear()
+        }
     }
 
     private fun addExplainables(
@@ -260,30 +269,30 @@ class GraphBuilder(
     sealed class ScopedEdgeCandidate {
         abstract var supertypes: Set<ThingType>
         abstract fun toEdge(target: Vertex): Edge
-        open fun rescope(supertype: Vertex.Type.Thing) {
+        open fun rescope(supertype: Vertex.Type) {
             this.supertypes = this.supertypes.apply {
                 take(this.indexOf(supertype.type) + 1)
             }
         }
         fun hasSupertype(supertype: ThingType) = supertypes.contains(supertype)
 
-        class Owns(var source: Vertex, val targetIID: String, override var supertypes: Set<ThingType>) : ScopedEdgeCandidate() {
-            override fun toEdge(target: Vertex) =
-                Edge.Owns(source as Vertex.Type, target as Vertex.Type.Attribute)
+        class Owns(var source: Vertex, val targetLabel: String, override var supertypes: Set<ThingType>) : ScopedEdgeCandidate() {
+            override fun toEdge(vertex: Vertex) =
+                Edge.Owns(source as Vertex.Type, vertex as Vertex.Type.Attribute)
 
-            override fun rescope(supertype: Vertex.Type.Thing) {
+            override fun rescope(supertype: Vertex.Type) {
                 super.rescope(supertype)
                 this.source = supertype
             }
         }
 
-        class Plays(val source: Vertex.Type.Relation, var targetLabel: String, val role: RoleType, override var supertypes: Set<ThingType>) : ScopedEdgeCandidate() {
-            override fun toEdge(target: Vertex) =
-                Edge.Plays(source, target as Vertex.Type, role.label.name())
+        class Plays(val sourceLabel: String, var target: Vertex.Type, val role: RoleType, override var supertypes: Set<ThingType>) : ScopedEdgeCandidate() {
+            override fun toEdge(vertex: Vertex) =
+                Edge.Plays(vertex as Vertex.Type.Relation, target, role.label.name())
 
-            override fun rescope(supertype: Vertex.Type.Thing) {
+            override fun rescope(supertype: Vertex.Type) {
                 super.rescope(supertype)
-                this.targetLabel = supertype.label
+                this.target = supertype as Vertex.Type.Thing
             }
         }
     }
@@ -421,7 +430,7 @@ class GraphBuilder(
             override fun build() {
                 loadSubEdge()
                 loadOwnsEdges()
-                loadPlaysEdges()
+//                loadPlaysEdges()
             }
 
             private fun loadSubEdge() {
@@ -433,52 +442,55 @@ class GraphBuilder(
             }
 
             private fun loadOwnsEdges() {
-                remoteThingType?.owns
-                    ?.filter { !ownsAttrFromSupertype(it) }
-                    ?.forEach { attrType ->
-                        val attrTypeLabel = attrType.label.name()
-                        val attrTypeVertex = graphBuilder.allTypeVertices[attrTypeLabel] as? Vertex.Type.Attribute
-                        if (attrTypeVertex != null) graphBuilder.addEdge(Edge.Owns(typeVertex, attrTypeVertex))
-                        else graphBuilder.addEdgeCandidate(EdgeCandidate.Owns(typeVertex, attrTypeLabel))
+                remoteThingType?.owns?.forEach { attrType ->
+                    val attrTypeLabel = attrType.label.name()
+                    if (graphBuilder.ownsScopedEdgeCandidates.contains(attrTypeLabel)) {
+                        val scopedEdgeCand = graphBuilder.ownsScopedEdgeCandidates[attrTypeLabel]!!
+                        if (scopedEdgeCand.hasSupertype(remoteThingType!!)) {
+                            scopedEdgeCand.rescope(typeVertex)
+                        }
+                    } else {
+                        val ownsScoped = ScopedEdgeCandidate.Owns(typeVertex, attrTypeLabel, getSupertypeSet(remoteThingType!!))
+                        graphBuilder.ownsScopedEdgeCandidates[attrTypeLabel] = ownsScoped
                     }
-            }
-
-            // For each attribute except if the supertype exists on the graph and already owns
-            // Recursively check supertypes to see if edge should exist for them
-            // Don't do if the above two are true
-            private fun ownsAttrFromSupertype(attrType: AttributeType): Boolean {
-                return if (remoteThingType?.supertype != null) {
-                    remoteThingType?.supertype!!.asRemote(transaction).owns.anyMatch { it.label.name() == attrType.label.name() }
-                } else {
-                    false
                 }
             }
 
-
             private fun loadPlaysEdges() {
-                // For each attribute except if the supertype exists on the graph and already plays
-                // Check the supertype exists
-                // Check the supertype may have this edge
                 remoteThingType?.plays
-                    ?.filter { !playsRoleFromSupertype(it) }
                     ?.forEach { roleType ->
                     val relationTypeLabel = roleType.label.scope().get()
                     val roleLabel = roleType.label.name()
-                    val relationTypeVertex = graphBuilder.allTypeVertices[relationTypeLabel] as? Vertex.Type.Relation
-                    if (relationTypeVertex != null) {
-                        graphBuilder.addEdge(Edge.Plays(relationTypeVertex, typeVertex, roleLabel))
+                    val roleRelationPair = Pair(roleLabel, relationTypeLabel)
+                    if (graphBuilder.playsRoleScopedEdgeCandidate.contains(roleRelationPair)) {
+                        val result = graphBuilder.playsRoleScopedEdgeCandidate[roleRelationPair]!!.firstOrNull {
+                            it.supertypes.contains(thingType)
+                        }
+                        if (result != null) {
+                            result.rescope(typeVertex)
+                        } else {
+                            val result = graphBuilder.playsRoleScopedEdgeCandidate[roleRelationPair]!!.firstOrNull{
+                                it.supertypes.union(getSupertypeSet(remoteThingType!!)).isNotEmpty()
+                            }
+                            if (result == null) {
+                                val scopedEdgeCand = ScopedEdgeCandidate.Plays(relationTypeLabel,
+                                    typeVertex as Vertex.Type.Thing, roleType, getSupertypeSet(remoteThingType!!))
+                                graphBuilder.playsRoleScopedEdgeCandidate[roleRelationPair] = graphBuilder.playsRoleScopedEdgeCandidate[roleRelationPair]!! + listOf(scopedEdgeCand)
+                            }
+                        }
                     } else {
-                        graphBuilder.addEdgeCandidate(EdgeCandidate.Plays(relationTypeLabel, typeVertex, roleLabel))
+                        val scopedEdgeCand = ScopedEdgeCandidate.Plays(relationTypeLabel,
+                            typeVertex, roleType, getSupertypeSet(remoteThingType!!))
+                        graphBuilder.playsRoleScopedEdgeCandidate[roleRelationPair] = listOf(scopedEdgeCand)
                     }
                 }
             }
 
-            private fun playsRoleFromSupertype(roleType: RoleType): Boolean {
-                return if (remoteThingType?.supertypes != null) {
-                    remoteThingType?.supertype!!.asRemote(transaction).plays.anyMatch { it.label.name() == roleType.label.name() }
-                } else {
-                    false
-                }
+            private fun getSupertypeSet(remoteThingType: Remote): Set<com.vaticle.typedb.client.api.concept.type.ThingType> {
+                return remoteThingType.supertypes
+                    .filter { it.label.name() !in listOf("thing", "entity", "relation", "attribute", remoteThingType.label.name()) }
+                    .toList()
+                    .toSet()
             }
         }
     }
