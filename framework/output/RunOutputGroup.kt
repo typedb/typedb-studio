@@ -41,7 +41,10 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
 internal class RunOutputGroup constructor(
@@ -147,6 +150,7 @@ internal class RunOutputGroup constructor(
         }
         runner.setConsumed()
         logOutput.stop()
+        if (active is GraphOutput) (active as GraphOutput).setCompleted()
         endTime = System.currentTimeMillis()
     }
 
@@ -203,7 +207,7 @@ internal class RunOutputGroup constructor(
                 transactionState = runner.transactionState, number = graphCount.incrementAndGet()
             ).also { outputs.add(it); activate(it) }
 
-        consumeStreamResponse(response, onCompleted = { graph?.setCompleted() }) {
+        consumeStreamResponse(response) {
             collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { logOutput.outputFn(it) })
             table?.let { t -> collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { t.outputFn(it) }) }
             graph?.let { g -> collectNonSerial(launchCompletableFuture(notificationSrv, LOGGER) { g.output(it) }) }
@@ -212,7 +216,6 @@ internal class RunOutputGroup constructor(
 
     private suspend fun <T> consumeStreamResponse(
         stream: Response.Stream<T>,
-        onCompleted: (() -> Unit)? = null,
         consumer: (T) -> Unit
     ) {
         val responses: MutableList<Either<T, Response.Done>> = mutableListOf()
@@ -222,6 +225,5 @@ internal class RunOutputGroup constructor(
             stream.queue.drainTo(responses)
             if (responses.isNotEmpty()) responses.filter { it.isFirst }.forEach { consumer(it.first()) }
         } while (responses.lastOrNull()?.isSecond != true)
-        onCompleted?.let { it() }
     }
 }

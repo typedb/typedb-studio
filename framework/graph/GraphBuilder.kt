@@ -430,7 +430,7 @@ class GraphBuilder(
             override fun build() {
                 loadSubEdge()
                 loadOwnsEdges()
-//                loadPlaysEdges()
+                loadPlaysEdges()
             }
 
             private fun loadSubEdge() {
