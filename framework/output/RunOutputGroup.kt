@@ -41,10 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
 internal class RunOutputGroup constructor(
@@ -150,7 +147,7 @@ internal class RunOutputGroup constructor(
         }
         runner.setConsumed()
         logOutput.stop()
-        if (active is GraphOutput) (active as GraphOutput).setCompleted()
+        outputs.filterIsInstance<GraphOutput>().forEach { it.setCompleted() }
         endTime = System.currentTimeMillis()
     }
 
