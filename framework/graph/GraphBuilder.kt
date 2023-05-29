@@ -277,7 +277,7 @@ class GraphBuilder(
         abstract fun toEdge(target: Vertex): Edge
         open fun rescope(supertype: Vertex.Type) {
             this.supertypes = this.supertypes.apply {
-                take(this.indexOf(supertype.type) + 1)
+                this.take(this.indexOf(supertype.type))
             }
             println("rescoped something")
         }
@@ -299,7 +299,7 @@ class GraphBuilder(
 
             override fun rescope(supertype: Vertex.Type) {
                 super.rescope(supertype)
-                this.target = supertype as Vertex.Type.Thing
+                this.target = supertype
             }
         }
     }
@@ -437,7 +437,7 @@ class GraphBuilder(
             override fun build() {
                 loadSubEdge()
                 loadOwnsEdges()
-                loadPlaysEdges()
+//                loadPlaysEdges()
             }
 
             private fun loadSubEdge() {
@@ -450,22 +450,40 @@ class GraphBuilder(
 
             private fun loadOwnsEdges() {
                 graphBuilder.ownsLock.writeLock().withLock {
-                    remoteThingType?.owns?.forEach { attrType ->
-                        val attrTypeLabel = attrType.label.name()
-                        if (graphBuilder.ownsScopedEdgeCandidates.containsKey(attrTypeLabel)) {
-                            println("owns sec contains attr type label $attrTypeLabel")
-                            val scopedEdgeCand = graphBuilder.ownsScopedEdgeCandidates[attrTypeLabel]!!
-                            if (scopedEdgeCand.hasSupertype(remoteThingType!!)) {
-                                println("sec has supertype remotethingtype $remoteThingType")
-                                scopedEdgeCand.rescope(typeVertex)
+                    remoteThingType?.owns
+                        ?.forEach { attrType ->
+                            val attrTypeLabel = attrType.label.name()
+                            if (graphBuilder.ownsScopedEdgeCandidates.containsKey(attrTypeLabel)) {
+                                println("owns sec contains key $attrTypeLabel")
+                                val result = graphBuilder.ownsScopedEdgeCandidates[attrTypeLabel]!!.firstOrNull {
+                                    it.hasSupertype(thingType)
+                                }
+                                if (result != null) {
+                                    println("found owns sec with supertypes containing thingtype $thingType")
+                                    result.rescope(typeVertex)
+                                } else {
+                                    println("couldn't find owns sec with supertypes containing thingtype $thingType")
+                                    val result =
+                                        graphBuilder.ownsScopedEdgeCandidates[attrTypeLabel]!!.firstOrNull {
+                                            val remoteThingTypeSupertypes = getSupertypeList(remoteThingType!!)
+                                            val supertypeUnion = it.supertypes.intersect(remoteThingTypeSupertypes)
+                                            supertypeUnion.isNotEmpty()
+                                        }
+                                    if (result == null) {
+                                        println("couldn't find owns sec with non-empty intersection of remotethingtype $remoteThingType and it $attrTypeLabel supertypes")
+                                        val scopedEdgeCand = ScopedEdgeCandidate.Owns(typeVertex, attrTypeLabel, getSupertypeList(remoteThingType!!))
+                                        graphBuilder.ownsScopedEdgeCandidates[attrTypeLabel] =
+                                            graphBuilder.ownsScopedEdgeCandidates[attrTypeLabel]!! + listOf(
+                                                scopedEdgeCand
+                                            )
+                                    }
+                                }
+                            } else {
+                                println("owns sec does not contains key $attrTypeLabel")
+                                val scopedEdgeCand = ScopedEdgeCandidate.Owns(typeVertex, attrTypeLabel, getSupertypeList(remoteThingType!!))
+                                graphBuilder.ownsScopedEdgeCandidates[attrTypeLabel] = listOf(scopedEdgeCand)
                             }
-                        } else {
-                            println("owns sec does not contains $attrTypeLabel")
-                            val ownsScoped =
-                                ScopedEdgeCandidate.Owns(typeVertex, attrTypeLabel, getSupertypeList(remoteThingType!!))
-                            graphBuilder.ownsScopedEdgeCandidates[attrTypeLabel] = ownsScoped
                         }
-                    }
                 }
             }
 
@@ -479,7 +497,7 @@ class GraphBuilder(
                             if (graphBuilder.playsRoleScopedEdgeCandidate.containsKey(roleRelationPair)) {
                                 println("plays sec contains role relation pair $roleRelationPair")
                                 val result = graphBuilder.playsRoleScopedEdgeCandidate[roleRelationPair]!!.firstOrNull {
-                                    it.supertypes.contains(thingType)
+                                    it.hasSupertype(thingType)
                                 }
                                 if (result != null) {
                                     println("found plays sec with supertypes containing thingtype $thingType")
@@ -488,7 +506,7 @@ class GraphBuilder(
                                     println("couldn't find plays sec with supertypes containing thingtype $thingType")
                                     val result =
                                         graphBuilder.playsRoleScopedEdgeCandidate[roleRelationPair]!!.firstOrNull {
-                                            it.supertypes.union(getSupertypeList(remoteThingType!!)).isNotEmpty()
+                                            it.supertypes.intersect(getSupertypeList(remoteThingType!!)).isNotEmpty()
                                         }
                                     if (result == null) {
                                         println("couldn't find plays sec with non-empty union of remotethingtype $remoteThingType and it $roleRelationPair supertypes")
@@ -503,7 +521,7 @@ class GraphBuilder(
                                     }
                                 }
                             } else {
-                                println("plays sec contains role relation pair $roleRelationPair")
+                                println("plays sec does not contains role relation pair $roleRelationPair")
                                 val scopedEdgeCand = ScopedEdgeCandidate.Plays(
                                     relationTypeLabel,
                                     typeVertex,
