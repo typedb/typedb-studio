@@ -159,15 +159,27 @@ class GraphBuilder(
         // concurrently, we do a final sanity check once all vertices + edges have been loaded.
         lock.readLock().withLock {
             (graph.thingVertices + graph.typeVertices).values.forEach { completeEdges(it) }
-            ownsScopedEdgeCandidates.forEach { (_, u) -> u.forEach {
+            val ownsCands = ownsScopedEdgeCandidates.values.flatten().distinctBy {
+                Pair(it.source, it.targetLabel)
+            }
+            ownsCands.forEach {
                 val typeVertex = allTypeVertices[it.targetLabel]
-                if (typeVertex != null) edges.add(it.toEdge(typeVertex))
-            } }
+                if (typeVertex != null) {
+                    val edge = it.toEdge(typeVertex)
+                    edges.add(edge)
+                }
+            }
             ownsScopedEdgeCandidates.clear()
-            playsRoleScopedEdgeCandidate.forEach { (_, u) -> u.forEach {
+            val playsCands = playsRoleScopedEdgeCandidate.values.flatten().distinctBy {
+                Pair(it.sourceLabel, it.target)
+            }
+            playsCands.forEach {
                 val typeVertex = allTypeVertices[it.sourceLabel]
-                if (typeVertex != null) edges.add(it.toEdge(typeVertex))
-            }}
+                if (typeVertex != null) {
+                    val edge = it.toEdge(typeVertex)
+                    edges.add(edge)
+                }
+            }
             playsRoleScopedEdgeCandidate.clear()
         }
     }
