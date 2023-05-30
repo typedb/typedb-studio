@@ -57,7 +57,7 @@ class GraphBuilder(
     private val edgeCandidates = ConcurrentHashMap<String, Collection<EdgeCandidate>>()
     private val explainables = ConcurrentHashMap<Vertex.Thing, ConceptMap.Explainable>()
     private val ownsScopedEdgeCandidates = ConcurrentHashMap<String, Collection<ScopedEdgeCandidate.Owns>>()
-    private val playsRoleScopedEdgeCandidate = ConcurrentHashMap<String, Collection<ScopedEdgeCandidate.Plays>>()
+    private val playsRoleScopedEdgeCandidates = ConcurrentHashMap<String, Collection<ScopedEdgeCandidate.Plays>>()
     private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
     private val playsLock = ReentrantReadWriteLock(true)
     private val ownsLock = ReentrantReadWriteLock(true)
@@ -159,28 +159,23 @@ class GraphBuilder(
         // concurrently, we do a final sanity check once all vertices + edges have been loaded.
         lock.readLock().withLock {
             (graph.thingVertices + graph.typeVertices).values.forEach { completeEdges(it) }
-            val ownsCands = ownsScopedEdgeCandidates.values.flatten().distinctBy {
-                Pair(it.source, it.targetLabel)
-            }
-            ownsCands.forEach {
-                val typeVertex = allTypeVertices[it.targetLabel]
-                if (typeVertex != null) {
-                    val edge = it.toEdge(typeVertex)
-                    edges.add(edge)
-                }
-            }
+            completeScopedEdgeCandidateEdges(ownsScopedEdgeCandidates.values.flatten())
             ownsScopedEdgeCandidates.clear()
-            val playsCands = playsRoleScopedEdgeCandidate.values.flatten().distinctBy {
-                Pair(it.sourceLabel, it.target)
+            completeScopedEdgeCandidateEdges(playsRoleScopedEdgeCandidates.values.flatten())
+            playsRoleScopedEdgeCandidates.clear()
+        }
+    }
+
+    private fun completeScopedEdgeCandidateEdges(edgeCandidates: Collection<ScopedEdgeCandidate>) {
+        val candidates = edgeCandidates.distinctBy {
+            Pair(it.label, it.vertex)
+        }
+        candidates.forEach {
+            val typeVertex = allTypeVertices[it.label]
+            if (typeVertex != null) {
+                val edge = it.toEdge(typeVertex)
+                edges.add(edge)
             }
-            playsCands.forEach {
-                val typeVertex = allTypeVertices[it.sourceLabel]
-                if (typeVertex != null) {
-                    val edge = it.toEdge(typeVertex)
-                    edges.add(edge)
-                }
-            }
-            playsRoleScopedEdgeCandidate.clear()
         }
     }
 
@@ -286,6 +281,8 @@ class GraphBuilder(
 
     sealed class ScopedEdgeCandidate {
         abstract var supertypes: List<ThingType>
+        abstract val label: String
+        abstract val vertex: Vertex
         abstract fun toEdge(vertex: Vertex): Edge
         open fun rescope(supertype: Vertex.Type) {
             this.supertypes.apply {
@@ -295,6 +292,10 @@ class GraphBuilder(
         fun hasSupertype(supertype: ThingType) = supertypes.contains(supertype)
 
         class Owns(var source: Vertex, val targetLabel: String, override var supertypes: List<ThingType>) : ScopedEdgeCandidate() {
+            override val label: String
+                get() = targetLabel
+            override val vertex: Vertex
+                get() = source
             override fun toEdge(vertex: Vertex) =
                 Edge.Owns(source as Vertex.Type, vertex as Vertex.Type.Attribute)
 
@@ -305,6 +306,10 @@ class GraphBuilder(
         }
 
         class Plays(val sourceLabel: String, var target: Vertex.Type, val role: RoleType, override var supertypes: List<ThingType>) : ScopedEdgeCandidate() {
+            override val label: String
+                get() = sourceLabel
+            override val vertex: Vertex
+                get() = target
             override fun toEdge(vertex: Vertex) =
                 Edge.Plays(vertex as Vertex.Type.Relation, target, role.label.name())
 
@@ -495,13 +500,13 @@ class GraphBuilder(
                             val relationTypeLabel = roleType.label.scope().get()
                             val roleLabel = roleType.label.name()
                             val roleRelationPair = Pair(relationTypeLabel, roleLabel).toString()
-                            if (!graphBuilder.playsRoleScopedEdgeCandidate.containsKey(roleRelationPair)) {
+                            if (!graphBuilder.playsRoleScopedEdgeCandidates.containsKey(roleRelationPair)) {
                                 val scopedEdgeCand = ScopedEdgeCandidate.Plays(relationTypeLabel, typeVertex, roleType, getSupertypeList(remoteThingType!!))
-                                graphBuilder.playsRoleScopedEdgeCandidate[roleRelationPair] = listOf(scopedEdgeCand)
+                                graphBuilder.playsRoleScopedEdgeCandidates[roleRelationPair] = listOf(scopedEdgeCand)
                             }
 
                             var parentFound = false
-                            val ownsScopedEdgeCandidates = graphBuilder.playsRoleScopedEdgeCandidate[roleRelationPair]!!
+                            val ownsScopedEdgeCandidates = graphBuilder.playsRoleScopedEdgeCandidates[roleRelationPair]!!
                             ownsScopedEdgeCandidates.forEach {
                                 if (it.hasSupertype(thingType)) {
                                     it.rescope(typeVertex)
@@ -512,12 +517,36 @@ class GraphBuilder(
                             }
                             if (!parentFound) {
                                 val scopedEdgeCand = ScopedEdgeCandidate.Plays(relationTypeLabel, typeVertex, roleType, getSupertypeList(remoteThingType!!))
-                                graphBuilder.playsRoleScopedEdgeCandidate[roleRelationPair] =
-                                    graphBuilder.playsRoleScopedEdgeCandidate[roleRelationPair]!! + listOf(scopedEdgeCand)
+                                graphBuilder.playsRoleScopedEdgeCandidates[roleRelationPair] =
+                                    graphBuilder.playsRoleScopedEdgeCandidates[roleRelationPair]!! + listOf(scopedEdgeCand)
                             }
                         }
                 }
             }
+//
+//            private fun buildScopedEdgeCandidates(edgeCandidateMap: ConcurrentHashMap<String, Collection<ScopedEdgeCandidate>>,
+//                                                  label: String) {
+//                if (!edgeCandidateMap.containsKey(label)) {
+//                    val scopedEdgeCand = ScopedEdgeCandidate.Plays(relationTypeLabel, typeVertex, roleType, getSupertypeList(remoteThingType!!))
+//                    edgeCandidateMap[label] = listOf(scopedEdgeCand)
+//                }
+//
+//                var parentFound = false
+//                val ownsScopedEdgeCandidates = edgeCandidateMap[label]!!
+//                ownsScopedEdgeCandidates.forEach {
+//                    if (it.hasSupertype(thingType)) {
+//                        it.rescope(typeVertex)
+//                    }
+//                    else if (remoteThingType!!.supertypes.toList().toSet().contains(it.target.concept.asThingType())) {
+//                        parentFound = true
+//                    }
+//                }
+//                if (!parentFound) {
+//                    val scopedEdgeCand = ScopedEdgeCandidate.Plays(relationTypeLabel, typeVertex, roleType, getSupertypeList(remoteThingType!!))
+//                    edgeCandidateMap[label] =
+//                        edgeCandidateMap[label]!! + listOf(scopedEdgeCand)
+//                }
+//            }
 
             private fun getSupertypeList(remoteThingType: Remote): List<com.vaticle.typedb.client.api.concept.type.ThingType> {
                 return remoteThingType.supertypes
