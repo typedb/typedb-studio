@@ -168,7 +168,7 @@ class GraphBuilder(
 
     private fun completeScopedEdgeCandidateEdges(edgeCandidates: Collection<ScopedEdgeCandidate>) {
         val candidates = edgeCandidates.distinctBy {
-            Pair(it.label, it.vertex)
+            it.distinctSelector
         }
         candidates.forEach {
             val typeVertex = allTypeVertices[it.label]
@@ -283,6 +283,7 @@ class GraphBuilder(
         abstract var supertypes: List<ThingType>
         abstract val label: String
         abstract val vertex: Vertex
+        abstract val distinctSelector: List<String>
         abstract fun toEdge(vertex: Vertex): Edge
         open fun rescope(supertype: Vertex.Type) {
             this.supertypes.apply {
@@ -296,6 +297,8 @@ class GraphBuilder(
                 get() = targetLabel
             override val vertex: Vertex
                 get() = source
+            override val distinctSelector: List<String>
+                get() = listOf(source.label, targetLabel)
             override fun toEdge(vertex: Vertex) =
                 Edge.Owns(source as Vertex.Type, vertex as Vertex.Type.Attribute)
 
@@ -310,6 +313,8 @@ class GraphBuilder(
                 get() = sourceLabel
             override val vertex: Vertex
                 get() = target
+            override val distinctSelector: List<String>
+                get() = listOf(sourceLabel, role.label.name(), target.label)
             override fun toEdge(vertex: Vertex) =
                 Edge.Plays(vertex as Vertex.Type.Relation, target, role.label.name())
 
