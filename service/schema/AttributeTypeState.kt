@@ -58,7 +58,6 @@ class AttributeTypeState internal constructor(
     override val parent: AttributeTypeState? get() = supertype
 
     val valueType: Concept.ValueType? = if (!conceptType.isRoot) conceptType.valueType else null
-    val isKeyable: Boolean get() = valueType.
     var ownerTypeProperties: List<AttTypeOwnerProperties> by mutableStateOf(listOf())
     val ownerTypes get() = ownerTypeProperties.map { it.ownerType }
     val ownerTypesExplicit get() = ownerTypeProperties.filter { !it.isInherited }.map { it.ownerType }
@@ -130,7 +129,7 @@ class AttributeTypeState internal constructor(
     )
 
     fun tryCreateSubtype(
-        label: String, isAbstract: Boolean, valueType: AttributeType.ValueType
+        label: String, isAbstract: Boolean, valueType: Concept.ValueType
     ) = tryCreateSubtype(label, schemaSrv.createAttributeTypeDialog) { tx ->
         val type = tx.concepts().putAttributeType(label, valueType)
         if (isAbstract || !isRoot) {
