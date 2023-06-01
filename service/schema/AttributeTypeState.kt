@@ -25,7 +25,7 @@ import com.vaticle.typedb.client.api.concept.Concept
 import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
-import com.vaticle.typeql.lang.common.TypeQLToken
+import com.vaticle.typeql.lang.common.TypeQLToken.Annotation.KEY
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 import mu.KotlinLogging
@@ -98,13 +98,13 @@ class AttributeTypeState internal constructor(
             val typeTx = conceptType.asRemote(tx)
             if (!loadedOwnerTypePropsAtomic.get()) {
                 loadedOwnerTypePropsAtomic.set(true)
-                typeTx.getOwnersExplicit(setOf(TypeQLToken.Annotation.KEY)).forEach {
+                typeTx.getOwnersExplicit(setOf(KEY)).forEach {
                     load(it, isKey = true, isInherited = false)
                 }
                 typeTx.ownersExplicit.filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = false, isInherited = false)
                 }
-                typeTx.getOwners(setOf(TypeQLToken.Annotation.KEY)).filter { !loaded.contains(it) }.forEach {
+                typeTx.getOwners(setOf(KEY)).filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = true, isInherited = true)
                 }
                 typeTx.owners.filter { !loaded.contains(it) }.forEach {

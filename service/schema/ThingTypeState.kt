@@ -49,7 +49,7 @@ import com.vaticle.typedb.studio.service.page.Pageable
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.TypeQL.rel
 import com.vaticle.typeql.lang.TypeQL.cVar
-import com.vaticle.typeql.lang.common.TypeQLToken
+import com.vaticle.typeql.lang.common.TypeQLToken.Annotation.KEY
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
@@ -229,13 +229,13 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             val typeTx = conceptType.asRemote(tx)
             if (!loadedOwnedAttTypePropsAtomic.get()) {
                 loadedOwnedAttTypePropsAtomic.set(true)
-                typeTx.getOwnsExplicit(setOf(TypeQLToken.Annotation.KEY)).forEach {
+                typeTx.getOwnsExplicit(setOf(KEY)).forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
                 }
                 typeTx.ownsExplicit.filter { !loaded.contains(it) }.forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = false)
                 }
-                typeTx.getOwns(setOf(TypeQLToken.Annotation.KEY)).filter { !loaded.contains(it) }.forEach {
+                typeTx.getOwns(setOf(KEY)).filter { !loaded.contains(it) }.forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = true)
                 }
                 typeTx.owns.filter { !loaded.contains(it) }.forEach {
@@ -340,7 +340,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     fun tryDefineOwnsAttributeType(
         attributeType: AttributeTypeState, overriddenType: AttributeTypeState?, isKey: Boolean, onSuccess: () -> Unit
     ) = schemaSrv.mayRunWriteTxAsync { tx ->
-        val annotationSet = if (isKey) setOf(TypeQLToken.Annotation.KEY) else emptySet()
+        val annotationSet = if (isKey) setOf(KEY) else emptySet()
         try {
             overriddenType?.let {
                 conceptType.asRemote(tx).setOwns(attributeType.conceptType, overriddenType.conceptType, annotationSet)
