@@ -388,6 +388,7 @@ sealed class TypeEditor<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
             Form.Text(value = Label.KEY.lowercase())
             Form.Checkbox(
                 value = isKey,
+                enabled = canWriteSchema
             ) { isKey = it }
             Form.TextButton(
                 text = Label.OWNS,

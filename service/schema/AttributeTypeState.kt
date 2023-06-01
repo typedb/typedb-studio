@@ -101,13 +101,13 @@ class AttributeTypeState internal constructor(
                 typeTx.getOwnersExplicit(setOf(TypeQLToken.Annotation.KEY)).forEach {
                     load(it, isKey = true, isInherited = false)
                 }
-                typeTx.getOwnersExplicit(setOf()).filter { !loaded.contains(it) }.forEach {
+                typeTx.ownersExplicit.filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = false, isInherited = false)
                 }
                 typeTx.getOwners(setOf(TypeQLToken.Annotation.KEY)).filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = true, isInherited = true)
                 }
-                typeTx.getOwners(setOf()).filter { !loaded.contains(it) }.forEach {
+                typeTx.owners.filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = false, isInherited = true)
                 }
                 ownerTypeProperties = properties

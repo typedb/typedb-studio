@@ -232,13 +232,13 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                 typeTx.getOwnsExplicit(setOf(TypeQLToken.Annotation.KEY)).forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
                 }
-                typeTx.getOwnsExplicit(setOf()).filter { !loaded.contains(it) }.forEach {
+                typeTx.ownsExplicit.filter { !loaded.contains(it) }.forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = false)
                 }
                 typeTx.getOwns(setOf(TypeQLToken.Annotation.KEY)).filter { !loaded.contains(it) }.forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = true)
                 }
-                typeTx.getOwns(setOf()).filter { !loaded.contains(it) }.forEach {
+                typeTx.owns.filter { !loaded.contains(it) }.forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = true)
                 }
                 ownedAttTypeProperties = properties
