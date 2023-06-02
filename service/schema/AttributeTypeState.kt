@@ -21,9 +21,11 @@ package com.vaticle.typedb.studio.service.schema
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.client.api.concept.Concept
 import com.vaticle.typedb.client.api.concept.type.AttributeType
 import com.vaticle.typedb.client.api.concept.type.ThingType
 import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typeql.lang.common.TypeQLToken.Annotation.KEY
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 import mu.KotlinLogging
@@ -55,8 +57,7 @@ class AttributeTypeState internal constructor(
     override val info get() = valueType?.name?.lowercase()
     override val parent: AttributeTypeState? get() = supertype
 
-    val valueType: AttributeType.ValueType? = if (!conceptType.isRoot) conceptType.valueType else null
-    val isKeyable: Boolean get() = conceptType.valueType.isKeyable
+    val valueType: Concept.ValueType? = if (!conceptType.isRoot) conceptType.valueType else null
     var ownerTypeProperties: List<AttTypeOwnerProperties> by mutableStateOf(listOf())
     val ownerTypes get() = ownerTypeProperties.map { it.ownerType }
     val ownerTypesExplicit get() = ownerTypeProperties.filter { !it.isInherited }.map { it.ownerType }
@@ -97,16 +98,16 @@ class AttributeTypeState internal constructor(
             val typeTx = conceptType.asRemote(tx)
             if (!loadedOwnerTypePropsAtomic.get()) {
                 loadedOwnerTypePropsAtomic.set(true)
-                typeTx.getOwnersExplicit(true).forEach {
+                typeTx.getOwnersExplicit(setOf(KEY)).forEach {
                     load(it, isKey = true, isInherited = false)
                 }
-                typeTx.getOwnersExplicit(false).filter { !loaded.contains(it) }.forEach {
+                typeTx.ownersExplicit.filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = false, isInherited = false)
                 }
-                typeTx.getOwners(true).filter { !loaded.contains(it) }.forEach {
+                typeTx.getOwners(setOf(KEY)).filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = true, isInherited = true)
                 }
-                typeTx.getOwners(false).filter { !loaded.contains(it) }.forEach {
+                typeTx.owners.filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = false, isInherited = true)
                 }
                 ownerTypeProperties = properties
@@ -128,7 +129,7 @@ class AttributeTypeState internal constructor(
     )
 
     fun tryCreateSubtype(
-        label: String, isAbstract: Boolean, valueType: AttributeType.ValueType
+        label: String, isAbstract: Boolean, valueType: Concept.ValueType
     ) = tryCreateSubtype(label, schemaSrv.createAttributeTypeDialog) { tx ->
         val type = tx.concepts().putAttributeType(label, valueType)
         if (isAbstract || !isRoot) {

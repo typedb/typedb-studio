@@ -48,7 +48,8 @@ import com.vaticle.typedb.studio.service.page.Navigable
 import com.vaticle.typedb.studio.service.page.Pageable
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.TypeQL.rel
-import com.vaticle.typeql.lang.TypeQL.`var`
+import com.vaticle.typeql.lang.TypeQL.cVar
+import com.vaticle.typeql.lang.common.TypeQLToken.Annotation.KEY
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
@@ -214,7 +215,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                 val extendedType = inheritedType?.ownerTypesExplicit?.toSet()
                     ?.intersect(supertypes.toSet())?.firstOrNull()
                 val canBeUndefined = !tx.query().match(
-                    TypeQL.match(`var`("x").isa(typeTx.label.name()).has(attType.name, `var`("y")))
+                    TypeQL.match(cVar("x").isa(typeTx.label.name()).has(attType.name, cVar("y")))
                 ).findFirst().isPresent
                 properties.add(
                     AttributeTypeState.OwnedAttTypeProperties(
@@ -228,16 +229,16 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             val typeTx = conceptType.asRemote(tx)
             if (!loadedOwnedAttTypePropsAtomic.get()) {
                 loadedOwnedAttTypePropsAtomic.set(true)
-                typeTx.getOwnsExplicit(true).forEach {
+                typeTx.getOwnsExplicit(setOf(KEY)).forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
                 }
-                typeTx.getOwnsExplicit(false).filter { !loaded.contains(it) }.forEach {
+                typeTx.ownsExplicit.filter { !loaded.contains(it) }.forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = false)
                 }
-                typeTx.getOwns(true).filter { !loaded.contains(it) }.forEach {
+                typeTx.getOwns(setOf(KEY)).filter { !loaded.contains(it) }.forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = true)
                 }
-                typeTx.getOwns(false).filter { !loaded.contains(it) }.forEach {
+                typeTx.owns.filter { !loaded.contains(it) }.forEach {
                     load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = true)
                 }
                 ownedAttTypeProperties = properties
@@ -262,8 +263,8 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                     ?.intersect(supertypes.toSet())?.firstOrNull()
                 val canBeUndefined = !tx.query().match(
                     TypeQL.match(
-                        `var`("x").isa(typeTx.label.name()),
-                        rel(roleTypeConcept.label.name(), "x")
+                        cVar("x").isa(typeTx.label.name()),
+                        rel(roleTypeConcept.label.name(), cVar("x"))
                     )
                 ).findFirst().isPresent
                 properties.add(
@@ -339,10 +340,11 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     fun tryDefineOwnsAttributeType(
         attributeType: AttributeTypeState, overriddenType: AttributeTypeState?, isKey: Boolean, onSuccess: () -> Unit
     ) = schemaSrv.mayRunWriteTxAsync { tx ->
+        val annotationSet = if (isKey) setOf(KEY) else emptySet()
         try {
             overriddenType?.let {
-                conceptType.asRemote(tx).setOwns(attributeType.conceptType, overriddenType.conceptType, isKey)
-            } ?: conceptType.asRemote(tx).setOwns(attributeType.conceptType, isKey)
+                conceptType.asRemote(tx).setOwns(attributeType.conceptType, overriddenType.conceptType, annotationSet)
+            } ?: conceptType.asRemote(tx).setOwns(attributeType.conceptType, annotationSet)
             loadOwnedAttributeTypes()
             onSuccess()
         } catch (e: Exception) {

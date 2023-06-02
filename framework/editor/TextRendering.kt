@@ -19,7 +19,6 @@
 package com.vaticle.typedb.studio.framework.editor
 
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.TextLayoutResult
 import com.vaticle.typedb.studio.framework.editor.common.GlyphLine

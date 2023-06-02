@@ -356,7 +356,6 @@ sealed class TypeEditor<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
 
         val isOwnable = canWriteSchema && attributeType != null
         val isOverridable = canWriteSchema && overridableTypeList.isNotEmpty()
-        val isKeyable = canWriteSchema && attributeType?.isKeyable == true
         var isKey: Boolean by remember { mutableStateOf(false) }
 
         SectionRow {
@@ -386,10 +385,10 @@ sealed class TypeEditor<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
                     enabled = isOverridable
                 )
             }
-            Form.Text(value = Label.KEY.lowercase(), enabled = isKeyable)
+            Form.Text(value = Label.KEY.lowercase())
             Form.Checkbox(
                 value = isKey,
-                enabled = isKeyable
+                enabled = canWriteSchema
             ) { isKey = it }
             Form.TextButton(
                 text = Label.OWNS,
