@@ -145,9 +145,9 @@ internal class RunOutputGroup constructor(
         while (futuresLatch.count > 0L) {
             delay(COUNT_DOWN_LATCH_PERIOD_MS)
         }
+        outputs.filterIsInstance<GraphOutput>().forEach { it.setCompleted() }
         runner.setConsumed()
         logOutput.stop()
-        outputs.filterIsInstance<GraphOutput>().forEach { it.setCompleted() }
         endTime = System.currentTimeMillis()
     }
 

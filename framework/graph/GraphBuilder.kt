@@ -159,54 +159,53 @@ class GraphBuilder(
     }
 
     private fun renderSchema() {
-        val vertices = allTypeVertices; // all schema vertices
-        val visited: Map<Vertex, Set<Pair<String, Type>>> = mapOf();
+        val vertices = allTypeVertices // all schema vertices
+        val visited: MutableMap<Vertex, Set<Pair<String, Vertex.Type>>> = mutableMapOf()
 
         vertices.values.forEach {
-            renderEdges(it, visited)
+            renderEdges(it.type, visited)
         }
     }
 
-    private fun renderEdges(vertex: Vertex, visited: Map<Vertex, Set<Pair<String, Type>>>): Set<Pair<String, Type>> {
-
+    private fun renderEdges(type: Type, visited: MutableMap<Vertex, Set<Pair<String, Vertex.Type>>>): Set<Pair<String, Vertex.Type>> {
         // what are you trying to render: <Label (OWNS/SUB/Role), TargetVertex>
+        if (type.isRoot) return emptySet()
 
-        if (visited.contains(vertex)) return visited[vertex]!!;
+        val remoteType = type.asRemote(transactionState.transaction)
+        if (!allTypeVertices.containsKey(type.label.name())) return renderEdges(remoteType.supertype!!, visited)
+        val vertex = allTypeVertices[type.label.name()]!!
+        if (visited.containsKey(vertex)) return visited[vertex]!!
+        val setToRender = getToRender(vertex)
+        val parentType = remoteType.supertype
+        val parentRendered = renderEdges(parentType!!, visited)
 
-        val setToRender = getToRender(vertex as Vertex.Type.Thing);
+        setToRender
+            .filter { !parentRendered.contains(it) }
+            .forEach { pair -> renderEdge(vertex, pair) }
 
-        val parentRendered = renderEdges(vertex, visited)
-
-
-        for pair in setToRender:
-        if pair not in parentRendered:
-        renderEdge(vertex, pair)
-
-        visited.add(vertex, setToRender);
-        return setToRender;
-
-
+        visited[vertex] = setToRender
+        return setToRender
     }
 
-    private fun renderEdge(vertex: Vertex.Type, pair: Pair<String, Type>) {
+    private fun renderEdge(vertex: Vertex.Type, pair: Pair<String, Vertex.Type>) {
         when (pair.first) {
             "SUB" -> addEdge(Edge.Sub(vertex, pair.second))
-            "OWNS" -> addEdge(Edge.Owns(vertex, pair.second))
-            else -> addEdge(Edge.Plays(vertex, pair.second, pair.first))
+            "OWNS" -> addEdge(Edge.Owns(vertex, pair.second as Vertex.Type.Attribute))
+            else -> addEdge(Edge.Plays(pair.second as Vertex.Type.Relation, vertex, pair.first))
         }
     }
 
-    private fun getToRender(schemaVertex: Vertex.Type.Thing): Set<Pair<String, Type>> {
-        val pairs: MutableSet<Pair<String, Type>> = mutableSetOf()
+    private fun getToRender(schemaVertex: Vertex.Type): Set<Pair<String, Vertex.Type>> {
+        val pairs: MutableSet<Pair<String, Vertex.Type>> = mutableSetOf()
         schemaVertex.type.asRemote(transactionState.transaction).asThingType().supertypes
-            .filter {superType -> allTypeVertices.contains(superType) }
-            .forEach {superType -> pairs.add(Pair("SUB", superType))}
-        schemaVertex.type.asRemote(transactionState.transaction).asThingType().owns.
-            filter {superType -> allTypeVertices.contains(superType)}
-            .forEach {superType -> pairs.add(Pair("OWNS", superType))}
+            .filter {superType -> !superType.isRoot && !superType.equals(schemaVertex.type) && allTypeVertices.containsKey(superType.label.name()) }
+            .forEach {superType -> pairs.add(Pair("SUB", allTypeVertices[superType.label.name()]!!))}
+        schemaVertex.type.asRemote(transactionState.transaction).asThingType().owns
+            .filter {attrType ->  allTypeVertices.containsKey(attrType.label.name())}
+            .forEach {attrType -> pairs.add(Pair("OWNS", allTypeVertices[attrType.label.name()]!!))}
         schemaVertex.type.asRemote(transactionState.transaction).asThingType().plays
-            .filter {superType -> allTypeVertices.contains(superType)}
-            .forEach {superType -> pairs.add(Pair("$label", superType))}
+            .filter {plays -> allTypeVertices.containsKey(plays.label.scope().get())}
+            .forEach {plays -> pairs.add(Pair(plays.label.name(), allTypeVertices[plays.label.scope().get()]!!))}
         return pairs
     }
 
@@ -309,47 +308,6 @@ class GraphBuilder(
     sealed class AnswerSource {
         object Query : AnswerSource()
         class Explanation(val explanation: com.vaticle.typedb.client.api.logic.Explanation) : AnswerSource()
-    }
-
-    sealed class ScopedEdgeCandidate {
-        abstract var supertypes: List<ThingType>
-        abstract val label: String
-        abstract val distinctSelector: List<String>
-        abstract fun toEdge(vertex: Vertex): Edge
-        open fun rescope(supertype: Vertex.Type) {
-            this.supertypes.apply {
-                take(indexOf(supertype.type))
-            }
-        }
-        fun hasSupertype(supertype: ThingType) = supertypes.contains(supertype)
-
-        class Owns(var source: Vertex, val targetLabel: String, override var supertypes: List<ThingType>) : ScopedEdgeCandidate() {
-            override val label: String
-                get() = targetLabel
-            override val distinctSelector: List<String>
-                get() = listOf(source.label, targetLabel)
-            override fun toEdge(vertex: Vertex) =
-                Edge.Owns(source as Vertex.Type, vertex as Vertex.Type.Attribute)
-
-            override fun rescope(supertype: Vertex.Type) {
-                super.rescope(supertype)
-                this.source = supertype
-            }
-        }
-
-        class Plays(val sourceLabel: String, var target: Vertex.Type, val role: RoleType, override var supertypes: List<ThingType>) : ScopedEdgeCandidate() {
-            override val label: String
-                get() = sourceLabel
-            override val distinctSelector: List<String>
-                get() = listOf(sourceLabel, role.label.name(), target.label)
-            override fun toEdge(vertex: Vertex) =
-                Edge.Plays(vertex as Vertex.Type.Relation, target, role.label.name())
-
-            override fun rescope(supertype: Vertex.Type) {
-                super.rescope(supertype)
-                this.target = supertype
-            }
-        }
     }
 
     sealed class EdgeCandidate {
@@ -483,15 +441,6 @@ class GraphBuilder(
             private val remoteThingType get() = transaction?.let { thingType.asRemote(it) }
 
             override fun build() {
-                loadSubEdge()
-            }
-
-            private fun loadSubEdge() {
-                remoteThingType?.supertype?.let { supertype ->
-                    val supertypeVertex = graphBuilder.allTypeVertices[supertype.label.name()]
-                    if (supertypeVertex != null) graphBuilder.addEdge(Edge.Sub(typeVertex, supertypeVertex))
-                    else graphBuilder.addEdgeCandidate(EdgeCandidate.Sub(typeVertex, supertype.label.name()))
-                }
             }
         }
     }
