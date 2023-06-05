@@ -115,7 +115,7 @@ class GraphBuilder(
             if (added) {
                 newRecords[key] = v
                 completeEdges(missingVertex = v)
-                EdgeBuilder.of(concept, v, this, transactionState.transaction).build()
+                EdgeBuilder.of(concept, v, this, transactionState.transaction)?.build()
             }
             v
         }
@@ -352,13 +352,13 @@ class GraphBuilder(
         abstract fun build()
 
         companion object {
-            fun of(concept: Concept, vertex: Vertex, graphBuilder: GraphBuilder, transaction: TypeDBTransaction?): EdgeBuilder {
+            fun of(concept: Concept, vertex: Vertex, graphBuilder: GraphBuilder, transaction: TypeDBTransaction?): EdgeBuilder? {
                 return when (concept) {
                     is com.vaticle.typedb.client.api.concept.thing.Thing -> {
                         Thing(concept, vertex as Vertex.Thing, transaction, graphBuilder)
                     }
-                    is com.vaticle.typedb.client.api.concept.type.ThingType -> {
-                        ThingType(concept.asThingType(), vertex as Vertex.Type, transaction, graphBuilder)
+                    is ThingType -> {
+                        null
                     }
                     else -> throw graphBuilder.unsupportedEncodingException(concept)
                 }
@@ -429,18 +429,6 @@ class GraphBuilder(
                         }
                     }
                 }
-            }
-        }
-
-        class ThingType(
-            private val thingType: com.vaticle.typedb.client.api.concept.type.ThingType,
-            private val typeVertex: Vertex.Type,
-            private val transaction: TypeDBTransaction?,
-            ctx: GraphBuilder,
-            ) : EdgeBuilder(ctx) {
-            private val remoteThingType get() = transaction?.let { thingType.asRemote(it) }
-
-            override fun build() {
             }
         }
     }
