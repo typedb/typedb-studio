@@ -132,9 +132,6 @@ class GraphBuilder(
         val key = when (edge) {
             is EdgeCandidate.Has -> edge.targetIID
             is EdgeCandidate.Isa -> edge.targetLabel
-            is EdgeCandidate.Owns -> edge.targetLabel
-            is EdgeCandidate.Plays -> edge.sourceLabel
-            is EdgeCandidate.Sub -> edge.targetLabel
         }
         edgeCandidates.compute(key) { _, existing -> if (existing == null) listOf(edge) else existing + edge }
     }
@@ -168,17 +165,17 @@ class GraphBuilder(
     }
 
     private fun renderEdges(type: Type, visited: MutableMap<Vertex, Set<Pair<String, Vertex.Type>>>): Set<Pair<String, Vertex.Type>> {
-        // what are you trying to render: <Label (OWNS/SUB/Role), TargetVertex>
         if (type.isRoot) return emptySet()
 
         val remoteType = type.asRemote(transactionState.transaction)
         if (!allTypeVertices.containsKey(type.label.name())) return renderEdges(remoteType.supertype!!, visited)
+
         val vertex = allTypeVertices[type.label.name()]!!
         if (visited.containsKey(vertex)) return visited[vertex]!!
+
         val setToRender = getToRender(vertex)
         val parentType = remoteType.supertype
         val parentRendered = renderEdges(parentType!!, visited)
-
         setToRender
             .filter { !parentRendered.contains(it) }
             .forEach { pair -> renderEdge(vertex, pair) }
@@ -197,13 +194,14 @@ class GraphBuilder(
 
     private fun getToRender(schemaVertex: Vertex.Type): Set<Pair<String, Vertex.Type>> {
         val pairs: MutableSet<Pair<String, Vertex.Type>> = mutableSetOf()
-        schemaVertex.type.asRemote(transactionState.transaction).asThingType().supertypes
+        val schemaVertexRemoteThingType = schemaVertex.type.asRemote(transactionState.transaction).asThingType()
+        schemaVertexRemoteThingType.supertypes
             .filter {superType -> !superType.isRoot && !superType.equals(schemaVertex.type) && allTypeVertices.containsKey(superType.label.name()) }
             .forEach {superType -> pairs.add(Pair("SUB", allTypeVertices[superType.label.name()]!!))}
-        schemaVertex.type.asRemote(transactionState.transaction).asThingType().owns
+        schemaVertexRemoteThingType.owns
             .filter {attrType ->  allTypeVertices.containsKey(attrType.label.name())}
             .forEach {attrType -> pairs.add(Pair("OWNS", allTypeVertices[attrType.label.name()]!!))}
-        schemaVertex.type.asRemote(transactionState.transaction).asThingType().plays
+        schemaVertexRemoteThingType.plays
             .filter {plays -> allTypeVertices.containsKey(plays.label.scope().get())}
             .forEach {plays -> pairs.add(Pair(plays.label.name(), allTypeVertices[plays.label.scope().get()]!!))}
         return pairs
@@ -318,19 +316,6 @@ class GraphBuilder(
 
         abstract fun toEdge(vertex: Vertex): Edge
 
-        // Type edges
-        class Sub(val source: Vertex.Type, val targetLabel: String) : EdgeCandidate() {
-            override fun toEdge(vertex: Vertex) = Edge.Sub(source, vertex as Vertex.Type)
-        }
-
-        class Owns(val source: Vertex.Type, val targetLabel: String) : EdgeCandidate() {
-            override fun toEdge(vertex: Vertex) = Edge.Owns(source, vertex as Vertex.Type.Attribute)
-        }
-
-        class Plays(val sourceLabel: String, val target: Vertex.Type, val role: String) : EdgeCandidate() {
-            override fun toEdge(vertex: Vertex) = Edge.Plays(vertex as Vertex.Type.Relation, target, role)
-        }
-
         // Thing edges
         class Has(
             val source: Vertex.Thing, val targetIID: String, override val isInferred: Boolean = false
@@ -392,7 +377,7 @@ class GraphBuilder(
                 // test for ability to own attributes, to ensure query will not throw during type inference
                 if (!canOwnAttributes()) return
                 graphBuilder.apply {
-                    remoteThing?.getHas()?.forEach {
+                    remoteThing?.has?.forEach {
                         val attributeVertex = graphBuilder.allThingVertices[it.iid] as? Vertex.Thing.Attribute
                         if (attributeVertex != null) {
                             addEdge(Edge.Has(thingVertex, attributeVertex, it.isInferred))
