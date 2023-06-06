@@ -66,6 +66,8 @@ class GraphBuilder(
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
+        private val SUB = "SUB"
+        private val OWNS = "OWNS"
     }
 
     fun loadConceptMap(conceptMap: ConceptMap, answerSource: AnswerSource = AnswerSource.Query) {
@@ -155,50 +157,48 @@ class GraphBuilder(
     }
 
     private fun renderSchema() {
-        val vertices = allTypeVertices // all schema vertices
-        val visited: MutableMap<Vertex, Set<Pair<String, Vertex.Type>>> = mutableMapOf()
+        val rendered: MutableMap<Vertex, Set<Pair<String, Vertex.Type>>> = mutableMapOf()
 
-        vertices.values.forEach {
-            renderEdges(it.type, visited)
+        allTypeVertices.values.forEach {
+            renderEdges(it.type, rendered)
         }
     }
 
-    private fun renderEdges(type: Type, visited: MutableMap<Vertex, Set<Pair<String, Vertex.Type>>>): Set<Pair<String, Vertex.Type>> {
+    private fun renderEdges(type: Type, rendered: MutableMap<Vertex, Set<Pair<String, Vertex.Type>>>): Set<Pair<String, Vertex.Type>> {
         if (type.isRoot) return emptySet()
 
-        val remoteType = type.asRemote(transactionState.transaction)
-        val superType = remoteType.supertype!!
-        if (!allTypeVertices.containsKey(type.label.name())) return renderEdges(superType, visited)
+        val superType = type.asRemote(transactionState.transaction).supertype!!
+        if (!allTypeVertices.containsKey(type.label.name())) return renderEdges(superType, rendered)
 
-        val vertex = allTypeVertices[type.label.name()]!!
-        if (visited.containsKey(vertex)) return visited[vertex]!!
+        val typeVertex = allTypeVertices[type.label.name()]!!
+        if (rendered.containsKey(typeVertex)) return rendered[typeVertex]!!
 
-        val setToRender = getToRender(vertex)
-        val superTypeRendered = renderEdges(superType, visited)
-        setToRender
+        val edgesForTypeVertex = getSchemaEdges(typeVertex)
+        val superTypeRendered = renderEdges(superType, rendered)
+        edgesForTypeVertex
             .filter { !superTypeRendered.contains(it) }
-            .forEach { pair -> renderEdge(vertex, pair) }
-        visited[vertex] = setToRender
-        return setToRender
+            .forEach { pair -> renderEdge(typeVertex, pair) }
+        rendered[typeVertex] = edgesForTypeVertex
+        return edgesForTypeVertex
     }
 
     private fun renderEdge(vertex: Vertex.Type, pair: Pair<String, Vertex.Type>) {
         when (pair.first) {
-            "SUB" -> addEdge(Edge.Sub(vertex, pair.second))
-            "OWNS" -> addEdge(Edge.Owns(vertex, pair.second as Vertex.Type.Attribute))
+            SUB -> addEdge(Edge.Sub(vertex, pair.second))
+            OWNS -> addEdge(Edge.Owns(vertex, pair.second as Vertex.Type.Attribute))
             else -> addEdge(Edge.Plays(pair.second as Vertex.Type.Relation, vertex, pair.first))
         }
     }
 
-    private fun getToRender(schemaVertex: Vertex.Type): Set<Pair<String, Vertex.Type>> {
+    private fun getSchemaEdges(schemaVertex: Vertex.Type): Set<Pair<String, Vertex.Type>> {
         val pairs: MutableSet<Pair<String, Vertex.Type>> = mutableSetOf()
         val schemaVertexRemoteThingType = schemaVertex.type.asRemote(transactionState.transaction).asThingType()
         schemaVertexRemoteThingType.supertypes
             .filter {superType -> !superType.isRoot && !superType.equals(schemaVertex.type) && allTypeVertices.containsKey(superType.label.name()) }
-            .forEach {superType -> pairs.add(Pair("SUB", allTypeVertices[superType.label.name()]!!))}
+            .forEach {superType -> pairs.add(Pair(SUB, allTypeVertices[superType.label.name()]!!))}
         schemaVertexRemoteThingType.owns
             .filter {attrType ->  allTypeVertices.containsKey(attrType.label.name())}
-            .forEach {attrType -> pairs.add(Pair("OWNS", allTypeVertices[attrType.label.name()]!!))}
+            .forEach {attrType -> pairs.add(Pair(OWNS, allTypeVertices[attrType.label.name()]!!))}
         schemaVertexRemoteThingType.plays
             .filter {plays -> allTypeVertices.containsKey(plays.label.scope().get())}
             .forEach {plays -> pairs.add(Pair(plays.label.name(), allTypeVertices[plays.label.scope().get()]!!))}
