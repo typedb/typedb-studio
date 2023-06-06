@@ -53,7 +53,7 @@ class GraphBuilder(
     private val allThingVertices = ConcurrentHashMap<String, Vertex.Thing>()
     private val allTypeVertices = ConcurrentHashMap<String, Vertex.Type>()
     private val edges = ConcurrentLinkedQueue<Edge>()
-    private val thingEdgeCandidates = ConcurrentHashMap<String, Collection<EdgeCandidate>>()
+    private val thingEdgeCandidates = ConcurrentHashMap<String, Collection<ThingEdgeCandidate>>()
     private val explainables = ConcurrentHashMap<Vertex.Thing, ConceptMap.Explainable>()
     private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
     private val lock = ReentrantReadWriteLock(true)
@@ -128,12 +128,12 @@ class GraphBuilder(
         lock.readLock().withLock { edges += edge }
     }
 
-    fun addEdgeCandidate(edge: EdgeCandidate) {
-        val key = when (edge) {
-            is EdgeCandidate.Has -> edge.targetIID
-            is EdgeCandidate.Isa -> edge.targetLabel
+    fun addThingEdgeCandidate(edgeCandidate: ThingEdgeCandidate) {
+        val key = when (edgeCandidate) {
+            is ThingEdgeCandidate.Has -> edgeCandidate.targetIID
+            is ThingEdgeCandidate.Isa -> edgeCandidate.targetLabel
         }
-        thingEdgeCandidates.compute(key) { _, existing -> if (existing == null) listOf(edge) else existing + edge }
+        thingEdgeCandidates.compute(key) { _, existing -> if (existing == null) listOf(edgeCandidate) else existing + edgeCandidate }
     }
 
     private fun completeEdges(missingVertex: Vertex) {
@@ -306,7 +306,7 @@ class GraphBuilder(
         class Explanation(val explanation: com.vaticle.typedb.client.api.logic.Explanation) : AnswerSource()
     }
 
-    sealed class EdgeCandidate {
+    sealed class ThingEdgeCandidate {
 
         interface Inferrable {
             val isInferred: Boolean
@@ -317,13 +317,13 @@ class GraphBuilder(
         // Thing edges
         class Has(
             val source: Vertex.Thing, val targetIID: String, override val isInferred: Boolean = false
-        ) : EdgeCandidate(), Inferrable {
+        ) : ThingEdgeCandidate(), Inferrable {
 
             override fun toEdge(vertex: Vertex) = Edge.Has(source, vertex as Vertex.Thing.Attribute, isInferred)
         }
 
         // Thing-to-type edges
-        class Isa(val source: Vertex.Thing, val targetLabel: String) : EdgeCandidate() {
+        class Isa(val source: Vertex.Thing, val targetLabel: String) : ThingEdgeCandidate() {
             override fun toEdge(vertex: Vertex) = Edge.Isa(source, vertex as Vertex.Type)
         }
     }
@@ -366,7 +366,7 @@ class GraphBuilder(
                 thing.type.let { type ->
                     val typeVertex = graphBuilder.allTypeVertices[type.label.name()]
                     if (typeVertex != null) graphBuilder.addEdge(Edge.Isa(thingVertex, typeVertex))
-                    else graphBuilder.addEdgeCandidate(EdgeCandidate.Isa(thingVertex, type.label.name()))
+                    else graphBuilder.addThingEdgeCandidate(ThingEdgeCandidate.Isa(thingVertex, type.label.name()))
                 }
             }
 
@@ -380,7 +380,7 @@ class GraphBuilder(
                         if (attributeVertex != null) {
                             addEdge(Edge.Has(thingVertex, attributeVertex, it.isInferred))
                         } else {
-                            addEdgeCandidate(EdgeCandidate.Has(thingVertex, it.iid, it.isInferred))
+                            addThingEdgeCandidate(ThingEdgeCandidate.Has(thingVertex, it.iid, it.isInferred))
                         }
                     }
                 }
