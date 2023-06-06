@@ -53,7 +53,7 @@ class GraphBuilder(
     private val allThingVertices = ConcurrentHashMap<String, Vertex.Thing>()
     private val allTypeVertices = ConcurrentHashMap<String, Vertex.Type>()
     private val edges = ConcurrentLinkedQueue<Edge>()
-    private val edgeCandidates = ConcurrentHashMap<String, Collection<EdgeCandidate>>()
+    private val thingEdgeCandidates = ConcurrentHashMap<String, Collection<EdgeCandidate>>()
     private val explainables = ConcurrentHashMap<Vertex.Thing, ConceptMap.Explainable>()
     private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
     private val lock = ReentrantReadWriteLock(true)
@@ -133,16 +133,15 @@ class GraphBuilder(
             is EdgeCandidate.Has -> edge.targetIID
             is EdgeCandidate.Isa -> edge.targetLabel
         }
-        edgeCandidates.compute(key) { _, existing -> if (existing == null) listOf(edge) else existing + edge }
+        thingEdgeCandidates.compute(key) { _, existing -> if (existing == null) listOf(edge) else existing + edge }
     }
 
     private fun completeEdges(missingVertex: Vertex) {
-        val key = when (missingVertex) {
-            is Vertex.Type -> missingVertex.type.label.name()
-            is Vertex.Thing -> missingVertex.thing.iid
-        }
-        edgeCandidates.remove(key)?.let { candidates ->
-            candidates.forEach { edges += it.toEdge(missingVertex) }
+        if (missingVertex is Vertex.Thing) {
+            val key = missingVertex.thing.iid
+            thingEdgeCandidates.remove(key)?.let { candidates ->
+                candidates.forEach { edges += it.toEdge(missingVertex) }
+            }
         }
     }
 
@@ -150,7 +149,7 @@ class GraphBuilder(
         // Since there is no protection against an edge candidate, and the vertex that completes it, being added
         // concurrently, we do a final sanity check once all vertices + edges have been loaded.
         lock.readLock().withLock {
-            (graph.thingVertices + graph.typeVertices).values.forEach { completeEdges(it) }
+            graph.thingVertices.values.forEach { completeEdges(it) }
             renderSchema()
         }
     }
@@ -168,18 +167,17 @@ class GraphBuilder(
         if (type.isRoot) return emptySet()
 
         val remoteType = type.asRemote(transactionState.transaction)
-        if (!allTypeVertices.containsKey(type.label.name())) return renderEdges(remoteType.supertype!!, visited)
+        val superType = remoteType.supertype!!
+        if (!allTypeVertices.containsKey(type.label.name())) return renderEdges(superType, visited)
 
         val vertex = allTypeVertices[type.label.name()]!!
         if (visited.containsKey(vertex)) return visited[vertex]!!
 
         val setToRender = getToRender(vertex)
-        val parentType = remoteType.supertype
-        val parentRendered = renderEdges(parentType!!, visited)
+        val superTypeRendered = renderEdges(superType, visited)
         setToRender
-            .filter { !parentRendered.contains(it) }
+            .filter { !superTypeRendered.contains(it) }
             .forEach { pair -> renderEdge(vertex, pair) }
-
         visited[vertex] = setToRender
         return setToRender
     }
