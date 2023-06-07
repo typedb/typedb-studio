@@ -178,7 +178,7 @@ assemble_targz(
 #    repository = deployment_github['github.repository'],
 #    title = "TypeDB Studio",
 #    title_append_version = True,
-#    release_description = "//:RELEASE_TEMPLATE.md",
+#    release_description = "//:RELEASE_NOTES_LATEST.md",
 #    archive = ":assemble-platform",
 #    version_file = ":VERSION",
 #    draft = False
