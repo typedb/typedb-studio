@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 #
 # Copyright (C) 2022 Vaticle
 #
@@ -16,4 +15,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
- bazel run @vaticle_dependencies//tool/release/notes:create -- vaticle typedb-studio HEAD $(cat VERSION) ./RELEASE_TEMPLATE.md ./RELEASE_NOTES_LATEST.md
+load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+
+checkstyle_test(
+    name = "checkstyle",
+    include = glob(["*"]),
+    license_type = "agpl-header",
+)
+
