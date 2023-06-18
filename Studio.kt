@@ -89,6 +89,7 @@ import com.vaticle.typedb.studio.module.type.TypeEditor
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
+import com.vaticle.typedb.studio.service.common.util.Property.Server
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.project.FileState
 import com.vaticle.typedb.studio.service.schema.ThingTypeState
@@ -160,6 +161,20 @@ object Studio {
                     TypeDialog.MayShowDialogs()
                 }
             }
+        }
+        tryOpenLastProject()
+        tryConnectToLastDatabase()
+    }
+
+    private fun tryOpenLastProject() {
+        Service.data.project.path?.let { Service.project.tryOpenProject(it) }
+    }
+
+    private fun tryConnectToLastDatabase() {
+        val connectionData = Service.data.connection
+        when (connectionData.server) {
+            Server.TYPEDB -> connectionData.coreAddress?.let {Service.client.tryConnectToTypeDBAsync(it) {}}
+            else -> {}
         }
     }
 
