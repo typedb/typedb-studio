@@ -16,16 +16,16 @@
 #
 
 colors:
-  white: "#d5ccff"
-  cyan: "#55EAE2"
-  green: "#4dc97c"
-  red: "#ff8080"
-  pink: "#ff7abd"
-  purple: "#b7a3ff" # unused
-  blue: "#82b6ff"
-  orange: "#FFA187"
-  yellow: "#FFE4A7"
-  grey: "#978aba" # unused
+  dark-purple: "#392d67"
+  cyan: "#28c9c0"
+  green: "#309c59"
+  red: "#f91111"
+  pink: "#fb3196"
+  purple: "#7b46d1" # unused
+  blue: "#3377d8"
+  orange: "#ff6b00"
+  yellow: "#f1be05"
+  grey: "#6c608c" # unused
 
 global:
   foreground: pink
@@ -85,7 +85,7 @@ rules:
         foreground: red
   entity:
     # my-entity, my-relation, my-attribute
-    foreground: white
+    foreground: dark-purple
   comment:
     # # This comment explains the code
     foreground: green
