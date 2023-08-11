@@ -66,11 +66,13 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         val onReopen = LinkedBlockingQueue<(ThingTypeState<*, *>) -> Unit>()
         val onClose = LinkedBlockingQueue<(ThingTypeState<*, *>) -> Unit>()
         val onSubtypesUpdated = LinkedBlockingQueue<() -> Unit>()
+        val onSchemaWrite = LinkedBlockingQueue<() -> Unit>()
 
         fun clear() {
             onReopen.clear()
             onClose.clear()
             onSubtypesUpdated.clear()
+            onSchemaWrite.clear()
         }
     }
 
@@ -124,6 +126,16 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     abstract fun tryChangeSupertype(supertypeState: TTS)
 
     fun onSubtypesUpdated(function: () -> Unit) = callbacks.onSubtypesUpdated.put(function)
+
+    fun onSchemaWrite(function: () -> Unit) = callbacks.onSchemaWrite.put(function)
+
+    fun removeSchemaWriteCallback(function: () -> Unit) {
+        callbacks.onSchemaWrite.remove(function)
+    }
+
+    fun notifySchemaWrite() {
+        callbacks.onSchemaWrite.forEach { it.invoke() }
+    }
 
     override fun updateConceptType(label: String) = schemaSrv.mayRunReadTx { tx ->
         val newConceptType = asSameEncoding(tx.concepts().getThingType(label)!!)

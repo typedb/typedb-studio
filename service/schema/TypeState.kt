@@ -79,13 +79,17 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(
     internal abstract fun resetLoadedConnectedTypes()
     abstract override fun toString(): String
 
+    fun loadSupertype(): Unit = schemaSrv.mayRunReadTx { tx ->
+        supertype = conceptType.asRemote(tx).supertype?.let {
+            if (isSameEncoding(it)) typeStateOf(asSameEncoding(it)) else null
+        }
+    } ?: Unit
+
     fun loadSupertypesAsync() = coroutines.launchAndHandle(notifications, LOGGER) { loadSupertypes() }
 
     fun loadSupertypes(): Unit = schemaSrv.mayRunReadTx { tx ->
-        val typeTx = conceptType.asRemote(tx)
-        supertype = typeTx.supertype?.let {
-            if (isSameEncoding(it)) typeStateOf(asSameEncoding(it)) else null
-        }?.also { it.loadInheritables() }
+        loadSupertype()
+        supertype?.loadInheritables()
         supertype?.loadSupertypes()
         supertypes = supertype?.let { listOf(it) + it.supertypes } ?: listOf()
     } ?: Unit

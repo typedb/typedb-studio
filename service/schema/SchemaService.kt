@@ -21,6 +21,7 @@ package com.vaticle.typedb.studio.service.schema
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.concept.type.*
 import com.vaticle.typedb.studio.service.common.ConfirmationService
@@ -160,6 +161,7 @@ class SchemaService(
             refreshTypesAndOpen()
             updateSchemaExceptionsStatus()
             reloadLoadedConnectedTypes()
+            notifySchemaWriteToTypes()
         }
     }
 
@@ -270,6 +272,7 @@ class SchemaService(
                     function(tx)
                     reloadLoadedConnectedTypes()
                     updateSchemaExceptionsStatus()
+                    if (session.type == TypeDBSession.Type.SCHEMA) notifySchemaWriteToTypes()
                 } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_WRITE_TX)
             }.invokeOnCompletion { hasRunningWriteAtomic.set(false) }
         }
@@ -354,8 +357,18 @@ class SchemaService(
 
     private fun reloadLoadedConnectedTypes() {
         resetLoadedConnectedTypes()
-        listOf(entityTypes, attributeTypes, relationTypes, roleTypes).forEach { types ->
-            types.values.forEach { type -> type.loadConstraints() }
+        loadTypeHierarchy()
+    }
+
+    private fun loadTypeHierarchy() {
+        listOf(entityTypes, attributeTypes, relationTypes).forEach { types ->
+            types.values.forEach { type -> type.loadSupertype() }
+        }
+    }
+
+    private fun notifySchemaWriteToTypes() {
+        listOf(entityTypes, attributeTypes, relationTypes).forEach { types ->
+            types.values.forEach { type -> type.notifySchemaWrite() }
         }
     }
 
