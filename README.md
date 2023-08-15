@@ -8,10 +8,10 @@
 
 [![TypeDB Studio](./docs/images/studio-full-1.png)](./docs/images/studio-full-1.png)
 
-TypeDB Studio is a fully-featured Integrated Development Environment (IDE) for TypeDB.
+TypeDB Studio is a fully-featured Integrated Development Environment (IDE) for [TypeDB](https://github.com/vaticle/typedb).
 
-You can utilise Studio as you would [TypeDB Console](https://docs.vaticle.com/docs/console/console)
-and the [TypeDB Clients](https://docs.vaticle.com/docs/client-api/overview): to connect to your TypeDB instance and
+You can utilise Studio as you would [TypeDB Console](https://github.com/vaticle/typedb-console)
+and the [TypeDB Clients](https://typedb.com/docs/clients/2.x/clients): to connect to your TypeDB instance and
 perform queries.
 
 Studio is an IDE designed for the end-to-end development of TypeDB databases, database queries, and data exploration,
