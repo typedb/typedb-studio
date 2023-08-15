@@ -20,15 +20,20 @@ orbs:
   win: circleci/windows@2.0.0
 commands:
 
-  install-bazel-linux:
+  install-bazel-linux-x86_64:
     steps:
-      - run: curl -OL https://raw.githubusercontent.com/vaticle/dependencies/master/tool/bazelinstall/linux.sh
-      - run: bash ./linux.sh && rm ./linux.sh
+      - run: curl -OL https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-linux-amd64
+      - run: sudo mv bazelisk-linux-amd64 /usr/local/bin/bazel
+
+  install-bazel-linux-arm64:
+    steps:
+      - run: curl -OL https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-linux-arm64
+      - run: sudo mv bazelisk-linux-arm64 /usr/local/bin/bazel
+      - run: chmod a+x /usr/local/bin/bazel
 
   install-bazel-mac:
     steps:
-      - run: curl -OL https://raw.githubusercontent.com/vaticle/dependencies/master/tool/bazelinstall/mac.sh
-      - run: bash ./mac.sh && rm ./mac.sh
+      - run: brew install bazelisk
 
   run-bazel:
     parameters:
@@ -80,7 +85,7 @@ jobs:
     working_directory: ~/typedb-studio
     steps:
       - checkout
-      - install-bazel-linux
+      - install-bazel-linux-arm64
       - run: bazel build //:assemble-platform
       - run: bazel build //:assemble-linux-targz
       - run: |
