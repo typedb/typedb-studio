@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -147,6 +148,7 @@ sealed class TypeEditor<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     override fun PrimaryContent() {
         val density = LocalDensity.current.density
         val bgColor = Theme.studio.backgroundDark
+        val onSchemaWrite: () -> Unit = { typeState.loadConstraintsAsync() }
         Box(Modifier.background(bgColor).focusRequester(focusReq).focusable()
             .onGloballyPositioned { width = toDP(it.size.width, density) }) {
             Box(Modifier.fillMaxSize().horizontalScroll(horScroller).verticalScroll(verScroller), Alignment.TopCenter) {
@@ -156,6 +158,10 @@ sealed class TypeEditor<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
             Scrollbar.Horizontal(rememberScrollbarAdapter(horScroller), Modifier.align(Alignment.BottomCenter))
         }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
+        DisposableEffect(Unit) {
+            typeState.onSchemaWrite(onSchemaWrite)
+            onDispose { typeState.removeSchemaWriteCallback(onSchemaWrite) }
+        }
     }
 
     @Composable
