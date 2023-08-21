@@ -59,8 +59,8 @@ object Theme {
     val TOOLBAR_SEPARATOR_HEIGHT = 20.dp
     val ROUNDED_CORNER_RADIUS = 4.dp
     val ROUNDED_CORNER_SHAPE = RoundedCornerShape(ROUNDED_CORNER_RADIUS)
-    const val TARGET_SELECTION_ALPHA = 0.35f
-    const val FIND_SELECTION_ALPHA = 0.3f
+    const val TARGET_SELECTION_ALPHA = 0.25f
+    const val FIND_SELECTION_ALPHA = 0.25f
     const val INDICATION_HOVER_ALPHA = 0.1f
     private const val INDICATION_PRESSED_ALPHA = 0.2f
     private val StudioColorsState = staticCompositionLocalOf { Color.Themes.DARK_STUDIO }

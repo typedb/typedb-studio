@@ -70,48 +70,41 @@ object Color {
 
     private object DarkPalette {
         val Black = Color(0xFF09022F)
-        val Blue1 = Color(0xFF5CA8FF)
-        val Blue2 = Color(0xFF92E4FC)
+        val Blue1 = Color(0xFF7BA0FF)
         val Green = Color(0xFF02DAC9)
-        val Orange1 = Color(0xFFA98119)
-        val Orange2 = Color(0xFFD68E11)
-        val Orange3 = Color(0xFFF6C94C)
-        val Pink1 = Color(0xFFF28DD7)
-        val Pink2 = Color(0xFFFFA9E8)
-        val Pink3 = Color(0xFFE69CFF)
-        val Purple0 = Color(0xFF080226)
-        val Purple1 = Color(0xFF0E053F)
-        val Purple2 = Color(0xFF180F49)
-        val Purple3 = Color(0xFF1D1354)
-        val Purple4 = Color(0xFF261C5E)
-        val Purple5 = Color(0xFF372E6A)
-        val Purple6 = Color(0xFF392D7F)
-        val Purple7 = Color(0xFF544899)
-        val Purple8 = Color(0xFF888DCA)
+        val Orange = Color(0xFFB0740C)
+        val Yellow = Color(0xFFF6C94C)
+        val Pink = Color(0xFFFF87DC)
+        val Purple1 = Color(0xFF0E0D17)
+        val Purple2 = Color(0xFF14121F)
+        val Purple3 = Color(0xFF151322)
+        val Purple4 = Color(0xFF1A182A)
+        val Purple5 = Color(0xFF232135)
+        val Purple6 = Color(0xFF2D2A46)
         val Red1 = Color(0xFFCF4A55)
-        val Red2 = Color(0xFFF66B65)
+        val Red2 = Color(0xFFFF8080)
         val White = Color(0xFFFFFFFF)
         val White2 = Color(0xFFd5ccff)
     }
 
     object Themes {
         val DARK_STUDIO = StudioTheme(
-            primary = DarkPalette.Purple4,
+            primary = DarkPalette.Purple5,
             secondary = DarkPalette.Green,
-            tertiary = DarkPalette.Pink1,
-            backgroundDark = DarkPalette.Purple0,
-            backgroundMedium = DarkPalette.Purple1,
-            backgroundLight = DarkPalette.Purple2,
-            surface = DarkPalette.Purple3,
+            tertiary = DarkPalette.Pink,
+            backgroundDark = DarkPalette.Purple1,
+            backgroundMedium = DarkPalette.Purple2,
+            backgroundLight = DarkPalette.Purple3,
+            surface = DarkPalette.Purple4,
             border = DarkPalette.Purple6,
-            scrollbar = DarkPalette.Purple8,
-            icon = DarkPalette.Purple8,
-            warningStroke = DarkPalette.Orange3,
-            warningBackground = DarkPalette.Orange1,
+            scrollbar = DarkPalette.Purple6,
+            icon = DarkPalette.White,
+            warningStroke = DarkPalette.Yellow,
+            warningBackground = DarkPalette.Orange,
             errorStroke = DarkPalette.Red2,
             errorBackground = DarkPalette.Red1,
             onPrimary = DarkPalette.White2,
-            onSecondary = DarkPalette.Purple0,
+            onSecondary = DarkPalette.Purple1,
             onBackground = DarkPalette.White2,
             onSurface = DarkPalette.White2,
             onError = DarkPalette.White,
@@ -119,15 +112,15 @@ object Color {
             isLight = false
         )
         val DARK_GRAPH = GraphTheme(
-            background = DarkPalette.Purple0,
+            background = DarkPalette.Purple1,
             vertex = GraphTheme.Vertex(
-                thingType = DarkPalette.Pink1,
-                entityType = DarkPalette.Pink1,
-                relationType = DarkPalette.Orange2,
+                thingType = DarkPalette.Pink,
+                entityType = DarkPalette.Pink,
+                relationType = DarkPalette.Yellow,
                 attributeType = DarkPalette.Blue1,
-                entity = DarkPalette.Pink3,
-                relation = DarkPalette.Orange3,
-                attribute = DarkPalette.Blue2,
+                entity = DarkPalette.Pink,
+                relation = DarkPalette.Yellow,
+                attribute = DarkPalette.Blue1,
             ),
             vertexLabel = DarkPalette.Black,
             edge = DarkPalette.Blue1,
