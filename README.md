@@ -87,9 +87,8 @@ or [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
       multiple Bazel versions transparently. Bazelisk runs the appropriate Bazel version for any `bazel` command as
       specified in [`.bazelversion`](https://github.com/vaticle/typedb/blob/master/.bazelversion) file. In order to
       install it, follow the platform-specific guide:
-        - MacOS: `brew install bazelbuild/tap/bazelisk`
-        -
-      Linux: `wget https://github.com/bazelbuild/bazelisk/releases/download/v1.4.0/bazelisk-linux-amd64 -O /usr/local/bin/bazel`
+        - MacOS: `brew install bazelisk`
+        - Linux: `wget https://github.com/bazelbuild/bazelisk/releases/download/v1.4.0/bazelisk-linux-amd64 -O /usr/local/bin/bazel`
 
 2. Depending on your Operating System, you can compile and run TypeDB Studio with either one of the following commands.
    ```sh
