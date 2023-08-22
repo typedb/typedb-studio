@@ -98,9 +98,10 @@
 "DATE_": constant
 "DATETIME_": constant
 
-"VAR_": variable
-"VAR_NAMED_": variable
-"VAR_ANONYMOUS_": variable.parameter
+"VAR_CONCEPT_": variable
+"VAR_CONCEPT_ANONYMOUS_": variable.parameter
+"VAR_CONCEPT_NAMED_": variable
+"VAR_VALUE_": variable
 "IID_": variable.language
 
 "LABEL_": entity
