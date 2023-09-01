@@ -53,6 +53,9 @@
 "WHEN": keyword.control
 "THEN": keyword.control
 
+"ANNOTATION_KEY": variable.annotation
+"ANNOTATION_UNIQUE": variable.annotation
+
 "IID": keyword.control
 "ISA_": keyword.control
 "ISA": keyword.control

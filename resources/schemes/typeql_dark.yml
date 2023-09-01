@@ -83,6 +83,10 @@ rules:
       language:
         # 0x966e80018000000000000000
         foreground: red
+      annotation:
+        # @key, @unique,
+        foreground: orange
+        styles: [ italic ]
   entity:
     # my-entity, my-relation, my-attribute
     foreground: white
