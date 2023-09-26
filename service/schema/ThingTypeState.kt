@@ -21,11 +21,13 @@ package com.vaticle.typedb.studio.service.schema
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.client.api.concept.type.AttributeType
-import com.vaticle.typedb.client.api.concept.type.RoleType
-import com.vaticle.typedb.client.api.concept.type.ThingType
-import com.vaticle.typedb.client.common.exception.TypeDBClientException
+import com.vaticle.typedb.driver.api.TypeDBTransaction
+import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
+import com.vaticle.typedb.driver.api.concept.type.AttributeType
+import com.vaticle.typedb.driver.api.concept.type.RoleType
+import com.vaticle.typedb.driver.api.concept.type.ThingType
+import com.vaticle.typedb.driver.api.concept.type.ThingType.Annotation.key
+import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
@@ -137,8 +139,9 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         callbacks.onSchemaWrite.forEach { it.invoke() }
     }
 
+    protected abstract fun fetchSameEncoding(tx: TypeDBTransaction, label: String): TT?
     override fun updateConceptType(label: String) = schemaSrv.mayRunReadTx { tx ->
-        val newConceptType = asSameEncoding(tx.concepts().getThingType(label)!!)
+        val newConceptType = fetchSameEncoding(tx, label)!!
         isAbstract = newConceptType.isAbstract
         name = newConceptType.label.name()
         conceptType = newConceptType // we need to update the mutable state last
@@ -166,7 +169,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         .sortedBy { it.scopedName }
 
     fun exportSyntaxAsync(onSuccess: (String) -> Unit) = coroutines.launchAndHandle(notifications, LOGGER) {
-        schemaSrv.mayRunReadTx { tx -> conceptType.asRemote(tx).syntax?.let { onSuccess(it) } }
+        schemaSrv.mayRunReadTx { tx -> conceptType.getSyntax(tx)?.let { onSuccess(it) } }
     }
 
     fun loadConstraintsAsync() = coroutines.launchAndHandle(notifications, LOGGER) {
@@ -179,7 +182,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                 loadSupertypes()
                 loadOtherConstraints()
                 loadSubtypesRecursively()
-            } catch (e: TypeDBClientException) {
+            } catch (e: TypeDBDriverException) {
                 notifications.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN)
             }
         }
@@ -206,7 +209,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     }
 
     private fun loadHasInstancesExplicit() = schemaSrv.mayRunReadTx { tx ->
-        hasInstancesExplicit = conceptType.asRemote(tx).instancesExplicit.findAny().isPresent
+        hasInstancesExplicit = conceptType.getInstances(tx, EXPLICIT).findAny().isPresent
     }
 
     private fun loadOwnedAttributeTypes() {
@@ -214,12 +217,12 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         val properties = mutableListOf<AttributeTypeState.OwnedAttTypeProperties>()
 
         fun load(
-            tx: TypeDBTransaction, typeTx: ThingType.Remote,
-            attTypeConcept: AttributeType, isKey: Boolean, isInherited: Boolean
+                tx: TypeDBTransaction,
+                attTypeConcept: AttributeType, isKey: Boolean, isInherited: Boolean
         ) {
             loaded.add(attTypeConcept)
             schemaSrv.typeStateOf(attTypeConcept)?.let { attType ->
-                val overriddenType = typeTx.getOwnsOverridden(attTypeConcept)?.let { schemaSrv.typeStateOf(it) }
+                val overriddenType = conceptType.getOwnsOverridden(tx, attTypeConcept)?.let { schemaSrv.typeStateOf(it) }
                 val inheritedType = when {
                     isInherited -> attType
                     else -> overriddenType
@@ -227,7 +230,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                 val extendedType = inheritedType?.ownerTypesExplicit?.toSet()
                     ?.intersect(supertypes.toSet())?.firstOrNull()
                 val canBeUndefined = !tx.query().match(
-                    TypeQL.match(cVar("x").isa(typeTx.label.name()).has(attType.name, cVar("y")))
+                    TypeQL.match(cVar("x").isa(conceptType.label.name()).has(attType.name, cVar("y")))
                 ).findFirst().isPresent
                 properties.add(
                     AttributeTypeState.OwnedAttTypeProperties(
@@ -238,20 +241,19 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         }
 
         schemaSrv.mayRunReadTx { tx ->
-            val typeTx = conceptType.asRemote(tx)
             if (!loadedOwnedAttTypePropsAtomic.get()) {
                 loadedOwnedAttTypePropsAtomic.set(true)
-                typeTx.getOwnsExplicit(setOf(KEY)).forEach {
-                    load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = false)
+                conceptType.getOwns(tx, setOf(key()), EXPLICIT).forEach {
+                    load(tx = tx, attTypeConcept = it, isKey = true, isInherited = false)
                 }
-                typeTx.ownsExplicit.filter { !loaded.contains(it) }.forEach {
-                    load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = false)
+                conceptType.getOwns(tx, EXPLICIT).filter { !loaded.contains(it) }.forEach {
+                    load(tx = tx, attTypeConcept = it, isKey = false, isInherited = false)
                 }
-                typeTx.getOwns(setOf(KEY)).filter { !loaded.contains(it) }.forEach {
-                    load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = true, isInherited = true)
+                conceptType.getOwns(tx, setOf(key())).filter { !loaded.contains(it) }.forEach {
+                    load(tx = tx, attTypeConcept = it, isKey = true, isInherited = true)
                 }
-                typeTx.owns.filter { !loaded.contains(it) }.forEach {
-                    load(tx = tx, typeTx = typeTx, attTypeConcept = it, isKey = false, isInherited = true)
+                conceptType.getOwns(tx).filter { !loaded.contains(it) }.forEach {
+                    load(tx = tx, attTypeConcept = it, isKey = false, isInherited = true)
                 }
                 ownedAttTypeProperties = properties
             }
@@ -262,11 +264,11 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         val loaded = mutableSetOf<RoleType>()
         val properties = mutableListOf<RoleTypeState.PlayedRoleTypeProperties>()
 
-        fun load(tx: TypeDBTransaction, typeTx: ThingType.Remote, roleTypeConcept: RoleType, isInherited: Boolean) {
+        fun load(tx: TypeDBTransaction, roleTypeConcept: RoleType, isInherited: Boolean) {
             loaded.add(roleTypeConcept)
             schemaSrv.typeStateOf(roleTypeConcept)?.let { roleType ->
                 roleType.loadConstraints()
-                val overriddenType = typeTx.getPlaysOverridden(roleTypeConcept)?.let { schemaSrv.typeStateOf(it) }
+                val overriddenType = conceptType.getPlaysOverridden(tx, roleTypeConcept)?.let { schemaSrv.typeStateOf(it) }
                 val inheritedType = when {
                     isInherited -> roleType
                     else -> overriddenType
@@ -275,7 +277,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                     ?.intersect(supertypes.toSet())?.firstOrNull()
                 val canBeUndefined = !tx.query().match(
                     TypeQL.match(
-                        cVar("x").isa(typeTx.label.name()),
+                        cVar("x").isa(conceptType.label.name()),
                         rel(roleTypeConcept.label.name(), cVar("x"))
                     )
                 ).findFirst().isPresent
@@ -288,11 +290,10 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         }
 
         schemaSrv.mayRunReadTx { tx ->
-            val typeTx = conceptType.asRemote(tx)
             if (!loadedPlayedRoleTypePropsAtomic.get()) {
                 loadedPlayedRoleTypePropsAtomic.set(true)
-                typeTx.playsExplicit.forEach { load(tx, typeTx, it, false) }
-                typeTx.plays.filter { !loaded.contains(it) }.forEach { load(tx, typeTx, it, true) }
+                conceptType.getPlays(tx, EXPLICIT).forEach { load(tx, it, false) }
+                conceptType.getPlays(tx).filter { !loaded.contains(it) }.forEach { load(tx, it, true) }
                 playedRoleTypeProperties = properties
             }
         }
@@ -308,7 +309,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     protected fun tryCreateSubtype(
         label: String, dialogState: SchemaService.TypeDialogState<*>, creatorFn: (TypeDBTransaction) -> Unit
     ) {
-        if (schemaSrv.mayRunReadTx { tx -> tx.concepts()?.getThingType(label) } != null) notifications.userError(
+        if (schemaSrv.mayRunReadTx { tx -> fetchSameEncoding(tx, label) } != null) notifications.userError(
             LOGGER, Message.Schema.FAILED_TO_CREATE_TYPE_DUE_TO_DUPLICATE, encoding.label, label
         ) else schemaSrv.mayRunWriteTxAsync { tx ->
             try {
@@ -341,7 +342,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
     fun tryChangeAbstract(isAbstract: Boolean) = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
-            conceptType.asRemote(tx).let { if (isAbstract) it.setAbstract() else it.unsetAbstract() }
+            conceptType.let { if (isAbstract) it.setAbstract(tx) else it.unsetAbstract(tx) }
             schemaSrv.changeAbstractDialog.close()
             updateConceptType()
         } catch (e: Exception) {
@@ -352,11 +353,11 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     fun tryDefineOwnsAttributeType(
         attributeType: AttributeTypeState, overriddenType: AttributeTypeState?, isKey: Boolean, onSuccess: () -> Unit
     ) = schemaSrv.mayRunWriteTxAsync { tx ->
-        val annotationSet = if (isKey) setOf(KEY) else emptySet()
+        val annotationSet = if (isKey) setOf(key()) else emptySet()
         try {
             overriddenType?.let {
-                conceptType.asRemote(tx).setOwns(attributeType.conceptType, overriddenType.conceptType, annotationSet)
-            } ?: conceptType.asRemote(tx).setOwns(attributeType.conceptType, annotationSet)
+                conceptType.setOwns(tx, attributeType.conceptType, overriddenType.conceptType, annotationSet)
+            } ?: conceptType.setOwns(tx, attributeType.conceptType, annotationSet)
             loadOwnedAttributeTypes()
             onSuccess()
         } catch (e: Exception) {
@@ -369,7 +370,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
     fun tryUndefineOwnedAttributeType(attType: AttributeTypeState) = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
-            conceptType.asRemote(tx).unsetOwns(attType.conceptType)
+            conceptType.unsetOwns(tx, attType.conceptType)
             loadOwnedAttributeTypes()
         } catch (e: Exception) {
             notifications.userError(
@@ -387,8 +388,8 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     ) = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
             overriddenType?.let {
-                conceptType.asRemote(tx).setOwns(attType.conceptType, overriddenType.conceptType)
-            } ?: conceptType.asRemote(tx).setOwns(attType.conceptType)
+                conceptType.setOwns(tx, attType.conceptType, overriddenType.conceptType)
+            } ?: conceptType.setOwns(tx, attType.conceptType)
             loadOwnedAttributeTypes()
             schemaSrv.changeOverriddenOwnedAttributeTypeDialog.close()
         } catch (e: Exception) {
@@ -408,8 +409,8 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     ) = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
             overriddenType?.let {
-                conceptType.asRemote(tx).setPlays(roleType.conceptType, it.conceptType)
-            } ?: conceptType.asRemote(tx).setPlays(roleType.conceptType)
+                conceptType.setPlays(tx, roleType.conceptType, it.conceptType)
+            } ?: conceptType.setPlays(tx, roleType.conceptType)
             loadPlayedRoleTypes()
             onSuccess()
         } catch (e: Exception) {
@@ -421,7 +422,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
     fun tryUndefinePlayedRoleType(roleType: RoleTypeState) = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
-            conceptType.asRemote(tx).unsetPlays(roleType.conceptType)
+            conceptType.unsetPlays(tx, roleType.conceptType)
             loadPlayedRoleTypes()
         } catch (e: Exception) {
             notifications.userError(
@@ -440,8 +441,8 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     ) = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
             overriddenType?.let {
-                conceptType.asRemote(tx).setPlays(roleType.conceptType, overriddenType.conceptType)
-            } ?: conceptType.asRemote(tx).setPlays(roleType.conceptType)
+                conceptType.setPlays(tx, roleType.conceptType, overriddenType.conceptType)
+            } ?: conceptType.setPlays(tx, roleType.conceptType)
             loadPlayedRoleTypes()
             schemaSrv.changeOverriddenPlayedRoleTypeDialog.close()
         } catch (e: Exception) {
@@ -464,7 +465,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
 
     override fun tryDelete() = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
-            conceptType.asRemote(tx).delete()
+            conceptType.delete(tx)
             purge()
             schemaSrv.execOnTypesUpdated()
         } catch (e: Exception) {

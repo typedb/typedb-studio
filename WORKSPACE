@@ -27,21 +27,20 @@ vaticle_dependencies()
 load("@vaticle_dependencies//builder/bazel:deps.bzl", "bazel_toolchain")
 bazel_toolchain()
 
+## Load Python
+#load("@vaticle_dependencies//builder/python:deps.bzl", python_deps = "deps")
+#python_deps()
+#load("@rules_python//python:pip.bzl", "pip_install")
+#pip_install(
+#    name = "vaticle_dependencies_ci_pip",
+#    requirements = "@vaticle_dependencies//tool:requirements.txt",
+#)
+
 # Load //builder/java
 load("@vaticle_dependencies//builder/java:deps.bzl", java_deps = "deps")
 java_deps()
-load("@vaticle_dependencies//library/maven:rules.bzl", "maven")
 
-# Load Python
-load("@vaticle_dependencies//builder/python:deps.bzl", python_deps = "deps")
-python_deps()
-load("@rules_python//python:pip.bzl", "pip_install")
-pip_install(
-    name = "vaticle_dependencies_ci_pip",
-    requirements = "@vaticle_dependencies//tool:requirements.txt",
-)
-
-# Load Kotlin
+# Load //builder/kotlin
 load("@vaticle_dependencies//builder/kotlin:deps.bzl", kotlin_deps = "deps")
 kotlin_deps()
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version")
@@ -53,9 +52,8 @@ kotlin_repositories(
 )
 load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
 kt_register_toolchains()
-register_toolchains("//:kotlin_toolchain_strict_deps")
 
-# Load //builder/antlr (required by typedb_client_java > typeql)
+# Load //builder/antlr (required by typedb_driver_java > typeql)
 load("@vaticle_dependencies//builder/antlr:deps.bzl", antlr_deps = "deps", "antlr_version")
 antlr_deps()
 
@@ -63,12 +61,40 @@ load("@rules_antlr//antlr:lang.bzl", "JAVA")
 load("@rules_antlr//antlr:repositories.bzl", "rules_antlr_dependencies")
 rules_antlr_dependencies(antlr_version, JAVA)
 
-# Load //builder/grpc (required by typedb_client_java)
+# Load //builder/grpc (required by typedb_driver_java)
 load("@vaticle_dependencies//builder/grpc:deps.bzl", grpc_deps = "deps")
 grpc_deps()
-load("@com_github_grpc_grpc//bazel:grpc_deps.bzl",
-com_github_grpc_grpc_deps = "grpc_deps")
+
+load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", com_github_grpc_grpc_deps = "grpc_deps")
 com_github_grpc_grpc_deps()
+
+# Load //builder/rust (required by typedb_driver_java)
+load("@vaticle_dependencies//builder/rust:deps.bzl", rust_deps = "deps")
+rust_deps()
+
+load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_register_toolchains", "rust_analyzer_toolchain_repository")
+load("@rules_rust//tools/rust_analyzer:deps.bzl", "rust_analyzer_dependencies")
+rules_rust_dependencies()
+load("@rules_rust//rust:defs.bzl", "rust_common")
+rust_register_toolchains(
+    edition = "2021",
+    extra_target_triples = [
+        "aarch64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+    ],
+    rust_analyzer_version = rust_common.default_version,
+)
+
+load("@vaticle_dependencies//library/crates:crates.bzl", "fetch_crates")
+fetch_crates()
+load("@crates//:defs.bzl", "crate_repositories")
+crate_repositories()
+
+load("@vaticle_dependencies//tool/swig:deps.bzl", swig_deps = "deps")
+swig_deps()
 
 # Load Compose
 load("@vaticle_dependencies//builder/compose:deps.bzl", compose_deps = "deps")
@@ -120,37 +146,35 @@ vaticle_typedb_artifact()
 # Load repositories
 load(
     "//dependencies/vaticle:repositories.bzl",
-    "vaticle_force_graph", "vaticle_typedb_common", "vaticle_typedb_client_java"
+    "vaticle_force_graph", "vaticle_typedb_common", "vaticle_typedb_driver"
 )
 vaticle_force_graph()
 vaticle_typedb_common()
-vaticle_typedb_client_java()
+vaticle_typedb_driver()
 
 load(
-    "@vaticle_typedb_client_java//dependencies/vaticle:repositories.bzl",
-    "vaticle_factory_tracing", "vaticle_typedb_protocol", "vaticle_typeql"
+    "@vaticle_typedb_driver//dependencies/vaticle:repositories.bzl",
+    "vaticle_typedb_protocol", "vaticle_typeql"
 )
 vaticle_typeql()
-vaticle_factory_tracing()
 vaticle_typedb_protocol()
 
 # Load Maven
 load("@vaticle_typeql//dependencies/maven:artifacts.bzl", vaticle_typeql_artifacts = "artifacts")
-load("@vaticle_typedb_client_java//dependencies/maven:artifacts.bzl", vaticle_typedb_client_java_artifacts = "artifacts")
+load("@vaticle_typedb_driver//dependencies/maven:artifacts.bzl", vaticle_typedb_driver_artifacts = "artifacts")
 load("@vaticle_typedb_common//dependencies/maven:artifacts.bzl", vaticle_typedb_common_artifacts = "artifacts")
-load("@vaticle_factory_tracing//dependencies/maven:artifacts.bzl", vaticle_factory_tracing_artifacts = "artifacts")
 load("@vaticle_force_graph//dependencies/maven:artifacts.bzl", vaticle_force_graph_artifacts = "artifacts")
 
 
 ############################
 # Load @maven dependencies #
 ############################
+load("@vaticle_dependencies//library/maven:rules.bzl", "maven")
 maven(
     vaticle_dependencies_tool_maven_artifacts +
     vaticle_typeql_artifacts +
-    vaticle_typedb_client_java_artifacts +
+    vaticle_typedb_driver_artifacts +
     vaticle_typedb_common_artifacts +
-    vaticle_factory_tracing_artifacts +
     vaticle_force_graph_artifacts +
     vaticle_typedb_studio_artifacts,
     fail_on_missing_checksum = False,

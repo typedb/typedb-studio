@@ -223,12 +223,12 @@ internal class EventHandler constructor(
     }
 
     private fun mayRunFile() {
-        if (!Service.client.isReadyToRunQuery) return
+        if (!Service.driver.isReadyToRunQuery) return
         processor.file?.mayOpenAndRun()
     }
 
     private fun mayRunSelection() {
-        if (!Service.client.isReadyToRunQuery) return
+        if (!Service.driver.isReadyToRunQuery) return
         processor.file?.mayRunSnippet(target.selectedText().text)
     }
 
@@ -308,7 +308,7 @@ internal class EventHandler constructor(
         icon = Icon.RUN,
         iconColor = { Theme.studio.secondary },
         info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
-        enabled = processor.file?.isRunnable == true && Service.client.isReadyToRunQuery
+        enabled = processor.file?.isRunnable == true && Service.driver.isReadyToRunQuery
     ) { mayRunFile() }
 
     private fun runSelectionMenuItem() = ContextMenu.Item(
@@ -316,7 +316,7 @@ internal class EventHandler constructor(
         icon = Icon.RUN,
         iconColor = { Theme.studio.secondary },
         info = "${KeyMapper.CURRENT.modKey} + ${Label.ENTER}",
-        enabled = target.selection != null && Service.client.isReadyToRunQuery
+        enabled = target.selection != null && Service.driver.isReadyToRunQuery
     ) { mayRunSelection() }
 
     private fun increaseTextSizeMenuItem() = ContextMenu.Item(

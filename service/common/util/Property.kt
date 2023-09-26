@@ -45,13 +45,13 @@ object Property {
 
     enum class Server(val displayName: String) {
         TYPEDB("TypeDB"),
-        TYPEDB_CLUSTER("TypeDB Cluster");
+        TYPEDB_ENTERPRISE("TypeDB Enterprise");
 
         companion object {
             fun of(name: String): Server? {
                 return when (name) {
                     TYPEDB.displayName -> TYPEDB
-                    TYPEDB_CLUSTER.displayName -> TYPEDB_CLUSTER
+                    TYPEDB_ENTERPRISE.displayName -> TYPEDB_ENTERPRISE
                     else -> null
                 }
             }
@@ -87,7 +87,7 @@ object Property {
     fun serverOf(displayName: String): Server {
         return when (displayName) {
             Server.TYPEDB.displayName -> Server.TYPEDB
-            Server.TYPEDB_CLUSTER.displayName -> Server.TYPEDB_CLUSTER
+            Server.TYPEDB_ENTERPRISE.displayName -> Server.TYPEDB_ENTERPRISE
             else -> throw IllegalStateException("Unrecognised TypeDB server type")
         }
     }

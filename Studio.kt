@@ -290,7 +290,7 @@ object Studio {
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run(): Unit = runBlocking {
                 LOGGER.info { Label.CLOSING_TYPEDB_STUDIO }
-                Service.client.close()
+                Service.driver.close()
             }
         })
     }

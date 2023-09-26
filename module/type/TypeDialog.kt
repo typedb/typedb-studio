@@ -30,7 +30,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.client.api.concept.Concept.ValueType
+import com.vaticle.typedb.driver.api.concept.value.Value
 import com.vaticle.typedb.studio.framework.common.Util.hyphenate
 import com.vaticle.typedb.studio.framework.material.Dialog
 import com.vaticle.typedb.studio.framework.material.Form
@@ -56,16 +56,16 @@ object TypeDialog {
 
     private class CreateTypeFormState<T : ThingTypeState<*, T>> constructor(
         supertypeState: T,
-        valueType: ValueType? = null,
+        valueType: Value.Type? = null,
         val isValid: ((CreateTypeFormState<T>) -> Boolean)? = null,
         val onCancel: () -> Unit,
-        val onSubmit: (supertypeState: T, label: String, isAbstract: Boolean, valueType: ValueType?) -> Unit,
+        val onSubmit: (supertypeState: T, label: String, isAbstract: Boolean, valueType: Value.Type?) -> Unit,
     ) : Form.State() {
 
         var supertypeState: T by mutableStateOf(supertypeState)
         var label: String by mutableStateOf(""); internal set
         var isAbstract: Boolean by mutableStateOf(false); internal set
-        var valueType: ValueType? by mutableStateOf(valueType); internal set
+        var valueType: Value.Type? by mutableStateOf(valueType); internal set
 
         override fun cancel() = onCancel()
         override fun isValid(): Boolean = label.isNotEmpty() && isValid?.invoke(this) ?: true
@@ -123,7 +123,7 @@ object TypeDialog {
         rootTypeState: T,
         title: String,
         isValidFn: ((formState: CreateTypeFormState<T>) -> Boolean)? = null,
-        creatorFn: (supertypeState: T, label: String, isAbstract: Boolean, valueType: ValueType?) -> Unit
+        creatorFn: (supertypeState: T, label: String, isAbstract: Boolean, valueType: Value.Type?) -> Unit
     ) {
         val supertypeState = dialogState.typeState!!
         val formState = remember {
@@ -369,7 +369,7 @@ object TypeDialog {
         formState: CreateTypeFormState<T>
     ) = Field(label = Label.VALUE_TYPE) {
         Form.Dropdown(
-            values = remember { ValueType.values().toList() - ValueType.OBJECT },
+            values = remember { Value.Type.values().toList() - Value.Type.OBJECT },
             selected = formState.valueType,
             displayFn = { AnnotatedString(it.name.lowercase()) },
             onSelection = { formState.valueType = it!! },

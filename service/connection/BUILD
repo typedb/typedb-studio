@@ -33,12 +33,11 @@ kt_jvm_library(
         "//service/common:common",
 
         # External Vaticle Dependencies
-        "@vaticle_typedb_client_java//:client-java",
-        "@vaticle_typedb_client_java//api:api",
-        "@vaticle_typedb_client_java//common:common",
-        "@vaticle_typedb_client_java//concept:concept", #TODO: remove this after debugging
-        "@vaticle_typedb_client_java//connection:connection", #TODO: remove this after debugging
-        "@vaticle_typedb_client_java//stream:stream", #TODO: remove this after debugging
+        "@vaticle_typedb_driver//java:driver-java",
+        "@vaticle_typedb_driver//java/api:api",
+        "@vaticle_typedb_driver//java/common:common",
+        "@vaticle_typedb_driver//java/concept:concept", #TODO: remove this after debugging
+        "@vaticle_typedb_driver//java/connection:connection", #TODO: remove this after debugging
         "@vaticle_typedb_common//:common",
         "@vaticle_typeql//java/query:query",
         "@vaticle_typeql//java/pattern:pattern",

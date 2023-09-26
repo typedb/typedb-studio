@@ -21,7 +21,8 @@ package com.vaticle.typedb.studio.service.schema
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
+import com.vaticle.typedb.driver.api.concept.type.Type
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
@@ -80,8 +81,10 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(
     abstract override fun toString(): String
 
     fun loadSupertype(): Unit = schemaSrv.mayRunReadTx { tx ->
-        supertype = conceptType.asRemote(tx).supertype?.let {
-            if (isSameEncoding(it)) typeStateOf(asSameEncoding(it)) else null
+        if (!conceptType.isRoot) {
+            supertype = conceptType.getSupertype(tx)?.let {
+                if (isSameEncoding(it)) typeStateOf(asSameEncoding(it)) else null
+            }
         }
     } ?: Unit
 
@@ -96,7 +99,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(
 
     protected fun loadHasSubtypes() = schemaSrv.mayRunReadTx { tx ->
         // TODO: Implement API to retrieve .hasSubtypes() on TypeDB Type API
-        hasSubtypes = conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent
+        hasSubtypes = conceptType.getSubtypes(tx, EXPLICIT).findAny().isPresent
     }
 
     fun loadSubtypesRecursivelyAsync() = coroutines.launchAndHandle(notifications, LOGGER) {
@@ -132,7 +135,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(
 
     fun tryRename(label: String) = schemaSrv.mayRunWriteTxAsync {
         try {
-            conceptType.asRemote(it).setLabel(label)
+            conceptType.setLabel(it, label)
             schemaSrv.remove(this)
             updateConceptType(label)
             schemaSrv.register(this)

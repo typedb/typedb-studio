@@ -53,10 +53,10 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.client.api.concept.type.AttributeType
-import com.vaticle.typedb.client.api.concept.type.EntityType
-import com.vaticle.typedb.client.api.concept.type.RelationType
-import com.vaticle.typedb.client.api.concept.type.ThingType
+import com.vaticle.typedb.driver.api.concept.type.AttributeType
+import com.vaticle.typedb.driver.api.concept.type.EntityType
+import com.vaticle.typedb.driver.api.concept.type.RelationType
+import com.vaticle.typedb.driver.api.concept.type.ThingType
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.Util.hyphenate
 import com.vaticle.typedb.studio.framework.common.Util.toDP
@@ -97,7 +97,7 @@ sealed class TypeEditor<T : ThingType, TS : ThingTypeState<T, TS>> constructor(
     internal val canReadSchema get() = !Service.schema.hasRunningCommand
     internal val canWriteSchema
         get() = !typeState.isRoot && Service.schema.isWritable &&
-                !Service.schema.hasRunningCommand && !Service.client.hasRunningCommand
+                !Service.schema.hasRunningCommand && !Service.driver.hasRunningCommand
 
     private val focusReq = FocusRequester()
     private val horScroller = ScrollState(0)

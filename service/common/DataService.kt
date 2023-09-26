@@ -72,7 +72,7 @@ class DataService {
 
         private val CONNECTION_SERVER = "connection.server"
         private val CONNECTION_CORE_ADDRESS = "connection.core_address"
-        private val CONNECTION_CLUSTER_ADDRESSES = "connection.cluster_addresses"
+        private val CONNECTION_ENTERPRISE_ADDRESSES = "connection.enterprise_addresses"
         private val CONNECTION_USERNAME = "connection.username"
         private val CONNECTION_TLS_ENABLED = "connection.tls_enabled"
         private val CONNECTION_CA_CERTIFICATE = "connection.ca_certificate"
@@ -83,10 +83,10 @@ class DataService {
         var coreAddress: String?
             get() = properties?.getProperty(CONNECTION_CORE_ADDRESS)
             set(value) = value?.let { setProperty(CONNECTION_CORE_ADDRESS, it) } ?: Unit
-        var clusterAddresses: MutableList<String>?
-            get() = properties?.getProperty(CONNECTION_CLUSTER_ADDRESSES)
+        var enterpriseAddresses: MutableList<String>?
+            get() = properties?.getProperty(CONNECTION_ENTERPRISE_ADDRESSES)
                 ?.split(",")?.filter { it.isNotBlank() }?.toMutableList()
-            set(value) = value?.let { setProperty(CONNECTION_CLUSTER_ADDRESSES, it.joinToString(",")) } ?: Unit
+            set(value) = value?.let { setProperty(CONNECTION_ENTERPRISE_ADDRESSES, it.joinToString(",")) } ?: Unit
         var username: String?
             get() = properties?.getProperty(CONNECTION_USERNAME)
             set(value) = value?.let { setProperty(CONNECTION_USERNAME, it) } ?: Unit

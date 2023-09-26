@@ -21,8 +21,8 @@ package com.vaticle.typedb.studio.service.connection
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.client.api.TypeDBOptions
-import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.driver.api.TypeDBOptions
+import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.PreferenceService
 import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
@@ -174,6 +174,6 @@ class TransactionState constructor(
     }
 
     internal fun defaultTypeDBOptions(): TypeDBOptions {
-        return if (session.client.isCluster) TypeDBOptions.cluster() else TypeDBOptions.core()
+        return TypeDBOptions()
     }
 }

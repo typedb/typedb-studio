@@ -21,9 +21,14 @@ package com.vaticle.typedb.studio.service.schema
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.client.api.TypeDBSession
-import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.client.api.concept.type.*
+import com.vaticle.typedb.driver.api.TypeDBSession
+import com.vaticle.typedb.driver.api.TypeDBTransaction
+import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
+import com.vaticle.typedb.driver.api.concept.type.AttributeType
+import com.vaticle.typedb.driver.api.concept.type.EntityType
+import com.vaticle.typedb.driver.api.concept.type.RelationType
+import com.vaticle.typedb.driver.api.concept.type.RoleType
+import com.vaticle.typedb.driver.api.concept.type.ThingType
 import com.vaticle.typedb.studio.service.common.ConfirmationService
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
@@ -169,7 +174,7 @@ class SchemaService(
 
     override fun reloadEntries() = mayRunReadTx { tx ->
         // TODO: Implement API to retrieve .hasSubtypes() on TypeDB Type API
-        entries.forEach { it.hasSubtypes = it.conceptType.asRemote(tx).subtypesExplicit.findAny().isPresent }
+        entries.forEach { it.hasSubtypes = it.conceptType.getSubtypes(tx, EXPLICIT).findAny().isPresent }
     } ?: Unit
 
     override fun compareTo(other: Navigable<ThingTypeState<*, *>>): Int = if (other is SchemaService) 0 else -1
@@ -182,9 +187,8 @@ class SchemaService(
     }
 
     internal fun typeStateOf(entityType: EntityType): EntityTypeState? = mayRunReadTx { tx ->
-        val remote = entityType.asRemote(tx)
         entityTypes[entityType] ?: let {
-            val supertype = remote.supertype?.let { st ->
+            val supertype = entityType.getSupertype(tx)?.let { st ->
                 if (st.isEntityType) entityTypes[st] ?: typeStateOf(st.asEntityType()) else null
             }
             entityTypes.computeIfAbsent(entityType) {
@@ -194,9 +198,8 @@ class SchemaService(
     }
 
     internal fun typeStateOf(attributeType: AttributeType): AttributeTypeState? = mayRunReadTx { tx ->
-        val remote = attributeType.asRemote(tx)
         attributeTypes[attributeType] ?: let {
-            val supertype = remote.supertype?.let { st ->
+            val supertype = attributeType.getSupertype(tx)?.let { st ->
                 if (st.isAttributeType) attributeTypes[st] ?: typeStateOf(st.asAttributeType()) else null
             }
             attributeTypes.computeIfAbsent(attributeType) {
@@ -206,9 +209,8 @@ class SchemaService(
     }
 
     internal fun typeStateOf(relationType: RelationType): RelationTypeState? = mayRunReadTx { tx ->
-        val remote = relationType.asRemote(tx)
         relationTypes[relationType] ?: let {
-            val supertype = remote.supertype?.let { st ->
+            val supertype = relationType.getSupertype(tx)?.let { st ->
                 if (st.isRelationType) relationTypes[st] ?: typeStateOf(st.asRelationType()) else null
             }
             relationTypes.computeIfAbsent(relationType) {
@@ -218,12 +220,11 @@ class SchemaService(
     }
 
     internal fun typeStateOf(roleType: RoleType): RoleTypeState? = mayRunReadTx { tx ->
-        val remote = roleType.asRemote(tx)
         roleTypes[roleType] ?: let {
-            val supertype = remote.supertype?.let { st ->
+            val supertype = roleType.getSupertype(tx)?.let { st ->
                 if (st.isRoleType) roleTypes[st] ?: typeStateOf(st.asRoleType()) else null
             }
-            typeStateOf(remote.relationType)?.let { relationType ->
+            typeStateOf(roleType.getRelationType(tx))?.let { relationType ->
                 roleTypes.computeIfAbsent(roleType) {
                     RoleTypeState(relationType, it, supertype, this)
                 }
@@ -238,23 +239,37 @@ class SchemaService(
         if (rootRelationType == null) rootRelationType = RelationTypeState(
             conceptType = tx.concepts().rootRelationType, supertype = null, schemaSrv = this
         ).also { relationTypes[tx.concepts().rootRelationType] = it }
-        val conceptRoleType = tx.concepts().rootRelationType.asRemote(tx).relates.findFirst().get()
+        val conceptRoleType = tx.concepts().rootRelationType.getRelates(tx).findFirst().get()
         if (rootRoleType == null) rootRoleType = RoleTypeState(
             relationType = rootRelationType!!, conceptType = conceptRoleType, supertype = null, schemaSrv = this
         ).also { roleTypes[conceptRoleType] = it }
         if (rootAttributeType == null) rootAttributeType = AttributeTypeState(
             conceptType = tx.concepts().rootAttributeType, supertype = null, schemaSrv = this
         ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
-        (entityTypes.values + attributeTypes.values + relationTypes.values).forEach {
-            if (tx.concepts().getThingType(it.name) == null) it.purge()
+        entityTypes.values.forEach {
+            if (tx.concepts().getEntityType(it.name) == null) it.purge()
+            else {
+                it.updateConceptType()
+                if (it.isOpen) it.loadConstraintsAsync()
+            }
+        }
+        relationTypes.values.forEach {
+            if (tx.concepts().getRelationType(it.name) == null) it.purge()
+            else {
+                it.updateConceptType()
+                if (it.isOpen) it.loadConstraintsAsync()
+            }
+        }
+        attributeTypes.values.forEach {
+            if (tx.concepts().getAttributeType(it.name) == null) it.purge()
             else {
                 it.updateConceptType()
                 if (it.isOpen) it.loadConstraintsAsync()
             }
         }
         roleTypes.values.forEach {
-            val exists = tx.concepts().getThingType(it.relationType.name)
-                ?.asRelationType()?.asRemote(tx)?.getRelates(it.name) != null
+            val exists = tx.concepts().getRelationType(it.relationType.name)
+                ?.asRelationType()?.getRelates(tx, it.name) != null
             if (!exists) it.purge() else it.updateConceptType()
         }
         isOpenAtomic.set(true)
@@ -285,7 +300,7 @@ class SchemaService(
             if (readTx.get() != null) return readTx.get()
             readTx.set(session.transaction()?.also {
                 resetLoadedConnectedTypes()
-                it.onClose { closeReadTx() }
+                it.onClose { readTx.set(null) }
                 scheduleCloseReadTxAsync()
             })
             return readTx.get()

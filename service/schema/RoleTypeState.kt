@@ -21,12 +21,14 @@ package com.vaticle.typedb.studio.service.schema
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.client.api.concept.type.RoleType
-import com.vaticle.typedb.client.api.concept.type.ThingType
-import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.driver.api.TypeDBTransaction
+import com.vaticle.typedb.driver.api.concept.Concept
+import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
+import com.vaticle.typedb.driver.api.concept.type.RoleType
+import com.vaticle.typedb.driver.api.concept.type.ThingType
+import com.vaticle.typedb.driver.api.concept.type.Type
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
-import mu.KotlinLogging
 
 class RoleTypeState constructor(
     val relationType: RelationTypeState,
@@ -78,14 +80,14 @@ class RoleTypeState constructor(
     override fun typeStateOf(type: RoleType) = schemaSrv.typeStateOf(type)
 
     override fun updateConceptType(label: String) = schemaSrv.mayRunReadTx { tx ->
-        val newConceptType = relationType.conceptType.asRemote(tx).getRelates(label)!!
+        val newConceptType = relationType.conceptType.getRelates(tx, label)!!
         isAbstract = newConceptType.isAbstract
         name = newConceptType.label.name()
         conceptType = newConceptType // we need to update the mutable state last
     } ?: Unit
 
     override fun requestSubtypesExplicit() = schemaSrv.mayRunReadTx { tx ->
-        conceptType.asRemote(tx).subtypesExplicit.toList()
+        conceptType.getSubtypes(tx, EXPLICIT).toList()
     }
 
     override fun loadConstraints() {
@@ -97,7 +99,7 @@ class RoleTypeState constructor(
     }
 
     private fun loadHasPlayerInstances() = schemaSrv.mayRunReadTx { tx ->
-        hasPlayerInstancesExplicit = conceptType.asRemote(tx).playerInstancesExplicit.findAny().isPresent
+        hasPlayerInstancesExplicit = conceptType.getPlayerInstances(tx, EXPLICIT).findAny().isPresent
     }
 
     fun loadPlayerTypes() {
@@ -112,11 +114,10 @@ class RoleTypeState constructor(
         }
 
         schemaSrv.mayRunReadTx { tx ->
-            val roleTypeTx = conceptType.asRemote(tx)
             if (!loadedPlayerTypePropsAtomic.get()) {
                 loadedPlayerTypePropsAtomic.set(true)
-                roleTypeTx.playerTypesExplicit.forEach { load(it, isInherited = false) }
-                roleTypeTx.playerTypes.filter { !loaded.contains(it) }.forEach { load(it, isInherited = true) }
+                conceptType.getPlayerTypes(tx, EXPLICIT).forEach { load(it, isInherited = false) }
+                conceptType.getPlayerTypes(tx).filter { !loaded.contains(it) }.forEach { load(it, isInherited = true) }
                 playerTypeProperties = properties
             }
         }

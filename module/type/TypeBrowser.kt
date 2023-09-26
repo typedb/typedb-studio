@@ -50,18 +50,18 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
 
     override val label: String = Label.TYPE_BROWSER
     override val icon: Icon = Icon.TYPES
-    override val isActive: Boolean get() = Service.client.isConnected && Service.client.session.isOpen
+    override val isActive: Boolean get() = Service.driver.isConnected && Service.driver.session.isOpen
     override var buttons: List<IconButtonArg> by mutableStateOf(emptyList())
 
     private val schemaIsWritable get() = Service.schema.isWritable
 
     @Composable
     override fun Content() {
-        val client = Service.client
+        val driver = Service.driver
         val schema = Service.schema
-        if (!client.isConnected) ConnectToServerHelper()
-        else if (!client.isInteractiveMode) NonInteractiveModeMessage()
-        else if (!client.session.isOpen || client.selectDBDialog.isOpen || !schema.isOpen) SelectDBHelper()
+        if (!driver.isConnected) ConnectToServerHelper()
+        else if (!driver.isInteractiveMode) NonInteractiveModeMessage()
+        else if (!driver.session.isOpen || driver.selectDBDialog.isOpen || !schema.isOpen) SelectDBHelper()
         else NavigatorLayout()
     }
 
@@ -147,7 +147,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
             Form.TextButton(
                 text = Label.CONNECT_TO_TYPEDB,
                 leadingIcon = Form.IconArg(Icon.CONNECT_TO_TYPEDB)
-            ) { Service.client.connectServerDialog.open() }
+            ) { Service.driver.connectServerDialog.open() }
         }
     }
 
@@ -169,7 +169,7 @@ class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen
             Form.TextButton(
                 text = Label.SELECT_DATABASE,
                 leadingIcon = Form.IconArg(Icon.DATABASE)
-            ) { Service.client.selectDBDialog.open() }
+            ) { Service.driver.selectDBDialog.open() }
         }
     }
 }

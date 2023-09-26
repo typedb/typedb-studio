@@ -64,23 +64,23 @@ object DatabaseDialog {
 
     private object CreateDatabaseForm : Form.State() {
         var name: String by mutableStateOf("")
-        override fun cancel() = Service.client.manageDatabasesDialog.close()
+        override fun cancel() = Service.driver.manageDatabasesDialog.close()
         override fun isValid(): Boolean = name.isNotBlank()
         override fun submit() {
             assert(isValid())
-            Service.client.tryCreateDatabase(name) { name = "" }
+            Service.driver.tryCreateDatabase(name) { name = "" }
         }
     }
 
     @Composable
     fun MayShowDialogs() {
-        if (Service.client.manageDatabasesDialog.isOpen) ManageDatabases()
-        if (Service.client.selectDBDialog.isOpen) SelectDatabase()
+        if (Service.driver.manageDatabasesDialog.isOpen) ManageDatabases()
+        if (Service.driver.selectDBDialog.isOpen) SelectDatabase()
     }
 
     @Composable
     private fun ManageDatabases() = Dialog.Layout(
-        state = Service.client.manageDatabasesDialog,
+        state = Service.driver.manageDatabasesDialog,
         title = Label.MANAGE_DATABASES,
         width = MANAGER_WIDTH,
         height = MANAGER_HEIGHT
@@ -95,17 +95,17 @@ object DatabaseDialog {
             Row(verticalAlignment = Alignment.Bottom) {
                 Spacer(modifier = Modifier.weight(1f))
                 TextButton(text = Label.REFRESH, leadingIcon = Form.IconArg(Icon.REFRESH)) {
-                    Service.client.refreshDatabaseList()
+                    Service.driver.refreshDatabaseList()
                 }
                 RowSpacer()
-                TextButton(text = Label.CLOSE) { Service.client.manageDatabasesDialog.close() }
+                TextButton(text = Label.CLOSE) { Service.driver.manageDatabasesDialog.close() }
             }
         }
     }
 
     @Composable
     private fun ManageableDatabaseList(modifier: Modifier) = ActionableList.Layout(
-        items = Service.client.databaseList,
+        items = Service.driver.databaseList,
         modifier = modifier.border(1.dp, Theme.studio.border),
         buttonsSide = ActionableList.Side.RIGHT,
         buttonsFn = { databaseName ->
@@ -119,7 +119,7 @@ object DatabaseDialog {
                         message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
                         verificationValue = databaseName,
                         confirmLabel = Label.DELETE,
-                        onConfirm = { Service.client.tryDeleteDatabase(databaseName) }
+                        onConfirm = { Service.driver.tryDeleteDatabase(databaseName) }
                     )
                 }
             )
@@ -153,7 +153,7 @@ object DatabaseDialog {
 
     @Composable
     private fun SelectDatabase() {
-        val dialogState = Service.client.selectDBDialog
+        val dialogState = Service.driver.selectDBDialog
         val focusReq = remember { FocusRequester() }
         Dialog.Layout(dialogState, Label.SELECT_DATABASE, SELECTOR_WIDTH, SELECTOR_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
@@ -174,10 +174,10 @@ object DatabaseDialog {
         focusReq: FocusRequester? = null,
         enabled: Boolean = true
     ) = Dropdown(
-        values = Service.client.databaseList,
-        selected = Service.client.session.database,
-        onSelection = { it?.let { Service.client.tryOpenSession(it) } ?: Service.client.closeSession() },
-        onExpand = { Service.client.refreshDatabaseList() },
+        values = Service.driver.databaseList,
+        selected = Service.driver.session.database,
+        onSelection = { it?.let { Service.driver.tryOpenSession(it) } ?: Service.driver.closeSession() },
+        onExpand = { Service.driver.refreshDatabaseList() },
         placeholder = Label.DATABASE.lowercase(),
         modifier = modifier,
         allowNone = true,

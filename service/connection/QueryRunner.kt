@@ -18,9 +18,9 @@
 
 package com.vaticle.typedb.studio.service.connection
 
-import com.vaticle.typedb.client.api.answer.ConceptMap
-import com.vaticle.typedb.client.api.answer.ConceptMapGroup
-import com.vaticle.typedb.client.api.answer.NumericGroup
+import com.vaticle.typedb.driver.api.answer.ConceptMap
+import com.vaticle.typedb.driver.api.answer.ConceptMapGroup
+import com.vaticle.typedb.driver.api.answer.NumericGroup
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
@@ -66,7 +66,7 @@ class QueryRunner constructor(
             enum class Type { INFO, SUCCESS, ERROR, TYPEQL }
         }
 
-        data class Numeric(val value: com.vaticle.typedb.client.api.answer.Numeric) : Response()
+        data class Numeric(val value: com.vaticle.typedb.driver.api.answer.Numeric) : Response()
 
         sealed class Stream<T> : Response() {
 
@@ -180,19 +180,19 @@ class QueryRunner constructor(
         name = DEFINE_QUERY,
         successMsg = DEFINE_QUERY_SUCCESS,
         queryStr = query.toString()
-    ) { transaction.query().define(query).get() }
+    ) { transaction.query().define(query) }
 
     private fun runUndefineQuery(query: TypeQLUndefine) = runUnitQuery(
         name = UNDEFINE_QUERY,
         successMsg = UNDEFINE_QUERY_SUCCESS,
         queryStr = query.toString()
-    ) { transaction.query().undefine(query).get() }
+    ) { transaction.query().undefine(query) }
 
     private fun runDeleteQuery(query: TypeQLDelete) = runUnitQuery(
         name = DELETE_QUERY,
         successMsg = DELETE_QUERY_SUCCESS,
         queryStr = query.toString()
-    ) { transaction.query().delete(query).get() }
+    ) { transaction.query().delete(query) }
 
     private fun runInsertQuery(query: TypeQLInsert) = runStreamingQuery(
         name = INSERT_QUERY,
@@ -227,7 +227,7 @@ class QueryRunner constructor(
 
     private fun runMatchAggregateQuery(query: TypeQLMatch.Aggregate) {
         printQueryStart(MATCH_AGGREGATE_QUERY, query.toString())
-        val result = transaction.query().match(query).get()
+        val result = transaction.query().match(query)
         collectEmptyLine()
         collectMessage(SUCCESS, RESULT_ + MATCH_AGGREGATE_QUERY_SUCCESS)
         responses.put(Response.Numeric(result))

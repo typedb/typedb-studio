@@ -17,6 +17,6 @@
 
 try-import ./.bazel-remote-cache.rc
 
-build --incompatible_strict_action_env --javacopt='--release 11'
-run --incompatible_strict_action_env --jvmopt='-ea'
-test --incompatible_strict_action_env --jvmopt='-ea'
+build --incompatible_strict_action_env --javacopt='--release 11' --java_runtime_version=remotejdk_11
+run --incompatible_strict_action_env --jvmopt='-ea' --java_runtime_version=remotejdk_11
+test --incompatible_strict_action_env --jvmopt='-ea' --java_runtime_version=remotejdk_11

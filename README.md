@@ -11,7 +11,7 @@
 TypeDB Studio is a fully-featured Integrated Development Environment (IDE) for [TypeDB](https://github.com/vaticle/typedb).
 
 You can utilise Studio as you would [TypeDB Console](https://github.com/vaticle/typedb-console)
-and the [TypeDB Clients](https://typedb.com/docs/clients/2.x/clients): to connect to your TypeDB instance and
+and the [TypeDB Driver](https://typedb.com/docs/drivers/2.x/drivers): to connect to your TypeDB instance and
 perform queries.
 
 Studio is an IDE designed for the end-to-end development of TypeDB databases, database queries, and data exploration,
@@ -54,7 +54,7 @@ to the Log Output window which is easily searchable (and supports regex matching
 [![Graph Visualisation](./docs/images/graph-vis-1.gif)](./docs/images/graph-vis-1.gif)
 
 Reasoning about text outputs in [TypeDB Console](https://docs.vaticle.com/docs/console/console) or through
-the various [TypeDB Clients](https://docs.vaticle.com/docs/client-api/overview) can be difficult to do for large
+the various [TypeDB Drivers](https://docs.vaticle.com/docs/driver-api/overview) can be difficult to do for large
 datasets. Studio's advanced force-graph visualisation makes the underlying structure of data immediately apparent.
 
 ### Reasoning and Explanations

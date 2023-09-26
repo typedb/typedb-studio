@@ -21,7 +21,7 @@ package com.vaticle.typedb.studio.framework.output
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.client.api.answer.ConceptMap
+import com.vaticle.typedb.driver.api.answer.ConceptMap
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.common.util.Label

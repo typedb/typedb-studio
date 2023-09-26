@@ -24,7 +24,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.withTransform
-import com.vaticle.typedb.client.api.concept.thing.Thing
+import com.vaticle.typedb.driver.api.concept.thing.Thing
 import kotlin.math.sqrt
 
 sealed class VertexBackgroundRenderer(

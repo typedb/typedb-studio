@@ -84,7 +84,7 @@ java_binary(
     main_class = "com.vaticle.typedb.studio.Studio",
     runtime_deps = [
         "//:studio",
-        "@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64",
+        "@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_arm64",
     ],
     classpath_resources = ["//config/logback:logback-test-xml"],
 )
@@ -233,9 +233,9 @@ artifact_extractor(
     artifact = ":native-typedb-artifact",
 )
 
-# CI targets that are not declared in any BUILD file, but are called externally
+# Tools to be built during `bazel build //...`
 filegroup(
-    name = "ci",
+    name = "tools",
     data = [
         "@vaticle_dependencies//distribution/artifact:create-netrc",
         "@vaticle_dependencies//tool/bazelinstall:remote_cache_setup.sh",

@@ -21,9 +21,11 @@ package com.vaticle.typedb.studio.service.schema
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.client.api.concept.type.RelationType
-import com.vaticle.typedb.client.api.concept.type.RoleType
-import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.driver.api.TypeDBTransaction
+import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
+import com.vaticle.typedb.driver.api.concept.type.RelationType
+import com.vaticle.typedb.driver.api.concept.type.RoleType
+import com.vaticle.typedb.driver.api.concept.type.Type
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
@@ -56,6 +58,7 @@ class RelationTypeState internal constructor(
 
     override fun isSameEncoding(conceptType: Type) = conceptType.isRelationType
     override fun asSameEncoding(conceptType: Type) = conceptType.asRelationType()!!
+    override fun fetchSameEncoding(tx: TypeDBTransaction, label: String) = tx.concepts().getRelationType(label)
     override fun typeStateOf(type: RelationType) = schemaSrv.typeStateOf(type)
 
     override fun updateConceptType(label: String) {
@@ -64,7 +67,7 @@ class RelationTypeState internal constructor(
     }
 
     override fun requestSubtypesExplicit() = schemaSrv.mayRunReadTx { tx ->
-        conceptType.asRemote(tx).subtypesExplicit.toList()
+        conceptType.getSubtypes(tx, EXPLICIT).toList()
     }
 
     fun overridableRelatedRoleTypes() = supertype?.relatedRoleTypes
@@ -96,11 +99,11 @@ class RelationTypeState internal constructor(
         val loaded = mutableSetOf<RoleType>()
         val properties = mutableListOf<RoleTypeState.RelatedRoleTypeProperties>()
 
-        fun load(relTypeTx: RelationType.Remote, roleTypeConcept: RoleType, isInherited: Boolean) {
+        fun load(tx: TypeDBTransaction, roleTypeConcept: RoleType, isInherited: Boolean) {
             loaded.add(roleTypeConcept)
             schemaSrv.typeStateOf(roleTypeConcept)?.let { roleType ->
                 roleType.loadConstraints()
-                val overriddenType = relTypeTx.getRelatesOverridden(roleTypeConcept)
+                val overriddenType = conceptType.getRelatesOverridden(tx, roleTypeConcept)
                     ?.let { schemaSrv.typeStateOf(it) }
                 val extendedType = when {
                     isInherited -> roleType
@@ -113,11 +116,10 @@ class RelationTypeState internal constructor(
         }
 
         schemaSrv.mayRunReadTx { tx ->
-            val relTypeTx = conceptType.asRemote(tx)
             if (!loadedRelatedRoleTypePropsAtomic.get()) {
                 loadedRelatedRoleTypePropsAtomic.set(true)
-                relTypeTx.relatesExplicit.forEach { load(relTypeTx, it, false) }
-                relTypeTx.relates.filter { !loaded.contains(it) && !it.isRoot }.forEach { load(relTypeTx, it, true) }
+                conceptType.getRelates(tx, EXPLICIT).forEach { load(tx, it, false) }
+                conceptType.getRelates(tx).filter { !loaded.contains(it) && !it.isRoot }.forEach { load(tx, it, true) }
                 relatedRoleTypeProperties = properties
             }
         }
@@ -137,9 +139,8 @@ class RelationTypeState internal constructor(
     ) = tryCreateSubtype(label, schemaSrv.createRelationTypeDialog) { tx ->
         val type = tx.concepts().putRelationType(label)
         if (isAbstract || !isRoot) {
-            val typeTx = type.asRemote(tx)
-            if (isAbstract) typeTx.setAbstract()
-            if (!isRoot) typeTx.setSupertype(conceptType)
+            if (isAbstract) type.setAbstract(tx)
+            if (!isRoot) type.setSupertype(tx, conceptType)
         }
     }
 
@@ -151,7 +152,7 @@ class RelationTypeState internal constructor(
     override fun tryChangeSupertype(
         supertypeState: RelationTypeState
     ) = super.tryChangeSupertype(schemaSrv.changeRelationSupertypeDialog) {
-        conceptType.asRemote(it).setSupertype(supertypeState.conceptType)
+        conceptType.setSupertype(it, supertypeState.conceptType)
     }
 
     fun tryDefineRelatesRoleType(
@@ -159,8 +160,8 @@ class RelationTypeState internal constructor(
     ) = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
             overriddenType?.let {
-                conceptType.asRemote(tx).setRelates(roleType, it.name)
-            } ?: conceptType.asRemote(tx).setRelates(roleType)
+                conceptType.setRelates(tx, roleType, it.name)
+            } ?: conceptType.setRelates(tx, roleType)
             loadRelatedRoleTypes()
             onSuccess?.let { it() }
         } catch (e: Exception) {
@@ -176,9 +177,9 @@ class RelationTypeState internal constructor(
         roleType: RoleTypeState, overriddenType: RoleTypeState?
     ) = schemaSrv.mayRunWriteTxAsync { tx ->
         try {
-            conceptType.asRemote(tx).let { r ->
-                overriddenType?.let { o -> r.setRelates(roleType.name, o.conceptType) }
-                    ?: r.setRelates(roleType.name)
+            conceptType.let { r ->
+                overriddenType?.let { o -> r.setRelates(tx, roleType.name, o.conceptType) }
+                    ?: r.setRelates(tx, roleType.name)
             }
             loadRelatedRoleTypes()
             schemaSrv.changeOverriddenRelatedRoleTypeDialog.close()
@@ -205,7 +206,7 @@ class RelationTypeState internal constructor(
 
     fun tryDeleteRoleType(roleType: RoleTypeState) = schemaSrv.mayRunWriteTxAsync {
         try {
-            conceptType.asRemote(it).unsetRelates(roleType.conceptType)
+            conceptType.unsetRelates(it, roleType.conceptType)
             loadConstraintsAsync()
         } catch (e: Exception) {
             notifications.userError(LOGGER, FAILED_TO_DELETE_TYPE, encoding.label, e.message ?: UNKNOWN)

@@ -24,7 +24,7 @@ import com.vaticle.typedb.studio.service.common.EditorService
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.PreferenceService
 import com.vaticle.typedb.studio.service.common.StatusService
-import com.vaticle.typedb.studio.service.connection.ClientState
+import com.vaticle.typedb.studio.service.connection.DriverState
 import com.vaticle.typedb.studio.service.page.PageService
 import com.vaticle.typedb.studio.service.project.ProjectService
 import com.vaticle.typedb.studio.service.schema.SchemaService
@@ -38,7 +38,7 @@ object Service {
     lateinit var notification: NotificationService
     lateinit var confirmation: ConfirmationService
     lateinit var pages: PageService
-    lateinit var client: ClientState
+    lateinit var driver: DriverState
     lateinit var project: ProjectService
     lateinit var schema: SchemaService
 
@@ -54,8 +54,8 @@ object Service {
         notification = NotificationService()
         confirmation = ConfirmationService()
         pages = PageService()
-        client = ClientState(notification, preference)
-        project = ProjectService(preference, data, notification, confirmation, client, pages)
-        schema = SchemaService(client.session, pages, notification, confirmation, status)
+        driver = DriverState(notification, preference)
+        project = ProjectService(preference, data, notification, confirmation, driver, pages)
+        schema = SchemaService(driver.session, pages, notification, confirmation, status)
     }
 }
