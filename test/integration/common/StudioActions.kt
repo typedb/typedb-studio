@@ -242,7 +242,7 @@ object StudioActions {
         val queryString = readQueryFileToString(queryFileName)
 
         TypeDB.coreDriver(address).use { driver ->
-            driver.session(dbName, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
+            driver.session(dbName, TypeDBSession.Type.DATA, TypeDBOptions().infer(true)).use { session ->
                 session.transaction(TypeDBTransaction.Type.READ).use { transaction ->
                     val results = ArrayList<String>()
                     val query = TypeQL.parseQuery<TypeQLMatch>(queryString)
