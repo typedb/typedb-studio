@@ -27,15 +27,6 @@ vaticle_dependencies()
 load("@vaticle_dependencies//builder/bazel:deps.bzl", "bazel_toolchain")
 bazel_toolchain()
 
-## Load Python
-#load("@vaticle_dependencies//builder/python:deps.bzl", python_deps = "deps")
-#python_deps()
-#load("@rules_python//python:pip.bzl", "pip_install")
-#pip_install(
-#    name = "vaticle_dependencies_ci_pip",
-#    requirements = "@vaticle_dependencies//tool:requirements.txt",
-#)
-
 # Load //builder/java
 load("@vaticle_dependencies//builder/java:deps.bzl", java_deps = "deps")
 java_deps()
