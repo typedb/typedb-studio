@@ -20,8 +20,8 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 def vaticle_dependencies():
     git_repository(
         name = "vaticle_dependencies",
-        remote = "https://github.com/vaticle/dependencies",
-        commit = "56b33e3483731b043498c6f28fcb77cb97d41874", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
+        remote = "https://github.com/dmitrii-ubskii/vaticle-dependencies",
+        commit = "54c29b9560883cdc7d4b37873930618f15995539",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
     )
 
 def vaticle_force_graph():
@@ -34,13 +34,17 @@ def vaticle_force_graph():
 def vaticle_typedb_common():
     git_repository(
         name = "vaticle_typedb_common",
-        remote = "https://github.com/vaticle/typedb-common",
-        tag = "2.24.2",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_common
+        remote = "https://github.com/dmitrii-ubskii/typedb-common",
+        commit = "21a29d0751910d40958eb3e52482f9b1f28d73ca",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_common
     )
 
 def vaticle_typedb_driver():
-    git_repository(
+    native.local_repository(
         name = "vaticle_typedb_driver",
-        remote = "https://github.com/vaticle/typedb-driver",
-        commit = "9fbf317598c62ad168439d2b95a49edc5203d6a1",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
+        path = "/Users/dmitriiubskii/workspace/assembly-workspace/typedb-driver",
     )
+#    git_repository(
+#        name = "vaticle_typedb_driver",
+#        remote = "https://github.com/vaticle/typedb-driver",
+#        commit = "9fbf317598c62ad168439d2b95a49edc5203d6a1",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
+#    )

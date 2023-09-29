@@ -21,11 +21,11 @@ load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 package(default_visibility = ["//test/integration:__pkg__"])
 
 skiko_runtime_platform = select({
-    "@vaticle_dependencies//util/platform:is_linux_arm64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_arm64"],
-    "@vaticle_dependencies//util/platform:is_linux_x86_64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64"],
-    "@vaticle_dependencies//util/platform:is_mac_arm64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_arm64"],
-    "@vaticle_dependencies//util/platform:is_mac_x86_64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64"],
-    "@vaticle_dependencies//util/platform:is_windows": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64"],
+    "@vaticle_bazel_distribution//platform:is_linux_arm64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_arm64"],
+    "@vaticle_bazel_distribution//platform:is_linux_x86_64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64"],
+    "@vaticle_bazel_distribution//platform:is_mac_arm64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_arm64"],
+    "@vaticle_bazel_distribution//platform:is_mac_x86_64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64"],
+    "@vaticle_bazel_distribution//platform:is_windows": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64"],
     "//conditions:default": ["INVALID"],
 })
 

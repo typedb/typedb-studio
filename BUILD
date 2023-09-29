@@ -28,7 +28,7 @@ load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolch
 load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
 load("@vaticle_typedb_common//test:rules.bzl", "native_typedb_artifact")
 load("@vaticle_bazel_distribution//artifact:rules.bzl", "artifact_extractor")
-load("@vaticle_dependencies//util/platform:constraints.bzl", "constraint_linux_arm64", "constraint_linux_x86_64",
+load("@vaticle_bazel_distribution//platform:constraints.bzl", "constraint_linux_arm64", "constraint_linux_x86_64",
      "constraint_mac_arm64", "constraint_mac_x86_64", "constraint_win_x86_64")
 
 package(default_visibility = ["//test/integration:__subpackages__"])
@@ -139,11 +139,11 @@ java_binary(
 java_deps(
     name = "assemble-deps",
     target = select({
-        "@vaticle_dependencies//util/platform:is_mac_arm64": ":studio-bin-mac-arm64",
-        "@vaticle_dependencies//util/platform:is_mac_x86_64": ":studio-bin-mac-x86_64",
-        "@vaticle_dependencies//util/platform:is_linux_arm64": ":studio-bin-linux-arm64",
-        "@vaticle_dependencies//util/platform:is_linux_x86_64": ":studio-bin-linux-x86_64",
-        "@vaticle_dependencies//util/platform:is_win_x86_64": ":studio-bin-windows-x86_64",
+        "@vaticle_bazel_distribution//platform:is_mac_arm64": ":studio-bin-mac-arm64",
+        "@vaticle_bazel_distribution//platform:is_mac_x86_64": ":studio-bin-mac-x86_64",
+        "@vaticle_bazel_distribution//platform:is_linux_arm64": ":studio-bin-linux-arm64",
+        "@vaticle_bazel_distribution//platform:is_linux_x86_64": ":studio-bin-linux-x86_64",
+        "@vaticle_bazel_distribution//platform:is_windows_x86_64": ":studio-bin-windows-x86_64",
         "//conditions:default": "INVALID",
     }),
     java_deps_root = "lib/",
@@ -158,11 +158,11 @@ assemble_jvm_platform(
     name = "assemble-platform",
     image_name = "TypeDB Studio",
     image_filename = "typedb-studio-" + select({
-        "@vaticle_dependencies//util/platform:is_mac_arm64": "mac-arm64",
-        "@vaticle_dependencies//util/platform:is_mac_x86_64": "mac-x86_64",
-        "@vaticle_dependencies//util/platform:is_linux_arm64": "linux-arm64",
-        "@vaticle_dependencies//util/platform:is_linux_x86_64": "linux-x86_64",
-        "@vaticle_dependencies//util/platform:is_win_x86_64": "windows-x86_64",
+        "@vaticle_bazel_distribution//platform:is_mac_arm64": "mac-arm64",
+        "@vaticle_bazel_distribution//platform:is_mac_x86_64": "mac-x86_64",
+        "@vaticle_bazel_distribution//platform:is_linux_arm64": "linux-arm64",
+        "@vaticle_bazel_distribution//platform:is_linux_x86_64": "linux-x86_64",
+        "@vaticle_bazel_distribution//platform:is_windows_x86_64": "windows-x86_64",
         "//conditions:default": "INVALID",
     }),
     description = "TypeDB's Integrated Development Environment",
@@ -171,9 +171,9 @@ assemble_jvm_platform(
     license_file = ":LICENSE",
     version_file = ":VERSION",
     icon = select({
-        "@vaticle_dependencies//util/platform:is_mac": "//resources/icons/vaticle:vaticle-bot-mac",
-        "@vaticle_dependencies//util/platform:is_linux": "//resources/icons/vaticle:vaticle-bot-linux",
-        "@vaticle_dependencies//util/platform:is_windows": "//resources/icons/vaticle:vaticle-bot-windows",
+        "@vaticle_bazel_distribution//platform:is_mac": "//resources/icons/vaticle:vaticle-bot-mac",
+        "@vaticle_bazel_distribution//platform:is_linux": "//resources/icons/vaticle:vaticle-bot-linux",
+        "@vaticle_bazel_distribution//platform:is_windows": "//resources/icons/vaticle:vaticle-bot-windows",
         "//conditions:default": "mac",
     }),
     java_deps = ":assemble-deps",
@@ -252,9 +252,13 @@ checkstyle_test(
 
 native_typedb_artifact(
     name = "native-typedb-artifact",
-    mac_artifact = "@vaticle_typedb_artifact_mac//file",
-    linux_artifact = "@vaticle_typedb_artifact_linux//file",
-    windows_artifact = "@vaticle_typedb_artifact_windows//file",
+    native_artifacts = {
+        "@vaticle_bazel_distribution//platform:is_linux_arm64": ["@vaticle_typedb_artifact_linux-arm64//file"],
+        "@vaticle_bazel_distribution//platform:is_linux_x86_64": ["@vaticle_typedb_artifact_linux-x86_64//file"],
+        "@vaticle_bazel_distribution//platform:is_mac_arm64": ["@vaticle_typedb_artifact_mac-arm64//file"],
+        "@vaticle_bazel_distribution//platform:is_mac_x86_64": ["@vaticle_typedb_artifact_mac-x86_64//file"],
+        "@vaticle_bazel_distribution//platform:is_windows_x86_64": ["@vaticle_typedb_artifact_windows-x86_64//file"],
+    },
     output = "typedb-server-native.tar.gz",
     visibility = ["//test/integration:__subpackages__"],
 )
