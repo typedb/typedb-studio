@@ -58,11 +58,11 @@ import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Property
 import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB
-import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_CLUSTER
+import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_ENTERPRISE
 import com.vaticle.typedb.studio.service.common.util.Sentence
-import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTED
-import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTING
-import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNECTED
+import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTED
+import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTING
+import com.vaticle.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 
 object ServerDialog {
 
@@ -77,45 +77,45 @@ object ServerDialog {
     private class ConnectServerForm : Form.State() {
         var server: Property.Server by mutableStateOf(appData.server ?: Property.Server.TYPEDB)
         var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
-        var clusterAddresses: MutableList<String> = mutableStateListOf<String>().also {
-            appData.clusterAddresses?.let { saved -> it.addAll(saved) }
+        var enterpriseAddresses: MutableList<String> = mutableStateListOf<String>().also {
+            appData.enterpriseAddresses?.let { saved -> it.addAll(saved) }
         }
         var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
 
-        override fun cancel() = Service.client.connectServerDialog.close()
+        override fun cancel() = Service.driver.connectServerDialog.close()
         override fun isValid(): Boolean = when (server) {
             TYPEDB -> coreAddress.isNotBlank()
-            TYPEDB_CLUSTER -> !(clusterAddresses.isEmpty() || username.isBlank() || password.isBlank())
+            TYPEDB_ENTERPRISE -> !(enterpriseAddresses.isEmpty() || username.isBlank() || password.isBlank())
         }
 
         override fun submit() {
             when (server) {
                 TYPEDB -> {
-                    Service.client.tryConnectToTypeDBAsync(coreAddress) {
-                        Service.client.connectServerDialog.close()
+                    Service.driver.tryConnectToTypeDBAsync(coreAddress) {
+                        Service.driver.connectServerDialog.close()
                     }
                 }
-                TYPEDB_CLUSTER -> {
+                TYPEDB_ENTERPRISE -> {
                     when {
-                        caCertificate.isBlank() -> Service.client.tryConnectToTypeDBClusterAsync(
-                            clusterAddresses.toSet(), username, password, tlsEnabled
+                        caCertificate.isBlank() -> Service.driver.tryConnectToTypeDBEnterpriseAsync(
+                            enterpriseAddresses.toSet(), username, password, tlsEnabled
                         ) {
-                            Service.client.connectServerDialog.close()
+                            Service.driver.connectServerDialog.close()
                         }
-                        else -> Service.client.tryConnectToTypeDBClusterAsync(
-                            clusterAddresses.toSet(), username, password, caCertificate
+                        else -> Service.driver.tryConnectToTypeDBEnterpriseAsync(
+                            enterpriseAddresses.toSet(), username, password, caCertificate
                         ) {
-                            Service.client.connectServerDialog.close()
+                            Service.driver.connectServerDialog.close()
                         }
                     }
                 }
             }
             appData.server = server
             appData.coreAddress = coreAddress
-            appData.clusterAddresses = clusterAddresses
+            appData.enterpriseAddresses = enterpriseAddresses
             appData.username = username
             appData.tlsEnabled = tlsEnabled
             appData.caCertificate = caCertificate
@@ -124,12 +124,12 @@ object ServerDialog {
 
     private object AddAddressForm : Form.State() {
         var value: String by mutableStateOf("")
-        override fun cancel() = Service.client.manageAddressesDialog.close()
-        override fun isValid() = value.isNotBlank() && validAddressFormat() && !state.clusterAddresses.contains(value)
+        override fun cancel() = Service.driver.manageAddressesDialog.close()
+        override fun isValid() = value.isNotBlank() && validAddressFormat() && !state.enterpriseAddresses.contains(value)
 
         override fun submit() {
             assert(isValid())
-            state.clusterAddresses.add(value)
+            state.enterpriseAddresses.add(value)
             value = ""
         }
 
@@ -141,33 +141,33 @@ object ServerDialog {
 
     @Composable
     fun MayShowDialogs() {
-        if (Service.client.connectServerDialog.isOpen) ConnectServer()
-        if (Service.client.manageAddressesDialog.isOpen) ManageClusterAddresses()
+        if (Service.driver.connectServerDialog.isOpen) ConnectServer()
+        if (Service.driver.manageAddressesDialog.isOpen) ManageEnterpriseAddresses()
     }
 
     @Composable
     private fun ConnectServer() = Dialog.Layout(
-        state = Service.client.connectServerDialog,
+        state = Service.driver.connectServerDialog,
         title = Label.CONNECT_TO_TYPEDB,
         width = WIDTH,
         height = HEIGHT
     ) {
         Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
             ServerFormField(state)
-            if (state.server == TYPEDB_CLUSTER) {
-                ManageClusterAddressesButton(state = state, shouldFocus = Service.client.isDisconnected)
+            if (state.server == TYPEDB_ENTERPRISE) {
+                ManageEnterpriseAddressesButton(state = state, shouldFocus = Service.driver.isDisconnected)
                 UsernameFormField(state)
                 PasswordFormField(state)
                 TLSEnabledFormField(state)
                 if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
             } else if (state.server == TYPEDB) {
-                CoreAddressFormField(state, shouldFocus = Service.client.isDisconnected)
+                CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
             }
             Spacer(Modifier.weight(1f))
             Row(verticalAlignment = Alignment.Bottom) {
                 ServerConnectionStatus()
                 Spacer(modifier = Modifier.weight(1f))
-                when (Service.client.status) {
+                when (Service.driver.status) {
                     DISCONNECTED -> DisconnectedFormButtons(state)
                     CONNECTING -> ConnectingFormButtons()
                     CONNECTED -> ConnectedFormButtons(state)
@@ -183,7 +183,7 @@ object ServerDialog {
             selected = state.server,
             onSelection = { state.server = it!! },
             modifier = Modifier.fillMaxSize(),
-            enabled = Service.client.isDisconnected
+            enabled = Service.driver.isDisconnected
         )
     }
 
@@ -197,7 +197,7 @@ object ServerDialog {
                 value = state.coreAddress,
                 placeholder = Label.DEFAULT_SERVER_ADDRESS,
                 onValueChange = { state.coreAddress = it },
-                enabled = Service.client.isDisconnected,
+                enabled = Service.driver.isDisconnected,
                 modifier = modifier
             )
         }
@@ -205,30 +205,30 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ManageClusterAddressesButton(state: ConnectServerForm, shouldFocus: Boolean) {
+    private fun ManageEnterpriseAddressesButton(state: ConnectServerForm, shouldFocus: Boolean) {
         val focusReq = if (shouldFocus) remember { FocusRequester() } else null
         Field(label = Label.ADDRESSES) {
             TextButton(
-                text = Label.MANAGE_CLUSTER_ADDRESSES + " (${state.clusterAddresses.size})",
+                text = Label.MANAGE_ENTERPRISE_ADDRESSES + " (${state.enterpriseAddresses.size})",
                 focusReq = focusReq, leadingIcon = Form.IconArg(Icon.CONNECT_TO_TYPEDB),
-                enabled = Service.client.isDisconnected
+                enabled = Service.driver.isDisconnected
             ) {
-                Service.client.manageAddressesDialog.open()
+                Service.driver.manageAddressesDialog.open()
             }
         }
         LaunchedEffect(focusReq) { focusReq?.requestFocus() }
     }
 
     @Composable
-    private fun ManageClusterAddresses() {
-        val dialogState = Service.client.manageAddressesDialog
-        Dialog.Layout(dialogState, Label.MANAGE_CLUSTER_ADDRESSES, ADDRESS_MANAGER_WIDTH, ADDRESS_MANAGER_HEIGHT) {
+    private fun ManageEnterpriseAddresses() {
+        val dialogState = Service.driver.manageAddressesDialog
+        Dialog.Layout(dialogState, Label.MANAGE_ENTERPRISE_ADDRESSES, ADDRESS_MANAGER_WIDTH, ADDRESS_MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Text(value = Sentence.MANAGE_ADDRESSES_MESSAGE, softWrap = true)
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING))
-                ClusterAddressList(Modifier.fillMaxWidth().weight(1f))
+                EnterpriseAddressList(Modifier.fillMaxWidth().weight(1f))
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING))
-                AddClusterAddressForm()
+                AddEnterpriseAddressForm()
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING * 2))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
@@ -240,7 +240,7 @@ object ServerDialog {
     }
 
     @Composable
-    private fun AddClusterAddressForm() {
+    private fun AddEnterpriseAddressForm() {
         val focusReq = remember { FocusRequester() }
         Submission(AddAddressForm, modifier = Modifier.height(Form.FIELD_HEIGHT), showButtons = false) {
             Row {
@@ -258,15 +258,15 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ClusterAddressList(modifier: Modifier) = ActionableList.SingleButtonLayout(
-        items = state.clusterAddresses.toMutableList(),
+    private fun EnterpriseAddressList(modifier: Modifier) = ActionableList.SingleButtonLayout(
+        items = state.enterpriseAddresses.toMutableList(),
         modifier = modifier.border(1.dp, Theme.studio.border),
         buttonSide = ActionableList.Side.RIGHT,
         buttonFn = { address ->
             Form.IconButtonArg(
                 icon = Icon.REMOVE,
                 color = { Theme.studio.errorStroke },
-                onClick = { state.clusterAddresses.remove(address) }
+                onClick = { state.enterpriseAddresses.remove(address) }
             )
         }
     )
@@ -277,7 +277,7 @@ object ServerDialog {
             value = state.username,
             placeholder = Label.USERNAME.lowercase(),
             onValueChange = { state.username = it },
-            enabled = Service.client.isDisconnected,
+            enabled = Service.driver.isDisconnected,
             modifier = Modifier.fillMaxSize()
         )
     }
@@ -288,7 +288,7 @@ object ServerDialog {
             value = state.password,
             placeholder = Label.PASSWORD.lowercase(),
             onValueChange = { state.password = it },
-            enabled = Service.client.isDisconnected,
+            enabled = Service.driver.isDisconnected,
             isPassword = true,
             modifier = Modifier.fillMaxSize(),
         )
@@ -296,7 +296,7 @@ object ServerDialog {
 
     @Composable
     private fun TLSEnabledFormField(state: ConnectServerForm) = Field(label = Label.ENABLE_TLS) {
-        Checkbox(value = state.tlsEnabled, enabled = Service.client.isDisconnected) { state.tlsEnabled = it }
+        Checkbox(value = state.tlsEnabled, enabled = Service.driver.isDisconnected) { state.tlsEnabled = it }
     }
 
     @Composable
@@ -307,7 +307,7 @@ object ServerDialog {
             value = state.caCertificate,
             placeholder = "${Label.PATH_TO_CA_CERTIFICATE} (${Label.OPTIONAL.lowercase()})",
             onValueChange = { state.caCertificate = it },
-            enabled = Service.client.isDisconnected,
+            enabled = Service.driver.isDisconnected,
             modifier = Modifier.weight(1f)
         )
         IconButton(
@@ -323,9 +323,9 @@ object ServerDialog {
 
     @Composable
     private fun ServerConnectionStatus() {
-        val statusText = "${Label.STATUS}: ${Service.client.status.name.lowercase()}"
+        val statusText = "${Label.STATUS}: ${Service.driver.status.name.lowercase()}"
         Text(
-            value = statusText, color = when (Service.client.status) {
+            value = statusText, color = when (Service.driver.status) {
                 DISCONNECTED -> Theme.studio.errorStroke
                 CONNECTING -> Theme.studio.warningStroke
                 CONNECTED -> Theme.studio.secondary
@@ -346,7 +346,7 @@ object ServerDialog {
         TextButton(
             text = Label.DISCONNECT,
             textColor = Theme.studio.errorStroke
-        ) { Service.client.closeAsync() }
+        ) { Service.driver.closeAsync() }
         RowSpacer()
         TextButton(text = Label.CLOSE, focusReq = focusReq) { state.cancel() }
         LaunchedEffect(focusReq) { focusReq.requestFocus() }
@@ -355,7 +355,7 @@ object ServerDialog {
     @Composable
     private fun ConnectingFormButtons() {
         val focusReq = remember { FocusRequester() }
-        TextButton(text = Label.CANCEL, focusReq = focusReq) { Service.client.closeAsync() }
+        TextButton(text = Label.CANCEL, focusReq = focusReq) { Service.driver.closeAsync() }
         RowSpacer()
         TextButton(text = Label.CONNECTING, enabled = false) {}
         LaunchedEffect(focusReq) { focusReq.requestFocus() }

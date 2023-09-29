@@ -15,13 +15,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
-// We need to access the private function StudioState.client.session.tryOpen, this allows us to.
+// We need to access the private function StudioState.driver.session.tryOpen, this allows us to.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package com.vaticle.typedb.studio.test.integration
 
-import com.vaticle.typedb.client.api.TypeDBSession
-import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.driver.api.TypeDBSession
+import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
@@ -51,13 +51,13 @@ class QueryRunnerTest : IntegrationTest() {
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
                 writeDataInteractively(composeRule, dbName = testID, SampleGitHubData.dataFile)
 
-                Service.client.session.tryOpen(
+                Service.driver.session.tryOpen(
                     database = testID,
                     TypeDBSession.Type.DATA
                 )
 
                 waitUntilTrue(composeRule) {
-                    Service.client.session.type == TypeDBSession.Type.DATA
+                    Service.driver.session.type == TypeDBSession.Type.DATA
                 }
 
                 Service.project.current!!.directory.entries.find {
@@ -73,12 +73,12 @@ class QueryRunnerTest : IntegrationTest() {
                     if (it.isRunnable) it.asRunnable().mayOpenAndRun()
                 }
 
-                val sessionType = Service.client.session.type
-                val transaction = Service.client.session.transaction.transaction!!
+                val sessionType = Service.driver.session.type
+                val transaction = Service.driver.session.transaction.transaction!!
                 val transactionType = transaction.type()
                 val transactionIsInfer = transaction.options().infer().get()
                 val transactionIsSnapshot =
-                    Service.client.session.transaction.snapshot.value
+                    Service.driver.session.transaction.snapshot.value
                 val transactionIsNotExplain = !transaction.options().explain().get()
 
                 assertEquals(sessionType, TypeDBSession.Type.DATA)

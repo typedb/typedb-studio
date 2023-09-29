@@ -24,13 +24,13 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import com.vaticle.typedb.client.api.concept.Concept
-import com.vaticle.typedb.client.api.concept.thing.Attribute
-import com.vaticle.typedb.client.api.concept.thing.Relation
-import com.vaticle.typedb.client.api.concept.type.AttributeType
-import com.vaticle.typedb.client.api.concept.type.RelationType
-import com.vaticle.typedb.client.api.concept.type.ThingType
-import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.driver.api.concept.Concept
+import com.vaticle.typedb.driver.api.concept.thing.Attribute
+import com.vaticle.typedb.driver.api.concept.thing.Relation
+import com.vaticle.typedb.driver.api.concept.type.AttributeType
+import com.vaticle.typedb.driver.api.concept.type.RelationType
+import com.vaticle.typedb.driver.api.concept.type.ThingType
+import com.vaticle.typedb.driver.api.concept.type.Type
 import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.service.common.util.Label
@@ -40,7 +40,7 @@ object ConceptDisplay {
 
     fun iconOf(concept: Concept) = when (concept) {
         is Relation, is RelationType -> Form.IconArg(Icon.RELATION) { Theme.graph.vertex.relationType }
-        is Attribute<*>, is AttributeType -> Form.IconArg(Icon.ATTRIBUTE) { Theme.graph.vertex.attributeType }
+        is Attribute, is AttributeType -> Form.IconArg(Icon.ATTRIBUTE) { Theme.graph.vertex.attributeType }
         is ThingType -> Form.IconArg(Icon.THING) { Theme.graph.vertex.entityType }
         else -> throw IllegalArgumentException("Type icon not defined for concept: $concept")
     }
@@ -63,8 +63,7 @@ object ConceptDisplay {
         }
     }
 
-    fun attributeValue(attribute: Attribute<*>) = when (attribute) {
-        is Attribute.DateTime -> attribute.value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-        else -> attribute.value.toString()
-    }
+    fun attributeValue(attribute: Attribute) =
+        if (attribute.value.isDateTime) attribute.value.asDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        else attribute.value.toString()
 }

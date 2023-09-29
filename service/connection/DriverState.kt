@@ -21,13 +21,13 @@ package com.vaticle.typedb.studio.service.connection
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.client.TypeDB
-import com.vaticle.typedb.client.api.TypeDBClient
-import com.vaticle.typedb.client.api.TypeDBCredential
-import com.vaticle.typedb.client.api.TypeDBSession
-import com.vaticle.typedb.client.api.TypeDBSession.Type.DATA
-import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.client.common.exception.TypeDBClientException
+import com.vaticle.typedb.driver.TypeDB
+import com.vaticle.typedb.driver.api.TypeDBDriver
+import com.vaticle.typedb.driver.api.TypeDBCredential
+import com.vaticle.typedb.driver.api.TypeDBSession
+import com.vaticle.typedb.driver.api.TypeDBSession.Type.DATA
+import com.vaticle.typedb.driver.api.TypeDBTransaction
+import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.PreferenceService
@@ -41,9 +41,9 @@ import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companio
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.UNABLE_TO_CONNECT
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.UNEXPECTED_ERROR
-import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTED
-import com.vaticle.typedb.studio.service.connection.ClientState.Status.CONNECTING
-import com.vaticle.typedb.studio.service.connection.ClientState.Status.DISCONNECTED
+import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTED
+import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTING
+import com.vaticle.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 import java.nio.file.Path
 import java.time.Duration
 import java.util.Optional
@@ -51,7 +51,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 
-class ClientState constructor(
+class DriverState constructor(
     private val notificationSrv: NotificationService,
     preferenceSrv: PreferenceService
 ) {
@@ -83,48 +83,49 @@ class ClientState constructor(
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     val session = SessionState(this, notificationSrv, preferenceSrv)
     private val statusAtomic = AtomicReferenceState(DISCONNECTED)
-    private var _client: TypeDBClient? by mutableStateOf(null)
+    private var _driver: TypeDBDriver? by mutableStateOf(null)
     private var hasRunningCommandAtomic = AtomicBooleanState(false)
     private var databaseListRefreshedTime = System.currentTimeMillis()
-    internal val isCluster get() = _client is TypeDBClient.Cluster
+    internal var isEnterprise: Boolean = false
 
     private val coroutines = CoroutineScope(Dispatchers.Default)
 
     fun tryConnectToTypeDBAsync(
         address: String, onSuccess: () -> Unit
-    ) = tryConnectAsync(newConnectionName = address, onSuccess = onSuccess) { TypeDB.coreClient(address) }
+    ) = tryConnectAsync(newConnectionName = address, onSuccess = onSuccess) { TypeDB.coreDriver(address) }
 
-    fun tryConnectToTypeDBClusterAsync(
+    fun tryConnectToTypeDBEnterpriseAsync(
         addresses: Set<String>, username: String, password: String,
         tlsEnabled: Boolean, onSuccess: () -> Unit
-    ) = tryConnectToTypeDBClusterAsync(addresses, username, TypeDBCredential(username, password, tlsEnabled), onSuccess)
+    ) = tryConnectToTypeDBEnterpriseAsync(addresses, username, TypeDBCredential(username, password, tlsEnabled), onSuccess)
 
-    fun tryConnectToTypeDBClusterAsync(
+    fun tryConnectToTypeDBEnterpriseAsync(
         addresses: Set<String>, username: String, password: String,
         caPath: String, onSuccess: () -> Unit
-    ) = tryConnectToTypeDBClusterAsync(
+    ) = tryConnectToTypeDBEnterpriseAsync(
         addresses, username, TypeDBCredential(username, password, Path.of(caPath)), onSuccess
     )
 
-    private fun tryConnectToTypeDBClusterAsync(
+    private fun tryConnectToTypeDBEnterpriseAsync(
         addresses: Set<String>, username: String,
         credentials: TypeDBCredential, onSuccess: () -> Unit
     ) = tryConnectAsync(newConnectionName = "$username@${addresses.first()}", onSuccess) {
-        TypeDB.clusterClient(addresses, credentials)
+        this.isEnterprise = true
+        TypeDB.enterpriseDriver(addresses, credentials)
     }
 
     private fun tryConnectAsync(
-        newConnectionName: String, onSuccess: () -> Unit, clientConstructor: () -> TypeDBClient
+        newConnectionName: String, onSuccess: () -> Unit, driverConstructor: () -> TypeDBDriver
     ) = coroutines.launchAndHandle(notificationSrv, LOGGER) {
         if (isConnecting || isConnected) return@launchAndHandle
         statusAtomic.set(CONNECTING)
         try {
             connectionName = newConnectionName
-            _client = clientConstructor()
+            _driver = driverConstructor()
             statusAtomic.set(CONNECTED)
             onSuccess()
             mayWarnPasswordExpiry()
-        } catch (e: TypeDBClientException) {
+        } catch (e: TypeDBDriverException) {
             statusAtomic.set(DISCONNECTED)
             notificationSrv.userError(LOGGER, UNABLE_TO_CONNECT)
         } catch (e: java.lang.Exception) {
@@ -142,8 +143,8 @@ class ClientState constructor(
     }
 
     private fun mayWarnPasswordExpiry() {
-        if (_client?.isCluster == false) return
-        val passwordExpiryDurationOptional: Optional<Duration>? = _client?.asCluster()?.user()?.passwordExpirySeconds()?.map { Duration.ofSeconds(it) }
+        if (!this.isEnterprise) return
+        val passwordExpiryDurationOptional: Optional<Duration>? = _driver?.user()?.passwordExpirySeconds()?.map { Duration.ofSeconds(it) }
         if (passwordExpiryDurationOptional?.isPresent != true) return
         val passwordExpiryDuration = passwordExpiryDurationOptional.get()
         if (passwordExpiryDuration.minus(PASSWORD_EXPIRY_WARN_DURATION).isNegative) {
@@ -176,7 +177,7 @@ class ClientState constructor(
 
     private fun refreshDatabaseListFn() {
         if (System.currentTimeMillis() - databaseListRefreshedTime < DATABASE_LIST_REFRESH_RATE_MS) return
-        _client?.let { c -> databaseList = c.databases().all().map { d -> d.name() }.sorted() }
+        _driver?.let { c -> databaseList = c.databases().all().map { d -> d.name() }.sorted() }
         databaseListRefreshedTime = System.currentTimeMillis()
     }
 
@@ -195,7 +196,7 @@ class ClientState constructor(
         refreshDatabaseListFn()
         if (!databaseList.contains(database)) {
             try {
-                _client?.databases()?.create(database)
+                _driver?.databases()?.create(database)
                 refreshDatabaseListFn()
                 onSuccess()
             } catch (e: Exception) {
@@ -207,17 +208,19 @@ class ClientState constructor(
     fun tryDeleteDatabase(database: String) = mayRunCommandAsync {
         try {
             if (session.database == database) session.close()
-            _client?.databases()?.get(database)?.delete()
+            _driver?.databases()?.get(database)?.delete()
             refreshDatabaseListFn()
         } catch (e: Exception) {
             notificationSrv.userWarning(LOGGER, FAILED_TO_DELETE_DATABASE, database, e.message ?: e.toString())
         }
     }
 
-    fun tryFetchSchema(database: String): String? = _client?.databases()?.get(database)?.schema()
+    fun tryFetchSchema(database: String): String? = _driver?.databases()?.get(database)?.schema()
+
+    fun tryFetchTypeSchema(database: String): String? = _driver?.databases()?.get(database)?.typeSchema()
 
     fun session(database: String, type: TypeDBSession.Type = DATA): TypeDBSession? {
-        return _client?.session(database, type)
+        return _driver?.session(database, type)
     }
 
     fun commitTransaction() = mayRunCommandAsync { session.transaction.commit() }
@@ -238,8 +241,8 @@ class ClientState constructor(
             statusAtomic.compareAndSet(expected = CONNECTING, new = DISCONNECTED)
         ) {
             session.close()
-            _client?.close()
-            _client = null
+            _driver?.close()
+            _driver = null
         }
     }
 }

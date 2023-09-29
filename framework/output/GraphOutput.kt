@@ -20,7 +20,7 @@ package com.vaticle.typedb.studio.framework.output
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.client.api.answer.ConceptMap
+import com.vaticle.typedb.driver.api.answer.ConceptMap
 import com.vaticle.typedb.studio.framework.graph.GraphVisualiser
 import com.vaticle.typedb.studio.framework.material.Form
 import com.vaticle.typedb.studio.framework.material.Icon

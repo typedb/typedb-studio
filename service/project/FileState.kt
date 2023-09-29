@@ -193,7 +193,7 @@ class FileState internal constructor(
     }
 
     fun mayRunSnippet(snippet: String) {
-        projectSrv.client.run(snippet)?.let { runners.launched(it) }
+        projectSrv.driver.run(snippet)?.let { runners.launched(it) }
     }
 
     fun isChanged() {

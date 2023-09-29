@@ -32,8 +32,8 @@ import com.vaticle.force.graph.force.YForce
 import com.vaticle.force.graph.impl.BasicSimulation
 import com.vaticle.force.graph.impl.BasicVertex
 import com.vaticle.force.graph.util.RandomEffects
-import com.vaticle.typedb.client.api.answer.ConceptMap
-import com.vaticle.typedb.client.api.logic.Explanation
+import com.vaticle.typedb.driver.api.answer.ConceptMap
+import com.vaticle.typedb.driver.api.logic.Explanation
 import com.vaticle.typedb.studio.framework.graph.Graph.Physics.Constants.COLLIDE_RADIUS
 import com.vaticle.typedb.studio.framework.graph.Graph.Physics.Constants.CURVE_COLLIDE_RADIUS
 import com.vaticle.typedb.studio.framework.graph.Graph.Physics.Constants.CURVE_COMPRESSION_POWER

@@ -32,10 +32,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.client.api.concept.Concept
-import com.vaticle.typedb.client.api.concept.thing.Attribute
-import com.vaticle.typedb.client.api.concept.thing.Thing
-import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.driver.api.concept.Concept
+import com.vaticle.typedb.driver.api.concept.thing.Attribute
+import com.vaticle.typedb.driver.api.concept.thing.Thing
+import com.vaticle.typedb.driver.api.concept.type.Type
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Browsers
@@ -133,7 +133,7 @@ class ConceptPreview constructor(
         return listOfNotNull(
             Property.Generic(Label.TYPE) { ConceptTypePreview(concept) },
             if (concept is Thing) Property.String(Label.INTERNAL_ID, concept.iid) else null,
-            if (concept is Attribute<*>) Property.String(Label.VALUE, attributeValue(concept)) else null,
+            if (concept is Attribute) Property.String(Label.VALUE, attributeValue(concept)) else null,
         )
     }
 }

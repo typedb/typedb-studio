@@ -16,7 +16,7 @@
  *
  */
 
-// We need to access the private function StudioState.client.session.tryOpen, this allows us to.
+// We need to access the private function StudioState.driver.session.tryOpen, this allows us to.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package com.vaticle.typedb.studio.test.integration.common
@@ -29,10 +29,10 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.vaticle.typedb.client.TypeDB
-import com.vaticle.typedb.client.api.TypeDBOptions
-import com.vaticle.typedb.client.api.TypeDBSession
-import com.vaticle.typedb.client.api.TypeDBTransaction
+import com.vaticle.typedb.driver.TypeDB
+import com.vaticle.typedb.driver.api.TypeDBOptions
+import com.vaticle.typedb.driver.api.TypeDBSession
+import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
@@ -150,21 +150,21 @@ object StudioActions {
         // clicked.
         composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
-        Service.client.tryConnectToTypeDBAsync(address) {}
+        Service.driver.tryConnectToTypeDBAsync(address) {}
 
         waitUntilTrue(composeRule) {
-            Service.client.isConnected
+            Service.driver.isConnected
         }
     }
 
     suspend fun createDatabase(composeRule: ComposeContentTestRule, dbName: String) {
         composeRule.onAllNodesWithText(Label.SELECT_DATABASE).assertAll(hasClickAction())
 
-        Service.client.tryCreateDatabase(dbName) {}
+        Service.driver.tryCreateDatabase(dbName) {}
 
         waitUntilTrue(composeRule) {
-            Service.client.refreshDatabaseList()
-            Service.client.databaseList.contains(dbName)
+            Service.driver.refreshDatabaseList()
+            Service.driver.databaseList.contains(dbName)
         }
     }
 
@@ -177,15 +177,15 @@ object StudioActions {
 
         clickIcon(composeRule, Icon.ADD)
 
-        Service.client.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
-        Service.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
+        Service.driver.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
+        Service.driver.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
 
         clickText(composeRule, Label.SCHEMA.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
         waitUntilTrue(composeRule) {
-            Service.client.session.type == TypeDBSession.Type.SCHEMA &&
-                    Service.client.session.transaction.type == TypeDBTransaction.Type.WRITE
+            Service.driver.session.type == TypeDBSession.Type.SCHEMA &&
+                    Service.driver.session.transaction.type == TypeDBTransaction.Type.WRITE
         }
 
         waitUntilTrue(composeRule) {
@@ -195,7 +195,7 @@ object StudioActions {
 
         clickIcon(composeRule, Icon.RUN)
         waitUntilTrue(composeRule) {
-            !Service.client.session.transaction.hasRunningQuery
+            !Service.driver.session.transaction.hasRunningQuery
         }
 
         clickIcon(composeRule, Icon.COMMIT)
@@ -209,15 +209,15 @@ object StudioActions {
 
         clickIcon(composeRule, Icon.ADD)
 
-        Service.client.session.tryOpen(dbName, TypeDBSession.Type.DATA)
-        Service.client.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
+        Service.driver.session.tryOpen(dbName, TypeDBSession.Type.DATA)
+        Service.driver.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
 
         clickText(composeRule, Label.DATA.lowercase())
         clickText(composeRule, Label.WRITE.lowercase())
 
         waitUntilTrue(composeRule) {
-            Service.client.session.type == TypeDBSession.Type.DATA &&
-                    Service.client.session.transaction.type == TypeDBTransaction.Type.WRITE
+            Service.driver.session.type == TypeDBSession.Type.DATA &&
+                    Service.driver.session.transaction.type == TypeDBTransaction.Type.WRITE
         }
 
         waitUntilTrue(composeRule) {
@@ -227,7 +227,7 @@ object StudioActions {
 
         clickIcon(composeRule, Icon.RUN)
         waitUntilTrue(composeRule) {
-            !Service.client.session.transaction.hasRunningQuery
+            !Service.driver.session.transaction.hasRunningQuery
         }
 
         clickIcon(composeRule, Icon.COMMIT)
@@ -241,8 +241,8 @@ object StudioActions {
     ) {
         val queryString = readQueryFileToString(queryFileName)
 
-        TypeDB.coreClient(address).use { client ->
-            client.session(dbName, TypeDBSession.Type.DATA, TypeDBOptions.core().infer(true)).use { session ->
+        TypeDB.coreDriver(address).use { driver ->
+            driver.session(dbName, TypeDBSession.Type.DATA, TypeDBOptions().infer(true)).use { session ->
                 session.transaction(TypeDBTransaction.Type.READ).use { transaction ->
                     val results = ArrayList<String>()
                     val query = TypeQL.parseQuery<TypeQLMatch>(queryString)

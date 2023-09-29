@@ -32,7 +32,7 @@ import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.P
 import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.PATH_NOT_READABLE
 import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.PATH_NOT_WRITABLE
 import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
-import com.vaticle.typedb.studio.service.connection.ClientState
+import com.vaticle.typedb.studio.service.connection.DriverState
 import com.vaticle.typedb.studio.service.page.PageService
 import java.nio.file.Path
 import java.util.concurrent.LinkedBlockingQueue
@@ -50,7 +50,7 @@ class ProjectService constructor(
     internal val appData: DataService,
     internal val notification: NotificationService,
     internal val confirmation: ConfirmationService,
-    internal val client: ClientState,
+    internal val driver: DriverState,
     internal val pages: PageService
 ) {
 

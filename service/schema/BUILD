@@ -36,8 +36,8 @@ kt_jvm_library(
         "//service/page",
 
         # External Vaticle Dependencies
-        "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_client_java//common",
+        "@vaticle_typedb_driver//java/api",
+        "@vaticle_typedb_driver//java/common",
         "@vaticle_typedb_common//:common",
         "@vaticle_typeql//java/common",
         "@vaticle_typeql//java:typeql-lang",

@@ -21,10 +21,13 @@ load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 package(default_visibility = ["//test/integration:__pkg__"])
 
 skiko_runtime_platform = select({
-     "@vaticle_dependencies//util/platform:is_mac": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64"],
-     "@vaticle_dependencies//util/platform:is_linux": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64"],
-     "@vaticle_dependencies//util/platform:is_windows": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64"],
-     "//conditions:default": ["INVALID"]})
+    "@vaticle_dependencies//util/platform:is_linux_arm64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_arm64"],
+    "@vaticle_dependencies//util/platform:is_linux_x86_64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64"],
+    "@vaticle_dependencies//util/platform:is_mac_arm64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_arm64"],
+    "@vaticle_dependencies//util/platform:is_mac_x86_64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64"],
+    "@vaticle_dependencies//util/platform:is_windows": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64"],
+    "//conditions:default": ["INVALID"],
+})
 
 kt_jvm_library(
     name = "common",
@@ -42,8 +45,8 @@ kt_jvm_library(
         "//service/page",
 
         # External Vaticle Dependencies
-        "@vaticle_typedb_client_java//api",
-        "@vaticle_typedb_client_java//:client-java",
+        "@vaticle_typedb_driver//java/api:api",
+        "@vaticle_typedb_driver//java:driver-java",
         "@vaticle_typedb_common//:common",
         "@vaticle_typedb_common//test:typedb-runner",
         "@vaticle_typeql//java:typeql-lang",

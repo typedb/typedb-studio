@@ -18,6 +18,31 @@
 version: 2.1
 orbs:
   win: circleci/windows@2.0.0
+
+executors:
+  linux-arm64:
+    machine:
+      image: ubuntu-2204:current
+      resource_class: arm.medium
+    working_directory: ~/typedb-studio
+
+  linux-x86_64:
+    machine:
+      image: ubuntu-2204:current
+    working_directory: ~/typedb-studio
+
+  mac-arm64:
+    macos:
+      xcode: "14.2.0"
+    resource_class: macos.m1.medium.gen1
+    working_directory: ~/typedb-studio
+
+  mac-x86_64:
+    macos:
+      xcode: "14.2.0"
+    working_directory: ~/typedb-studio
+
+
 commands:
 
   install-bazel-linux-x86_64:
@@ -46,10 +71,8 @@ commands:
           no_output_timeout: 120m
 
 jobs:
-  build-mac:
-    macos:
-      xcode: "12.5.1"
-    working_directory: ~/typedb-studio
+  build-mac-arm64:
+    executor: mac-arm64
     steps:
       - checkout
       - install-bazel-mac
@@ -66,7 +89,63 @@ jobs:
           paths:
             - ./*
 
-  build-windows:
+  build-mac-x86_64:
+    executor: mac-x86_64
+    steps:
+      - checkout
+      - install-bazel-mac
+      - run: |
+          export ARTIFACT_USERNAME=$REPO_VATICLE_USERNAME
+          export ARTIFACT_PASSWORD=$REPO_VATICLE_PASSWORD
+          bazel run @vaticle_dependencies//distribution/artifact:create-netrc
+      - run: bazel build //:assemble-platform --define APPLE_CODE_SIGN=yes --define APPLE_ID=$APPLE_ID --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD --spawn_strategy=local
+      - run: |
+          mkdir -p ~/src && cp bazel-bin/assemble-platform.zip ~/src
+          mkdir -p ~/dist && cd ~/dist && jar xf ~/src/assemble-platform.zip
+      - persist_to_workspace:
+          root: ~/dist
+          paths:
+            - ./*
+
+  build-linux-arm64:
+    executor: linux-arm64
+    steps:
+      - checkout
+      - install-bazel-linux-arm64
+      - run: bazel build //:assemble-platform
+      - run: bazel build //:assemble-linux-targz
+      - run: |
+          mkdir -p ~/src
+          mkdir -p ~/dist
+          cp bazel-bin/typedb-studio-linux.tar.gz ~/dist/typedb-studio-linux-arm64-$(cat VERSION).tar.gz
+          cp bazel-bin/assemble-platform.zip ~/src
+          cd ~/dist
+          jar xf ~/src/assemble-platform.zip
+      - persist_to_workspace:
+          root: ~/dist
+          paths:
+            - ./*
+
+  build-linux-x86_64:
+    executor: linux-x86_64
+    steps:
+      - checkout
+      - install-bazel-linux-x86_64
+      - run: bazel build //:assemble-platform
+      - run: bazel build //:assemble-linux-targz
+      - run: |
+          mkdir -p ~/src
+          mkdir -p ~/dist
+          cp bazel-bin/typedb-studio-linux.tar.gz ~/dist/typedb-studio-linux-x86_64-$(cat VERSION).tar.gz
+          cp bazel-bin/assemble-platform.zip ~/src
+          cd ~/dist
+          jar xf ~/src/assemble-platform.zip
+      - persist_to_workspace:
+          root: ~/dist
+          paths:
+            - ./*
+
+  build-windows-x86_64:
     executor:
       name: win/default
       shell: cmd.exe
@@ -80,31 +159,8 @@ jobs:
           paths:
             - ./*
 
-  build-linux:
-    machine:
-      image: ubuntu-2004:202101-01
-    working_directory: ~/typedb-studio
-    steps:
-      - checkout
-      - install-bazel-linux-x86_64
-      - run: bazel build //:assemble-platform
-      - run: bazel build //:assemble-linux-targz
-      - run: |
-          mkdir -p ~/src
-          mkdir -p ~/dist
-          cp bazel-bin/typedb-studio-linux.tar.gz ~/dist/typedb-studio-linux-$(cat VERSION).tar.gz
-          cp bazel-bin/assemble-platform.zip ~/src
-          cd ~/dist
-          jar xf ~/src/assemble-platform.zip
-      - persist_to_workspace:
-          root: ~/dist
-          paths:
-            - ./*
-
   deploy-github:
-    machine:
-      image: ubuntu-2004:202101-01
-    working_directory: ~/typedb-studio
+    executor: linux-x86_64
     steps:
       - attach_workspace:
           at: ~/dist
@@ -119,9 +175,7 @@ jobs:
               -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION) ~/dist/
 
   deploy-brew:
-    machine:
-      image: ubuntu-2004:202101-01
-    working_directory: ~/typedb-studio
+    executor: linux-x86_64
     steps:
       - attach_workspace:
           at: ~/dist
@@ -159,9 +213,11 @@ workflows:
             branches:
               only: release
           requires:
-            - build-linux
-            - build-mac
-            - build-windows
+            - build-linux-arm64
+            - build-linux-x86_64
+            - build-mac-arm64
+            - build-mac-x86_64
+            - build-windows-x86_64
       - deploy-approval:
           type: approval
           requires:

@@ -26,15 +26,15 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.client.api.answer.ConceptMap
-import com.vaticle.typedb.client.api.answer.ConceptMapGroup
-import com.vaticle.typedb.client.api.answer.Numeric
-import com.vaticle.typedb.client.api.answer.NumericGroup
-import com.vaticle.typedb.client.api.concept.Concept
-import com.vaticle.typedb.client.api.concept.thing.Attribute
-import com.vaticle.typedb.client.api.concept.thing.Relation
-import com.vaticle.typedb.client.api.concept.thing.Thing
-import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.driver.api.answer.ConceptMap
+import com.vaticle.typedb.driver.api.answer.ConceptMapGroup
+import com.vaticle.typedb.driver.api.answer.Numeric
+import com.vaticle.typedb.driver.api.answer.NumericGroup
+import com.vaticle.typedb.driver.api.concept.Concept
+import com.vaticle.typedb.driver.api.concept.thing.Attribute
+import com.vaticle.typedb.driver.api.concept.thing.Relation
+import com.vaticle.typedb.driver.api.concept.thing.Thing
+import com.vaticle.typedb.driver.api.concept.type.Type
 import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.editor.TextEditor
@@ -196,9 +196,9 @@ internal class LogOutput constructor(
     }
 
     private fun loadToString(conceptMap: ConceptMap): String {
-        val content = conceptMap.map().map {
-            "$" + it.key + " " + loadToString(it.value) + ";"
-        }.stream().collect(Collectors.joining("\n"))
+        val content = conceptMap.variables().map {
+            "$" + it + " " + loadToString(conceptMap.get(it)) + ";"
+        }.collect(Collectors.joining("\n"))
 
         val str = StringBuilder("{")
         if (content.lines().size > 1) str.append("\n").append(Strings.indent(content)).append("\n")
@@ -218,7 +218,7 @@ internal class LogOutput constructor(
     private fun printType(type: Type): String {
         var str = TypeQLToken.Constraint.TYPE.toString() + " " + type.label
         transactionState.transaction?.let {
-            type.asRemote(it).supertype?.let {
+            type.getSupertype(it)?.let {
                 str += " " + TypeQLToken.Constraint.SUB + " " + it.label.scopedName()
             }
         }
@@ -228,7 +228,7 @@ internal class LogOutput constructor(
     private fun printThing(thing: Thing): String {
         val str = StringBuilder()
         when (thing) {
-            is Attribute<*> -> str.append(Strings.valueToString(thing.value))
+            is Attribute -> str.append(Strings.valueToString(thing.value))
             else -> str.append(TypeQLToken.Constraint.IID.toString() + " " + thing.asThing().iid)
         }
         if (thing is Relation) str.append(" ").append(printRolePlayers(thing.asThing().asRelation()))
@@ -239,7 +239,7 @@ internal class LogOutput constructor(
 
     private fun printRolePlayers(relation: Relation): String {
         val rolePlayers = transactionState.transaction?.let {
-            relation.asRemote(it).playersByRoleType.flatMap { (role, players) ->
+            relation.getPlayersByRoleType(it).flatMap { (role, players) ->
                 players.map { player -> role.label.name() + ": " + TypeQLToken.Constraint.IID + " " + player.iid }
             }.stream().collect(Collectors.joining(", "))
         } ?: " "

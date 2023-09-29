@@ -28,6 +28,8 @@ load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolch
 load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
 load("@vaticle_typedb_common//test:rules.bzl", "native_typedb_artifact")
 load("@vaticle_bazel_distribution//artifact:rules.bzl", "artifact_extractor")
+load("@vaticle_dependencies//util/platform:constraints.bzl", "constraint_linux_arm64", "constraint_linux_x86_64",
+     "constraint_mac_arm64", "constraint_mac_x86_64", "constraint_win_x86_64")
 
 package(default_visibility = ["//test/integration:__subpackages__"])
 kt_jvm_library(
@@ -80,42 +82,69 @@ define_kt_toolchain(
 )
 
 java_binary(
-    name = "studio-bin-mac",
+    name = "studio-bin-linux-arm64",
     main_class = "com.vaticle.typedb.studio.Studio",
     runtime_deps = [
         "//:studio",
-        "@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64",
+        "@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_arm64",
     ],
     classpath_resources = ["//config/logback:logback-test-xml"],
+    target_compatible_with = constraint_linux_arm64,
 )
 
 java_binary(
-    name = "studio-bin-windows",
-    main_class = "com.vaticle.typedb.studio.Studio",
-    runtime_deps = [
-        "//:studio",
-        "@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64",
-    ],
-    classpath_resources = ["//config/logback:logback-test-xml"],
-)
-
-java_binary(
-    name = "studio-bin-linux",
+    name = "studio-bin-linux-x86_64",
     main_class = "com.vaticle.typedb.studio.Studio",
     runtime_deps = [
         "//:studio",
         "@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64",
     ],
     classpath_resources = ["//config/logback:logback-test-xml"],
+    target_compatible_with = constraint_linux_x86_64,
+)
+
+java_binary(
+    name = "studio-bin-mac-arm64",
+    main_class = "com.vaticle.typedb.studio.Studio",
+    runtime_deps = [
+        "//:studio",
+        "@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_arm64",
+    ],
+    classpath_resources = ["//config/logback:logback-test-xml"],
+    target_compatible_with = constraint_mac_arm64,
+)
+
+java_binary(
+    name = "studio-bin-mac-x86_64",
+    main_class = "com.vaticle.typedb.studio.Studio",
+    runtime_deps = [
+        "//:studio",
+        "@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64",
+    ],
+    classpath_resources = ["//config/logback:logback-test-xml"],
+    target_compatible_with = constraint_mac_x86_64,
+)
+
+java_binary(
+    name = "studio-bin-windows-x86_64",
+    main_class = "com.vaticle.typedb.studio.Studio",
+    runtime_deps = [
+        "//:studio",
+        "@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64",
+    ],
+    classpath_resources = ["//config/logback:logback-test-xml"],
+    target_compatible_with = constraint_win_x86_64,
 )
 
 java_deps(
     name = "assemble-deps",
     target = select({
-        "@vaticle_dependencies//util/platform:is_mac": ":studio-bin-mac",
-        "@vaticle_dependencies//util/platform:is_linux": ":studio-bin-linux",
-        "@vaticle_dependencies//util/platform:is_windows": ":studio-bin-windows",
-        "//conditions:default": ":studio-bin-mac",
+        "@vaticle_dependencies//util/platform:is_mac_arm64": ":studio-bin-mac-arm64",
+        "@vaticle_dependencies//util/platform:is_mac_x86_64": ":studio-bin-mac-x86_64",
+        "@vaticle_dependencies//util/platform:is_linux_arm64": ":studio-bin-linux-arm64",
+        "@vaticle_dependencies//util/platform:is_linux_x86_64": ":studio-bin-linux-x86_64",
+        "@vaticle_dependencies//util/platform:is_win_x86_64": ":studio-bin-windows-x86_64",
+        "//conditions:default": "INVALID",
     }),
     java_deps_root = "lib/",
 )
@@ -129,9 +158,11 @@ assemble_jvm_platform(
     name = "assemble-platform",
     image_name = "TypeDB Studio",
     image_filename = "typedb-studio-" + select({
-        "@vaticle_dependencies//util/platform:is_mac": "mac",
-        "@vaticle_dependencies//util/platform:is_linux": "linux",
-        "@vaticle_dependencies//util/platform:is_windows": "windows",
+        "@vaticle_dependencies//util/platform:is_mac_arm64": "mac-arm64",
+        "@vaticle_dependencies//util/platform:is_mac_x86_64": "mac-x86_64",
+        "@vaticle_dependencies//util/platform:is_linux_arm64": "linux-arm64",
+        "@vaticle_dependencies//util/platform:is_linux_x86_64": "linux-x86_64",
+        "@vaticle_dependencies//util/platform:is_win_x86_64": "windows-x86_64",
         "//conditions:default": "INVALID",
     }),
     description = "TypeDB's Integrated Development Environment",
@@ -233,9 +264,9 @@ artifact_extractor(
     artifact = ":native-typedb-artifact",
 )
 
-# CI targets that are not declared in any BUILD file, but are called externally
+# Tools to be built during `bazel build //...`
 filegroup(
-    name = "ci",
+    name = "tools",
     data = [
         "@vaticle_dependencies//distribution/artifact:create-netrc",
         "@vaticle_dependencies//tool/bazelinstall:remote_cache_setup.sh",

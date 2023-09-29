@@ -21,11 +21,11 @@ package com.vaticle.typedb.studio.service.connection
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.client.api.TypeDBOptions
-import com.vaticle.typedb.client.api.TypeDBSession
-import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
-import com.vaticle.typedb.client.common.exception.TypeDBClientException
+import com.vaticle.typedb.driver.api.TypeDBOptions
+import com.vaticle.typedb.driver.api.TypeDBSession
+import com.vaticle.typedb.driver.api.TypeDBTransaction
+import com.vaticle.typedb.driver.api.TypeDBTransaction.Type.READ
+import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.PreferenceService
 import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicReference
 import mu.KotlinLogging
 
 class SessionState constructor(
-    internal val client: ClientState,
+    internal val driver: DriverState,
     private val notificationSrv: NotificationService,
     preferenceSrv: PreferenceService
 ) {
@@ -66,20 +66,20 @@ class SessionState constructor(
         if (isOpen && this.database == database && this.type == type) return
         if (this.database != database) close() else reset()
         try {
-            _session.set(client.session(database, type)?.apply { onClose { close(SESSION_CLOSED_ON_SERVER) } })
+            _session.set(driver.session(database, type)?.apply { onClose { close(SESSION_CLOSED_ON_SERVER) } })
             if (_session.get()?.isOpen == true) {
                 this.database = database
                 this.type = type
                 isOpenAtomic.set(true)
                 onOpen.forEach { it() }
             } else isOpenAtomic.set(false)
-        } catch (exception: TypeDBClientException) {
+        } catch (exception: TypeDBDriverException) {
             notificationSrv.userError(LOGGER, FAILED_TO_OPEN_SESSION, type, database)
             isOpenAtomic.set(false)
         }
     }
 
-    fun typeSchema(): String? = _session.get()?.database()?.typeSchema()
+    fun typeSchema(): String? = database?.let { driver.tryFetchTypeSchema(it) }
 
     fun transaction(type: TypeDBTransaction.Type = READ, options: TypeDBOptions? = null): TypeDBTransaction? {
         return if (!isOpenAtomic.atomic.get()) null

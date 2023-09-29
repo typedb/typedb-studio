@@ -18,17 +18,17 @@
 
 package com.vaticle.typedb.studio.framework.graph
 
-import com.vaticle.typedb.client.api.TypeDBTransaction
-import com.vaticle.typedb.client.api.answer.ConceptMap
-import com.vaticle.typedb.client.api.concept.Concept
-import com.vaticle.typedb.client.api.concept.thing.Attribute
-import com.vaticle.typedb.client.api.concept.thing.Relation
-import com.vaticle.typedb.client.api.concept.thing.Thing
-import com.vaticle.typedb.client.api.concept.type.RoleType
-import com.vaticle.typedb.client.api.concept.type.ThingType
-import com.vaticle.typedb.client.api.concept.type.Type
-import com.vaticle.typedb.client.api.logic.Explanation
-import com.vaticle.typedb.client.common.exception.TypeDBClientException
+import com.vaticle.typedb.driver.api.TypeDBTransaction
+import com.vaticle.typedb.driver.api.answer.ConceptMap
+import com.vaticle.typedb.driver.api.concept.Concept
+import com.vaticle.typedb.driver.api.concept.thing.Attribute
+import com.vaticle.typedb.driver.api.concept.thing.Relation
+import com.vaticle.typedb.driver.api.concept.thing.Thing
+import com.vaticle.typedb.driver.api.concept.type.RoleType
+import com.vaticle.typedb.driver.api.concept.type.ThingType
+import com.vaticle.typedb.driver.api.concept.type.Type
+import com.vaticle.typedb.driver.api.logic.Explanation
+import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.EXPLAIN_NOT_ENABLED
@@ -71,7 +71,8 @@ class GraphBuilder(
     }
 
     fun loadConceptMap(conceptMap: ConceptMap, answerSource: AnswerSource = AnswerSource.Query) {
-        conceptMap.map().entries.forEach { (varName: String, concept: Concept) ->
+        conceptMap.variables().forEach { varName: String ->
+            val concept = conceptMap.get(varName)
             when {
                 concept is Thing -> {
                     val (added, vertex) = putVertexIfAbsent(concept)
@@ -167,7 +168,7 @@ class GraphBuilder(
     private fun renderEdges(type: Type, rendered: MutableMap<Vertex, Set<Pair<String, Vertex.Type>>>): Set<Pair<String, Vertex.Type>> {
         if (type.isRoot) return emptySet()
 
-        val superType = type.asRemote(transactionState.transaction).supertype!!
+        val superType = type.getSupertype(transactionState.transaction)!!
         if (!allTypeVertices.containsKey(type.label.name())) return renderEdges(superType, rendered)
 
         val typeVertex = allTypeVertices[type.label.name()]!!
@@ -192,14 +193,15 @@ class GraphBuilder(
 
     private fun getSchemaEdges(schemaVertex: Vertex.Type): Set<Pair<String, Vertex.Type>> {
         val pairs: MutableSet<Pair<String, Vertex.Type>> = mutableSetOf()
-        val schemaVertexRemoteThingType = schemaVertex.type.asRemote(transactionState.transaction).asThingType()
-        schemaVertexRemoteThingType.supertypes
+        val schemaVertexThingType = schemaVertex.type.asThingType()
+        val tx = transactionState.transaction
+        schemaVertexThingType.getSupertypes(tx)
             .filter {superType -> !superType.isRoot && !superType.equals(schemaVertex.type) && allTypeVertices.containsKey(superType.label.name()) }
             .forEach {superType -> pairs.add(Pair(SUB, allTypeVertices[superType.label.name()]!!))}
-        schemaVertexRemoteThingType.owns
+        schemaVertexThingType.getOwns(tx)
             .filter {attrType ->  allTypeVertices.containsKey(attrType.label.name())}
             .forEach {attrType -> pairs.add(Pair(OWNS, allTypeVertices[attrType.label.name()]!!))}
-        schemaVertexRemoteThingType.plays
+        schemaVertexThingType.getPlays(tx)
             .filter {plays -> allTypeVertices.containsKey(plays.label.scope().get())}
             .forEach {plays -> pairs.add(Pair(plays.label.name(), allTypeVertices[plays.label.scope().get()]!!))}
         return pairs
@@ -213,11 +215,11 @@ class GraphBuilder(
             this.explainables.computeIfAbsent(thingVertex) {
                 when (thing) {
                     is Relation -> explainables.relation(varName)
-                    is Attribute<*> -> explainables.attribute(varName)
+                    is Attribute -> explainables.attribute(varName)
                     else -> throw IllegalStateException("Inferred Thing was neither a Relation nor an Attribute")
                 }
             }
-        } catch (_: TypeDBClientException) {
+        } catch (_: TypeDBDriverException) {
             // TODO: Currently we need to catch this exception because not every Inferred concept is
             //       Explainable. Once that bug is fixed, remove this catch statement.
             /* do nothing */
@@ -303,7 +305,7 @@ class GraphBuilder(
 
     sealed class AnswerSource {
         object Query : AnswerSource()
-        class Explanation(val explanation: com.vaticle.typedb.client.api.logic.Explanation) : AnswerSource()
+        class Explanation(val explanation: com.vaticle.typedb.driver.api.logic.Explanation) : AnswerSource()
     }
 
     sealed class ThingEdgeCandidate {
@@ -337,7 +339,7 @@ class GraphBuilder(
         companion object {
             fun of(concept: Concept, vertex: Vertex, graphBuilder: GraphBuilder, transaction: TypeDBTransaction?): EdgeBuilder? {
                 return when (concept) {
-                    is com.vaticle.typedb.client.api.concept.thing.Thing -> {
+                    is com.vaticle.typedb.driver.api.concept.thing.Thing -> {
                         Thing(concept, vertex as Vertex.Thing, transaction, graphBuilder)
                     }
                     is ThingType -> {
@@ -349,12 +351,12 @@ class GraphBuilder(
         }
 
         class Thing(
-            val thing: com.vaticle.typedb.client.api.concept.thing.Thing,
+            val thing: com.vaticle.typedb.driver.api.concept.thing.Thing,
             private val thingVertex: Vertex.Thing,
             private val transaction: TypeDBTransaction?,
             ctx: GraphBuilder,
             ) : EdgeBuilder(ctx) {
-            private val remoteThing get() = transaction?.let { thing.asRemote(it) }
+            private val remoteThing get() = transaction?.let { thing }
 
             override fun build() {
                 loadIsaEdge()
@@ -375,7 +377,7 @@ class GraphBuilder(
                 // test for ability to own attributes, to ensure query will not throw during type inference
                 if (!canOwnAttributes()) return
                 graphBuilder.apply {
-                    remoteThing?.has?.forEach {
+                    remoteThing?.getHas(transaction)?.forEach {
                         val attributeVertex = graphBuilder.allThingVertices[it.iid] as? Vertex.Thing.Attribute
                         if (attributeVertex != null) {
                             addEdge(Edge.Has(thingVertex, attributeVertex, it.isInferred))
@@ -391,14 +393,14 @@ class GraphBuilder(
                 return graphBuilder.schema.typeAttributeOwnershipMap.getOrPut(typeLabel) {
                     // non-atomic update as Concept API call is idempotent and cheaper than locking the map
                     transaction?.let {
-                        thing.type.asRemote(it).owns.findAny().isPresent
+                        thing.type.getOwns(it).findAny().isPresent
                     } ?: false
                 }
             }
 
             private fun loadRoleplayerEdgesAndVertices() {
                 graphBuilder.apply {
-                    remoteThing?.asRelation()?.playersByRoleType?.entries?.forEach { (roleType, roleplayers) ->
+                    remoteThing?.asRelation()?.getPlayersByRoleType(transaction)?.entries?.forEach { (roleType, roleplayers) ->
                         roleplayers.forEach { rp ->
                             val result = putVertexIfAbsent(rp.iid, rp, newThingVertices, allThingVertices) {
                                 Vertex.Thing.of(rp, graph)

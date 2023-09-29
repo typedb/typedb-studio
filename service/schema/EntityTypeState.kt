@@ -18,10 +18,11 @@
 
 package com.vaticle.typedb.studio.service.schema
 
-import com.vaticle.typedb.client.api.concept.type.EntityType
-import com.vaticle.typedb.client.api.concept.type.Type
+import com.vaticle.typedb.driver.api.TypeDBTransaction
+import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
+import com.vaticle.typedb.driver.api.concept.type.EntityType
+import com.vaticle.typedb.driver.api.concept.type.Type
 import kotlin.streams.toList
-import mu.KotlinLogging
 
 class EntityTypeState internal constructor(
     conceptType: EntityType,
@@ -33,10 +34,11 @@ class EntityTypeState internal constructor(
 
     override fun isSameEncoding(conceptType: Type) = conceptType.isEntityType
     override fun asSameEncoding(conceptType: Type) = conceptType.asEntityType()!!
+    override fun fetchSameEncoding(tx: TypeDBTransaction, label: String) = tx.concepts().getEntityType(label)
     override fun typeStateOf(type: EntityType) = schemaSrv.typeStateOf(type)
 
     override fun requestSubtypesExplicit() = schemaSrv.mayRunReadTx { tx ->
-        conceptType.asRemote(tx).subtypesExplicit.toList()
+        conceptType.getSubtypes(tx, EXPLICIT).toList()
     }
 
     override fun initiateCreateSubtype(onSuccess: () -> Unit) =
@@ -47,9 +49,8 @@ class EntityTypeState internal constructor(
     ) = tryCreateSubtype(label, schemaSrv.createEntityTypeDialog) { tx ->
         val type = tx.concepts().putEntityType(label)
         if (isAbstract || !isRoot) {
-            val typeTx = type.asRemote(tx)
-            if (isAbstract) typeTx.setAbstract()
-            if (!isRoot) typeTx.setSupertype(conceptType)
+            if (isAbstract) type.setAbstract(tx)
+            if (!isRoot) type.setSupertype(tx, conceptType)
         }
     }
 
@@ -61,7 +62,7 @@ class EntityTypeState internal constructor(
     override fun tryChangeSupertype(
         supertypeState: EntityTypeState
     ) = super.tryChangeSupertype(schemaSrv.changeEntitySupertypeDialog) {
-        conceptType.asRemote(it).setSupertype(supertypeState.conceptType)
+        conceptType.setSupertype(it, supertypeState.conceptType)
     }
 
     override fun toString(): String = "TypeState.Entity: $conceptType"

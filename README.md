@@ -1,6 +1,6 @@
 [![Factory](https://factory.vaticle.com/api/status/vaticle/typedb-studio/badge.svg)](https://factory.vaticle.com/vaticle/typedb-studio)
-[![Discord](https://img.shields.io/discord/665254494820368395?color=7389D8&label=chat&logo=discord&logoColor=ffffff)](https://vaticle.com/discord)
-[![Discussion Forum](https://img.shields.io/discourse/https/forum.vaticle.com/topics.svg)](https://forum.vaticle.com)
+[![Discord](https://img.shields.io/discord/665254494820368395?color=7389D8&label=chat&logo=discord&logoColor=ffffff)](https://typedb.com/discord)
+[![Discussion Forum](https://img.shields.io/discourse/https/forum.typedb.com/topics.svg)](https://forum.typedb.com)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typedb-796de3.svg)](https://stackoverflow.com/questions/tagged/typedb)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typeql-3dce8c.svg)](https://stackoverflow.com/questions/tagged/typeql)
 
@@ -11,7 +11,7 @@
 TypeDB Studio is a fully-featured Integrated Development Environment (IDE) for [TypeDB](https://github.com/vaticle/typedb).
 
 You can utilise Studio as you would [TypeDB Console](https://github.com/vaticle/typedb-console)
-and the [TypeDB Clients](https://typedb.com/docs/clients/2.x/clients): to connect to your TypeDB instance and
+and the [TypeDB Driver](https://typedb.com/docs/drivers/2.x/drivers): to connect to your TypeDB instance and
 perform queries.
 
 Studio is an IDE designed for the end-to-end development of TypeDB databases, database queries, and data exploration,
@@ -53,8 +53,8 @@ to the Log Output window which is easily searchable (and supports regex matching
 
 [![Graph Visualisation](./docs/images/graph-vis-1.gif)](./docs/images/graph-vis-1.gif)
 
-Reasoning about text outputs in [TypeDB Console](https://docs.vaticle.com/docs/console/console) or through
-the various [TypeDB Clients](https://docs.vaticle.com/docs/client-api/overview) can be difficult to do for large
+Reasoning about text outputs in [TypeDB Console](https://docs.typedb.com/docs/console/console) or through
+the various [TypeDB Drivers](https://docs.typedb.com/docs/driver-api/overview) can be difficult to do for large
 datasets. Studio's advanced force-graph visualisation makes the underlying structure of data immediately apparent.
 
 ### Reasoning and Explanations
@@ -66,14 +66,14 @@ how the fact was inferred.
 
 ## Download TypeDB Studio
 
-You can download TypeDB Studio from the [Download Centre](https://vaticle.com/download#typedb-studio)
+You can download TypeDB Studio from the [Download Centre](https://typedb.com/download#typedb-studio)
 or [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
 
 ## Developer Resources
 
-- Documentation: https://docs.vaticle.com
-- Discussion Forum: https://forum.vaticle.com
-- Discord Chat Server: https://vaticle.com/discord
+- Documentation: https://docs.typedb.com
+- Discussion Forum: https://forum.typedb.com
+- Discord Chat Server: https://typedb.com/discord
 - Community Projects: https://github.com/typedb-osi
 
 ## Compiling and Running TypeDB Studio from Source
@@ -111,7 +111,7 @@ and [Bazel](https://bazel.build). Thank you to the developers!
 
 ## Licensing
 
-This software is developed by [Vaticle](https://vaticle.com/). It's released under the GNU Affero GENERAL PUBLIC
+This software is developed by [Vaticle](https://typedb.com/). It's released under the GNU Affero GENERAL PUBLIC
 LICENSE, Version 3, 19 November 2007. For license information, please
 see [LICENSE](https://github.com/vaticle/typedb-studio/blob/master/LICENSE). Vaticle also provides a commercial license
 for TypeDB Studio - get in touch with our team at commercial@vaticle.com.

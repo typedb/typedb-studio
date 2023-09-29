@@ -16,12 +16,12 @@
  *
  */
 
-// We need to access the private function StudioState.client.session.tryOpen, this allows us to.
+// We need to access the private function StudioState.driver.session.tryOpen, this allows us to.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package com.vaticle.typedb.studio.test.integration
 
-import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.driver.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
@@ -80,17 +80,17 @@ class TextEditorTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                Service.client.session.tryOpen(
+                Service.driver.session.tryOpen(
                     database = testID,
                     TypeDBSession.Type.SCHEMA
                 )
 
                 waitUntilTrue(composeRule) {
-                    Service.client.session.type == TypeDBSession.Type.SCHEMA
+                    Service.driver.session.type == TypeDBSession.Type.SCHEMA
                 }
 
                 waitUntilAssertionPasses(composeRule) {
-                    assert(Service.client.session.typeSchema()!!.contains(commitDateAttributeName))
+                    assert(Service.driver.session.typeSchema()!!.contains(commitDateAttributeName))
                 }
 
                 waitUntilAssertionPasses(composeRule) {
@@ -134,10 +134,10 @@ class TextEditorTest : IntegrationTest() {
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
 
-                Service.client.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
+                Service.driver.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
 
                 waitUntilTrue(composeRule) {
-                    Service.client.session.type == TypeDBSession.Type.SCHEMA
+                    Service.driver.session.type == TypeDBSession.Type.SCHEMA
                 }
 
                 clickText(composeRule, Label.SCHEMA.lowercase())
@@ -150,7 +150,7 @@ class TextEditorTest : IntegrationTest() {
 
                 waitUntilAssertionPasses(composeRule) {
                     assertNotEquals(
-                        Service.client.session.transaction.transaction!!.concepts()
+                        Service.driver.session.transaction.transaction!!.concepts()
                             .getAttributeType(commitDateAttributeName),
                         null
                     )
@@ -160,7 +160,7 @@ class TextEditorTest : IntegrationTest() {
 
                 waitUntilAssertionPasses(composeRule) {
                     assertEquals(
-                        Service.client.session.transaction.transaction!!.concepts()
+                        Service.driver.session.transaction.transaction!!.concepts()
                             .getAttributeType(commitDateAttributeName),
                         null
                     )

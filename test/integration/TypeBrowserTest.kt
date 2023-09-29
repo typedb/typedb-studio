@@ -16,13 +16,13 @@
  *
  */
 
-// We need to access the private function StudioState.client.session.tryOpen, this allows us to.
+// We need to access the private function StudioState.driver.session.tryOpen, this allows us to.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package com.vaticle.typedb.studio.test.integration
 
 import androidx.compose.ui.test.onNodeWithText
-import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.driver.api.TypeDBSession
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
@@ -76,13 +76,13 @@ class TypeBrowserTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                Service.client.session.tryOpen(
+                Service.driver.session.tryOpen(
                     database = testID,
                     TypeDBSession.Type.DATA
                 )
 
                 waitUntilTrue(composeRule) {
-                    Service.client.session.type == TypeDBSession.Type.DATA
+                    Service.driver.session.type == TypeDBSession.Type.DATA
                 }
 
                 clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)
@@ -105,13 +105,13 @@ class TypeBrowserTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                Service.client.session.tryOpen(
+                Service.driver.session.tryOpen(
                     database = testID,
                     TypeDBSession.Type.DATA
                 )
 
                 waitUntilTrue(composeRule) {
-                    Service.client.session.type == TypeDBSession.Type.DATA
+                    Service.driver.session.type == TypeDBSession.Type.DATA
                 }
 
                 clickAllInstancesOfIcon(composeRule, Icon.COLLAPSE)

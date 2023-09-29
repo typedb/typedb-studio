@@ -21,14 +21,15 @@ package com.vaticle.typedb.studio.service.schema
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.client.api.concept.Concept
-import com.vaticle.typedb.client.api.concept.type.AttributeType
-import com.vaticle.typedb.client.api.concept.type.ThingType
-import com.vaticle.typedb.client.api.concept.type.Type
-import com.vaticle.typeql.lang.common.TypeQLToken.Annotation.KEY
+import com.vaticle.typedb.driver.api.TypeDBTransaction
+import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
+import com.vaticle.typedb.driver.api.concept.type.AttributeType
+import com.vaticle.typedb.driver.api.concept.type.ThingType
+import com.vaticle.typedb.driver.api.concept.type.ThingType.Annotation.key
+import com.vaticle.typedb.driver.api.concept.type.Type
+import com.vaticle.typedb.driver.api.concept.value.Value
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
-import mu.KotlinLogging
 
 class AttributeTypeState internal constructor(
     conceptType: AttributeType,
@@ -57,7 +58,7 @@ class AttributeTypeState internal constructor(
     override val info get() = valueType?.name?.lowercase()
     override val parent: AttributeTypeState? get() = supertype
 
-    val valueType: Concept.ValueType? = if (!conceptType.isRoot) conceptType.valueType else null
+    val valueType: Value.Type? = if (!conceptType.isRoot) conceptType.valueType else null
     var ownerTypeProperties: List<AttTypeOwnerProperties> by mutableStateOf(listOf())
     val ownerTypes get() = ownerTypeProperties.map { it.ownerType }
     val ownerTypesExplicit get() = ownerTypeProperties.filter { !it.isInherited }.map { it.ownerType }
@@ -66,10 +67,11 @@ class AttributeTypeState internal constructor(
 
     override fun isSameEncoding(conceptType: Type) = conceptType.isAttributeType
     override fun asSameEncoding(conceptType: Type) = conceptType.asAttributeType()!!
+    override fun fetchSameEncoding(tx: TypeDBTransaction, label: String) = tx.concepts().getAttributeType(label)
     override fun typeStateOf(type: AttributeType) = schemaSrv.typeStateOf(type)
 
     override fun requestSubtypesExplicit() = schemaSrv.mayRunReadTx { tx ->
-        conceptType.asRemote(tx).subtypesExplicit.toList()
+        conceptType.getSubtypes(tx, EXPLICIT).toList()
     }
 
     override fun loadOtherConstraints() {
@@ -95,19 +97,18 @@ class AttributeTypeState internal constructor(
         }
 
         schemaSrv.mayRunReadTx { tx ->
-            val typeTx = conceptType.asRemote(tx)
             if (!loadedOwnerTypePropsAtomic.get()) {
                 loadedOwnerTypePropsAtomic.set(true)
-                typeTx.getOwnersExplicit(setOf(KEY)).forEach {
+                conceptType.getOwners(tx, setOf(key()), EXPLICIT).forEach {
                     load(it, isKey = true, isInherited = false)
                 }
-                typeTx.ownersExplicit.filter { !loaded.contains(it) }.forEach {
+                conceptType.getOwners(tx, EXPLICIT).filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = false, isInherited = false)
                 }
-                typeTx.getOwners(setOf(KEY)).filter { !loaded.contains(it) }.forEach {
+                conceptType.getOwners(tx, setOf(key())).filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = true, isInherited = true)
                 }
-                typeTx.owners.filter { !loaded.contains(it) }.forEach {
+                conceptType.getOwners(tx, EXPLICIT).filter { !loaded.contains(it) }.forEach {
                     load(it, isKey = false, isInherited = true)
                 }
                 ownerTypeProperties = properties
@@ -129,13 +130,12 @@ class AttributeTypeState internal constructor(
     )
 
     fun tryCreateSubtype(
-        label: String, isAbstract: Boolean, valueType: Concept.ValueType
+        label: String, isAbstract: Boolean, valueType: Value.Type
     ) = tryCreateSubtype(label, schemaSrv.createAttributeTypeDialog) { tx ->
         val type = tx.concepts().putAttributeType(label, valueType)
         if (isAbstract || !isRoot) {
-            val typeTx = type.asRemote(tx)
-            if (isAbstract) typeTx.setAbstract()
-            if (!isRoot) typeTx.setSupertype(conceptType)
+            if (isAbstract) type.setAbstract(tx)
+            if (!isRoot) type.setSupertype(tx, conceptType)
         }
     }
 
@@ -147,7 +147,7 @@ class AttributeTypeState internal constructor(
     override fun tryChangeSupertype(
         supertypeState: AttributeTypeState
     ) = super.tryChangeSupertype(schemaSrv.changeAttributeSupertypeDialog) {
-        conceptType.asRemote(it).setSupertype(supertypeState.conceptType)
+        conceptType.setSupertype(it, supertypeState.conceptType)
     }
 
     override fun toString(): String = "TypeState.Attribute: $conceptType"
