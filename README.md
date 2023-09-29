@@ -92,16 +92,18 @@ or [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
 
 2. Depending on your Operating System, you can compile and run TypeDB Studio with either one of the following commands.
    ```sh
-   $ bazel run //:studio-bin-mac
+   $ bazel run //:studio-bin-mac-arm64  # for Apple Silicon
+   $ bazel run //:studio-bin-mac-x86_64  # for Intel
    ```
    ```sh
-   $ bazel run //:studio-bin-windows
+   $ bazel run //:studio-bin-windows-x86_64
    ```
    ```sh
-   $ bazel run //:studio-bin-linux
+   $ bazel run //:studio-bin-linux-arm64  # for ARM
+   $ bazel run //:studio-bin-linux-x86_64  # for Intel
    ```
    You can also replace `run` with `build` in the command above, and Bazel will simply produce the JAR for TypeDB Studio
-   under `bazel-bin/studio-bin-<mac|windows|linux>.jar`.
+   under `bazel-bin/studio-bin-<mac|windows|linux>-<arm64|x86_64>.jar`.
 
 ## Contributions
 
