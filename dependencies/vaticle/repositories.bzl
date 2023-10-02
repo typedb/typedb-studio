@@ -39,12 +39,8 @@ def vaticle_typedb_common():
     )
 
 def vaticle_typedb_driver():
-    native.local_repository(
+    git_repository(
         name = "vaticle_typedb_driver",
-        path = "/Users/dmitriiubskii/workspace/assembly-workspace/typedb-driver",
+        remote = "https://github.com/vaticle/typedb-driver",
+        commit = "c682ca915e0739e9413fa06156f368e8214ec169",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
     )
-#    git_repository(
-#        name = "vaticle_typedb_driver",
-#        remote = "https://github.com/vaticle/typedb-driver",
-#        commit = "9fbf317598c62ad168439d2b95a49edc5203d6a1",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_client_java
-#    )
