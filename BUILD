@@ -203,7 +203,7 @@ assemble_targz(
 
 genrule(
     name = "invalid-checksum",
-    outs = [":invalid-checksum"],
+    outs = ["invalid-checksum.txt"],
     srcs = [],
     cmd = "echo > $@",
 )
