@@ -17,11 +17,19 @@
 
 cask 'typedb-studio' do
   version '{version}'
-  sha256 '{sha256}'
 
-  url "https://github.com/vaticle/typedb-studio/releases/download/{version}/typedb-studio-mac-{version}.dmg"
+  on_arm do
+    url "https://github.com/vaticle/typedb-studio/releases/download/{version}/typedb-studio-mac-arm64-{version}.dmg"
+    sha256 "{sha256-arm64}"
+  end
+
+  on_intel do
+    url "https://github.com/vaticle/typedb-studio/releases/download/{version}/typedb-studio-mac-x86_64-{version}.dmg"
+    sha256 "{sha256-x86_64}"
+  end
+
   name 'TypeDB Studio'
-  homepage 'https://vaticle.com'
+  homepage 'https://typedb.com'
 
   app "TypeDB Studio.app"
 

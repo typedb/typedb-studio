@@ -201,26 +201,32 @@ assemble_targz(
     visibility = ["//:__pkg__"],
 )
 
-# We can't currently use this because the files to be deployed come in via
-# CircleCI's shared drive and are therefore not Bazel targets.
-#deploy_github(
-#    name = "deploy-github",
-#    organisation = deployment_github['github.organisation'],
-#    repository = deployment_github['github.repository'],
-#    title = "TypeDB Studio",
-#    title_append_version = True,
-#    release_description = "//:RELEASE_NOTES_LATEST.md",
-#    archive = ":assemble-platform",
-#    version_file = ":VERSION",
-#    draft = False
-#)
+genrule(
+    name = "invalid-checksum",
+    outs = [":invalid-checksum"],
+    srcs = [],
+    cmd = "echo > $@",
+)
+
+label_flag(
+    name = "checksum-mac-arm64",
+    build_setting_default = ":invalid-checksum",
+)
+
+label_flag(
+    name = "checksum-mac-x86_64",
+    build_setting_default = ":invalid-checksum",
+)
 
 deploy_brew(
     name = "deploy-brew",
     snapshot = deployment['brew.snapshot'],
     release = deployment['brew.release'],
     formula = "//config/brew:typedb-studio.rb",
-#    checksum = "//:checksum",
+    file_substitutions = {
+        "//:checksum-mac-arm64": "{sha256-arm64}",
+        "//:checksum-mac-x86_64": "{sha256-x86_64}",
+    },
     version_file = "//:VERSION",
     type = "cask",
 )
