@@ -62,6 +62,9 @@ build:
         bazel test $(bazel query '//test/integration/... except kind(checkstyle_test, //test/integration/...)') --jobs=1 --spawn_strategy=local --test_output=errors
 
 release:
+  filter:
+    owner: vaticle
+    branch: master
   validation:
     validate-release-notes:
       image: vaticle-ubuntu-22.04
