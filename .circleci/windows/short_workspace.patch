@@ -1,0 +1,13 @@
+diff --git a/WORKSPACE b/WORKSPACE
+index 689b420f..5e3ecec8 100644
+--- a/WORKSPACE
++++ b/WORKSPACE
+@@ -15,7 +15,7 @@
+ # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ #
+ 
+-workspace(name = "vaticle_typedb_studio")
++workspace(name = "v")
+ 
+ ################################
+ # Load @vaticle_dependencies #
