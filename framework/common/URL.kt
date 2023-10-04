@@ -22,16 +22,16 @@ import java.net.URL
 
 object URL {
 
-    val DOCS_ENABLE_INFERENCE = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_ENABLE_INFERENCE_EXPLANATION = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_ENABLE_SNAPSHOT = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_MODE_INTERACTIVE = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_MODE_SCRIPT = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_SESSION_DATA = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_SESSION_SCHEMA = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_TRANSACTION_COMMIT = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_TRANSACTION_READ = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
-    val DOCS_TRANSACTION_CLOSE = URL("https://docs.vaticle.com") // TODO: provide accurate URL
-    val DOCS_TRANSACTION_ROLLBACK = URL("https://docs.vaticle.com") // TODO: provide accurate URL
-    val DOCS_TRANSACTION_WRITE = URL("https://docs.vaticle.com/") // TODO: provide accurate URL
+    val DOCS_ENABLE_INFERENCE = URL("https://typedb.com/docs/") // TODO: provide accurate URL
+    val DOCS_ENABLE_INFERENCE_EXPLANATION = URL("https://typedb.com/docs/") // TODO: provide accurate URL
+    val DOCS_ENABLE_SNAPSHOT = URL("https://typedb.com/docs/") // TODO: provide accurate URL
+    val DOCS_MODE_INTERACTIVE = URL("https://typedb.com/docs/") // TODO: provide accurate URL
+    val DOCS_MODE_SCRIPT = URL("https://typedb.com/docs/") // TODO: provide accurate URL
+    val DOCS_SESSION_DATA = URL("https://typedb.com/docs/") // TODO: provide accurate URL
+    val DOCS_SESSION_SCHEMA = URL("https://typedb.com/docs/") // TODO: provide accurate URL
+    val DOCS_TRANSACTION_COMMIT = URL("https://typedb.com/docs/") // TODO: provide accurate URL
+    val DOCS_TRANSACTION_READ = URL("https://typedb.com/docs/") // TODO: provide accurate URL
+    val DOCS_TRANSACTION_CLOSE = URL("https://typedb.com/docs") // TODO: provide accurate URL
+    val DOCS_TRANSACTION_ROLLBACK = URL("https://typedb.com/docs") // TODO: provide accurate URL
+    val DOCS_TRANSACTION_WRITE = URL("https://typedb.com/docs/") // TODO: provide accurate URL
 }

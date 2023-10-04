@@ -11,48 +11,47 @@ brew install --cask vaticle/tap/typedb-studio
 
 ### TypeDB Server Compatible Versions
 
-See the [compatibility table](https://docs.vaticle.com/docs/studio/overview#version-compatibility) at our Studio
+See the [compatibility table](https://typedb.com/docs/clients/2.x/studio#_version_compatibility) at our Studio
 documentation for which versions of Studio are compatible with which versions of TypeDB.
 
 ---
 
 
 ## New Features
-- **Refactor schema vertex rendering for graph visualisation**
+- **Deploy studio for each OS + Arch**
   
-  Previously, Studio would visualise 'owns' edges that are inherited multiple times, even if the type from which it inherited this ownership is also present on the graph with its own 'owns' edge to the same attribute type.
+  We deploy 5 separate distributions of TypeDB Studio, one per platform:
   
-  Now, Studio only visualises owns, plays and sub edges for the 'super-est' edges that own, plays or are subtypes for those types that are visible on the graph.
+  1. `linux-x86_64`
+  2. `linux-arm64`
+  3. `mac-x86_64`
+  4. `mac-arm64`
+  5. `windows-x86_64`
+  
+  Please be aware that this means TypeDB Studio distributions are no longer portable between Intel and Mac variants of the same system - eg. from an Intel mac to an ARM mac. 
   
   
-- **Bump TypeDB Client Java to 2.18**
+- **Upgrade to 2.24.x and implement native ARM64 targets**
   
-  We've bumped the java client that Studio uses to 2.18.
+  We update the underlying typedb-driver and dependencies, and add arm64 build targets.
   
   
 
 ## Bugs Fixed
-
+- **Set release compilation mode to optimized**
+  
+  We set the Bazel compilation mode for releases to `opt`.
+  
 
 ## Code Refactors
-- **Use remote concept API to derive has edges for graph visualisation**
-  
-  We've refactored the graph building process to derive 'has' edges from the remote concept API. This is hugely faster than the previous approach of running explicit reasoning queries per concept.
-  
-  
-- **Terminology update for Type Editor and Type Browser**
-  
-  We've renamed two parts of our system that pertain to the displaying of information about types. 
-  
-  
+
 
 ## Other Improvements
-- **Update release notes workflow**
-  
-  We integrate the new release notes tooling. The release notes are now to be written by a person and committed to the repo.
-  
-  
-- **Update CODEOWNERS**
+- **Fix CircleCI release workflow job references**
+
+- **Allow releasing from development branch**
+
+- **Update README.md**
 
     
 
