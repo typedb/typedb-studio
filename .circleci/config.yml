@@ -61,15 +61,6 @@ commands:
     steps:
       - run: brew install bazelisk
 
-  run-bazel:
-    parameters:
-      command:
-        type: string
-    steps:
-      - run:
-          command: bazel run @vaticle_dependencies//tool/bazelrun:rbe -- << parameters.command >>
-          no_output_timeout: 120m
-
 jobs:
   build-mac-arm64:
     executor: mac-arm64
@@ -197,15 +188,23 @@ jobs:
 workflows:
   release:
     jobs:
-      - build-linux:
+      - build-linux-arm64:
           filters:
             branches:
               only: release
-      - build-mac:
+      - build-linux-x86_64:
           filters:
             branches:
               only: release
-      - build-windows:
+      - build-mac-arm64:
+          filters:
+            branches:
+              only: release
+      - build-mac-x86_64:
+          filters:
+            branches:
+              only: release
+      - build-windows-x86_64:
           filters:
             branches:
               only: release
