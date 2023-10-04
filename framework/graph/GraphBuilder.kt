@@ -400,7 +400,7 @@ class GraphBuilder(
 
             private fun loadRoleplayerEdgesAndVertices() {
                 graphBuilder.apply {
-                    remoteThing?.asRelation()?.getPlayersByRoleType(transaction)?.entries?.forEach { (roleType, roleplayers) ->
+                    remoteThing?.asRelation()?.getPlayers(transaction)?.entries?.forEach { (roleType, roleplayers) ->
                         roleplayers.forEach { rp ->
                             val result = putVertexIfAbsent(rp.iid, rp, newThingVertices, allThingVertices) {
                                 Vertex.Thing.of(rp, graph)

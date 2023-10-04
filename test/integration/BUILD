@@ -22,11 +22,11 @@ load("@vaticle_typedb_common//test:rules.bzl", "typedb_kt_test")
 package(default_visibility = ["//:__pkg__"])
 
 skiko_runtime_platform = select({
-    "@vaticle_dependencies//util/platform:is_linux_arm64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_arm64"],
-    "@vaticle_dependencies//util/platform:is_linux_x86_64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64"],
-    "@vaticle_dependencies//util/platform:is_mac_arm64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_arm64"],
-    "@vaticle_dependencies//util/platform:is_mac_x86_64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64"],
-    "@vaticle_dependencies//util/platform:is_windows": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64"],
+    "@vaticle_bazel_distribution//platform:is_linux_arm64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_arm64"],
+    "@vaticle_bazel_distribution//platform:is_linux_x86_64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64"],
+    "@vaticle_bazel_distribution//platform:is_mac_arm64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_arm64"],
+    "@vaticle_bazel_distribution//platform:is_mac_x86_64": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64"],
+    "@vaticle_bazel_distribution//platform:is_windows": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64"],
     "//conditions:default": ["INVALID"],
 })
 
@@ -72,9 +72,13 @@ typedb_kt_test(
     name = "test-quickstart",
     srcs = ["QuickstartTest.kt"],
     data = ["//test/integration/data:sample-github-data-files"],
-    server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
-    server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
-    server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
+    server_artifacts = {
+        "@vaticle_bazel_distribution//platform:is_linux_arm64": "@vaticle_typedb_artifact_linux-arm64//file",
+        "@vaticle_bazel_distribution//platform:is_linux_x86_64": "@vaticle_typedb_artifact_linux-x86_64//file",
+        "@vaticle_bazel_distribution//platform:is_mac_arm64": "@vaticle_typedb_artifact_mac-arm64//file",
+        "@vaticle_bazel_distribution//platform:is_mac_x86_64": "@vaticle_typedb_artifact_mac-x86_64//file",
+        "@vaticle_bazel_distribution//platform:is_windows_x86_64": "@vaticle_typedb_artifact_windows-x86_64//file",
+    },
     test_class = "com.vaticle.typedb.studio.test.integration.QuickstartTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries,
@@ -84,9 +88,13 @@ typedb_kt_test(
     name = "test-queryrunner",
     srcs = ["QueryRunnerTest.kt"],
     data = ["//test/integration/data:sample-github-data-files"],
-    server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
-    server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
-    server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
+    server_artifacts = {
+        "@vaticle_bazel_distribution//platform:is_linux_arm64": "@vaticle_typedb_artifact_linux-arm64//file",
+        "@vaticle_bazel_distribution//platform:is_linux_x86_64": "@vaticle_typedb_artifact_linux-x86_64//file",
+        "@vaticle_bazel_distribution//platform:is_mac_arm64": "@vaticle_typedb_artifact_mac-arm64//file",
+        "@vaticle_bazel_distribution//platform:is_mac_x86_64": "@vaticle_typedb_artifact_mac-x86_64//file",
+        "@vaticle_bazel_distribution//platform:is_windows_x86_64": "@vaticle_typedb_artifact_windows-x86_64//file",
+    },
     test_class = "com.vaticle.typedb.studio.test.integration.QueryRunnerTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
@@ -121,9 +129,13 @@ typedb_kt_test(
         "//test/integration/data:sample-file-structure-files",
         "//test/integration/data:sample-github-data-files",
     ],
-    server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
-    server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
-    server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
+    server_artifacts = {
+        "@vaticle_bazel_distribution//platform:is_linux_arm64": "@vaticle_typedb_artifact_linux-arm64//file",
+        "@vaticle_bazel_distribution//platform:is_linux_x86_64": "@vaticle_typedb_artifact_linux-x86_64//file",
+        "@vaticle_bazel_distribution//platform:is_mac_arm64": "@vaticle_typedb_artifact_mac-arm64//file",
+        "@vaticle_bazel_distribution//platform:is_mac_x86_64": "@vaticle_typedb_artifact_mac-x86_64//file",
+        "@vaticle_bazel_distribution//platform:is_windows_x86_64": "@vaticle_typedb_artifact_windows-x86_64//file",
+    },
     test_class = "com.vaticle.typedb.studio.test.integration.TextEditorTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
@@ -151,9 +163,13 @@ typedb_kt_test(
         "//test/integration/data:sample-file-structure-files",
         "//test/integration/data:sample-github-data-files",
     ],
-    server_linux_artifact = "@vaticle_typedb_artifact_linux//file",
-    server_mac_artifact = "@vaticle_typedb_artifact_mac//file",
-    server_windows_artifact = "@vaticle_typedb_artifact_windows//file",
+    server_artifacts = {
+        "@vaticle_bazel_distribution//platform:is_linux_arm64": "@vaticle_typedb_artifact_linux-arm64//file",
+        "@vaticle_bazel_distribution//platform:is_linux_x86_64": "@vaticle_typedb_artifact_linux-x86_64//file",
+        "@vaticle_bazel_distribution//platform:is_mac_arm64": "@vaticle_typedb_artifact_mac-arm64//file",
+        "@vaticle_bazel_distribution//platform:is_mac_x86_64": "@vaticle_typedb_artifact_mac-x86_64//file",
+        "@vaticle_bazel_distribution//platform:is_windows_x86_64": "@vaticle_typedb_artifact_windows-x86_64//file",
+    },
     test_class = "com.vaticle.typedb.studio.test.integration.TypeBrowserTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [

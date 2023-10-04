@@ -22,24 +22,24 @@ orbs:
 executors:
   linux-arm64:
     machine:
-      image: ubuntu-2204:current
+      image: ubuntu-2004:current
       resource_class: arm.medium
     working_directory: ~/typedb-studio
 
   linux-x86_64:
     machine:
-      image: ubuntu-2204:current
+      image: ubuntu-2004:current
     working_directory: ~/typedb-studio
 
   mac-arm64:
     macos:
-      xcode: "14.2.0"
+      xcode: "13.4.1"
     resource_class: macos.m1.medium.gen1
     working_directory: ~/typedb-studio
 
   mac-x86_64:
     macos:
-      xcode: "14.2.0"
+      xcode: "13.4.1"
     working_directory: ~/typedb-studio
 
 
@@ -183,8 +183,9 @@ jobs:
       - install-bazel-linux-x86_64
       - run: |
           export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN DEPLOY_BREW_USERNAME=$REPO_GITHUB_USERNAME DEPLOY_BREW_EMAIL=$REPO_GITHUB_EMAIL
-          export DEPLOY_BREW_CHECKSUM=$(sha256sum ~/dist/typedb-studio-mac-$(cat VERSION).dmg | awk '{print $1}')
-          bazel run --define version=$(cat VERSION) //:deploy-brew -- release
+          sha256sum ~/dist/typedb-studio-mac-arm64-$(cat VERSION).dmg | awk '{print $1}' > checksum-arm64
+          sha256sum ~/dist/typedb-studio-mac-x86_64-$(cat VERSION).dmg | awk '{print $1}' > checksum-x86_64
+          bazel run --define version=$(cat VERSION) //:deploy-brew --//:checksum-mac-arm64=:checksum-arm64 --//:checksum-mac-x86_64=:checksum-x86_64 -- release
 
   release-cleanup:
     machine:

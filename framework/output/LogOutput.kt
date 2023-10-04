@@ -239,7 +239,7 @@ internal class LogOutput constructor(
 
     private fun printRolePlayers(relation: Relation): String {
         val rolePlayers = transactionState.transaction?.let {
-            relation.getPlayersByRoleType(it).flatMap { (role, players) ->
+            relation.getPlayers(it).flatMap { (role, players) ->
                 players.map { player -> role.label.name() + ": " + TypeQLToken.Constraint.IID + " " + player.iid }
             }.stream().collect(Collectors.joining(", "))
         } ?: " "
