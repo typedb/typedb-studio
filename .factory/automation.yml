@@ -64,7 +64,7 @@ build:
 release:
   filter:
     owner: vaticle
-    branch: master
+    branch: [master, development]
   validation:
     validate-release-notes:
       image: vaticle-ubuntu-22.04
