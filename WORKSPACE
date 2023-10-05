@@ -106,7 +106,8 @@ load("@vaticle_dependencies//tool/common:deps.bzl", "vaticle_dependencies_ci_pip
 #####################################################################
 # Load @vaticle_bazel_distribution from (@vaticle_dependencies) #
 #####################################################################
-load("@vaticle_dependencies//distribution:deps.bzl", "vaticle_bazel_distribution")
+#load("@vaticle_dependencies//distribution:deps.bzl", "vaticle_bazel_distribution")
+load("//dependencies/vaticle:repositories.bzl", "vaticle_bazel_distribution")
 vaticle_bazel_distribution()
 
 # Load //pip
