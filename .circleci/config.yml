@@ -33,13 +33,13 @@ executors:
 
   mac-arm64:
     macos:
-      xcode: "12.5.1"
+      xcode: "13.4.1"
     resource_class: macos.m1.medium.gen1
     working_directory: ~/typedb-studio
 
   mac-x86_64:
     macos:
-      xcode: "12.5.1"
+      xcode: "13.4.1"
     working_directory: ~/typedb-studio
 
 
