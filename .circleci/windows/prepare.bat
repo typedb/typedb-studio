@@ -16,6 +16,9 @@ REM You should have received a copy of the GNU Affero General Public License
 REM along with this program.  If not, see <https://www.gnu.org/licenses/>.
 REM
 
+REM shorten the workspace name so that we can avoid the long path restriction
+git apply .circleci\windows\short_workspace.patch
+
 REM uninstall Java 12 installed by CircleCI
 choco uninstall openjdk --limit-output --yes --no-progress
 
