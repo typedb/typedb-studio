@@ -63,14 +63,7 @@ commands:
 
   assemble-mac:
     steps:
-      - run: bazel build //:assemble-platform \
-          --compilation_mode=opt \
-          --define APPLE_CODE_SIGN=yes \
-          --define APPLE_ID=$APPLE_ID \
-          --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD \
-          --define APPLE_TEAM_ID=$APPLE_TEAM_ID \
-          --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD \
-          --spawn_strategy=local
+      - run: bazel build //:assemble-platform --compilation_mode=opt --define APPLE_CODE_SIGN=yes --define APPLE_ID=$APPLE_ID --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD --define APPLE_TEAM_ID=$APPLE_TEAM_ID --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD --spawn_strategy=local
 
 jobs:
   build-mac-arm64:
