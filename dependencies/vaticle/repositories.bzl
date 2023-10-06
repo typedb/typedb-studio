@@ -21,14 +21,14 @@ def vaticle_bazel_distribution():
     git_repository(
         name = "vaticle_bazel_distribution",
         remote = "https://github.com/dmitrii-ubskii/bazel-distribution",
-        commit = "92c1cef55c45dbb4176ac66f3467c788fac6e0b0",
+        commit = "3fd7abf9250a0ea309183abc24f800822e188da1",
     )
 
 def vaticle_dependencies():
     git_repository(
         name = "vaticle_dependencies",
         remote = "https://github.com/vaticle/dependencies",
-        commit = "a90be4ff87998dfb17ac69494f02d6cbc14de8d2", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
+        commit = "fcc9a56b65e6ab69bbf0f1680affe38e12617ed6", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
     )
 
 def vaticle_force_graph():
