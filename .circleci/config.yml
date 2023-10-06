@@ -61,6 +61,17 @@ commands:
     steps:
       - run: brew install bazelisk
 
+  assemble-mac:
+    steps:
+      - run: bazel build //:assemble-platform \
+          --compilation_mode=opt \
+          --define APPLE_CODE_SIGN=yes \
+          --define APPLE_ID=$APPLE_ID \
+          --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD \
+          --define APPLE_TEAM_ID=$APPLE_TEAM_ID \
+          --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD \
+          --spawn_strategy=local
+
 jobs:
   build-mac-arm64:
     executor: mac-arm64
@@ -71,7 +82,7 @@ jobs:
           export ARTIFACT_USERNAME=$REPO_VATICLE_USERNAME
           export ARTIFACT_PASSWORD=$REPO_VATICLE_PASSWORD
           bazel run @vaticle_dependencies//distribution/artifact:create-netrc
-      - run: bazel build //:assemble-platform --compilation_mode=opt --define APPLE_CODE_SIGN=yes --define APPLE_ID=$APPLE_ID --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD --spawn_strategy=local
+      - assemble-mac
       - run: |
           mkdir -p ~/src && cp bazel-bin/assemble-platform.zip ~/src
           mkdir -p ~/dist && cd ~/dist && jar xf ~/src/assemble-platform.zip
@@ -89,7 +100,7 @@ jobs:
           export ARTIFACT_USERNAME=$REPO_VATICLE_USERNAME
           export ARTIFACT_PASSWORD=$REPO_VATICLE_PASSWORD
           bazel run @vaticle_dependencies//distribution/artifact:create-netrc
-      - run: bazel build //:assemble-platform --compilation_mode=opt --define APPLE_CODE_SIGN=yes --define APPLE_ID=$APPLE_ID --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD --spawn_strategy=local
+      - assemble-mac
       - run: |
           mkdir -p ~/src && cp bazel-bin/assemble-platform.zip ~/src
           mkdir -p ~/dist && cd ~/dist && jar xf ~/src/assemble-platform.zip
