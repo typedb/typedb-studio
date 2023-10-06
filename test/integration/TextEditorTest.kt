@@ -81,10 +81,7 @@ class TextEditorTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                Service.driver.session.tryOpen(
-                    database = testID,
-                    TypeDBSession.Type.SCHEMA
-                )
+                clickText(composeRule, Label.SCHEMA.lowercase())
 
                 waitUntilTrue(composeRule) {
                     Service.driver.session.type == TypeDBSession.Type.SCHEMA
@@ -135,17 +132,12 @@ class TextEditorTest : IntegrationTest() {
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
 
-                Service.driver.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
-
-                waitUntilTrue(composeRule) {
-                    Service.driver.session.type == TypeDBSession.Type.SCHEMA
-                }
-
                 clickText(composeRule, Label.SCHEMA.lowercase())
                 clickText(composeRule, Label.WRITE.lowercase())
 
                 waitUntilTrue(composeRule) {
-                    Service.driver.session.transaction.type == TypeDBTransaction.Type.WRITE
+                    Service.driver.session.type == TypeDBSession.Type.SCHEMA &&
+                        Service.driver.session.transaction.type == TypeDBTransaction.Type.WRITE
                 }
 
                 Service.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!

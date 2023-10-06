@@ -51,23 +51,20 @@ class QueryRunnerTest : IntegrationTest() {
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
                 writeDataInteractively(composeRule, dbName = testID, SampleGitHubData.dataFile)
 
-                Service.driver.session.tryOpen(
-                    database = testID,
-                    TypeDBSession.Type.DATA
-                )
+                clickText(composeRule, Label.DATA.lowercase())
+                clickText(composeRule, Label.READ.lowercase())
 
                 waitUntilTrue(composeRule) {
-                    Service.driver.session.type == TypeDBSession.Type.DATA
+                    Service.driver.session.type == TypeDBSession.Type.DATA &&
+                            Service.driver.session.transaction.type == TypeDBTransaction.Type.READ
                 }
+
+                clickText(composeRule, Label.SNAPSHOT.lowercase())
+                clickText(composeRule, Label.INFER.lowercase())
 
                 Service.project.current!!.directory.entries.find {
                     it.name == SampleGitHubData.collaboratorsQueryFile
                 }!!.asFile().tryOpen()
-
-                clickText(composeRule, Label.DATA.lowercase())
-                clickText(composeRule, Label.READ.lowercase())
-                clickText(composeRule, Label.SNAPSHOT.lowercase())
-                clickText(composeRule, Label.INFER.lowercase())
 
                 Service.pages.active?.let {
                     if (it.isRunnable) it.asRunnable().mayOpenAndRun()
