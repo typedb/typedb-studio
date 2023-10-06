@@ -33,8 +33,10 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectTo
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.openSchemaWriteTransaction
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilTrue
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
@@ -81,12 +83,6 @@ class TextEditorTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                clickText(composeRule, Label.SCHEMA.lowercase())
-
-                waitUntilTrue(composeRule) {
-                    Service.driver.session.type == TypeDBSession.Type.SCHEMA
-                }
-
                 waitUntilAssertionPasses(composeRule) {
                     assert(Service.driver.session.typeSchema()!!.contains(commitDateAttributeName))
                 }
@@ -132,13 +128,7 @@ class TextEditorTest : IntegrationTest() {
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
 
-                clickText(composeRule, Label.SCHEMA.lowercase())
-                clickText(composeRule, Label.WRITE.lowercase())
-
-                waitUntilTrue(composeRule) {
-                    Service.driver.session.type == TypeDBSession.Type.SCHEMA &&
-                        Service.driver.session.transaction.type == TypeDBTransaction.Type.WRITE
-                }
+                openSchemaWriteTransaction(testID, composeRule)
 
                 Service.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!
                     .asFile().tryOpen()
