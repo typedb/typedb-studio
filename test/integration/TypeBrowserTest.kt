@@ -28,7 +28,6 @@ import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickAllInstancesOfIcon
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
@@ -77,7 +76,10 @@ class TypeBrowserTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                clickText(composeRule, Label.DATA.lowercase())
+                Service.driver.session.tryOpen(
+                    database = testID,
+                    TypeDBSession.Type.DATA
+                )
 
                 waitUntilTrue(composeRule) {
                     Service.driver.session.type == TypeDBSession.Type.DATA
@@ -103,7 +105,10 @@ class TypeBrowserTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                clickText(composeRule, Label.DATA.lowercase())
+                Service.driver.session.tryOpen(
+                    database = testID,
+                    TypeDBSession.Type.DATA
+                )
 
                 waitUntilTrue(composeRule) {
                     Service.driver.session.type == TypeDBSession.Type.DATA
