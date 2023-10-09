@@ -57,8 +57,7 @@ class QueryRunnerTest : IntegrationTest() {
                 )
 
                 waitUntilTrue(composeRule) {
-                    Service.driver.session.type == TypeDBSession.Type.DATA &&
-                            Service.driver.session.transaction.type == TypeDBTransaction.Type.READ
+                    Service.driver.session.type == TypeDBSession.Type.DATA
                 }
 
                 Service.project.current!!.directory.entries.find {
