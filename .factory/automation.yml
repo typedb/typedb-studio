@@ -77,4 +77,4 @@ release:
       command: |
         git checkout -b release
         git push -f origin release
-        echo "Successfully pushed branch 'release', which triggers a release workflow in CircleCI. The progress of the release can be tracked there."
+        echo "Successfully pushed branch 'release', which triggers a release workflow in CircleCI. The progress of the release can be tracked here: https://app.circleci.com/pipelines/github/vaticle/typedb-studio"
