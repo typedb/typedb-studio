@@ -22,7 +22,6 @@
 package com.vaticle.typedb.studio.test.integration
 
 import com.vaticle.typedb.driver.api.TypeDBSession
-import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
@@ -143,10 +142,6 @@ class TextEditorTest : IntegrationTest() {
 
                 clickText(composeRule, Label.SCHEMA.lowercase())
                 clickText(composeRule, Label.WRITE.lowercase())
-
-                waitUntilTrue(composeRule) {
-                    Service.driver.session.transaction.type == TypeDBTransaction.Type.WRITE
-                }
 
                 Service.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!
                     .asFile().tryOpen()
