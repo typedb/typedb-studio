@@ -48,7 +48,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
 
 object StudioActions {
 
@@ -175,18 +174,9 @@ object StudioActions {
     suspend fun writeSchemaInteractively(composeRule: ComposeContentTestRule, dbName: String, schemaFileName: String) {
         Service.notification.dismissAll()
 
+        openSchemaWriteTransaction(dbName, composeRule)
+
         clickIcon(composeRule, Icon.ADD)
-
-        Service.driver.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
-        Service.driver.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
-
-        clickText(composeRule, Label.SCHEMA.lowercase())
-        clickText(composeRule, Label.WRITE.lowercase())
-
-        waitUntilTrue(composeRule) {
-            Service.driver.session.type == TypeDBSession.Type.SCHEMA &&
-                    Service.driver.session.transaction.type == TypeDBTransaction.Type.WRITE
-        }
 
         waitUntilTrue(composeRule) {
             Service.project.current!!.directory.entries.find { it.name == schemaFileName }!!.asFile().tryOpen()
@@ -201,6 +191,19 @@ object StudioActions {
         clickIcon(composeRule, Icon.COMMIT)
         waitUntilTrue(composeRule) {
             Service.notification.queue.last().code == Message.Connection.TRANSACTION_COMMIT_SUCCESSFULLY.code()
+        }
+    }
+
+    suspend fun openSchemaWriteTransaction(dbName: String, composeRule: ComposeContentTestRule) {
+        Service.driver.session.tryOpen(dbName, TypeDBSession.Type.SCHEMA)
+        Service.driver.tryUpdateTransactionType(TypeDBTransaction.Type.WRITE)
+
+        clickText(composeRule, Label.SCHEMA.lowercase())
+        clickText(composeRule, Label.WRITE.lowercase())
+
+        waitUntilTrue(composeRule) {
+            Service.driver.session.type == TypeDBSession.Type.SCHEMA &&
+                    Service.driver.session.transaction.type == TypeDBTransaction.Type.WRITE
         }
     }
 

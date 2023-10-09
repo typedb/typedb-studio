@@ -22,6 +22,7 @@
 package com.vaticle.typedb.studio.test.integration
 
 import com.vaticle.typedb.driver.api.TypeDBSession
+import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
@@ -32,8 +33,10 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectTo
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.openSchemaWriteTransaction
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
+import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilTrue
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
@@ -80,15 +83,6 @@ class TextEditorTest : IntegrationTest() {
                 createDatabase(composeRule, dbName = testID)
                 writeSchemaInteractively(composeRule, dbName = testID, SampleGitHubData.schemaFile)
 
-                Service.driver.session.tryOpen(
-                    database = testID,
-                    TypeDBSession.Type.SCHEMA
-                )
-
-                waitUntilTrue(composeRule) {
-                    Service.driver.session.type == TypeDBSession.Type.SCHEMA
-                }
-
                 waitUntilAssertionPasses(composeRule) {
                     assert(Service.driver.session.typeSchema()!!.contains(commitDateAttributeName))
                 }
@@ -134,14 +128,7 @@ class TextEditorTest : IntegrationTest() {
                 connectToTypeDB(composeRule, typeDB.address())
                 createDatabase(composeRule, dbName = testID)
 
-                Service.driver.session.tryOpen(testID, TypeDBSession.Type.SCHEMA)
-
-                waitUntilTrue(composeRule) {
-                    Service.driver.session.type == TypeDBSession.Type.SCHEMA
-                }
-
-                clickText(composeRule, Label.SCHEMA.lowercase())
-                clickText(composeRule, Label.WRITE.lowercase())
+                openSchemaWriteTransaction(testID, composeRule)
 
                 Service.project.current!!.directory.entries.find { it.name == SampleGitHubData.schemaFile }!!
                     .asFile().tryOpen()
