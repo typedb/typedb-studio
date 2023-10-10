@@ -2,7 +2,7 @@
 
 TypeDB Studio is available for Linux, Mac and Windows (download binaries below).
 
-For Mac, TypeDB Studio is also available through Homebrew:
+For Mac Intel and Mac ARM, TypeDB Studio is also available through Homebrew:
 
 ```
 brew tap vaticle/tap

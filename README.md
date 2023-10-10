@@ -83,13 +83,10 @@ or [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
 
 1. Make sure you have the following dependencies installed on your machine:
     - Java JDK 11 or higher
-    - [Bazel 5 or higher](http://bazel.build/). We use [Bazelisk](https://github.com/bazelbuild/bazelisk) to manage
-      multiple Bazel versions transparently. Bazelisk runs the appropriate Bazel version for any `bazel` command as
-      specified in [`.bazelversion`](https://github.com/vaticle/typedb/blob/master/.bazelversion) file. In order to
-      install it, follow the platform-specific guide:
-        - MacOS: `brew install bazelisk`
-        - Linux: `wget https://github.com/bazelbuild/bazelisk/releases/download/v1.4.0/bazelisk-linux-amd64 -O /usr/local/bin/bazel`
-
+    - [Bazel 6 or higher](http://bazel.build/). We recommend installing it using [Bazelisk](https://github.com/bazelbuild/bazelisk),
+      which manages multiple Bazel versions transparently. Bazelisk runs the appropriate Bazel version for any `bazel` command as
+      specified in [`.bazelversion`](https://github.com/vaticle/typedb/blob/master/.bazelversion) file. 
+ 
 2. Depending on your Operating System, you can compile and run TypeDB Studio with either one of the following commands.
    ```sh
    $ bazel run //:studio-bin-mac-arm64  # for Apple Silicon

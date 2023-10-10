@@ -2,7 +2,7 @@
 
 TypeDB Studio is available for Linux, Mac and Windows (download binaries below).
 
-For Mac, TypeDB Studio is also available through Homebrew:
+For Mac Intel and Mac ARM, TypeDB Studio is also available through Homebrew:
 
 ```
 brew tap vaticle/tap
@@ -18,6 +18,14 @@ documentation for which versions of Studio are compatible with which versions of
 
 
 ## New Features
+- **Update MacOS DMG signing and notarization process via bazel-distribution**
+  
+  We update the packaging and signing tools used by `//:assemble-platform` to correctly sign the MacOS package vis-à-vis changes in JVM17, XCode 13+, and Apple notarization process. See https://github.com/vaticle/bazel-distribution/pull/391 for more details.
+  
+- **Windows build fixes**
+  
+  We shorten bazel workspace path to work around the character limit on Windows, and enable runfiles linking for Rust compilation.
+  
 - **Deploy studio for each OS + Arch**
   
   We deploy 5 separate distributions of TypeDB Studio, one per platform:
@@ -38,6 +46,11 @@ documentation for which versions of Studio are compatible with which versions of
   
 
 ## Bugs Fixed
+- **Ensure write transaction has been opened in integration test**
+  
+  We fix a spurious NPE that arises in the TextEditor integration test when a schema write is attempted before the write transaction is opened.
+  
+  
 - **Set release compilation mode to optimized**
   
   We set the Bazel compilation mode for releases to `opt`.
@@ -47,9 +60,10 @@ documentation for which versions of Studio are compatible with which versions of
 
 
 ## Other Improvements
-- **Fix CircleCI release workflow job references**
 
-- **Allow releasing from development branch**
+- **Replace references to vaticle.com**
+
+- **Fix CircleCI release workflow job references**
 
 - **Update README.md**
 
