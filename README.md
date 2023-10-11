@@ -16,14 +16,36 @@
 
 [![TypeDB Studio](./docs/images/studio-full-1.png)](./docs/images/studio-full-1.png)
 
-TypeDB Studio is a fully-featured Integrated Development Environment (IDE) for [TypeDB](https://github.com/vaticle/typedb).
+TypeDB Studio is an Integrated Development Environment (IDE)
+that facilitates the development process for TypeDB databases.
+It provides a consistent experience across different operating systems, including Windows, macOS, and Linux.
+With TypeDB Studio, developers can efficiently manage databases,
+execute queries, and explore query results all within a unified environment.
 
-You can utilise Studio as you would [TypeDB Console](https://github.com/vaticle/typedb-console)
-and the [TypeDB Driver](https://typedb.com/docs/drivers/2.x/drivers): to connect to your TypeDB instance and
-perform queries.
+One of the key features of TypeDB Studio is its interactive visualizer,
+which allows developers to visualize query results and explore inferred data.
+The visualizer presents data in a hypergraph format,
+making it easy to navigate and understand the relationships between entities and attributes.
 
-Studio is an IDE designed for the end-to-end development of TypeDB databases, database queries, and data exploration,
-via a clean and intuitive UI that gives you a top-down view of your entire database.
+TypeDB Studio also includes a schema manager with a graphical interface,
+making it convenient for developers to edit, visualize, and maintain their data models.
+The user-friendly interface simplifies the process of creating, extending, exploring,
+and managing schemas, enabling developers to easily define the structure and relationships of their data.
+
+TypeDB Studio offers a clean and intuitive UI for various tasks related to TypeDB databases.
+Developers can effortlessly create and delete databases, build and extend schemas, and define or undefine rules.
+TypeDB Studio also enables efficient data management by providing functionality to insert, modify,
+and query data directly within the IDE.
+This feature is particularly useful in production environments,
+as it allows developers to quickly address issues and make data-related changes.
+
+Key features of TypeDB Studio include:
+
+- Graphical interface for creating or establishing a connection with a TypeDB database, eliminating the need for command line tools or client libraries.
+- Built-in syntax highlighting for TypeQL and pop-up notifications for warnings and error messages that may occur during runtime/query execution.
+- Local syntax validation against a set of basic checks before sending instructions and queries to the server.
+- Concept browser for exploring data models, including detailed views of entities, relations, attributes, and their interactions.
+- Graph visualization engine for visualizing query results using user-modifiable, force-directed graph drawings.
 
 ## Usage
 
