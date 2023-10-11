@@ -4,6 +4,14 @@
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typedb-796de3.svg)](https://stackoverflow.com/questions/tagged/typedb)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typeql-3dce8c.svg)](https://stackoverflow.com/questions/tagged/typeql)
 
+* [TypeDB Studio](#typedb-studio)
+* [Usage](#usage)
+* [Download TypeDB Studio](#download-typedb-studio)
+* [Developer resources](#developer-resources)
+* [Compiling from source](#compiling-and-running-typedb-studio-from-source)
+* [Contributions](#contributions)
+* [Licensing](#licensing)
+
 ## TypeDB Studio
 
 [![TypeDB Studio](./docs/images/studio-full-1.png)](./docs/images/studio-full-1.png)
@@ -66,8 +74,7 @@ how the fact was inferred.
 
 ## Download TypeDB Studio
 
-You can download TypeDB Studio from the [Download Centre](https://typedb.com/download#typedb-studio)
-or [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
+You can download TypeDB Studio from the [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
 
 ## Developer Resources
 
@@ -78,41 +85,43 @@ or [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
 
 ## Compiling and Running TypeDB Studio from Source
 
-> Note: You **DO NOT NEED** to compile TypeDB Studio _"from source"_ if you just want to use TypeDB Studio. You can
-> simply download TypeDB Studio following the section above.
+> Note: You **DO NOT NEED** to compile TypeDB Studio from source if you just want to use TypeDB Studio. You can
+> simply download TypeDB Studio following the _"Download TypeDB Studio"_ section above.
 
 1. Make sure you have the following dependencies installed on your machine:
     - Java JDK 11 or higher
-    - [Bazel 6 or higher](http://bazel.build/). We recommend installing it using [Bazelisk](https://github.com/bazelbuild/bazelisk),
-      which manages multiple Bazel versions transparently. Bazelisk runs the appropriate Bazel version for any `bazel` command as
-      specified in [`.bazelversion`](https://github.com/vaticle/typedb/blob/master/.bazelversion) file. 
+    - [Bazel 6 or higher](https://bazel.build/install).
  
-2. Depending on your Operating System, you can compile and run TypeDB Studio with either one of the following commands.
+2. You can build TypeDB with either one of the following commands, depending on the targeted architecture and 
+   Operation system: 
    ```sh
-   $ bazel run //:studio-bin-mac-arm64  # for Apple Silicon
-   $ bazel run //:studio-bin-mac-x86_64  # for Intel
+   $ bazel run //:studio-bin-mac-arm64
+   $ bazel run //:studio-bin-mac-x86_64
    ```
    ```sh
    $ bazel run //:studio-bin-windows-x86_64
    ```
    ```sh
-   $ bazel run //:studio-bin-linux-arm64  # for ARM
-   $ bazel run //:studio-bin-linux-x86_64  # for Intel
+   $ bazel run //:studio-bin-linux-arm64
+   $ bazel run //:studio-bin-linux-x86_64
    ```
    You can also replace `run` with `build` in the command above, and Bazel will simply produce the JAR for TypeDB Studio
    under `bazel-bin/studio-bin-<mac|windows|linux>-<arm64|x86_64>.jar`.
 
 ## Contributions
 
-TypeDB Studio has been built using various open-source frameworks throughout its evolution. Today TypeDB Studio is built
-using [Kotlin](https://kotlinlang.org), [Compose Multiplatform](https://github.com/JetBrains/compose-jb),
-and [Bazel](https://bazel.build). Thank you to the developers!
+TypeDB Studio has been built using various open-source frameworks, technologies and communities throughout its 
+evolution. Today TypeDB Studio is built
+using [Kotlin](https://kotlinlang.org),
+[Compose Multiplatform](https://github.com/JetBrains/compose-jb),
+and [Bazel](https://bazel.build).
+
+Thank you!
 
 ## Licensing
 
-This software is developed by [Vaticle](https://typedb.com/). It's released under the GNU Affero GENERAL PUBLIC
-LICENSE, Version 3, 19 November 2007. For license information, please
-see [LICENSE](https://github.com/vaticle/typedb-studio/blob/master/LICENSE). Vaticle also provides a commercial license
-for TypeDB Studio - get in touch with our team at commercial@vaticle.com.
+This software is developed by [Vaticle](https://typedb.com/). 
+It's released under the GNU Affero GENERAL PUBLIC LICENSE version 3 (AGPL v.3.0). 
+For license information, please see [LICENSE](https://github.com/vaticle/typedb-studio/blob/master/LICENSE). 
 
-Copyright (C) 2022 Vaticle
+Copyright (C) 2023 Vaticle.
