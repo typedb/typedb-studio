@@ -21,7 +21,7 @@
   </a>
 </div>
 
-## Introducing TypeDB Studio
+# Introducing TypeDB Studio
 
 TypeDB Studio is an Integrated Development Environment (IDE) that facilitates the development process for TypeDB databases. It provides a consistent experience across different operating systems, including Windows, macOS, and Linux. With TypeDB Studio, developers can efficiently manage databases, execute queries, and explore query results, all within a unified environment.
 
