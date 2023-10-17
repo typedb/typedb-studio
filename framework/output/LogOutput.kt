@@ -35,6 +35,7 @@ import com.vaticle.typedb.driver.api.concept.thing.Attribute
 import com.vaticle.typedb.driver.api.concept.thing.Relation
 import com.vaticle.typedb.driver.api.concept.thing.Thing
 import com.vaticle.typedb.driver.api.concept.type.Type
+import com.vaticle.typedb.driver.api.concept.value.Value
 import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.editor.TextEditor
@@ -197,7 +198,7 @@ internal class LogOutput constructor(
 
     private fun loadToString(conceptMap: ConceptMap): String {
         val content = conceptMap.variables().map {
-            "$" + it + " " + loadToString(conceptMap.get(it)) + ";"
+            formatVariable(it, conceptMap.get(it))
         }.collect(Collectors.joining("\n"))
 
         val str = StringBuilder("{")
@@ -207,10 +208,21 @@ internal class LogOutput constructor(
         return str.toString()
     }
 
+    private fun formatVariable(variable: String, concept: Concept): String {
+        val str = StringBuilder()
+        if (concept.isValue)
+            str.append("?").append(variable).append(" = ")
+        else
+            str.append("$").append(variable).append(" ")
+        str.append(loadToString(concept)).append(";")
+        return str.toString()
+    }
+
     private fun loadToString(concept: Concept): String {
         return when (concept) {
             is Type -> printType(concept)
             is Thing -> printThing(concept)
+            is Value -> printValue(concept)
             else -> throw IllegalStateException("Unrecognised TypeQL Concept")
         }
     }
@@ -245,6 +257,8 @@ internal class LogOutput constructor(
         } ?: " "
         return "($rolePlayers)"
     }
+
+    private fun printValue(value: Value) = Strings.valueToString(value)
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable

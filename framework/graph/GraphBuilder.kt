@@ -27,6 +27,7 @@ import com.vaticle.typedb.driver.api.concept.thing.Thing
 import com.vaticle.typedb.driver.api.concept.type.RoleType
 import com.vaticle.typedb.driver.api.concept.type.ThingType
 import com.vaticle.typedb.driver.api.concept.type.Type
+import com.vaticle.typedb.driver.api.concept.value.Value
 import com.vaticle.typedb.driver.api.logic.Explanation
 import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
 import com.vaticle.typedb.studio.service.Service
@@ -92,6 +93,8 @@ class GraphBuilder(
                     putVertexIfAbsent(concept)
                 }
                 concept is RoleType -> { /* skip role types */
+                }
+                concept is Value -> { /* skip values */
                 }
                 else -> throw unsupportedEncodingException(concept)
             }
