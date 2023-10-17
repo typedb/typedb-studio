@@ -4,15 +4,7 @@
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typedb-796de3.svg)](https://stackoverflow.com/questions/tagged/typedb)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typeql-3dce8c.svg)](https://stackoverflow.com/questions/tagged/typeql)
 
-* [TypeDB Studio](#typedb-studio)
-* [Usage](#usage)
-* [Download TypeDB Studio](#download-typedb-studio)
-* [Developer resources](#developer-resources)
-* [Compiling from source](#compiling-and-running-typedb-studio-from-source)
-* [Contributions](#contributions)
-* [Licensing](#licensing)
-
-## TypeDB Studio
+## Meet TypeDB Studio
 
 [![TypeDB Studio](./docs/images/studio_full_1.png)](./docs/images/studio_full_1.png)
 
