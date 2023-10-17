@@ -37,12 +37,12 @@ TypeDB Studio also includes a schema manager with a graphical interface, making 
 TypeDB Studio covers all steps of the development process with TypeDB:
 
 - Graphical interface for creating or establishing a connection with a TypeDB database, eliminating the need for command line tools or client libraries.
-- Built-in syntax highlighting for TypeQL and pop-up notifications for warnings and error messages that may occur during runtime/query execution.
-- Local syntax validation against a set of basic checks before sending instructions and queries to the server.
 - Concept browser for exploring data models, including detailed views of entities, relations, attributes, and their interactions.
 [![Manage Database Schemas](./docs/images/type_browser_1.gif)](./docs/images/type_browser_1.gif)
+- Built-in syntax highlighting for TypeQL and pop-up notifications for warnings and error messages that may occur during runtime/query execution.
 - Graph visualization engine for visualizing query results using user-modifiable, force-directed graph drawings.
 [![Graph Visualisation](./docs/images/graph_vis_1.gif)](./docs/images/graph_vis_1.gif)
+- Local syntax validation against a set of basic checks before sending instructions and queries to the server.
 - Explanations visualization displays the deductive reasoning behind inferred data guaranteeing accountability of generated information.
 [![Inference Visualisation](./docs/images/expl_vis_1.gif)](./docs/images/expl_vis_1.gif)
 
