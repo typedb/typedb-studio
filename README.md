@@ -1,118 +1,111 @@
-[![Factory](https://factory.vaticle.com/api/status/vaticle/typedb-studio/badge.svg)](https://factory.vaticle.com/vaticle/typedb-studio)
-[![Discord](https://img.shields.io/discord/665254494820368395?color=7389D8&label=chat&logo=discord&logoColor=ffffff)](https://typedb.com/discord)
-[![Discussion Forum](https://img.shields.io/discourse/https/forum.typedb.com/topics.svg)](https://forum.typedb.com)
-[![Stack Overflow](https://img.shields.io/badge/stackoverflow-typedb-796de3.svg)](https://stackoverflow.com/questions/tagged/typedb)
-[![Stack Overflow](https://img.shields.io/badge/stackoverflow-typeql-3dce8c.svg)](https://stackoverflow.com/questions/tagged/typeql)
+[![TypeDB Studio](./docs/images/studio_full_1.png)](./docs/images/studio_full_1.png)
 
-## TypeDB Studio
+<div align="center">
+  <a href="https://factory.vaticle.com/vaticle/typedb-studio">
+    <img alt="Factory" src="https://factory.vaticle.com/api/status/vaticle/typedb-studio/badge.svg" />
+  </a>
+  <a href="https://circleci.com/gh/vaticle/typedb-studio/tree/master">
+    <img alt="CircleCI" src="https://circleci.com/gh/vaticle/typedb-studio/tree/master.svg?style=shield" />
+  </a>
+  <a href="https://github.com/vaticle/typedb-studio/releases/latest">
+    <img alt="GitHub release" src="https://img.shields.io/github/release/vaticle/typedb-studio.svg">
+  </a>
+  <a href="https://vaticle.com/discord">
+    <img alt="Discord" src="https://img.shields.io/discord/665254494820368395?color=7389D8&label=chat&logo=discord&logoColor=ffffff" />
+  </a>
+  <a href="https://forum.vaticle.com">
+    <img alt="Discussion Forum" src="https://img.shields.io/discourse/https/forum.vaticle.com/topics.svg" />
+  </a>
+  <a href="https://stackoverflow.com/questions/tagged/typedb">
+    <img alt="Stack Overflow" src="https://img.shields.io/badge/stackoverflow-typedb-796de3.svg">
+  </a>
+</div>
 
-[![TypeDB Studio](./docs/images/studio-full-1.png)](./docs/images/studio-full-1.png)
+# Introducing TypeDB Studio
 
-TypeDB Studio is a fully-featured Integrated Development Environment (IDE) for [TypeDB](https://github.com/vaticle/typedb).
+TypeDB Studio is an Integrated Development Environment (IDE) that facilitates the development process for TypeDB databases. It provides a consistent experience across different operating systems, including Windows, macOS, and Linux. With TypeDB Studio, developers can efficiently manage databases, execute queries, and explore query results, all within a unified environment.
 
-You can utilise Studio as you would [TypeDB Console](https://github.com/vaticle/typedb-console)
-and the [TypeDB Driver](https://typedb.com/docs/drivers/2.x/drivers): to connect to your TypeDB instance and
-perform queries.
+## Features
 
-Studio is an IDE designed for the end-to-end development of TypeDB databases, database queries, and data exploration,
-via a clean and intuitive UI that gives you a top-down view of your entire database.
+### Clean and intuitive design
 
-## Usage
+TypeDB Studio offers a clean and intuitive UI for various tasks related to TypeDB databases. It, for example, allows developers to effortlessly create and delete databases and provides functionality to insert, modify, and query data directly within the IDE. The latter feature is particularly useful in production environments, allowing developers to quickly address issues and make data-related changes.
 
-### Connect to TypeDB
+### Data visualization
 
-Upon launching Studio, you'll be asked for your TypeDB server details and to choose or create a database.
+One of the key features of TypeDB Studio is its interactive visualizer, which allows developers to visualize query results and explore inferred data. The visualizer presents data in a hypergraph format, making it easy to navigate and understand the relationships between entities and attributes.
 
-### Manage TypeDB Projects
+### GUI for schema management
 
-After connecting to TypeDB and selecting a database, Studio will prompt you to open (or create) a project directory.
-This is where Studio will load and save query files, but you can also freely edit text files in the project directory
-using Studio. The project browser maintains a live view of the directory contents on the filesystem.
+TypeDB Studio also includes a schema manager with a graphical interface, making it convenient for developers to edit, visualize, and maintain their data models. The user-friendly interface simplifies the process of creating, extending, exploring, and managing schemas, enabling developers to easily define the structure and relationships of their data.
 
-### Manage Database Schemas
+### Fully-fledged IDE for developing with TypeDB
 
-[![Manage Database Schemas](./docs/images/type-browser-1.gif)](./docs/images/type-browser-1.gif)
+TypeDB Studio covers all steps of the development process with TypeDB:
 
-The Type Browser provides a structured tree view of the connected database's type hierarchy. Double-clicking on any of
-the listed types will bring up a page that lists their properties in detail — supertype, roles played, attributes owned
-and more.
-
-### Run TypeQL Queries
-
-[![Log Output](./docs/images/log-output-1.gif)](./docs/images/log-output-1.gif)
-
-Studio's text editor comes equipped with rich developer tooling, like syntax highlighting
-for TypeQL files (\*.tql), with more advanced features currently under development. Studio's intuitive and
-self-explanatory interface enables a rapid, iterative workflow.
-
-TypeDB Studio brings session and transaction configuration to the forefront, providing greater visibility to the user
-about the state of the system. Studio allows you to run any TypeQL query, pretty-printing results
-to the Log Output window which is easily searchable (and supports regex matching.)
-
-### Graph Visualisation
-
-[![Graph Visualisation](./docs/images/graph-vis-1.gif)](./docs/images/graph-vis-1.gif)
-
-Reasoning about text outputs in [TypeDB Console](https://docs.typedb.com/docs/console/console) or through
-the various [TypeDB Drivers](https://docs.typedb.com/docs/driver-api/overview) can be difficult to do for large
-datasets. Studio's advanced force-graph visualisation makes the underlying structure of data immediately apparent.
-
-### Reasoning and Explanations
-
-[![Inference Visualisation](./docs/images/infer-vis-1.gif)](./docs/images/infer-vis-1.gif)
-
-Select infer and explain, then double-click highlighted inferred concepts to retrieve their explanations and visualise
-how the fact was inferred.
+- Graphical interface for creating or establishing a connection with a TypeDB database, eliminating the need for command line tools or client libraries.
+- Concept browser for exploring data models, including detailed views of entities, relations, attributes, and their interactions.
+[![Manage Database Schemas](./docs/images/type_browser_1.gif)](./docs/images/type_browser_1.gif)
+- Built-in syntax highlighting for TypeQL and pop-up notifications for warnings and error messages that may occur during runtime/query execution.
+- Graph visualization engine for visualizing query results using user-modifiable, force-directed graph drawings.
+[![Graph Visualisation](./docs/images/graph_vis_1.gif)](./docs/images/graph_vis_1.gif)
+- Local syntax validation against a set of basic checks before sending instructions and queries to the server.
+- Explanations visualization displays the deductive reasoning behind inferred data guaranteeing accountability of generated information.
+[![Inference Visualisation](./docs/images/expl_vis_1.gif)](./docs/images/expl_vis_1.gif)
 
 ## Download TypeDB Studio
 
-You can download TypeDB Studio from the [Download Centre](https://typedb.com/download#typedb-studio)
-or [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
-
-## Developer Resources
-
-- Documentation: https://docs.typedb.com
-- Discussion Forum: https://forum.typedb.com
-- Discord Chat Server: https://typedb.com/discord
-- Community Projects: https://github.com/typedb-osi
+You can download TypeDB Studio from the [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
 
 ## Compiling and Running TypeDB Studio from Source
 
-> Note: You **DO NOT NEED** to compile TypeDB Studio _"from source"_ if you just want to use TypeDB Studio. You can
-> simply download TypeDB Studio following the section above.
+> Note: You **DO NOT NEED** to compile TypeDB Studio from source if you just want to use TypeDB Studio. You can
+> simply download TypeDB Studio following the _"Download TypeDB Studio"_ section above.
 
 1. Make sure you have the following dependencies installed on your machine:
     - Java JDK 11 or higher
-    - [Bazel 6 or higher](http://bazel.build/). We recommend installing it using [Bazelisk](https://github.com/bazelbuild/bazelisk),
-      which manages multiple Bazel versions transparently. Bazelisk runs the appropriate Bazel version for any `bazel` command as
-      specified in [`.bazelversion`](https://github.com/vaticle/typedb/blob/master/.bazelversion) file. 
+    - [Bazel 6 or higher](https://bazel.build/install).
  
-2. Depending on your Operating System, you can compile and run TypeDB Studio with either one of the following commands.
+2. You can build TypeDB with either one of the following commands, depending on the targeted architecture and 
+   Operation system: 
    ```sh
-   $ bazel run //:studio-bin-mac-arm64  # for Apple Silicon
-   $ bazel run //:studio-bin-mac-x86_64  # for Intel
+   $ bazel run //:studio-bin-mac-arm64
+   $ bazel run //:studio-bin-mac-x86_64
    ```
    ```sh
    $ bazel run //:studio-bin-windows-x86_64
    ```
    ```sh
-   $ bazel run //:studio-bin-linux-arm64  # for ARM
-   $ bazel run //:studio-bin-linux-x86_64  # for Intel
+   $ bazel run //:studio-bin-linux-arm64
+   $ bazel run //:studio-bin-linux-x86_64
    ```
    You can also replace `run` with `build` in the command above, and Bazel will simply produce the JAR for TypeDB Studio
    under `bazel-bin/studio-bin-<mac|windows|linux>-<arm64|x86_64>.jar`.
 
+## Useful links
+
+If you want to begin your journey with TypeDB, you can explore the following resources:
+
+* In-depth dive into TypeDB's [philosophy](https://typedb.com/philosophy)
+* Our [TypeDB quickstart](https://typedb.com/docs/typedb/2.x/quickstart-guide)
+* Our [TypeDB Studio documentation](https://typedb.com/docs/clients/2.x/studio)
+* **[TypeQL](https://github.com/vaticle/typeql)**
+* **[TypeDB](https://github.com/vaticle/typedb)**
+
 ## Contributions
 
-TypeDB Studio has been built using various open-source frameworks throughout its evolution. Today TypeDB Studio is built
-using [Kotlin](https://kotlinlang.org), [Compose Multiplatform](https://github.com/JetBrains/compose-jb),
-and [Bazel](https://bazel.build). Thank you to the developers!
+TypeDB Studio has been built using various open-source frameworks, technologies and communities throughout its 
+evolution. Today TypeDB Studio is built
+using [Kotlin](https://kotlinlang.org),
+[Compose Multiplatform](https://github.com/JetBrains/compose-jb),
+and [Bazel](https://bazel.build).
+
+Thank you!
 
 ## Licensing
 
-This software is developed by [Vaticle](https://typedb.com/). It's released under the GNU Affero GENERAL PUBLIC
-LICENSE, Version 3, 19 November 2007. For license information, please
-see [LICENSE](https://github.com/vaticle/typedb-studio/blob/master/LICENSE). Vaticle also provides a commercial license
-for TypeDB Studio - get in touch with our team at commercial@vaticle.com.
+This software is developed by [Vaticle](https://typedb.com/). 
+It's released under the GNU Affero GENERAL PUBLIC LICENSE version 3 (AGPL v.3.0). 
+For license information, please see [LICENSE](https://github.com/vaticle/typedb-studio/blob/master/LICENSE). 
 
-Copyright (C) 2022 Vaticle
+Copyright (C) 2023 Vaticle.
