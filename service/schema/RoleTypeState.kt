@@ -80,7 +80,7 @@ class RoleTypeState constructor(
     override fun typeStateOf(type: RoleType) = schemaSrv.typeStateOf(type)
 
     override fun updateConceptType(label: String) = schemaSrv.mayRunReadTx { tx ->
-        val newConceptType = relationType.conceptType.getRelates(tx, label)!!
+        val newConceptType = relationType.conceptType.getRelates(tx, label).resolve()!!
         isAbstract = newConceptType.isAbstract
         name = newConceptType.label.name()
         conceptType = newConceptType // we need to update the mutable state last

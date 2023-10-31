@@ -429,8 +429,8 @@ object PreferenceDialog {
                 private const val TRANSACTION_TIMEOUT_MINS_PLACEHOLDER = "5"
             }
 
-            private var matchQueryLimit = PreferenceField.TextInputValidated(
-                initValue = preferenceSrv.matchQueryLimit.toString(),
+            private var getQueryLimit = PreferenceField.TextInputValidated(
+                initValue = preferenceSrv.getQueryLimit.toString(),
                 label = SET_QUERY_LIMIT, placeholder = QUERY_LIMIT_PLACEHOLDER,
                 invalidWarning = Label.PREFERENCE_INTEGER_WARNING, caption = PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
             ) {/* validator = */ it.toLongOrNull() != null && it.toLongOrNull()!! >= 0 }
@@ -445,19 +445,19 @@ object PreferenceDialog {
                 transactionTimeoutMins in 1..10000
             }
 
-            override val preferences: List<PreferenceField> = listOf(matchQueryLimit, transactionTimeoutMins)
+            override val preferences: List<PreferenceField> = listOf(getQueryLimit, transactionTimeoutMins)
 
             override fun submit() {
-                preferenceSrv.matchQueryLimit = matchQueryLimit.value.toLong()
+                preferenceSrv.getQueryLimit = getQueryLimit.value.toLong()
                 preferenceSrv.transactionTimeoutMins = transactionTimeoutMins.value.toLong()
-                matchQueryLimit.modified = false
+                getQueryLimit.modified = false
                 transactionTimeoutMins.modified = false
             }
 
             override fun reset() {
-                matchQueryLimit.value = preferenceSrv.matchQueryLimit.toString()
+                getQueryLimit.value = preferenceSrv.getQueryLimit.toString()
                 transactionTimeoutMins.value = preferenceSrv.transactionTimeoutMins.toString()
-                matchQueryLimit.modified = false
+                getQueryLimit.modified = false
                 transactionTimeoutMins.modified = false
             }
         }

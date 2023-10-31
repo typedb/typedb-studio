@@ -49,8 +49,8 @@ import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.page.Navigable
 import com.vaticle.typedb.studio.service.page.Pageable
 import com.vaticle.typeql.lang.TypeQL
-import com.vaticle.typeql.lang.TypeQL.rel
 import com.vaticle.typeql.lang.TypeQL.cVar
+import com.vaticle.typeql.lang.TypeQL.rel
 import com.vaticle.typeql.lang.common.TypeQLToken.Annotation.KEY
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -169,7 +169,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         .sortedBy { it.scopedName }
 
     fun exportSyntaxAsync(onSuccess: (String) -> Unit) = coroutines.launchAndHandle(notifications, LOGGER) {
-        schemaSrv.mayRunReadTx { tx -> conceptType.getSyntax(tx)?.let { onSuccess(it) } }
+        schemaSrv.mayRunReadTx { tx -> conceptType.getSyntax(tx).resolve()?.let { onSuccess(it) } }
     }
 
     fun loadConstraintsAsync() = coroutines.launchAndHandle(notifications, LOGGER) {
@@ -222,15 +222,15 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
         ) {
             loaded.add(attTypeConcept)
             schemaSrv.typeStateOf(attTypeConcept)?.let { attType ->
-                val overriddenType = conceptType.getOwnsOverridden(tx, attTypeConcept)?.let { schemaSrv.typeStateOf(it) }
+                val overriddenType = conceptType.getOwnsOverridden(tx, attTypeConcept).resolve()?.let { schemaSrv.typeStateOf(it) }
                 val inheritedType = when {
                     isInherited -> attType
                     else -> overriddenType
                 }?.also { it.loadOwnerTypes() }
                 val extendedType = inheritedType?.ownerTypesExplicit?.toSet()
                     ?.intersect(supertypes.toSet())?.firstOrNull()
-                val canBeUndefined = !tx.query().match(
-                    TypeQL.match(cVar("x").isa(conceptType.label.name()).has(attType.name, cVar("y")))
+                val canBeUndefined = !tx.query().get(
+                    TypeQL.match(cVar("x").isa(conceptType.label.name()).has(attType.name, cVar("y"))).get()
                 ).findFirst().isPresent
                 properties.add(
                     AttributeTypeState.OwnedAttTypeProperties(
@@ -268,18 +268,18 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
             loaded.add(roleTypeConcept)
             schemaSrv.typeStateOf(roleTypeConcept)?.let { roleType ->
                 roleType.loadConstraints()
-                val overriddenType = conceptType.getPlaysOverridden(tx, roleTypeConcept)?.let { schemaSrv.typeStateOf(it) }
+                val overriddenType = conceptType.getPlaysOverridden(tx, roleTypeConcept).resolve()?.let { schemaSrv.typeStateOf(it) }
                 val inheritedType = when {
                     isInherited -> roleType
                     else -> overriddenType
                 }?.also { it.loadPlayerTypes() }
                 val extendedType = inheritedType?.playerTypesExplicit?.toSet()
                     ?.intersect(supertypes.toSet())?.firstOrNull()
-                val canBeUndefined = !tx.query().match(
+                val canBeUndefined = !tx.query().get(
                     TypeQL.match(
                         cVar("x").isa(conceptType.label.name()),
                         rel(roleTypeConcept.label.name(), cVar("x"))
-                    )
+                    ).get()
                 ).findFirst().isPresent
                 properties.add(
                     RoleTypeState.PlayedRoleTypeProperties(

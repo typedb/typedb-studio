@@ -20,7 +20,7 @@ package com.vaticle.typedb.studio.service.connection
 
 import com.vaticle.typedb.driver.api.answer.ConceptMap
 import com.vaticle.typedb.driver.api.answer.ConceptMapGroup
-import com.vaticle.typedb.driver.api.answer.NumericGroup
+import com.vaticle.typedb.driver.api.answer.ValueGroup
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
@@ -36,7 +36,7 @@ import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLDefine
 import com.vaticle.typeql.lang.query.TypeQLDelete
 import com.vaticle.typeql.lang.query.TypeQLInsert
-import com.vaticle.typeql.lang.query.TypeQLMatch
+import com.vaticle.typeql.lang.query.TypeQLGet
 import com.vaticle.typeql.lang.query.TypeQLQuery
 import com.vaticle.typeql.lang.query.TypeQLUndefine
 import com.vaticle.typeql.lang.query.TypeQLUpdate
@@ -66,14 +66,14 @@ class QueryRunner constructor(
             enum class Type { INFO, SUCCESS, ERROR, TYPEQL }
         }
 
-        data class Numeric(val value: com.vaticle.typedb.driver.api.answer.Numeric) : Response()
+        data class Value(val value: com.vaticle.typedb.driver.api.concept.value.Value) : Response()
 
         sealed class Stream<T> : Response() {
 
             val queue = LinkedBlockingQueue<Either<T, Done>>()
 
             class ConceptMapGroups : Stream<ConceptMapGroup>()
-            class NumericGroups : Stream<NumericGroup>()
+            class ValueGroups : Stream<ValueGroup>()
             class ConceptMaps constructor(val source: Source) : Stream<ConceptMap>() {
                 enum class Source { INSERT, UPDATE, MATCH }
             }
@@ -98,19 +98,19 @@ class QueryRunner constructor(
         const val UPDATE_QUERY = "Update query:"
         const val UPDATE_QUERY_SUCCESS = "Update query successfully updated things in the databases:"
         const val UPDATE_QUERY_NO_RESULT = "Update query did not update any thing in the databases."
-        const val MATCH_QUERY = "Match query:"
-        const val MATCH_QUERY_SUCCESS = "Match query successfully matched concepts in the database:"
-        const val MATCH_QUERY_NO_RESULT = "Match query did not match any concepts in the database."
-        const val MATCH_AGGREGATE_QUERY = "Match Aggregate query:"
-        const val MATCH_AGGREGATE_QUERY_SUCCESS = "Match Aggregate query successfully calculated:"
-        const val MATCH_GROUP_QUERY = "Match Group query:"
-        const val MATCH_GROUP_QUERY_SUCCESS = "Match Group query successfully matched concept groups in the database:"
-        const val MATCH_GROUP_QUERY_NO_RESULT = "Match Group query did not match any concept groups in the database."
-        const val MATCH_GROUP_AGGREGATE_QUERY = "Match Group Aggregate query:"
+        const val MATCH_QUERY = "Get query:"
+        const val MATCH_QUERY_SUCCESS = "Get query successfully matched concepts in the database:"
+        const val MATCH_QUERY_NO_RESULT = "Get query did not match any concepts in the database."
+        const val MATCH_AGGREGATE_QUERY = "Get Aggregate query:"
+        const val MATCH_AGGREGATE_QUERY_SUCCESS = "Get Aggregate query successfully calculated:"
+        const val MATCH_GROUP_QUERY = "Get Group query:"
+        const val MATCH_GROUP_QUERY_SUCCESS = "Get Group query successfully matched concept groups in the database:"
+        const val MATCH_GROUP_QUERY_NO_RESULT = "Get Group query did not match any concept groups in the database."
+        const val MATCH_GROUP_AGGREGATE_QUERY = "Get Group Aggregate query:"
         const val MATCH_GROUP_AGGREGATE_QUERY_SUCCESS =
-            "Match Group Aggregate query successfully aggregated matched concept groups in the database:"
+            "Get Group Aggregate query successfully aggregated matched concept groups in the database:"
         const val MATCH_GROUP_AGGREGATE_QUERY_NO_RESULT =
-            "Match Group Aggregate query did not match any concept groups to aggregate in the database."
+            "Get Group Aggregate query did not match any concept groups to aggregate in the database."
 
         private const val COUNT_DOWN_LATCH_PERIOD_MS: Long = 50
         private val LOGGER = KotlinLogging.logger {}
@@ -168,10 +168,10 @@ class QueryRunner constructor(
             is TypeQLDelete -> runDeleteQuery(query)
             is TypeQLInsert -> runInsertQuery(query)
             is TypeQLUpdate -> runUpdateQuery(query)
-            is TypeQLMatch -> runMatchQuery(query)
-            is TypeQLMatch.Aggregate -> runMatchAggregateQuery(query)
-            is TypeQLMatch.Group -> runMatchGroupQuery(query)
-            is TypeQLMatch.Group.Aggregate -> runMatchGroupAggregateQuery(query)
+            is TypeQLGet -> runGetQuery(query)
+            is TypeQLGet.Aggregate -> runGetAggregateQuery(query)
+            is TypeQLGet.Group -> runGetGroupQuery(query)
+            is TypeQLGet.Group.Aggregate -> runGetGroupAggregateQuery(query)
             else -> throw IllegalStateException("Unrecognised TypeQL query")
         }
     }
@@ -180,19 +180,19 @@ class QueryRunner constructor(
         name = DEFINE_QUERY,
         successMsg = DEFINE_QUERY_SUCCESS,
         queryStr = query.toString()
-    ) { transaction.query().define(query) }
+    ) { transaction.query().define(query).resolve() }
 
     private fun runUndefineQuery(query: TypeQLUndefine) = runUnitQuery(
         name = UNDEFINE_QUERY,
         successMsg = UNDEFINE_QUERY_SUCCESS,
         queryStr = query.toString()
-    ) { transaction.query().undefine(query) }
+    ) { transaction.query().undefine(query).resolve() }
 
     private fun runDeleteQuery(query: TypeQLDelete) = runUnitQuery(
         name = DELETE_QUERY,
         successMsg = DELETE_QUERY_SUCCESS,
         queryStr = query.toString()
-    ) { transaction.query().delete(query) }
+    ) { transaction.query().delete(query).resolve() }
 
     private fun runInsertQuery(query: TypeQLInsert) = runStreamingQuery(
         name = INSERT_QUERY,
@@ -210,7 +210,7 @@ class QueryRunner constructor(
         stream = Response.Stream.ConceptMaps(UPDATE)
     ) { transaction.query().update(query, transactionState.defaultTypeDBOptions().prefetch(true)) }
 
-    private fun runMatchQuery(query: TypeQLMatch) = runStreamingQuery(
+    private fun runGetQuery(query: TypeQLGet) = runStreamingQuery(
         name = MATCH_QUERY,
         successMsg = MATCH_QUERY_SUCCESS,
         noResultMsg = MATCH_QUERY_NO_RESULT,
@@ -218,36 +218,36 @@ class QueryRunner constructor(
         stream = Response.Stream.ConceptMaps(MATCH)
     ) {
         if (query.modifiers().limit().isPresent) {
-            transaction.query().match(query)
+            transaction.query().get(query)
         } else {
-            val queryWithLimit = TypeQLMatch.Limited(query, preferenceSrv.matchQueryLimit)
-            transaction.query().match(queryWithLimit)
+            val queryWithLimit = TypeQLGet.Limited(query, preferenceSrv.getQueryLimit)
+            transaction.query().get(queryWithLimit)
         }
     }
 
-    private fun runMatchAggregateQuery(query: TypeQLMatch.Aggregate) {
+    private fun runGetAggregateQuery(query: TypeQLGet.Aggregate) {
         printQueryStart(MATCH_AGGREGATE_QUERY, query.toString())
-        val result = transaction.query().match(query)
+        val result = transaction.query().get(query).resolve()
         collectEmptyLine()
         collectMessage(SUCCESS, RESULT_ + MATCH_AGGREGATE_QUERY_SUCCESS)
-        responses.put(Response.Numeric(result))
+        responses.put(Response.Value(result))
     }
 
-    private fun runMatchGroupQuery(query: TypeQLMatch.Group) = runStreamingQuery(
+    private fun runGetGroupQuery(query: TypeQLGet.Group) = runStreamingQuery(
         name = MATCH_GROUP_QUERY,
         successMsg = MATCH_GROUP_QUERY_SUCCESS,
         noResultMsg = MATCH_GROUP_QUERY_NO_RESULT,
         queryStr = query.toString(),
         stream = Response.Stream.ConceptMapGroups()
-    ) { transaction.query().match(query) }
+    ) { transaction.query().get(query) }
 
-    private fun runMatchGroupAggregateQuery(query: TypeQLMatch.Group.Aggregate) = runStreamingQuery(
+    private fun runGetGroupAggregateQuery(query: TypeQLGet.Group.Aggregate) = runStreamingQuery(
         name = MATCH_GROUP_AGGREGATE_QUERY,
         successMsg = MATCH_GROUP_AGGREGATE_QUERY_SUCCESS,
         noResultMsg = MATCH_GROUP_AGGREGATE_QUERY_NO_RESULT,
         queryStr = query.toString(),
-        stream = Response.Stream.NumericGroups()
-    ) { transaction.query().match(query) }
+        stream = Response.Stream.ValueGroups()
+    ) { transaction.query().get(query) }
 
     private fun runUnitQuery(name: String, successMsg: String, queryStr: String, queryFn: () -> Unit) {
         printQueryStart(name, queryStr)

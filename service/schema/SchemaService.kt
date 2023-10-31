@@ -188,7 +188,7 @@ class SchemaService(
 
     internal fun typeStateOf(entityType: EntityType): EntityTypeState? = mayRunReadTx { tx ->
         entityTypes[entityType] ?: let {
-            val supertype = entityType.getSupertype(tx)?.let { st ->
+            val supertype = entityType.getSupertype(tx).resolve()?.let { st ->
                 if (st.isEntityType) entityTypes[st] ?: typeStateOf(st.asEntityType()) else null
             }
             entityTypes.computeIfAbsent(entityType) {
@@ -199,7 +199,7 @@ class SchemaService(
 
     internal fun typeStateOf(attributeType: AttributeType): AttributeTypeState? = mayRunReadTx { tx ->
         attributeTypes[attributeType] ?: let {
-            val supertype = attributeType.getSupertype(tx)?.let { st ->
+            val supertype = attributeType.getSupertype(tx).resolve()?.let { st ->
                 if (st.isAttributeType) attributeTypes[st] ?: typeStateOf(st.asAttributeType()) else null
             }
             attributeTypes.computeIfAbsent(attributeType) {
@@ -210,7 +210,7 @@ class SchemaService(
 
     internal fun typeStateOf(relationType: RelationType): RelationTypeState? = mayRunReadTx { tx ->
         relationTypes[relationType] ?: let {
-            val supertype = relationType.getSupertype(tx)?.let { st ->
+            val supertype = relationType.getSupertype(tx).resolve()?.let { st ->
                 if (st.isRelationType) relationTypes[st] ?: typeStateOf(st.asRelationType()) else null
             }
             relationTypes.computeIfAbsent(relationType) {
@@ -221,10 +221,10 @@ class SchemaService(
 
     internal fun typeStateOf(roleType: RoleType): RoleTypeState? = mayRunReadTx { tx ->
         roleTypes[roleType] ?: let {
-            val supertype = roleType.getSupertype(tx)?.let { st ->
+            val supertype = roleType.getSupertype(tx).resolve()?.let { st ->
                 if (st.isRoleType) roleTypes[st] ?: typeStateOf(st.asRoleType()) else null
             }
-            typeStateOf(roleType.getRelationType(tx))?.let { relationType ->
+            typeStateOf(roleType.getRelationType(tx).resolve())?.let { relationType ->
                 roleTypes.computeIfAbsent(roleType) {
                     RoleTypeState(relationType, it, supertype, this)
                 }
@@ -268,7 +268,7 @@ class SchemaService(
             }
         }
         roleTypes.values.forEach {
-            val exists = tx.concepts().getRelationType(it.relationType.name)
+            val exists = tx.concepts().getRelationType(it.relationType.name).resolve()
                 ?.asRelationType()?.getRelates(tx, it.name) != null
             if (!exists) it.purge() else it.updateConceptType()
         }

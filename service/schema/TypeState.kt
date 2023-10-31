@@ -82,7 +82,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(
 
     fun loadSupertype(): Unit = schemaSrv.mayRunReadTx { tx ->
         if (!conceptType.isRoot) {
-            supertype = conceptType.getSupertype(tx)?.let {
+            supertype = conceptType.getSupertype(tx).resolve()?.let {
                 if (isSameEncoding(it)) typeStateOf(asSameEncoding(it)) else null
             }
         }

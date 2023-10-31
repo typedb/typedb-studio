@@ -164,9 +164,9 @@ internal class RunOutputGroup constructor(
 
     private suspend fun consumeResponse(response: Response) = when (response) {
         is Response.Message -> consumeMessageResponse(response)
-        is Response.Numeric -> consumeNumericResponse(response)
+        is Response.Value -> consumeValueResponse(response)
         is Response.Stream<*> -> when (response) {
-            is Response.Stream.NumericGroups -> consumeNumericGroupStreamResponse(response)
+            is Response.Stream.ValueGroups -> consumeValueGroupStreamResponse(response)
             is Response.Stream.ConceptMapGroups -> consumeConceptMapGroupStreamResponse(response)
             is Response.Stream.ConceptMaps -> consumeConceptMapStreamResponse(response)
         }
@@ -175,9 +175,9 @@ internal class RunOutputGroup constructor(
 
     private fun consumeMessageResponse(response: Response.Message) = collectSerial(logOutput.outputFn(response))
 
-    private fun consumeNumericResponse(response: Response.Numeric) = collectSerial(logOutput.outputFn(response.value))
+    private fun consumeValueResponse(response: Response.Value) = collectSerial(logOutput.outputFn(response.value))
 
-    private suspend fun consumeNumericGroupStreamResponse(response: Response.Stream.NumericGroups) {
+    private suspend fun consumeValueGroupStreamResponse(response: Response.Stream.ValueGroups) {
         consumeStreamResponse(response) {
             collectSerial(
                 launchCompletableFuture(

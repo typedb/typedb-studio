@@ -58,7 +58,7 @@ class RelationTypeState internal constructor(
 
     override fun isSameEncoding(conceptType: Type) = conceptType.isRelationType
     override fun asSameEncoding(conceptType: Type) = conceptType.asRelationType()!!
-    override fun fetchSameEncoding(tx: TypeDBTransaction, label: String) = tx.concepts().getRelationType(label)
+    override fun fetchSameEncoding(tx: TypeDBTransaction, label: String) = tx.concepts().getRelationType(label).resolve()
     override fun typeStateOf(type: RelationType) = schemaSrv.typeStateOf(type)
 
     override fun updateConceptType(label: String) {
@@ -103,7 +103,7 @@ class RelationTypeState internal constructor(
             loaded.add(roleTypeConcept)
             schemaSrv.typeStateOf(roleTypeConcept)?.let { roleType ->
                 roleType.loadConstraints()
-                val overriddenType = conceptType.getRelatesOverridden(tx, roleTypeConcept)
+                val overriddenType = conceptType.getRelatesOverridden(tx, roleTypeConcept).resolve()
                     ?.let { schemaSrv.typeStateOf(it) }
                 val extendedType = when {
                     isInherited -> roleType
@@ -137,7 +137,7 @@ class RelationTypeState internal constructor(
     override fun tryCreateSubtype(
         label: String, isAbstract: Boolean
     ) = tryCreateSubtype(label, schemaSrv.createRelationTypeDialog) { tx ->
-        val type = tx.concepts().putRelationType(label)
+        val type = tx.concepts().putRelationType(label).resolve()
         if (isAbstract || !isRoot) {
             if (isAbstract) type.setAbstract(tx)
             if (!isRoot) type.setSupertype(tx, conceptType)
