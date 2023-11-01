@@ -144,7 +144,7 @@ internal class LogOutput constructor(
 
     internal fun outputFn(message: Response.Message): () -> Unit = { output(message.type, message.text) }
 
-    internal fun outputFn(value: Value): () -> Unit = { output(TYPEQL, value.toString()) }
+    internal fun outputFn(value: Value?): () -> Unit = { output(TYPEQL, value?.toString() ?: "NaN") }
 
     internal fun outputFn(conceptMap: ConceptMap): () -> Unit {
         val output = loadToString(conceptMap)

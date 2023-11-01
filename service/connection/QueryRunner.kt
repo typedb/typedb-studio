@@ -68,7 +68,7 @@ class QueryRunner constructor(
             enum class Type { INFO, SUCCESS, ERROR, TYPEQL }
         }
 
-        data class Value(val value: com.vaticle.typedb.driver.api.concept.value.Value) : Response()
+        data class Value(val value: com.vaticle.typedb.driver.api.concept.value.Value?) : Response()
 
         sealed class Stream<T> : Response() {
 
@@ -234,7 +234,7 @@ class QueryRunner constructor(
 
     private fun runGetAggregateQuery(query: TypeQLGet.Aggregate) {
         printQueryStart(GET_AGGREGATE_QUERY, query.toString())
-        val result = transaction.query().get(query).resolve()
+        val result = transaction.query().get(query).resolve().orElse(null)
         collectEmptyLine()
         collectMessage(SUCCESS, RESULT_ + GET_AGGREGATE_QUERY_SUCCESS)
         responses.put(Response.Value(result))
