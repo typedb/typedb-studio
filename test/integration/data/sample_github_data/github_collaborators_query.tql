@@ -18,3 +18,4 @@
 match $file isa file, has file-name "typeql/reasoner/negation.feature";
 $file-collaborator(file: $file, collaborator: $c) isa file-collaborator;
 $c has user-name $user-name;
+get;
