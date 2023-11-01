@@ -132,7 +132,7 @@ class TextEditorTest : IntegrationTest() {
                 waitUntilAssertionPasses(composeRule) {
                     assertNotEquals(
                         Service.driver.session.transaction.transaction!!.concepts()
-                            .getAttributeType(commitDateAttributeName),
+                            .getAttributeType(commitDateAttributeName).resolve(),
                         null
                     )
                 }
@@ -142,7 +142,7 @@ class TextEditorTest : IntegrationTest() {
                 waitUntilAssertionPasses(composeRule) {
                     assertEquals(
                         Service.driver.session.transaction.transaction!!.concepts()
-                            .getAttributeType(commitDateAttributeName),
+                            .getAttributeType(commitDateAttributeName).resolve(),
                         null
                     )
                 }

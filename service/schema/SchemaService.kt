@@ -247,21 +247,21 @@ class SchemaService(
             conceptType = tx.concepts().rootAttributeType, supertype = null, schemaSrv = this
         ).also { attributeTypes[tx.concepts().rootAttributeType] = it }
         entityTypes.values.forEach {
-            if (tx.concepts().getEntityType(it.name) == null) it.purge()
+            if (tx.concepts().getEntityType(it.name).resolve() == null) it.purge()
             else {
                 it.updateConceptType()
                 if (it.isOpen) it.loadConstraintsAsync()
             }
         }
         relationTypes.values.forEach {
-            if (tx.concepts().getRelationType(it.name) == null) it.purge()
+            if (tx.concepts().getRelationType(it.name).resolve() == null) it.purge()
             else {
                 it.updateConceptType()
                 if (it.isOpen) it.loadConstraintsAsync()
             }
         }
         attributeTypes.values.forEach {
-            if (tx.concepts().getAttributeType(it.name) == null) it.purge()
+            if (tx.concepts().getAttributeType(it.name).resolve() == null) it.purge()
             else {
                 it.updateConceptType()
                 if (it.isOpen) it.loadConstraintsAsync()
