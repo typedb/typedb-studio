@@ -28,6 +28,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.driver.api.answer.ConceptMap
 import com.vaticle.typedb.driver.api.answer.ConceptMapGroup
+import com.vaticle.typedb.driver.api.answer.JSON
 import com.vaticle.typedb.driver.api.answer.ValueGroup
 import com.vaticle.typedb.driver.api.concept.Concept
 import com.vaticle.typedb.driver.api.concept.thing.Attribute
@@ -160,6 +161,11 @@ internal class LogOutput constructor(
         return { output(TYPEQL, output) }
     }
 
+    internal fun outputFn(json: JSON): () -> Unit {
+        val output = loadToString(json)
+        return { output(TYPEQL, output) }
+    }
+
     private fun output(type: Response.Message.Type, text: String) {
         when (type) {
             INFO -> editorState.addContent(text)
@@ -187,6 +193,8 @@ internal class LogOutput constructor(
     private fun loadToString(group: ValueGroup): String {
         return loadToString(group.owner()) + " => " + group.value().toString()
     }
+
+    private fun loadToString(json: JSON): String = json.toString()
 
     private fun loadToString(group: ConceptMapGroup): String {
         val str = StringBuilder(loadToString(group.owner()) + " => {\n")

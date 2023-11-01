@@ -32,7 +32,7 @@ import com.vaticle.typedb.studio.service.common.StatusService.Key.OUTPUT_RESPONS
 import com.vaticle.typedb.studio.service.common.StatusService.Key.QUERY_RESPONSE_TIME
 import com.vaticle.typedb.studio.service.connection.QueryRunner
 import com.vaticle.typedb.studio.service.connection.QueryRunner.Response
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.MATCH
+import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.GET
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
@@ -169,6 +169,7 @@ internal class RunOutputGroup constructor(
             is Response.Stream.ValueGroups -> consumeValueGroupStreamResponse(response)
             is Response.Stream.ConceptMapGroups -> consumeConceptMapGroupStreamResponse(response)
             is Response.Stream.ConceptMaps -> consumeConceptMapStreamResponse(response)
+            is Response.Stream.JSONs -> consumeJSONStreamResponse(response)
         }
         is Response.Done -> {}
     }
@@ -196,11 +197,11 @@ internal class RunOutputGroup constructor(
     private suspend fun consumeConceptMapStreamResponse(response: Response.Stream.ConceptMaps) {
         val notificationSrv = Service.notification
         // TODO: enable configuration of displaying GraphOutput for INSERT and UPDATE
-        val table = if (response.source != MATCH) null else TableOutput(
+        val table = if (response.source != GET) null else TableOutput(
             transaction = runner.transactionState, number = tableCount.incrementAndGet()
         ) // TODO: .also { outputs.add(it) }
         val graph =
-            if (response.source != MATCH || !Service.preference.graphOutputEnabled) null else GraphOutput(
+            if (response.source != GET || !Service.preference.graphOutputEnabled) null else GraphOutput(
                 transactionState = runner.transactionState, number = graphCount.incrementAndGet()
             ).also { outputs.add(it); activate(it) }
 
@@ -209,6 +210,10 @@ internal class RunOutputGroup constructor(
             table?.let { t -> collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { t.outputFn(it) }) }
             graph?.let { g -> collectNonSerial(launchCompletableFuture(notificationSrv, LOGGER) { g.output(it) }) }
         }
+    }
+
+    private suspend fun consumeJSONStreamResponse(response: Response.Stream.JSONs) = consumeStreamResponse(response) {
+        collectSerial(launchCompletableFuture(Service.notification, LOGGER) { logOutput.outputFn(it) })
     }
 
     private suspend fun <T> consumeStreamResponse(
