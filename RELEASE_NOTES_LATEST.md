@@ -9,29 +9,41 @@ brew tap vaticle/tap
 brew install --cask vaticle/tap/typedb-studio
 ```
 
-### TypeDB Server Compatible Versions
+### TypeDB Server Compatibility
 
-See the [compatibility table](https://typedb.com/docs/clients/2.x/studio#_version_compatibility) at our Studio
-documentation for which versions of Studio are compatible with which versions of TypeDB.
+See the [compatibility table](https://typedb.com/docs/clients/studio#_version_compatibility) to see
+which versions of Studio are compatible with which versions of TypeDB server.
 
 ---
 
 
 ## New Features
-
+- **Implement Fetch query**
+  
+  We update to the newest version of TypeDB Driver which supports Fetch queries. As Fetch queries return a stream of JSONs, they are only available in text output view, not as a graph.
+  
+  For more details, see https://github.com/vaticle/typeql/pull/300
+  
+  
+- **Support value variables in log output**
+  
+  We now handle the possibility of Values being returned as part of a ConceptMap. Retrieved pure values are not displayed in the graph view, but printed out as expected in the log view.
+  
+  
 
 ## Bugs Fixed
-- **Fix unpacking driver runtime files into working directory**
-  
-  Due to a bug in the Java driver, we unpacked the driver dynamic library into the current working directory of Studio, rather than into a temporary directory. This was at best confusing, and at worst caused an unrecognized error in cases where the Studio was run from a read-only directory (such as `/Applications/` on mac OS.
-  
-  We update to the driver version with the fix.
-  
+
 
 ## Code Refactors
 
 
 ## Other Improvements
+- **Update README file**
+  
+  Update the README file.
+  
+  
+- **Update CODEOWNERS**
 
     
 
