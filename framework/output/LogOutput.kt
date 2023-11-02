@@ -144,7 +144,7 @@ internal class LogOutput constructor(
 
     internal fun outputFn(message: Response.Message): () -> Unit = { output(message.type, message.text) }
 
-    internal fun outputFn(value: Value?): () -> Unit = { output(TYPEQL, value?.toString() ?: "NaN") }
+    internal fun outputFn(value: Value?): () -> Unit = { output(TYPEQL, printValue(value)) }
 
     internal fun outputFn(conceptMap: ConceptMap): () -> Unit {
         val output = loadToString(conceptMap)
@@ -265,7 +265,7 @@ internal class LogOutput constructor(
         return "($rolePlayers)"
     }
 
-    private fun printValue(value: Value) = Strings.valueToString(value)
+    private fun printValue(value: Value?) = value?.let { Strings.valueToString(value) } ?: "NaN"
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
