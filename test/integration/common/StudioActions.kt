@@ -38,7 +38,7 @@ import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typeql.lang.TypeQL
-import com.vaticle.typeql.lang.query.TypeQLMatch
+import com.vaticle.typeql.lang.query.TypeQLGet
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -248,8 +248,8 @@ object StudioActions {
             driver.session(dbName, TypeDBSession.Type.DATA, TypeDBOptions().infer(true)).use { session ->
                 session.transaction(TypeDBTransaction.Type.READ).use { transaction ->
                     val results = ArrayList<String>()
-                    val query = TypeQL.parseQuery<TypeQLMatch>(queryString)
-                    transaction.query().match(query).forEach { result ->
+                    val query = TypeQL.parseQuery<TypeQLGet>(queryString)
+                    transaction.query().get(query).forEach { result ->
                         results.add(
                             result.get("user-name").asAttribute().value.toString()
                         )

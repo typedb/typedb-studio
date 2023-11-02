@@ -21,14 +21,10 @@
 
 package com.vaticle.typedb.studio.test.integration
 
-import com.vaticle.typedb.driver.api.TypeDBSession
-import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickText
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
@@ -36,8 +32,6 @@ import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProje
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.openSchemaWriteTransaction
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilTrue
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
 import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
@@ -138,7 +132,7 @@ class TextEditorTest : IntegrationTest() {
                 waitUntilAssertionPasses(composeRule) {
                     assertNotEquals(
                         Service.driver.session.transaction.transaction!!.concepts()
-                            .getAttributeType(commitDateAttributeName),
+                            .getAttributeType(commitDateAttributeName).resolve(),
                         null
                     )
                 }
@@ -148,7 +142,7 @@ class TextEditorTest : IntegrationTest() {
                 waitUntilAssertionPasses(composeRule) {
                     assertEquals(
                         Service.driver.session.transaction.transaction!!.concepts()
-                            .getAttributeType(commitDateAttributeName),
+                            .getAttributeType(commitDateAttributeName).resolve(),
                         null
                     )
                 }

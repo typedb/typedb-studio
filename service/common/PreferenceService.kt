@@ -35,9 +35,9 @@ class PreferenceService(dataSrv: DataService) {
         get() = preferences.graphOutputEnabled ?: field
         set(value) = run { preferences.graphOutputEnabled = value }
 
-    var matchQueryLimit: Long = Defaults.matchQueryLimit
-        get() = preferences.matchQueryLimit ?: field
-        set(value) = run { preferences.matchQueryLimit = value }
+    var getQueryLimit: Long = Defaults.getQueryLimit
+        get() = preferences.getQueryLimit ?: field
+        set(value) = run { preferences.getQueryLimit = value }
 
     var transactionTimeoutMins: Long = Defaults.transactionTimeoutMins
         get() = preferences.transactionTimeoutMins ?: field
@@ -60,7 +60,7 @@ class PreferenceService(dataSrv: DataService) {
     private object Defaults {
         val autoSave = true
         val graphOutputEnabled = true
-        val matchQueryLimit = 1000L
+        val getQueryLimit = 1000L
         val ignoredPaths = listOf(".git")
         val transactionTimeoutMins = 60L
     }

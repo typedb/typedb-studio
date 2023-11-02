@@ -171,7 +171,7 @@ class GraphBuilder(
     private fun renderEdges(type: Type, rendered: MutableMap<Vertex, Set<Pair<String, Vertex.Type>>>): Set<Pair<String, Vertex.Type>> {
         if (type.isRoot) return emptySet()
 
-        val superType = type.getSupertype(transactionState.transaction)!!
+        val superType = type.getSupertype(transactionState.transaction).resolve()!!
         if (!allTypeVertices.containsKey(type.label.name())) return renderEdges(superType, rendered)
 
         val typeVertex = allTypeVertices[type.label.name()]!!

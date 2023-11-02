@@ -113,7 +113,7 @@ class DataService {
             get() = properties?.getProperty(IGNORED_PATHS)?.split(',')?.map { it.trim() }
             set(value) = setProperty(IGNORED_PATHS, value!!.joinToString(","))
 
-        var matchQueryLimit: Long?
+        var getQueryLimit: Long?
             get() = properties?.getProperty(MATCH_QUERY_LIMIT)?.toLong()
             set(value) = setProperty(MATCH_QUERY_LIMIT, value!!.toString())
 

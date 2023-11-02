@@ -28,8 +28,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import com.vaticle.typedb.driver.api.answer.ConceptMap
 import com.vaticle.typedb.driver.api.answer.ConceptMapGroup
-import com.vaticle.typedb.driver.api.answer.Numeric
-import com.vaticle.typedb.driver.api.answer.NumericGroup
+import com.vaticle.typedb.driver.api.answer.JSON
+import com.vaticle.typedb.driver.api.answer.ValueGroup
 import com.vaticle.typedb.driver.api.concept.Concept
 import com.vaticle.typedb.driver.api.concept.thing.Attribute
 import com.vaticle.typedb.driver.api.concept.thing.Relation
@@ -144,7 +144,7 @@ internal class LogOutput constructor(
 
     internal fun outputFn(message: Response.Message): () -> Unit = { output(message.type, message.text) }
 
-    internal fun outputFn(numeric: Numeric): () -> Unit = { output(TYPEQL, numeric.toString()) }
+    internal fun outputFn(value: Value?): () -> Unit = { output(TYPEQL, printValue(value)) }
 
     internal fun outputFn(conceptMap: ConceptMap): () -> Unit {
         val output = loadToString(conceptMap)
@@ -156,8 +156,13 @@ internal class LogOutput constructor(
         return { output(TYPEQL, output) }
     }
 
-    internal fun outputFn(numericGroup: NumericGroup): () -> Unit {
-        val output = loadToString(numericGroup)
+    internal fun outputFn(valueGroup: ValueGroup): () -> Unit {
+        val output = loadToString(valueGroup)
+        return { output(TYPEQL, output) }
+    }
+
+    internal fun outputFn(json: JSON): () -> Unit {
+        val output = loadToString(json)
         return { output(TYPEQL, output) }
     }
 
@@ -185,9 +190,11 @@ internal class LogOutput constructor(
         return builder.toAnnotatedString()
     }
 
-    private fun loadToString(group: NumericGroup): String {
-        return loadToString(group.owner()) + " => " + group.numeric().asNumber()
+    private fun loadToString(group: ValueGroup): String {
+        return loadToString(group.owner()) + " => " + group.value().toString()
     }
+
+    private fun loadToString(json: JSON): String = json.toString()
 
     private fun loadToString(group: ConceptMapGroup): String {
         val str = StringBuilder(loadToString(group.owner()) + " => {\n")
@@ -230,7 +237,7 @@ internal class LogOutput constructor(
     private fun printType(type: Type): String {
         var str = TypeQLToken.Constraint.TYPE.toString() + " " + type.label
         transactionState.transaction?.let {
-            type.getSupertype(it)?.let {
+            type.getSupertype(it).resolve()?.let {
                 str += " " + TypeQLToken.Constraint.SUB + " " + it.label.scopedName()
             }
         }
@@ -258,7 +265,7 @@ internal class LogOutput constructor(
         return "($rolePlayers)"
     }
 
-    private fun printValue(value: Value) = Strings.valueToString(value)
+    private fun printValue(value: Value?) = value?.let { Strings.valueToString(value) } ?: "NaN"
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable

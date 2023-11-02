@@ -137,6 +137,7 @@
 @maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_arm64_0_7_34
 @maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64_0_7_34
 @maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64_0_7_34
+@maven//:org_jsoup_jsoup_1_16_1
 @maven//:org_mockito_mockito_core_2_6_4
 @maven//:org_objenesis_objenesis_2_5
 @maven//:org_slf4j_jcl_over_slf4j_2_0_0

@@ -103,6 +103,17 @@ unuseddeps_deps()
 load("@vaticle_dependencies//tool/common:deps.bzl", "vaticle_dependencies_ci_pip",
     vaticle_dependencies_tool_maven_artifacts = "maven_artifacts")
 
+# Load //tool/docs
+load("@vaticle_dependencies//tool/docs:python_deps.bzl", docs_deps = "deps")
+docs_deps()
+load("@vaticle_dependencies_tool_docs//:requirements.bzl", install_doc_deps = "install_deps")
+install_doc_deps()
+
+load("@vaticle_dependencies//tool/docs:java_deps.bzl", java_doc_deps = "deps")
+java_doc_deps()
+load("@google_bazel_common//:workspace_defs.bzl", "google_common_workspace_rules")
+google_common_workspace_rules()
+
 #####################################################################
 # Load @vaticle_bazel_distribution from (@vaticle_dependencies) #
 #####################################################################

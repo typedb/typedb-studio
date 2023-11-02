@@ -34,7 +34,7 @@ class EntityTypeState internal constructor(
 
     override fun isSameEncoding(conceptType: Type) = conceptType.isEntityType
     override fun asSameEncoding(conceptType: Type) = conceptType.asEntityType()!!
-    override fun fetchSameEncoding(tx: TypeDBTransaction, label: String) = tx.concepts().getEntityType(label)
+    override fun fetchSameEncoding(tx: TypeDBTransaction, label: String) = tx.concepts().getEntityType(label).resolve()
     override fun typeStateOf(type: EntityType) = schemaSrv.typeStateOf(type)
 
     override fun requestSubtypesExplicit() = schemaSrv.mayRunReadTx { tx ->
@@ -47,7 +47,7 @@ class EntityTypeState internal constructor(
     override fun tryCreateSubtype(
         label: String, isAbstract: Boolean
     ) = tryCreateSubtype(label, schemaSrv.createEntityTypeDialog) { tx ->
-        val type = tx.concepts().putEntityType(label)
+        val type = tx.concepts().putEntityType(label).resolve()
         if (isAbstract || !isRoot) {
             if (isAbstract) type.setAbstract(tx)
             if (!isRoot) type.setSupertype(tx, conceptType)
