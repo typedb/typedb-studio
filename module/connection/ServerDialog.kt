@@ -99,17 +99,14 @@ object ServerDialog {
                     }
                 }
                 TYPEDB_ENTERPRISE -> {
+                    val onSuccess = Service.driver.connectServerDialog::close
                     when {
                         caCertificate.isBlank() || !tlsEnabled -> Service.driver.tryConnectToTypeDBEnterpriseAsync(
-                            enterpriseAddresses.toSet(), username, password, tlsEnabled
-                        ) {
-                            Service.driver.connectServerDialog.close()
-                        }
+                            enterpriseAddresses.toSet(), username, password, tlsEnabled, onSuccess
+                        )
                         else -> Service.driver.tryConnectToTypeDBEnterpriseAsync(
-                            enterpriseAddresses.toSet(), username, password, caCertificate
-                        ) {
-                            Service.driver.connectServerDialog.close()
-                        }
+                            enterpriseAddresses.toSet(), username, password, caCertificate, onSuccess
+                        )
                     }
                 }
             }
