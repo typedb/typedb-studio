@@ -292,9 +292,7 @@ object PreferenceDialog {
             return rootPreferenceGroup.isModified()
         }
 
-        override fun isValid(): Boolean {
-            return rootPreferenceGroup.isValid()
-        }
+        override fun isValid() = rootPreferenceGroup.isValid()
 
         override fun submit() {
             if (preferenceGroups.all { it.isValid() }) {

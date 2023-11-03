@@ -87,7 +87,7 @@ object ServerDialog {
 
         override fun cancel() = Service.driver.connectServerDialog.close()
         override fun isValid(): Boolean = when (server) {
-            TYPEDB -> coreAddress.isNotBlank()
+            TYPEDB -> coreAddress.isNotBlank() && addressFormatIsValid(coreAddress)
             TYPEDB_ENTERPRISE -> !(enterpriseAddresses.isEmpty() || username.isBlank() || password.isBlank())
         }
 
@@ -122,18 +122,18 @@ object ServerDialog {
     private object AddAddressForm : Form.State() {
         var value: String by mutableStateOf("")
         override fun cancel() = Service.driver.manageAddressesDialog.close()
-        override fun isValid() = value.isNotBlank() && validAddressFormat() && !state.enterpriseAddresses.contains(value)
+        override fun isValid() = value.isNotBlank() && addressFormatIsValid(value) && !state.enterpriseAddresses.contains(value)
 
         override fun submit() {
             assert(isValid())
             state.enterpriseAddresses.add(value)
             value = ""
         }
+    }
 
-        private fun validAddressFormat(): Boolean {
-            val addressParts = value.split(":")
-            return addressParts.size == 2 && addressParts[1].toIntOrNull()?.let { it in 1024..65535 } == true
-        }
+    private fun addressFormatIsValid(address: String): Boolean {
+        val addressParts = address.split(":")
+        return addressParts.size == 2 && addressParts[1].toIntOrNull()?.let { it in 1024..65535 } == true
     }
 
     @Composable
