@@ -50,6 +50,7 @@ import com.vaticle.typedb.studio.framework.material.Form.Submission
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import com.vaticle.typedb.studio.framework.material.Form.TextButton
 import com.vaticle.typedb.studio.framework.material.Form.TextInput
+import com.vaticle.typedb.studio.framework.material.Form.TextInputValidated
 import com.vaticle.typedb.studio.framework.material.Icon
 import com.vaticle.typedb.studio.framework.material.SelectFileDialog
 import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
@@ -87,7 +88,7 @@ object ServerDialog {
 
         override fun cancel() = Service.driver.connectServerDialog.close()
         override fun isValid(): Boolean = when (server) {
-            TYPEDB -> coreAddress.isNotBlank()
+            TYPEDB -> coreAddress.isNotBlank() && addressFormatIsValid(coreAddress)
             TYPEDB_ENTERPRISE -> !(enterpriseAddresses.isEmpty() || username.isBlank() || password.isBlank())
         }
 
@@ -99,17 +100,14 @@ object ServerDialog {
                     }
                 }
                 TYPEDB_ENTERPRISE -> {
+                    val onSuccess = Service.driver.connectServerDialog::close
                     when {
-                        caCertificate.isBlank() -> Service.driver.tryConnectToTypeDBEnterpriseAsync(
-                            enterpriseAddresses.toSet(), username, password, tlsEnabled
-                        ) {
-                            Service.driver.connectServerDialog.close()
-                        }
+                        caCertificate.isBlank() || !tlsEnabled -> Service.driver.tryConnectToTypeDBEnterpriseAsync(
+                            enterpriseAddresses.toSet(), username, password, tlsEnabled, onSuccess
+                        )
                         else -> Service.driver.tryConnectToTypeDBEnterpriseAsync(
-                            enterpriseAddresses.toSet(), username, password, caCertificate
-                        ) {
-                            Service.driver.connectServerDialog.close()
-                        }
+                            enterpriseAddresses.toSet(), username, password, caCertificate, onSuccess
+                        )
                     }
                 }
             }
@@ -125,18 +123,18 @@ object ServerDialog {
     private object AddAddressForm : Form.State() {
         var value: String by mutableStateOf("")
         override fun cancel() = Service.driver.manageAddressesDialog.close()
-        override fun isValid() = value.isNotBlank() && validAddressFormat() && !state.enterpriseAddresses.contains(value)
+        override fun isValid() = value.isNotBlank() && addressFormatIsValid(value) && !state.enterpriseAddresses.contains(value)
 
         override fun submit() {
             assert(isValid())
             state.enterpriseAddresses.add(value)
             value = ""
         }
+    }
 
-        private fun validAddressFormat(): Boolean {
-            val addressParts = value.split(":")
-            return addressParts.size == 2 && addressParts[1].toIntOrNull()?.let { it in 1024..65535 } == true
-        }
+    private fun addressFormatIsValid(address: String): Boolean {
+        val addressParts = address.split(":")
+        return addressParts.size == 2 && addressParts[1].toIntOrNull()?.let { it in 1024..65535 } == true
     }
 
     @Composable
@@ -193,12 +191,14 @@ object ServerDialog {
         val focusReq = if (shouldFocus) remember { FocusRequester() } else null
         focusReq?.let { modifier = modifier.focusRequester(focusReq) }
         Field(label = Label.ADDRESS) {
-            TextInput(
+            TextInputValidated(
                 value = state.coreAddress,
                 placeholder = Label.DEFAULT_SERVER_ADDRESS,
                 onValueChange = { state.coreAddress = it },
                 enabled = Service.driver.isDisconnected,
-                modifier = modifier
+                modifier = modifier,
+                invalidWarning = Label.ADDRESS_PORT_WARNING,
+                validator = { state.coreAddress.isBlank() || addressFormatIsValid(state.coreAddress) }
             )
         }
         LaunchedEffect(focusReq) { focusReq?.requestFocus() }
@@ -244,11 +244,13 @@ object ServerDialog {
         val focusReq = remember { FocusRequester() }
         Submission(AddAddressForm, modifier = Modifier.height(Form.FIELD_HEIGHT), showButtons = false) {
             Row {
-                TextInput(
+                TextInputValidated(
                     value = AddAddressForm.value,
                     placeholder = Label.DEFAULT_SERVER_ADDRESS,
                     onValueChange = { AddAddressForm.value = it },
                     modifier = Modifier.weight(1f).focusRequester(focusReq),
+                    invalidWarning = Label.ADDRESS_PORT_WARNING,
+                    validator = { AddAddressForm.value.isBlank() || addressFormatIsValid(AddAddressForm.value) }
                 )
                 RowSpacer()
                 TextButton(text = Label.ADD, enabled = AddAddressForm.isValid()) { AddAddressForm.submit() }

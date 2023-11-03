@@ -129,45 +129,18 @@ object PreferenceDialog {
             @Composable
             override fun Display() {
                 Layout(caption) {
-                    val borderColour = if (this.isValid()) Theme.studio.border else Theme.studio.errorStroke
-                    val modifier = Modifier.border(1.dp, borderColour, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS))
-                    val positionProvider = rememberComponentRectPositionProvider(
-                        anchor = Alignment.TopStart,
-                        alignment = Alignment.BottomEnd,
-                        offset = DpOffset(0.dp, -(Form.FIELD_HEIGHT.value + Form.FIELD_SPACING.value).dp)
-                    )
-                    Form.TextInput(
+                    Form.TextInputValidated(
                         value = value,
                         placeholder = placeholder,
-                        modifier = modifier,
-                        onValueChange = { value = it; modified = true }
+                        onValueChange = { value = it; modified = true },
+                        invalidWarning = invalidWarning,
+                        validator = validator,
                     )
-                    if (!this.isValid()) {
-                        InvalidPopup(invalidWarning, positionProvider)
-                    }
                 }
             }
 
             override fun isValid(): Boolean {
                 return validator(value)
-            }
-
-            @Composable
-            fun InvalidPopup(text: String, popupPositionProvider: PopupPositionProvider) {
-                Popup(
-                    popupPositionProvider
-                ) {
-                    Box(
-                        Modifier.background(color = Theme.studio.errorBackground)
-                            .border(Form.BORDER_WIDTH, Theme.studio.errorStroke, RectangleShape)
-                    ) {
-                        Column {
-                            Row(Modifier.padding(5.dp), Arrangement.SpaceBetween) {
-                                Text(value = text)
-                            }
-                        }
-                    }
-                }
             }
         }
 
@@ -292,9 +265,7 @@ object PreferenceDialog {
             return rootPreferenceGroup.isModified()
         }
 
-        override fun isValid(): Boolean {
-            return rootPreferenceGroup.isValid()
-        }
+        override fun isValid() = rootPreferenceGroup.isValid()
 
         override fun submit() {
             if (preferenceGroups.all { it.isValid() }) {

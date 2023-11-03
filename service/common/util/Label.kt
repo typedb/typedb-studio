@@ -23,6 +23,7 @@ object Label {
     const val ADD = "Add"
     const val ADDRESS = "Address"
     const val ADDRESSES = "Addresses"
+    const val ADDRESS_PORT_WARNING = "Server address must include valid port number"
     const val ADVANCED = "Advanced"
     const val APPLY = "Apply"
     const val AS = "As"
