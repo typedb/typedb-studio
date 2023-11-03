@@ -93,7 +93,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.rememberComponentRectPositionProvider
 import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
 import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
 import com.vaticle.typedb.studio.framework.common.Util.getCursorRectSafely
@@ -439,6 +442,57 @@ object Form {
                 }
             },
         )
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Composable
+    fun TextInputValidated(
+            value: String,
+            onValueChange: (String) -> Unit,
+            placeholder: String? = null,
+            singleLine: Boolean = true,
+            readOnly: Boolean = false,
+            enabled: Boolean = true,
+            isPassword: Boolean = false,
+            modifier: Modifier = Modifier,
+            fontColor: Color = Theme.studio.onSurface,
+            textStyle: TextStyle = Theme.typography.body1,
+            pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
+            onTextLayout: (TextLayoutResult) -> Unit = {},
+            shape: Shape? = ROUNDED_CORNER_SHAPE,
+            border: Border? = DEFAULT_BORDER,
+            trailingIcon: Icon? = null,
+            leadingIcon: Icon? = null,
+            invalidWarning: String,
+            validator: (String) -> Boolean = { true }
+    ) {
+        val borderColour = if (validator(value)) Theme.studio.border else Theme.studio.errorStroke
+        val mod = border?.let {
+            modifier.border(border.width, fadeable(borderColour, !enabled), border.shape)
+        } ?: modifier
+        val positionProvider = rememberComponentRectPositionProvider(
+                anchor = Alignment.TopStart,
+                alignment = Alignment.BottomEnd,
+                offset = DpOffset(0.dp, -(Form.FIELD_HEIGHT.value + Form.FIELD_SPACING.value).dp)
+        )
+        TextInput(
+                value, onValueChange, placeholder, singleLine, readOnly, enabled, isPassword, mod,
+                fontColor, textStyle, pointerHoverIcon, onTextLayout, shape, border, trailingIcon, leadingIcon,
+        )
+        if (!validator(value)) {
+            Popup(positionProvider) {
+                Box(
+                        Modifier.background(color = Theme.studio.errorBackground)
+                                .border(Form.BORDER_WIDTH, Theme.studio.errorStroke, RectangleShape)
+                ) {
+                    Column {
+                        Row(Modifier.padding(5.dp), Arrangement.SpaceBetween) {
+                            Text(value = invalidWarning)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Composable
