@@ -100,7 +100,7 @@ object ServerDialog {
                 }
                 TYPEDB_ENTERPRISE -> {
                     when {
-                        caCertificate.isBlank() -> Service.driver.tryConnectToTypeDBEnterpriseAsync(
+                        caCertificate.isBlank() || !tlsEnabled -> Service.driver.tryConnectToTypeDBEnterpriseAsync(
                             enterpriseAddresses.toSet(), username, password, tlsEnabled
                         ) {
                             Service.driver.connectServerDialog.close()
