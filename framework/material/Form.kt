@@ -473,7 +473,7 @@ object Form {
         val positionProvider = rememberComponentRectPositionProvider(
             anchor = Alignment.TopStart,
             alignment = Alignment.BottomEnd,
-            offset = DpOffset(0.dp, -(Form.FIELD_HEIGHT.value + Form.FIELD_SPACING.value).dp)
+            offset = DpOffset(0.dp, -(FIELD_HEIGHT.value + FIELD_SPACING.value).dp)
         )
         TextInput(
             value, onValueChange, placeholder, singleLine, readOnly, enabled, isPassword, mod,
@@ -483,7 +483,7 @@ object Form {
             Popup(positionProvider) {
                 Box(
                     Modifier.background(color = Theme.studio.errorBackground)
-                            .border(Form.BORDER_WIDTH, Theme.studio.errorStroke, RectangleShape)
+                            .border(BORDER_WIDTH, Theme.studio.errorStroke, RectangleShape)
                 ) {
                     Column {
                         Row(Modifier.padding(5.dp), Arrangement.SpaceBetween) {
