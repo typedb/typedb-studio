@@ -198,7 +198,7 @@ object ServerDialog {
                 enabled = Service.driver.isDisconnected,
                 modifier = modifier,
                 invalidWarning = Label.ADDRESS_PORT_WARNING,
-                validator = { state.coreAddress.isNotBlank() && addressFormatIsValid(state.coreAddress) }
+                validator = { state.coreAddress.isBlank() || addressFormatIsValid(state.coreAddress) }
             )
         }
         LaunchedEffect(focusReq) { focusReq?.requestFocus() }
@@ -250,7 +250,7 @@ object ServerDialog {
                     onValueChange = { AddAddressForm.value = it },
                     modifier = Modifier.weight(1f).focusRequester(focusReq),
                     invalidWarning = Label.ADDRESS_PORT_WARNING,
-                    validator = { AddAddressForm.value.isNotBlank() && addressFormatIsValid(AddAddressForm.value) }
+                    validator = { AddAddressForm.value.isBlank() || addressFormatIsValid(AddAddressForm.value) }
                 )
                 RowSpacer()
                 TextButton(text = Label.ADD, enabled = AddAddressForm.isValid()) { AddAddressForm.submit() }
