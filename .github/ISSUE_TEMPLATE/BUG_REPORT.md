@@ -7,37 +7,36 @@ assignees: ''
 
 ---
 
-Please replace every line in curly brackets ( { like this } ) with appropriate answers, and remove this line.
-
 ## Description
 
-{ Please provide a clear and concise description of the bug. }
 
 ## Environment
 
-1. TypeDB version: { e.g. TypeDB 2.0.0, TypeDB Cluster 2.0.0 }
-2. OS of TypeDB server: { e.g. Mac OS 10, Windows 10, Ubuntu 16.4, Google Cloud }
-3. Studio version: { e.g. 3.0, 3.1 }
-4. OS of Studio: { e.g. Mac OS 10, Windows 10, Ubuntu 16.4 }
-5. Other environment details:
+1. TypeDB distribution: Core/Enterprise/Cloud
+2. TypeDB version: 
+3. Environment: Linux/Mac/Windows/TypeDB Cloud/Google Cloud/AWS/Azure
+4. Studio version: 
+5. Other details:
 
 ## Reproducible Steps
 
-Steps to create the smallest reproducible scenario:
+1. Set up
 
-1. { e.g. Run ... }
-2. { e.g. Load ... }
-3. { e.g. Query ... }
-4. { e.g. See error ... }
 
-## Expected Output
+2. Execute
 
-{ Please describe what you expected to happen. }
 
-## Actual Output
+3. Test/Query
 
-{ Please describe what actually happened. }
+
+4. Unexpected result
+
+
+
+## Expected result
+
 
 ## Additional information
 
-{ Any additional information, including logs or screenshots if you have any. }
+Relevant logs from TypeDB or Driver:
+
