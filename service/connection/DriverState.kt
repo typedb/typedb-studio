@@ -127,7 +127,7 @@ class DriverState constructor(
             mayWarnPasswordExpiry()
         } catch (e: TypeDBDriverException) {
             statusAtomic.set(DISCONNECTED)
-            notificationSrv.userError(LOGGER, UNABLE_TO_CONNECT)
+            notificationSrv.userError(LOGGER, UNABLE_TO_CONNECT, e.message ?: "")
         } catch (e: java.lang.Exception) {
             statusAtomic.set(DISCONNECTED)
             notificationSrv.systemError(LOGGER, e, UNEXPECTED_ERROR)

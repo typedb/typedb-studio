@@ -83,7 +83,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             val UNEXPECTED_ERROR =
                 Connection(1, "Unexpected error occurred with the connection to TypeDB server.")
             val UNABLE_TO_CONNECT =
-                Connection(2, "Failed to connect to TypeDB server with the provided address and credentials.")
+                Connection(2, "Failed to connect to TypeDB server with the provided address and credentials: '%s'.")
             val FAILED_TO_OPEN_SESSION =
                 Connection(3, "Failed to establish '%s' session to database '%s'.")
             val FAILED_TO_OPEN_TRANSACTION =
