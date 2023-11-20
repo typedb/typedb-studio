@@ -32,10 +32,10 @@ import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.SESSION_CLOSED_ON_SERVER
+import mu.KotlinLogging
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import mu.KotlinLogging
 
 class SessionState constructor(
     internal val driver: DriverState,

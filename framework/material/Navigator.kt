@@ -88,6 +88,10 @@ import com.vaticle.typedb.studio.service.common.NotificationService.Companion.la
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message.Framework.Companion.EXPAND_LIMIT_REACHED
 import com.vaticle.typedb.studio.service.page.Navigable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import mu.KotlinLogging
 import java.awt.event.MouseEvent
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -95,10 +99,6 @@ import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.floor
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import mu.KotlinLogging
 
 object Navigator {
 
