@@ -190,7 +190,7 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
             private const val MESSAGE_PREFIX = "TypeDB Studio Schema"
 
             val UNEXPECTED_ERROR =
-                Schema(1, "Unexpected error occurred with database schema management/operation.")
+                Schema(1, "Unexpected error occurred with database schema management/operation: %s")
             val FAILED_TO_OPEN_READ_TX =
                 Schema(2, "Failed to open read transaction for schema manager.")
             val FAILED_TO_OPEN_WRITE_TX =
