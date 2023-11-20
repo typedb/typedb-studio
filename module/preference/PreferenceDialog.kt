@@ -104,7 +104,7 @@ object PreferenceDialog {
         var modified by mutableStateOf(false)
 
         @Composable
-        fun Layout(caption: String?, fieldContent: @Composable () -> Unit) {
+        fun Layout(fieldContent: @Composable () -> Unit) {
             Field(label, caption, fieldHeight) {
                 fieldContent()
             }
@@ -112,7 +112,7 @@ object PreferenceDialog {
 
         class TextInputValidated(
             initValue: String,
-            label: String, private val caption: String? = null,
+            label: String, caption: String? = null,
             private val placeholder: String, private val invalidWarning: String,
             private val validator: (String) -> Boolean = { true }
         ) : PreferenceField(label, caption) {
@@ -121,7 +121,7 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                Layout(caption) {
+                Layout {
                     Form.TextInputValidated(
                         value = value,
                         placeholder = placeholder,
@@ -139,7 +139,7 @@ object PreferenceDialog {
 
         class TextInput(
             initValue: String,
-            label: String, private val caption: String? = null,
+            label: String, caption: String? = null,
             private val placeholder: String
         ) : PreferenceField(label, caption) {
 
@@ -147,7 +147,7 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                Layout(caption) {
+                Layout {
                     Form.TextInput(
                         value = value,
                         placeholder = placeholder,
@@ -165,13 +165,13 @@ object PreferenceDialog {
         }
 
         class MultilineTextInput(
-            initValue: String, label: String, private val caption: String? = null,
+            initValue: String, label: String, caption: String? = null,
         ) : PreferenceField(label, caption, fieldHeight = MULTILINE_FIELD_HEIGHT) {
             var value by mutableStateOf(TextFieldValue(initValue))
 
             @Composable
             override fun Display() {
-                Layout(caption) {
+                Layout {
                     Form.MultilineTextInput(
                         value = value,
                         onValueChange = { value = it; modified = true },
@@ -190,14 +190,14 @@ object PreferenceDialog {
         }
 
         class Checkbox(
-            initValue: Boolean, label: String, private val caption: String? = null
+            initValue: Boolean, label: String, caption: String? = null
         ) : PreferenceField(label, caption) {
 
             var value by mutableStateOf(initValue)
 
             @Composable
             override fun Display() {
-                Layout(caption) {
+                Layout {
                     Form.Checkbox(
                         value = value,
                         onChange = { value = it; modified = true }
@@ -211,14 +211,14 @@ object PreferenceDialog {
         }
 
         class Dropdown<T : Any>(
-            initValue: T, val values: List<T>, label: String, private val caption: String? = null
+            initValue: T, val values: List<T>, label: String, caption: String? = null
         ) : PreferenceField(label, caption) {
 
             private var selected by mutableStateOf(values.find { it == initValue })
 
             @Composable
             override fun Display() {
-                Layout(caption) {
+                Layout {
                     Form.Dropdown(
                         values = values,
                         selected = selected,
