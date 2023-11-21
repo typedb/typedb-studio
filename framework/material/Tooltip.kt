@@ -41,7 +41,9 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Enter
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Exit
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpOffset
@@ -159,10 +161,8 @@ object Tooltip {
                     boxMod.background(color = Theme.studio.surface)
                         .border(BORDER_WIDTH, Theme.studio.border, RectangleShape)
                         .onSizeChanged { height = toDP(it.width, density) }
-                        .pointerMoveFilter(
-                            onEnter = { state.keepShowingOnTooltipHover(); false },
-                            onExit = { state.mayHideOnTooltipExit(); false },
-                        )
+                        .onPointerEvent(Enter) { state.keepShowingOnTooltipHover() }
+                        .onPointerEvent(Exit) { state.mayHideOnTooltipExit() }
                 ) {
                     Column(contentMod.padding(TOOLTIP_SPACE)) {
                         Row(contentMod, Arrangement.SpaceBetween) {

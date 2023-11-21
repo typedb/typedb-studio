@@ -29,7 +29,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Enter
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Exit
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -83,21 +85,21 @@ object StatusBar {
     private fun StatusDisplay(status: StatusService.Status, textStyle: TextStyle) {
         val tooltipState: Tooltip.State = Tooltip.State(tooltipArg(status.key))
         Tooltip.Popup(tooltipState)
-        Column(Modifier.pointerMoveFilter(
-            onEnter = { tooltipState.mayShowOnTargetHover(); false },
-            onExit = { tooltipState.mayHideOnTargetExit(); false }
-        )) {
+        Column(Modifier
+            .onPointerEvent(Enter) { tooltipState.mayShowOnTargetHover() }
+            .onPointerEvent(Exit) { tooltipState.mayHideOnTargetExit() }
+        ) {
             Row(Modifier.height(HEIGHT), verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.width(PADDING))
                 Icon.Render(icon = icon(status.key), color = iconColor(status.type), size = ICON_SIZE)
                 Spacer(Modifier.width(SPACING))
-                if (status.onClick != null) status.onClick!!.let { fn ->
+                status.onClick?.let { fn ->
                     val textColor = textColor(status.type)
                     Form.ClickableText(
                         value = status.message, color = textColor, hoverColor = textColor,
                         textStyle = textStyle, onClick = fn
                     )
-                } else Form.Text(value = status.message, textStyle = textStyle)
+                } ?: Form.Text(value = status.message, textStyle = textStyle)
                 Spacer(Modifier.width(PADDING))
             }
             Spacer(Modifier.height(2.dp))

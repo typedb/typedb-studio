@@ -35,8 +35,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Exit
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Move
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -51,7 +53,6 @@ import com.vaticle.typedb.studio.service.connection.TransactionState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import mu.KotlinLogging
 
 class GraphArea(transactionState: TransactionState) {
 
@@ -255,11 +256,9 @@ class GraphArea(transactionState: TransactionState) {
         @Composable
         fun TapAndHover(graphArea: GraphArea, modifier: Modifier) {
             Box(modifier
-                .pointerMoveFilter(
-                    onMove = { graphArea.interactions.pointerPosition = it; false },
-                    // TODO: this is not triggered reliably when the pointer leaves the window bounds
-                    onExit = { graphArea.interactions.pointerPosition = null; false }
-                )
+                .onPointerEvent(Move) { graphArea.interactions.pointerPosition = it.changes.first().position }
+                // TODO: this is not triggered reliably when the pointer leaves the window bounds
+                .onPointerEvent(Exit) { graphArea.interactions.pointerPosition = null }
                 .pointerInput(graphArea) {
                     detectTapGestures(
                         onPress = { point ->

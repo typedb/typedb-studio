@@ -42,7 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.awtEvent
+import androidx.compose.ui.awt.awtEventOrNull
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -52,13 +52,14 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Enter
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Exit
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Release
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -431,7 +432,7 @@ object Navigator {
             LazyColumn(
                 state = state.scroller, modifier = Modifier.widthIn(min = state.minWidth)
                     .horizontalScroll(state = horScrollState)
-                    .pointerMoveFilter(onExit = { state.hovered = null; false })
+                    .onPointerEvent(Exit) { state.hovered = null }
             ) {
                 state.entries.forEach { item { ItemLayout(state, it, itemHeight, iconArg, styleArgs) } }
                 if (bottomSpace > 0.dp) item { Spacer(Modifier.height(bottomSpace)) }
@@ -474,8 +475,8 @@ object Navigator {
                 .padding(horizontal = horizontalItemPadding)
                 .pointerHoverIcon(PointerIconDefaults.Hand)
                 .pointerInput(item) { onPointerInput(state, item) }
-                .onPointerEvent(Release) { mayOpenItem(it.awtEvent) }
-                .pointerMoveFilter(onEnter = { state.hovered = item; false })
+                .onPointerEvent(Release) { it.awtEventOrNull?.let(::mayOpenItem) }
+                .onPointerEvent(Enter) { state.hovered = item }
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -540,7 +541,7 @@ object Navigator {
     private fun <T : Navigable<T>> onKeyEvent(
         event: KeyEvent, state: NavigatorState<T>, item: ItemState<T>
     ): Boolean {
-        return when (event.awtEvent.id) {
+        return when (event.awtEventOrNull?.id) {
             java.awt.event.KeyEvent.KEY_RELEASED -> false
             else -> when (event.key) {
                 Key.Enter, Key.NumPadEnter -> {

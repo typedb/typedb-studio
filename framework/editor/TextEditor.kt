@@ -42,7 +42,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.awtEvent
+import androidx.compose.ui.awt.awtEventOrNull
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -293,8 +293,8 @@ object TextEditor {
                     .focusRequester(state.focusReq).focusable()
                     .onGloballyPositioned { state.density = density }
                     .onKeyEvent { state.handler.handleEditorEvent(it) }
-                    .onPointerEvent(Move) { state.target.dragSelection(it.awtEvent.x, it.awtEvent.y) }
-                    .onPointerEvent(Release) { if (it.awtEvent.button == BUTTON1) state.target.stopDragSelection() }
+                    .onPointerEvent(Move) { it.awtEventOrNull?.let { event -> state.target.dragSelection(event.x, event.y) } }
+                    .onPointerEvent(Release) { if (it.awtEventOrNull?.button == BUTTON1) state.target.stopDragSelection() }
                     .pointerInput(state) { onPointerInput(state) }
                 ) {
                     if (showLine) {

@@ -22,7 +22,7 @@ import androidx.compose.foundation.text.isTypedEvent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.awt.awtEvent
+import androidx.compose.ui.awt.awtEventOrNull
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.type
@@ -107,7 +107,7 @@ internal class EventHandler constructor(
         return if (event.type == KeyEventType.KeyUp) false
         else when {
             event.isTypedEvent -> {
-                processor.insertText(event.awtEvent.keyChar.toString())
+                event.awtEventOrNull?.let { processor.insertText(it.keyChar.toString()) }
                 true
             }
             else -> KeyMapper.CURRENT.map(event)?.let { executeEditorCommand(it) } ?: false
