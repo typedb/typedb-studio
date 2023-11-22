@@ -84,7 +84,7 @@ See the [Installation guide](https://typedb.com/docs/home/install#_studio).
     - [Bazel 6 or higher](https://bazel.build/install).
  
 2. You can build TypeDB with either one of the following commands, depending on the targeted architecture and 
-   Operation system: 
+   operating system: 
    ```sh
    $ bazel run //:studio-bin-mac-arm64
    $ bazel run //:studio-bin-mac-x86_64
@@ -97,7 +97,7 @@ See the [Installation guide](https://typedb.com/docs/home/install#_studio).
    $ bazel run //:studio-bin-linux-x86_64
    ```
    You can also replace `run` with `build` in the command above, and Bazel will simply produce the JAR for TypeDB Studio
-   under `bazel-bin/studio-bin-`<mac|windows|linux>`-`<arm64|x86_64>`.jar`.
+   under `bazel-bin/studio-bin-mac-x86_64.jar` or similar directory, with respect to the chosen OS and architecture.
 
 ## Useful links
 
