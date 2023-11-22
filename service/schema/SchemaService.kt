@@ -29,6 +29,7 @@ import com.vaticle.typedb.driver.api.concept.type.EntityType
 import com.vaticle.typedb.driver.api.concept.type.RelationType
 import com.vaticle.typedb.driver.api.concept.type.RoleType
 import com.vaticle.typedb.driver.api.concept.type.ThingType
+import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
 import com.vaticle.typedb.studio.service.common.ConfirmationService
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
@@ -57,13 +58,11 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
-@OptIn(ExperimentalTime::class)
 class SchemaService(
     private val session: SessionState,
     internal val pages: PageService,
@@ -312,6 +311,8 @@ class SchemaService(
             openOrGetReadTx()?.let {
                 result = function(it)
             } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_READ_TX)
+        } catch (e: TypeDBDriverException) {
+            throw e
         } catch (e: Throwable) {
             notification.systemError(LOGGER, e, UNEXPECTED_ERROR, e.message ?: UNKNOWN)
         } finally {
