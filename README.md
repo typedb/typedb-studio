@@ -1,36 +1,10 @@
 [![TypeDB Studio](./docs/images/studio_full_1.png)](./docs/images/studio_full_1.png)
 
 <div align="center">
-  <a href="https://factory.vaticle.com/vaticle/typedb-studio">
-    <img alt="Factory" src="https://factory.vaticle.com/api/status/vaticle/typedb-studio/badge.svg"/>
-  </a>
-  &ensp;
-  <a href="https://circleci.com/gh/vaticle/typedb-studio/tree/master">
-    <img alt="CircleCI" src="https://circleci.com/gh/vaticle/typedb-studio/tree/master.svg?style=shield"/>
-  </a>
-  &ensp;
-  <a href="https://github.com/vaticle/typedb-studio/releases/latest">
-    <img alt="GitHub release" src="https://img.shields.io/github/release/vaticle/typedb-studio.svg">
-  </a>
-  &ensp;
-  <a href="https://vaticle.com/discord">
-    <img alt="Discord" src="https://img.shields.io/discord/665254494820368395?color=7389D8&label=chat&logo=discord&logoColor=ffffff" />
-  </a>
-  &ensp;
-  <a href="https://forum.vaticle.com">
-    <img alt="Discussion Forum" src="https://img.shields.io/badge/discourse-forum-blue.svg" />
-  </a>
-  &ensp;
-  <a href="https://stackoverflow.com/questions/tagged/typedb">
-    <img alt="Stack Overflow" src="https://img.shields.io/badge/stackoverflow-typedb-796de3.svg">
-  </a>
-</div>
 
-<div align="center">
-
-[![Factory](https://factory.vaticle.com/api/status/vaticle/typedb/badge.svg)](https://factory.vaticle.com/vaticle/typedb)
-[![CircleCI](https://circleci.com/gh/vaticle/typedb/tree/master.svg?style=shield)](https://circleci.com/gh/vaticle/typedb/tree/master)
-[![GitHub release](https://img.shields.io/github/release/vaticle/typedb.svg)](https://github.com/vaticle/typedb/releases/latest)
+[![Factory](https://factory.vaticle.com/api/status/vaticle/typedb-studio/badge.svg)](https://factory.vaticle.com/vaticle/typedb-studio)
+[![CircleCI](https://circleci.com/gh/vaticle/typedb-studio/tree/master.svg?style=shield)](https://circleci.com/gh/vaticle/typedb-studio/tree/master)
+[![GitHub release](https://img.shields.io/github/release/vaticle/typedb-studio.svg)](https://github.com/vaticle/typedb-studio/releases/latest)
 [![Discord](https://img.shields.io/discord/665254494820368395?color=7389D8&label=chat&logo=discord&logoColor=ffffff)](https://typedb.com/discord)
 [![Discussion Forum](https://img.shields.io/badge/discourse-forum-blue.svg)](https://forum.typedb.com)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typedb-796de3.svg)](https://stackoverflow.com/questions/tagged/typedb)
