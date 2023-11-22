@@ -23,21 +23,41 @@
 
 # Introducing TypeDB Studio
 
-TypeDB Studio is an Integrated Development Environment (IDE) that facilitates the development process for TypeDB databases. It provides a consistent experience across different operating systems, including Windows, macOS, and Linux. With TypeDB Studio, developers can efficiently manage databases, execute queries, and explore query results, all within a unified environment.
+TypeDB Studio is an Integrated Development Environment (IDE)
+that facilitates the development process for TypeDB databases.
+It provides a consistent experience across different operating systems, including macOS, Linux, and Windows.
+With TypeDB Studio, developers can efficiently manage databases, execute queries,
+and explore query results, all within a unified environment.
 
 ## Features
 
 ### Clean and intuitive design
 
-TypeDB Studio offers a clean and intuitive UI for various tasks related to TypeDB databases. It, for example, allows developers to effortlessly create and delete databases and provides functionality to insert, modify, and query data directly within the IDE. The latter feature is particularly useful in production environments, allowing developers to quickly address issues and make data-related changes.
+TypeDB Studio offers a clean and intuitive GUI for various tasks related to TypeDB databases.
+It, for example, allows developers to effortlessly create and delete databases and provides functionality to insert, 
+modify, and query data directly within the IDE.
+The latter feature is particularly useful in production environments, 
+allowing developers to quickly address issues and make data-related changes.
+
+[![Manage Database Schemas](./docs/images/create.gif)](./docs/images/create.gif)
 
 ### Data visualization
 
-One of the key features of TypeDB Studio is its interactive visualizer, which allows developers to visualize query results and explore inferred data. The visualizer presents data in a hypergraph format, making it easy to navigate and understand the relationships between entities and attributes.
+One of the key features of TypeDB Studio is its interactive visualizer, 
+which allows developers to visualize query results and explore inferred data.
+The visualizer presents data in a hypergraph format,
+making it easy to navigate and understand the relationships between entities and attributes.
+
+[![Graph Visualisation](./docs/images/query.gif)](./docs/images/query.gif)
 
 ### GUI for schema management
 
-TypeDB Studio also includes a schema manager with a graphical interface, making it convenient for developers to edit, visualize, and maintain their data models. The user-friendly interface simplifies the process of creating, extending, exploring, and managing schemas, enabling developers to easily define the structure and relationships of their data.
+TypeDB Studio also includes a schema manager with a graphical interface,
+making it convenient for developers to edit, visualize, and maintain their data models.
+The user-friendly interface simplifies the process of creating, extending, exploring, and managing schemas,
+enabling developers to easily define the structure and relationships of their data.
+
+[![Graph Visualisation](./docs/images/edit.gif)](./docs/images/edit.gif)
 
 ### Fully-fledged IDE for developing with TypeDB
 
@@ -45,13 +65,10 @@ TypeDB Studio covers all steps of the development process with TypeDB:
 
 - Graphical interface for creating or establishing a connection with a TypeDB database, eliminating the need for command line tools or client libraries.
 - Concept browser for exploring data models, including detailed views of entities, relations, attributes, and their interactions.
-[![Manage Database Schemas](./docs/images/type_browser_1.gif)](./docs/images/type_browser_1.gif)
 - Built-in syntax highlighting for TypeQL and pop-up notifications for warnings and error messages that may occur during runtime/query execution.
 - Graph visualization engine for visualizing query results using user-modifiable, force-directed graph drawings.
-[![Graph Visualisation](./docs/images/graph_vis_1.gif)](./docs/images/graph_vis_1.gif)
 - Local syntax validation against a set of basic checks before sending instructions and queries to the server.
 - Explanations visualization displays the deductive reasoning behind inferred data guaranteeing accountability of generated information.
-[![Inference Visualisation](./docs/images/expl_vis_1.gif)](./docs/images/expl_vis_1.gif)
 
 ## Download TypeDB Studio
 
