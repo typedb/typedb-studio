@@ -1,15 +1,11 @@
 [![TypeDB Studio](./docs/images/studio_full_1.png)](./docs/images/studio_full_1.png)
 
-<div align="center">
-
 [![Factory](https://factory.vaticle.com/api/status/vaticle/typedb-studio/badge.svg)](https://factory.vaticle.com/vaticle/typedb-studio)
 [![GitHub release](https://img.shields.io/github/release/vaticle/typedb-studio.svg)](https://github.com/vaticle/typedb-studio/releases/latest)
 [![Discord](https://img.shields.io/discord/665254494820368395?color=7389D8&label=chat&logo=discord&logoColor=ffffff)](https://typedb.com/discord)
 [![Discussion Forum](https://img.shields.io/badge/discourse-forum-blue.svg)](https://forum.typedb.com)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typedb-796de3.svg)](https://stackoverflow.com/questions/tagged/typedb)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typeql-3dce8c.svg)](https://stackoverflow.com/questions/tagged/typeql)
-
-</div>
 
 # Introducing TypeDB Studio
 
