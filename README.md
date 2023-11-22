@@ -2,25 +2,25 @@
 
 <div align="center">
   <a href="https://factory.vaticle.com/vaticle/typedb-studio">
-    <img alt="Factory" src="https://factory.vaticle.com/api/status/vaticle/typedb-studio/badge.svg" />
+    <img alt="Factory" src="https://factory.vaticle.com/api/status/vaticle/typedb-studio/badge.svg"/>
   </a>
-  &emsp;
+  &ensp;
   <a href="https://circleci.com/gh/vaticle/typedb-studio/tree/master">
-    <img alt="CircleCI" src="https://circleci.com/gh/vaticle/typedb-studio/tree/master.svg?style=shield" />
+    <img alt="CircleCI" src="https://circleci.com/gh/vaticle/typedb-studio/tree/master.svg?style=shield"/>
   </a>
-  &emsp;
+  &ensp;
   <a href="https://github.com/vaticle/typedb-studio/releases/latest">
     <img alt="GitHub release" src="https://img.shields.io/github/release/vaticle/typedb-studio.svg">
   </a>
-  &emsp;
+  &ensp;
   <a href="https://vaticle.com/discord">
     <img alt="Discord" src="https://img.shields.io/discord/665254494820368395?color=7389D8&label=chat&logo=discord&logoColor=ffffff" />
   </a>
-  &emsp;
+  &ensp;
   <a href="https://forum.vaticle.com">
     <img alt="Discussion Forum" src="https://img.shields.io/badge/discourse-forum-blue.svg" />
   </a>
-  &emsp;
+  &ensp;
   <a href="https://stackoverflow.com/questions/tagged/typedb">
     <img alt="Stack Overflow" src="https://img.shields.io/badge/stackoverflow-typedb-796de3.svg">
   </a>
