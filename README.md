@@ -20,7 +20,7 @@ It provides a consistent experience across different operating systems, includin
 With TypeDB Studio, developers can efficiently manage databases, execute queries,
 and explore query results, all within a unified environment.
 
-## Features
+## Top features
 
 ### Clean and intuitive design
 
@@ -50,20 +50,29 @@ enabling developers to easily define the structure and relationships of their da
 
 [![Graph Visualisation](./docs/images/edit.gif)](./docs/images/edit.gif)
 
-### Fully-fledged IDE for developing with TypeDB
+## Fully-fledged IDE for developing with TypeDB
 
 TypeDB Studio covers all steps of the development process with TypeDB:
 
-- Graphical interface for creating or establishing a connection with a TypeDB database, eliminating the need for command line tools or client libraries.
-- Concept browser for exploring data models, including detailed views of entities, relations, attributes, and their interactions.
-- Built-in syntax highlighting for TypeQL and pop-up notifications for warnings and error messages that may occur during runtime/query execution.
+- Graphical user interface for connecting to TypeDB Core & Enterprise without the use of command line tools, libraries,
+  or Driver API.
+- Database manager to create and delete databases.
+- Type browser for exploring type hierarchy of a database's schema.
+- Type editor for adjusting existing types in a database.
+- Convenient multi-tab query editor with TypeQL syntax highlighting, auto-saving, query execution, response output, 
+  and pop-up notifications for warnings and error messages that may occur during runtime/query execution.
+- Project folder file management to store your favorite queries.
 - Graph visualization engine for visualizing query results using user-modifiable, force-directed graph drawings.
-- Local syntax validation against a set of basic checks before sending instructions and queries to the server.
-- Explanations visualization displays the deductive reasoning behind inferred data guaranteeing accountability of generated information.
+- Local syntax validation before sending instructions and queries to the server.
+- Automatic transaction management with full GUI control, including read/write transactions, schema/data sessions, as 
+  well as transaction control (commit/rollback/close) and transaction options.
+- Rule-based inference enabled with a click of a button (`infer`).
+- Explanations visualization displays the deductive reasoning behind inferred data for accountability.
 
 ## Download TypeDB Studio
 
-You can download TypeDB Studio from the [GitHub Releases](https://github.com/vaticle/typedb-studio/releases).
+You can download TypeDB Studio from the [GitHub Releases](https://github.com/vaticle/typedb-studio/releases) page.
+See the [Installation guide](https://typedb.com/docs/home/install#_studio).
 
 ## Compiling and Running TypeDB Studio from Source
 
@@ -88,15 +97,15 @@ You can download TypeDB Studio from the [GitHub Releases](https://github.com/vat
    $ bazel run //:studio-bin-linux-x86_64
    ```
    You can also replace `run` with `build` in the command above, and Bazel will simply produce the JAR for TypeDB Studio
-   under `bazel-bin/studio-bin-<mac|windows|linux>-<arm64|x86_64>.jar`.
+   under `bazel-bin/studio-bin-`<mac|windows|linux>`-`<arm64|x86_64>`.jar`.
 
 ## Useful links
 
 If you want to begin your journey with TypeDB, you can explore the following resources:
 
 * In-depth dive into TypeDB's [philosophy](https://typedb.com/philosophy)
-* Our [TypeDB quickstart](https://typedb.com/docs/typedb/2.x/quickstart-guide)
-* Our [TypeDB Studio documentation](https://typedb.com/docs/clients/2.x/studio)
+* Our [TypeDB quickstart](https://typedb.com/docs/typedb/quickstart-guide)
+* Our [TypeDB Studio documentation](https://typedb.com/docs/clients/studio)
 * **[TypeQL](https://github.com/vaticle/typeql)**
 * **[TypeDB](https://github.com/vaticle/typedb)**
 
