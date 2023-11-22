@@ -3,7 +3,6 @@
 <div align="center">
 
 [![Factory](https://factory.vaticle.com/api/status/vaticle/typedb-studio/badge.svg)](https://factory.vaticle.com/vaticle/typedb-studio)
-[![CircleCI](https://circleci.com/gh/vaticle/typedb-studio/tree/master.svg?style=shield)](https://circleci.com/gh/vaticle/typedb-studio/tree/master)
 [![GitHub release](https://img.shields.io/github/release/vaticle/typedb-studio.svg)](https://github.com/vaticle/typedb-studio/releases/latest)
 [![Discord](https://img.shields.io/discord/665254494820368395?color=7389D8&label=chat&logo=discord&logoColor=ffffff)](https://typedb.com/discord)
 [![Discussion Forum](https://img.shields.io/badge/discourse-forum-blue.svg)](https://forum.typedb.com)
