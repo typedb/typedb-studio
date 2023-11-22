@@ -18,11 +18,11 @@
 
 package com.vaticle.typedb.studio.service.connection
 
+import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.driver.api.answer.ConceptMap
 import com.vaticle.typedb.driver.api.answer.ConceptMapGroup
-import com.vaticle.typedb.driver.api.answer.ValueGroup
-import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.driver.api.answer.JSON
+import com.vaticle.typedb.driver.api.answer.ValueGroup
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.PreferenceService
@@ -30,15 +30,15 @@ import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message
 import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.INFO
 import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.SUCCESS
 import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.TYPEQL
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.INSERT
 import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.GET
+import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.INSERT
 import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.UPDATE
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLDefine
 import com.vaticle.typeql.lang.query.TypeQLDelete
 import com.vaticle.typeql.lang.query.TypeQLFetch
-import com.vaticle.typeql.lang.query.TypeQLInsert
 import com.vaticle.typeql.lang.query.TypeQLGet
+import com.vaticle.typeql.lang.query.TypeQLInsert
 import com.vaticle.typeql.lang.query.TypeQLQuery
 import com.vaticle.typeql.lang.query.TypeQLUndefine
 import com.vaticle.typeql.lang.query.TypeQLUpdate
@@ -156,18 +156,18 @@ class QueryRunner constructor(
             isRunning.set(false)
             responses.add(Response.Done)
             var isConsumed: Boolean
-            if (!hasStopSignal.atomic.get()) {
+            if (!hasStopSignal.state) {
                 do {
                     isConsumed = consumerLatch.count == 0L
                     if (!isConsumed) delay(COUNT_DOWN_LATCH_PERIOD_MS)
-                } while (!isConsumed && !hasStopSignal.atomic.get())
+                } while (!isConsumed && !hasStopSignal.state)
             }
             onComplete()
         }
     }
 
     private fun runQueries(queries: List<TypeQLQuery>) = queries.forEach { query ->
-        if (hasStopSignal.atomic.get()) return@forEach
+        if (hasStopSignal.state) return@forEach
         when (query) {
             is TypeQLDefine -> runDefineQuery(query)
             is TypeQLUndefine -> runUndefineQuery(query)
@@ -312,7 +312,7 @@ class QueryRunner constructor(
                 responses.put(stream)
                 started = true
             }.forEach {
-                if (hasStopSignal.atomic.get()) return@forEach
+                if (hasStopSignal.state) return@forEach
                 stream.queue.put(Either.first(it))
             }
         } catch (e: Exception) {
@@ -320,7 +320,7 @@ class QueryRunner constructor(
             error = true
         } finally {
             if (started) stream.queue.put(Either.second(Response.Done))
-            if (error || hasStopSignal.atomic.get()) collectMessage(ERROR, TERMINATED)
+            if (error || hasStopSignal.state) collectMessage(ERROR, TERMINATED)
             else if (started) collectMessage(INFO, COMPLETED)
             else collectMessage(SUCCESS, RESULT_ + noResultMsg)
         }

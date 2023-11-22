@@ -307,7 +307,7 @@ class SchemaService(
 
         var result: T? = null
         try {
-            countRunningReadAtomic.incrementAndGet()
+            countRunningReadAtomic.increment()
             openOrGetReadTx()?.let {
                 result = function(it)
             } ?: notification.userWarning(LOGGER, FAILED_TO_OPEN_READ_TX)
@@ -316,7 +316,7 @@ class SchemaService(
         } catch (e: Throwable) {
             notification.systemError(LOGGER, e, UNEXPECTED_ERROR, e.message ?: UNKNOWN)
         } finally {
-            countRunningReadAtomic.decrementAndGet()
+            countRunningReadAtomic.decrement()
         }
         return result
     }

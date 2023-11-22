@@ -82,7 +82,7 @@ class SessionState constructor(
     fun typeSchema(): String? = database?.let { driver.tryFetchTypeSchema(it) }
 
     fun transaction(type: TypeDBTransaction.Type = READ, options: TypeDBOptions? = null): TypeDBTransaction? {
-        return if (!isOpenAtomic.atomic.get()) null
+        return if (!isOpenAtomic.state) null
         else if (options != null) _session.get()?.transaction(type, options)
         else _session.get()?.transaction(type)
     }
