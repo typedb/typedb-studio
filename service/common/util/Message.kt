@@ -94,26 +94,28 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Connection(6, "Session is closed on TypeDB Studio.")
             val SESSION_CLOSED_ON_SERVER =
                 Connection(7, "Session was closed on TypeDB Server.")
+            val SESSION_REOPENED =
+                Connection(8, "Session reopened successfully.")
             val TRANSACTION_CLOSED_ON_SERVER =
-                Connection(8, "Transaction was closed, due to:\n%s")
+                Connection(9, "Transaction was closed, due to:\n%s")
             val TRANSACTION_CLOSED_IN_QUERY =
-                Connection(9, "Transaction was closed, due to an error in the query.")
+                Connection(10, "Transaction was closed, due to an error in the query.")
             val TRANSACTION_ROLLBACK =
-                Connection(10, "Transaction has been rolled back to the opened snapshot, and all uncommitted writes have been deleted.")
+                Connection(11, "Transaction has been rolled back to the opened snapshot, and all uncommitted writes have been deleted.")
             val TRANSACTION_COMMIT_SUCCESSFULLY =
-                Connection(11, "Transaction has been successfully committed and closed -- all writes have been persisted.")
+                Connection(12, "Transaction has been successfully committed and closed -- all writes have been persisted.")
             val TRANSACTION_COMMIT_FAILED =
-                Connection(12, "Transaction failed to commit, due to:\n%s")
+                Connection(13, "Transaction failed to commit, due to:\n%s")
             val FAILED_TO_DELETE_DATABASE =
-                Connection(13, "Failed to delete database '%s', due to:\n%s")
+                Connection(14, "Failed to delete database '%s', due to:\n%s")
             val FAILED_TO_CREATE_DATABASE =
-                Connection(14, "Failed to create database '%s', due to:\n%s")
+                Connection(15, "Failed to create database '%s', due to:\n%s")
             val FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE =
-                Connection(15, "Failed to create database '%s', due to duplicate.")
+                Connection(16, "Failed to create database '%s', due to duplicate.")
             val FAILED_TO_LOAD_SCHEMA =
-                Connection(16, "Failed to fetch schema for database '%s', due to:\n%s")
+                Connection(17, "Failed to fetch schema for database '%s', due to:\n%s")
             val CREDENTIALS_EXPIRE_SOON_HOURS =
-                Connection(17, "Your credentials are expiring within %s hour(s). Use TypeDB Console to update your password.")
+                Connection(18, "Your credentials are expiring within %s hour(s). Use TypeDB Console to update your password.")
         }
     }
 

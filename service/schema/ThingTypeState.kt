@@ -51,7 +51,6 @@ import com.vaticle.typedb.studio.service.page.Pageable
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.TypeQL.cVar
 import com.vaticle.typeql.lang.TypeQL.rel
-import com.vaticle.typeql.lang.common.TypeQLToken.Annotation.KEY
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import mu.KotlinLogging
@@ -117,7 +116,15 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
     override fun deactivate() {}
     override fun execBeforeClose() {}
     override fun initiateSave(reopen: Boolean) {}
-    override fun reloadEntries() = loadSubtypesExplicit()
+    override fun reloadEntries() {
+        try {
+            loadSubtypesExplicit()
+        } catch (e: TypeDBDriverException) {
+            notifications.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN)
+            LOGGER.error { e.stackTraceToString() }
+        }
+    }
+
     override fun onReopen(function: (Pageable) -> Unit) = callbacks.onReopen.put(function)
     override fun onClose(function: (Pageable) -> Unit) = callbacks.onClose.put(function)
     override fun compareTo(other: Navigable<ThingTypeState<TT, TTS>>): Int = name.compareTo(other.name)
@@ -184,6 +191,7 @@ sealed class ThingTypeState<TT : ThingType, TTS : ThingTypeState<TT, TTS>> const
                 loadSubtypesRecursively()
             } catch (e: TypeDBDriverException) {
                 notifications.userError(LOGGER, FAILED_TO_LOAD_TYPE, e.message ?: UNKNOWN)
+                LOGGER.error { e.stackTraceToString() }
             }
         }
     }

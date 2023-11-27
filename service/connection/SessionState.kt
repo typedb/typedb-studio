@@ -32,10 +32,11 @@ import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
 import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.SESSION_CLOSED_ON_SERVER
-import mu.KotlinLogging
+import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.SESSION_REOPENED
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import mu.KotlinLogging
 
 class SessionState constructor(
     internal val driver: DriverState,
@@ -66,17 +67,25 @@ class SessionState constructor(
         if (isOpen && this.database == database && this.type == type) return
         if (this.database != database) close() else reset()
         try {
-            _session.set(driver.session(database, type)?.apply { onClose { close(SESSION_CLOSED_ON_SERVER) } })
+            _session.set(driver.session(database, type))
             if (_session.get()?.isOpen == true) {
-                this.database = database
                 this.type = type
-                isOpenAtomic.set(true)
-                onOpen.forEach { it() }
+                opened(database)
+                val session = _session.get()!!
+                session.onClose { closed(SESSION_CLOSED_ON_SERVER) }
+                session.onReopen { opened(database, SESSION_REOPENED) }
             } else isOpenAtomic.set(false)
         } catch (exception: TypeDBDriverException) {
             notificationSrv.userError(LOGGER, FAILED_TO_OPEN_SESSION, type, database)
             isOpenAtomic.set(false)
         }
+    }
+
+    private fun opened(database: String, message: Message? = null, vararg params: Any) {
+        this.database = database
+        isOpenAtomic.set(true)
+        message?.let { notificationSrv.userWarning(LOGGER, it, *params) }
+        onOpen.forEach { it() }
     }
 
     fun typeSchema(): String? = database?.let { driver.tryFetchTypeSchema(it) }
@@ -97,11 +106,19 @@ class SessionState constructor(
         isResetting.set(false)
     }
 
-    internal fun close(message: Message? = null, vararg params: Any) {
+    internal fun close() {
         if (!isResetting.get() && isOpenAtomic.compareAndSet(expected = true, new = false)) {
-            onClose.forEach { it() }
             reset()
+            closed()
+        }
+    }
+
+    private fun closed(message: Message? = null, vararg params: Any) {
+        if (!isResetting.get() && isOpenAtomic.compareAndSet(expected = true, new = false)) {
+            database = null
+            transaction.close()
             message?.let { notificationSrv.userError(LOGGER, it, *params) }
+            onClose.forEach { it() }
         }
     }
 }
