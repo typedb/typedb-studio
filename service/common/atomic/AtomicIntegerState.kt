@@ -21,19 +21,16 @@ package com.vaticle.typedb.studio.service.common.atomic
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import java.util.concurrent.atomic.AtomicInteger
 
 class AtomicIntegerState constructor(initValue: Int) {
 
     var state by mutableStateOf(initValue); private set
-    val atomic = AtomicInteger(initValue)
 
     fun set(value: Int) {
-        atomic.set(value)
         state = value
     }
 
-    fun incrementAndGet(): Int = atomic.incrementAndGet().also { state = it }
+    fun increment() = synchronized(this) { state += 1 }
 
-    fun decrementAndGet() = atomic.decrementAndGet().also { state = it }
+    fun decrement() = synchronized(this) { state -= 1 }
 }

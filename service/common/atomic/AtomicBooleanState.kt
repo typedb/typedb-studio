@@ -21,20 +21,17 @@ package com.vaticle.typedb.studio.service.common.atomic
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import java.util.concurrent.atomic.AtomicBoolean
 
 class AtomicBooleanState constructor(initValue: Boolean) {
 
     var state by mutableStateOf(initValue); private set
-    val atomic = AtomicBoolean(initValue)
 
-    fun set(value: Boolean) {
-        atomic.set(value)
+    fun set(value: Boolean) = synchronized(this) {
         state = value
     }
 
-    fun compareAndSet(expected: Boolean, new: Boolean): Boolean {
-        return if (atomic.compareAndSet(expected, new)) {
+    fun compareAndSet(expected: Boolean, new: Boolean): Boolean = synchronized(this) {
+        return if (state == expected) {
             state = new
             true
         } else false

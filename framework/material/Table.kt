@@ -32,10 +32,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Enter
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Exit
 import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
@@ -162,10 +164,8 @@ object Table {
                 ContextMenu.Popup(contextMenuState) { fn(item) }
                 modifier = modifier.pointerHoverIcon(PointerIconDefaults.Hand)
                     .pointerInput(item) { contextMenuState.onPointerInput(this) }
-                    .pointerMoveFilter(
-                        onEnter = { isHover = true; false },
-                        onExit = { isHover = false; false }
-                    )
+                    .onPointerEvent(Enter) { isHover = true }
+                    .onPointerEvent(Exit) { isHover = false }
             }
             Row(modifier) {
                 columns.forEachIndexed { i, col ->

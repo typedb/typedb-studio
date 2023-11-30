@@ -41,7 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.awtEvent
+import androidx.compose.ui.awt.awtEventOrNull
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -53,7 +53,6 @@ import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.changedToDown
-import androidx.compose.ui.input.pointer.consumeDownChange
 import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -67,7 +66,6 @@ import com.vaticle.typedb.studio.framework.common.Util.toDP
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Form.Text
 import java.awt.event.MouseEvent
-import mu.KotlinLogging
 
 object ContextMenu {
 
@@ -100,17 +98,19 @@ object ContextMenu {
             pointerInputScope.forEachGesture {
                 awaitPointerEventScope {
                     val event = awaitEventFirstDown()
-                    event.changes.forEach { it.consumeDownChange() }
+                    event.changes.forEach { if (it.pressed != it.previousPressed) it.consume() }
                     when {
                         event.buttons.isPrimaryPressed -> {
-                            when (event.awtEvent.clickCount) {
-                                0, 1 -> onSinglePrimaryPressed(event.awtEvent)
-                                2 -> onDoublePrimaryPressed(event.awtEvent)
-                                else -> onTriplePrimaryPressed(event.awtEvent)
+                            event.awtEventOrNull?.let {
+                                when (it.clickCount) {
+                                    0, 1 -> onSinglePrimaryPressed(it)
+                                    2 -> onDoublePrimaryPressed(it)
+                                    else -> onTriplePrimaryPressed(it)
+                                }
                             }
                         }
                         event.buttons.isSecondaryPressed -> {
-                            onSecondaryClick(event.awtEvent)
+                            event.awtEventOrNull?.let(onSecondaryClick)
                             isOpen = true
                         }
                     }

@@ -57,7 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.awtEvent
+import androidx.compose.ui.awt.awtEventOrNull
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Rect
@@ -69,13 +69,14 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Enter
+import androidx.compose.ui.input.pointer.PointerEventType.Companion.Exit
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Press
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -339,10 +340,9 @@ object Form {
         var isHover by remember { mutableStateOf(false) }
         ClickableText(
             text = value,
-            modifier = Modifier.pointerHoverIcon(PointerIconDefaults.Hand).pointerMoveFilter(
-                onEnter = { isHover = true; false },
-                onExit = { isHover = false; false }
-            ),
+            modifier = Modifier.pointerHoverIcon(PointerIconDefaults.Hand)
+                .onPointerEvent(Enter) { isHover = true }
+                .onPointerEvent(Exit) { isHover = false },
             style = textStyle.copy(if (isHover) hoverColor else color),
             onClick = { onClick() }
         )
@@ -751,10 +751,9 @@ object Form {
                         tooltipState?.hideOnTargetClicked()
                         onClick?.let { c -> c() }
                     }
-                }.pointerMoveFilter(
-                    onEnter = { mayShowOnTargetHover(); false },
-                    onExit = { tooltipState?.mayHideOnTargetExit(); false }
-                )
+                }
+                .onPointerEvent(Enter) { mayShowOnTargetHover() }
+                .onPointerEvent(Exit) { tooltipState?.mayHideOnTargetExit() }
         ) {
             Icon.Render(icon = icon, color = iconColor, enabled = enabled)
             tooltipState?.let { Tooltip.Popup(it) }
@@ -779,10 +778,9 @@ object Form {
     ) {
         var isHover by remember { mutableStateOf(false) }
         BoxButton(
-            modifier = modifier.size(FIELD_HEIGHT).pointerMoveFilter(
-                onEnter = { isHover = true; false },
-                onExit = { isHover = false; false }
-            ),
+            modifier = modifier.size(FIELD_HEIGHT)
+                .onPointerEvent(Enter) { isHover = true }
+                .onPointerEvent(Exit) { isHover = false },
             bgColor = bgColor, focusReq = focusReq, roundedCorners = roundedCorners,
             enabled = enabled, tooltip = tooltip, onClick = onClick,
         ) {
@@ -825,10 +823,8 @@ object Form {
                     .onGloballyPositioned { area = toRectDP(it.boundsInWindow(), density) }
                     .clickable(enabled = enabled) { tooltipState?.hideOnTargetClicked(); onClick() }
                     .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
-                    .pointerMoveFilter(
-                        onEnter = { mayShowOnTargetHover(); false },
-                        onExit = { tooltipState?.mayHideOnTargetExit(); false }
-                    )
+                    .onPointerEvent(Enter) { mayShowOnTargetHover() }
+                    .onPointerEvent(Exit) { tooltipState?.mayHideOnTargetExit() }
             ) {
                 content()
                 tooltipState?.let { Tooltip.Popup(it) }
@@ -918,19 +914,16 @@ object Form {
             modifier = Modifier.height(FIELD_HEIGHT)
                 .background(if (i == state.mouseIndex) Theme.studio.primary else Theme.studio.surface)
                 .pointerHoverIcon(icon = PointerIconDefaults.Hand)
-                .pointerMoveFilter(
-                    onEnter = { state.mouseInTo(i); false },
-                    onExit = { state.mouseOutFrom(i); false }
-                ),
+                .onPointerEvent(Enter) { state.mouseInTo(i) }
+                .onPointerEvent(Exit) { state.mouseOutFrom(i) },
         ) { Row { Text(value = value, color = color) } }
 
         Box(modifier.onSizeChanged { state.width = toDP(it.width, pixelDensity) }) {
             TextButton(
                 text = selected?.let { displayFn(it) } ?: (placeholderAnnStr + AnnotatedString(" ") + noneAnnStr),
-                modifier = Modifier.defaultMinSize(minWidth = state.width).pointerMoveFilter(
-                    onEnter = { state.isButtonHover = true; false },
-                    onExit = { state.isButtonHover = false; false }
-                ),
+                modifier = Modifier.defaultMinSize(minWidth = state.width)
+                    .onPointerEvent(Enter) { state.isButtonHover = true }
+                    .onPointerEvent(Exit) { state.isButtonHover = false },
                 textColor = fadeable(Theme.studio.onPrimary, selected == null, PLACEHOLDER_OPACITY),
                 focusReq = focusReq,
                 trailingIcon = IconArg(Icon.DROPDOWN_SELECT),
@@ -959,7 +952,7 @@ object Form {
     @OptIn(ExperimentalComposeUiApi::class)
     fun onKeyEventHandler(
         event: KeyEvent, onEnter: (() -> Unit)? = null, onSpace: (() -> Unit)? = null
-    ): Boolean = when (event.awtEvent.id) {
+    ): Boolean = when (event.awtEventOrNull?.id) {
         KEY_PRESSED -> false
         else -> when (event.key) {
             Key.Enter, Key.NumPadEnter -> onEnter?.let { it(); true } ?: false

@@ -90,7 +90,7 @@ sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(
 
     fun loadSupertypesAsync() = coroutines.launchAndHandle(notifications, LOGGER) { loadSupertypes() }
 
-    fun loadSupertypes(): Unit = schemaSrv.mayRunReadTx { tx ->
+    fun loadSupertypes(): Unit = schemaSrv.mayRunReadTx { _ ->
         loadSupertype()
         supertype?.loadInheritables()
         supertype?.loadSupertypes()

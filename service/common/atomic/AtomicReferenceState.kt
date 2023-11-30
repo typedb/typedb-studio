@@ -21,20 +21,17 @@ package com.vaticle.typedb.studio.service.common.atomic
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import java.util.concurrent.atomic.AtomicReference
 
 class AtomicReferenceState<T : Any> constructor(initValue: T) {
 
     var state: T by mutableStateOf(initValue); private set
-    val atomic: AtomicReference<T> = AtomicReference(initValue)
 
-    fun set(value: T) {
-        atomic.set(value)
+    fun set(value: T) = synchronized(this) {
         state = value
     }
 
-    fun compareAndSet(expected: T, new: T): Boolean {
-        return if (atomic.compareAndSet(expected, new)) {
+    fun compareAndSet(expected: T, new: T): Boolean = synchronized(this) {
+        return if (state == expected) {
             state = new
             true
         } else false

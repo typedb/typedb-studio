@@ -21,7 +21,6 @@ package com.vaticle.typedb.studio.module.preference
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -36,17 +35,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupPositionProvider
-import androidx.compose.ui.window.rememberComponentRectPositionProvider
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.Dialog
@@ -111,7 +104,7 @@ object PreferenceDialog {
         var modified by mutableStateOf(false)
 
         @Composable
-        fun Layout(caption: String?, fieldContent: @Composable () -> Unit) {
+        fun Layout(fieldContent: @Composable () -> Unit) {
             Field(label, caption, fieldHeight) {
                 fieldContent()
             }
@@ -119,7 +112,7 @@ object PreferenceDialog {
 
         class TextInputValidated(
             initValue: String,
-            label: String, private val caption: String? = null,
+            label: String, caption: String? = null,
             private val placeholder: String, private val invalidWarning: String,
             private val validator: (String) -> Boolean = { true }
         ) : PreferenceField(label, caption) {
@@ -128,7 +121,7 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                Layout(caption) {
+                Layout {
                     Form.TextInputValidated(
                         value = value,
                         placeholder = placeholder,
@@ -146,7 +139,7 @@ object PreferenceDialog {
 
         class TextInput(
             initValue: String,
-            label: String, private val caption: String? = null,
+            label: String, caption: String? = null,
             private val placeholder: String
         ) : PreferenceField(label, caption) {
 
@@ -154,7 +147,7 @@ object PreferenceDialog {
 
             @Composable
             override fun Display() {
-                Layout(caption) {
+                Layout {
                     Form.TextInput(
                         value = value,
                         placeholder = placeholder,
@@ -172,13 +165,13 @@ object PreferenceDialog {
         }
 
         class MultilineTextInput(
-            initValue: String, label: String, private val caption: String? = null,
+            initValue: String, label: String, caption: String? = null,
         ) : PreferenceField(label, caption, fieldHeight = MULTILINE_FIELD_HEIGHT) {
             var value by mutableStateOf(TextFieldValue(initValue))
 
             @Composable
             override fun Display() {
-                Layout(caption) {
+                Layout {
                     Form.MultilineTextInput(
                         value = value,
                         onValueChange = { value = it; modified = true },
@@ -197,14 +190,14 @@ object PreferenceDialog {
         }
 
         class Checkbox(
-            initValue: Boolean, label: String, private val caption: String? = null
+            initValue: Boolean, label: String, caption: String? = null
         ) : PreferenceField(label, caption) {
 
             var value by mutableStateOf(initValue)
 
             @Composable
             override fun Display() {
-                Layout(caption) {
+                Layout {
                     Form.Checkbox(
                         value = value,
                         onChange = { value = it; modified = true }
@@ -218,14 +211,14 @@ object PreferenceDialog {
         }
 
         class Dropdown<T : Any>(
-            initValue: T, val values: List<T>, label: String, private val caption: String? = null
+            initValue: T, val values: List<T>, label: String, caption: String? = null
         ) : PreferenceField(label, caption) {
 
             private var selected by mutableStateOf(values.find { it == initValue })
 
             @Composable
             override fun Display() {
-                Layout(caption) {
+                Layout {
                     Form.Dropdown(
                         values = values,
                         selected = selected,

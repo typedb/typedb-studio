@@ -26,12 +26,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.input.mouse.MouseScrollEvent
-import androidx.compose.ui.input.mouse.MouseScrollOrientation
-import androidx.compose.ui.input.mouse.MouseScrollUnit
-import androidx.compose.ui.input.mouse.mouseScrollFilter
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -105,9 +105,9 @@ internal object LazyLines {
             updateOffset(offset + delta)
         }
 
-        internal fun updateOffset(event: MouseScrollEvent): Boolean {
-            if (event.delta !is MouseScrollUnit.Line || event.orientation != MouseScrollOrientation.Vertical) return false
-            updateOffsetBy(lineHeight * (event.delta as MouseScrollUnit.Line).value)
+        internal fun updateOffset(scrollDelta: Offset): Boolean {
+            if (scrollDelta.y == 0f) return false
+            updateOffsetBy(lineHeight * scrollDelta.y)
             return true
         }
 
@@ -130,6 +130,7 @@ internal object LazyLines {
         return State(lines, scroller)
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun <T : Any> Area(
         state: State<T>,
@@ -139,7 +140,12 @@ internal object LazyLines {
     ) {
         val density = LocalDensity.current.density
         Box(modifier = modifier.fillMaxHeight().clipToBounds()
-            .mouseScrollFilter { event, _ -> onScroll(); state.scroller.updateOffset(event) }
+            .onPointerEvent(PointerEventType.Scroll) {
+                onScroll()
+                val change = it.changes.first()
+                state.scroller.updateOffset(change.scrollDelta)
+                change.consume()
+            }
             .onSizeChanged { state.scroller.viewHeight = toDP(it.height, density) }) {
             if (state.lines.isNotEmpty()) {
                 val lastVisibleIndex = min(state.scroller.lastVisibleIndexPossible + 1, state.scroller.lineCount() - 1)

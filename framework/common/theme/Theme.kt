@@ -157,10 +157,10 @@ object Theme {
     ): Indication {
         return object : Indication {
             @Composable
-            override fun rememberUpdatedInstance(src: InteractionSource): IndicationInstance {
-                val isPressed = src.collectIsPressedAsState()
-                val isHovered = src.collectIsHoveredAsState()
-                val isFocused = src.collectIsFocusedAsState()
+            override fun rememberUpdatedInstance(interactionSource: InteractionSource): IndicationInstance {
+                val isPressed = interactionSource.collectIsPressedAsState()
+                val isHovered = interactionSource.collectIsHoveredAsState()
+                val isFocused = interactionSource.collectIsFocusedAsState()
                 return object : IndicationInstance {
                     override fun ContentDrawScope.drawIndication() {
                         drawContent()
