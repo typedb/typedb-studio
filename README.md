@@ -26,31 +26,9 @@ within the IDE.
 
 [![Manage Database Schemas](./docs/images/create.gif)](./docs/images/create.gif)
 
-### Data visualization
-
-One of the key features of TypeDB Studio is its interactive visualizer, 
-which allows developers to visualize query results and explore inferred data.
-The visualizer presents data in a hypergraph format,
-making it easy to navigate and visualize TypeDB responses.
-
-[![Graph Visualisation](./docs/images/query.gif)](./docs/images/query.gif)
-
-### GUI for data modeling
-
-TypeDB Studio includes a type browser and a type editor with a graphical user interface,
-making it convenient for developers to edit, visualize, and maintain their data models.
-The user-friendly interface simplifies the process of creating, extending, exploring, and managing schemas,
-enabling developers to easily define the structure and relationships of their data.
-
-[![Graph Visualisation](./docs/images/edit.gif)](./docs/images/edit.gif)
-
-## Feature list
-
 TypeDB Studio covers all steps of the development process with TypeDB:
 
-- Graphical user interface for connecting to TypeDB without the use of command line tools, libraries,
-  or Driver API.
-- Network encryption and authentication support (for TypeDB Enterprise and TypeDB Cloud).
+- Graphical user interface for connecting to TypeDB without the use of command line tools, libraries, or Driver API.
 - Database manager to create and delete databases.
 - Type browser for exploring type hierarchy of a database's schema.
 - Type editor for adjusting existing types in a database.
@@ -64,15 +42,35 @@ TypeDB Studio covers all steps of the development process with TypeDB:
 - Rule-based inference enabled with a click of a button (`infer`).
 - Explanations visualization displays the deductive reasoning behind inferred data for root cause analysis.
 
+### GUI for data modeling
+
+On top of the ability to model your data with TypeQL,
+TypeDB Studio includes a type browser and a type editor with a graphical user interface,
+making it convenient to edit, visualize, and maintain data models.
+The user-friendly interface simplifies the process of creating, extending, exploring, and managing schemas,
+enabling developers to easily define the structure and relationships of their data.
+
+[![Graph Visualisation](./docs/images/edit.gif)](./docs/images/edit.gif)
+
+### Data and schema visualization
+
+One of the key features of TypeDB Studio is its interactive visualizer, 
+which allows developers to visualize query results and explore inferred data.
+The visualizer presents data in a hypergraph format,
+making it easy to navigate and visualize TypeDB responses.
+
+[![Graph Visualisation](./docs/images/query.gif)](./docs/images/query.gif)
+
 ## Download TypeDB Studio
 
 You can download TypeDB Studio from the [GitHub Releases](https://github.com/vaticle/typedb-studio/releases) page.
-See the [Installation guide](https://typedb.com/docs/home/install#_studio).
+For more information on how to install and run TypeDB Studio, see the 
+[Installation guide](https://typedb.com/docs/home/install#_studio).
 
-## Compiling and Running TypeDB Studio from Source
+## Compiling from source
 
-> Note: You **DO NOT NEED** to compile TypeDB Studio from source if you just want to use TypeDB Studio. You can
-> simply download TypeDB Studio following the _"Download TypeDB Studio"_ section above.
+> Note: You **DO NOT NEED** to compile TypeDB Studio from source if you just want to use TypeDB Studio.
+> You can simply download TypeDB Studio following the _"Download TypeDB Studio"_ section above.
 
 1. Make sure you have the following dependencies installed on your machine:
     - Java JDK 11 or higher
