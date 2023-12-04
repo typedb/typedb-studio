@@ -11,7 +11,7 @@ brew install --cask vaticle/tap/typedb-studio
 
 ### TypeDB Server Compatibility
 
-See the [compatibility table](https://typedb.com/docs/clients/studio#_version_compatibility) to see
+See the [compatibility table](https://typedb.com/docs/typedb/connecting/studio#_version_compatibility) to see
 which versions of Studio are compatible with which versions of TypeDB server.
 
 ---

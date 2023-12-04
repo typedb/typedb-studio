@@ -11,23 +11,21 @@ brew install --cask vaticle/tap/typedb-studio
 
 ### TypeDB Server Compatibility
 
-See the [compatibility table](https://typedb.com/docs/clients/studio#_version_compatibility) to see
+See the [compatibility table](https://typedb.com/docs/typedb/connecting/studio#_version_compatibility) to see
 which versions of Studio are compatible with which versions of TypeDB server.
 
 ---
 
 
 ## New Features
-- **Implement Fetch query**
+- **Gracefully handle session failover**
   
-  We update to the newest version of TypeDB Driver which supports Fetch queries. As Fetch queries return a stream of JSONs, they are only available in text output view, not as a graph.
-  
-  For more details, see https://github.com/vaticle/typeql/pull/300
+  Gracefully handle session failover: session automatically reconnects and the UI is updated accordingly.
   
   
-- **Support value variables in log output**
-  
-  We now handle the possibility of Values being returned as part of a ConceptMap. Retrieved pure values are not displayed in the graph view, but printed out as expected in the log view.
+- **Update to driver with fixed error messages and ability to use system CA**
+
+  We update typedb-driver to 2.25.8, which has error UX improvements and the ability to read system certificates when connecting to TypeDB.
   
   
 
@@ -38,12 +36,11 @@ which versions of Studio are compatible with which versions of TypeDB server.
 
 
 ## Other Improvements
-- **Update README file**
-  
-  Update the README file.
-  
-  
-- **Update CODEOWNERS**
+- **Update to use vaticle/typedb-driver commit**
+
+- **Unable to connect error carries driver message**
+
+- **Update github PR and issue templates**
 
     
 
