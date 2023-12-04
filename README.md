@@ -12,21 +12,8 @@
 TypeDB Studio is an Integrated Development Environment (IDE)
 that facilitates the development process for TypeDB databases.
 It provides a consistent experience across different operating systems, including macOS, Linux, and Windows.
-TypeDB Studio covers all steps of the development process with TypeDB:
-
-- Graphical user interface for connecting to TypeDB without the use of command line tools, libraries, or Driver API.
-- Database manager to create and delete databases.
-- Type browser for exploring type hierarchy of a database's schema.
-- Type editor for adjusting existing types in a database.
-- Project file management to store your favorite queries.
-- Convenient multi-tab query editor with TypeQL syntax highlighting, auto-saving, query execution, response output, 
-  and pop-up notifications for warnings and error messages that may occur during runtime/query execution.
-- Graph visualization engine for visualizing query results using user-modifiable, force-directed graph drawings.
-- Local syntax validation before sending instructions and queries to the server.
-- Automatic transaction management with full GUI control, including read/write transactions, schema/data sessions, as 
-  well as transaction control (commit/rollback/close) and transaction options.
-- Rule-based inference enabled with a click of a button (`infer`).
-- Explanations visualization displays the deductive reasoning behind inferred data for root cause analysis.
+With TypeDB Studio, developers can efficiently manage databases, execute queries,
+and explore query results, all within a unified environment.
 
 ## Key features
 
@@ -57,6 +44,24 @@ The user-friendly interface simplifies the process of creating, extending, explo
 enabling developers to easily define the structure and relationships of their data.
 
 [![Type editor](./docs/images/edit.gif)](./docs/images/edit.gif)
+
+## Feature list
+
+TypeDB Studio covers all steps of the development process with TypeDB:
+
+- Graphical user interface for connecting to TypeDB without the use of command line tools, libraries, or Driver API.
+- Database manager to create and delete databases.
+- Type browser for exploring type hierarchy of a database's schema.
+- Type editor for adjusting existing types in a database.
+- Project file management to store your favorite queries.
+- Convenient multi-tab query editor with TypeQL syntax highlighting, auto-saving, query execution, response output, 
+  and pop-up notifications for warnings and error messages that may occur during runtime/query execution.
+- Graph visualization engine for visualizing query results using user-modifiable, force-directed graph drawings.
+- Local syntax validation before sending instructions and queries to the server.
+- Automatic transaction management with full GUI control, including read/write transactions, schema/data sessions, as 
+  well as transaction control (commit/rollback/close) and transaction options.
+- Rule-based inference enabled with a click of a button (`infer`).
+- Explanations visualization displays the deductive reasoning behind inferred data for root cause analysis.
 
 ## Download TypeDB Studio
 
