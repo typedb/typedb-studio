@@ -1,4 +1,4 @@
-[![TypeDB Studio](./docs/images/studio_banner.svg)](https://typedb.com/docs/typedb/connecting/studio)
+[![TypeDB Studio](./docs/images/studio_banner.png)](https://typedb.com/docs/typedb/connecting/studio)
 
 [![Factory](https://factory.vaticle.com/api/status/vaticle/typedb-studio/badge.svg)](https://factory.vaticle.com/vaticle/typedb-studio)
 [![GitHub release](https://img.shields.io/github/release/vaticle/typedb-studio.svg)](https://github.com/vaticle/typedb-studio/releases/latest)
@@ -15,25 +15,9 @@ It provides a consistent experience across different operating systems, includin
 With TypeDB Studio, developers can efficiently manage databases, execute queries,
 and explore query results, all within a unified environment.
 
-## Key features
-
-### Complete toolbox
-
-TypeDB Studio offers a complete range of tools with a clean and intuitive GUI for various tasks related to TypeDB 
-databases.
-It allows developers to connect to a TypeDB, create and delete databases, insert, modify, and query data directly 
-within the IDE.
-
 [![Manage Database Schemas](./docs/images/create.gif)](./docs/images/create.gif)
 
-### Data and schema visualization
-
-One of the key features of TypeDB Studio is its interactive visualizer, 
-which allows developers to visualize query results and explore inferred data.
-The visualizer presents data in a hypergraph format,
-making it easy to navigate and visualize TypeDB responses.
-
-[![Response Visualisation](./docs/images/query.gif)](./docs/images/query.gif)
+## Features
 
 ### GUI for data modeling
 
@@ -45,7 +29,16 @@ enabling developers to easily define the structure and relationships of their da
 
 [![Type editor](./docs/images/edit.gif)](./docs/images/edit.gif)
 
-## Feature list
+### Data and schema visualization
+
+One of the key features of TypeDB Studio is its interactive visualizer, 
+which allows developers to visualize query results and explore inferred data.
+The visualizer presents data in a hypergraph format,
+making it easy to navigate and visualize TypeDB responses.
+
+[![Response Visualisation](./docs/images/query.gif)](./docs/images/query.gif)
+
+### Fully-fledged IDE for developing with TypeDB
 
 TypeDB Studio covers all steps of the development process with TypeDB:
 
