@@ -36,7 +36,7 @@ import com.vaticle.typedb.studio.service.common.util.Sentence.UPDATE_DEFAULT_PAS
 object UpdateDefaultPasswordDialog {
 
     private val WIDTH = 500.dp
-    private val HEIGHT = 225.dp
+    private val HEIGHT = 300.dp
 
     private val state by mutableStateOf(UpdateDefaultPasswordForm())
 
