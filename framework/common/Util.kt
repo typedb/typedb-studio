@@ -34,6 +34,8 @@ import kotlin.math.roundToInt
 
 object Util {
 
+    const val ELLIPSES = "..."
+
     fun Rect.contains(x: Int, y: Int): Boolean = this.contains(Offset(x.toFloat(), y.toFloat()))
 
     fun toRectDP(rawRectangle: Rect, density: Float) = Rect(
@@ -72,6 +74,10 @@ object Util {
         append(placeholder)
         pop()
     }.toAnnotatedString()
+
+    fun mayTruncate(string: String, length: Int): String {
+        return if (string.length <= length) string else string.take(length) + ELLIPSES
+    }
 
     fun String.hyphenate(): String = this.replace(" ", "-")
 

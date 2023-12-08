@@ -36,6 +36,7 @@ import com.vaticle.typedb.driver.api.concept.thing.Relation
 import com.vaticle.typedb.driver.api.concept.thing.Thing
 import com.vaticle.typedb.driver.api.concept.type.Type
 import com.vaticle.typedb.driver.api.concept.value.Value
+import com.vaticle.typedb.studio.framework.common.Util
 import com.vaticle.typedb.studio.framework.common.theme.Color
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.editor.TextEditor
@@ -134,7 +135,7 @@ internal class LogOutput constructor(
             if (!isCollecting.get()) return@launchAndHandle
             val timeSinceLastResponse = System.currentTimeMillis() - lastOutputTime.get()
             if (timeSinceLastResponse >= RUNNING_INDICATOR_DELAY.inWholeMilliseconds) {
-                output(INFO, "...")
+                output(INFO, Util.ELLIPSES)
                 duration = RUNNING_INDICATOR_DELAY
             } else {
                 duration = RUNNING_INDICATOR_DELAY - timeSinceLastResponse.milliseconds

@@ -194,4 +194,8 @@ object Sentence {
                 "undefining schema, in addition to matching. " + BUTTON_ENABLED_WHEN_SESSION_OPEN
     const val TYPE_BROWSER_ONLY_INTERACTIVE =
         "The Type Browser only works in 'interactive' mode."
+    const val UPDATE_DEFAULT_PASSWORD_FOR_USERNAME =
+        "Update default password for username '%s'."
+    const val UPDATE_DEFAULT_PASSWORD_INSTRUCTION =
+        "Update your initial default password below. The new password must be different, and the repeated password must be identical."
 }

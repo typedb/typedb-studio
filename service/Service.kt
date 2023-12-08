@@ -54,7 +54,7 @@ object Service {
         notification = NotificationService()
         confirmation = ConfirmationService()
         pages = PageService()
-        driver = DriverState(notification, preference)
+        driver = DriverState(notification, preference, data)
         project = ProjectService(preference, data, notification, confirmation, driver, pages)
         schema = SchemaService(driver.session, pages, notification, confirmation, status)
     }

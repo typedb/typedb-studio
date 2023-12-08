@@ -22,12 +22,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vaticle.typedb.driver.TypeDB
-import com.vaticle.typedb.driver.api.TypeDBDriver
 import com.vaticle.typedb.driver.api.TypeDBCredential
+import com.vaticle.typedb.driver.api.TypeDBDriver
 import com.vaticle.typedb.driver.api.TypeDBSession
 import com.vaticle.typedb.driver.api.TypeDBSession.Type.DATA
 import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
+import com.vaticle.typedb.studio.service.common.DataService
 import com.vaticle.typedb.studio.service.common.NotificationService
 import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
 import com.vaticle.typedb.studio.service.common.PreferenceService
@@ -39,6 +40,8 @@ import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companio
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
+import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_UPDATE_PASSWORD
+import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.PASSWORD_UPDATED_SUCCESSFULLY
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.UNABLE_TO_CONNECT
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTED
@@ -51,9 +54,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 
-class DriverState constructor(
+class DriverState(
     private val notificationSrv: NotificationService,
-    preferenceSrv: PreferenceService
+    preferenceSrv: PreferenceService,
+    private val dataSrv: DataService
 ) {
 
     enum class Status { DISCONNECTED, CONNECTED, CONNECTING }
@@ -65,10 +69,37 @@ class DriverState constructor(
         private val LOGGER = KotlinLogging.logger {}
     }
 
+    class ChangeInitialPasswordDialog(val driver: DriverState) : DialogState() {
+
+        var onCancel : (() -> Unit)? by mutableStateOf(null); private set
+        var onSubmit : ((old: String, new: String) -> Unit)? by mutableStateOf(null); private set
+
+        internal fun open(onCancel: (() -> Unit)?, onSubmit: ((old: String, new: String) -> Unit)?) {
+            this.onCancel = onCancel
+            this.onSubmit = onSubmit
+            isOpen = true
+        }
+
+        override fun close() {
+            isOpen = false
+        }
+
+        fun cancel() {
+            onCancel?.invoke()
+            close()
+        }
+
+        fun submit(old: String, new: String) {
+            onSubmit?.invoke(old, new)
+            close()
+        }
+    }
+
     val connectServerDialog = DialogState.Base()
     val selectDBDialog = DialogState.Base()
     val manageDatabasesDialog = DialogState.Base()
     val manageAddressesDialog = DialogState.Base()
+    val updateDefaultPasswordDialog = ChangeInitialPasswordDialog(this)
     val status: Status get() = statusAtomic.state
     val isConnected: Boolean get() = status == CONNECTED
     val isConnecting: Boolean get() = status == CONNECTING
@@ -90,28 +121,45 @@ class DriverState constructor(
 
     private val coroutines = CoroutineScope(Dispatchers.Default)
 
-    fun tryConnectToTypeDBAsync(
+    fun tryConnectToTypeDBCoreAsync(
         address: String, onSuccess: () -> Unit
     ) = tryConnectAsync(newConnectionName = address, onSuccess = onSuccess) { TypeDB.coreDriver(address) }
 
     fun tryConnectToTypeDBEnterpriseAsync(
         addresses: Set<String>, username: String, password: String,
-        tlsEnabled: Boolean, onSuccess: () -> Unit
-    ) = tryConnectToTypeDBEnterpriseAsync(addresses, username, TypeDBCredential(username, password, tlsEnabled), onSuccess)
+        tlsEnabled: Boolean, caPath: String, onSuccess: (() -> Unit)? = null
+    ) {
+        val credentials = if (caPath.isBlank()) TypeDBCredential(username, password, tlsEnabled)
+        else TypeDBCredential(username, password, Path.of(caPath))
+        val postLoginFn = {
+            onSuccess?.invoke()
+            if (needsToChangeDefaultPassword()) forcePasswordUpdate()
+            else mayWarnPasswordExpiry()
+        }
+        tryConnectAsync(newConnectionName = "$username@${addresses.first()}", postLoginFn) {
+            TypeDB.enterpriseDriver(addresses, credentials)
+        }
+    }
 
-    fun tryConnectToTypeDBEnterpriseAsync(
-        addresses: Set<String>, username: String, password: String,
-        caPath: String, onSuccess: () -> Unit
-    ) = tryConnectToTypeDBEnterpriseAsync(
-        addresses, username, TypeDBCredential(username, password, Path.of(caPath)), onSuccess
-    )
-
-    private fun tryConnectToTypeDBEnterpriseAsync(
-        addresses: Set<String>, username: String,
-        credentials: TypeDBCredential, onSuccess: () -> Unit
-    ) = tryConnectAsync(newConnectionName = "$username@${addresses.first()}", onSuccess) {
-        this.isEnterprise = true
-        TypeDB.enterpriseDriver(addresses, credentials)
+    private fun forcePasswordUpdate() = updateDefaultPasswordDialog.open(
+        onCancel = {
+            close()
+            connectServerDialog.open()
+        }
+    ) { old, new ->
+        tryUpdateUserPassword(old, new) {
+            updateDefaultPasswordDialog.close()
+            close()
+            tryConnectToTypeDBEnterpriseAsync(
+                addresses = dataSrv.connection.enterpriseAddresses!!.toSet(),
+                username = dataSrv.connection.username!!,
+                password = new,
+                tlsEnabled = dataSrv.connection.tlsEnabled!!,
+                caPath = dataSrv.connection.caCertificate!!
+            ) {
+                notificationSrv.info(LOGGER, Message.Connection.RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY)
+            }
+        }
     }
 
     private fun tryConnectAsync(
@@ -124,7 +172,6 @@ class DriverState constructor(
             _driver = driverConstructor()
             statusAtomic.set(CONNECTED)
             onSuccess()
-            mayWarnPasswordExpiry()
         } catch (e: TypeDBDriverException) {
             statusAtomic.set(DISCONNECTED)
             notificationSrv.userError(LOGGER, UNABLE_TO_CONNECT, e.message ?: "")
@@ -144,11 +191,32 @@ class DriverState constructor(
 
     private fun mayWarnPasswordExpiry() {
         if (!this.isEnterprise) return
-        val passwordExpiryDurationOptional: Optional<Duration>? = _driver?.user()?.passwordExpirySeconds()?.map { Duration.ofSeconds(it) }
+        val passwordExpiryDurationOptional: Optional<Duration>? =
+            _driver?.user()?.passwordExpirySeconds()?.map { Duration.ofSeconds(it) }
         if (passwordExpiryDurationOptional?.isPresent != true) return
         val passwordExpiryDuration = passwordExpiryDurationOptional.get()
         if (passwordExpiryDuration.minus(PASSWORD_EXPIRY_WARN_DURATION).isNegative) {
             notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON_HOURS, passwordExpiryDuration.toHours() + 1)
+        }
+    }
+
+    // TODO: We need a proper way to check if default password needs to changed
+    fun needsToChangeDefaultPassword(): Boolean {
+        try {
+            _driver?.databases()?.all()
+        } catch (e: TypeDBDriverException) {
+            return e.toString().contains("CLS21")
+        }
+        return false
+    }
+
+    fun tryUpdateUserPassword(passwordOld: String, passwordNew: String, onSuccess: (() -> Unit)?) {
+        try {
+            _driver?.user()?.passwordUpdate(passwordOld, passwordNew)
+            notificationSrv.info(LOGGER, PASSWORD_UPDATED_SUCCESSFULLY)
+            onSuccess?.invoke()
+        } catch (e: TypeDBDriverException) {
+            notificationSrv.userError(LOGGER, FAILED_TO_UPDATE_PASSWORD, e.message ?: e.toString())
         }
     }
 

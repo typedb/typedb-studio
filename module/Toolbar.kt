@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import com.vaticle.typedb.driver.api.TypeDBSession
 import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.studio.framework.common.URL
+import com.vaticle.typedb.studio.framework.common.Util.mayTruncate
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.common.theme.Theme.TOOLBAR_BUTTON_SIZE
 import com.vaticle.typedb.studio.framework.common.theme.Theme.TOOLBAR_SEPARATOR_HEIGHT
@@ -60,6 +61,8 @@ import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTIN
 import com.vaticle.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 
 object Toolbar {
+
+    private const val CONNECTION_NAME_LENGTH_LIMIT = 50
 
     private val isConnected get() = Service.driver.isConnected
     private val isScript get() = Service.driver.isScriptMode
@@ -524,7 +527,7 @@ object Toolbar {
             when (Service.driver.status) {
                 DISCONNECTED -> ConnectionButton(Label.CONNECT_TO_TYPEDB)
                 CONNECTING -> ConnectionButton(Label.CONNECTING)
-                CONNECTED -> ConnectionButton(Service.driver.connectionName!!)
+                CONNECTED -> ConnectionButton(mayTruncate(Service.driver.connectionName!!, CONNECTION_NAME_LENGTH_LIMIT))
             }
         }
 

@@ -58,7 +58,7 @@ import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Property
-import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB
+import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_CORE
 import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_ENTERPRISE
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTED
@@ -76,41 +76,32 @@ object ServerDialog {
     private val state by mutableStateOf(ConnectServerForm())
 
     private class ConnectServerForm : Form.State() {
-        var server: Property.Server by mutableStateOf(appData.server ?: Property.Server.TYPEDB)
+        var server: Property.Server by mutableStateOf(appData.server ?: Property.Server.TYPEDB_CORE)
         var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
         var enterpriseAddresses: MutableList<String> = mutableStateListOf<String>().also {
             appData.enterpriseAddresses?.let { saved -> it.addAll(saved) }
         }
         var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
-        var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: false)
+        var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: true)
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
 
         override fun cancel() = Service.driver.connectServerDialog.close()
         override fun isValid(): Boolean = when (server) {
-            TYPEDB -> coreAddress.isNotBlank() && addressFormatIsValid(coreAddress)
+            TYPEDB_CORE -> coreAddress.isNotBlank() && addressFormatIsValid(coreAddress)
             TYPEDB_ENTERPRISE -> !(enterpriseAddresses.isEmpty() || username.isBlank() || password.isBlank())
         }
 
         override fun submit() {
             when (server) {
-                TYPEDB -> {
-                    Service.driver.tryConnectToTypeDBAsync(coreAddress) {
-                        Service.driver.connectServerDialog.close()
-                    }
+                TYPEDB_CORE -> Service.driver.tryConnectToTypeDBCoreAsync(coreAddress) {
+                    Service.driver.connectServerDialog.close()
                 }
-                TYPEDB_ENTERPRISE -> {
-                    val onSuccess = Service.driver.connectServerDialog::close
-                    when {
-                        caCertificate.isBlank() || !tlsEnabled -> Service.driver.tryConnectToTypeDBEnterpriseAsync(
-                            enterpriseAddresses.toSet(), username, password, tlsEnabled, onSuccess
-                        )
-                        else -> Service.driver.tryConnectToTypeDBEnterpriseAsync(
-                            enterpriseAddresses.toSet(), username, password, caCertificate, onSuccess
-                        )
-                    }
-                }
+                TYPEDB_ENTERPRISE -> Service.driver.tryConnectToTypeDBEnterpriseAsync(
+                    enterpriseAddresses.toSet(), username, password, tlsEnabled, caCertificate
+                ) { Service.driver.connectServerDialog.close() }
             }
+            password = ""
             appData.server = server
             appData.coreAddress = coreAddress
             appData.enterpriseAddresses = enterpriseAddresses
@@ -158,7 +149,7 @@ object ServerDialog {
                 PasswordFormField(state)
                 TLSEnabledFormField(state)
                 if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
-            } else if (state.server == TYPEDB) {
+            } else if (state.server == TYPEDB_CORE) {
                 CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
             }
             Spacer(Modifier.weight(1f))
