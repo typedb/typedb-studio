@@ -18,10 +18,10 @@ which versions of Studio are compatible with which versions of TypeDB server.
 
 
 ## New Features
-- **Automate workflow for updating default password upon first login**
 
 
 ## Bugs Fixed
+- **Increase width of Update Default Password dialog box**
 
 
 ## Code Refactors
@@ -29,10 +29,5 @@ which versions of Studio are compatible with which versions of TypeDB server.
 
 ## Other Improvements
 
-- **Update readme file to be more relevant**
-  
-  Update the TypeDB Studio description and features in the readme file to be more relevant for software engineers.
-  
-  
     
 
