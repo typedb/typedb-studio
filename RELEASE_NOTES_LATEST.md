@@ -18,16 +18,8 @@ which versions of Studio are compatible with which versions of TypeDB server.
 
 
 ## New Features
-- **Gracefully handle session failover**
-  
-  Gracefully handle session failover: session automatically reconnects and the UI is updated accordingly.
-  
-  
-- **Update to driver with fixed error messages and ability to use system CA**
+- **Automate workflow for updating default password upon first login**
 
-  We update typedb-driver to 2.25.8, which has error UX improvements and the ability to read system certificates when connecting to TypeDB.
-  
-  
 
 ## Bugs Fixed
 
@@ -36,11 +28,11 @@ which versions of Studio are compatible with which versions of TypeDB server.
 
 
 ## Other Improvements
-- **Update to use vaticle/typedb-driver commit**
 
-- **Unable to connect error carries driver message**
-
-- **Update github PR and issue templates**
-
+- **Update readme file to be more relevant**
+  
+  Update the TypeDB Studio description and features in the readme file to be more relevant for software engineers.
+  
+  
     
 
