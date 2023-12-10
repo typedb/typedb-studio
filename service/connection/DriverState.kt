@@ -205,7 +205,8 @@ class DriverState(
         try {
             _driver?.databases()?.all()
         } catch (e: TypeDBDriverException) {
-            return e.toString().contains("ENT21")
+            val errorString = e.toString()
+            return errorString.contains("ENT21") || errorString.contains("CLS21")
         }
         return false
     }
