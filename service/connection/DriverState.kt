@@ -205,7 +205,7 @@ class DriverState(
         try {
             _driver?.databases()?.all()
         } catch (e: TypeDBDriverException) {
-            return e.toString().contains("CLS21")
+            return e.toString().contains("ENT21")
         }
         return false
     }
