@@ -21,8 +21,11 @@ which versions of Studio are compatible with which versions of TypeDB server.
 
 
 ## Bugs Fixed
-- **Increase width of Update Default Password dialog box**
-
+- **Update Enterprise error code prefix**
+  
+  * We've updated the enterprise error prefix in places where we detect certain errors.
+  
+  
 
 ## Code Refactors
 
