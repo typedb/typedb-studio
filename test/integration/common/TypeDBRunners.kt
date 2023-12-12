@@ -19,18 +19,18 @@
 package com.vaticle.typedb.studio.test.integration.common
 
 import com.vaticle.typedb.common.test.TypeDBRunner
-import com.vaticle.typedb.common.test.enterprise.TypeDBEnterpriseRunner
+import com.vaticle.typedb.common.test.cloud.TypeDBCloudRunner
 import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
 import kotlin.io.path.Path
 
 object TypeDBRunners {
-    val ENTERPRISE_RUNNER_SERVER_COUNT = 3
-    val ENTERPRISE_RUNNER_DATA_PATH = Path("enterprise-runner-data-path")
+    val CLOUD_RUNNER_SERVER_COUNT = 3
+    val CLOUD_RUNNER_DATA_PATH = Path("cloud-runner-data-path")
 
     fun withTypeDB(runnerType: RunnerType = RunnerType.CORE, testFunction: (TypeDBRunner) -> Unit) {
         val typeDB = when (runnerType) {
             RunnerType.CORE -> TypeDBCoreRunner()
-            RunnerType.ENTERPRISE -> TypeDBEnterpriseRunner.create(ENTERPRISE_RUNNER_DATA_PATH, ENTERPRISE_RUNNER_SERVER_COUNT)
+            RunnerType.CLOUD -> TypeDBCloudRunner.create(CLOUD_RUNNER_DATA_PATH, CLOUD_RUNNER_SERVER_COUNT)
         }
         typeDB.start()
         testFunction(typeDB)
@@ -39,6 +39,6 @@ object TypeDBRunners {
 
     enum class RunnerType {
         CORE,
-        ENTERPRISE
+        CLOUD
     }
 }
