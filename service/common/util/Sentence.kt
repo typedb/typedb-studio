@@ -85,8 +85,8 @@ object Sentence {
         "Create a new %s type."
     const val CREATE_TYPE_AS_SUBTYPE_OF =
         "Create a new %s type as a subtype of '%s'."
-    const val CREATE_AN_ADDRESS_FOR_ENTERPRISE =
-        "Create a new address for connecting to your TypeDB Enterprise."
+    const val CREATE_AN_ADDRESS_FOR_CLOUD =
+        "Create a new address for connecting to your TypeDB Cloud."
     const val EDITING_TYPES_REQUIREMENT_DESCRIPTION =
         "To add/delete/edit type definitions in the database schema, you must be on a 'schema' session and 'write' transaction."
 
@@ -113,7 +113,7 @@ object Sentence {
                 "can set on these parameters in the toolbar, and perform queries against the TypeDB server with configured " +
                 "parameters interactively. " + BUTTON_ENABLED_WHEN_CONNECTED
     const val MANAGE_ADDRESSES_MESSAGE =
-        "Below is the list of server addresses of your TypeDB Enterprise. You can remove them from the list below and/or " +
+        "Below is the list of server addresses of your TypeDB Cloud. You can remove them from the list below and/or " +
                 "add new ones."
     const val MANAGE_DATABASES_DESCRIPTION =
         "You can manage your databases by adding or deleting databases from the TypeDB Server you are connected to. " +

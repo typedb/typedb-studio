@@ -59,7 +59,7 @@ import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Property
 import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_CORE
-import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_ENTERPRISE
+import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_CLOUD
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTED
 import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTING
@@ -78,8 +78,8 @@ object ServerDialog {
     private class ConnectServerForm : Form.State() {
         var server: Property.Server by mutableStateOf(appData.server ?: Property.Server.TYPEDB_CORE)
         var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
-        var enterpriseAddresses: MutableList<String> = mutableStateListOf<String>().also {
-            appData.enterpriseAddresses?.let { saved -> it.addAll(saved) }
+        var cloudAddresses: MutableList<String> = mutableStateListOf<String>().also {
+            appData.cloudAddresses?.let { saved -> it.addAll(saved) }
         }
         var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
@@ -89,7 +89,7 @@ object ServerDialog {
         override fun cancel() = Service.driver.connectServerDialog.close()
         override fun isValid(): Boolean = when (server) {
             TYPEDB_CORE -> coreAddress.isNotBlank() && addressFormatIsValid(coreAddress)
-            TYPEDB_ENTERPRISE -> !(enterpriseAddresses.isEmpty() || username.isBlank() || password.isBlank())
+            TYPEDB_CLOUD -> !(cloudAddresses.isEmpty() || username.isBlank() || password.isBlank())
         }
 
         override fun submit() {
@@ -97,14 +97,14 @@ object ServerDialog {
                 TYPEDB_CORE -> Service.driver.tryConnectToTypeDBCoreAsync(coreAddress) {
                     Service.driver.connectServerDialog.close()
                 }
-                TYPEDB_ENTERPRISE -> Service.driver.tryConnectToTypeDBEnterpriseAsync(
-                    enterpriseAddresses.toSet(), username, password, tlsEnabled, caCertificate
+                TYPEDB_CLOUD -> Service.driver.tryConnectToTypeDBCloudAsync(
+                    cloudAddresses.toSet(), username, password, tlsEnabled, caCertificate
                 ) { Service.driver.connectServerDialog.close() }
             }
             password = ""
             appData.server = server
             appData.coreAddress = coreAddress
-            appData.enterpriseAddresses = enterpriseAddresses
+            appData.cloudAddresses = cloudAddresses
             appData.username = username
             appData.tlsEnabled = tlsEnabled
             appData.caCertificate = caCertificate
@@ -114,11 +114,11 @@ object ServerDialog {
     private object AddAddressForm : Form.State() {
         var value: String by mutableStateOf("")
         override fun cancel() = Service.driver.manageAddressesDialog.close()
-        override fun isValid() = value.isNotBlank() && addressFormatIsValid(value) && !state.enterpriseAddresses.contains(value)
+        override fun isValid() = value.isNotBlank() && addressFormatIsValid(value) && !state.cloudAddresses.contains(value)
 
         override fun submit() {
             assert(isValid())
-            state.enterpriseAddresses.add(value)
+            state.cloudAddresses.add(value)
             value = ""
         }
     }
@@ -131,7 +131,7 @@ object ServerDialog {
     @Composable
     fun MayShowDialogs() {
         if (Service.driver.connectServerDialog.isOpen) ConnectServer()
-        if (Service.driver.manageAddressesDialog.isOpen) ManageEnterpriseAddresses()
+        if (Service.driver.manageAddressesDialog.isOpen) ManageCloudAddresses()
     }
 
     @Composable
@@ -143,8 +143,8 @@ object ServerDialog {
     ) {
         Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
             ServerFormField(state)
-            if (state.server == TYPEDB_ENTERPRISE) {
-                ManageEnterpriseAddressesButton(state = state, shouldFocus = Service.driver.isDisconnected)
+            if (state.server == TYPEDB_CLOUD) {
+                ManageCloudAddressesButton(state = state, shouldFocus = Service.driver.isDisconnected)
                 UsernameFormField(state)
                 PasswordFormField(state)
                 TLSEnabledFormField(state)
@@ -196,11 +196,11 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ManageEnterpriseAddressesButton(state: ConnectServerForm, shouldFocus: Boolean) {
+    private fun ManageCloudAddressesButton(state: ConnectServerForm, shouldFocus: Boolean) {
         val focusReq = if (shouldFocus) remember { FocusRequester() } else null
         Field(label = Label.ADDRESSES) {
             TextButton(
-                text = Label.MANAGE_ENTERPRISE_ADDRESSES + " (${state.enterpriseAddresses.size})",
+                text = Label.MANAGE_CLOUD_ADDRESSES + " (${state.cloudAddresses.size})",
                 focusReq = focusReq, leadingIcon = Form.IconArg(Icon.CONNECT_TO_TYPEDB),
                 enabled = Service.driver.isDisconnected
             ) {
@@ -211,15 +211,15 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ManageEnterpriseAddresses() {
+    private fun ManageCloudAddresses() {
         val dialogState = Service.driver.manageAddressesDialog
-        Dialog.Layout(dialogState, Label.MANAGE_ENTERPRISE_ADDRESSES, ADDRESS_MANAGER_WIDTH, ADDRESS_MANAGER_HEIGHT) {
+        Dialog.Layout(dialogState, Label.MANAGE_CLOUD_ADDRESSES, ADDRESS_MANAGER_WIDTH, ADDRESS_MANAGER_HEIGHT) {
             Column(Modifier.fillMaxSize()) {
                 Text(value = Sentence.MANAGE_ADDRESSES_MESSAGE, softWrap = true)
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING))
-                EnterpriseAddressList(Modifier.fillMaxWidth().weight(1f))
+                CloudAddressList(Modifier.fillMaxWidth().weight(1f))
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING))
-                AddEnterpriseAddressForm()
+                AddCloudAddressForm()
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING * 2))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Spacer(modifier = Modifier.weight(1f))
@@ -231,7 +231,7 @@ object ServerDialog {
     }
 
     @Composable
-    private fun AddEnterpriseAddressForm() {
+    private fun AddCloudAddressForm() {
         val focusReq = remember { FocusRequester() }
         Submission(AddAddressForm, modifier = Modifier.height(Form.FIELD_HEIGHT), showButtons = false) {
             Row {
@@ -251,15 +251,15 @@ object ServerDialog {
     }
 
     @Composable
-    private fun EnterpriseAddressList(modifier: Modifier) = ActionableList.SingleButtonLayout(
-        items = state.enterpriseAddresses.toMutableList(),
+    private fun CloudAddressList(modifier: Modifier) = ActionableList.SingleButtonLayout(
+        items = state.cloudAddresses.toMutableList(),
         modifier = modifier.border(1.dp, Theme.studio.border),
         buttonSide = ActionableList.Side.RIGHT,
         buttonFn = { address ->
             Form.IconButtonArg(
                 icon = Icon.REMOVE,
                 color = { Theme.studio.errorStroke },
-                onClick = { state.enterpriseAddresses.remove(address) }
+                onClick = { state.cloudAddresses.remove(address) }
             )
         }
     )

@@ -21,9 +21,9 @@ which versions of Studio are compatible with which versions of TypeDB server.
 
 
 ## Bugs Fixed
-- **Update Enterprise error code prefix**
+- **Update Cloud error code prefix**
   
-  * We've updated the enterprise error prefix in places where we detect certain errors.
+  * We've updated the cloud error prefix in places where we detect certain errors.
   
   
 

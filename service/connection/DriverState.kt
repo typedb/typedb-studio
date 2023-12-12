@@ -117,7 +117,7 @@ class DriverState(
     private var _driver: TypeDBDriver? by mutableStateOf(null)
     private var hasRunningCommandAtomic = AtomicBooleanState(false)
     private var databaseListRefreshedTime = System.currentTimeMillis()
-    internal var isEnterprise: Boolean = false
+    internal var isCloud: Boolean = false
 
     private val coroutines = CoroutineScope(Dispatchers.Default)
 
@@ -125,7 +125,7 @@ class DriverState(
         address: String, onSuccess: () -> Unit
     ) = tryConnectAsync(newConnectionName = address, onSuccess = onSuccess) { TypeDB.coreDriver(address) }
 
-    fun tryConnectToTypeDBEnterpriseAsync(
+    fun tryConnectToTypeDBCloudAsync(
         addresses: Set<String>, username: String, password: String,
         tlsEnabled: Boolean, caPath: String, onSuccess: (() -> Unit)? = null
     ) {
@@ -137,7 +137,7 @@ class DriverState(
             else mayWarnPasswordExpiry()
         }
         tryConnectAsync(newConnectionName = "$username@${addresses.first()}", postLoginFn) {
-            TypeDB.enterpriseDriver(addresses, credentials)
+            TypeDB.cloudDriver(addresses, credentials)
         }
     }
 
@@ -150,8 +150,8 @@ class DriverState(
         tryUpdateUserPassword(old, new) {
             updateDefaultPasswordDialog.close()
             close()
-            tryConnectToTypeDBEnterpriseAsync(
-                addresses = dataSrv.connection.enterpriseAddresses!!.toSet(),
+            tryConnectToTypeDBCloudAsync(
+                addresses = dataSrv.connection.cloudAddresses!!.toSet(),
                 username = dataSrv.connection.username!!,
                 password = new,
                 tlsEnabled = dataSrv.connection.tlsEnabled!!,
@@ -190,7 +190,7 @@ class DriverState(
     }
 
     private fun mayWarnPasswordExpiry() {
-        if (!this.isEnterprise) return
+        if (!this.isCloud) return
         val passwordExpiryDurationOptional: Optional<Duration>? =
             _driver?.user()?.passwordExpirySeconds()?.map { Duration.ofSeconds(it) }
         if (passwordExpiryDurationOptional?.isPresent != true) return
