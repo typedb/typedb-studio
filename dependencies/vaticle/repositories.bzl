@@ -41,13 +41,13 @@ def vaticle_force_graph():
 def vaticle_typedb_common():
     git_repository(
         name = "vaticle_typedb_common",
-        remote = "https://github.com/dmitrii-ubskii/typedb-common",
-        commit = "aeee242969199d2d33340288cc10aa0bf7ad857d",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_common
+        remote = "https://github.com/vaticle/typedb-common",
+        commit = "4d2adde1cb75a40ca1629eed258d2a7dcda9f5e3",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_common
     )
 
 def vaticle_typedb_driver():
     git_repository(
         name = "vaticle_typedb_driver",
-        remote = "https://github.com/dmitrii-ubskii/typedb-driver",
-        commit = "85f0dce6e87eed4b1b4c236da61979234a250481",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_driver
+        remote = "https://github.com/vaticle/typedb-driver",
+        commit = "927343bbb09ad12ba74d88c94d443f3f81cc2e09",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_driver
     )
