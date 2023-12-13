@@ -167,7 +167,7 @@ jobs:
             tar -xf ghr_v0.12.1_linux_amd64.tar.gz
             ghr_v0.12.1_linux_amd64/ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
               -r ${CIRCLE_PROJECT_REPONAME} -n "TypeDB Studio $(cat VERSION)" -b "$(cat ./RELEASE_NOTES_LATEST.md)" \
-              -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION) ~/dist/
+              -c ${CIRCLE_SHA1} -delete $(cat VERSION) ~/dist/
 
   deploy-brew:
     executor: linux-x86_64
@@ -222,16 +222,12 @@ workflows:
             - build-mac-arm64
             - build-mac-x86_64
             - build-windows-x86_64
-      - deploy-approval:
-          type: approval
-          requires:
-            - deploy-github
       - deploy-brew:
           filters:
             branches:
               only: release
           requires:
-            - deploy-approval
+            - deploy-github
       - release-cleanup:
           filters:
             branches:
