@@ -21,16 +21,16 @@ which versions of Studio are compatible with which versions of TypeDB server.
 
 
 ## Bugs Fixed
-- **Update Cloud error code prefix**
-  
-  * We've updated the cloud error prefix in places where we detect certain errors.
-  
-  
+
 
 ## Code Refactors
 
+- **Replace all instances of 'enterprise' with 'cloud'**
+
+  We replace the term 'enterprise' with 'cloud', to reflect the new consistent terminology used throughout Vaticle.
 
 ## Other Improvements
+- **Remove approval step in CircleCI release workflow**
 
     
 
