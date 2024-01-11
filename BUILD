@@ -220,8 +220,8 @@ label_flag(
 
 deploy_brew(
     name = "deploy-brew",
-    snapshot = deployment['brew.snapshot'],
-    release = deployment['brew.release'],
+    snapshot = deployment['brew']['snapshot'],
+    release = deployment['brew']['release'],
     formula = "//config/brew:typedb-studio.rb",
     file_substitutions = {
         "//:checksum-mac-arm64": "{sha256-arm64}",
