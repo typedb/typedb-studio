@@ -27,3 +27,8 @@ def vaticle_typedb_artifact():
         commit_source = deployment["artifact"]["snapshot"]["download"],
         tag = "2.26.3",
     )
+
+maven_artifacts = {
+    'com.vaticle.typedb:typedb-runner': '525f9e989ac9fb2d06a05e0ad61c711610803526',
+    'com.vaticle.typedb:typedb-cloud-runner': 'f78fdb0d3ac4c533c0eb9a2e02d986702435efe4',
+}

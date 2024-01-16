@@ -168,11 +168,11 @@ vaticle_typeql()
 vaticle_typedb_protocol()
 
 # Load Maven
+load("//dependencies/vaticle:artifacts.bzl", vaticle_typedb_studio_vaticle_maven_artifacts = "maven_artifacts")
 load("@vaticle_typeql//dependencies/maven:artifacts.bzl", vaticle_typeql_artifacts = "artifacts")
 load("@vaticle_typedb_driver//dependencies/maven:artifacts.bzl", vaticle_typedb_driver_artifacts = "artifacts")
 load("@vaticle_typedb_common//dependencies/maven:artifacts.bzl", vaticle_typedb_common_artifacts = "artifacts")
 load("@vaticle_force_graph//dependencies/maven:artifacts.bzl", vaticle_force_graph_artifacts = "artifacts")
-
 
 ############################
 # Load @maven dependencies #
@@ -185,6 +185,7 @@ maven(
     vaticle_typedb_common_artifacts +
     vaticle_force_graph_artifacts +
     vaticle_typedb_studio_artifacts,
+    internal_artifacts = vaticle_typedb_studio_vaticle_maven_artifacts,
     fail_on_missing_checksum = False,
 )
 

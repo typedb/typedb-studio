@@ -18,9 +18,9 @@
 
 package com.vaticle.typedb.studio.test.integration.common
 
-import com.vaticle.typedb.common.test.TypeDBRunner
-import com.vaticle.typedb.common.test.cloud.TypeDBCloudRunner
-import com.vaticle.typedb.common.test.core.TypeDBCoreRunner
+import com.vaticle.typedb.core.tool.runner.TypeDBRunner
+import com.vaticle.typedb.cloud.tool.runner.TypeDBCloudRunner;
+import com.vaticle.typedb.core.tool.runner.TypeDBCoreRunner
 import kotlin.io.path.Path
 
 object TypeDBRunners {
