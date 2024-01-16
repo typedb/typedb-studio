@@ -15,9 +15,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+load("@vaticle_dependencies//builder/java:rules.bzl", "typedb_kt_test")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library", "kt_jvm_test")
-load("@vaticle_typedb_common//test:rules.bzl", "typedb_kt_test")
 
 package(default_visibility = ["//:__pkg__"])
 

@@ -72,8 +72,8 @@ jobs:
       - checkout
       - install-bazel-mac
       - run: |
-          export ARTIFACT_USERNAME=$REPO_VATICLE_USERNAME
-          export ARTIFACT_PASSWORD=$REPO_VATICLE_PASSWORD
+          export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           bazel run @vaticle_dependencies//distribution/artifact:create-netrc
       - assemble-mac
       - run: |
@@ -90,8 +90,8 @@ jobs:
       - checkout
       - install-bazel-mac
       - run: |
-          export ARTIFACT_USERNAME=$REPO_VATICLE_USERNAME
-          export ARTIFACT_PASSWORD=$REPO_VATICLE_PASSWORD
+          export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           bazel run @vaticle_dependencies//distribution/artifact:create-netrc
       - assemble-mac
       - run: |

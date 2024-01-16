@@ -18,6 +18,7 @@
 load("//:deployment.bzl", deployment_github = "deployment")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
+load("@vaticle_dependencies//builder/java:rules.bzl", "native_typedb_artifact")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz", "assemble_versioned", "assemble_zip", "checksum", "java_deps")
 load("@vaticle_bazel_distribution//common/tgz2zip:rules.bzl", "tgz2zip")
@@ -26,7 +27,6 @@ load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_library")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
-load("@vaticle_typedb_common//test:rules.bzl", "native_typedb_artifact")
 load("@vaticle_bazel_distribution//artifact:rules.bzl", "artifact_extractor")
 load("@vaticle_bazel_distribution//platform:constraints.bzl", "constraint_linux_arm64", "constraint_linux_x86_64",
      "constraint_mac_arm64", "constraint_mac_x86_64", "constraint_win_x86_64")
@@ -220,8 +220,8 @@ label_flag(
 
 deploy_brew(
     name = "deploy-brew",
-    snapshot = deployment['brew.snapshot'],
-    release = deployment['brew.release'],
+    snapshot = deployment['brew']['snapshot'],
+    release = deployment['brew']['release'],
     formula = "//config/brew:typedb-studio.rb",
     file_substitutions = {
         "//:checksum-mac-arm64": "{sha256-arm64}",

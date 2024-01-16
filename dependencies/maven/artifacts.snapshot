@@ -18,6 +18,8 @@
 @maven//:com_google_protobuf_protobuf_java_3_21_1
 @maven//:com_google_truth_truth_1_0_1
 @maven//:com_googlecode_java_diff_utils_diffutils_1_3_0
+@maven//:com_vaticle_typedb_typedb_cloud_runner_f78fdb0d3ac4c533c0eb9a2e02d986702435efe4
+@maven//:com_vaticle_typedb_typedb_runner_525f9e989ac9fb2d06a05e0ad61c711610803526
 @maven//:commons_codec_commons_codec_1_11
 @maven//:commons_io_commons_io_2_3
 @maven//:commons_logging_commons_logging_1_2

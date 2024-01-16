@@ -48,12 +48,13 @@ kt_jvm_library(
         "@vaticle_typedb_driver//java/api:api",
         "@vaticle_typedb_driver//java:driver-java",
         "@vaticle_typedb_common//:common",
-        "@vaticle_typedb_common//test:typedb-runner",
         "@vaticle_typeql//java:typeql-lang",
         "@vaticle_typeql//java/common:common",
         "@vaticle_typeql//java/query:query",
 
         # External Maven Dependencies
+        "@maven//:com_vaticle_typedb_typedb_runner",
+        "@maven//:com_vaticle_typedb_typedb_cloud_runner",
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_test_desktop",

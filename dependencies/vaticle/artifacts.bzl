@@ -21,9 +21,14 @@ load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
 def vaticle_typedb_artifact():
     native_artifact_files(
         name = "vaticle_typedb_artifact",
-        group_name = "vaticle_typedb",
+        group_name = "typedb-server-{platform}",
         artifact_name = "typedb-server-{platform}-{version}.{ext}",
-        tag_source = deployment["artifact.release"],
-        commit_source = deployment["artifact.snapshot"],
-        commit = "e0941f2f70988fa0a7fe9510b175e91d55126db4",
+        tag_source = deployment["artifact"]["release"]["download"],
+        commit_source = deployment["artifact"]["snapshot"]["download"],
+        tag = "2.26.3",
     )
+
+maven_artifacts = {
+    'com.vaticle.typedb:typedb-runner': '525f9e989ac9fb2d06a05e0ad61c711610803526',
+    'com.vaticle.typedb:typedb-cloud-runner': 'f78fdb0d3ac4c533c0eb9a2e02d986702435efe4',
+}
