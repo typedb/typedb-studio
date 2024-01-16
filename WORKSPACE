@@ -58,8 +58,8 @@ load("@rules_antlr//antlr:lang.bzl", "JAVA")
 load("@rules_antlr//antlr:repositories.bzl", "rules_antlr_dependencies")
 rules_antlr_dependencies(antlr_version, JAVA)
 
-# Load //builder/grpc (required by typedb_driver_java)
-load("@vaticle_dependencies//builder/grpc:deps.bzl", grpc_deps = "deps")
+# Load //builder/proto_grpc (required by typedb_driver_java)
+load("@vaticle_dependencies//builder/proto_grpc:deps.bzl", grpc_deps = "deps")
 grpc_deps()
 
 load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", com_github_grpc_grpc_deps = "grpc_deps")
@@ -109,17 +109,6 @@ unuseddeps_deps()
 load("@vaticle_dependencies//tool/common:deps.bzl", "vaticle_dependencies_ci_pip",
     vaticle_dependencies_tool_maven_artifacts = "maven_artifacts")
 
-# Load //tool/docs
-load("@vaticle_dependencies//tool/docs:python_deps.bzl", docs_deps = "deps")
-docs_deps()
-load("@vaticle_dependencies_tool_docs//:requirements.bzl", install_doc_deps = "install_deps")
-install_doc_deps()
-
-load("@vaticle_dependencies//tool/docs:java_deps.bzl", java_doc_deps = "deps")
-java_doc_deps()
-load("@google_bazel_common//:workspace_defs.bzl", "google_common_workspace_rules")
-google_common_workspace_rules()
-
 #####################################################################
 # Load @vaticle_bazel_distribution from (@vaticle_dependencies) #
 #####################################################################
@@ -146,6 +135,17 @@ load("//dependencies/maven:artifacts.bzl", vaticle_typedb_studio_artifacts = "ar
 # Load artifacts
 load("//dependencies/vaticle:artifacts.bzl", "vaticle_typedb_artifact")
 vaticle_typedb_artifact()
+
+# Load //docs
+load("@vaticle_bazel_distribution//docs:python/deps.bzl", docs_deps = "deps")
+docs_deps()
+load("@vaticle_dependencies_tool_docs//:requirements.bzl", install_doc_deps = "install_deps")
+install_doc_deps()
+
+load("@vaticle_bazel_distribution//docs:java/deps.bzl", java_doc_deps = "deps")
+java_doc_deps()
+load("@google_bazel_common//:workspace_defs.bzl", "google_common_workspace_rules")
+google_common_workspace_rules()
 
 ################################
 # Load @vaticle dependencies #
