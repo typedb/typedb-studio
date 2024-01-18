@@ -182,6 +182,17 @@ jobs:
           sha256sum ~/dist/typedb-studio-mac-x86_64-$(cat VERSION).dmg | awk '{print $1}' > checksum-x86_64
           bazel run --define version=$(cat VERSION) //:deploy-brew --//:checksum-mac-arm64=:checksum-arm64 --//:checksum-mac-x86_64=:checksum-x86_64 --compilation_mode=opt -- release
 
+  sync-dependencies:
+    executor: linux-x86_64
+    steps:
+      - checkout
+      - install-bazel-linux:
+          arch: amd64
+      - run:
+          command: |
+              export SYNC_DEPENDENCIES_TOKEN=$REPO_GITHUB_TOKEN
+              bazel run @vaticle_dependencies//tool/sync:dependencies -- --source ${CIRCLE_PROJECT_REPONAME}@$(cat VERSION)
+
   release-cleanup:
     machine:
       image: ubuntu-2004:202101-01
@@ -228,9 +239,15 @@ workflows:
               only: release
           requires:
             - deploy-github
-      - release-cleanup:
+      - sync-dependencies:
           filters:
             branches:
               only: release
           requires:
             - deploy-brew
+      - release-cleanup:
+          filters:
+            branches:
+              only: release
+          requires:
+            - sync-dependencies
