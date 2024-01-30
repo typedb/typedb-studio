@@ -119,6 +119,12 @@ vaticle_bazel_distribution()
 load("@vaticle_bazel_distribution//pip:deps.bzl", pip_deps = "deps")
 pip_deps()
 
+# Load @vaticle_bazel_distribution_uploader
+load("@vaticle_bazel_distribution//common/uploader:deps.bzl", uploader_deps = "deps")
+uploader_deps()
+load("@vaticle_bazel_distribution_uploader//:requirements.bzl", install_uploader_deps = "install_deps")
+install_uploader_deps()
+
 # Load //github
 load("@vaticle_bazel_distribution//github:deps.bzl", github_deps = "deps")
 github_deps()
