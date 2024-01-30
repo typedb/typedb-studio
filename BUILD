@@ -20,7 +20,7 @@ load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
 load("@vaticle_dependencies//builder/java:rules.bzl", "native_typedb_artifact")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz", "assemble_versioned", "assemble_zip", "unzip", "checksum", "java_deps")
+load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz", "assemble_versioned", "assemble_zip", "unzip_file", "checksum", "java_deps")
 load("@vaticle_bazel_distribution//common/tgz2zip:rules.bzl", "tgz2zip")
 load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
@@ -208,10 +208,84 @@ genrule(
     cmd = "echo > $@",
 )
 
-unzip(
-    name = "native-artifact",
+unzip_file(
+    name = "native-artifact-mac-arm64-dmg",
     target = ":assemble-platform",
-    outs = ["typedb-studio-mac-arm64-2.26.0.dmg"],
+    output = "typedb-studio-mac-arm64.dmg",
+)
+
+unzip_file(
+    name = "native-artifact-mac-x86_64-dmg",
+    target = ":assemble-platform",
+    output = "typedb-studio-mac-x86_64.dmg",
+)
+
+unzip_file(
+    name = "native-artifact-linux-arm64-tar-gz",
+    target = ":assemble-platform",
+    output = "typedb-studio-linux-arm64.tar.gz",
+)
+
+unzip_file(
+    name = "native-artifact-linux-x86_64-tar-gz",
+    target = ":assemble-platform",
+    output = "typedb-studio-linux-x86_64.tar.gz",
+)
+
+unzip_file(
+    name = "native-artifact-windows-x86_64-exe",
+    target = ":assemble-platform",
+    output = "typedb-studio-windows-x86_64.exe",
+)
+
+deploy_artifact(
+    name = "deploy-mac-x86_64-dmg",
+    target = ":native-artifact-mac-x86_64-dmg",
+    artifact_group = "typedb-studio-mac-x86_64",
+    artifact_name = "typedb-studio-mac-x86_64-{version}.dmg",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    visibility = ["//visibility:public"],
+)
+
+deploy_artifact(
+    name = "deploy-mac-arm64-dmg",
+    target = ":native-artifact-mac-arm64-dmg",
+    artifact_group = "typedb-studio-mac-arm64",
+    artifact_name = "typedb-studio-mac-arm64-{version}.dmg",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    visibility = ["//visibility:public"],
+)
+
+deploy_artifact(
+    name = "deploy-linux-x86_64-targz",
+    target = ":native-artifact-linux-x86_64-targz",
+    artifact_group = "typedb-studio-linux-x86_64",
+    artifact_name = "typedb-studio-linux-x86_64-{version}.tar.gz",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    visibility = ["//visibility:public"],
+)
+
+deploy_artifact(
+    name = "deploy-linux-arm64-targz",
+    target = ":native-artifact-linux-arm64-targz",
+    artifact_group = "typedb-studio-linux-arm64",
+    artifact_name = "typedb-studio-linux-arm64-{version}.tar.gz",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    visibility = ["//visibility:public"],
+)
+
+deploy_artifact(
+    name = "deploy-windows-x86_64-exe",
+    target = ":native-artifact-windows-x86_64-exe",
+    artifact_group = "typedb-studio-windows-x86_64",
+    artifact_name = "typedb-studio-windows-x86_64-{version}.exe",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    visibility = ["//visibility:public"],
 )
 
 label_flag(
