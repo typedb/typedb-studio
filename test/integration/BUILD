@@ -149,7 +149,7 @@ typedb_kt_test(
 
         # External Vaticle Dependencies
         "@vaticle_typedb_driver//java/api:api",
-        "@vaticle_typedb_common//:common",
+        "@vaticle_typeql//common/java:common",
 
         # External Maven Dependencies
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",

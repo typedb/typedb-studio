@@ -28,7 +28,7 @@ kt_jvm_library(
         "//framework/editor/highlighter/common:common",
 
         # External Vaticle Dependencies
-        "@vaticle_typedb_common//:common",
+        "@vaticle_typeql//common/java:common",
         "@vaticle_typeql//grammar/java:typeql-grammar",
         "@vaticle_typeql//java:typeql-lang",
 

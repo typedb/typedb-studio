@@ -36,7 +36,7 @@ kt_jvm_library(
         "//framework/material",
 
         # External Vaticle Dependencies
-        #        "@vaticle_typedb_common//:common",
+        #        "@vaticle_typeql//common/java:common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
