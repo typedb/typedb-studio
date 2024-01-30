@@ -61,12 +61,15 @@ commands:
     steps:
       - run: brew install bazelisk
 
-  assemble-mac:
+  deploy-mac:
+    parameters:
+      target-arch:
+        type: string
     steps:
-      - run: bazel build //:assemble-platform --compilation_mode=opt --define APPLE_CODE_SIGN=yes --define APPLE_ID=$APPLE_ID --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD --define APPLE_TEAM_ID=$APPLE_TEAM_ID --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD --spawn_strategy=local
+      - run: bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt --define APPLE_CODE_SIGN=yes --define APPLE_ID=$APPLE_ID --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD --define APPLE_TEAM_ID=$APPLE_TEAM_ID --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD --spawn_strategy=local
 
 jobs:
-  build-mac-arm64:
+  deploy-mac-arm64:
     executor: mac-arm64
     steps:
       - checkout
@@ -75,16 +78,16 @@ jobs:
           export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           bazel run @vaticle_dependencies//distribution/artifact:create-netrc
-      - assemble-mac
+      - deploy-mac:
+          target-arch: arm64
       - run: |
-          mkdir -p ~/src && cp bazel-bin/assemble-platform.zip ~/src
-          mkdir -p ~/dist && cd ~/dist && jar xf ~/src/assemble-platform.zip
+          mkdir -p ~/dist && cp bazel-bin/typedb-studio-mac-arm64-*.dmg ~/dist
       - persist_to_workspace:
           root: ~/dist
           paths:
             - ./*
 
-  build-mac-x86_64:
+  deploy-mac-x86_64:
     executor: mac-x86_64
     steps:
       - checkout
@@ -93,32 +96,32 @@ jobs:
           export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           bazel run @vaticle_dependencies//distribution/artifact:create-netrc
-      - assemble-mac
+      - deploy-mac:
+          target-arch: x86_64
       - run: |
-          mkdir -p ~/src && cp bazel-bin/assemble-platform.zip ~/src
-          mkdir -p ~/dist && cd ~/dist && jar xf ~/src/assemble-platform.zip
+          mkdir -p ~/dist && cp bazel-bin/typedb-studio-mac-x86_64-*.dmg ~/dist
       - persist_to_workspace:
           root: ~/dist
           paths:
             - ./*
 
-  build-linux-arm64:
+  deploy-linux-arm64:
     executor: linux-arm64
     steps:
       - checkout
       - install-bazel-linux-arm64
-      - run: bazel build //:assemble-platform --compilation_mode=opt
-      - run: bazel build //:assemble-linux-targz --compilation_mode=opt
+      - run: bazel run //:deploy-linux-arm64-deb --compilation_mode=opt
+      - run: bazel run //:deploy-linux-arm64-targz --compilation_mode=opt
 
-  build-linux-x86_64:
+  deploy-linux-x86_64:
     executor: linux-x86_64
     steps:
       - checkout
       - install-bazel-linux-x86_64
-      - run: bazel build //:assemble-platform --compilation_mode=opt
-      - run: bazel build //:assemble-linux-targz --compilation_mode=opt
+      - run: bazel run //:deploy-linux-x86_64-deb --compilation_mode=opt
+      - run: bazel run //:deploy-linux-x86_64-targz --compilation_mode=opt
 
-  build-windows-x86_64:
+  deploy-windows-x86_64:
     executor:
       name: win/default
       shell: cmd.exe
@@ -126,7 +129,7 @@ jobs:
     steps:
       - checkout
       - run: .circleci\windows\prepare.bat
-      - run: .circleci\windows\build.bat
+      - run: .circleci\windows\deploy.bat
 
   deploy-github:
     executor: linux-x86_64
@@ -164,23 +167,23 @@ jobs:
 workflows:
   release:
     jobs:
-      - build-linux-arm64:
+      - deploy-linux-arm64:
           filters:
             branches:
               only: release
-      - build-linux-x86_64:
+      - deploy-linux-x86_64:
           filters:
             branches:
               only: release
-      - build-mac-arm64:
+      - deploy-mac-arm64:
           filters:
             branches:
               only: release
-      - build-mac-x86_64:
+      - deploy-mac-x86_64:
           filters:
             branches:
               only: release
-      - build-windows-x86_64:
+      - deploy-windows-x86_64:
           filters:
             branches:
               only: release
@@ -189,11 +192,11 @@ workflows:
             branches:
               only: release
           requires:
-            - build-linux-arm64
-            - build-linux-x86_64
-            - build-mac-arm64
-            - build-mac-x86_64
-            - build-windows-x86_64
+            - deploy-linux-arm64
+            - deploy-linux-x86_64
+            - deploy-mac-arm64
+            - deploy-mac-x86_64
+            - deploy-windows-x86_64
       - deploy-brew:
           filters:
             branches:
