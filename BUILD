@@ -223,16 +223,16 @@ unzip_file(
 )
 
 unzip_file(
-    name = "native-artifact-linux-arm64-tar-gz",
+    name = "native-artifact-linux-arm64-deb",
     target = ":assemble-platform",
-    output = "typedb-studio-linux-arm64.tar.gz",
+    output = "typedb-studio-linux-arm64.deb",
     target_compatible_with = constraint_linux_arm64,
 )
 
 unzip_file(
-    name = "native-artifact-linux-x86_64-tar-gz",
+    name = "native-artifact-linux-x86_64-deb",
     target = ":assemble-platform",
-    output = "typedb-studio-linux-x86_64.tar.gz",
+    output = "typedb-studio-linux-x86_64.deb",
     target_compatible_with = constraint_linux_x86_64,
 )
 
@@ -266,8 +266,19 @@ deploy_artifact(
 )
 
 deploy_artifact(
+    name = "deploy-linux-x86_64-deb",
+    target = ":native-artifact-linux-x86_64-deb",
+    artifact_group = "typedb-studio-linux-x86_64",
+    artifact_name = "typedb-studio-linux-x86_64-{version}.deb",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    visibility = ["//visibility:public"],
+    target_compatible_with = constraint_linux_x86_64,
+)
+
+deploy_artifact(
     name = "deploy-linux-x86_64-targz",
-    target = ":native-artifact-linux-x86_64-targz",
+    target = ":assemble-linux-targz",
     artifact_group = "typedb-studio-linux-x86_64",
     artifact_name = "typedb-studio-linux-x86_64-{version}.tar.gz",
     snapshot = deployment['artifact']['snapshot']['upload'],
@@ -277,14 +288,25 @@ deploy_artifact(
 )
 
 deploy_artifact(
+    name = "deploy-linux-arm64-deb",
+    target = ":native-artifact-linux-arm64-deb",
+    artifact_group = "typedb-studio-linux-arm64",
+    artifact_name = "typedb-studio-linux-arm64-{version}.deb",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    visibility = ["//visibility:public"],
+    target_compatible_with = constraint_linux_arm64,
+)
+
+deploy_artifact(
     name = "deploy-linux-arm64-targz",
-    target = ":native-artifact-linux-arm64-targz",
+    target = ":assemble-linux-targz",
     artifact_group = "typedb-studio-linux-arm64",
     artifact_name = "typedb-studio-linux-arm64-{version}.tar.gz",
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
     visibility = ["//visibility:public"],
-    target_compatible_with = constraint_linux_arm64,
+    target_compatible_with = constraint_linux_x86_64,
 )
 
 deploy_artifact(
