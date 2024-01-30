@@ -20,7 +20,7 @@ load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
 load("@vaticle_dependencies//builder/java:rules.bzl", "native_typedb_artifact")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz", "assemble_versioned", "assemble_zip", "checksum", "java_deps")
+load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz", "assemble_versioned", "assemble_zip", "unzip", "checksum", "java_deps")
 load("@vaticle_bazel_distribution//common/tgz2zip:rules.bzl", "tgz2zip")
 load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
@@ -55,7 +55,7 @@ kt_jvm_library(
         "//framework/material:material",
 
         # External Vaticle Dependencies
-        "@vaticle_typedb_common//:common",
+        "@vaticle_typeql//common/java:common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
@@ -206,6 +206,12 @@ genrule(
     outs = ["invalid-checksum.txt"],
     srcs = [],
     cmd = "echo > $@",
+)
+
+unzip(
+    name = "native-artifact",
+    target = ":assemble-platform",
+    outs = ["typedb-studio-mac-arm64-2.26.0.dmg"],
 )
 
 label_flag(

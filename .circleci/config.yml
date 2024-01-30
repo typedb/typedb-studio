@@ -109,17 +109,6 @@ jobs:
       - install-bazel-linux-arm64
       - run: bazel build //:assemble-platform --compilation_mode=opt
       - run: bazel build //:assemble-linux-targz --compilation_mode=opt
-      - run: |
-          mkdir -p ~/src
-          mkdir -p ~/dist
-          cp bazel-bin/typedb-studio-linux.tar.gz ~/dist/typedb-studio-linux-arm64-$(cat VERSION).tar.gz
-          cp bazel-bin/assemble-platform.zip ~/src
-          cd ~/dist
-          jar xf ~/src/assemble-platform.zip
-      - persist_to_workspace:
-          root: ~/dist
-          paths:
-            - ./*
 
   build-linux-x86_64:
     executor: linux-x86_64
@@ -128,17 +117,6 @@ jobs:
       - install-bazel-linux-x86_64
       - run: bazel build //:assemble-platform --compilation_mode=opt
       - run: bazel build //:assemble-linux-targz --compilation_mode=opt
-      - run: |
-          mkdir -p ~/src
-          mkdir -p ~/dist
-          cp bazel-bin/typedb-studio-linux.tar.gz ~/dist/typedb-studio-linux-x86_64-$(cat VERSION).tar.gz
-          cp bazel-bin/assemble-platform.zip ~/src
-          cd ~/dist
-          jar xf ~/src/assemble-platform.zip
-      - persist_to_workspace:
-          root: ~/dist
-          paths:
-            - ./*
 
   build-windows-x86_64:
     executor:
@@ -149,16 +127,10 @@ jobs:
       - checkout
       - run: .circleci\windows\prepare.bat
       - run: .circleci\windows\build.bat
-      - persist_to_workspace:
-          root: dist
-          paths:
-            - ./*
 
   deploy-github:
     executor: linux-x86_64
     steps:
-      - attach_workspace:
-          at: ~/dist
       - checkout
       - run:
           name: "Publish Draft Release on GitHub"
@@ -167,7 +139,7 @@ jobs:
             tar -xf ghr_v0.12.1_linux_amd64.tar.gz
             ghr_v0.12.1_linux_amd64/ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
               -r ${CIRCLE_PROJECT_REPONAME} -n "TypeDB Studio $(cat VERSION)" -b "$(cat ./RELEASE_NOTES_LATEST.md)" \
-              -c ${CIRCLE_SHA1} -delete $(cat VERSION) ~/dist/
+              -c ${CIRCLE_SHA1} -delete $(cat VERSION)
 
   deploy-brew:
     executor: linux-x86_64
