@@ -212,30 +212,35 @@ unzip_file(
     name = "native-artifact-mac-arm64-dmg",
     target = ":assemble-platform",
     output = "typedb-studio-mac-arm64.dmg",
+    target_compatible_with = constraint_mac_arm64,
 )
 
 unzip_file(
     name = "native-artifact-mac-x86_64-dmg",
     target = ":assemble-platform",
     output = "typedb-studio-mac-x86_64.dmg",
+    target_compatible_with = constraint_mac_x86_64,
 )
 
 unzip_file(
     name = "native-artifact-linux-arm64-tar-gz",
     target = ":assemble-platform",
     output = "typedb-studio-linux-arm64.tar.gz",
+    target_compatible_with = constraint_linux_arm64,
 )
 
 unzip_file(
     name = "native-artifact-linux-x86_64-tar-gz",
     target = ":assemble-platform",
     output = "typedb-studio-linux-x86_64.tar.gz",
+    target_compatible_with = constraint_linux_x86_64,
 )
 
 unzip_file(
     name = "native-artifact-windows-x86_64-exe",
     target = ":assemble-platform",
     output = "typedb-studio-windows-x86_64.exe",
+    target_compatible_with = constraint_win_x86_64,
 )
 
 deploy_artifact(
@@ -246,6 +251,7 @@ deploy_artifact(
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
     visibility = ["//visibility:public"],
+    target_compatible_with = constraint_mac_x86_64,
 )
 
 deploy_artifact(
@@ -256,6 +262,7 @@ deploy_artifact(
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
     visibility = ["//visibility:public"],
+    target_compatible_with = constraint_mac_arm64,
 )
 
 deploy_artifact(
@@ -266,6 +273,7 @@ deploy_artifact(
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
     visibility = ["//visibility:public"],
+    target_compatible_with = constraint_linux_x86_64,
 )
 
 deploy_artifact(
@@ -276,6 +284,7 @@ deploy_artifact(
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
     visibility = ["//visibility:public"],
+    target_compatible_with = constraint_linux_arm64,
 )
 
 deploy_artifact(
@@ -286,6 +295,7 @@ deploy_artifact(
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
     visibility = ["//visibility:public"],
+    target_compatible_with = constraint_win_x86_64,
 )
 
 label_flag(
