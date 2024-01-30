@@ -18,14 +18,10 @@
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 def vaticle_bazel_distribution():
-    native.local_repository(
-        name = "vaticle_bazel_distribution",
-        path = "../bazel-distribution",
-    )
     git_repository(
-        name = "vaticle_bazel_distribution_",
+        name = "vaticle_bazel_distribution",
         remote = "https://github.com/vaticle/bazel-distribution",
-        commit = "4a01d09ef542a423ced909db9a61291dc0a6acc5",
+        commit = "009311e5b9928396d0ff044583a03728255afc3f",
     )
 
 def vaticle_dependencies():
