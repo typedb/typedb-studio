@@ -27,7 +27,7 @@ load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_library")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
-load("@vaticle_bazel_distribution//artifact:rules.bzl", "artifact_extractor")
+load("@vaticle_bazel_distribution//artifact:rules.bzl", "artifact_extractor", "deploy_artifact")
 load("@vaticle_bazel_distribution//platform:constraints.bzl", "constraint_linux_arm64", "constraint_linux_x86_64",
      "constraint_mac_arm64", "constraint_mac_x86_64", "constraint_win_x86_64")
 
