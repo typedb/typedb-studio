@@ -138,9 +138,9 @@ jobs:
       - run:
           name: "Publish Draft Release on GitHub"
           command: |
-            wget https://github.com/tcnksm/ghr/releases/download/v0.12.1/ghr_v0.12.1_linux_amd64.tar.gz
-            tar -xf ghr_v0.12.1_linux_amd64.tar.gz
-            ghr_v0.12.1_linux_amd64/ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
+            wget https://github.com/tcnksm/ghr/releases/download/v0.16.2/ghr_v0.16.2_linux_amd64.tar.gz
+            tar -xf ghr_v0.16.2_linux_amd64.tar.gz
+            ghr_v0.16.2_linux_amd64/ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
               -r ${CIRCLE_PROJECT_REPONAME} -n "TypeDB Studio $(cat VERSION)" -b "$(cat ./RELEASE_NOTES_LATEST.md)" \
               -c ${CIRCLE_SHA1} -delete $(cat VERSION)
 
