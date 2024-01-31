@@ -34,7 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Enter
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Exit
-import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
@@ -134,7 +134,7 @@ object Table {
                     )
                 }
             }
-            Scrollbar.Vertical(rememberScrollbarAdapter(scroller), Modifier.align(Alignment.CenterEnd), height)
+            Scrollbar.Vertical(rememberScrollbarAdapter(scroller), Modifier.align(Alignment.CenterEnd))
         }
     }
 
@@ -162,7 +162,7 @@ object Table {
             var modifier = Modifier.fillMaxWidth().height(rowHeight)
             contextMenuFn?.let { fn ->
                 ContextMenu.Popup(contextMenuState) { fn(item) }
-                modifier = modifier.pointerHoverIcon(PointerIconDefaults.Hand)
+                modifier = modifier.pointerHoverIcon(PointerIcon.Hand)
                     .pointerInput(item) { contextMenuState.onPointerInput(this) }
                     .onPointerEvent(Enter) { isHover = true }
                     .onPointerEvent(Exit) { isHover = false }

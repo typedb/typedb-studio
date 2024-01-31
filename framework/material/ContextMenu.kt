@@ -50,7 +50,7 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEvent
-import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.isPrimaryPressed
@@ -175,7 +175,7 @@ object ContextMenu {
     private fun Item(state: State, item: Item, minWidth: Dp) {
         var modifier = Modifier.defaultMinSize(minWidth).height(ITEM_HEIGHT)
         if (item.enabled) modifier = modifier
-            .pointerHoverIcon(PointerIconDefaults.Hand)
+            .pointerHoverIcon(PointerIcon.Hand)
             .clickable { state.isOpen = false; item.onClick() }
         Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
             Box(modifier = Modifier.size(ITEM_HEIGHT), contentAlignment = Alignment.Center) {

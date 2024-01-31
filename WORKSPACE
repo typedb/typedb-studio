@@ -43,8 +43,8 @@ kotlin_deps()
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version")
 kotlin_repositories(
     compiler_release = kotlinc_version(
-        release = "1.7.20",
-        sha256 = "5e3c8d0f965410ff12e90d6f8dc5df2fc09fd595a684d514616851ce7e94ae7d"
+        release = "1.9.22",
+        sha256 = "88b39213506532c816ff56348c07bbeefe0c8d18943bffbad11063cf97cac3e6"
     )
 )
 load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")

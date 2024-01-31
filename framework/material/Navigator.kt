@@ -55,7 +55,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Enter
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Exit
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Release
-import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -437,8 +437,8 @@ object Navigator {
                 state.entries.forEach { item { ItemLayout(state, it, itemHeight, iconArg, styleArgs) } }
                 if (bottomSpace > 0.dp) item { Spacer(Modifier.height(bottomSpace)) }
             }
-            Scrollbar.Vertical(verScrollAdapter, Modifier.align(Alignment.CenterEnd), state.areaHeight)
-            Scrollbar.Horizontal(horScrollAdapter, Modifier.align(Alignment.BottomCenter), state.areaWidth)
+            Scrollbar.Vertical(verScrollAdapter, Modifier.align(Alignment.CenterEnd))
+            Scrollbar.Horizontal(horScrollAdapter, Modifier.align(Alignment.BottomCenter))
         } else Box(modifier, Alignment.Center) {
             Text(value = Label.NONE_IN_PARENTHESES.lowercase())
         }
@@ -473,7 +473,7 @@ object Navigator {
                 .focusRequester(item.focusReq).focusable()
                 .onKeyEvent { onKeyEvent(it, state, item) }
                 .padding(horizontal = horizontalItemPadding)
-                .pointerHoverIcon(PointerIconDefaults.Hand)
+                .pointerHoverIcon(PointerIcon.Hand)
                 .pointerInput(item) { onPointerInput(state, item) }
                 .onPointerEvent(Release) { it.awtEventOrNull?.let(::mayOpenItem) }
                 .onPointerEvent(Enter) { state.hovered = item }

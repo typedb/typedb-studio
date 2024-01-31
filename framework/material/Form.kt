@@ -73,7 +73,6 @@ import androidx.compose.ui.input.pointer.PointerEventType.Companion.Enter
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Exit
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Press
 import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.PointerIconDefaults
 import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -299,7 +298,7 @@ object Form {
         modifier: Modifier = Modifier,
         onTextLayout: (TextLayoutResult) -> Unit = {},
     ) = BasicTextField(
-        modifier = modifier.pointerHoverIcon(icon = PointerIconDefaults.Hand),
+        modifier = modifier.pointerHoverIcon(icon = PointerIcon.Hand),
         value = value,
         onValueChange = {},
         readOnly = true,
@@ -340,7 +339,7 @@ object Form {
         var isHover by remember { mutableStateOf(false) }
         ClickableText(
             text = value,
-            modifier = Modifier.pointerHoverIcon(PointerIconDefaults.Hand)
+            modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
                 .onPointerEvent(Enter) { isHover = true }
                 .onPointerEvent(Exit) { isHover = false },
             style = textStyle.copy(if (isHover) hoverColor else color),
@@ -398,7 +397,7 @@ object Form {
         modifier: Modifier = Modifier,
         fontColor: Color = Theme.studio.onSurface,
         textStyle: TextStyle = Theme.typography.body1,
-        pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
+        pointerHoverIcon: PointerIcon = PointerIcon.Text,
         onTextLayout: (TextLayoutResult) -> Unit = {},
         shape: Shape? = ROUNDED_CORNER_SHAPE,
         border: Border? = DEFAULT_BORDER,
@@ -457,7 +456,7 @@ object Form {
         modifier: Modifier = Modifier,
         fontColor: Color = Theme.studio.onSurface,
         textStyle: TextStyle = Theme.typography.body1,
-        pointerHoverIcon: PointerIcon = PointerIconDefaults.Text,
+        pointerHoverIcon: PointerIcon = PointerIcon.Text,
         onTextLayout: (TextLayoutResult) -> Unit = {},
         shape: Shape? = ROUNDED_CORNER_SHAPE,
         border: Border? = DEFAULT_BORDER,
@@ -559,7 +558,7 @@ object Form {
             modifier = modifier.fillMaxWidth()
                 .background(Theme.studio.surface)
                 .onSizeChanged { state.density = density }
-                .pointerHoverIcon(PointerIconDefaults.Text)
+                .pointerHoverIcon(PointerIcon.Text)
         ) {
             icon?.let {
                 Box(Modifier.size(FIELD_HEIGHT)) { Icon.Render(icon = it, modifier = Modifier.align(Alignment.Center)) }
@@ -735,7 +734,7 @@ object Form {
         val window = LocalWindowContext.current!!
         val titleBarHeight = LocalTitleBarHeight.current
         val mod = onClick?.let {
-            modifier.pointerHoverIcon(if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
+            modifier.pointerHoverIcon(if (enabled) PointerIcon.Hand else PointerIcon.Default)
         } ?: modifier
 
         fun mayShowOnTargetHover() {
@@ -822,7 +821,7 @@ object Form {
                 modifier = mod.background(fadeable(bgColor, !enabled), roundedCorners.shape(density))
                     .onGloballyPositioned { area = toRectDP(it.boundsInWindow(), density) }
                     .clickable(enabled = enabled) { tooltipState?.hideOnTargetClicked(); onClick() }
-                    .pointerHoverIcon(icon = if (enabled) PointerIconDefaults.Hand else PointerIconDefaults.Default)
+                    .pointerHoverIcon(icon = if (enabled) PointerIcon.Hand else PointerIcon.Default)
                     .onPointerEvent(Enter) { mayShowOnTargetHover() }
                     .onPointerEvent(Exit) { tooltipState?.mayHideOnTargetExit() }
             ) {
@@ -913,7 +912,7 @@ object Form {
             contentPadding = PaddingValues(horizontal = TEXT_BUTTON_PADDING),
             modifier = Modifier.height(FIELD_HEIGHT)
                 .background(if (i == state.mouseIndex) Theme.studio.primary else Theme.studio.surface)
-                .pointerHoverIcon(icon = PointerIconDefaults.Hand)
+                .pointerHoverIcon(icon = PointerIcon.Hand)
                 .onPointerEvent(Enter) { state.mouseInTo(i) }
                 .onPointerEvent(Exit) { state.mouseOutFrom(i) },
         ) { Row { Text(value = value, color = color) } }

@@ -51,7 +51,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Move
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Release
-import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -358,7 +358,7 @@ object TextEditor {
                 modifier = Modifier.fillMaxSize()
                     .background(Theme.studio.backgroundDark)
                     .horizontalScroll(state.target.horScroller)
-                    .pointerHoverIcon(PointerIconDefaults.Text)
+                    .pointerHoverIcon(PointerIcon.Text)
             ) {
                 ContextMenu.Popup(state.contextMenu) { state.handler.contextMenuFn() }
                 LazyLines.Area(

@@ -25,8 +25,12 @@ def vaticle_bazel_distribution():
     )
 
 def vaticle_dependencies():
-    git_repository(
+    native.local_repository(
         name = "vaticle_dependencies",
+        path = "../dependencies",
+    )
+    git_repository(
+        name = "vaticle_dependencies_",
         remote = "https://github.com/vaticle/dependencies",
         commit = "cd00aa9bc16bc2eb857b9b5e4d7a301bf19908dc",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
     )

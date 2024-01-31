@@ -18,10 +18,10 @@
 
 package com.vaticle.typedb.studio.framework.editor
 
-import androidx.compose.foundation.ScrollbarAdapter
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.v2.ScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,13 +79,11 @@ internal object LazyLines {
                 _stickToBottom = value
             }
 
-        override val scrollOffset: Float get() = offset.value
+        override val scrollOffset: Double get() = offset.value.toDouble()
+        override val contentSize: Double get() = contentHeight.value.toDouble()
+        override val viewportSize: Double get() = viewHeight.value.toDouble()
 
-        override fun maxScrollOffset(containerSize: Int): Float {
-            return contentHeight.value - viewHeight.value
-        }
-
-        override suspend fun scrollTo(containerSize: Int, scrollOffset: Float) {
+        override suspend fun scrollTo(scrollOffset: Double) {
             updateOffset(scrollOffset.dp)
         }
 
