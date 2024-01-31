@@ -61,15 +61,30 @@ commands:
     steps:
       - run: brew install bazelisk
 
-  deploy-mac:
+  deploy-mac-snapshot:
     parameters:
       target-arch:
         type: string
     steps:
-      - run: bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt --define APPLE_CODE_SIGN=yes --define APPLE_ID=$APPLE_ID --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD --define APPLE_TEAM_ID=$APPLE_TEAM_ID --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD --spawn_strategy=local
+      - run: |
+          bazel run --define version=$(git rev-parse HEAD) //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt --spawn_strategy=local -- snapshot
+
+  deploy-mac-release:
+    parameters:
+      target-arch:
+        type: string
+    steps:
+      - run: |
+          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt \
+              --define APPLE_CODE_SIGN=yes \
+              --define APPLE_ID=$APPLE_ID \
+              --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD \
+              --define APPLE_TEAM_ID=$APPLE_TEAM_ID \
+              --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD \
+              --spawn_strategy=local -- release
 
 jobs:
-  deploy-mac-arm64:
+  deploy-mac-arm64-snapshot:
     executor: mac-arm64
     steps:
       - checkout
@@ -78,16 +93,10 @@ jobs:
           export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           bazel run @vaticle_dependencies//distribution/artifact:create-netrc
-      - deploy-mac:
+      - deploy-mac-snapshot:
           target-arch: arm64
-      - run: |
-          mkdir -p ~/dist && cp bazel-bin/typedb-studio-mac-arm64-*.dmg ~/dist
-      - persist_to_workspace:
-          root: ~/dist
-          paths:
-            - ./*
 
-  deploy-mac-x86_64:
+  deploy-mac-x86_64-snapshot:
     executor: mac-x86_64
     steps:
       - checkout
@@ -96,7 +105,61 @@ jobs:
           export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           bazel run @vaticle_dependencies//distribution/artifact:create-netrc
-      - deploy-mac:
+      - deploy-mac-snapshot:
+          target-arch: x86_64
+
+  deploy-linux-arm64-snapshot:
+    executor: linux-arm64
+    steps:
+      - checkout
+      - install-bazel-linux-arm64
+      - run: bazel run --define version=$(git rev-parse HEAD) //:deploy-linux-arm64-targz --compilation_mode=opt -- snapshot
+
+  deploy-linux-x86_64-snapshot:
+    executor: linux-x86_64
+    steps:
+      - checkout
+      - install-bazel-linux-x86_64
+      - run: bazel run --define version=$(git rev-parse HEAD) //:deploy-linux-x86_64-targz --compilation_mode=opt -- snapshot
+
+  deploy-windows-x86_64-snapshot:
+    executor:
+      name: win/default
+      shell: cmd.exe
+    working_directory: ~/typedb-studio
+    steps:
+      - checkout
+      - run: .circleci\windows\prepare.bat
+      - run: .circleci\windows\deploy_snapshot.bat
+
+  deploy-mac-arm64-release:
+    executor: mac-arm64
+    steps:
+      - checkout
+      - install-bazel-mac
+      - run: |
+          export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          bazel run @vaticle_dependencies//distribution/artifact:create-netrc
+      - deploy-mac-release:
+          target-arch: arm64
+      - run: |
+          mkdir -p ~/dist && cp bazel-bin/typedb-studio-mac-arm64-*.dmg ~/dist
+      - persist_to_workspace:
+          root: ~/dist
+          paths:
+            - ./*
+
+  deploy-mac-x86_64-release:
+    executor: mac-x86_64
+    steps:
+      - checkout
+      - install-bazel-mac
+      - run: |
+          export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          bazel run @vaticle_dependencies//distribution/artifact:create-netrc
+      - deploy-mac-release:
           target-arch: x86_64
       - run: |
           mkdir -p ~/dist && cp bazel-bin/typedb-studio-mac-x86_64-*.dmg ~/dist
@@ -105,23 +168,23 @@ jobs:
           paths:
             - ./*
 
-  deploy-linux-arm64:
+  deploy-linux-arm64-release:
     executor: linux-arm64
     steps:
       - checkout
       - install-bazel-linux-arm64
-      - run: bazel run //:deploy-linux-arm64-deb --compilation_mode=opt
-      - run: bazel run //:deploy-linux-arm64-targz --compilation_mode=opt
+      - run: bazel run //:deploy-linux-arm64-deb --compilation_mode=opt -- release
+      - run: bazel run //:deploy-linux-arm64-targz --compilation_mode=opt -- release
 
-  deploy-linux-x86_64:
+  deploy-linux-x86_64-release:
     executor: linux-x86_64
     steps:
       - checkout
       - install-bazel-linux-x86_64
-      - run: bazel run //:deploy-linux-x86_64-deb --compilation_mode=opt
-      - run: bazel run //:deploy-linux-x86_64-targz --compilation_mode=opt
+      - run: bazel run //:deploy-linux-x86_64-deb --compilation_mode=opt -- release
+      - run: bazel run //:deploy-linux-x86_64-targz --compilation_mode=opt -- release
 
-  deploy-windows-x86_64:
+  deploy-windows-x86_64-release:
     executor:
       name: win/default
       shell: cmd.exe
@@ -129,7 +192,7 @@ jobs:
     steps:
       - checkout
       - run: .circleci\windows\prepare.bat
-      - run: .circleci\windows\deploy.bat
+      - run: .circleci\windows\deploy_release.bat
 
   deploy-github:
     executor: linux-x86_64
@@ -165,25 +228,47 @@ jobs:
       - run: git push --delete https://$REPO_GITHUB_TOKEN@github.com/vaticle/typedb-studio.git $CIRCLE_BRANCH
 
 workflows:
+  snapshot:
+    jobs:
+      - deploy-linux-arm64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
+      - deploy-linux-x86_64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
+      - deploy-mac-arm64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
+      - deploy-mac-x86_64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
+      - deploy-windows-x86_64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
   release:
     jobs:
-      - deploy-linux-arm64:
+      - deploy-linux-arm64-release:
           filters:
             branches:
               only: release
-      - deploy-linux-x86_64:
+      - deploy-linux-x86_64-release:
           filters:
             branches:
               only: release
-      - deploy-mac-arm64:
+      - deploy-mac-arm64-release:
           filters:
             branches:
               only: release
-      - deploy-mac-x86_64:
+      - deploy-mac-x86_64-release:
           filters:
             branches:
               only: release
-      - deploy-windows-x86_64:
+      - deploy-windows-x86_64-release:
           filters:
             branches:
               only: release
@@ -192,11 +277,11 @@ workflows:
             branches:
               only: release
           requires:
-            - deploy-linux-arm64
-            - deploy-linux-x86_64
-            - deploy-mac-arm64
-            - deploy-mac-x86_64
-            - deploy-windows-x86_64
+            - deploy-linux-arm64-release
+            - deploy-linux-x86_64-release
+            - deploy-mac-arm64-release
+            - deploy-mac-x86_64-release
+            - deploy-windows-x86_64-release
       - deploy-brew:
           filters:
             branches:
