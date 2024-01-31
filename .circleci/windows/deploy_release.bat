@@ -20,5 +20,5 @@ REM by Chocolatey in prepare.bat is accessible
 CALL refreshenv
 
 ECHO Building Windows application image...
-bazel --output_user_root=C:/b run //:deploy-windows-x86_64-exe --compilation_mode=opt
+bazel --output_user_root=C:/b run //:deploy-windows-x86_64-exe --compilation_mode=opt -- release
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
