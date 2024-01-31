@@ -306,7 +306,7 @@ deploy_artifact(
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
     visibility = ["//visibility:public"],
-    target_compatible_with = constraint_linux_x86_64,
+    target_compatible_with = constraint_linux_arm64,
 )
 
 deploy_artifact(
