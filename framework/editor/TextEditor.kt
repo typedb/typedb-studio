@@ -271,7 +271,6 @@ object TextEditor {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun Layout(state: State, modifier: Modifier = Modifier, showLine: Boolean = true, onScroll: () -> Unit = {}) {
         if (state.content.isEmpty()) return
@@ -293,8 +292,6 @@ object TextEditor {
                     .focusRequester(state.focusReq).focusable()
                     .onGloballyPositioned { state.density = density }
                     .onKeyEvent { state.handler.handleEditorEvent(it) }
-                    .onPointerEvent(Move) { it.awtEventOrNull?.let { event -> state.target.dragSelection(event.x, event.y) } }
-                    .onPointerEvent(Release) { if (it.awtEventOrNull?.button == BUTTON1) state.target.stopDragSelection() }
                     .pointerInput(state) { onPointerInput(state) }
                 ) {
                     if (showLine) {
@@ -365,6 +362,8 @@ object TextEditor {
                     state = lazyColumnState,
                     onScroll = onScroll,
                     modifier = Modifier.defaultMinSize(minWidth = state.textAreaWidth)
+                        .onPointerEvent(Move) { it.awtEventOrNull?.let { event -> state.target.dragSelection(event.x, event.y) } }
+                        .onPointerEvent(Release) { if (it.awtEventOrNull?.button == BUTTON1) state.target.stopDragSelection() }
                 ) { index, text -> TextLine(state, index, text, font, fontWidth, lineGap, showLine) }
             }
             Scrollbar.Vertical(state.target.verScroller, Modifier.align(Alignment.CenterEnd))
