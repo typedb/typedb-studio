@@ -95,8 +95,8 @@ jobs:
       - checkout
       - install-bazel-mac
       - run: |
-          export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
-          export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           bazel run @vaticle_dependencies//distribution/artifact:create-netrc
       - deploy-mac-snapshot:
           target-arch: arm64
@@ -107,8 +107,8 @@ jobs:
       - checkout
       - install-bazel-mac
       - run: |
-          export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
-          export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           bazel run @vaticle_dependencies//distribution/artifact:create-netrc
       - deploy-mac-snapshot:
           target-arch: x86_64
@@ -155,8 +155,8 @@ jobs:
       - checkout
       - install-bazel-mac
       - run: |
-          export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
-          export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           bazel run @vaticle_dependencies//distribution/artifact:create-netrc
       - deploy-mac-release:
           target-arch: arm64
@@ -173,8 +173,8 @@ jobs:
       - checkout
       - install-bazel-mac
       - run: |
-          export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
-          export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           bazel run @vaticle_dependencies//distribution/artifact:create-netrc
       - deploy-mac-release:
           target-arch: x86_64
