@@ -97,7 +97,6 @@ jobs:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          bazel run @vaticle_dependencies//distribution/artifact:create-netrc
       - deploy-mac-snapshot:
           target-arch: arm64
 
@@ -109,7 +108,6 @@ jobs:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          bazel run @vaticle_dependencies//distribution/artifact:create-netrc
       - deploy-mac-snapshot:
           target-arch: x86_64
 
@@ -119,6 +117,8 @@ jobs:
       - checkout
       - install-bazel-linux-arm64
       - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           # TODO Temporary measure. This exists for two reasons:
           # 1) platform-jvm assembly rules currently requires the version to be specified in a version_file
           # 2) jpackage does not support 0 as a major version
@@ -132,6 +132,8 @@ jobs:
       - checkout
       - install-bazel-linux-x86_64
       - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           # TODO Temporary measure. This exists for two reasons:
           # 1) platform-jvm assembly rules currently requires the version to be specified in a version_file
           # 2) jpackage does not support 0 as a major version
