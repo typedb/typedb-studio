@@ -67,12 +67,14 @@ commands:
         type: string
     steps:
       - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           # TODO Temporary measure. This exists for two reasons:
           # 1) platform-jvm assembly rules currently requires the version to be specified in a version_file
           # 2) jpackage does not support 0 as a major version
           # This writes VERSION-SHA1 into the VERSION file to be used by the assembly rule.
           echo $(cat VERSION)-$CIRCLE_SHA1 > VERSION
-          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt --spawn_strategy=local -- snapshot
+          bazel run --define version=$(cat VERSION) //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt --spawn_strategy=local -- snapshot
 
   deploy-mac-release:
     parameters:
@@ -80,7 +82,7 @@ commands:
         type: string
     steps:
       - run: |
-          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt \
+          bazel run --define version=$(cat VERSION) //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt \
               --define APPLE_CODE_SIGN=yes \
               --define APPLE_ID=$APPLE_ID \
               --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD \
@@ -124,7 +126,7 @@ jobs:
           # 2) jpackage does not support 0 as a major version
           # This writes VERSION-SHA1 into the VERSION file to be used by the assembly rule.
           echo $(cat VERSION)-$CIRCLE_SHA1 > VERSION
-          bazel run //:deploy-linux-arm64-targz --compilation_mode=opt -- snapshot
+          bazel run --define version=$(cat VERSION) //:deploy-linux-arm64-targz --compilation_mode=opt -- snapshot
 
   deploy-linux-x86_64-snapshot:
     executor: linux-x86_64
@@ -139,7 +141,7 @@ jobs:
           # 2) jpackage does not support 0 as a major version
           # This writes VERSION-SHA1 into the VERSION file to be used by the assembly rule.
           echo $(cat VERSION)-$CIRCLE_SHA1 > VERSION
-          bazel run //:deploy-linux-x86_64-targz --compilation_mode=opt -- snapshot
+          bazel run --define version=$(cat VERSION) //:deploy-linux-x86_64-targz --compilation_mode=opt -- snapshot
 
   deploy-windows-x86_64-snapshot:
     executor:
@@ -192,16 +194,16 @@ jobs:
     steps:
       - checkout
       - install-bazel-linux-arm64
-      - run: bazel run //:deploy-linux-arm64-deb --compilation_mode=opt -- release
-      - run: bazel run //:deploy-linux-arm64-targz --compilation_mode=opt -- release
+      - run: bazel run --define version=$(cat VERSION) //:deploy-linux-arm64-deb --compilation_mode=opt -- release
+      - run: bazel run --define version=$(cat VERSION) //:deploy-linux-arm64-targz --compilation_mode=opt -- release
 
   deploy-linux-x86_64-release:
     executor: linux-x86_64
     steps:
       - checkout
       - install-bazel-linux-x86_64
-      - run: bazel run //:deploy-linux-x86_64-deb --compilation_mode=opt -- release
-      - run: bazel run //:deploy-linux-x86_64-targz --compilation_mode=opt -- release
+      - run: bazel run --define version=$(cat VERSION) //:deploy-linux-x86_64-deb --compilation_mode=opt -- release
+      - run: bazel run --define version=$(cat VERSION) //:deploy-linux-x86_64-targz --compilation_mode=opt -- release
 
   deploy-windows-x86_64-release:
     executor:
