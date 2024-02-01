@@ -21,7 +21,7 @@ def vaticle_bazel_distribution():
     git_repository(
         name = "vaticle_bazel_distribution",
         remote = "https://github.com/vaticle/bazel-distribution",
-        commit = "6ecb2a5b2d03e8558f17a18fdc0558247cf0d378",
+        commit = "31b7140753037c3316e91cfe108616bf62ead05b",
     )
 
 def vaticle_dependencies():
