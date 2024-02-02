@@ -250,6 +250,7 @@ deploy_artifact(
     artifact_name = "typedb-studio-mac-x86_64-{version}.dmg",
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
     visibility = ["//visibility:public"],
     target_compatible_with = constraint_mac_x86_64,
 )
@@ -261,6 +262,7 @@ deploy_artifact(
     artifact_name = "typedb-studio-mac-arm64-{version}.dmg",
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
     visibility = ["//visibility:public"],
     target_compatible_with = constraint_mac_arm64,
 )
@@ -272,6 +274,7 @@ deploy_artifact(
     artifact_name = "typedb-studio-linux-x86_64-{version}.deb",
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
     visibility = ["//visibility:public"],
     target_compatible_with = constraint_linux_x86_64,
 )
@@ -283,6 +286,7 @@ deploy_artifact(
     artifact_name = "typedb-studio-linux-x86_64-{version}.tar.gz",
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
     visibility = ["//visibility:public"],
     target_compatible_with = constraint_linux_x86_64,
 )
@@ -294,6 +298,7 @@ deploy_artifact(
     artifact_name = "typedb-studio-linux-arm64-{version}.deb",
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
     visibility = ["//visibility:public"],
     target_compatible_with = constraint_linux_arm64,
 )
@@ -305,6 +310,7 @@ deploy_artifact(
     artifact_name = "typedb-studio-linux-arm64-{version}.tar.gz",
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
     visibility = ["//visibility:public"],
     target_compatible_with = constraint_linux_arm64,
 )
@@ -316,6 +322,7 @@ deploy_artifact(
     artifact_name = "typedb-studio-windows-x86_64-{version}.exe",
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
     visibility = ["//visibility:public"],
     target_compatible_with = constraint_win_x86_64,
 )
