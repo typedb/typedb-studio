@@ -28,5 +28,8 @@ REM This writes VERSION-SHA1 into the VERSION file to be used by the assembly ru
 FOR /F "tokens=*" %%V IN (VERSION) DO (SET VERS=%%V)
 ECHO %VERS%-%CIRCLE_SHA1%> VERSION
 
+SET DEPLOY_ARTIFACT_USERNAME=%REPO_TYPEDB_USERNAME%
+SET DEPLOY_ARTIFACT_PASSWORD=%REPO_TYPEDB_PASSWORD%
+
 bazel --output_user_root=C:/b run //:deploy-windows-x86_64-exe --compilation_mode=opt -- snapshot
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
