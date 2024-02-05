@@ -82,6 +82,8 @@ commands:
         type: string
     steps:
       - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt \
               --define APPLE_CODE_SIGN=yes \
               --define APPLE_ID=$APPLE_ID \
@@ -96,9 +98,6 @@ jobs:
     steps:
       - checkout
       - install-bazel-mac
-      - run: |
-          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
-          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
       - deploy-mac-snapshot:
           target-arch: arm64
 
@@ -107,9 +106,6 @@ jobs:
     steps:
       - checkout
       - install-bazel-mac
-      - run: |
-          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
-          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
       - deploy-mac-snapshot:
           target-arch: x86_64
 
@@ -194,16 +190,22 @@ jobs:
     steps:
       - checkout
       - install-bazel-linux-arm64
-      - run: bazel run //:deploy-linux-arm64-deb --compilation_mode=opt -- release
-      - run: bazel run //:deploy-linux-arm64-targz --compilation_mode=opt -- release
+      - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          bazel run //:deploy-linux-arm64-deb --compilation_mode=opt -- release
+          bazel run //:deploy-linux-arm64-targz --compilation_mode=opt -- release
 
   deploy-linux-x86_64-release:
     executor: linux-x86_64
     steps:
       - checkout
       - install-bazel-linux-x86_64
-      - run: bazel run //:deploy-linux-x86_64-deb --compilation_mode=opt -- release
-      - run: bazel run //:deploy-linux-x86_64-targz --compilation_mode=opt -- release
+      - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          bazel run //:deploy-linux-x86_64-deb --compilation_mode=opt -- release
+          bazel run //:deploy-linux-x86_64-targz --compilation_mode=opt -- release
 
   deploy-windows-x86_64-release:
     executor:

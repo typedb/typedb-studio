@@ -20,5 +20,9 @@ REM by Chocolatey in prepare.bat is accessible
 CALL refreshenv
 
 ECHO Building Windows application image...
+
+SET DEPLOY_ARTIFACT_USERNAME=%REPO_TYPEDB_USERNAME%
+SET DEPLOY_ARTIFACT_PASSWORD=%REPO_TYPEDB_PASSWORD%
+
 bazel --output_user_root=C:/b run //:deploy-windows-x86_64-exe --compilation_mode=opt -- release
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
