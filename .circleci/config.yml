@@ -316,10 +316,12 @@ workflows:
             branches:
               only: release
           requires:
-            - deploy-github
+            - deploy-mac-arm64-release
+            - deploy-mac-x86_64-release
       - release-cleanup:
           filters:
             branches:
               only: release
           requires:
+            - deploy-github
             - deploy-brew
