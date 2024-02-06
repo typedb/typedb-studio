@@ -1,6 +1,6 @@
 ### Distribution
 
-TypeDB Studio is available for Linux, Mac and Windows (download binaries below).
+TypeDB Studio is available for Linux, Mac and Windows. [Download TypeDB Studio 2.26.6-rc2.](https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:2.26.6-rc2)
 
 For Mac Intel and Mac ARM, TypeDB Studio is also available through Homebrew:
 
@@ -25,12 +25,14 @@ which versions of Studio are compatible with which versions of TypeDB server.
 
 ## Code Refactors
 
-- **Replace all instances of 'enterprise' with 'cloud'**
-
-  We replace the term 'enterprise' with 'cloud', to reflect the new consistent terminology used throughout Vaticle.
 
 ## Other Improvements
-- **Remove approval step in CircleCI release workflow**
-
-    
+- **Deploy artifacts to CloudSmith**
+  
+  We no longer upload build artifacts to the github releases page. Instead, the artifacts are available from our public cloudsmith repository, linked in the release notes.
+  
+- **Migrate artifact hosting to cloudsmith**
+  Updates artifact deployment & consumption rules to use cloudsmith (repo.typedb.com) instead of the self-hosted sonatype repository (repo.vaticle.com).
+  
+- **Update typedb-driver with null fix**
 
