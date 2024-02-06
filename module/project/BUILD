@@ -38,7 +38,6 @@ kt_jvm_library(
         "//framework/output:output",
 
         # External Vaticle Dependencies
-#        "@vaticle_typedb_common//:common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",

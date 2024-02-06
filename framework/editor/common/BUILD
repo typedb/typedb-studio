@@ -29,7 +29,7 @@ kt_jvm_library(
     plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
     deps = [
         # External Vaticle Dependencies
-        "@vaticle_typedb_common//:common",
+        "@vaticle_typeql//common/java:common",
 
         # External Maven Dependencies
         "@maven//:org_jetbrains_compose_ui_ui_text_desktop",

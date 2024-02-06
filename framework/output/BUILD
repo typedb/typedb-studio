@@ -39,7 +39,7 @@ kt_jvm_library(
         "//framework/material:material",
 
         # External Vaticle Dependencies
-        "@vaticle_typedb_common//:common",
+        "@vaticle_typeql//common/java:common",
         "@vaticle_typedb_driver//java/api:api",
         "@vaticle_typedb_driver//java/common:common",
         "@vaticle_typeql//java/common:common",

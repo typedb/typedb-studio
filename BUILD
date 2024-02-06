@@ -15,19 +15,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-load("//:deployment.bzl", deployment_github = "deployment")
-load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
 load("@vaticle_dependencies//builder/java:rules.bzl", "native_typedb_artifact")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz", "assemble_versioned", "assemble_zip", "checksum", "java_deps")
-load("@vaticle_bazel_distribution//common/tgz2zip:rules.bzl", "tgz2zip")
-load("@vaticle_bazel_distribution//github:rules.bzl", "deploy_github")
+load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz", "unzip_file", "checksum", "java_deps")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
-load("@vaticle_bazel_distribution//artifact:rules.bzl", "artifact_extractor")
+load("@vaticle_bazel_distribution//artifact:rules.bzl", "artifact_extractor", "deploy_artifact")
 load("@vaticle_bazel_distribution//platform:constraints.bzl", "constraint_linux_arm64", "constraint_linux_x86_64",
      "constraint_mac_arm64", "constraint_mac_x86_64", "constraint_win_x86_64")
 
@@ -55,7 +51,7 @@ kt_jvm_library(
         "//framework/material:material",
 
         # External Vaticle Dependencies
-        "@vaticle_typedb_common//:common",
+        "@vaticle_typeql//common/java:common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
@@ -206,6 +202,125 @@ genrule(
     outs = ["invalid-checksum.txt"],
     srcs = [],
     cmd = "echo > $@",
+)
+
+unzip_file(
+    name = "native-artifact-mac-arm64-dmg",
+    target = ":assemble-platform",
+    output = "typedb-studio-mac-arm64.dmg",
+    target_compatible_with = constraint_mac_arm64,
+)
+
+unzip_file(
+    name = "native-artifact-mac-x86_64-dmg",
+    target = ":assemble-platform",
+    output = "typedb-studio-mac-x86_64.dmg",
+    target_compatible_with = constraint_mac_x86_64,
+)
+
+unzip_file(
+    name = "native-artifact-linux-arm64-deb",
+    target = ":assemble-platform",
+    output = "typedb-studio-linux-arm64.deb",
+    target_compatible_with = constraint_linux_arm64,
+)
+
+unzip_file(
+    name = "native-artifact-linux-x86_64-deb",
+    target = ":assemble-platform",
+    output = "typedb-studio-linux-x86_64.deb",
+    target_compatible_with = constraint_linux_x86_64,
+)
+
+unzip_file(
+    name = "native-artifact-windows-x86_64-exe",
+    target = ":assemble-platform",
+    output = "typedb-studio-windows-x86_64.exe",
+    target_compatible_with = constraint_win_x86_64,
+)
+
+deploy_artifact(
+    name = "deploy-mac-x86_64-dmg",
+    target = ":native-artifact-mac-x86_64-dmg",
+    artifact_group = "typedb-studio-mac-x86_64",
+    artifact_name = "typedb-studio-mac-x86_64-{version}.dmg",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
+    visibility = ["//visibility:public"],
+    target_compatible_with = constraint_mac_x86_64,
+)
+
+deploy_artifact(
+    name = "deploy-mac-arm64-dmg",
+    target = ":native-artifact-mac-arm64-dmg",
+    artifact_group = "typedb-studio-mac-arm64",
+    artifact_name = "typedb-studio-mac-arm64-{version}.dmg",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
+    visibility = ["//visibility:public"],
+    target_compatible_with = constraint_mac_arm64,
+)
+
+deploy_artifact(
+    name = "deploy-linux-x86_64-deb",
+    target = ":native-artifact-linux-x86_64-deb",
+    artifact_group = "typedb-studio-linux-x86_64",
+    artifact_name = "typedb-studio-linux-x86_64-{version}.deb",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
+    visibility = ["//visibility:public"],
+    target_compatible_with = constraint_linux_x86_64,
+)
+
+deploy_artifact(
+    name = "deploy-linux-x86_64-targz",
+    target = ":assemble-linux-targz",
+    artifact_group = "typedb-studio-linux-x86_64",
+    artifact_name = "typedb-studio-linux-x86_64-{version}.tar.gz",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
+    visibility = ["//visibility:public"],
+    target_compatible_with = constraint_linux_x86_64,
+)
+
+deploy_artifact(
+    name = "deploy-linux-arm64-deb",
+    target = ":native-artifact-linux-arm64-deb",
+    artifact_group = "typedb-studio-linux-arm64",
+    artifact_name = "typedb-studio-linux-arm64-{version}.deb",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
+    visibility = ["//visibility:public"],
+    target_compatible_with = constraint_linux_arm64,
+)
+
+deploy_artifact(
+    name = "deploy-linux-arm64-targz",
+    target = ":assemble-linux-targz",
+    artifact_group = "typedb-studio-linux-arm64",
+    artifact_name = "typedb-studio-linux-arm64-{version}.tar.gz",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
+    visibility = ["//visibility:public"],
+    target_compatible_with = constraint_linux_arm64,
+)
+
+deploy_artifact(
+    name = "deploy-windows-x86_64-exe",
+    target = ":native-artifact-windows-x86_64-exe",
+    artifact_group = "typedb-studio-windows-x86_64",
+    artifact_name = "typedb-studio-windows-x86_64-{version}.exe",
+    snapshot = deployment['artifact']['snapshot']['upload'],
+    release = deployment['artifact']['release']['upload'],
+    version_file = ":VERSION",
+    visibility = ["//visibility:public"],
+    target_compatible_with = constraint_win_x86_64,
 )
 
 label_flag(

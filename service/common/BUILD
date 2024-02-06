@@ -31,7 +31,7 @@ kt_jvm_library(
     srcs = glob(["*.kt", "*/*.kt"]),
     deps = [
         # External Vaticle Dependencies
-        "@vaticle_typedb_common//:common",
+        "@vaticle_typeql//common/java:common",
 
         # External Maven Dependencies
         "@maven//:ch_qos_logback_logback_classic",

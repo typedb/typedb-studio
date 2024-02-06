@@ -39,7 +39,7 @@ kt_jvm_library(
         # External Vaticle Dependencies
         "@vaticle_typedb_driver//java/api:api",
         "@vaticle_typedb_driver//java/common:common",
-        "@vaticle_typedb_common//:common",
+        "@vaticle_typeql//common/java:common",
 
         # External Maven Dependencies
         "@maven//:org_jetbrains_compose_animation_animation_core_desktop",

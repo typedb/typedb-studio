@@ -36,7 +36,7 @@ kt_jvm_library(
 
         # External Vaticle Dependencies
         "@vaticle_force_graph//:force_graph",
-        "@vaticle_typedb_common//:common",
+        "@vaticle_typeql//common/java:common",
         "@vaticle_typedb_driver//java/api:api",
         "@vaticle_typedb_driver//java/common:common",
         "@vaticle_typeql//java:typeql-lang",

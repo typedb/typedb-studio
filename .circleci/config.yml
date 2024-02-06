@@ -22,13 +22,13 @@ orbs:
 executors:
   linux-arm64:
     machine:
-      image: ubuntu-2004:current
+      image: ubuntu-2004:2023.10.1
       resource_class: arm.medium
     working_directory: ~/typedb-studio
 
   linux-x86_64:
     machine:
-      image: ubuntu-2004:current
+      image: ubuntu-2004:2023.10.1
     working_directory: ~/typedb-studio
 
   mac-arm64:
@@ -61,86 +61,97 @@ commands:
     steps:
       - run: brew install bazelisk
 
-  assemble-mac:
+  deploy-mac-snapshot:
+    parameters:
+      target-arch:
+        type: string
     steps:
-      - run: bazel build //:assemble-platform --compilation_mode=opt --define APPLE_CODE_SIGN=yes --define APPLE_ID=$APPLE_ID --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD --define APPLE_TEAM_ID=$APPLE_TEAM_ID --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD --spawn_strategy=local
+      - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          # TODO Temporary measure. This exists for two reasons:
+          # 1) platform-jvm assembly rules currently requires the version to be specified in a version_file
+          # 2) jpackage does not support 0 as a major version
+          # This writes VERSION-SHA1 into the VERSION file to be used by the assembly rule.
+          echo $(cat VERSION)-$CIRCLE_SHA1 > VERSION
+          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt --spawn_strategy=local -- snapshot
+
+  deploy-mac-release:
+    parameters:
+      target-arch:
+        type: string
+    steps:
+      - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt \
+              --define APPLE_CODE_SIGN=yes \
+              --define APPLE_ID=$APPLE_ID \
+              --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD \
+              --define APPLE_TEAM_ID=$APPLE_TEAM_ID \
+              --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD \
+              --spawn_strategy=local -- release
+
+  deploy-linux-snapshot:
+    parameters:
+      target-arch:
+        type: string
+    steps:
+      - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          # TODO Temporary measure. This exists for two reasons:
+          # 1) platform-jvm assembly rules currently requires the version to be specified in a version_file
+          # 2) jpackage does not support 0 as a major version
+          # This writes VERSION-SHA1 into the VERSION file to be used by the assembly rule.
+          echo $(cat VERSION)-$CIRCLE_SHA1 > VERSION
+          bazel run //:deploy-linux-<<parameters.target-arch>>-targz --compilation_mode=opt -- snapshot
+
+  deploy-linux-release:
+    parameters:
+      target-arch:
+        type: string
+    steps:
+      - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          bazel run //:deploy-linux-<<parameters.target-arch>>-deb --compilation_mode=opt -- release
+          bazel run //:deploy-linux-<<parameters.target-arch>>-targz --compilation_mode=opt -- release
 
 jobs:
-  build-mac-arm64:
+  deploy-mac-arm64-snapshot:
     executor: mac-arm64
     steps:
       - checkout
       - install-bazel-mac
-      - run: |
-          export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
-          export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          bazel run @vaticle_dependencies//distribution/artifact:create-netrc
-      - assemble-mac
-      - run: |
-          mkdir -p ~/src && cp bazel-bin/assemble-platform.zip ~/src
-          mkdir -p ~/dist && cd ~/dist && jar xf ~/src/assemble-platform.zip
-      - persist_to_workspace:
-          root: ~/dist
-          paths:
-            - ./*
+      - deploy-mac-snapshot:
+          target-arch: arm64
 
-  build-mac-x86_64:
+  deploy-mac-x86_64-snapshot:
     executor: mac-x86_64
     steps:
       - checkout
       - install-bazel-mac
-      - run: |
-          export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
-          export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          bazel run @vaticle_dependencies//distribution/artifact:create-netrc
-      - assemble-mac
-      - run: |
-          mkdir -p ~/src && cp bazel-bin/assemble-platform.zip ~/src
-          mkdir -p ~/dist && cd ~/dist && jar xf ~/src/assemble-platform.zip
-      - persist_to_workspace:
-          root: ~/dist
-          paths:
-            - ./*
+      - deploy-mac-snapshot:
+          target-arch: x86_64
 
-  build-linux-arm64:
+  deploy-linux-arm64-snapshot:
     executor: linux-arm64
     steps:
       - checkout
       - install-bazel-linux-arm64
-      - run: bazel build //:assemble-platform --compilation_mode=opt
-      - run: bazel build //:assemble-linux-targz --compilation_mode=opt
-      - run: |
-          mkdir -p ~/src
-          mkdir -p ~/dist
-          cp bazel-bin/typedb-studio-linux.tar.gz ~/dist/typedb-studio-linux-arm64-$(cat VERSION).tar.gz
-          cp bazel-bin/assemble-platform.zip ~/src
-          cd ~/dist
-          jar xf ~/src/assemble-platform.zip
-      - persist_to_workspace:
-          root: ~/dist
-          paths:
-            - ./*
+      - deploy-linux-snapshot:
+          target-arch: arm64
 
-  build-linux-x86_64:
+  deploy-linux-x86_64-snapshot:
     executor: linux-x86_64
     steps:
       - checkout
       - install-bazel-linux-x86_64
-      - run: bazel build //:assemble-platform --compilation_mode=opt
-      - run: bazel build //:assemble-linux-targz --compilation_mode=opt
-      - run: |
-          mkdir -p ~/src
-          mkdir -p ~/dist
-          cp bazel-bin/typedb-studio-linux.tar.gz ~/dist/typedb-studio-linux-x86_64-$(cat VERSION).tar.gz
-          cp bazel-bin/assemble-platform.zip ~/src
-          cd ~/dist
-          jar xf ~/src/assemble-platform.zip
-      - persist_to_workspace:
-          root: ~/dist
-          paths:
-            - ./*
+      - deploy-linux-snapshot:
+          target-arch: x86_64
 
-  build-windows-x86_64:
+  deploy-windows-x86_64-snapshot:
     executor:
       name: win/default
       shell: cmd.exe
@@ -148,26 +159,74 @@ jobs:
     steps:
       - checkout
       - run: .circleci\windows\prepare.bat
-      - run: .circleci\windows\build.bat
+      - run: .circleci\windows\deploy_snapshot.bat
+
+  deploy-mac-arm64-release:
+    executor: mac-arm64
+    steps:
+      - checkout
+      - install-bazel-mac
+      - deploy-mac-release:
+          target-arch: arm64
+      - run: |
+          mkdir -p ~/dist && cp bazel-bin/typedb-studio-mac-arm64-*.dmg ~/dist
       - persist_to_workspace:
-          root: dist
+          root: ~/dist
           paths:
             - ./*
+
+  deploy-mac-x86_64-release:
+    executor: mac-x86_64
+    steps:
+      - checkout
+      - install-bazel-mac
+      - deploy-mac-release:
+          target-arch: x86_64
+      - run: |
+          mkdir -p ~/dist && cp bazel-bin/typedb-studio-mac-x86_64-*.dmg ~/dist
+      - persist_to_workspace:
+          root: ~/dist
+          paths:
+            - ./*
+
+  deploy-linux-arm64-release:
+    executor: linux-arm64
+    steps:
+      - checkout
+      - install-bazel-linux-arm64
+      - deploy-linux-release:
+          target-arch: arm64
+
+  deploy-linux-x86_64-release:
+    executor: linux-x86_64
+    steps:
+      - checkout
+      - install-bazel-linux-x86_64
+      - deploy-linux-release:
+          target-arch: x86_64
+
+  deploy-windows-x86_64-release:
+    executor:
+      name: win/default
+      shell: cmd.exe
+    working_directory: ~/typedb-studio
+    steps:
+      - checkout
+      - run: .circleci\windows\prepare.bat
+      - run: .circleci\windows\deploy_release.bat
 
   deploy-github:
     executor: linux-x86_64
     steps:
-      - attach_workspace:
-          at: ~/dist
       - checkout
       - run:
           name: "Publish Draft Release on GitHub"
           command: |
-            wget https://github.com/tcnksm/ghr/releases/download/v0.12.1/ghr_v0.12.1_linux_amd64.tar.gz
-            tar -xf ghr_v0.12.1_linux_amd64.tar.gz
-            ghr_v0.12.1_linux_amd64/ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
+            wget https://github.com/tcnksm/ghr/releases/download/v0.16.2/ghr_v0.16.2_linux_amd64.tar.gz
+            tar -xf ghr_v0.16.2_linux_amd64.tar.gz
+            ghr_v0.16.2_linux_amd64/ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
               -r ${CIRCLE_PROJECT_REPONAME} -n "TypeDB Studio $(cat VERSION)" -b "$(cat ./RELEASE_NOTES_LATEST.md)" \
-              -c ${CIRCLE_SHA1} -delete $(cat VERSION) ~/dist/
+              -c ${CIRCLE_SHA1} -delete $(cat VERSION)
 
   deploy-brew:
     executor: linux-x86_64
@@ -190,25 +249,47 @@ jobs:
       - run: git push --delete https://$REPO_GITHUB_TOKEN@github.com/vaticle/typedb-studio.git $CIRCLE_BRANCH
 
 workflows:
+  snapshot:
+    jobs:
+      - deploy-linux-arm64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
+      - deploy-linux-x86_64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
+      - deploy-mac-arm64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
+      - deploy-mac-x86_64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
+      - deploy-windows-x86_64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
   release:
     jobs:
-      - build-linux-arm64:
+      - deploy-linux-arm64-release:
           filters:
             branches:
               only: release
-      - build-linux-x86_64:
+      - deploy-linux-x86_64-release:
           filters:
             branches:
               only: release
-      - build-mac-arm64:
+      - deploy-mac-arm64-release:
           filters:
             branches:
               only: release
-      - build-mac-x86_64:
+      - deploy-mac-x86_64-release:
           filters:
             branches:
               only: release
-      - build-windows-x86_64:
+      - deploy-windows-x86_64-release:
           filters:
             branches:
               only: release
@@ -217,20 +298,22 @@ workflows:
             branches:
               only: release
           requires:
-            - build-linux-arm64
-            - build-linux-x86_64
-            - build-mac-arm64
-            - build-mac-x86_64
-            - build-windows-x86_64
+            - deploy-linux-arm64-release
+            - deploy-linux-x86_64-release
+            - deploy-mac-arm64-release
+            - deploy-mac-x86_64-release
+            - deploy-windows-x86_64-release
       - deploy-brew:
           filters:
             branches:
               only: release
           requires:
-            - deploy-github
+            - deploy-mac-arm64-release
+            - deploy-mac-x86_64-release
       - release-cleanup:
           filters:
             branches:
               only: release
           requires:
+            - deploy-github
             - deploy-brew
