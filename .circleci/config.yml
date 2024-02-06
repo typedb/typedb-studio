@@ -259,11 +259,26 @@ jobs:
 workflows:
   snapshot:
     jobs:
-      - deploy-linux-arm64-snapshot
-      - deploy-linux-x86_64-snapshot
-      - deploy-mac-arm64-snapshot
-      - deploy-mac-x86_64-snapshot
-      - deploy-windows-x86_64-snapshot
+      - deploy-linux-arm64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
+      - deploy-linux-x86_64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
+      - deploy-mac-arm64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
+      - deploy-mac-x86_64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
+      - deploy-windows-x86_64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
   release:
     jobs:
       - deploy-linux-arm64-release:
