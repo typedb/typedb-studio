@@ -266,7 +266,7 @@ deploy_artifact(
 deploy_artifact(
     name = "deploy-linux-x86_64-deb",
     target = ":native-artifact-linux-x86_64-deb",
-    artifact_group = "typedb-studio-linux-x86_64",
+    artifact_group = "typedb-studio-linux-x86_64-deb",
     artifact_name = "typedb-studio-linux-x86_64-{version}.deb",
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
@@ -290,7 +290,7 @@ deploy_artifact(
 deploy_artifact(
     name = "deploy-linux-arm64-deb",
     target = ":native-artifact-linux-arm64-deb",
-    artifact_group = "typedb-studio-linux-arm64",
+    artifact_group = "typedb-studio-linux-arm64-deb",
     artifact_name = "typedb-studio-linux-arm64-{version}.deb",
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
