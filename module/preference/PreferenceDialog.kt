@@ -46,6 +46,7 @@ import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Label.APPLY
 import com.vaticle.typedb.studio.service.common.util.Label.CANCEL
+import com.vaticle.typedb.studio.service.common.util.Label.ENABLE_DIAGNOSTICS_REPORTING
 import com.vaticle.typedb.studio.service.common.util.Label.ENABLE_EDITOR_AUTOSAVE
 import com.vaticle.typedb.studio.service.common.util.Label.ENABLE_GRAPH_OUTPUT
 import com.vaticle.typedb.studio.service.common.util.Label.GRAPH_VISUALISER
@@ -56,8 +57,10 @@ import com.vaticle.typedb.studio.service.common.util.Label.PROJECT_MANAGER
 import com.vaticle.typedb.studio.service.common.util.Label.QUERY_RUNNER
 import com.vaticle.typedb.studio.service.common.util.Label.RESET
 import com.vaticle.typedb.studio.service.common.util.Label.SET_QUERY_LIMIT
+import com.vaticle.typedb.studio.service.common.util.Label.SYSTEM
 import com.vaticle.typedb.studio.service.common.util.Label.TEXT_EDITOR
 import com.vaticle.typedb.studio.service.common.util.Label.TRANSACTION_TIMEOUT_MINS
+import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_DIAGNOSTICS_REPORTING_ENABLED
 import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
 import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_IGNORED_PATHS_CAPTION
 import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
@@ -226,7 +229,8 @@ object PreferenceDialog {
             PreferenceGroup.GraphVisualiser(),
             PreferenceGroup.TextEditor(),
             PreferenceGroup.Project(),
-            PreferenceGroup.QueryRunner()
+            PreferenceGroup.QueryRunner(),
+            PreferenceGroup.System()
         )
 
         val rootPreferenceGroup = PreferenceGroup.Root(entries = preferenceGroups)
@@ -411,6 +415,25 @@ object PreferenceDialog {
                 transactionTimeoutMins.value = preferenceSrv.transactionTimeoutMins.toString()
                 getQueryLimit.modified = false
                 transactionTimeoutMins.modified = false
+            }
+        }
+
+        class System : PreferenceGroup(SYSTEM) {
+            private var diagnosticsReportingEnabled = PreferenceField.Checkbox(
+                    initValue = preferenceSrv.diagnosticsReportingEnabled, label = ENABLE_DIAGNOSTICS_REPORTING,
+                    caption = PREFERENCES_DIAGNOSTICS_REPORTING_ENABLED
+            )
+
+            override val preferences: List<PreferenceField> = listOf(diagnosticsReportingEnabled)
+
+            override fun submit() {
+                preferenceSrv.diagnosticsReportingEnabled = diagnosticsReportingEnabled.value
+                diagnosticsReportingEnabled.modified = false
+            }
+
+            override fun reset() {
+                diagnosticsReportingEnabled.value = preferenceSrv.diagnosticsReportingEnabled
+                diagnosticsReportingEnabled.modified = false
             }
         }
     }
