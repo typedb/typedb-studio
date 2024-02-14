@@ -15,11 +15,16 @@ load("@vaticle_bazel_distribution//platform:constraints.bzl", "constraint_linux_
      "constraint_mac_arm64", "constraint_mac_x86_64", "constraint_win_x86_64")
 
 package(default_visibility = ["//test/integration:__subpackages__"])
+
+exports_files(["VERSION"])
+
 kt_jvm_library(
     name = "studio",
     srcs = glob(["*.kt"]),
     plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
     deps = [
+        "//framework/common:common",
+        "//framework/material:material",
         "//module/connection:connection",
         "//module/preference:preference",
         "//module/project:project",
@@ -28,20 +33,20 @@ kt_jvm_library(
         "//module/type:type",
         "//module/user:user",
         "//module:module",
+        "//resources/version:version",
         "//service/common:common",
         "//service/connection:connection",
         "//service/project:project",
         "//service/page:page",
         "//service/schema:schema",
         "//service:service",
-        "//framework/common:common",
-        "//framework/material:material",
 
         # External Vaticle Dependencies
         "@vaticle_typeql//common/java:common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
+        "@maven//:io_sentry_sentry",
         "@maven//:org_jetbrains_compose_foundation_foundation_desktop",
         "@maven//:org_jetbrains_compose_foundation_foundation_layout_desktop",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",

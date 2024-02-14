@@ -75,18 +75,28 @@ import com.vaticle.typedb.studio.module.type.TypeBrowser
 import com.vaticle.typedb.studio.module.type.TypeDialog
 import com.vaticle.typedb.studio.module.type.TypeEditor
 import com.vaticle.typedb.studio.module.user.UpdateDefaultPasswordDialog
+import com.vaticle.typedb.studio.resources.version.Version
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.project.FileState
 import com.vaticle.typedb.studio.service.schema.ThingTypeState
+import io.sentry.Sentry
+import io.sentry.protocol.User
+import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
 import java.awt.Window
 import java.awt.event.WindowEvent
+import java.net.InetAddress
+import java.net.NetworkInterface
+import java.nio.ByteBuffer
+import java.security.MessageDigest
+import java.util.*
 import javax.swing.UIManager
 import kotlin.system.exitProcess
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
+import java.lang.RuntimeException
 
 object Studio {
 
@@ -293,6 +303,31 @@ object Studio {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()) // Set UI style for Windows
     }
 
+    private fun configureDiagnostics() {
+        val releaseName = "TypeDB Studio@" + Version.VERSION;
+        Sentry.init { options ->
+            options.setEnabled(true)
+            options.setDsn("https://9c327cb98a925974587f98adb192a89b@o4506315929812992.ingest.sentry.io/4506355166806016")
+            options.setEnableTracing(true)
+            options.setSendDefaultPii(false)
+            options.setRelease(releaseName)
+        }
+        val user = User();
+        user.setUsername(userID());
+        Sentry.setUser(user);
+    }
+
+    private fun userID(): String {
+        return try {
+            val mac = NetworkInterface.getByInetAddress(InetAddress.getLocalHost()).hardwareAddress
+            val macHash = MessageDigest.getInstance("SHA-256").digest(mac)
+            val truncatedHash = Arrays.copyOfRange(macHash, 0, 8)
+            String.format("%X", ByteBuffer.wrap(truncatedHash).long)
+        } catch (e: java.lang.Exception) {
+            "_0"
+        }
+    }
+
     @OptIn(ExperimentalComposeUiApi::class)
     private fun application(window: @Composable ApplicationScope.() -> Unit) {
         androidx.compose.ui.window.application(exitProcessOnExit = false) {
@@ -309,17 +344,20 @@ object Studio {
         try {
             addShutdownHook()
             setConfigurations()
+            configureDiagnostics();
             Message.loadClasses()
             Service.data.initialise()
             while (!quit) {
                 application { MainWindow(::exitApplication) }
                 error?.let { exception ->
+                    Sentry.captureException(exception)
                     LOGGER.error(exception.message, exception)
                     application { ErrorWindow(exception) { error = null; exitApplication() } }
                 }
             }
             exitProcess(0)
         } catch (exception: Exception) {
+            Sentry.captureException(exception)
             LOGGER.error(exception.message, exception)
             exitProcess(1)
         }

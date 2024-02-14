@@ -7,6 +7,7 @@ artifacts = [
     "ch.qos.logback:logback-core",
     "io.github.microutils:kotlin-logging-jvm",
     "junit:junit",
+    "io.sentry:sentry",
     "org.antlr:antlr4-runtime",
     "org.slf4j:slf4j-api",
     "org.zeroturnaround:zt-exec",
