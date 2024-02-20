@@ -95,7 +95,7 @@
 "TRUE": constant.language
 "FALSE": constant.language
 
-"STRING_": string
+"QUOTED_STRING": string
 "LONG_": constant.numeric
 "DOUBLE_": constant.numeric
 "DATE_": constant
