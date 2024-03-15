@@ -1,6 +1,6 @@
 ### Distribution
 
-TypeDB Studio is available for Linux, Mac and Windows. [Download TypeDB Studio 2.26.6.](https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:2.26.6)
+TypeDB Studio is available for Linux, Mac and Windows. [Download TypeDB Studio 2.27.0-rc0.](https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:2.27.0-rc0)
 
 For Mac Intel and Mac ARM, TypeDB Studio is also available through Homebrew:
 
@@ -27,12 +27,15 @@ which versions of Studio are compatible with which versions of TypeDB server.
 
 
 ## Other Improvements
-- **Deploy artifacts to CloudSmith**
+- **Fix syntax highlighting for quoted strings**
+  We fix the highlighting for string literals to make it yellow as it used to be. The highlighting had not been correct due to a bug introduced in TypeDB Studio 2.25.0. 
   
-  We no longer upload build artifacts to the github releases page. Instead, the artifacts are available from our public cloudsmith repository, linked in the release notes.
+  Before:
+  ![image](https://github.com/vaticle/typedb-studio/assets/22564079/f4a9165b-93c7-4115-8646-5f9352e232f0)
   
-- **Migrate artifact hosting to cloudsmith**
-  Updates artifact deployment & consumption rules to use cloudsmith (repo.typedb.com) instead of the self-hosted sonatype repository (repo.vaticle.com).
+  After:
+  ![image](https://github.com/vaticle/typedb-studio/assets/22564079/24d88b06-4ff5-4f44-9feb-f30131b9116e)
   
-- **Update typedb-driver with null fix**
+  
+    
 
