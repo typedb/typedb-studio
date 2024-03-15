@@ -42,12 +42,12 @@ def vaticle_typeql():
     git_repository(
         name = "vaticle_typeql",
         remote = "https://github.com/vaticle/typeql",
-        tag = "2.26.6",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typeql
+        tag = "2.27.0-rc0",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typeql
     )
 
 def vaticle_typedb_driver():
     git_repository(
         name = "vaticle_typedb_driver",
         remote = "https://github.com/vaticle/typedb-driver",
-        commit = "836d22bd614fbc5e52e83ff841a31eb3daffddf0",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_driver
+        tag = "2.27.0-rc0",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_driver
     )
