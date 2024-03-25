@@ -38,8 +38,16 @@ load("@vaticle_dependencies//builder/java:deps.bzl", java_deps = "deps")
 java_deps()
 
 # Load //builder/kotlin
-load("@vaticle_dependencies//builder/kotlin:deps.bzl", kotlin_deps = "deps")
-kotlin_deps()
+# FIXME studio kotlin dependency is held back, out of sync with dependencies
+# load("@vaticle_dependencies//builder/kotlin:deps.bzl", kotlin_deps = "deps")
+# kotlin_deps()
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "io_bazel_rules_kotlin",
+    urls = ["https://github.com/bazelbuild/rules_kotlin/releases/download/v1.7.0-RC-3/rules_kotlin_release.tgz"],
+    sha256 = "f033fa36f51073eae224f18428d9493966e67c27387728b6be2ebbdae43f140e"
+)
+
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version")
 kotlin_repositories(
     compiler_release = kotlinc_version(
@@ -175,7 +183,19 @@ load("@vaticle_force_graph//dependencies/maven:artifacts.bzl", vaticle_force_gra
 ############################
 # Load @maven dependencies #
 ############################
-load("@vaticle_dependencies//library/maven:rules.bzl", "maven")
+http_archive(
+    name = "io_bazel_stardoc",
+    sha256 = "3fd8fec4ddec3c670bd810904e2e33170bedfe12f90adf943508184be458c8bb",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/stardoc/releases/download/0.5.3/stardoc-0.5.3.tar.gz",
+        "https://github.com/bazelbuild/stardoc/releases/download/0.5.3/stardoc-0.5.3.tar.gz",
+    ],
+)
+load("@io_bazel_stardoc//:setup.bzl", "stardoc_repositories")
+stardoc_repositories()
+
+# FIXME studio compose dependencies are held back, out of sync with dependencies
+load("//:maven.bzl", "maven")
 maven(
     vaticle_dependencies_tool_maven_artifacts +
     vaticle_typeql_artifacts +
@@ -185,7 +205,6 @@ maven(
     internal_artifacts = vaticle_typedb_studio_vaticle_maven_artifacts,
     fail_on_missing_checksum = False,
 )
-
 
 ###############################################
 # Create @vaticle_typedb_studio_workspace_refs #

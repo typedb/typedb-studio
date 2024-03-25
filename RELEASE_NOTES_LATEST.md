@@ -1,6 +1,6 @@
 ### Distribution
 
-TypeDB Studio is available for Linux, Mac and Windows. [Download TypeDB Studio 2.27.0-rc0.](https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:2.27.0-rc0)
+TypeDB Studio is available for Linux, Mac and Windows. [Download TypeDB Studio 2.27.0.](https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:2.27.0)
 
 For Mac Intel and Mac ARM, TypeDB Studio is also available through Homebrew:
 

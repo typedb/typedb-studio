@@ -89,8 +89,8 @@
 @maven//:io_perfmark_perfmark_api_0_25_0
 @maven//:javax_annotation_javax_annotation_api_1_3_2
 @maven//:junit_junit_4_12
-@maven//:net_bytebuddy_byte_buddy_1_6_4
-@maven//:net_bytebuddy_byte_buddy_agent_1_6_4
+@maven//:net_bytebuddy_byte_buddy_1_10_5
+@maven//:net_bytebuddy_byte_buddy_agent_1_10_5
 @maven//:net_jcip_jcip_annotations_1_0
 @maven//:org_antlr_antlr4_runtime_4_8
 @maven//:org_apache_httpcomponents_httpclient_4_5_11
@@ -140,8 +140,8 @@
 @maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64_0_7_34
 @maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64_0_7_34
 @maven//:org_jsoup_jsoup_1_16_1
-@maven//:org_mockito_mockito_core_2_6_4
-@maven//:org_objenesis_objenesis_2_5
+@maven//:org_mockito_mockito_core_3_2_4
+@maven//:org_objenesis_objenesis_2_6
 @maven//:org_slf4j_jcl_over_slf4j_2_0_0
 @maven//:org_slf4j_log4j_over_slf4j_2_0_0
 @maven//:org_slf4j_slf4j_api_2_0_0
