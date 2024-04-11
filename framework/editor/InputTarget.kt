@@ -373,8 +373,7 @@ internal class InputTarget constructor(
     internal fun moveCursorUpByLine(isSelecting: Boolean = false) {
         if (cursor.row != 0) {
             val newRow = cursor.row - 1
-            var newCol = cursor.lastCol
-            newCol = newCol.coerceAtMost(content[newRow].length)
+            val newCol = cursor.lastCol.coerceAtMost(content[newRow].length)
             updateCursor(Cursor(newRow, newCol, lastCol = cursor.lastCol), isSelecting)
         }
     }
@@ -382,8 +381,7 @@ internal class InputTarget constructor(
     internal fun moveCursorDownByLine(isSelecting: Boolean = false) {
         if (cursor.row != content.size - 1) {
             val newRow = cursor.row + 1
-            var newCol = cursor.lastCol
-            newCol = newCol.coerceAtMost(content[newRow].length)
+            val newCol = cursor.lastCol.coerceAtMost(content[newRow].length)
             updateCursor(Cursor(newRow, newCol, lastCol = cursor.lastCol), isSelecting)
         }
     }
