@@ -66,7 +66,7 @@ internal class InputTarget constructor(
         }
     }
 
-    internal data class Cursor constructor(val row: Int, val col: Int) : Comparable<Cursor> {
+    internal data class Cursor constructor(val row: Int, val col: Int, val lastCol: Int = col) : Comparable<Cursor> {
 
         companion object {
             fun min(first: Cursor, second: Cursor): Cursor {
@@ -371,23 +371,19 @@ internal class InputTarget constructor(
     }
 
     internal fun moveCursorUpByLine(isSelecting: Boolean = false) {
-        var newRow = cursor.row - 1
-        var newCol = cursor.col
-        if (newRow < 0) {
-            newRow = 0
-            newCol = 0
-        } else newCol = newCol.coerceAtMost(content[newRow].length)
-        updateCursor(Cursor(newRow, newCol), isSelecting)
+        if (cursor.row != 0) {
+            val newRow = cursor.row - 1
+            val newCol = cursor.lastCol.coerceAtMost(content[newRow].length)
+            updateCursor(Cursor(newRow, newCol, lastCol = cursor.lastCol), isSelecting)
+        }
     }
 
     internal fun moveCursorDownByLine(isSelecting: Boolean = false) {
-        var newRow = cursor.row + 1
-        var newCol = cursor.col
-        if (newRow >= content.size) {
-            newRow = content.size - 1
-            newCol = content[newRow].length
-        } else newCol = newCol.coerceAtMost(content[newRow].length)
-        updateCursor(Cursor(newRow, newCol), isSelecting)
+        if (cursor.row != content.size - 1) {
+            val newRow = cursor.row + 1
+            val newCol = cursor.lastCol.coerceAtMost(content[newRow].length)
+            updateCursor(Cursor(newRow, newCol, lastCol = cursor.lastCol), isSelecting)
+        }
     }
 
     internal fun moveCursorUpByPage(isSelecting: Boolean = false) {
