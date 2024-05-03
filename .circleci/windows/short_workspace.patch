@@ -1,10 +1,10 @@
 diff --git a/WORKSPACE b/WORKSPACE
-index 689b420f..5e3ecec8 100644
+index fefc608f..65fde3c5 100644
 --- a/WORKSPACE
 +++ b/WORKSPACE
-@@ -15,7 +15,7 @@
- # along with this program.  If not, see <https://www.gnu.org/licenses/>.
- #
+@@ -2,7 +2,7 @@
+ # License, v. 2.0. If a copy of the MPL was not distributed with this
+ # file, You can obtain one at https://mozilla.org/MPL/2.0/.
  
 -workspace(name = "vaticle_typedb_studio")
 +workspace(name = "v")
