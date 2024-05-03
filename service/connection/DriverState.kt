@@ -53,7 +53,7 @@ class DriverState(
 
     companion object {
         private const val DATABASE_LIST_REFRESH_RATE_MS = 100
-        private val PASSWORD_EXPIRY_WARN_DURATION = Duration.ofDays(7);
+        private val PASSWORD_EXPIRY_WARN_DURATION = Duration.ofDays(7)
         private val LOGGER = KotlinLogging.logger {}
     }
 
@@ -114,19 +114,25 @@ class DriverState(
     ) = tryConnectAsync(newConnectionName = address, onSuccess = onSuccess) { TypeDB.coreDriver(address) }
 
     fun tryConnectToTypeDBCloudAsync(
-        addresses: Set<String>, username: String, password: String,
-        tlsEnabled: Boolean, caPath: String, onSuccess: (() -> Unit)? = null
+        connectionName: String, addresses: Set<String>, credentials: TypeDBCredential, onSuccess: (() -> Unit)? = null
     ) {
-        val credentials = if (caPath.isBlank()) TypeDBCredential(username, password, tlsEnabled)
-        else TypeDBCredential(username, password, Path.of(caPath))
         val postLoginFn = {
             onSuccess?.invoke()
             if (needsToChangeDefaultPassword()) forcePasswordUpdate()
             else mayWarnPasswordExpiry()
         }
-        tryConnectAsync(newConnectionName = "$username@${addresses.first()}", postLoginFn) {
-            TypeDB.cloudDriver(addresses, credentials)
+        tryConnectAsync(newConnectionName = connectionName, postLoginFn) { TypeDB.cloudDriver(addresses, credentials) }
+    }
+
+    fun tryConnectToTypeDBCloudAsync(
+        connectionName: String, addressTranslation: Map<String, String>, credentials: TypeDBCredential, onSuccess: (() -> Unit)? = null
+    ) {
+        val postLoginFn = {
+            onSuccess?.invoke()
+            if (needsToChangeDefaultPassword()) forcePasswordUpdate()
+            else mayWarnPasswordExpiry()
         }
+        tryConnectAsync(newConnectionName = connectionName, postLoginFn) { TypeDB.cloudDriver(addressTranslation, credentials) }
     }
 
     private fun forcePasswordUpdate() = updateDefaultPasswordDialog.open(
@@ -138,15 +144,17 @@ class DriverState(
         tryUpdateUserPassword(old, new) {
             updateDefaultPasswordDialog.close()
             close()
-            tryConnectToTypeDBCloudAsync(
-                addresses = dataSrv.connection.cloudAddresses!!.toSet(),
-                username = dataSrv.connection.username!!,
-                password = new,
-                tlsEnabled = dataSrv.connection.tlsEnabled!!,
-                caPath = dataSrv.connection.caCertificate!!
-            ) {
-                notificationSrv.info(LOGGER, Message.Connection.RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY)
-            }
+
+            val username = dataSrv.connection.username!!
+            val password = new
+            val credentials = if (dataSrv.connection.caCertificate!!.isBlank()) TypeDBCredential(username, password, dataSrv.connection.tlsEnabled!!)
+                else TypeDBCredential(username, password, Path.of(dataSrv.connection.caCertificate!!))
+            val onSuccess = { notificationSrv.info(LOGGER, Message.Connection.RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY) }
+
+            if (dataSrv.connection.useCloudAddressTranslation == true)
+                tryConnectToTypeDBCloudAsync(connectionName!!, dataSrv.connection.cloudAddressTranslation!!.associate { it }, credentials, onSuccess)
+            else
+                tryConnectToTypeDBCloudAsync(connectionName!!, dataSrv.connection.cloudAddresses!!.toSet(), credentials, onSuccess)
         }
     }
 

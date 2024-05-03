@@ -26,6 +26,7 @@ import androidx.compose.ui.awt.ComposeDialog
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
+import com.vaticle.typedb.driver.api.TypeDBCredential
 import com.vaticle.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.studio.framework.material.ActionableList
 import com.vaticle.typedb.studio.framework.material.Dialog
@@ -46,12 +47,13 @@ import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Property
-import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_CORE
 import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_CLOUD
+import com.vaticle.typedb.studio.service.common.util.Property.Server.TYPEDB_CORE
 import com.vaticle.typedb.studio.service.common.util.Sentence
 import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTED
 import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTING
 import com.vaticle.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
+import java.nio.file.Path
 
 object ServerDialog {
 
@@ -69,6 +71,10 @@ object ServerDialog {
         var cloudAddresses: MutableList<String> = mutableStateListOf<String>().also {
             appData.cloudAddresses?.let { saved -> it.addAll(saved) }
         }
+        var cloudAddressTranslation: MutableList<Pair<String, String>> = mutableStateListOf<Pair<String, String>>().also {
+            appData.cloudAddressTranslation?.let { saved -> it.addAll(saved) }
+        }
+        var useCloudAddressTranslation: Boolean by mutableStateOf(appData.useCloudAddressTranslation ?: false)
         var username: String by mutableStateOf(appData.username ?: "")
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: true)
@@ -77,7 +83,11 @@ object ServerDialog {
         override fun cancel() = Service.driver.connectServerDialog.close()
         override fun isValid(): Boolean = when (server) {
             TYPEDB_CORE -> coreAddress.isNotBlank() && addressFormatIsValid(coreAddress)
-            TYPEDB_CLOUD -> !(cloudAddresses.isEmpty() || username.isBlank() || password.isBlank())
+            TYPEDB_CLOUD -> username.isNotBlank() && password.isNotBlank() && if (useCloudAddressTranslation) {
+                    cloudAddressTranslation.isNotEmpty()
+                } else {
+                    cloudAddresses.isNotEmpty()
+                }
         }
 
         override fun submit() {
@@ -85,14 +95,25 @@ object ServerDialog {
                 TYPEDB_CORE -> Service.driver.tryConnectToTypeDBCoreAsync(coreAddress) {
                     Service.driver.connectServerDialog.close()
                 }
-                TYPEDB_CLOUD -> Service.driver.tryConnectToTypeDBCloudAsync(
-                    cloudAddresses.toSet(), username, password, tlsEnabled, caCertificate
-                ) { Service.driver.connectServerDialog.close() }
+                TYPEDB_CLOUD -> {
+                    val credentials = if (caCertificate.isBlank()) TypeDBCredential(username, password, tlsEnabled)
+                        else TypeDBCredential(username, password, Path.of(caCertificate))
+                    val onSuccess = { Service.driver.connectServerDialog.close() }
+                    if (useCloudAddressTranslation) {
+                        val firstAddress = cloudAddressTranslation.first().first
+                        Service.driver.tryConnectToTypeDBCloudAsync("$username@$firstAddress", cloudAddressTranslation.associate { it }, credentials, onSuccess)
+                    } else {
+                        val firstAddress = cloudAddresses.first()
+                        Service.driver.tryConnectToTypeDBCloudAsync("$username@$firstAddress", cloudAddresses.toSet(), credentials, onSuccess)
+                    }
+                }
             }
             password = ""
             appData.server = server
             appData.coreAddress = coreAddress
             appData.cloudAddresses = cloudAddresses
+            appData.cloudAddressTranslation = cloudAddressTranslation
+            appData.useCloudAddressTranslation = useCloudAddressTranslation
             appData.username = username
             appData.tlsEnabled = tlsEnabled
             appData.caCertificate = caCertificate
@@ -100,14 +121,30 @@ object ServerDialog {
     }
 
     private object AddAddressForm : Form.State() {
-        var value: String by mutableStateOf("")
+        var server: String by mutableStateOf("")
         override fun cancel() = Service.driver.manageAddressesDialog.close()
-        override fun isValid() = value.isNotBlank() && addressFormatIsValid(value) && !state.cloudAddresses.contains(value)
+        override fun isValid() = server.isNotBlank() && addressFormatIsValid(server) && !state.cloudAddresses.contains(server)
 
         override fun submit() {
             assert(isValid())
-            state.cloudAddresses.add(value)
-            value = ""
+            state.cloudAddresses.add(server)
+            server = ""
+        }
+    }
+
+    private object AddAddressTranslationForm : Form.State() {
+        var server: String by mutableStateOf("")
+        var translation: String by mutableStateOf("")
+        override fun cancel() = Service.driver.manageAddressesDialog.close()
+        override fun isValid() = serverIsValid() && translationIsValid()
+        fun serverIsValid() = server.isNotBlank() && addressFormatIsValid(server) && !state.cloudAddressTranslation.any { it.first == server }
+        fun translationIsValid() = translation.isNotBlank() && addressFormatIsValid(translation) && !state.cloudAddressTranslation.any { it.second == translation }
+
+        override fun submit() {
+            assert(isValid())
+            state.cloudAddressTranslation.add(Pair(server, translation))
+            server = ""
+            translation = ""
         }
     }
 
@@ -187,8 +224,9 @@ object ServerDialog {
     private fun ManageCloudAddressesButton(state: ConnectServerForm, shouldFocus: Boolean) {
         val focusReq = if (shouldFocus) remember { FocusRequester() } else null
         Field(label = Label.ADDRESSES) {
+            val numAddresses = if (state.useCloudAddressTranslation) state.cloudAddressTranslation.size else state.cloudAddresses.size
             TextButton(
-                text = Label.MANAGE_CLOUD_ADDRESSES + " (${state.cloudAddresses.size})",
+                text = Label.MANAGE_CLOUD_ADDRESSES + " ($numAddresses)",
                 focusReq = focusReq, leadingIcon = Form.IconArg(Icon.CONNECT_TO_TYPEDB),
                 enabled = Service.driver.isDisconnected
             ) {
@@ -205,11 +243,21 @@ object ServerDialog {
             Column(Modifier.fillMaxSize()) {
                 Text(value = Sentence.MANAGE_ADDRESSES_MESSAGE, softWrap = true)
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING))
-                CloudAddressList(Modifier.fillMaxWidth().weight(1f))
-                Spacer(Modifier.height(Dialog.DIALOG_SPACING))
-                AddCloudAddressForm()
+                if (state.useCloudAddressTranslation) {
+                    CloudAddressTranslationList(Modifier.fillMaxWidth().weight(1f))
+                    Spacer(Modifier.height(Dialog.DIALOG_SPACING))
+                    AddCloudAddressTranslationForm()
+                } else {
+                    CloudAddressList(Modifier.fillMaxWidth().weight(1f))
+                    Spacer(Modifier.height(Dialog.DIALOG_SPACING))
+                    AddCloudAddressForm()
+                }
                 Spacer(Modifier.height(Dialog.DIALOG_SPACING * 2))
                 Row(verticalAlignment = Alignment.Bottom) {
+                    Text(value = Label.TRANSLATE_ADDRESSES)
+                    RowSpacer()
+                    Checkbox(value = state.useCloudAddressTranslation) { state.useCloudAddressTranslation = it }
+                    RowSpacer()
                     Spacer(modifier = Modifier.weight(1f))
                     RowSpacer()
                     TextButton(text = Label.CLOSE) { dialogState.close() }
@@ -224,12 +272,12 @@ object ServerDialog {
         Submission(AddAddressForm, modifier = Modifier.height(Form.FIELD_HEIGHT), showButtons = false) {
             Row {
                 TextInputValidated(
-                    value = AddAddressForm.value,
+                    value = AddAddressForm.server,
                     placeholder = Label.DEFAULT_SERVER_ADDRESS,
-                    onValueChange = { AddAddressForm.value = it },
+                    onValueChange = { AddAddressForm.server = it },
                     modifier = Modifier.weight(1f).focusRequester(focusReq),
                     invalidWarning = Label.ADDRESS_PORT_WARNING,
-                    validator = { AddAddressForm.value.isBlank() || addressFormatIsValid(AddAddressForm.value) }
+                    validator = { AddAddressForm.server.isBlank() || addressFormatIsValid(AddAddressForm.server) }
                 )
                 RowSpacer()
                 TextButton(text = Label.ADD, enabled = AddAddressForm.isValid()) { AddAddressForm.submit() }
@@ -239,8 +287,37 @@ object ServerDialog {
     }
 
     @Composable
+    private fun AddCloudAddressTranslationForm() {
+        val focusReq = remember { FocusRequester() }
+        Submission(AddAddressTranslationForm, modifier = Modifier.height(Form.FIELD_HEIGHT), showButtons = false) {
+            Row {
+                TextInputValidated(
+                    value = AddAddressTranslationForm.server,
+                    placeholder = Label.DEFAULT_SERVER_ADDRESS,
+                    onValueChange = { AddAddressTranslationForm.server = it },
+                    modifier = Modifier.weight(1f).focusRequester(focusReq),
+                    invalidWarning = Label.ADDRESS_PORT_WARNING,
+                    validator = { AddAddressTranslationForm.server.isBlank() || addressFormatIsValid(AddAddressTranslationForm.server) }
+                )
+                RowSpacer()
+                TextInputValidated(
+                    value = AddAddressTranslationForm.translation,
+                    placeholder = Label.DEFAULT_SERVER_ADDRESS,
+                    onValueChange = { AddAddressTranslationForm.translation = it },
+                    modifier = Modifier.weight(1f).focusRequester(focusReq),
+                    invalidWarning = Label.ADDRESS_PORT_WARNING,
+                    validator = { AddAddressTranslationForm.translation.isBlank() || addressFormatIsValid(AddAddressTranslationForm.translation) }
+                )
+                RowSpacer()
+                TextButton(text = Label.ADD, enabled = AddAddressTranslationForm.isValid()) { AddAddressTranslationForm.submit() }
+            }
+        }
+        LaunchedEffect(focusReq) { focusReq.requestFocus() }
+    }
+
+    @Composable
     private fun CloudAddressList(modifier: Modifier) = ActionableList.SingleButtonLayout(
-        items = state.cloudAddresses.toMutableList(),
+        items = state.cloudAddresses,
         modifier = modifier.border(1.dp, Theme.studio.border),
         buttonSide = ActionableList.Side.RIGHT,
         buttonFn = { address ->
@@ -248,6 +325,21 @@ object ServerDialog {
                 icon = Icon.REMOVE,
                 color = { Theme.studio.errorStroke },
                 onClick = { state.cloudAddresses.remove(address) }
+            )
+        }
+    )
+
+    @Composable
+    private fun CloudAddressTranslationList(modifier: Modifier) = ActionableList.SingleButtonLayout(
+        items = state.cloudAddressTranslation.map { "${it.first} ⇒ ${it.second}" },
+        modifier = modifier.border(1.dp, Theme.studio.border),
+        buttonSide = ActionableList.Side.RIGHT,
+        buttonFn = { address ->
+            val parts = address.split(" ⇒ ", limit = 2)
+            Form.IconButtonArg(
+                icon = Icon.REMOVE,
+                color = { Theme.studio.errorStroke },
+                onClick = { state.cloudAddressTranslation.remove(parts[0] to parts[1]) }
             )
         }
     )
