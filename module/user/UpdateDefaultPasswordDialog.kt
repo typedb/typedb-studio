@@ -32,8 +32,17 @@ object UpdateDefaultPasswordDialog {
         var newPassword: String by mutableStateOf("")
         var repeatPassword: String by mutableStateOf("")
 
-        override fun cancel() = Service.driver.updateDefaultPasswordDialog.cancel()
-        override fun submit() = Service.driver.updateDefaultPasswordDialog.submit(oldPassword, newPassword)
+        override fun cancel() {
+            Service.driver.updateDefaultPasswordDialog.cancel()
+            oldPassword = ""
+            newPassword = ""
+        }
+        override fun submit() {
+            assert(isValid())
+            Service.driver.updateDefaultPasswordDialog.submit(oldPassword, newPassword)
+            oldPassword = ""
+            newPassword = ""
+        }
         override fun isValid() = oldPassword.isNotEmpty() && newPassword.isNotEmpty()
                     && oldPassword != newPassword && repeatPassword == newPassword
     }
