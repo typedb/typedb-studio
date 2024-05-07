@@ -1,6 +1,6 @@
 ### Distribution
 
-TypeDB Studio is available for Linux, Mac and Windows. [Download TypeDB Studio 2.27.0.](https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:2.27.0)
+TypeDB Studio is available for Linux, Mac and Windows. [Download TypeDB Studio 2.28.0.](https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:2.28.0)
 
 For Mac Intel and Mac ARM, TypeDB Studio is also available through Homebrew:
 
@@ -18,8 +18,27 @@ which versions of Studio are compatible with which versions of TypeDB server.
 
 
 ## New Features
+- **Cloud address translation**
+  
+  We introduce a way to provide address translation when attempting to connect to cloud servers (cf. https://github.com/vaticle/typedb-driver/pull/624). This is useful when the route from the user to the servers differs from the route the servers are configured with (e.g. connection to public-facing servers from an internal network).
+  
+  Note: we currently require that the user provides translation for the addresses of _all_ nodes in the Cloud deployment.
+  
+  <img width="532" src="https://github.com/vaticle/typedb-studio/assets/18616863/74859fbd-de4f-4844-b1e6-f3507dc364b7">
+  
 
-
+- **Store cursor position when changing lines**
+  
+  We store cursor positions when changing lines as described in https://github.com/vaticle/typedb-studio/issues/748. This is standard behaviour in other IDEs, such as IntelliJ IDEA and VSCode.
+  
+  Before:
+  
+  https://github.com/vaticle/typedb-studio/assets/51956016/9a4232b2-fb41-4276-9b48-76d741143329
+  
+  After:
+  
+  https://github.com/vaticle/typedb-studio/assets/51956016/0f311437-15f4-4a66-96d8-0005dedc6ad7
+  
 ## Bugs Fixed
 
 
@@ -27,15 +46,7 @@ which versions of Studio are compatible with which versions of TypeDB server.
 
 
 ## Other Improvements
-- **Fix syntax highlighting for quoted strings**
-  We fix the highlighting for string literals to make it yellow as it used to be. The highlighting had not been correct due to a bug introduced in TypeDB Studio 2.25.0. 
-  
-  Before:
-  ![image](https://github.com/vaticle/typedb-studio/assets/22564079/f4a9165b-93c7-4115-8646-5f9352e232f0)
-  
-  After:
-  ![image](https://github.com/vaticle/typedb-studio/assets/22564079/24d88b06-4ff5-4f44-9feb-f30131b9116e)
-  
-  
-    
+- **Fix Windows short workspace git patch**
+
+- **Replace licenses with MPL version 2.0**
 
