@@ -229,6 +229,7 @@ object Label {
     const val TRANSACTION_STATUS = "Transaction Status"
     const val TRANSACTION_TIMEOUT_MINS = "Transaction Timeout (mins)"
     const val TRANSACTION_TYPE = "Transaction Type"
+    const val TRANSLATE_ADDRESSES = "Translate addresses"
     const val TYPE = "Type"
     const val TYPEDB_STUDIO = "TypeDB Studio"
     const val TYPEDB_STUDIO_APPLICATION_ERROR = "TypeDB Studio Application Error"

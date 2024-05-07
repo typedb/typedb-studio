@@ -61,6 +61,8 @@ class DataService {
         private val CONNECTION_SERVER = "connection.server"
         private val CONNECTION_CORE_ADDRESS = "connection.core_address"
         private val CONNECTION_CLOUD_ADDRESSES = "connection.cloud_addresses"
+        private val CONNECTION_CLOUD_ADDRESS_TRANSLATION = "connection.cloud_address_translation"
+        private val CONNECTION_USE_CLOUD_ADDRESS_TRANSLATION = "connection.use_cloud_address_translation"
         private val CONNECTION_USERNAME = "connection.username"
         private val CONNECTION_TLS_ENABLED = "connection.tls_enabled"
         private val CONNECTION_CA_CERTIFICATE = "connection.ca_certificate"
@@ -71,10 +73,18 @@ class DataService {
         var coreAddress: String?
             get() = properties?.getProperty(CONNECTION_CORE_ADDRESS)
             set(value) = value?.let { setProperty(CONNECTION_CORE_ADDRESS, it) } ?: Unit
-        var cloudAddresses: MutableList<String>?
+        var cloudAddresses: List<String>?
             get() = properties?.getProperty(CONNECTION_CLOUD_ADDRESSES)
-                ?.split(",")?.filter { it.isNotBlank() }?.toMutableList()
+                ?.split(",")?.filter { it.isNotBlank() }
             set(value) = value?.let { setProperty(CONNECTION_CLOUD_ADDRESSES, it.joinToString(",")) } ?: Unit
+        var cloudAddressTranslation: List<Pair<String, String>>?
+            get() = properties?.getProperty(CONNECTION_CLOUD_ADDRESS_TRANSLATION)
+                ?.split(",")?.filter { it.contains("=") }?.map { it.split("=", limit = 2) }?.map{ it[0] to it[1] }
+            set(value) = value
+                ?.let { setProperty(CONNECTION_CLOUD_ADDRESS_TRANSLATION, it.map { pair -> "${pair.first}=${pair.second}" } .joinToString(",")) } ?: Unit
+        var useCloudAddressTranslation: Boolean?
+            get() = properties?.getProperty(CONNECTION_USE_CLOUD_ADDRESS_TRANSLATION)?.toBooleanStrictOrNull()
+            set(value) = value?.let { setProperty(CONNECTION_USE_CLOUD_ADDRESS_TRANSLATION, it.toString()) } ?: Unit
         var username: String?
             get() = properties?.getProperty(CONNECTION_USERNAME)
             set(value) = value?.let { setProperty(CONNECTION_USERNAME, it) } ?: Unit
