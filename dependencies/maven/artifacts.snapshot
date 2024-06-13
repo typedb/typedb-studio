@@ -21,8 +21,9 @@
 @maven//:com_google_protobuf_protobuf_java_3_21_1
 @maven//:com_google_truth_truth_1_0_1
 @maven//:com_googlecode_java_diff_utils_diffutils_1_3_0
-@maven//:com_vaticle_typedb_typedb_cloud_runner_0_0_0_78f5c1c83be5f0c8982b86ae4d15dd0b2f377905
-@maven//:com_vaticle_typedb_typedb_runner_0_0_0_e182b2dfcaf5f4cf7e7ce3dbb46edad3dccc48e0
+@maven//:com_vaticle_typedb_typedb_cloud_runner_2_28_3
+@maven//:com_vaticle_typedb_typedb_common_2_28_1
+@maven//:com_vaticle_typedb_typedb_runner_2_28_3
 @maven//:com_vdurmont_semver4j_3_1_0
 @maven//:commons_codec_commons_codec_1_13
 @maven//:commons_io_commons_io_2_3
@@ -152,5 +153,5 @@
 @maven//:org_slf4j_log4j_over_slf4j_2_0_0
 @maven//:org_slf4j_slf4j_api_2_0_0
 @maven//:org_slf4j_slf4j_simple_2_0_0
-@maven//:org_yaml_snakeyaml_1_25
+@maven//:org_yaml_snakeyaml_2_2
 @maven//:org_zeroturnaround_zt_exec_1_10
