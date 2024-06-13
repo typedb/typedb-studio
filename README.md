@@ -9,11 +9,13 @@
 
 # Introducing TypeDB Studio
 
-TypeDB Studio is an Integrated Development Environment (IDE)
-that facilitates the development process for TypeDB databases.
-It provides a consistent experience across different operating systems, including macOS, Linux, and Windows.
-With TypeDB Studio, developers can efficiently manage databases, execute queries,
-and explore query results, all within a unified environment.
+TypeDB Studio is the IDE for developing with **[TypeDB](https://github.com/vaticle/typedb)**. It provides a consistent experience across different environments, including macOS, Linux, and Windows. With Studio, developers can easily manage databases, execute queries, and explore query results, all within a unified interface.
+
+- Get started by [installing TypeDB Studio](https://typedb.com/docs/home/install/studio).
+- For a quick overview, check out the [relevant lesson](https://typedb.com/docs/learn/2-environment-setup/2.2-using-typedb-studio) in our end-to-end [TypeDB Learning Course](https://typedb.com/docs/learn/overview).
+- For an in-depth guide to TypeDB Studio, check out the [manual](https://typedb.com/docs/manual/studio).
+- Discover more of TypeDB’s unique [features](https://typedb.com/features).
+
 
 [![Manage Database Schemas](./docs/images/create.gif)](./docs/images/create.gif)
 
