@@ -32,8 +32,8 @@ import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.ENTER_SHIFT
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOD_ENTER
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_CHAR_LEFT
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_CHAR_RIGHT
-import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_END
-import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_HOME
+import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_CONTENT_END
+import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_CONTENT_START
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_LINE_DOWN
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_LINE_END
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.MOVE_LINE_LEFT
@@ -53,8 +53,8 @@ import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.REORDER_LINE
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_ALL
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_CHAR_LEFT
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_CHAR_RIGHT
-import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_END
-import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_HOME
+import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_CONTENT_END
+import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_CONTENT_START
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_LINE_DOWN
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_LINE_END
 import com.vaticle.typedb.studio.framework.common.KeyMapper.Command.SELECT_LINE_LEFT
@@ -123,8 +123,8 @@ internal class EventHandler constructor(
             MOVE_LINE_DOWN -> target.moveCursorDownByLine()
             MOVE_PAGE_UP -> target.moveCursorUpByPage()
             MOVE_PAGE_DOWN -> target.moveCursorDownByPage()
-            MOVE_HOME -> target.moveCursorToStartOfContent()
-            MOVE_END -> target.moveCursorToEndOfContent()
+            MOVE_CONTENT_START -> target.moveCursorToStartOfContent()
+            MOVE_CONTENT_END -> target.moveCursorToEndOfContent()
             SELECT_CHAR_LEFT -> target.moveCursorPrevByChar(true) // because we only display left to right
             SELECT_CHAR_RIGHT -> target.moveCursorNextByChar(true) // because we only display left to right
             SELECT_WORD_LEFT -> target.moveCursorPrevByWord(true) // because we only display left to right
@@ -139,8 +139,8 @@ internal class EventHandler constructor(
             SELECT_LINE_DOWN -> target.moveCursorDownByLine(true)
             SELECT_PAGE_UP -> target.moveCursorUpByPage(true)
             SELECT_PAGE_DOWN -> target.moveCursorDownByPage(true)
-            SELECT_HOME -> target.moveCursorToStartOfContent(true)
-            SELECT_END -> target.moveCursorToEndOfContent(true)
+            SELECT_CONTENT_START -> target.moveCursorToStartOfContent(true)
+            SELECT_CONTENT_END -> target.moveCursorToEndOfContent(true)
             SELECT_ALL -> target.selectAll()
             SELECT_NONE -> target.selectNone()
             REORDER_LINES_UP -> processor.reorderLinesUp()
