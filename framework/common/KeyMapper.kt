@@ -170,6 +170,8 @@ interface KeyMapper {
                     Keys.DirectionRight -> Command.SELECT_LINE_RIGHT
                     Keys.DirectionUp -> Command.REORDER_LINES_UP
                     Keys.DirectionDown -> Command.REORDER_LINES_DOWN
+                    Keys.MoveHome -> Command.SELECT_HOME
+                    Keys.MoveEnd -> Command.SELECT_END
                     else -> null
                 }
                 shortcutModifier(event) -> when (event.key) {
@@ -188,6 +190,8 @@ interface KeyMapper {
                     Keys.Equals -> Command.TEXT_SIZE_INCREASE
                     Keys.Minus -> Command.TEXT_SIZE_DECREASE
                     Keys.Zero -> Command.TEXT_SIZE_RESET
+                    Keys.MoveHome -> Command.MOVE_HOME
+                    Keys.MoveEnd -> Command.MOVE_END
                     else -> null
                 }
                 event.isCtrlPressed && event.isShiftPressed -> when (event.key) {
@@ -212,8 +216,8 @@ interface KeyMapper {
                     Keys.DirectionDown -> Command.SELECT_LINE_DOWN
                     Keys.PageUp -> Command.SELECT_PAGE_UP
                     Keys.PageDown -> Command.SELECT_PAGE_DOWN
-                    Keys.MoveHome -> Command.SELECT_HOME
-                    Keys.MoveEnd -> Command.SELECT_END
+                    Keys.MoveHome -> Command.SELECT_LINE_START
+                    Keys.MoveEnd -> Command.SELECT_LINE_END
                     Keys.Insert -> Command.PASTE
                     Keys.Tab -> Command.TAB_SHIFT
                     Keys.Enter, Keys.EnterNumPad -> Command.ENTER_SHIFT
@@ -226,8 +230,8 @@ interface KeyMapper {
                     Keys.DirectionDown -> Command.MOVE_LINE_DOWN
                     Keys.PageUp -> Command.MOVE_PAGE_UP
                     Keys.PageDown -> Command.MOVE_PAGE_DOWN
-                    Keys.MoveHome -> Command.MOVE_HOME
-                    Keys.MoveEnd -> Command.MOVE_END
+                    Keys.MoveHome -> Command.MOVE_LINE_START
+                    Keys.MoveEnd -> Command.MOVE_LINE_END
                     Keys.Enter, Keys.EnterNumPad -> Command.ENTER
                     Keys.Backspace -> Command.DELETE_CHAR_PREV
                     Keys.Delete -> Command.DELETE_CHAR_NEXT
