@@ -96,7 +96,6 @@ import java.util.*
 import javax.swing.UIManager
 import kotlin.system.exitProcess
 import kotlinx.coroutines.runBlocking
-import java.lang.RuntimeException
 
 object Studio {
 
