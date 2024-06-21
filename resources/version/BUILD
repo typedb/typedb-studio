@@ -26,6 +26,6 @@ kt_jvm_library(
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*"]),
+    include = glob(["*", "templates/*"]),
     license_type = "mpl-header",
 )
