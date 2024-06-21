@@ -101,7 +101,8 @@ class DataService {
         private val IGNORED_PATHS = "project.ignored-paths"
         private val MATCH_QUERY_LIMIT = "query.match-limit"
         private val TRANSACTION_TIMEOUT_MINS = "query.transaction-timeout-mins"
-        private val GRAPH_OUTPUT = "graph.output"
+        private val GRAPH_OUTPUT = "graph.output" // TODO: add _ENABLED to be symmetric, when we break backwards compatibility
+        private val DIAGNOSTICS_REPORTING_ENABLED = "diagnostics.reporting.enabled"
 
         var autoSave: Boolean?
             get() = properties?.getProperty(AUTO_SAVE)?.toBoolean()
@@ -122,6 +123,10 @@ class DataService {
         var graphOutputEnabled: Boolean?
             get() = properties?.getProperty(GRAPH_OUTPUT)?.toBoolean()
             set(value) = setProperty(GRAPH_OUTPUT, value.toString())
+
+        var diagnosticsReportingEnabled: Boolean?
+            get() = properties?.getProperty(DIAGNOSTICS_REPORTING_ENABLED)?.toBoolean()
+            set(value) = setProperty(DIAGNOSTICS_REPORTING_ENABLED, value.toString())
     }
 
     var properties: Properties? by mutableStateOf(null)

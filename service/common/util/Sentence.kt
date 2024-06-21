@@ -111,6 +111,8 @@ object Sentence {
                 "Additionally, you can export a database's schema."
     const val OUTPUT_RESPONSE_TIME_DESCRIPTION =
         "Duration to collect all answers of the query from the server."
+    const val PREFERENCES_DIAGNOSTICS_REPORTING_ENABLED =
+            "Enable anonymous fatal error reporting. This will not include personal information or sensitive data such as queries and responses, usernames, etc. Changes to this setting will not take effect until you restart TypeDB Studio."
     const val PREFERENCES_GRAPH_OUTPUT_CAPTION =
         "When running a match query, display a graph output."
     const val PREFERENCES_IGNORED_PATHS_CAPTION = "Ignore files matching glob expressions. Separate entries by line."
