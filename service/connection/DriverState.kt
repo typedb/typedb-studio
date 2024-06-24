@@ -30,6 +30,7 @@ import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companio
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_UPDATE_PASSWORD
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.PASSWORD_UPDATED_SUCCESSFULLY
+import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.UNABLE_TO_CONNECT
 import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.UNEXPECTED_ERROR
 import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTED
@@ -140,21 +141,30 @@ class DriverState(
             close()
             connectServerDialog.open()
         }
-    ) { old, new ->
-        tryUpdateUserPassword(old, new) {
+    ) { oldPW, newPW ->
+        tryUpdateUserPassword(oldPW, newPW) {
             updateDefaultPasswordDialog.close()
             close()
 
+            val caCert = dataSrv.connection.caCertificate!!
             val username = dataSrv.connection.username!!
-            val password = new
-            val credentials = if (dataSrv.connection.caCertificate!!.isBlank()) TypeDBCredential(username, password, dataSrv.connection.tlsEnabled!!)
-                else TypeDBCredential(username, password, Path.of(dataSrv.connection.caCertificate!!))
-            val onSuccess = { notificationSrv.info(LOGGER, Message.Connection.RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY) }
+            val credentials = when {
+                caCert.isBlank() -> TypeDBCredential(username, newPW, dataSrv.connection.tlsEnabled!!)
+                else -> TypeDBCredential(username, newPW, Path.of(caCert))
+            }
+            val onSuccess = { notificationSrv.info(LOGGER, RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY) }
 
-            if (dataSrv.connection.useCloudAddressTranslation == true)
-                tryConnectToTypeDBCloudAsync(connectionName!!, dataSrv.connection.cloudAddressTranslation!!.associate { it }, credentials, onSuccess)
-            else
-                tryConnectToTypeDBCloudAsync(connectionName!!, dataSrv.connection.cloudAddresses!!.toSet(), credentials, onSuccess)
+            if (dataSrv.connection.useCloudAddressTranslation == true) tryConnectToTypeDBCloudAsync(
+                connectionName = connectionName!!,
+                addressTranslation = dataSrv.connection.cloudAddressTranslation!!.associate { it },
+                credentials = credentials,
+                onSuccess = onSuccess
+            ) else tryConnectToTypeDBCloudAsync(
+                connectionName = connectionName!!,
+                addresses = dataSrv.connection.cloudAddresses!!.toSet(),
+                credentials = credentials,
+                onSuccess = onSuccess
+            )
         }
     }
 
