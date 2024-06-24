@@ -365,7 +365,7 @@ assemble_apt(
     package_name = "typedb",
     maintainer = "TypeDB Community <community@typedb.com>",
     description = "TypeDB",
-    workspace_refs = "@vaticle_typedb_workspace_refs//:refs.json",
+    workspace_refs = "@vaticle_typedb_studio_workspace_refs//:refs.json",
     archives = [":assemble-deps", "//binary:assemble-bash-targz"],
     installation_dir = apt_installation_dir,
     files = assemble_files,
