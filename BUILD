@@ -7,6 +7,7 @@ load("@vaticle_dependencies//builder/java:rules.bzl", "native_typedb_artifact")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz", "unzip_file", "checksum", "java_deps")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
+load("@vaticle_bazel_distribution//apt:rules.bzl", "assemble_apt", "deploy_apt")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
@@ -336,6 +337,46 @@ deploy_brew(
     },
     version_file = "//:VERSION",
     type = "cask",
+)
+
+apt_installation_dir = "/opt/typedb-studio/"
+
+assemble_apt(
+    name = "assemble-linux-x86_64-apt",
+    package_name = "typedb-studio",
+    maintainer = "TypeDB Community <community@typedb.com>",
+    description = "TypeDB",
+    workspace_refs = "@vaticle_typedb_studio_workspace_refs//:refs.json",
+    archives = [":assemble-deps", "//binary:assemble-bash-targz"],
+    installation_dir = apt_installation_dir,
+    files = assemble_files,
+    architecture = "amd64",
+)
+
+deploy_apt(
+    name = "deploy-apt-x86_64",
+    target = ":assemble-linux-x86_64-apt",
+    snapshot = deployment['apt']['snapshot']['upload'],
+    release = deployment['apt']['release']['upload'],
+)
+
+assemble_apt(
+    name = "assemble-linux-arm64-apt",
+    package_name = "typedb",
+    maintainer = "TypeDB Community <community@typedb.com>",
+    description = "TypeDB",
+    workspace_refs = "@vaticle_typedb_workspace_refs//:refs.json",
+    archives = [":assemble-deps", "//binary:assemble-bash-targz"],
+    installation_dir = apt_installation_dir,
+    files = assemble_files,
+    architecture = "arm64",
+)
+
+deploy_apt(
+    name = "deploy-apt-arm64",
+    target = ":assemble-linux-arm64-apt",
+    snapshot = deployment['apt']['snapshot']['upload'],
+    release = deployment['apt']['release']['upload'],
 )
 
 checkstyle_test(
