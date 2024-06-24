@@ -5,6 +5,7 @@
 version: 2.1
 orbs:
   win: circleci/windows@2.0.0
+  macos: circleci/macos@2.4.0
 
 executors:
   linux-arm64:
@@ -24,11 +25,6 @@ executors:
     resource_class: macos.m1.medium.gen1
     working_directory: ~/typedb-studio
 
-  mac-x86_64:
-    macos:
-      xcode: "13.4.1"
-    working_directory: ~/typedb-studio
-
 
 commands:
 
@@ -45,8 +41,18 @@ commands:
       - run: chmod a+x /usr/local/bin/bazel
 
   install-bazel-mac:
+    parameters:
+      bazel-arch:
+        type: string
     steps:
-      - run: brew install bazelisk
+      - run: |
+          curl -OL "https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-darwin-<<parameters.bazel-arch>>"
+          sudo mv "bazelisk-darwin-<<parameters.bazel-arch>>" /usr/local/bin/bazel
+          chmod a+x /usr/local/bin/bazel
+
+  install-brew-rosetta:
+    steps:
+      - run: arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
   deploy-mac-snapshot:
     parameters:
@@ -110,15 +116,19 @@ jobs:
     executor: mac-arm64
     steps:
       - checkout
-      - install-bazel-mac
+      - install-bazel-mac:
+          bazel-arch: arm64
       - deploy-mac-snapshot:
           target-arch: arm64
 
   deploy-mac-x86_64-snapshot:
-    executor: mac-x86_64
+    executor: mac-arm64
     steps:
       - checkout
-      - install-bazel-mac
+      - macos/install-rosetta
+      - install-brew-rosetta
+      - install-bazel-mac:
+          bazel-arch: amd64
       - deploy-mac-snapshot:
           target-arch: x86_64
 
@@ -152,7 +162,8 @@ jobs:
     executor: mac-arm64
     steps:
       - checkout
-      - install-bazel-mac
+      - install-bazel-mac:
+          bazel-arch: arm64
       - deploy-mac-release:
           target-arch: arm64
       - run: |
@@ -163,10 +174,13 @@ jobs:
             - ./*
 
   deploy-mac-x86_64-release:
-    executor: mac-x86_64
+    executor: mac-arm64
     steps:
       - checkout
-      - install-bazel-mac
+      - macos/install-rosetta
+      - install-brew-rosetta
+      - install-bazel-mac:
+          bazel-arch: amd64
       - deploy-mac-release:
           target-arch: x86_64
       - run: |
