@@ -267,7 +267,7 @@ workflows:
       - deploy-mac-x86_64-snapshot:
           filters:
             branches:
-              only: [master, development]
+              only: [master, development, migrate-mac-executors]
       - deploy-windows-x86_64-snapshot:
           filters:
             branches:
