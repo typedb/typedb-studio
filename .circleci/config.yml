@@ -111,8 +111,8 @@ commands:
         type: string
     steps:
       - run: |
-          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
-          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
           bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- snapshot
 
   deploy-apt-release:
@@ -121,8 +121,8 @@ commands:
         type: string
     steps:
       - run: |
-          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
-          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
           bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- release
 
 jobs:
