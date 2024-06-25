@@ -362,7 +362,7 @@ deploy_apt(
 
 assemble_apt(
     name = "assemble-linux-arm64-apt",
-    package_name = "typedb",
+    package_name = "typedb-studio",
     maintainer = "TypeDB Community <community@typedb.com>",
     description = "TypeDB",
     workspace_refs = "@vaticle_typedb_studio_workspace_refs//:refs.json",
