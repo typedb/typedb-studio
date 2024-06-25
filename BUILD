@@ -340,6 +340,9 @@ deploy_brew(
 )
 
 apt_installation_dir = "/opt/typedb-studio/"
+apt_symlinks = {
+    "/usr/local/bin/typedb-studio": "/opt/typedb-studio/typedb-studio",
+}
 
 assemble_apt(
     name = "assemble-linux-x86_64-apt",
@@ -351,6 +354,7 @@ assemble_apt(
     installation_dir = apt_installation_dir,
     files = assemble_files,
     architecture = "amd64",
+    symlinks = apt_symlinks,
 )
 
 deploy_apt(
@@ -370,6 +374,7 @@ assemble_apt(
     installation_dir = apt_installation_dir,
     files = assemble_files,
     architecture = "arm64",
+    symlinks = apt_symlinks,
 )
 
 deploy_apt(
