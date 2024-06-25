@@ -6,6 +6,7 @@ load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
 load("@vaticle_dependencies//builder/java:rules.bzl", "native_typedb_artifact")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz", "unzip_file", "checksum", "java_deps")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@vaticle_bazel_distribution//apt:rules.bzl", "assemble_apt", "deploy_apt")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
@@ -344,13 +345,27 @@ apt_symlinks = {
     "/usr/local/bin/typedb-studio": "/opt/typedb-studio/bin/TypeDB Studio",
 }
 
+pkg_tar(
+    name = "native-artifact-linux-x86_64-deb-targz",
+    srcs = [":native-artifact-linux-x86_64-deb"],
+    extension = "tar.gz",
+    target_compatible_with = constraint_linux_x86_64,
+)
+
+pkg_tar(
+    name = "native-artifact-linux-arm64-deb-targz",
+    srcs = [":native-artifact-linux-arm64-deb"],
+    extension = "tar.gz",
+    target_compatible_with = constraint_linux_arm64,
+)
+
 assemble_apt(
     name = "assemble-linux-x86_64-apt",
     package_name = "typedb-studio",
     maintainer = "TypeDB Community <community@typedb.com>",
     description = "TypeDB",
     workspace_refs = "@vaticle_typedb_studio_workspace_refs//:refs.json",
-    archives = [":assemble-platform"],
+    archives = [":native-artifact-linux-x86_64-deb-targz"],
     installation_dir = apt_installation_dir,
     files = assemble_files,
     architecture = "amd64",
@@ -371,7 +386,7 @@ assemble_apt(
     maintainer = "TypeDB Community <community@typedb.com>",
     description = "TypeDB",
     workspace_refs = "@vaticle_typedb_studio_workspace_refs//:refs.json",
-    archives = [":assemble-platform"],
+    archives = [":native-artifact-linux-arm64-deb-targz"],
     installation_dir = apt_installation_dir,
     files = assemble_files,
     architecture = "arm64",
