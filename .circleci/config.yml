@@ -105,6 +105,26 @@ commands:
           bazel run //:deploy-linux-<<parameters.target-arch>>-deb --compilation_mode=opt -- release
           bazel run //:deploy-linux-<<parameters.target-arch>>-targz --compilation_mode=opt -- release
 
+  deploy-apt-snapshot:
+    parameters:
+      target-arch:
+        type: string
+    steps:
+      - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- snapshot
+
+  deploy-apt-release:
+    parameters:
+      target-arch:
+        type: string
+    steps:
+      - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- release
+
 jobs:
   deploy-mac-arm64-snapshot:
     executor: mac-arm64
@@ -147,6 +167,22 @@ jobs:
       - checkout
       - run: .circleci\windows\prepare.bat
       - run: .circleci\windows\deploy_snapshot.bat
+
+  deploy-apt-arm64-snapshot:
+    executor: linux-arm64
+    steps:
+      - checkout
+      - install-bazel-linux-arm64
+      - deploy-apt-snapshot:
+          target-arch: arm64
+
+  deploy-apt-x86_64-snapshot:
+    executor: linux-x86_64
+    steps:
+      - checkout
+      - install-bazel-linux-x86_64
+      - deploy-apt-snapshot:
+          target-arch: x86_64
 
   deploy-mac-arm64-release:
     executor: mac-arm64
@@ -201,6 +237,22 @@ jobs:
       - checkout
       - run: .circleci\windows\prepare.bat
       - run: .circleci\windows\deploy_release.bat
+
+  deploy-apt-arm64-release:
+    executor: linux-arm64
+    steps:
+      - checkout
+      - install-bazel-linux-arm64
+      - deploy-apt-release:
+          target-arch: arm64
+
+  deploy-apt-x86_64-release:
+    executor: linux-x86_64
+    steps:
+      - checkout
+      - install-bazel-linux-x86_64
+      - deploy-apt-release:
+          target-arch: x86_64
 
   deploy-github:
     executor: linux-x86_64
@@ -258,6 +310,14 @@ workflows:
           filters:
             branches:
               only: [master, development]
+      - deploy-apt-arm64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
+      - deploy-apt-x86_64-snapshot:
+          filters:
+            branches:
+              only: [master, development]
   release:
     jobs:
       - deploy-linux-arm64-release:
@@ -290,6 +350,18 @@ workflows:
             - deploy-mac-arm64-release
             - deploy-mac-x86_64-release
             - deploy-windows-x86_64-release
+      - deploy-apt-arm64-release:
+          filters:
+            branches:
+              only: release
+          requires:
+            - deploy-linux-arm64-release
+      - deploy-apt-x86_64-release:
+          filters:
+            branches:
+              only: release
+          requires:
+            - deploy-linux-x86_64-release
       - deploy-brew:
           filters:
             branches:
