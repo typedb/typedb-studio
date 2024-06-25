@@ -350,11 +350,12 @@ assemble_apt(
     maintainer = "TypeDB Community <community@typedb.com>",
     description = "TypeDB",
     workspace_refs = "@vaticle_typedb_studio_workspace_refs//:refs.json",
-    archives = [":native-artifact-linux-x86_64-deb"],
+    archives = [":assemble-platform"],
     installation_dir = apt_installation_dir,
     files = assemble_files,
     architecture = "amd64",
     symlinks = apt_symlinks,
+    target_compatible_with = constraint_linux_x86_64,
 )
 
 deploy_apt(
@@ -370,11 +371,12 @@ assemble_apt(
     maintainer = "TypeDB Community <community@typedb.com>",
     description = "TypeDB",
     workspace_refs = "@vaticle_typedb_studio_workspace_refs//:refs.json",
-    archives = [":native-artifact-linux-arm64-deb"],
+    archives = [":assemble-platform"],
     installation_dir = apt_installation_dir,
     files = assemble_files,
     architecture = "arm64",
     symlinks = apt_symlinks,
+    target_compatible_with = constraint_linux_arm64,
 )
 
 deploy_apt(
