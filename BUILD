@@ -341,7 +341,7 @@ deploy_brew(
 
 apt_installation_dir = "/opt/typedb-studio/"
 apt_symlinks = {
-    "/usr/local/bin/typedb-studio": "/opt/typedb-studio/typedb-studio",
+    "/usr/local/bin/typedb-studio": "/opt/typedb-studio/bin/TypeDB Studio",
 }
 
 assemble_apt(
@@ -350,7 +350,7 @@ assemble_apt(
     maintainer = "TypeDB Community <community@typedb.com>",
     description = "TypeDB",
     workspace_refs = "@vaticle_typedb_studio_workspace_refs//:refs.json",
-    archives = [":assemble-deps", "//binary:assemble-bash-targz"],
+    archives = [":native-artifact-linux-x86_64-deb"],
     installation_dir = apt_installation_dir,
     files = assemble_files,
     architecture = "amd64",
@@ -370,7 +370,7 @@ assemble_apt(
     maintainer = "TypeDB Community <community@typedb.com>",
     description = "TypeDB",
     workspace_refs = "@vaticle_typedb_studio_workspace_refs//:refs.json",
-    archives = [":assemble-deps", "//binary:assemble-bash-targz"],
+    archives = [":native-artifact-linux-arm64-deb"],
     installation_dir = apt_installation_dir,
     files = assemble_files,
     architecture = "arm64",
