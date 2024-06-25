@@ -310,14 +310,14 @@ workflows:
           filters:
             branches:
               only: [master, development]
-      - deploy-apt-arm64-snapshot:
-          filters:
-            branches:
-              only: [master, development]
-      - deploy-apt-x86_64-snapshot:
-          filters:
-            branches:
-              only: [master, development]
+      - deploy-apt-arm64-snapshot
+#          filters:
+#            branches:
+#              only: [master, development]
+      - deploy-apt-x86_64-snapshot
+#          filters:
+#            branches:
+#              only: [master, development]
   release:
     jobs:
       - deploy-linux-arm64-release:
