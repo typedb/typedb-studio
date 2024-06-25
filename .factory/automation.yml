@@ -58,8 +58,8 @@ build:
         export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
         bazel run @vaticle_dependencies//tool/bazelinstall:remote_cache_setup.sh
         echo $(cat VERSION)-$(git rev-parse HEAD) > VERSION
-        bazel run --define version=$(git rev-parse HEAD) //:deploy-apt-x86_64 -- snapshot
-        bazel run --define version=$(git rev-parse HEAD) //:deploy-apt-arm64 -- snapshot
+        bazel run //:deploy-apt-x86_64 -- snapshot
+        bazel run //:deploy-apt-arm64 -- snapshot
 
 release:
   filter:
