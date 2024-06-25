@@ -359,44 +359,44 @@ pkg_tar(
     target_compatible_with = constraint_linux_arm64,
 )
 
-assemble_apt(
-    name = "assemble-linux-x86_64-apt",
-    package_name = "typedb-studio",
-    maintainer = "TypeDB Community <community@typedb.com>",
-    description = "TypeDB",
-    workspace_refs = "@vaticle_typedb_studio_workspace_refs//:refs.json",
-    archives = [":native-artifact-linux-x86_64-deb-targz"],
-    installation_dir = apt_installation_dir,
-    files = assemble_files,
-    architecture = "amd64",
-    symlinks = apt_symlinks,
-    target_compatible_with = constraint_linux_x86_64,
-)
+#assemble_apt(
+#    name = "assemble-linux-x86_64-apt",
+#    package_name = "typedb-studio",
+#    maintainer = "TypeDB Community <community@typedb.com>",
+#    description = "TypeDB",
+#    workspace_refs = "@vaticle_typedb_studio_workspace_refs//:refs.json",
+#    archives = [":native-artifact-linux-x86_64-deb-targz"],
+#    installation_dir = apt_installation_dir,
+#    files = assemble_files,
+#    architecture = "amd64",
+#    symlinks = apt_symlinks,
+#    target_compatible_with = constraint_linux_x86_64,
+#)
 
 deploy_apt(
     name = "deploy-apt-x86_64",
-    target = ":assemble-linux-x86_64-apt",
+    target = ":native-artifact-linux-x86_64-deb",
     snapshot = deployment['apt']['snapshot']['upload'],
     release = deployment['apt']['release']['upload'],
 )
 
-assemble_apt(
-    name = "assemble-linux-arm64-apt",
-    package_name = "typedb-studio",
-    maintainer = "TypeDB Community <community@typedb.com>",
-    description = "TypeDB",
-    workspace_refs = "@vaticle_typedb_studio_workspace_refs//:refs.json",
-    archives = [":native-artifact-linux-arm64-deb-targz"],
-    installation_dir = apt_installation_dir,
-    files = assemble_files,
-    architecture = "arm64",
-    symlinks = apt_symlinks,
-    target_compatible_with = constraint_linux_arm64,
-)
+#assemble_apt(
+#    name = "assemble-linux-arm64-apt",
+#    package_name = "typedb-studio",
+#    maintainer = "TypeDB Community <community@typedb.com>",
+#    description = "TypeDB",
+#    workspace_refs = "@vaticle_typedb_studio_workspace_refs//:refs.json",
+#    archives = [":native-artifact-linux-arm64-deb-targz"],
+#    installation_dir = apt_installation_dir,
+#    files = assemble_files,
+#    architecture = "arm64",
+#    symlinks = apt_symlinks,
+#    target_compatible_with = constraint_linux_arm64,
+#)
 
 deploy_apt(
     name = "deploy-apt-arm64",
-    target = ":assemble-linux-arm64-apt",
+    target = ":native-artifact-linux-arm64-deb",
     snapshot = deployment['apt']['snapshot']['upload'],
     release = deployment['apt']['release']['upload'],
 )
