@@ -7,8 +7,8 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 def vaticle_bazel_distribution():
     git_repository(
         name = "vaticle_bazel_distribution",
-        remote = "https://github.com/alexjpwalker/bazel-distribution",
-        commit = "649eab09cf06aed144dc676ab2d99ba2eded2d03",
+        remote = "https://github.com/vaticle/bazel-distribution",
+        commit = "425493c9a92ef894b99b3b8071886dd2af8098cf",
     )
 
 def vaticle_dependencies():

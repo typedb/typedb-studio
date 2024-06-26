@@ -105,20 +105,23 @@ commands:
           bazel run //:deploy-linux-<<parameters.target-arch>>-deb --compilation_mode=opt -- release
           bazel run //:deploy-linux-<<parameters.target-arch>>-targz --compilation_mode=opt -- release
 
-  deploy-apt-snapshot:
-    parameters:
-      target-arch:
-        type: string
-    steps:
-      - run: |
-          export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
-          export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          # TODO Temporary measure. This exists for two reasons:
-          # 1) platform-jvm assembly rules currently requires the version to be specified in a version_file
-          # 2) jpackage does not support 0 as a major version
-          # This writes VERSION-SHA1 into the VERSION file to be used by the assembly rule.
-          echo $(cat VERSION)-$CIRCLE_SHA1 > VERSION
-          bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- snapshot
+# TODO: jpackage does not support snapshot version numbers (with commit SHA), so we end up trying to repeatedly
+#       upload v0.0.0, which is rejected by repo.typedb.com. This issue should not affect release versions.
+
+#  deploy-apt-snapshot:
+#    parameters:
+#      target-arch:
+#        type: string
+#    steps:
+#      - run: |
+#          export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
+#          export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
+#          # TODO Temporary measure. This exists for two reasons:
+#          # 1) platform-jvm assembly rules currently requires the version to be specified in a version_file
+#          # 2) jpackage does not support 0 as a major version
+#          # This writes VERSION-SHA1 into the VERSION file to be used by the assembly rule.
+#          echo $(cat VERSION)-$CIRCLE_SHA1 > VERSION
+#          bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- snapshot
 
   deploy-apt-release:
     parameters:
@@ -173,21 +176,21 @@ jobs:
       - run: .circleci\windows\prepare.bat
       - run: .circleci\windows\deploy_snapshot.bat
 
-  deploy-apt-arm64-snapshot:
-    executor: linux-arm64
-    steps:
-      - checkout
-      - install-bazel-linux-arm64
-      - deploy-apt-snapshot:
-          target-arch: arm64
-
-  deploy-apt-x86_64-snapshot:
-    executor: linux-x86_64
-    steps:
-      - checkout
-      - install-bazel-linux-x86_64
-      - deploy-apt-snapshot:
-          target-arch: x86_64
+#  deploy-apt-arm64-snapshot:
+#    executor: linux-arm64
+#    steps:
+#      - checkout
+#      - install-bazel-linux-arm64
+#      - deploy-apt-snapshot:
+#          target-arch: arm64
+#
+#  deploy-apt-x86_64-snapshot:
+#    executor: linux-x86_64
+#    steps:
+#      - checkout
+#      - install-bazel-linux-x86_64
+#      - deploy-apt-snapshot:
+#          target-arch: x86_64
 
   deploy-mac-arm64-release:
     executor: mac-arm64
@@ -315,11 +318,11 @@ workflows:
           filters:
             branches:
               only: [master, development]
-      - deploy-apt-arm64-snapshot
+#      - deploy-apt-arm64-snapshot
 #          filters:
 #            branches:
 #              only: [master, development]
-      - deploy-apt-x86_64-snapshot
+#      - deploy-apt-x86_64-snapshot
 #          filters:
 #            branches:
 #              only: [master, development]

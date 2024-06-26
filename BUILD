@@ -342,7 +342,6 @@ deploy_brew(
 deploy_apt(
     name = "deploy-apt-x86_64",
     target = ":native-artifact-linux-x86_64-deb",
-    version_file = "//:VERSION",
     snapshot = deployment['apt']['snapshot']['upload'],
     release = deployment['apt']['release']['upload'],
 )
@@ -350,7 +349,6 @@ deploy_apt(
 deploy_apt(
     name = "deploy-apt-arm64",
     target = ":native-artifact-linux-arm64-deb",
-    version_file = "//:VERSION",
     snapshot = deployment['apt']['snapshot']['upload'],
     release = deployment['apt']['release']['upload'],
 )
