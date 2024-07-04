@@ -46,6 +46,7 @@ object ActionableList {
     fun <T : Any> Layout(
         items: List<T>,
         itemHeight: Dp = ITEM_HEIGHT,
+        itemDisplayFn: (T) -> String = { it.toString() },
         modifier: Modifier,
         buttonsSide: Side,
         buttonsFn: (T) -> List<Form.IconButtonArg>
@@ -63,7 +64,7 @@ object ActionableList {
                     ActionColumn(items, itemHeight, buttonsFn)
                     Separator()
                 }
-                ItemColumn(Modifier.weight(1f), items, itemHeight)
+                ItemColumn(Modifier.weight(1f), items, itemHeight, itemDisplayFn)
                 if (buttonsSide == Side.RIGHT) {
                     Separator()
                     ActionColumn(items, itemHeight, buttonsFn, scrollState)
@@ -77,17 +78,23 @@ object ActionableList {
     fun <T: Any> SingleButtonLayout(
         items: List<T>,
         itemHeight: Dp = ITEM_HEIGHT,
+        itemDisplayFn: (T) -> String,
         modifier: Modifier,
         buttonSide: Side,
         buttonFn: (T) -> Form.IconButtonArg
-    ) = Layout(items, itemHeight, modifier, buttonSide) { listOf(buttonFn(it)) }
+    ) = Layout(items, itemHeight, itemDisplayFn, modifier, buttonSide) { listOf(buttonFn(it)) }
 
     @Composable
     private fun bgColor(i: Int): Color =
         if (i % 2 == 0) Theme.studio.backgroundLight else Theme.studio.backgroundMedium
 
     @Composable
-    private fun <T : Any> ItemColumn(modifier: Modifier, items: List<T>, itemHeight: Dp) {
+    private fun <T : Any> ItemColumn(
+        modifier: Modifier,
+        items: List<T>,
+        itemHeight: Dp,
+        itemDisplayFn: (T) -> String = { it.toString() }
+    ) {
         val density = LocalDensity.current.density
         var minWidth by remember { mutableStateOf(0.dp) }
         Column(
@@ -103,7 +110,7 @@ object ActionableList {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RowSpacer()
-                    Form.Text(value = item.toString())
+                    Form.Text(value = itemDisplayFn(item))
                     RowSpacer()
                 }
             }

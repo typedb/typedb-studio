@@ -418,7 +418,7 @@ object Form {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                         innerTextField()
                         if (value.isEmpty()) Text(
-                            value = placeholder?.let { Label.E_G_ + " " + it } ?: "",
+                            value = placeholder ?: "",
                             textStyle = textStyle.copy(fontStyle = FontStyle.Italic),
                             color = fadeable(fontColor, true, PLACEHOLDER_OPACITY)
                         )

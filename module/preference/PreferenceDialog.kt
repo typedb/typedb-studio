@@ -43,7 +43,6 @@ import com.vaticle.typedb.studio.framework.material.Navigator
 import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
 import com.vaticle.typedb.studio.framework.material.Separator
 import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Label.APPLY
 import com.vaticle.typedb.studio.service.common.util.Label.CANCEL
 import com.vaticle.typedb.studio.service.common.util.Label.ENABLE_DIAGNOSTICS_REPORTING
@@ -59,12 +58,14 @@ import com.vaticle.typedb.studio.service.common.util.Label.RESET
 import com.vaticle.typedb.studio.service.common.util.Label.SET_QUERY_LIMIT
 import com.vaticle.typedb.studio.service.common.util.Label.SYSTEM
 import com.vaticle.typedb.studio.service.common.util.Label.TEXT_EDITOR
-import com.vaticle.typedb.studio.service.common.util.Label.TRANSACTION_TIMEOUT_MINS
+import com.vaticle.typedb.studio.service.common.util.Label.TRANSACTION_TIMEOUT_MINUTES
 import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_DIAGNOSTICS_REPORTING_ENABLED
 import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
 import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_IGNORED_PATHS_CAPTION
 import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
 import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_TRANSACTION_TIMEOUT_CAPTION
+import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_INTEGER_WARNING
+import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_TRANSACTION_TIMEOUT_INPUT_WARNING
 import com.vaticle.typedb.studio.service.page.Navigable
 
 object PreferenceDialog {
@@ -388,13 +389,13 @@ object PreferenceDialog {
             private var getQueryLimit = PreferenceField.TextInputValidated(
                 initValue = preferenceSrv.getQueryLimit.toString(),
                 label = SET_QUERY_LIMIT, placeholder = QUERY_LIMIT_PLACEHOLDER,
-                invalidWarning = Label.PREFERENCE_INTEGER_WARNING, caption = PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
+                invalidWarning = PREFERENCES_INTEGER_WARNING, caption = PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
             ) {/* validator = */ it.toLongOrNull() != null && it.toLongOrNull()!! >= 0 }
 
             private var transactionTimeoutMins = PreferenceField.TextInputValidated(
                 initValue = preferenceSrv.transactionTimeoutMins.toString(),
-                label = TRANSACTION_TIMEOUT_MINS, placeholder = TRANSACTION_TIMEOUT_MINS_PLACEHOLDER,
-                invalidWarning = Label.PREFERENCE_TRANSACTION_TIMEOUT_MINS_INPUT_WARNING,
+                label = TRANSACTION_TIMEOUT_MINUTES, placeholder = TRANSACTION_TIMEOUT_MINS_PLACEHOLDER,
+                invalidWarning = PREFERENCES_TRANSACTION_TIMEOUT_INPUT_WARNING,
                 caption = PREFERENCES_TRANSACTION_TIMEOUT_CAPTION
             ) {/* validator = */
                 val transactionTimeoutMins = it.toLongOrNull() ?: return@TextInputValidated false

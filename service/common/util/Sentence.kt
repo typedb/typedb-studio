@@ -116,8 +116,10 @@ object Sentence {
     const val PREFERENCES_GRAPH_OUTPUT_CAPTION =
         "When running a match query, display a graph output."
     const val PREFERENCES_IGNORED_PATHS_CAPTION = "Ignore files matching glob expressions. Separate entries by line."
+    const val PREFERENCES_INTEGER_WARNING = "Please enter a positive integer."
     const val PREFERENCES_MATCH_QUERY_LIMIT_CAPTION =
         "When running a match query, limit the number of results to this value."
+    const val PREFERENCES_TRANSACTION_TIMEOUT_INPUT_WARNING = "Please enter an integer between 1 and 10000."
     const val PREFERENCES_TRANSACTION_TIMEOUT_CAPTION =
         "Set the timeout of transactions (in minutes) to this value."
     const val QUERY_RESPONSE_TIME_DESCRIPTION =

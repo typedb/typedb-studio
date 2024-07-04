@@ -41,7 +41,6 @@ import com.vaticle.typedb.studio.framework.material.Tooltip
 import com.vaticle.typedb.studio.service.Service
 import com.vaticle.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.studio.service.common.util.Sentence
-import mu.KotlinLogging
 
 object DatabaseDialog {
 
@@ -95,24 +94,23 @@ object DatabaseDialog {
     private fun ManageableDatabaseList(modifier: Modifier) = ActionableList.Layout(
         items = Service.driver.databaseList,
         modifier = modifier.border(1.dp, Theme.studio.border),
-        buttonsSide = ActionableList.Side.RIGHT,
-        buttonsFn = { databaseName ->
-            listOf(
-                IconButtonArg(
-                    icon = Icon.DELETE,
-                    color = { Theme.studio.errorStroke }
-                ) {
-                    Service.confirmation.submit(
-                        title = Label.DELETE_DATABASE,
-                        message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
-                        verificationValue = databaseName,
-                        confirmLabel = Label.DELETE,
-                        onConfirm = { Service.driver.tryDeleteDatabase(databaseName) }
-                    )
-                }
-            )
-        }
-    )
+        buttonsSide = ActionableList.Side.RIGHT
+    ) { databaseName ->
+        listOf(
+            IconButtonArg(
+                icon = Icon.DELETE,
+                color = { Theme.studio.errorStroke }
+            ) {
+                Service.confirmation.submit(
+                    title = Label.DELETE_DATABASE,
+                    message = Sentence.CONFIRM_DATABASE_DELETION.format(databaseName),
+                    verificationValue = databaseName,
+                    confirmLabel = Label.DELETE,
+                    onConfirm = { Service.driver.tryDeleteDatabase(databaseName) }
+                )
+            }
+        )
+    }
 
     @Composable
     private fun CreateDatabaseForm() {
