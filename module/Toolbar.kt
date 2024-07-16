@@ -171,29 +171,37 @@ object Toolbar {
         object Manager {
 
             @Composable
-            internal fun Buttons(enabled: Boolean) {
-                val dbManagerEnabled = enabled && !hasOpenTx
-                ToolbarRow {
-                    ManageDatabasesButton(dbManagerEnabled)
-                    DatabaseDropdown(Modifier.height(TOOLBAR_BUTTON_SIZE), enabled = dbManagerEnabled)
-                }
+            internal fun Buttons(enabled: Boolean) = ToolbarRow {
+                ManageDatabasesButton(enabled && !hasOpenTx)
+                DatabaseDropdown(Modifier.height(TOOLBAR_BUTTON_SIZE), enabled = enabled && !hasOpenTx)
+                CloseDatabaseButton(enabled && hasOpenSession) // we want to be able to close session even when hasOpenTx==true
             }
 
             @Composable
-            private fun ManageDatabasesButton(enabled: Boolean) {
-                ToolbarIconButton(
-                    icon = Icon.DATABASE,
-                    onClick = {
-                        Service.driver.refreshDatabaseList()
-                        Service.driver.manageDatabasesDialog.open()
-                    },
-                    enabled = enabled,
-                    tooltip = Tooltip.Arg(
-                        title = Label.MANAGE_DATABASES,
-                        description = Sentence.MANAGE_DATABASES_DESCRIPTION,
-                    )
+            private fun ManageDatabasesButton(enabled: Boolean) = ToolbarIconButton(
+                icon = Icon.DATABASE,
+                onClick = {
+                    Service.driver.refreshDatabaseList()
+                    Service.driver.manageDatabasesDialog.open()
+                },
+                enabled = enabled,
+                tooltip = Tooltip.Arg(
+                    title = Label.MANAGE_DATABASES,
+                    description = Sentence.MANAGE_DATABASES_DESCRIPTION,
                 )
-            }
+            )
+
+            @Composable
+            private fun CloseDatabaseButton(enabled: Boolean) = ToolbarIconButton(
+                icon = Icon.CLOSE_DATABASE,
+                color = Theme.studio.errorStroke,
+                onClick = { Service.driver.closeSession() },
+                enabled = enabled,
+                tooltip = Tooltip.Arg(
+                    title = Label.CLOSE_DATABASE_SESSION,
+                    description = Sentence.SESSION_CLOSE_DESCRIPTION,
+                )
+            )
         }
 
         object Transaction {
@@ -227,39 +235,35 @@ object Toolbar {
                     TextButtonRow(
                         height = TOOLBAR_BUTTON_SIZE,
                         buttons = listOf(
-                            TextButtonArg(
-                                text = Label.SCHEMA.lowercase(),
-                                onClick = {
-                                    Service.driver.tryUpdateSessionType(
-                                        schema
-                                    )
-                                },
-                                color = { toggleButtonColor(isSchemaSession) },
-                                enabled = enabled,
-                                tooltip = Tooltip.Arg(
-                                    title = Label.SCHEMA_SESSION,
-                                    description = Sentence.SESSION_SCHEMA_DESCRIPTION,
-                                    url = URL.DOCS_SESSION_SCHEMA
-                                )
-                            ),
-                            TextButtonArg(
-                                text = Label.DATA.lowercase(),
-                                onClick = {
-                                    Service.driver.tryUpdateSessionType(
-                                        data
-                                    )
-                                },
-                                color = { toggleButtonColor(isDataSession) },
-                                enabled = enabled,
-                                tooltip = Tooltip.Arg(
-                                    title = Label.DATA_SESSION,
-                                    description = Sentence.SESSION_DATA_DESCRIPTION,
-                                    url = URL.DOCS_SESSION_DATA
-                                )
-                            )
+                            schemaSessionButtonArg(schema, enabled),
+                            dataSessionButtonArg(data, enabled)
                         )
                     )
                 }
+
+                private fun schemaSessionButtonArg(schema: TypeDBSession.Type, enabled: Boolean) = TextButtonArg(
+                    text = Label.SCHEMA.lowercase(),
+                    onClick = { Service.driver.tryUpdateSessionType(schema) },
+                    color = { toggleButtonColor(isSchemaSession) },
+                    enabled = enabled,
+                    tooltip = Tooltip.Arg(
+                        title = Label.SCHEMA_SESSION,
+                        description = Sentence.SESSION_SCHEMA_DESCRIPTION,
+                        url = URL.DOCS_SESSION_SCHEMA
+                    )
+                )
+
+                private fun dataSessionButtonArg(data: TypeDBSession.Type, enabled: Boolean) = TextButtonArg(
+                    text = Label.DATA.lowercase(),
+                    onClick = { Service.driver.tryUpdateSessionType(data) },
+                    color = { toggleButtonColor(isDataSession) },
+                    enabled = enabled,
+                    tooltip = Tooltip.Arg(
+                        title = Label.DATA_SESSION,
+                        description = Sentence.SESSION_DATA_DESCRIPTION,
+                        url = URL.DOCS_SESSION_DATA
+                    )
+                )
 
                 @Composable
                 private fun TransactionTypeButtons(enabled: Boolean) {

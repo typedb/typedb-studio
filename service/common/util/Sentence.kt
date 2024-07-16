@@ -149,6 +149,10 @@ object Sentence {
         "Select the directory that will serve as the project root directory."
     const val SELECT_PARENT_DIRECTORY_TO_MOVE_UNDER =
         "Select the parent directory in which %s will be moved under."
+    const val SESSION_CLOSE_DESCRIPTION =
+        "Closing a database session will immediately terminate all running transactions within the current session, " +
+                "and disconnect the current session to the selected database. This button will only be enabled if there " +
+                "is an open session to a database."
     const val SESSION_DATA_DESCRIPTION =
         "Data sessions allow you to only modify data in the database, and not the schema. This means inserting and deleting data. " +
                 "There is no limitation on performing reads on schema or data. " + BUTTON_ENABLED_WHEN_SESSION_OPEN

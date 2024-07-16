@@ -26,6 +26,7 @@ enum class Icon(private val shape: Shape) {
     ADD(Shape.PLUS),
     ATTRIBUTE(Shape.OVAL),
     CLOSE(Shape.XMARK),
+    CLOSE_DATABASE(Shape.STOP),
     COLLAPSE(Shape.CHEVRONS_UP),
     COMMIT(Shape.CHECK),
     CONNECT_TO_TYPEDB(Shape.SERVER),

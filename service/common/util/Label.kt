@@ -30,6 +30,7 @@ object Label {
     const val CHANGE_SUPERTYPE = "Change Supertype"
     const val CHANGE_TYPE_ABSTRACTNESS = "Change Type Abstractness"
     const val CLOSE = "Close"
+    const val CLOSE_DATABASE_SESSION = "Close Database Session"
     const val CLOSE_TRANSACTION = "Close Transaction"
     const val CLOSING_TYPEDB_STUDIO = "Closing TypeDB Studio"
     const val CMD = "cmd"

@@ -312,21 +312,21 @@ object ServerDialog {
         val focusReq = remember { FocusRequester() }
         val form = AddTranslatedAddressForm
         Submission(form, modifier = Modifier.height(Form.FIELD_HEIGHT), showButtons = false) {
-            Row {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 TextInputValidated(
                     value = form.externalAddress,
-                    placeholder = Label.EXTERNAL_ADDRESS,
+                    placeholder = Label.EXTERNAL_ADDRESS.lowercase(),
                     onValueChange = { form.externalAddress = it.trim() },
                     modifier = Modifier.weight(1f).focusRequester(focusReq),
                     invalidWarning = Label.ADDRESS_PORT_WARNING,
                     validator = { form.externalAddress.isBlank() || addressFormatIsValid(form.externalAddress) }
                 )
                 RowSpacer()
-                Text(value = Label.TO)
+                Text(value = Label.TO.lowercase())
                 RowSpacer()
                 TextInputValidated(
                     value = form.internalAddress,
-                    placeholder = Label.INTERNAL_ADDRESS,
+                    placeholder = Label.INTERNAL_ADDRESS.lowercase(),
                     onValueChange = { form.internalAddress = it.trim() },
                     modifier = Modifier.weight(1f).focusRequester(focusReq),
                     invalidWarning = Label.ADDRESS_PORT_WARNING,
