@@ -1,52 +1,34 @@
 ### Distribution
 
-TypeDB Studio is available for Linux, Mac and Windows. [Download TypeDB Studio 2.28.0.](https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:2.28.0)
+TypeDB Studio is available for Linux, Mac and Windows operating systems.
 
-For Mac Intel and Mac ARM, TypeDB Studio is also available through Homebrew:
+- Installation instructions: https://typedb.com/docs/home/install/studio
+- Direct download: https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:2.28.4
+- User manual: https://typedb.com/docs/manual/studio
 
-```
-brew tap vaticle/tap
-brew install --cask vaticle/tap/typedb-studio
-```
+#### TypeDB Server Compatibility
 
-### TypeDB Server Compatibility
-
-See the [compatibility table](https://typedb.com/docs/typedb/connecting/studio#_version_compatibility) to see
-which versions of Studio are compatible with which versions of TypeDB server.
+See the [compatibility table](https://typedb.com/docs/typedb/connecting/studio#_version_compatibility) to ensure
+compatibility between Studio and TypeDB server.
 
 ---
 
 
 ## New Features
-- **Cloud address translation**
-  
-  We introduce a way to provide address translation when attempting to connect to cloud servers (cf. https://github.com/vaticle/typedb-driver/pull/624). This is useful when the route from the user to the servers differs from the route the servers are configured with (e.g. connection to public-facing servers from an internal network).
-  
-  Note: we currently require that the user provides translation for the addresses of _all_ nodes in the Cloud deployment.
-  
-  <img width="532" src="https://github.com/vaticle/typedb-studio/assets/18616863/74859fbd-de4f-4844-b1e6-f3507dc364b7">
-  
+- **Deploy to APT**
 
-- **Store cursor position when changing lines**
-  
-  We store cursor positions when changing lines as described in https://github.com/vaticle/typedb-studio/issues/748. This is standard behaviour in other IDEs, such as IntelliJ IDEA and VSCode.
-  
-  Before:
-  
-  https://github.com/vaticle/typedb-studio/assets/51956016/9a4232b2-fb41-4276-9b48-76d741143329
-  
-  After:
-  
-  https://github.com/vaticle/typedb-studio/assets/51956016/0f311437-15f4-4a66-96d8-0005dedc6ad7
+Users of Ubuntu and other Debian-like Linux distributions will now be able to install the
+`typedb-studio` package from the Vaticle APT repo (https://repo.typedb.com/public/public-release/deb/ubuntu).
+
+- **Introduce 'Close Database Session' button**
+
   
 ## Bugs Fixed
+- **Clean up ServerDialog and trim whitespaces from address input form**
 
 
 ## Code Refactors
 
 
 ## Other Improvements
-- **Fix Windows short workspace git patch**
-
-- **Replace licenses with MPL version 2.0**
 
