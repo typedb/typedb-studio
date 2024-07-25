@@ -11,7 +11,7 @@ config:
 build:
   quality:
     filter:
-      owner: vaticle
+      owner: typedb
       branch: master
     dependency-analysis:
       image: vaticle-ubuntu-22.04
@@ -50,7 +50,7 @@ build:
 
 release:
   filter:
-    owner: vaticle
+    owner: typedb
     branch: [master, development]
   validation:
     validate-release-notes:
@@ -64,4 +64,4 @@ release:
       command: |
         git checkout -b release
         git push -f origin release
-        echo "Successfully pushed branch 'release', which triggers a release workflow in CircleCI. The progress of the release can be tracked here: https://app.circleci.com/pipelines/github/vaticle/typedb-studio"
+        echo "Successfully pushed branch 'release', which triggers a release workflow in CircleCI. The progress of the release can be tracked here: https://app.circleci.com/pipelines/github/typedb/typedb-studio"
