@@ -1,7 +1,7 @@
 [![TypeDB Studio](./docs/images/studio_banner.png)](https://typedb.com/docs/typedb/connecting/studio)
 
-[![Factory](https://factory.vaticle.com/api/status/vaticle/typedb-studio/badge.svg)](https://factory.vaticle.com/vaticle/typedb-studio)
-[![GitHub release](https://img.shields.io/github/release/vaticle/typedb-studio.svg)](https://github.com/vaticle/typedb-studio/releases/latest)
+[![Factory](https://factory.vaticle.com/api/status/typedb/typedb-studio/badge.svg)](https://factory.vaticle.com/typedb/typedb-studio)
+[![GitHub release](https://img.shields.io/github/release/typedb/typedb-studio.svg)](https://github.com/typedb/typedb-studio/releases/latest)
 [![Discord](https://img.shields.io/discord/665254494820368395?color=7389D8&label=chat&logo=discord&logoColor=ffffff)](https://typedb.com/discord)
 [![Discussion Forum](https://img.shields.io/badge/discourse-forum-blue.svg)](https://forum.typedb.com)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typedb-796de3.svg)](https://stackoverflow.com/questions/tagged/typedb)
@@ -9,7 +9,7 @@
 
 # Introducing TypeDB Studio
 
-TypeDB Studio is the IDE for developing with **[TypeDB](https://github.com/vaticle/typedb)**. It provides a consistent experience across different environments, including macOS, Linux, and Windows. With Studio, developers can easily manage databases, execute queries, and explore query results, all within a unified interface.
+TypeDB Studio is the IDE for developing with **[TypeDB](https://github.com/typedb/typedb)**. It provides a consistent experience across different environments, including macOS, Linux, and Windows. With Studio, developers can easily manage databases, execute queries, and explore query results, all within a unified interface.
 
 - [Install TypeDB Studio](https://typedb.com/docs/home/install/studio)
 - For a quick overview, check out the [relevant lesson](https://typedb.com/docs/learn/2-environment-setup/2.2-using-typedb-studio) in our end-to-end [TypeDB Learning Course](https://typedb.com/docs/learn/overview).
@@ -60,7 +60,7 @@ TypeDB Studio covers all steps of the development process with TypeDB:
 
 ## Download TypeDB Studio
 
-You can download TypeDB Studio from the [GitHub Releases](https://github.com/vaticle/typedb-studio/releases) page.
+You can download TypeDB Studio from the [GitHub Releases](https://github.com/typedb/typedb-studio/releases) page.
 For more information on how to install and run TypeDB Studio, see the 
 [Installation guide](https://typedb.com/docs/home/install#_studio).
 
@@ -96,8 +96,8 @@ If you want to begin your journey with TypeDB, you can explore the following res
 * In-depth dive into TypeDB's [philosophy](https://typedb.com/philosophy)
 * Our [TypeDB quickstart](https://typedb.com/docs/typedb/quickstart-guide)
 * Our [TypeDB Studio documentation](https://typedb.com/docs/clients/studio)
-* **[TypeQL](https://github.com/vaticle/typeql)**
-* **[TypeDB](https://github.com/vaticle/typedb)**
+* **[TypeQL](https://github.com/typedb/typeql)**
+* **[TypeDB](https://github.com/typedb/typedb)**
 
 ## Contributions
 
@@ -111,8 +111,5 @@ Thank you!
 
 ## Licensing
 
-This software is developed by [Vaticle](https://typedb.com/). 
-It's released under the Mozilla Public License 2.0 (MPL 2.0).
-For license information, please see [LICENSE](https://github.com/vaticle/typedb-studio/blob/master/LICENSE). 
-
-Copyright (C) 2023 Vaticle.
+This software is released under the Mozilla Public License 2.0 (MPL 2.0).
+For license information, please see [LICENSE](https://github.com/typedb/typedb-studio/blob/master/LICENSE). 
