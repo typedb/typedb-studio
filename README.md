@@ -1,4 +1,4 @@
-[![TypeDB Studio](./docs/images/studio_banner.png)](https://typedb.com/docs/typedb/connecting/studio)
+[![TypeDB Studio](./docs/images/typedb_banner.png)](https://typedb.com/docs/typedb/connecting/studio)
 
 [![Factory](https://factory.vaticle.com/api/status/typedb/typedb-studio/badge.svg)](https://factory.vaticle.com/typedb/typedb-studio)
 [![GitHub release](https://img.shields.io/github/release/typedb/typedb-studio.svg)](https://github.com/typedb/typedb-studio/releases/latest)
