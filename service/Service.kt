@@ -4,18 +4,18 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service
+package com.typedb.studio.service
 
-import com.vaticle.typedb.studio.service.common.ConfirmationService
-import com.vaticle.typedb.studio.service.common.DataService
-import com.vaticle.typedb.studio.service.common.EditorService
-import com.vaticle.typedb.studio.service.common.NotificationService
-import com.vaticle.typedb.studio.service.common.PreferenceService
-import com.vaticle.typedb.studio.service.common.StatusService
-import com.vaticle.typedb.studio.service.connection.DriverState
-import com.vaticle.typedb.studio.service.page.PageService
-import com.vaticle.typedb.studio.service.project.ProjectService
-import com.vaticle.typedb.studio.service.schema.SchemaService
+import com.typedb.studio.service.common.ConfirmationService
+import com.typedb.studio.service.common.DataService
+import com.typedb.studio.service.common.EditorService
+import com.typedb.studio.service.common.NotificationService
+import com.typedb.studio.service.common.PreferenceService
+import com.typedb.studio.service.common.StatusService
+import com.typedb.studio.service.connection.DriverState
+import com.typedb.studio.service.page.PageService
+import com.typedb.studio.service.project.ProjectService
+import com.typedb.studio.service.schema.SchemaService
 
 object Service {
 

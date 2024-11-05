@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.schema
+package com.typedb.studio.service.schema
 
 import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT

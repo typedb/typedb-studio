@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.editor.highlighter.common
+package com.typedb.studio.framework.editor.highlighter.common
 
 interface Lexer {
 

@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.material
+package com.typedb.studio.framework.material
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
@@ -31,14 +31,14 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
+import com.typedb.studio.framework.common.KeyMapper
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.material.Form.IconButtonArg
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Sentence
+import com.typedb.studio.service.page.Pageable
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.common.KeyMapper
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Sentence
-import com.vaticle.typedb.studio.service.page.Pageable
 
 object Pages {
 

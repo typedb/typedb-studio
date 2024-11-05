@@ -4,16 +4,16 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.common
+package com.typedb.studio.service.common
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.ERROR
-import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.INFO
-import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.WARNING
-import com.vaticle.typedb.studio.service.common.util.Message
-import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
-import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.UNEXPECTED_ERROR_IN_COROUTINE
+import com.typedb.studio.service.common.NotificationService.Notification.Type.ERROR
+import com.typedb.studio.service.common.NotificationService.Notification.Type.INFO
+import com.typedb.studio.service.common.NotificationService.Notification.Type.WARNING
+import com.typedb.studio.service.common.util.Message
+import com.typedb.studio.service.common.util.Message.Companion.UNKNOWN
+import com.typedb.studio.service.common.util.Message.System.Companion.UNEXPECTED_ERROR_IN_COROUTINE
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds

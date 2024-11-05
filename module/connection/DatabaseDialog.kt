@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.module.connection
+package com.typedb.studio.module.connection
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -24,23 +24,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.ActionableList
-import com.vaticle.typedb.studio.framework.material.Dialog
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.Dropdown
-import com.vaticle.typedb.studio.framework.material.Form.FIELD_HEIGHT
-import com.vaticle.typedb.studio.framework.material.Form.Field
-import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
-import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
-import com.vaticle.typedb.studio.framework.material.Form.Submission
-import com.vaticle.typedb.studio.framework.material.Form.TextButton
-import com.vaticle.typedb.studio.framework.material.Form.TextInput
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Sentence
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.material.ActionableList
+import com.typedb.studio.framework.material.Dialog
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Form.Dropdown
+import com.typedb.studio.framework.material.Form.FIELD_HEIGHT
+import com.typedb.studio.framework.material.Form.Field
+import com.typedb.studio.framework.material.Form.IconButtonArg
+import com.typedb.studio.framework.material.Form.RowSpacer
+import com.typedb.studio.framework.material.Form.Submission
+import com.typedb.studio.framework.material.Form.TextButton
+import com.typedb.studio.framework.material.Form.TextInput
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.framework.material.Tooltip
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Sentence
 
 object DatabaseDialog {
 

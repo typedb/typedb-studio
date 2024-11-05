@@ -7,24 +7,24 @@
 // We need to access the private function StudioState.driver.session.tryOpen, this allows us to.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
-package com.vaticle.typedb.studio.test.integration
+package com.typedb.studio.test.integration
 
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Message
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.openSchemaWriteTransaction
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
-import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
-import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
-import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Message
+import com.typedb.studio.test.integration.common.StudioActions.clickIcon
+import com.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
+import com.typedb.studio.test.integration.common.StudioActions.copyFolder
+import com.typedb.studio.test.integration.common.StudioActions.createDatabase
+import com.typedb.studio.test.integration.common.StudioActions.openProject
+import com.typedb.studio.test.integration.common.StudioActions.openSchemaWriteTransaction
+import com.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
+import com.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
+import com.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
+import com.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
+import com.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
+import com.typedb.studio.test.integration.data.Paths.SampleFileStructure
+import com.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals

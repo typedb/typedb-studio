@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.editor
+package com.typedb.studio.framework.editor
 
 import androidx.compose.foundation.ScrollbarAdapter
 import androidx.compose.foundation.layout.Box
@@ -27,8 +27,8 @@ import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
-import com.vaticle.typedb.studio.framework.common.Util.toDP
-import com.vaticle.typedb.studio.service.Service
+import com.typedb.studio.framework.common.Util.toDP
+import com.typedb.studio.service.Service
 import java.lang.Integer.min
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.math.floor

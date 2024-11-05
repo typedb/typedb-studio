@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.module.user
+package com.typedb.studio.module.user
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -13,12 +13,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.framework.material.Dialog
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Sentence.UPDATE_DEFAULT_PASSWORD_FOR_USERNAME
-import com.vaticle.typedb.studio.service.common.util.Sentence.UPDATE_DEFAULT_PASSWORD_INSTRUCTION
+import com.typedb.studio.framework.material.Dialog
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Sentence.UPDATE_DEFAULT_PASSWORD_FOR_USERNAME
+import com.typedb.studio.service.common.util.Sentence.UPDATE_DEFAULT_PASSWORD_INSTRUCTION
 
 object UpdateDefaultPasswordDialog {
 

@@ -4,17 +4,17 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.schema
+package com.typedb.studio.service.schema
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Message.Companion.UNKNOWN
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_RENAME_TYPE
 import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
 import com.vaticle.typedb.driver.api.concept.type.Type
-import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_RENAME_TYPE
 import mu.KotlinLogging
 
 sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(

@@ -4,9 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.common
+package com.typedb.studio.service.common
 
-import com.vaticle.typedb.studio.service.common.util.DialogState
+import com.typedb.studio.service.common.util.DialogState
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.relativeTo

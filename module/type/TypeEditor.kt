@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.module.type
+package com.typedb.studio.module.type
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -41,37 +41,37 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.typedb.studio.framework.common.Util.hyphenate
+import com.typedb.studio.framework.common.Util.toDP
+import com.typedb.studio.framework.common.theme.Color.FADED_OPACITY
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.material.ConceptDisplay.TypeLabelWithDetails
+import com.typedb.studio.framework.material.ConceptDisplay.iconOf
+import com.typedb.studio.framework.material.ContextMenu
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Form.ClickableText
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.framework.material.Navigator
+import com.typedb.studio.framework.material.Pages
+import com.typedb.studio.framework.material.Scrollbar
+import com.typedb.studio.framework.material.Separator
+import com.typedb.studio.framework.material.Table
+import com.typedb.studio.framework.material.Tooltip
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Sentence
+import com.typedb.studio.service.page.Pageable
+import com.typedb.studio.service.schema.AttributeTypeState
+import com.typedb.studio.service.schema.EntityTypeState
+import com.typedb.studio.service.schema.RelationTypeState
+import com.typedb.studio.service.schema.RoleTypeState
+import com.typedb.studio.service.schema.ThingTypeState
+import com.typedb.studio.service.schema.TypeState
+import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.driver.api.concept.type.AttributeType
 import com.vaticle.typedb.driver.api.concept.type.EntityType
 import com.vaticle.typedb.driver.api.concept.type.RelationType
 import com.vaticle.typedb.driver.api.concept.type.ThingType
-import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.common.Util.hyphenate
-import com.vaticle.typedb.studio.framework.common.Util.toDP
-import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.ConceptDisplay.TypeLabelWithDetails
-import com.vaticle.typedb.studio.framework.material.ConceptDisplay.iconOf
-import com.vaticle.typedb.studio.framework.material.ContextMenu
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.ClickableText
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.Navigator
-import com.vaticle.typedb.studio.framework.material.Pages
-import com.vaticle.typedb.studio.framework.material.Scrollbar
-import com.vaticle.typedb.studio.framework.material.Separator
-import com.vaticle.typedb.studio.framework.material.Table
-import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Sentence
-import com.vaticle.typedb.studio.service.page.Pageable
-import com.vaticle.typedb.studio.service.schema.AttributeTypeState
-import com.vaticle.typedb.studio.service.schema.EntityTypeState
-import com.vaticle.typedb.studio.service.schema.RelationTypeState
-import com.vaticle.typedb.studio.service.schema.RoleTypeState
-import com.vaticle.typedb.studio.service.schema.ThingTypeState
-import com.vaticle.typedb.studio.service.schema.TypeState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 

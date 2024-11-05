@@ -18,7 +18,7 @@ compatibility between Studio and TypeDB server.
 - **Deploy to APT**
 
 Users of Ubuntu and other Debian-like Linux distributions will now be able to install the
-`typedb-studio` package from the Vaticle APT repo (https://repo.typedb.com/public/public-release/deb/ubuntu).
+`typedb-studio` package from the TypeDB APT repo (https://repo.typedb.com/public/public-release/deb/ubuntu).
 
 - **Introduce 'Close Database Session' button**
 

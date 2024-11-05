@@ -4,13 +4,12 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.editor
+package com.typedb.studio.framework.editor
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.TextLayoutResult
-import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
-import mu.KotlinLogging
+import com.typedb.studio.framework.editor.common.GlyphLine
 
 /**
  * This class is a wrapper over [TextLayoutResult] which is produced after

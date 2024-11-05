@@ -4,11 +4,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.project
+package com.typedb.studio.service.project
 
-import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.PATH_NO_LONGER_EXIST
-import com.vaticle.typedb.studio.service.page.Navigable
+import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.typedb.studio.service.common.util.Message.Project.Companion.PATH_NO_LONGER_EXIST
+import com.typedb.studio.service.page.Navigable
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists

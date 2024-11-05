@@ -4,11 +4,32 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.schema
+package com.typedb.studio.service.schema
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.typedb.studio.service.common.ConfirmationService
+import com.typedb.studio.service.common.NotificationService
+import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.typedb.studio.service.common.NotificationService.Notification
+import com.typedb.studio.service.common.StatusService
+import com.typedb.studio.service.common.StatusService.Key.SCHEMA_EXCEPTIONS
+import com.typedb.studio.service.common.StatusService.Status.Type.WARNING
+import com.typedb.studio.service.common.atomic.AtomicBooleanState
+import com.typedb.studio.service.common.atomic.AtomicIntegerState
+import com.typedb.studio.service.common.util.DialogState
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Message.Companion.UNKNOWN
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_OPEN_READ_TX
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_OPEN_WRITE_TX
+import com.typedb.studio.service.common.util.Message.Schema.Companion.UNEXPECTED_ERROR
+import com.typedb.studio.service.connection.SessionState
+import com.typedb.studio.service.page.Navigable
+import com.typedb.studio.service.page.PageService
+import com.typedb.studio.service.schema.AttributeTypeState.OwnedAttTypeProperties
+import com.typedb.studio.service.schema.RoleTypeState.PlayedRoleTypeProperties
+import com.typedb.studio.service.schema.RoleTypeState.RelatedRoleTypeProperties
 import com.vaticle.typedb.driver.api.TypeDBSession
 import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
@@ -18,27 +39,6 @@ import com.vaticle.typedb.driver.api.concept.type.RelationType
 import com.vaticle.typedb.driver.api.concept.type.RoleType
 import com.vaticle.typedb.driver.api.concept.type.ThingType
 import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
-import com.vaticle.typedb.studio.service.common.ConfirmationService
-import com.vaticle.typedb.studio.service.common.NotificationService
-import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.service.common.NotificationService.Notification
-import com.vaticle.typedb.studio.service.common.StatusService
-import com.vaticle.typedb.studio.service.common.StatusService.Key.SCHEMA_EXCEPTIONS
-import com.vaticle.typedb.studio.service.common.StatusService.Status.Type.WARNING
-import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
-import com.vaticle.typedb.studio.service.common.atomic.AtomicIntegerState
-import com.vaticle.typedb.studio.service.common.util.DialogState
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_OPEN_READ_TX
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_OPEN_WRITE_TX
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.UNEXPECTED_ERROR
-import com.vaticle.typedb.studio.service.connection.SessionState
-import com.vaticle.typedb.studio.service.page.Navigable
-import com.vaticle.typedb.studio.service.page.PageService
-import com.vaticle.typedb.studio.service.schema.AttributeTypeState.OwnedAttTypeProperties
-import com.vaticle.typedb.studio.service.schema.RoleTypeState.PlayedRoleTypeProperties
-import com.vaticle.typedb.studio.service.schema.RoleTypeState.RelatedRoleTypeProperties
 import com.vaticle.typeql.lang.common.TypeQLToken
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue

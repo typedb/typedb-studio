@@ -53,7 +53,7 @@ kt_jvm_test(
         "@maven//:org_jetbrains_compose_ui_ui_geometry_desktop",
         "@maven//:org_jetbrains_kotlin_kotlin_test",
     ],
-    test_class = "com.vaticle.typedb.studio.framework.common.geometry.GeometryTest",
+    test_class = "com.typedb.studio.framework.common.geometry.GeometryTest",
 )
 
 checkstyle_test(

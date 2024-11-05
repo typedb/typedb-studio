@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.editor
+package com.typedb.studio.framework.editor
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -57,22 +57,22 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vaticle.typedb.studio.framework.common.Util.getCursorRectSafely
-import com.vaticle.typedb.studio.framework.common.Util.toDP
-import com.vaticle.typedb.studio.framework.common.theme.Color.fadeable
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.editor.InputTarget.Selection
-import com.vaticle.typedb.studio.framework.editor.TextProcessor.Companion.normaliseWhiteSpace
-import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
-import com.vaticle.typedb.studio.framework.editor.highlighter.SyntaxHighlighter.highlight
-import com.vaticle.typedb.studio.framework.material.ContextMenu
-import com.vaticle.typedb.studio.framework.material.Scrollbar
-import com.vaticle.typedb.studio.framework.material.Separator
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FILE_CONTENT_CHANGED_ON_DISK
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FILE_PERMISSION_CHANGED_ON_DISK
-import com.vaticle.typedb.studio.service.common.util.Property
-import com.vaticle.typedb.studio.service.project.FileState
+import com.typedb.studio.framework.common.Util.getCursorRectSafely
+import com.typedb.studio.framework.common.Util.toDP
+import com.typedb.studio.framework.common.theme.Color.fadeable
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.editor.InputTarget.Selection
+import com.typedb.studio.framework.editor.TextProcessor.Companion.normaliseWhiteSpace
+import com.typedb.studio.framework.editor.common.GlyphLine
+import com.typedb.studio.framework.editor.highlighter.SyntaxHighlighter.highlight
+import com.typedb.studio.framework.material.ContextMenu
+import com.typedb.studio.framework.material.Scrollbar
+import com.typedb.studio.framework.material.Separator
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Message.Project.Companion.FILE_CONTENT_CHANGED_ON_DISK
+import com.typedb.studio.service.common.util.Message.Project.Companion.FILE_PERMISSION_CHANGED_ON_DISK
+import com.typedb.studio.service.common.util.Property
+import com.typedb.studio.service.project.FileState
 import java.awt.event.MouseEvent.BUTTON1
 import kotlin.math.ceil
 import kotlin.math.log10

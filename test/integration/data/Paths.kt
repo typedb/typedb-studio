@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.test.integration.data
+package com.typedb.studio.test.integration.data
 
 import java.io.File
 

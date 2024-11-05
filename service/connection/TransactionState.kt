@@ -4,25 +4,25 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.connection
+package com.typedb.studio.service.connection
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.typedb.studio.service.common.NotificationService
+import com.typedb.studio.service.common.PreferenceService
+import com.typedb.studio.service.common.atomic.AtomicBooleanState
+import com.typedb.studio.service.common.util.Message
+import com.typedb.studio.service.common.util.Message.Companion.UNKNOWN
+import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_OPEN_TRANSACTION
+import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_RUN_QUERY
+import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_CLOSED_IN_QUERY
+import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_CLOSED_ON_SERVER
+import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_COMMIT_FAILED
+import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_COMMIT_SUCCESSFULLY
+import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_ROLLBACK
 import com.vaticle.typedb.driver.api.TypeDBOptions
 import com.vaticle.typedb.driver.api.TypeDBTransaction
-import com.vaticle.typedb.studio.service.common.NotificationService
-import com.vaticle.typedb.studio.service.common.PreferenceService
-import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
-import com.vaticle.typedb.studio.service.common.util.Message
-import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_OPEN_TRANSACTION
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_RUN_QUERY
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_CLOSED_IN_QUERY
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_CLOSED_ON_SERVER
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_COMMIT_FAILED
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_COMMIT_SUCCESSFULLY
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_ROLLBACK
 import java.util.concurrent.LinkedBlockingQueue
 import mu.KotlinLogging
 

@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.material
+package com.typedb.studio.framework.material
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -45,10 +45,10 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vaticle.typedb.studio.framework.common.Util.toDP
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Form.IconArg
-import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
+import com.typedb.studio.framework.common.Util.toDP
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.material.Form.IconArg
+import com.typedb.studio.framework.material.Form.IconButtonArg
 import java.awt.event.MouseEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

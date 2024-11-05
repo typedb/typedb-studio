@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.common
+package com.typedb.studio.framework.common
 
 import java.net.URL
 

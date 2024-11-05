@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.module
+package com.typedb.studio.module
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -18,35 +18,35 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.typedb.studio.framework.common.URL
+import com.typedb.studio.framework.common.Util.mayTruncate
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.common.theme.Theme.TOOLBAR_BUTTON_SIZE
+import com.typedb.studio.framework.common.theme.Theme.TOOLBAR_SEPARATOR_HEIGHT
+import com.typedb.studio.framework.common.theme.Theme.TOOLBAR_SIZE
+import com.typedb.studio.framework.common.theme.Theme.TOOLBAR_SPACING
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Form.IconButton
+import com.typedb.studio.framework.material.Form.LoadingIndicator
+import com.typedb.studio.framework.material.Form.RawIconButton
+import com.typedb.studio.framework.material.Form.TextButton
+import com.typedb.studio.framework.material.Form.TextButtonArg
+import com.typedb.studio.framework.material.Form.TextButtonRow
+import com.typedb.studio.framework.material.Form.toggleButtonColor
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.framework.material.Separator
+import com.typedb.studio.framework.material.Tooltip
+import com.typedb.studio.module.connection.DatabaseDialog.DatabaseDropdown
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Property.FileType.Companion.RUNNABLE_EXTENSIONS_STR
+import com.typedb.studio.service.common.util.Sentence
+import com.typedb.studio.service.connection.DriverState
+import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
+import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
+import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 import com.vaticle.typedb.driver.api.TypeDBSession
 import com.vaticle.typedb.driver.api.TypeDBTransaction
-import com.vaticle.typedb.studio.framework.common.URL
-import com.vaticle.typedb.studio.framework.common.Util.mayTruncate
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.common.theme.Theme.TOOLBAR_BUTTON_SIZE
-import com.vaticle.typedb.studio.framework.common.theme.Theme.TOOLBAR_SEPARATOR_HEIGHT
-import com.vaticle.typedb.studio.framework.common.theme.Theme.TOOLBAR_SIZE
-import com.vaticle.typedb.studio.framework.common.theme.Theme.TOOLBAR_SPACING
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.IconButton
-import com.vaticle.typedb.studio.framework.material.Form.LoadingIndicator
-import com.vaticle.typedb.studio.framework.material.Form.RawIconButton
-import com.vaticle.typedb.studio.framework.material.Form.TextButton
-import com.vaticle.typedb.studio.framework.material.Form.TextButtonArg
-import com.vaticle.typedb.studio.framework.material.Form.TextButtonRow
-import com.vaticle.typedb.studio.framework.material.Form.toggleButtonColor
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.Separator
-import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.module.connection.DatabaseDialog.DatabaseDropdown
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Property.FileType.Companion.RUNNABLE_EXTENSIONS_STR
-import com.vaticle.typedb.studio.service.common.util.Sentence
-import com.vaticle.typedb.studio.service.connection.DriverState
-import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTED
-import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTING
-import com.vaticle.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 
 object Toolbar {
 

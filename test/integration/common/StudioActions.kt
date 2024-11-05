@@ -7,7 +7,7 @@
 // We need to access the private function StudioState.driver.session.tryOpen, this allows us to.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
-package com.vaticle.typedb.studio.test.integration.common
+package com.typedb.studio.test.integration.common
 
 import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.assertAll
@@ -17,14 +17,14 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Message
 import com.vaticle.typedb.driver.TypeDB
 import com.vaticle.typedb.driver.api.TypeDBOptions
 import com.vaticle.typedb.driver.api.TypeDBSession
 import com.vaticle.typedb.driver.api.TypeDBTransaction
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Message
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLGet
 import java.io.File

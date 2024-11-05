@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.material
+package com.typedb.studio.framework.material
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -25,11 +25,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
-import com.vaticle.typedb.studio.framework.material.Form.TextButton
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.material.Form.RowSpacer
+import com.typedb.studio.framework.material.Form.TextButton
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Label
 
 object ConfirmationDialog {
 

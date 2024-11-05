@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.graph
+package com.typedb.studio.framework.graph
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,8 +14,8 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
-import com.vaticle.typedb.studio.framework.common.Util.toDP
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry
+import com.typedb.studio.framework.common.Util.toDP
+import com.typedb.studio.framework.common.geometry.Geometry
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.sqrt
 

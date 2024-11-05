@@ -4,27 +4,27 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.project
+package com.typedb.studio.service.project
 
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Label.UNTITLED
-import com.vaticle.typedb.studio.service.common.util.Message
-import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.DIRECTORY_HAS_BEEN_MOVED_OUT
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.DIRECTORY_NOT_DELETABLE
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_CREATE_DIRECTORY
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_CREATE_FILE
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_DIRECTORY_DUE_TO_DUPLICATE
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_RENAME_DIRECTORY
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.PATH_NOT_EXIST
-import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.ILLEGAL_CAST
-import com.vaticle.typedb.studio.service.common.util.Property
-import com.vaticle.typedb.studio.service.common.util.Sentence
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Label.UNTITLED
+import com.typedb.studio.service.common.util.Message
+import com.typedb.studio.service.common.util.Message.Companion.UNKNOWN
+import com.typedb.studio.service.common.util.Message.Project.Companion.DIRECTORY_HAS_BEEN_MOVED_OUT
+import com.typedb.studio.service.common.util.Message.Project.Companion.DIRECTORY_NOT_DELETABLE
+import com.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_CREATE_DIRECTORY
+import com.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_CREATE_FILE
+import com.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_DIRECTORY_DUE_TO_DUPLICATE
+import com.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
+import com.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY
+import com.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_AS_PATH_NOT_EXIST
+import com.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_DUE_TO_DUPLICATE
+import com.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_MOVE_DIRECTORY_TO_SAME_LOCATION
+import com.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_RENAME_DIRECTORY
+import com.typedb.studio.service.common.util.Message.Project.Companion.PATH_NOT_EXIST
+import com.typedb.studio.service.common.util.Message.System.Companion.ILLEGAL_CAST
+import com.typedb.studio.service.common.util.Property
+import com.typedb.studio.service.common.util.Sentence
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.createFile

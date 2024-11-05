@@ -4,14 +4,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.editor.highlighter.common
+package com.typedb.studio.framework.editor.highlighter.common
 
 import androidx.compose.ui.graphics.Color
+import com.typedb.studio.framework.common.theme.Typography
+import com.typedb.studio.framework.common.theme.Typography.Style.BOLD
+import com.typedb.studio.framework.common.theme.Typography.Style.ITALIC
+import com.typedb.studio.framework.common.theme.Typography.Style.UNDERLINE
 import com.vaticle.typedb.common.yaml.YAML
-import com.vaticle.typedb.studio.framework.common.theme.Typography
-import com.vaticle.typedb.studio.framework.common.theme.Typography.Style.BOLD
-import com.vaticle.typedb.studio.framework.common.theme.Typography.Style.ITALIC
-import com.vaticle.typedb.studio.framework.common.theme.Typography.Style.UNDERLINE
 
 class Scope private constructor(val name: String, var parent: Scope?) {
 

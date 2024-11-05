@@ -4,23 +4,23 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.connection
+package com.typedb.studio.service.connection
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.typedb.studio.service.common.NotificationService
+import com.typedb.studio.service.common.PreferenceService
+import com.typedb.studio.service.common.atomic.AtomicBooleanState
+import com.typedb.studio.service.common.util.Message
+import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
+import com.typedb.studio.service.common.util.Message.Connection.Companion.SESSION_CLOSED_ON_SERVER
+import com.typedb.studio.service.common.util.Message.Connection.Companion.SESSION_REOPENED
 import com.vaticle.typedb.driver.api.TypeDBOptions
 import com.vaticle.typedb.driver.api.TypeDBSession
 import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.driver.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
-import com.vaticle.typedb.studio.service.common.NotificationService
-import com.vaticle.typedb.studio.service.common.PreferenceService
-import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
-import com.vaticle.typedb.studio.service.common.util.Message
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.SESSION_CLOSED_ON_SERVER
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.SESSION_REOPENED
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference

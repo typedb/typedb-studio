@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.material
+package com.typedb.studio.framework.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -34,17 +34,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
-import com.vaticle.typedb.studio.framework.common.Util.fromDP
-import com.vaticle.typedb.studio.framework.common.Util.toDP
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Form.IconButton
-import com.vaticle.typedb.studio.framework.material.Form.Text
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.NotificationService.Notification
-import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.ERROR
-import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.INFO
-import com.vaticle.typedb.studio.service.common.NotificationService.Notification.Type.WARNING
-import com.vaticle.typedb.studio.service.common.util.Label
+import com.typedb.studio.framework.common.Util.fromDP
+import com.typedb.studio.framework.common.Util.toDP
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.material.Form.IconButton
+import com.typedb.studio.framework.material.Form.Text
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.NotificationService.Notification
+import com.typedb.studio.service.common.NotificationService.Notification.Type.ERROR
+import com.typedb.studio.service.common.NotificationService.Notification.Type.INFO
+import com.typedb.studio.service.common.NotificationService.Notification.Type.WARNING
+import com.typedb.studio.service.common.util.Label
 import kotlin.math.roundToInt
 
 object Notifications {

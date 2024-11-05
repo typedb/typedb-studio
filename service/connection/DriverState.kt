@@ -4,11 +4,31 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.connection
+package com.typedb.studio.service.connection
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.typedb.studio.service.common.DataService
+import com.typedb.studio.service.common.NotificationService
+import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.typedb.studio.service.common.PreferenceService
+import com.typedb.studio.service.common.atomic.AtomicBooleanState
+import com.typedb.studio.service.common.atomic.AtomicReferenceState
+import com.typedb.studio.service.common.util.DialogState
+import com.typedb.studio.service.common.util.Message
+import com.typedb.studio.service.common.util.Message.Connection.Companion.CREDENTIALS_EXPIRE_SOON_HOURS
+import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
+import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
+import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
+import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_UPDATE_PASSWORD
+import com.typedb.studio.service.common.util.Message.Connection.Companion.PASSWORD_UPDATED_SUCCESSFULLY
+import com.typedb.studio.service.common.util.Message.Connection.Companion.RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY
+import com.typedb.studio.service.common.util.Message.Connection.Companion.UNABLE_TO_CONNECT
+import com.typedb.studio.service.common.util.Message.Connection.Companion.UNEXPECTED_ERROR
+import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
+import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
+import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 import com.vaticle.typedb.driver.TypeDB
 import com.vaticle.typedb.driver.api.TypeDBCredential
 import com.vaticle.typedb.driver.api.TypeDBDriver
@@ -16,26 +36,6 @@ import com.vaticle.typedb.driver.api.TypeDBSession
 import com.vaticle.typedb.driver.api.TypeDBSession.Type.DATA
 import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
-import com.vaticle.typedb.studio.service.common.DataService
-import com.vaticle.typedb.studio.service.common.NotificationService
-import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.service.common.PreferenceService
-import com.vaticle.typedb.studio.service.common.atomic.AtomicBooleanState
-import com.vaticle.typedb.studio.service.common.atomic.AtomicReferenceState
-import com.vaticle.typedb.studio.service.common.util.DialogState
-import com.vaticle.typedb.studio.service.common.util.Message
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.CREDENTIALS_EXPIRE_SOON_HOURS
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_UPDATE_PASSWORD
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.PASSWORD_UPDATED_SUCCESSFULLY
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.UNABLE_TO_CONNECT
-import com.vaticle.typedb.studio.service.common.util.Message.Connection.Companion.UNEXPECTED_ERROR
-import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTED
-import com.vaticle.typedb.studio.service.connection.DriverState.Status.CONNECTING
-import com.vaticle.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 import java.nio.file.Path
 import java.time.Duration
 import java.util.Optional

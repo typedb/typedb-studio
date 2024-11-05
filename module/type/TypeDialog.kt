@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.module.type
+package com.typedb.studio.module.type
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -18,27 +18,27 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import com.typedb.studio.framework.common.Util.hyphenate
+import com.typedb.studio.framework.material.Dialog
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Form.Checkbox
+import com.typedb.studio.framework.material.Form.Field
+import com.typedb.studio.framework.material.Form.Submission
+import com.typedb.studio.framework.material.Form.TextInput
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Sentence
+import com.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_OWNED_ATT_TYPE
+import com.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_OWNED_ATT_TYPE_TO_SET
+import com.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE
+import com.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE_TO_SET
+import com.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE
+import com.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE_TO_SET
+import com.typedb.studio.service.schema.AttributeTypeState
+import com.typedb.studio.service.schema.SchemaService
+import com.typedb.studio.service.schema.ThingTypeState
+import com.typedb.studio.service.schema.TypeState
 import com.vaticle.typedb.driver.api.concept.value.Value
-import com.vaticle.typedb.studio.framework.common.Util.hyphenate
-import com.vaticle.typedb.studio.framework.material.Dialog
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.Checkbox
-import com.vaticle.typedb.studio.framework.material.Form.Field
-import com.vaticle.typedb.studio.framework.material.Form.Submission
-import com.vaticle.typedb.studio.framework.material.Form.TextInput
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Sentence
-import com.vaticle.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_OWNED_ATT_TYPE
-import com.vaticle.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_OWNED_ATT_TYPE_TO_SET
-import com.vaticle.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE
-import com.vaticle.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE_TO_SET
-import com.vaticle.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE
-import com.vaticle.typedb.studio.service.common.util.Sentence.CHANGE_OVERRIDDEN_RELATED_ROLE_TYPE_TO_SET
-import com.vaticle.typedb.studio.service.schema.AttributeTypeState
-import com.vaticle.typedb.studio.service.schema.SchemaService
-import com.vaticle.typedb.studio.service.schema.ThingTypeState
-import com.vaticle.typedb.studio.service.schema.TypeState
 
 object TypeDialog {
 

@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.common
+package com.typedb.studio.framework.common
 
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -13,8 +13,8 @@ import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Property.OS
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Property.OS
 import java.awt.event.KeyEvent.KEY_LOCATION_NUMPAD
 
 interface KeyMapper {

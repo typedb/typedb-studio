@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.resources.version
+package com.typedb.studio.resources.version
 
 class Version {
     companion object {

@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.page
+package com.typedb.studio.service.page
 
 interface Navigable<out T : Navigable<T>> : Comparable<Navigable<@UnsafeVariance T>> {
     val name: String

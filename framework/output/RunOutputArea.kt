@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.output
+package com.typedb.studio.framework.output
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,20 +25,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.common.theme.Theme.PANEL_BAR_HEIGHT
-import com.vaticle.typedb.studio.framework.common.theme.Theme.PANEL_BAR_SPACING
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
-import com.vaticle.typedb.studio.framework.material.Frame
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.Separator
-import com.vaticle.typedb.studio.framework.material.Tabs
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Sentence
-import com.vaticle.typedb.studio.service.connection.QueryRunner
-import com.vaticle.typedb.studio.service.page.Pageable
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.common.theme.Theme.PANEL_BAR_HEIGHT
+import com.typedb.studio.framework.common.theme.Theme.PANEL_BAR_SPACING
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Form.IconButtonArg
+import com.typedb.studio.framework.material.Frame
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.framework.material.Separator
+import com.typedb.studio.framework.material.Tabs
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Sentence
+import com.typedb.studio.service.connection.QueryRunner
+import com.typedb.studio.service.page.Pageable
 import kotlinx.coroutines.delay
 
 object RunOutputArea {

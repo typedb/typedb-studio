@@ -7,25 +7,25 @@
 // We need to access the private function StudioState.driver.session.tryOpen, this allows us to.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
-package com.vaticle.typedb.studio.test.integration
+package com.typedb.studio.test.integration
 
 import androidx.compose.ui.test.onNodeWithText
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.test.integration.common.StudioActions.Delays
+import com.typedb.studio.test.integration.common.StudioActions.clickAllInstancesOfIcon
+import com.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
+import com.typedb.studio.test.integration.common.StudioActions.copyFolder
+import com.typedb.studio.test.integration.common.StudioActions.createDatabase
+import com.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
+import com.typedb.studio.test.integration.common.StudioActions.openProject
+import com.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
+import com.typedb.studio.test.integration.common.StudioActions.waitUntilTrue
+import com.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
+import com.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
+import com.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import com.vaticle.typedb.driver.api.TypeDBSession
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickAllInstancesOfIcon
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilTrue
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
-import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
-import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 

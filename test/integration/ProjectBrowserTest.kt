@@ -4,20 +4,20 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.test.integration
+package com.typedb.studio.test.integration
 
 import androidx.compose.ui.test.onNodeWithText
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.Delays
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.clickIcon
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.waitUntilTrue
-import com.vaticle.typedb.studio.test.integration.data.Paths.SampleFileStructure
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.service.Service
+import com.typedb.studio.test.integration.common.StudioActions.Delays
+import com.typedb.studio.test.integration.common.StudioActions.clickIcon
+import com.typedb.studio.test.integration.common.StudioActions.copyFolder
+import com.typedb.studio.test.integration.common.StudioActions.delayAndRecompose
+import com.typedb.studio.test.integration.common.StudioActions.openProject
+import com.typedb.studio.test.integration.common.StudioActions.waitUntilAssertionPasses
+import com.typedb.studio.test.integration.common.StudioActions.waitUntilNodeWithTextExists
+import com.typedb.studio.test.integration.common.StudioActions.waitUntilTrue
+import com.typedb.studio.test.integration.data.Paths.SampleFileStructure
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.Test

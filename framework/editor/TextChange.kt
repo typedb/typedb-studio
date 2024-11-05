@@ -4,13 +4,13 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.editor
+package com.typedb.studio.framework.editor
 
+import com.typedb.studio.framework.editor.InputTarget.Cursor
+import com.typedb.studio.framework.editor.InputTarget.Cursor.Companion.min
+import com.typedb.studio.framework.editor.InputTarget.Selection
+import com.typedb.studio.framework.editor.common.GlyphLine
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.editor.InputTarget.Cursor
-import com.vaticle.typedb.studio.framework.editor.InputTarget.Cursor.Companion.min
-import com.vaticle.typedb.studio.framework.editor.InputTarget.Selection
-import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
 import kotlin.streams.toList
 
 internal class TextChange(val operations: List<Operation>) {

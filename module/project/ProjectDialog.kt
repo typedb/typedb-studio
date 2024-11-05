@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.module.project
+package com.typedb.studio.module.project
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -19,25 +19,25 @@ import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.framework.material.Dialog
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.Field
-import com.vaticle.typedb.studio.framework.material.Form.Submission
-import com.vaticle.typedb.studio.framework.material.Form.Text
-import com.vaticle.typedb.studio.framework.material.Form.TextInput
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.SelectFileDialog
-import com.vaticle.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
-import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.Service.notification
-import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.service.common.util.DialogState
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Sentence
-import com.vaticle.typedb.studio.service.project.DirectoryState
-import com.vaticle.typedb.studio.service.project.PathState.Type.DIRECTORY
-import com.vaticle.typedb.studio.service.project.PathState.Type.FILE
+import com.typedb.studio.framework.material.Dialog
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Form.Field
+import com.typedb.studio.framework.material.Form.Submission
+import com.typedb.studio.framework.material.Form.Text
+import com.typedb.studio.framework.material.Form.TextInput
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.framework.material.SelectFileDialog
+import com.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
+import com.typedb.studio.framework.material.Tooltip
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.Service.notification
+import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.typedb.studio.service.common.util.DialogState
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Sentence
+import com.typedb.studio.service.project.DirectoryState
+import com.typedb.studio.service.project.PathState.Type.DIRECTORY
+import com.typedb.studio.service.project.PathState.Type.FILE
 import java.awt.FileDialog
 import kotlin.io.path.Path
 import kotlinx.coroutines.CoroutineScope

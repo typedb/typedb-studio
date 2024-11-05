@@ -4,13 +4,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.schema
+package com.typedb.studio.service.schema
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.driver.api.TypeDBTransaction
-import com.vaticle.typedb.driver.api.concept.Concept
 import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
 import com.vaticle.typedb.driver.api.concept.type.RoleType
 import com.vaticle.typedb.driver.api.concept.type.ThingType

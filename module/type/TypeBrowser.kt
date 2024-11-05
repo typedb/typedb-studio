@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.module.type
+package com.typedb.studio.module.type
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -19,20 +19,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Browsers
-import com.vaticle.typedb.studio.framework.material.ConceptDisplay.iconOf
-import com.vaticle.typedb.studio.framework.material.ContextMenu
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.Navigator
-import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
-import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Sentence
-import com.vaticle.typedb.studio.service.schema.ThingTypeState
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.material.Browsers
+import com.typedb.studio.framework.material.ConceptDisplay.iconOf
+import com.typedb.studio.framework.material.ContextMenu
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Form.IconButtonArg
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.framework.material.Navigator
+import com.typedb.studio.framework.material.Navigator.rememberNavigatorState
+import com.typedb.studio.framework.material.Tooltip
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Sentence
+import com.typedb.studio.service.schema.ThingTypeState
 
 class TypeBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
 

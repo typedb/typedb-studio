@@ -72,7 +72,7 @@ define_kt_toolchain(
 
 java_binary(
     name = "studio-bin-linux-arm64",
-    main_class = "com.vaticle.typedb.studio.Studio",
+    main_class = "com.typedb.studio.Studio",
     runtime_deps = [
         "//:studio",
         "@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_arm64",
@@ -83,7 +83,7 @@ java_binary(
 
 java_binary(
     name = "studio-bin-linux-x86_64",
-    main_class = "com.vaticle.typedb.studio.Studio",
+    main_class = "com.typedb.studio.Studio",
     runtime_deps = [
         "//:studio",
         "@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64",
@@ -94,7 +94,7 @@ java_binary(
 
 java_binary(
     name = "studio-bin-mac-arm64",
-    main_class = "com.vaticle.typedb.studio.Studio",
+    main_class = "com.typedb.studio.Studio",
     runtime_deps = [
         "//:studio",
         "@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_arm64",
@@ -105,7 +105,7 @@ java_binary(
 
 java_binary(
     name = "studio-bin-mac-x86_64",
-    main_class = "com.vaticle.typedb.studio.Studio",
+    main_class = "com.typedb.studio.Studio",
     runtime_deps = [
         "//:studio",
         "@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64",
@@ -116,7 +116,7 @@ java_binary(
 
 java_binary(
     name = "studio-bin-windows-x86_64",
-    main_class = "com.vaticle.typedb.studio.Studio",
+    main_class = "com.typedb.studio.Studio",
     runtime_deps = [
         "//:studio",
         "@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64",
@@ -168,12 +168,12 @@ assemble_jvm_platform(
     java_deps = ":assemble-deps",
     java_deps_root = "lib/",
     main_jar_path = "com-vaticle-typedb-typedb-studio-0.0.0.jar",
-    main_class = "com.vaticle.typedb.studio.Studio",
+    main_class = "com.typedb.studio.Studio",
     additional_files = assemble_files,
     verbose = True,
     linux_app_category = "database",
     linux_menu_group = "Utility;Development;IDE;",
-    mac_app_id = "com.vaticle.typedb.studio",
+    mac_app_id = "com.typedb.studio",
     mac_entitlements = "//config/mac:entitlements-mac-plist",
     mac_code_signing_cert = "@vaticle_apple_developer_id_application_cert//file",
     mac_deep_sign_jars_regex = ".*io-netty-netty.*",

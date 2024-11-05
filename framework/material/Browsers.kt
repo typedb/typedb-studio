@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.material
+package com.typedb.studio.framework.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -27,8 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.common.theme.Theme
 import java.util.concurrent.LinkedBlockingQueue
 
 object Browsers {

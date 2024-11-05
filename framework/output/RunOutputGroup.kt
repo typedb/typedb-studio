@@ -4,23 +4,23 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.output
+package com.typedb.studio.framework.output
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.typedb.studio.framework.material.Tabs
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.typedb.studio.service.common.NotificationService.Companion.launchCompletableFuture
+import com.typedb.studio.service.common.StatusService.Key.OUTPUT_RESPONSE_TIME
+import com.typedb.studio.service.common.StatusService.Key.QUERY_RESPONSE_TIME
+import com.typedb.studio.service.connection.QueryRunner
+import com.typedb.studio.service.connection.QueryRunner.Response
+import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.GET
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.material.Tabs
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchCompletableFuture
-import com.vaticle.typedb.studio.service.common.StatusService.Key.OUTPUT_RESPONSE_TIME
-import com.vaticle.typedb.studio.service.common.StatusService.Key.QUERY_RESPONSE_TIME
-import com.vaticle.typedb.studio.service.connection.QueryRunner
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.GET
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue

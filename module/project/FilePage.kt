@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.module.project
+package com.typedb.studio.module.project
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -12,15 +12,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.editor.TextEditor
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Frame
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.Pages
-import com.vaticle.typedb.studio.framework.output.RunOutputArea
-import com.vaticle.typedb.studio.service.page.Pageable
-import com.vaticle.typedb.studio.service.project.FileState
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.editor.TextEditor
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Frame
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.framework.material.Pages
+import com.typedb.studio.framework.output.RunOutputArea
+import com.typedb.studio.service.page.Pageable
+import com.typedb.studio.service.project.FileState
 
 class FilePage private constructor(
     private var file: FileState,

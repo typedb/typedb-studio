@@ -4,9 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.page
+package com.typedb.studio.service.page
 
-import com.vaticle.typedb.studio.service.connection.QueryRunnerService
+import com.typedb.studio.service.connection.QueryRunnerService
 
 interface Pageable {
 

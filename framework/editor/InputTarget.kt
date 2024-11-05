@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.editor
+package com.typedb.studio.framework.editor
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.ScrollbarAdapter
@@ -19,12 +19,12 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.typedb.studio.framework.common.Util.getCursorRectSafely
+import com.typedb.studio.framework.common.Util.toDP
+import com.typedb.studio.framework.editor.common.GlyphLine
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.StatusService.Key.TEXT_CURSOR_POSITION
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.common.Util.getCursorRectSafely
-import com.vaticle.typedb.studio.framework.common.Util.toDP
-import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.StatusService.Key.TEXT_CURSOR_POSITION
 import kotlin.math.floor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

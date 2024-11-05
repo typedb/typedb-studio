@@ -4,16 +4,16 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.common.geometry
+package com.typedb.studio.framework.common.geometry
 
 import androidx.compose.ui.geometry.Offset
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.AngularDirection.CLOCKWISE
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.AngularDirection.COUNTER_CLOCKWISE
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.Circle
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.Ray
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.quadraticRoots
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.rayCircleIntersect
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.sweepAngle
+import com.typedb.studio.framework.common.geometry.Geometry.AngularDirection.CLOCKWISE
+import com.typedb.studio.framework.common.geometry.Geometry.AngularDirection.COUNTER_CLOCKWISE
+import com.typedb.studio.framework.common.geometry.Geometry.Circle
+import com.typedb.studio.framework.common.geometry.Geometry.Ray
+import com.typedb.studio.framework.common.geometry.Geometry.quadraticRoots
+import com.typedb.studio.framework.common.geometry.Geometry.rayCircleIntersect
+import com.typedb.studio.framework.common.geometry.Geometry.sweepAngle
 import kotlin.math.abs
 import kotlin.test.assertTrue
 import org.junit.Test

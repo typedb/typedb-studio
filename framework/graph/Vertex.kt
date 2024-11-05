@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.graph
+package com.typedb.studio.framework.graph
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector3D
@@ -17,19 +17,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import com.typedb.studio.framework.common.geometry.Geometry.Ellipse
+import com.typedb.studio.framework.common.geometry.Geometry.diamondArcIntersectAngles
+import com.typedb.studio.framework.common.geometry.Geometry.diamondIncomingLineIntersect
+import com.typedb.studio.framework.common.geometry.Geometry.ellipseIncomingLineIntersect
+import com.typedb.studio.framework.common.geometry.Geometry.rectArcIntersectAngles
+import com.typedb.studio.framework.common.geometry.Geometry.rectIncomingLineIntersect
+import com.typedb.studio.framework.material.ConceptDisplay.attributeValue
 import com.vaticle.force.graph.impl.BasicVertex
 import com.vaticle.typedb.driver.api.concept.Concept
 import com.vaticle.typedb.driver.api.concept.type.AttributeType
 import com.vaticle.typedb.driver.api.concept.type.EntityType
 import com.vaticle.typedb.driver.api.concept.type.RelationType
 import com.vaticle.typedb.driver.api.concept.type.ThingType
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.Ellipse
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.diamondArcIntersectAngles
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.diamondIncomingLineIntersect
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.ellipseIncomingLineIntersect
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.rectArcIntersectAngles
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.rectIncomingLineIntersect
-import com.vaticle.typedb.studio.framework.material.ConceptDisplay.attributeValue
 import java.awt.Polygon
 import kotlin.math.pow
 
@@ -181,7 +181,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
         abstract fun edgeEndpoint(source: Offset): Offset?
 
         /** Find the end angle of the given `Arc` when drawn as a curved edge to this vertex */
-        abstract fun curvedEdgeEndAngle(arc: com.vaticle.typedb.studio.framework.common.geometry.Geometry.Arc): Float?
+        abstract fun curvedEdgeEndAngle(arc: com.typedb.studio.framework.common.geometry.Geometry.Arc): Float?
 
         suspend fun animateExpandOrCollapse() {
             _sizeAndScale.animateTo(
@@ -221,7 +221,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                 return rectIncomingLineIntersect(source, incomingEdgeTargetRect)
             }
 
-            override fun curvedEdgeEndAngle(arc: com.vaticle.typedb.studio.framework.common.geometry.Geometry.Arc): Float? {
+            override fun curvedEdgeEndAngle(arc: com.typedb.studio.framework.common.geometry.Geometry.Arc): Float? {
                 // There should be only one intersection point when the arc has an endpoint within the vertex
                 return rectArcIntersectAngles(arc, incomingEdgeTargetRect).firstOrNull()
             }
@@ -258,7 +258,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                 return diamondIncomingLineIntersect(source, incomingEdgeTargetRect)
             }
 
-            override fun curvedEdgeEndAngle(arc: com.vaticle.typedb.studio.framework.common.geometry.Geometry.Arc): Float? {
+            override fun curvedEdgeEndAngle(arc: com.typedb.studio.framework.common.geometry.Geometry.Arc): Float? {
                 return diamondArcIntersectAngles(arc, incomingEdgeTargetRect).firstOrNull()
             }
         }
@@ -287,7 +287,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
                 return ellipseIncomingLineIntersect(source, ellipse)
             }
 
-            override fun curvedEdgeEndAngle(arc: com.vaticle.typedb.studio.framework.common.geometry.Geometry.Arc): Float? {
+            override fun curvedEdgeEndAngle(arc: com.typedb.studio.framework.common.geometry.Geometry.Arc): Float? {
                 // This implementation approximates the elliptical vertex as a diamond (like a relation); technically it
                 // should intersect an arc with an ellipse. However, curved edges to/from attribute vertices are rare.
                 val incomingEdgeTargetRect = Rect(

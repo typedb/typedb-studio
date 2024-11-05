@@ -4,8 +4,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.graph
+package com.typedb.studio.framework.graph
 
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.NotificationService
+import com.typedb.studio.service.common.util.Message.Visualiser.Companion.EXPLAIN_NOT_ENABLED
+import com.typedb.studio.service.common.util.Message.Visualiser.Companion.FULLY_EXPLAINED
+import com.typedb.studio.service.common.util.Message.Visualiser.Companion.UNEXPECTED_ERROR
+import com.typedb.studio.service.connection.TransactionState
 import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.driver.api.answer.ConceptMap
 import com.vaticle.typedb.driver.api.concept.Concept
@@ -18,12 +24,6 @@ import com.vaticle.typedb.driver.api.concept.type.Type
 import com.vaticle.typedb.driver.api.concept.value.Value
 import com.vaticle.typedb.driver.api.logic.Explanation
 import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.NotificationService
-import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.EXPLAIN_NOT_ENABLED
-import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.FULLY_EXPLAINED
-import com.vaticle.typedb.studio.service.common.util.Message.Visualiser.Companion.UNEXPECTED_ERROR
-import com.vaticle.typedb.studio.service.connection.TransactionState
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue

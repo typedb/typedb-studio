@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.graph
+package com.typedb.studio.framework.graph
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -34,10 +34,10 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
-import com.vaticle.typedb.studio.framework.common.theme.Color
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.common.theme.Typography
-import com.vaticle.typedb.studio.service.connection.TransactionState
+import com.typedb.studio.framework.common.theme.Color
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.common.theme.Typography
+import com.typedb.studio.service.connection.TransactionState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

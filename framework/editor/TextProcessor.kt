@@ -4,26 +4,26 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.editor
+package com.typedb.studio.framework.editor
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import com.typedb.studio.framework.editor.InputTarget.Companion.prefixSpaces
+import com.typedb.studio.framework.editor.InputTarget.Cursor
+import com.typedb.studio.framework.editor.InputTarget.Selection
+import com.typedb.studio.framework.editor.TextChange.Deletion
+import com.typedb.studio.framework.editor.TextChange.Insertion
+import com.typedb.studio.framework.editor.TextChange.ReplayType
+import com.typedb.studio.framework.editor.common.GlyphLine
+import com.typedb.studio.framework.editor.common.GlyphLine.Companion.toGlyphLines
+import com.typedb.studio.framework.editor.highlighter.SyntaxHighlighter
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Message.Project.Companion.FILE_NOT_WRITABLE
+import com.typedb.studio.service.common.util.Property
+import com.typedb.studio.service.project.FileState
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.editor.InputTarget.Companion.prefixSpaces
-import com.vaticle.typedb.studio.framework.editor.InputTarget.Cursor
-import com.vaticle.typedb.studio.framework.editor.InputTarget.Selection
-import com.vaticle.typedb.studio.framework.editor.TextChange.Deletion
-import com.vaticle.typedb.studio.framework.editor.TextChange.Insertion
-import com.vaticle.typedb.studio.framework.editor.TextChange.ReplayType
-import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
-import com.vaticle.typedb.studio.framework.editor.common.GlyphLine.Companion.toGlyphLines
-import com.vaticle.typedb.studio.framework.editor.highlighter.SyntaxHighlighter
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FILE_NOT_WRITABLE
-import com.vaticle.typedb.studio.service.common.util.Property
-import com.vaticle.typedb.studio.service.project.FileState
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger

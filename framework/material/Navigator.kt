@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.material
+package com.typedb.studio.framework.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -58,29 +58,25 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
-import com.vaticle.typedb.studio.framework.common.Util.contains
-import com.vaticle.typedb.studio.framework.common.Util.toDP
-import com.vaticle.typedb.studio.framework.common.Util.toRectDP
-import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.common.theme.Theme.INDICATION_HOVER_ALPHA
-import com.vaticle.typedb.studio.framework.common.theme.Typography
-import com.vaticle.typedb.studio.framework.common.theme.Typography.Style.BOLD
-import com.vaticle.typedb.studio.framework.common.theme.Typography.Style.ITALIC
-import com.vaticle.typedb.studio.framework.common.theme.Typography.Style.UNDERLINE
-import com.vaticle.typedb.studio.framework.material.Form.IconArg
-import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
-import com.vaticle.typedb.studio.framework.material.Form.RawIconButton
-import com.vaticle.typedb.studio.framework.material.Form.Text
-import com.vaticle.typedb.studio.service.Service.notification
-import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Message.Framework.Companion.EXPAND_LIMIT_REACHED
-import com.vaticle.typedb.studio.service.page.Navigable
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import mu.KotlinLogging
+import com.typedb.studio.framework.common.Util.contains
+import com.typedb.studio.framework.common.Util.toDP
+import com.typedb.studio.framework.common.Util.toRectDP
+import com.typedb.studio.framework.common.theme.Color.FADED_OPACITY
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.common.theme.Theme.INDICATION_HOVER_ALPHA
+import com.typedb.studio.framework.common.theme.Typography
+import com.typedb.studio.framework.common.theme.Typography.Style.BOLD
+import com.typedb.studio.framework.common.theme.Typography.Style.ITALIC
+import com.typedb.studio.framework.common.theme.Typography.Style.UNDERLINE
+import com.typedb.studio.framework.material.Form.IconArg
+import com.typedb.studio.framework.material.Form.IconButtonArg
+import com.typedb.studio.framework.material.Form.RawIconButton
+import com.typedb.studio.framework.material.Form.Text
+import com.typedb.studio.service.Service.notification
+import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Message.Framework.Companion.EXPAND_LIMIT_REACHED
+import com.typedb.studio.service.page.Navigable
 import java.awt.event.MouseEvent
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -88,6 +84,10 @@ import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.floor
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import mu.KotlinLogging
 
 object Navigator {
 

@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.common
+package com.typedb.studio.service.common
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,13 +16,13 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy
 import ch.qos.logback.core.util.FileSize
-import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.APP_DATA_DIR_DISABLED
-import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.DATA_DIR_NOT_WRITABLE
-import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.UNEXPECTED_ERROR_APP_DATA_DIR
-import com.vaticle.typedb.studio.service.common.util.Property
-import com.vaticle.typedb.studio.service.common.util.Property.OS.LINUX
-import com.vaticle.typedb.studio.service.common.util.Property.OS.MACOS
-import com.vaticle.typedb.studio.service.common.util.Property.OS.WINDOWS
+import com.typedb.studio.service.common.util.Message.System.Companion.APP_DATA_DIR_DISABLED
+import com.typedb.studio.service.common.util.Message.System.Companion.DATA_DIR_NOT_WRITABLE
+import com.typedb.studio.service.common.util.Message.System.Companion.UNEXPECTED_ERROR_APP_DATA_DIR
+import com.typedb.studio.service.common.util.Property
+import com.typedb.studio.service.common.util.Property.OS.LINUX
+import com.typedb.studio.service.common.util.Property.OS.MACOS
+import com.typedb.studio.service.common.util.Property.OS.WINDOWS
 import java.lang.System.getProperty
 import java.lang.System.getenv
 import java.nio.file.Files

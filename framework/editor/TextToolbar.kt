@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.editor
+package com.typedb.studio.framework.editor
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,19 +37,19 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
-import com.vaticle.typedb.studio.framework.common.KeyMapper
-import com.vaticle.typedb.studio.framework.common.Util.toDP
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.editor.TextToolbar.State.InputType.FINDER
-import com.vaticle.typedb.studio.framework.editor.TextToolbar.State.InputType.REPLACER
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
-import com.vaticle.typedb.studio.framework.material.Form.IconButtonRow
-import com.vaticle.typedb.studio.framework.material.Form.MultilineTextInput
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.Separator
-import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.service.common.util.Label
+import com.typedb.studio.framework.common.KeyMapper
+import com.typedb.studio.framework.common.Util.toDP
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.editor.TextToolbar.State.InputType.FINDER
+import com.typedb.studio.framework.editor.TextToolbar.State.InputType.REPLACER
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Form.IconButtonArg
+import com.typedb.studio.framework.material.Form.IconButtonRow
+import com.typedb.studio.framework.material.Form.MultilineTextInput
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.framework.material.Separator
+import com.typedb.studio.framework.material.Tooltip
+import com.typedb.studio.service.common.util.Label
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope

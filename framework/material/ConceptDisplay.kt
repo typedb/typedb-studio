@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.material
+package com.typedb.studio.framework.material
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -12,6 +12,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import com.typedb.studio.framework.common.theme.Color.FADED_OPACITY
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.service.common.util.Label
 import com.vaticle.typedb.driver.api.concept.Concept
 import com.vaticle.typedb.driver.api.concept.thing.Attribute
 import com.vaticle.typedb.driver.api.concept.thing.Relation
@@ -19,9 +22,6 @@ import com.vaticle.typedb.driver.api.concept.type.AttributeType
 import com.vaticle.typedb.driver.api.concept.type.RelationType
 import com.vaticle.typedb.driver.api.concept.type.ThingType
 import com.vaticle.typedb.driver.api.concept.type.Type
-import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.service.common.util.Label
 import java.time.format.DateTimeFormatter
 
 object ConceptDisplay {

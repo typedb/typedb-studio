@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.output
+package com.typedb.studio.framework.output
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -14,6 +14,24 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
+import com.typedb.studio.framework.common.Util
+import com.typedb.studio.framework.common.theme.Color
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.editor.TextEditor
+import com.typedb.studio.framework.material.Form.IconButtonArg
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.framework.material.Tooltip
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Message
+import com.typedb.studio.service.common.util.Property
+import com.typedb.studio.service.connection.QueryRunner.Response
+import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.ERROR
+import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.INFO
+import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.SUCCESS
+import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.TYPEQL
+import com.typedb.studio.service.connection.TransactionState
 import com.vaticle.typedb.driver.api.answer.ConceptMap
 import com.vaticle.typedb.driver.api.answer.ConceptMapGroup
 import com.vaticle.typedb.driver.api.answer.JSON
@@ -24,24 +42,6 @@ import com.vaticle.typedb.driver.api.concept.thing.Relation
 import com.vaticle.typedb.driver.api.concept.thing.Thing
 import com.vaticle.typedb.driver.api.concept.type.Type
 import com.vaticle.typedb.driver.api.concept.value.Value
-import com.vaticle.typedb.studio.framework.common.Util
-import com.vaticle.typedb.studio.framework.common.theme.Color
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.editor.TextEditor
-import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Message
-import com.vaticle.typedb.studio.service.common.util.Property
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.ERROR
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.INFO
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.SUCCESS
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.TYPEQL
-import com.vaticle.typedb.studio.service.connection.TransactionState
 import com.vaticle.typeql.lang.common.TypeQLToken
 import com.vaticle.typeql.lang.common.util.Strings
 import java.util.concurrent.atomic.AtomicBoolean

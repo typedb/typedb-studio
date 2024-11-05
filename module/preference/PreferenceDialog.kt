@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.module.preference
+package com.typedb.studio.module.preference
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,45 +28,45 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.material.Dialog
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Form.ColumnSpacer
+import com.typedb.studio.framework.material.Form.Field
+import com.typedb.studio.framework.material.Form.RowSpacer
+import com.typedb.studio.framework.material.Form.State
+import com.typedb.studio.framework.material.Form.Text
+import com.typedb.studio.framework.material.Form.TextButton
+import com.typedb.studio.framework.material.Frame
+import com.typedb.studio.framework.material.Navigator
+import com.typedb.studio.framework.material.Navigator.rememberNavigatorState
+import com.typedb.studio.framework.material.Separator
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Label.APPLY
+import com.typedb.studio.service.common.util.Label.CANCEL
+import com.typedb.studio.service.common.util.Label.ENABLE_DIAGNOSTICS_REPORTING
+import com.typedb.studio.service.common.util.Label.ENABLE_EDITOR_AUTOSAVE
+import com.typedb.studio.service.common.util.Label.ENABLE_GRAPH_OUTPUT
+import com.typedb.studio.service.common.util.Label.GRAPH_VISUALISER
+import com.typedb.studio.service.common.util.Label.MANAGE_PREFERENCES
+import com.typedb.studio.service.common.util.Label.OK
+import com.typedb.studio.service.common.util.Label.PROJECT_IGNORED_PATHS
+import com.typedb.studio.service.common.util.Label.PROJECT_MANAGER
+import com.typedb.studio.service.common.util.Label.QUERY_RUNNER
+import com.typedb.studio.service.common.util.Label.RESET
+import com.typedb.studio.service.common.util.Label.SET_QUERY_LIMIT
+import com.typedb.studio.service.common.util.Label.SYSTEM
+import com.typedb.studio.service.common.util.Label.TEXT_EDITOR
+import com.typedb.studio.service.common.util.Label.TRANSACTION_TIMEOUT_MINUTES
+import com.typedb.studio.service.common.util.Sentence.PREFERENCES_DIAGNOSTICS_REPORTING_ENABLED
+import com.typedb.studio.service.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
+import com.typedb.studio.service.common.util.Sentence.PREFERENCES_IGNORED_PATHS_CAPTION
+import com.typedb.studio.service.common.util.Sentence.PREFERENCES_INTEGER_WARNING
+import com.typedb.studio.service.common.util.Sentence.PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
+import com.typedb.studio.service.common.util.Sentence.PREFERENCES_TRANSACTION_TIMEOUT_CAPTION
+import com.typedb.studio.service.common.util.Sentence.PREFERENCES_TRANSACTION_TIMEOUT_INPUT_WARNING
+import com.typedb.studio.service.page.Navigable
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Dialog
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.ColumnSpacer
-import com.vaticle.typedb.studio.framework.material.Form.Field
-import com.vaticle.typedb.studio.framework.material.Form.RowSpacer
-import com.vaticle.typedb.studio.framework.material.Form.State
-import com.vaticle.typedb.studio.framework.material.Form.Text
-import com.vaticle.typedb.studio.framework.material.Form.TextButton
-import com.vaticle.typedb.studio.framework.material.Frame
-import com.vaticle.typedb.studio.framework.material.Navigator
-import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
-import com.vaticle.typedb.studio.framework.material.Separator
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label.APPLY
-import com.vaticle.typedb.studio.service.common.util.Label.CANCEL
-import com.vaticle.typedb.studio.service.common.util.Label.ENABLE_DIAGNOSTICS_REPORTING
-import com.vaticle.typedb.studio.service.common.util.Label.ENABLE_EDITOR_AUTOSAVE
-import com.vaticle.typedb.studio.service.common.util.Label.ENABLE_GRAPH_OUTPUT
-import com.vaticle.typedb.studio.service.common.util.Label.GRAPH_VISUALISER
-import com.vaticle.typedb.studio.service.common.util.Label.MANAGE_PREFERENCES
-import com.vaticle.typedb.studio.service.common.util.Label.OK
-import com.vaticle.typedb.studio.service.common.util.Label.PROJECT_IGNORED_PATHS
-import com.vaticle.typedb.studio.service.common.util.Label.PROJECT_MANAGER
-import com.vaticle.typedb.studio.service.common.util.Label.QUERY_RUNNER
-import com.vaticle.typedb.studio.service.common.util.Label.RESET
-import com.vaticle.typedb.studio.service.common.util.Label.SET_QUERY_LIMIT
-import com.vaticle.typedb.studio.service.common.util.Label.SYSTEM
-import com.vaticle.typedb.studio.service.common.util.Label.TEXT_EDITOR
-import com.vaticle.typedb.studio.service.common.util.Label.TRANSACTION_TIMEOUT_MINUTES
-import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_DIAGNOSTICS_REPORTING_ENABLED
-import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_GRAPH_OUTPUT_CAPTION
-import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_IGNORED_PATHS_CAPTION
-import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_MATCH_QUERY_LIMIT_CAPTION
-import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_TRANSACTION_TIMEOUT_CAPTION
-import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_INTEGER_WARNING
-import com.vaticle.typedb.studio.service.common.util.Sentence.PREFERENCES_TRANSACTION_TIMEOUT_INPUT_WARNING
-import com.vaticle.typedb.studio.service.page.Navigable
 
 object PreferenceDialog {
     private val WIDTH = 800.dp

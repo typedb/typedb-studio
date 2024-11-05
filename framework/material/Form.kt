@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.material
+package com.typedb.studio.framework.material
 
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.ScrollState
@@ -86,20 +86,20 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberComponentRectPositionProvider
-import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
-import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
-import com.vaticle.typedb.studio.framework.common.Util.getCursorRectSafely
-import com.vaticle.typedb.studio.framework.common.Util.isMouseHover
-import com.vaticle.typedb.studio.framework.common.Util.italics
-import com.vaticle.typedb.studio.framework.common.Util.toDP
-import com.vaticle.typedb.studio.framework.common.Util.toRectDP
-import com.vaticle.typedb.studio.framework.common.theme.Color.FADED_OPACITY
-import com.vaticle.typedb.studio.framework.common.theme.Color.fadeable
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.common.theme.Theme.ROUNDED_CORNER_SHAPE
-import com.vaticle.typedb.studio.framework.common.theme.Theme.RoundedCorners
-import com.vaticle.typedb.studio.framework.common.theme.Theme.rectangleIndication
-import com.vaticle.typedb.studio.service.common.util.Label
+import com.typedb.studio.framework.common.Context.LocalTitleBarHeight
+import com.typedb.studio.framework.common.Context.LocalWindowContext
+import com.typedb.studio.framework.common.Util.getCursorRectSafely
+import com.typedb.studio.framework.common.Util.isMouseHover
+import com.typedb.studio.framework.common.Util.italics
+import com.typedb.studio.framework.common.Util.toDP
+import com.typedb.studio.framework.common.Util.toRectDP
+import com.typedb.studio.framework.common.theme.Color.FADED_OPACITY
+import com.typedb.studio.framework.common.theme.Color.fadeable
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.common.theme.Theme.ROUNDED_CORNER_SHAPE
+import com.typedb.studio.framework.common.theme.Theme.RoundedCorners
+import com.typedb.studio.framework.common.theme.Theme.rectangleIndication
+import com.typedb.studio.service.common.util.Label
 import java.awt.event.KeyEvent.KEY_PRESSED
 import java.net.URL
 import kotlinx.coroutines.CoroutineScope

@@ -4,11 +4,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.test.integration.common
+package com.typedb.studio.test.integration.common
 
-import com.vaticle.typedb.core.tool.runner.TypeDBRunner
-import com.vaticle.typedb.cloud.tool.runner.TypeDBCloudRunner;
+import com.vaticle.typedb.cloud.tool.runner.TypeDBCloudRunner
 import com.vaticle.typedb.core.tool.runner.TypeDBCoreRunner
+import com.vaticle.typedb.core.tool.runner.TypeDBRunner
 import kotlin.io.path.Path
 
 object TypeDBRunners {

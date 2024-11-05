@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.output
+package com.typedb.studio.framework.output
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -17,11 +17,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.IconButton
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.Separator
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Form.IconButton
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.framework.material.Separator
 
 internal sealed class RunOutput {
 

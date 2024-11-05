@@ -66,7 +66,7 @@ typedb_kt_test(
         "@vaticle_bazel_distribution//platform:is_mac_x86_64": "@vaticle_typedb_artifact_mac-x86_64//file",
         "@vaticle_bazel_distribution//platform:is_windows_x86_64": "@vaticle_typedb_artifact_windows-x86_64//file",
     },
-    test_class = "com.vaticle.typedb.studio.test.integration.QuickstartTest",
+    test_class = "com.typedb.studio.test.integration.QuickstartTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries,
 )
@@ -82,7 +82,7 @@ typedb_kt_test(
         "@vaticle_bazel_distribution//platform:is_mac_x86_64": "@vaticle_typedb_artifact_mac-x86_64//file",
         "@vaticle_bazel_distribution//platform:is_windows_x86_64": "@vaticle_typedb_artifact_windows-x86_64//file",
     },
-    test_class = "com.vaticle.typedb.studio.test.integration.QueryRunnerTest",
+    test_class = "com.typedb.studio.test.integration.QueryRunnerTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
         "//framework/material",
@@ -99,7 +99,7 @@ kt_jvm_test(
     name = "test-projectbrowser",
     srcs = ["ProjectBrowserTest.kt"],
     data = ["//test/integration/data:sample-file-structure-files"],
-    test_class = "com.vaticle.typedb.studio.test.integration.ProjectBrowserTest",
+    test_class = "com.typedb.studio.test.integration.ProjectBrowserTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
         "//framework/material",
@@ -123,7 +123,7 @@ typedb_kt_test(
         "@vaticle_bazel_distribution//platform:is_mac_x86_64": "@vaticle_typedb_artifact_mac-x86_64//file",
         "@vaticle_bazel_distribution//platform:is_windows_x86_64": "@vaticle_typedb_artifact_windows-x86_64//file",
     },
-    test_class = "com.vaticle.typedb.studio.test.integration.TextEditorTest",
+    test_class = "com.typedb.studio.test.integration.TextEditorTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
         "//framework/material",
@@ -157,7 +157,7 @@ typedb_kt_test(
         "@vaticle_bazel_distribution//platform:is_mac_x86_64": "@vaticle_typedb_artifact_mac-x86_64//file",
         "@vaticle_bazel_distribution//platform:is_windows_x86_64": "@vaticle_typedb_artifact_windows-x86_64//file",
     },
-    test_class = "com.vaticle.typedb.studio.test.integration.TypeBrowserTest",
+    test_class = "com.typedb.studio.test.integration.TypeBrowserTest",
     runtime_deps = skiko_runtime_platform,
     deps = compose_test_libraries + [
         "//framework/material",

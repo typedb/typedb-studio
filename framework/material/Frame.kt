@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.material
+package com.typedb.studio.framework.material
 
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -33,12 +33,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
+import com.typedb.studio.framework.common.Context.LocalTitleBarHeight
+import com.typedb.studio.framework.common.Context.LocalWindowContext
+import com.typedb.studio.framework.common.Util.mousePoint
+import com.typedb.studio.framework.common.Util.toDP
+import com.typedb.studio.framework.common.theme.Theme
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.common.Context.LocalTitleBarHeight
-import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
-import com.vaticle.typedb.studio.framework.common.Util.mousePoint
-import com.vaticle.typedb.studio.framework.common.Util.toDP
-import com.vaticle.typedb.studio.framework.common.theme.Theme
 import java.awt.Cursor
 
 object Frame {

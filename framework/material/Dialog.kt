@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.material
+package com.typedb.studio.framework.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -23,9 +23,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogWindowScope
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
-import com.vaticle.typedb.studio.framework.common.KeyMapper
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.service.common.util.DialogState
+import com.typedb.studio.framework.common.KeyMapper
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.service.common.util.DialogState
 
 object Dialog {
 

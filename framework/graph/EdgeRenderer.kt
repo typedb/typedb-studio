@@ -4,17 +4,17 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.graph
+package com.typedb.studio.framework.graph
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.drawscope.Stroke
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.normalisedAngle
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.radToDeg
-import com.vaticle.typedb.studio.framework.common.theme.Color
+import com.typedb.studio.framework.common.geometry.Geometry
+import com.typedb.studio.framework.common.geometry.Geometry.normalisedAngle
+import com.typedb.studio.framework.common.geometry.Geometry.radToDeg
+import com.typedb.studio.framework.common.theme.Color
 import kotlin.math.abs
 import kotlin.math.atan2
 

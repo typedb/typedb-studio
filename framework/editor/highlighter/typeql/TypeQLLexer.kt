@@ -4,12 +4,12 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.editor.highlighter.typeql
+package com.typedb.studio.framework.editor.highlighter.typeql
 
+import com.typedb.studio.framework.editor.highlighter.common.Lexer
+import com.typedb.studio.framework.editor.highlighter.common.Lexer.Token
+import com.typedb.studio.framework.editor.highlighter.common.Scheme
 import com.vaticle.typedb.common.yaml.YAML
-import com.vaticle.typedb.studio.framework.editor.highlighter.common.Lexer
-import com.vaticle.typedb.studio.framework.editor.highlighter.common.Lexer.Token
-import com.vaticle.typedb.studio.framework.editor.highlighter.common.Scheme
 import com.vaticle.typeql.grammar.TypeQLLexer.VOCABULARY
 import com.vaticle.typeql.lang.TypeQL
 import org.antlr.v4.runtime.CommonTokenStream

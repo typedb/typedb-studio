@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.editor.highlighter
+package com.typedb.studio.framework.editor.highlighter
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString.Builder
@@ -12,13 +12,13 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
-import com.vaticle.typedb.studio.framework.editor.highlighter.common.Lexer
-import com.vaticle.typedb.studio.framework.editor.highlighter.common.Lexer.Token
-import com.vaticle.typedb.studio.framework.editor.highlighter.common.Scheme
-import com.vaticle.typedb.studio.framework.editor.highlighter.common.Scope
-import com.vaticle.typedb.studio.framework.editor.highlighter.typeql.TypeQLLexer
-import com.vaticle.typedb.studio.service.common.util.Property
+import com.typedb.studio.framework.editor.common.GlyphLine
+import com.typedb.studio.framework.editor.highlighter.common.Lexer
+import com.typedb.studio.framework.editor.highlighter.common.Lexer.Token
+import com.typedb.studio.framework.editor.highlighter.common.Scheme
+import com.typedb.studio.framework.editor.highlighter.common.Scope
+import com.typedb.studio.framework.editor.highlighter.typeql.TypeQLLexer
+import com.typedb.studio.service.common.util.Property
 
 object SyntaxHighlighter {
 

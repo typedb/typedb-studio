@@ -4,13 +4,13 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.module.user
+package com.typedb.studio.module.user
 
 import androidx.compose.runtime.Composable
-import com.vaticle.typedb.studio.framework.material.Browsers
-import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.service.common.util.Label
+import com.typedb.studio.framework.material.Browsers
+import com.typedb.studio.framework.material.Form.IconButtonArg
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.service.common.util.Label
 
 class UserBrowser(isOpen: Boolean = false, order: Int) : Browsers.Browser(isOpen, order) {
 

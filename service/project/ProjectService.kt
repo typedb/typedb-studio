@@ -4,24 +4,24 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.project
+package com.typedb.studio.service.project
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.studio.service.common.ConfirmationService
-import com.vaticle.typedb.studio.service.common.DataService
-import com.vaticle.typedb.studio.service.common.NotificationService
-import com.vaticle.typedb.studio.service.common.PreferenceService
-import com.vaticle.typedb.studio.service.common.util.DialogState
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_CREATE_FILE
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.PATH_NOT_DIRECTORY
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.PATH_NOT_EXIST
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.PATH_NOT_READABLE
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.PATH_NOT_WRITABLE
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
-import com.vaticle.typedb.studio.service.connection.DriverState
-import com.vaticle.typedb.studio.service.page.PageService
+import com.typedb.studio.service.common.ConfirmationService
+import com.typedb.studio.service.common.DataService
+import com.typedb.studio.service.common.NotificationService
+import com.typedb.studio.service.common.PreferenceService
+import com.typedb.studio.service.common.util.DialogState
+import com.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_CREATE_FILE
+import com.typedb.studio.service.common.util.Message.Project.Companion.PATH_NOT_DIRECTORY
+import com.typedb.studio.service.common.util.Message.Project.Companion.PATH_NOT_EXIST
+import com.typedb.studio.service.common.util.Message.Project.Companion.PATH_NOT_READABLE
+import com.typedb.studio.service.common.util.Message.Project.Companion.PATH_NOT_WRITABLE
+import com.typedb.studio.service.common.util.Message.Project.Companion.PROJECT_DATA_DIR_PATH_TAKEN
+import com.typedb.studio.service.connection.DriverState
+import com.typedb.studio.service.page.PageService
 import java.nio.file.Path
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.io.path.createDirectory

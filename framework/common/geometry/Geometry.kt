@@ -4,14 +4,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.common.geometry
+package com.typedb.studio.framework.common.geometry
 
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.AngularDirection.CLOCKWISE
-import com.vaticle.typedb.studio.framework.common.geometry.Geometry.AngularDirection.COUNTER_CLOCKWISE
+import com.typedb.studio.framework.common.geometry.Geometry.AngularDirection.CLOCKWISE
+import com.typedb.studio.framework.common.geometry.Geometry.AngularDirection.COUNTER_CLOCKWISE
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2

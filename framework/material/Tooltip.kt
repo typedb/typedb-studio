@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.material
+package com.typedb.studio.framework.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,14 +38,14 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.rememberCursorPositionProvider
-import com.vaticle.typedb.studio.framework.common.Context.LocalWindowContext
-import com.vaticle.typedb.studio.framework.common.Util.toDP
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Form.BORDER_WIDTH
-import com.vaticle.typedb.studio.framework.material.Form.ClickableText
-import com.vaticle.typedb.studio.framework.material.Form.Text
-import com.vaticle.typedb.studio.framework.material.Form.URLText
-import com.vaticle.typedb.studio.service.common.util.Label
+import com.typedb.studio.framework.common.Context.LocalWindowContext
+import com.typedb.studio.framework.common.Util.toDP
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.material.Form.BORDER_WIDTH
+import com.typedb.studio.framework.material.Form.ClickableText
+import com.typedb.studio.framework.material.Form.Text
+import com.typedb.studio.framework.material.Form.URLText
+import com.typedb.studio.service.common.util.Label
 import java.awt.MouseInfo
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean

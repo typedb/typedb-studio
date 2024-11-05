@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.module.project
+package com.typedb.studio.module.project
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -16,24 +16,23 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.common.theme.Typography
-import com.vaticle.typedb.studio.framework.common.theme.Typography.Style.FADED
-import com.vaticle.typedb.studio.framework.common.theme.Typography.Style.ITALIC
-import com.vaticle.typedb.studio.framework.material.Browsers
-import com.vaticle.typedb.studio.framework.material.ContextMenu
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Form.IconArg
-import com.vaticle.typedb.studio.framework.material.Form.IconButtonArg
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.Navigator
-import com.vaticle.typedb.studio.framework.material.Navigator.rememberNavigatorState
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.project.DirectoryState
-import com.vaticle.typedb.studio.service.project.FileState
-import com.vaticle.typedb.studio.service.project.PathState
-import mu.KotlinLogging
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.common.theme.Typography
+import com.typedb.studio.framework.common.theme.Typography.Style.FADED
+import com.typedb.studio.framework.common.theme.Typography.Style.ITALIC
+import com.typedb.studio.framework.material.Browsers
+import com.typedb.studio.framework.material.ContextMenu
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Form.IconArg
+import com.typedb.studio.framework.material.Form.IconButtonArg
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.framework.material.Navigator
+import com.typedb.studio.framework.material.Navigator.rememberNavigatorState
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.project.DirectoryState
+import com.typedb.studio.service.project.FileState
+import com.typedb.studio.service.project.PathState
 
 class ProjectBrowser(initOpen: Boolean = false, order: Int) : Browsers.Browser(initOpen, order) {
 

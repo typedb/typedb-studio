@@ -4,10 +4,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.graph
+package com.typedb.studio.framework.graph
 
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import com.vaticle.typedb.studio.framework.common.theme.Color
-import com.vaticle.typedb.studio.framework.common.theme.Typography
+import com.typedb.studio.framework.common.theme.Color
+import com.typedb.studio.framework.common.theme.Typography
 
 data class RendererContext(val drawScope: DrawScope, val theme: Color.GraphTheme, val typography: Typography.Theme)

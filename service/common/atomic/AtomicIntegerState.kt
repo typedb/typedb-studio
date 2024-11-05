@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.common.atomic
+package com.typedb.studio.service.common.atomic
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

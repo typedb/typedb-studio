@@ -4,18 +4,18 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.graph
+package com.typedb.studio.framework.graph
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
-import com.vaticle.typedb.driver.api.answer.ConceptMap
+import com.typedb.studio.framework.material.Browsers
+import com.typedb.studio.framework.material.Frame
+import com.typedb.studio.framework.material.Separator
+import com.typedb.studio.framework.material.Tabs
+import com.typedb.studio.service.connection.TransactionState
 import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.studio.framework.material.Browsers
-import com.vaticle.typedb.studio.framework.material.Frame
-import com.vaticle.typedb.studio.framework.material.Separator
-import com.vaticle.typedb.studio.framework.material.Tabs
-import com.vaticle.typedb.studio.service.connection.TransactionState
+import com.vaticle.typedb.driver.api.answer.ConceptMap
 
 class GraphVisualiser constructor(transactionState: TransactionState) {
 

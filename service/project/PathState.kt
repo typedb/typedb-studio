@@ -4,10 +4,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.project
+package com.typedb.studio.service.project
 
-import com.vaticle.typedb.studio.service.common.util.DialogState
-import com.vaticle.typedb.studio.service.page.Navigable
+import com.typedb.studio.service.common.util.DialogState
+import com.typedb.studio.service.page.Navigable
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.WRITE
@@ -18,7 +18,6 @@ import kotlin.io.path.moveTo
 import kotlin.io.path.name
 import kotlin.io.path.readSymbolicLink
 import kotlin.io.path.relativeTo
-import mu.KotlinLogging
 
 sealed class PathState constructor(
     final override val parent: DirectoryState?,

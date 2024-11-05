@@ -4,17 +4,17 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.test.integration
+package com.typedb.studio.test.integration
 
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.copyFolder
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.createDatabase
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.openProject
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
-import com.vaticle.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
-import com.vaticle.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
-import com.vaticle.typedb.studio.test.integration.data.Paths.SampleGitHubData
+import com.typedb.studio.test.integration.common.StudioActions.connectToTypeDB
+import com.typedb.studio.test.integration.common.StudioActions.copyFolder
+import com.typedb.studio.test.integration.common.StudioActions.createDatabase
+import com.typedb.studio.test.integration.common.StudioActions.openProject
+import com.typedb.studio.test.integration.common.StudioActions.verifyDataWrite
+import com.typedb.studio.test.integration.common.StudioActions.writeDataInteractively
+import com.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
+import com.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
+import com.typedb.studio.test.integration.data.Paths.SampleGitHubData
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 

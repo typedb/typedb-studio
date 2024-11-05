@@ -4,12 +4,12 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.common
+package com.typedb.studio.service.common
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.studio.service.common.util.DialogState
+import com.typedb.studio.service.common.util.DialogState
 
 class ConfirmationService : DialogState() {
 

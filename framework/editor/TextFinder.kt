@@ -4,16 +4,16 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.editor
+package com.typedb.studio.framework.editor
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import com.vaticle.typedb.studio.framework.editor.InputTarget.Cursor
-import com.vaticle.typedb.studio.framework.editor.InputTarget.Selection
-import com.vaticle.typedb.studio.framework.editor.common.GlyphLine
-import com.vaticle.typedb.studio.service.common.util.Label
+import com.typedb.studio.framework.editor.InputTarget.Cursor
+import com.typedb.studio.framework.editor.InputTarget.Selection
+import com.typedb.studio.framework.editor.common.GlyphLine
+import com.typedb.studio.service.common.util.Label
 import java.util.regex.MatchResult
 import java.util.regex.Pattern
 import kotlin.streams.toList

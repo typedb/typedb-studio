@@ -4,27 +4,27 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.project
+package com.typedb.studio.service.project
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Message
-import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_RENAME_FILE
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_SAVE_FILE
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FILE_HAS_BEEN_MOVED_OUT
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FILE_NOT_DELETABLE
-import com.vaticle.typedb.studio.service.common.util.Message.Project.Companion.FILE_NOT_READABLE
-import com.vaticle.typedb.studio.service.common.util.Message.System.Companion.ILLEGAL_CAST
-import com.vaticle.typedb.studio.service.common.util.Property.FileType
-import com.vaticle.typedb.studio.service.common.util.Property.FileType.TYPEQL
-import com.vaticle.typedb.studio.service.common.util.Sentence
-import com.vaticle.typedb.studio.service.connection.QueryRunnerService
-import com.vaticle.typedb.studio.service.page.Pageable
+import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Message
+import com.typedb.studio.service.common.util.Message.Companion.UNKNOWN
+import com.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_CREATE_OR_RENAME_FILE_DUE_TO_DUPLICATE
+import com.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_RENAME_FILE
+import com.typedb.studio.service.common.util.Message.Project.Companion.FAILED_TO_SAVE_FILE
+import com.typedb.studio.service.common.util.Message.Project.Companion.FILE_HAS_BEEN_MOVED_OUT
+import com.typedb.studio.service.common.util.Message.Project.Companion.FILE_NOT_DELETABLE
+import com.typedb.studio.service.common.util.Message.Project.Companion.FILE_NOT_READABLE
+import com.typedb.studio.service.common.util.Message.System.Companion.ILLEGAL_CAST
+import com.typedb.studio.service.common.util.Property.FileType
+import com.typedb.studio.service.common.util.Property.FileType.TYPEQL
+import com.typedb.studio.service.common.util.Sentence
+import com.typedb.studio.service.connection.QueryRunnerService
+import com.typedb.studio.service.page.Pageable
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader

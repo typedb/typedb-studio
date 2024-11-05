@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.graph
+package com.typedb.studio.framework.graph
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -19,13 +19,13 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.common.theme.Typography
-import com.vaticle.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.BLOCK_START
-import com.vaticle.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.OVERFLOW
-import com.vaticle.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.WHITESPACE
-import com.vaticle.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.WORD_BREAK
-import com.vaticle.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.common.theme.Typography
+import com.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.BLOCK_START
+import com.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.OVERFLOW
+import com.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.WHITESPACE
+import com.typedb.studio.framework.graph.TextRenderer.LineBreak.Reason.WORD_BREAK
+import com.typedb.studio.framework.material.Form
 import java.util.concurrent.ConcurrentHashMap
 import org.jetbrains.skia.Font
 import org.jetbrains.skia.TextLine

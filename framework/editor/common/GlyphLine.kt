@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.editor.common
+package com.typedb.studio.framework.editor.common
 
 import androidx.compose.ui.text.AnnotatedString
 import kotlin.streams.toList

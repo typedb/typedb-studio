@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.material
+package com.typedb.studio.framework.material
 
 import androidx.compose.foundation.HorizontalScrollbar
 import androidx.compose.foundation.ScrollbarAdapter
@@ -17,8 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.vaticle.typedb.studio.framework.common.theme.Theme.SCROLLBAR_END_PADDING
-import com.vaticle.typedb.studio.framework.common.theme.Theme.SCROLLBAR_LONG_PADDING
+import com.typedb.studio.framework.common.theme.Theme.SCROLLBAR_END_PADDING
+import com.typedb.studio.framework.common.theme.Theme.SCROLLBAR_LONG_PADDING
 
 object Scrollbar {
 

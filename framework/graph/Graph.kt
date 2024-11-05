@@ -4,12 +4,15 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.graph
+package com.typedb.studio.framework.graph
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import com.typedb.studio.framework.graph.Graph.Physics.Constants.COLLIDE_RADIUS
+import com.typedb.studio.framework.graph.Graph.Physics.Constants.CURVE_COLLIDE_RADIUS
+import com.typedb.studio.framework.graph.Graph.Physics.Constants.CURVE_COMPRESSION_POWER
 import com.vaticle.force.graph.api.Simulation
 import com.vaticle.force.graph.force.CenterForce
 import com.vaticle.force.graph.force.CollideForce
@@ -22,9 +25,6 @@ import com.vaticle.force.graph.impl.BasicVertex
 import com.vaticle.force.graph.util.RandomEffects
 import com.vaticle.typedb.driver.api.answer.ConceptMap
 import com.vaticle.typedb.driver.api.logic.Explanation
-import com.vaticle.typedb.studio.framework.graph.Graph.Physics.Constants.COLLIDE_RADIUS
-import com.vaticle.typedb.studio.framework.graph.Graph.Physics.Constants.CURVE_COLLIDE_RADIUS
-import com.vaticle.typedb.studio.framework.graph.Graph.Physics.Constants.CURVE_COMPRESSION_POWER
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean

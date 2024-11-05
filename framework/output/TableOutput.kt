@@ -4,16 +4,16 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.output
+package com.typedb.studio.framework.output
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.connection.TransactionState
 import com.vaticle.typedb.driver.api.answer.ConceptMap
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.connection.TransactionState
 
 internal class TableOutput constructor(val transaction: TransactionState, number: Int) : RunOutput() {
 

@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.graph
+package com.typedb.studio.framework.graph
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -68,7 +68,7 @@ sealed class Edge(open val source: Vertex, open val target: Vertex) {
 
         val isCurved get() = edge.curvePoint != null
         val midpoint
-            get() = com.vaticle.typedb.studio.framework.common.geometry.Geometry.midpoint(
+            get() = com.typedb.studio.framework.common.geometry.Geometry.midpoint(
                 edge.source.geometry.position,
                 edge.target.geometry.position
             )

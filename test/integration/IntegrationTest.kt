@@ -7,12 +7,12 @@
 // We need to access the private function Studio.MainWindowColumn, this allows us to.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
-package com.vaticle.typedb.studio.test.integration
+package com.typedb.studio.test.integration
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.vaticle.typedb.studio.Studio
-import com.vaticle.typedb.studio.framework.common.WindowContext
-import com.vaticle.typedb.studio.service.Service
+import com.typedb.studio.Studio
+import com.typedb.studio.framework.common.WindowContext
+import com.typedb.studio.service.Service
 import java.util.UUID
 import org.junit.Before
 import org.junit.Rule

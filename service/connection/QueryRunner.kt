@@ -4,23 +4,23 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.connection
+package com.typedb.studio.service.connection
 
+import com.typedb.studio.service.common.NotificationService
+import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.typedb.studio.service.common.PreferenceService
+import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.ERROR
+import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.INFO
+import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.SUCCESS
+import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.TYPEQL
+import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.GET
+import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.INSERT
+import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.UPDATE
 import com.vaticle.typedb.common.collection.Either
 import com.vaticle.typedb.driver.api.answer.ConceptMap
 import com.vaticle.typedb.driver.api.answer.ConceptMapGroup
 import com.vaticle.typedb.driver.api.answer.JSON
 import com.vaticle.typedb.driver.api.answer.ValueGroup
-import com.vaticle.typedb.studio.service.common.NotificationService
-import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.service.common.PreferenceService
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.ERROR
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.INFO
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.SUCCESS
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Message.Type.TYPEQL
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.GET
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.INSERT
-import com.vaticle.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.UPDATE
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.query.TypeQLDefine
 import com.vaticle.typeql.lang.query.TypeQLDelete

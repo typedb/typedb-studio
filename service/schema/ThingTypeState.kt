@@ -4,11 +4,31 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.service.schema
+package com.typedb.studio.service.schema
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Message
+import com.typedb.studio.service.common.util.Message.Companion.UNKNOWN
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_ABSTRACT
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_OWNED_ATT_TYPE
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_OWNED_ATT_TYPE_TO_REMOVE
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE_TO_REMOVE
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_SUPERTYPE
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CREATE_TYPE
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_OWN_ATT_TYPE
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_PLAY_ROLE_TYPE
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_LOAD_TYPE
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_UNDEFINE_OWNED_ATT_TYPE
+import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_UNDEFINE_PLAYED_ROLE_TYPE
+import com.typedb.studio.service.common.util.Sentence
+import com.typedb.studio.service.page.Navigable
+import com.typedb.studio.service.page.Pageable
 import com.vaticle.typedb.driver.api.TypeDBTransaction
 import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
 import com.vaticle.typedb.driver.api.concept.type.AttributeType
@@ -16,26 +36,6 @@ import com.vaticle.typedb.driver.api.concept.type.RoleType
 import com.vaticle.typedb.driver.api.concept.type.ThingType
 import com.vaticle.typedb.driver.api.concept.type.ThingType.Annotation.key
 import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
-import com.vaticle.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Message
-import com.vaticle.typedb.studio.service.common.util.Message.Companion.UNKNOWN
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_ABSTRACT
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_OWNED_ATT_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_OWNED_ATT_TYPE_TO_REMOVE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_OVERRIDDEN_PLAYED_ROLE_TYPE_TO_REMOVE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CHANGE_SUPERTYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_CREATE_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_OWN_ATT_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_PLAY_ROLE_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_LOAD_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_UNDEFINE_OWNED_ATT_TYPE
-import com.vaticle.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_UNDEFINE_PLAYED_ROLE_TYPE
-import com.vaticle.typedb.studio.service.common.util.Sentence
-import com.vaticle.typedb.studio.service.page.Navigable
-import com.vaticle.typedb.studio.service.page.Pageable
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.TypeQL.cVar
 import com.vaticle.typeql.lang.TypeQL.rel

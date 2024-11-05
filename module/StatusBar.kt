@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.module
+package com.typedb.studio.module
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,22 +23,22 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vaticle.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.studio.framework.material.Form
-import com.vaticle.typedb.studio.framework.material.Icon
-import com.vaticle.typedb.studio.framework.material.Separator
-import com.vaticle.typedb.studio.framework.material.Tooltip
-import com.vaticle.typedb.studio.service.Service
-import com.vaticle.typedb.studio.service.common.StatusService
-import com.vaticle.typedb.studio.service.common.StatusService.Key.OUTPUT_RESPONSE_TIME
-import com.vaticle.typedb.studio.service.common.StatusService.Key.QUERY_RESPONSE_TIME
-import com.vaticle.typedb.studio.service.common.StatusService.Key.SCHEMA_EXCEPTIONS
-import com.vaticle.typedb.studio.service.common.StatusService.Key.TEXT_CURSOR_POSITION
-import com.vaticle.typedb.studio.service.common.StatusService.Status.Type.ERROR
-import com.vaticle.typedb.studio.service.common.StatusService.Status.Type.INFO
-import com.vaticle.typedb.studio.service.common.StatusService.Status.Type.WARNING
-import com.vaticle.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.studio.service.common.util.Sentence
+import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.framework.material.Separator
+import com.typedb.studio.framework.material.Tooltip
+import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.StatusService
+import com.typedb.studio.service.common.StatusService.Key.OUTPUT_RESPONSE_TIME
+import com.typedb.studio.service.common.StatusService.Key.QUERY_RESPONSE_TIME
+import com.typedb.studio.service.common.StatusService.Key.SCHEMA_EXCEPTIONS
+import com.typedb.studio.service.common.StatusService.Key.TEXT_CURSOR_POSITION
+import com.typedb.studio.service.common.StatusService.Status.Type.ERROR
+import com.typedb.studio.service.common.StatusService.Status.Type.INFO
+import com.typedb.studio.service.common.StatusService.Status.Type.WARNING
+import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Sentence
 
 object StatusBar {
 

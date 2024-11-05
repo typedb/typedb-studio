@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package com.vaticle.typedb.studio.framework.material
+package com.typedb.studio.framework.material
 
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.Text
@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vaticle.typedb.studio.framework.common.theme.Color.fadeable
-import com.vaticle.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.common.theme.Color.fadeable
+import com.typedb.studio.framework.common.theme.Theme
 
 enum class Icon(private val shape: Shape) {
     ADD(Shape.PLUS),
