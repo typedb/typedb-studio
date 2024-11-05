@@ -8,7 +8,7 @@ load("@rules_jvm_external//:specs.bzl", rje_maven = "maven", rje_parse = "parse"
 load("@vaticle_dependencies//library/maven:artifacts.bzl", maven_artifacts_org = "artifacts")
 load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
 # FIXME: Studio compose dependencies are held back, out of sync with dependencies
-load("//dependencies/maven:artifacts.bzl", vaticle_typedb_studio_maven_overrides = "version_overrides")
+load("//dependencies/maven:artifacts.bzl", typedb_studio_maven_overrides = "version_overrides")
 
 def maven(artifacts_org, internal_artifacts = {}, artifacts_repo={}, override_targets={}, fail_on_missing_checksum=True, generate_compat_repositories=False):
     if len(artifacts_repo) > 0:
@@ -26,7 +26,7 @@ def maven(artifacts_org, internal_artifacts = {}, artifacts_repo={}, override_ta
         artifacts_selected.append(maven_artifact(coordinate, info))
     rje_maven_install(
         # FIXME studio compose dependencies are held back, out of sync with dependencies
-        artifacts = artifacts_selected + vaticle_typedb_studio_maven_overrides,
+        artifacts = artifacts_selected + typedb_studio_maven_overrides,
         repositories = [
             "https://repo1.maven.org/maven2",
             "https://repo.maven.apache.org/maven2/",
