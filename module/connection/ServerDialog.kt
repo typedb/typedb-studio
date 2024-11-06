@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,6 +46,7 @@ import com.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
 import com.typedb.studio.framework.material.Tooltip
 import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.util.Label
+import com.typedb.studio.service.common.util.Message.Framework.Companion.CONNECTION_STRING_PARSE_ERROR
 import com.typedb.studio.service.common.util.Property
 import com.typedb.studio.service.common.util.Property.Server.TYPEDB_CLOUD
 import com.typedb.studio.service.common.util.Property.Server.TYPEDB_CORE
@@ -53,15 +55,19 @@ import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
 import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 import com.vaticle.typedb.driver.api.TypeDBCredential
+import java.net.URLDecoder
+import java.nio.charset.Charset
 import java.nio.file.Path
+import mu.KotlinLogging
 
 object ServerDialog {
 
     private val WIDTH = 500.dp
-    private val HEIGHT = 340.dp
+    private val HEIGHT = 400.dp
     private val ADDRESS_MANAGER_WIDTH = 400.dp
     private val ADDRESS_MANAGER_HEIGHT = 500.dp
     private val appData = Service.data.connection
+    private val LOGGER = KotlinLogging.logger {}
 
     private val state by mutableStateOf(ConnectServerForm())
 
@@ -79,6 +85,7 @@ object ServerDialog {
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: true)
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
+        var connectionString: String by mutableStateOf("")
 
         override fun cancel() = Service.driver.connectServerDialog.close()
         override fun isValid(): Boolean = when (server) {
@@ -192,6 +199,8 @@ object ServerDialog {
             } else if (state.server == TYPEDB_CORE) {
                 CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
             }
+            Divider()
+            ConnectionStringFormField(state)
             Spacer(Modifier.weight(1f))
             Row(verticalAlignment = Alignment.Bottom) {
                 ServerConnectionStatus()
@@ -417,6 +426,42 @@ object ServerDialog {
             )
             if (selectedFilePath != null) state.caCertificate = selectedFilePath
         }
+    }
+
+    @Composable
+    private fun ConnectionStringFormField(
+        state: ConnectServerForm
+    ) = Field(label = Label.CONNECTION_STRING) {
+        TextInput(
+            placeholder = "e.g. typedb://username:password@addr:port/?tlsEnabled=true",
+            value = state.connectionString,
+            onValueChange = { state.connectionString = it },
+            modifier = Modifier.weight(1f)
+        )
+        TextButton(text = Label.LOAD, enabled = state.connectionString.isNotBlank()) {
+            try {
+                loadConnectionString(state.connectionString)
+            } catch (e: Throwable) {
+                Service.notification.systemError(LOGGER, e, CONNECTION_STRING_PARSE_ERROR)
+            }
+        }
+    }
+
+    private fun loadConnectionString(connectionString: String) {
+        assert(connectionString.startsWith("typedb://"))
+        val strippedConnectionString = connectionString.removePrefix("typedb://")
+        val (username, connectionStringWithoutUsername) = strippedConnectionString.split(":", limit = 2)
+        val (password, connectionStringWithoutPassword) = connectionStringWithoutUsername.split("@", limit = 2)
+        val (addressesString, path) = connectionStringWithoutPassword.split("/", limit = 2)
+        val addresses = addressesString.split(",")
+        val queryParams = path.split("?").last().split("&").associate {
+            val k = it.split("=", limit = 2)
+            k[0] to k[1]
+        }
+        state.username = username
+        state.password = URLDecoder.decode(password, Charset.defaultCharset())
+        state.cloudAddresses = addresses.toMutableList()
+        state.tlsEnabled = queryParams["tlsEnabled"]?.toBoolean() ?: false
     }
 
     @Composable
