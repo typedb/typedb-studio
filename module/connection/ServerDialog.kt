@@ -45,6 +45,7 @@ import com.typedb.studio.framework.material.SelectFileDialog
 import com.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
 import com.typedb.studio.framework.material.Tooltip
 import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.ConnectionString
 import com.typedb.studio.service.common.util.Label
 import com.typedb.studio.service.common.util.Message.Framework.Companion.CONNECTION_STRING_PARSE_ERROR
 import com.typedb.studio.service.common.util.Property
@@ -448,20 +449,21 @@ object ServerDialog {
     }
 
     private fun loadConnectionString(connectionString: String) {
-        assert(connectionString.startsWith("typedb://"))
-        val strippedConnectionString = connectionString.removePrefix("typedb://")
-        val (username, connectionStringWithoutUsername) = strippedConnectionString.split(":", limit = 2)
-        val (password, connectionStringWithoutPassword) = connectionStringWithoutUsername.split("@", limit = 2)
-        val (addressesString, path) = connectionStringWithoutPassword.split("/", limit = 2)
-        val addresses = addressesString.split(",")
-        val queryParams = path.split("?").last().split("&").associate {
-            val k = it.split("=", limit = 2)
+        assert(connectionString.startsWith(ConnectionString.SCHEME))
+        val strippedConnectionString = connectionString.removePrefix(ConnectionString.SCHEME)
+        val (auth, address) = strippedConnectionString.split(ConnectionString.AUTH_ADDRESS_SEPARATOR, limit = 2)
+        val (username, password) = auth.split(ConnectionString.USERNAME_PASSWORD_SEPARATOR, limit = 2)
+        val (hosts, path) = address.split(ConnectionString.PATH_SEPARATOR, limit = 2)
+        val addresses = hosts.split(ConnectionString.ADDRESSES_SEPARATOR, limit = 2)
+        val queryParams = path.split(ConnectionString.PARAM_STARTER).last().split(ConnectionString.PARAM_SEPARATOR).associate {
+            val k = it.split(ConnectionString.PARAM_KEY_VALUE_SEPARATOR, limit = 2)
             k[0] to k[1]
         }
+
         state.username = username
         state.password = URLDecoder.decode(password, Charset.defaultCharset())
         state.cloudAddresses = addresses.toMutableList()
-        state.tlsEnabled = queryParams["tlsEnabled"]?.toBoolean() ?: false
+        state.tlsEnabled = queryParams[ConnectionString.TLS_ENABLED]?.toBoolean() ?: false
     }
 
     @Composable
