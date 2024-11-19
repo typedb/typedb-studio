@@ -47,7 +47,6 @@ import com.typedb.studio.framework.material.Tooltip
 import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.util.ConnectionString
 import com.typedb.studio.service.common.util.Label
-import com.typedb.studio.service.common.util.Message.Framework.Companion.CONNECTION_STRING_PARSE_ERROR
 import com.typedb.studio.service.common.util.Property
 import com.typedb.studio.service.common.util.Property.Server.TYPEDB_CLOUD
 import com.typedb.studio.service.common.util.Property.Server.TYPEDB_CORE
@@ -111,7 +110,7 @@ object ServerDialog {
                         val firstAddress = cloudTranslatedAddresses.first().first
                         val connectionName = "$username@$firstAddress"
                         Service.driver.tryConnectToTypeDBCloudAsync(
-                            connectionName, cloudTranslatedAddresses.associate { it }, credentials, onSuccess
+                            connectionName, cloudTranslatedAddresses.toMap(), credentials, onSuccess
                         )
                     } else {
                         val firstAddress = cloudAddresses.first()
@@ -142,6 +141,7 @@ object ServerDialog {
         override fun submit() {
             assert(isValid())
             state.cloudAddresses.add(server)
+            syncConnectionString()
             server = ""
         }
     }
@@ -197,11 +197,11 @@ object ServerDialog {
                 PasswordFormField(state)
                 TLSEnabledFormField(state)
                 if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
+                Divider()
+                ConnectionStringFormField(state)
             } else if (state.server == TYPEDB_CORE) {
                 CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
             }
-            Divider()
-            ConnectionStringFormField(state)
             Spacer(Modifier.weight(1f))
             Row(verticalAlignment = Alignment.Bottom) {
                 ServerConnectionStatus()
@@ -384,7 +384,7 @@ object ServerDialog {
         TextInput(
             value = state.username,
             placeholder = Label.USERNAME.lowercase(),
-            onValueChange = { state.username = it },
+            onValueChange = { state.username = it; syncConnectionString() },
             enabled = Service.driver.isDisconnected,
             modifier = Modifier.fillMaxSize()
         )
@@ -395,7 +395,7 @@ object ServerDialog {
         TextInput(
             value = state.password,
             placeholder = Label.PASSWORD.lowercase(),
-            onValueChange = { state.password = it },
+            onValueChange = { state.password = it; syncConnectionString() },
             enabled = Service.driver.isDisconnected,
             isPassword = true,
             modifier = Modifier.fillMaxSize(),
@@ -404,7 +404,7 @@ object ServerDialog {
 
     @Composable
     private fun TLSEnabledFormField(state: ConnectServerForm) = Field(label = Label.ENABLE_TLS) {
-        Checkbox(value = state.tlsEnabled, enabled = Service.driver.isDisconnected) { state.tlsEnabled = it }
+        Checkbox(value = state.tlsEnabled, enabled = Service.driver.isDisconnected) { state.tlsEnabled = it; syncConnectionString() }
     }
 
     @Composable
@@ -434,36 +434,73 @@ object ServerDialog {
         state: ConnectServerForm
     ) = Field(label = Label.CONNECTION_STRING) {
         TextInput(
-            placeholder = "e.g. typedb://username:password@addr:port/?tlsEnabled=true",
+            placeholder = ConnectionString.build(
+                Label.USERNAME.lowercase(), Label.PASSWORD.lowercase(), listOf(Label.ADDRESS.lowercase()), true
+            ),
             value = state.connectionString,
-            onValueChange = { state.connectionString = it },
+            onValueChange = {
+                state.connectionString = it
+                try {
+                    loadConnectionString(state.connectionString)
+                } catch (_: Throwable) {}
+            },
             modifier = Modifier.weight(1f)
         )
-        TextButton(text = Label.LOAD, enabled = state.connectionString.isNotBlank()) {
-            try {
-                loadConnectionString(state.connectionString)
-            } catch (e: Throwable) {
-                Service.notification.systemError(LOGGER, e, CONNECTION_STRING_PARSE_ERROR)
-            }
+//        TextButton(text = Label.LOAD, enabled = state.connectionString.isNotBlank()) {
+//        }
+    }
+
+    private fun syncConnectionString() {
+        state.connectionString = if (state.useCloudTranslatedAddress) {
+            ConnectionString.buildTranslated(
+                state.username, state.password, state.cloudTranslatedAddresses, state.tlsEnabled
+            )
+        } else {
+            ConnectionString.build(
+                state.username, state.password, state.cloudAddresses, state.tlsEnabled
+            )
         }
     }
 
     private fun loadConnectionString(connectionString: String) {
         assert(connectionString.startsWith(ConnectionString.SCHEME))
         val strippedConnectionString = connectionString.removePrefix(ConnectionString.SCHEME)
+        println("STRIPPED: $strippedConnectionString")
         val (auth, address) = strippedConnectionString.split(ConnectionString.AUTH_ADDRESS_SEPARATOR, limit = 2)
+        println("AUTH: $auth")
+        println("ADDRESS: $address")
         val (username, password) = auth.split(ConnectionString.USERNAME_PASSWORD_SEPARATOR, limit = 2)
-        val (hosts, path) = address.split(ConnectionString.PATH_SEPARATOR, limit = 2)
-        val addresses = hosts.split(ConnectionString.ADDRESSES_SEPARATOR, limit = 2)
-        val queryParams = path.split(ConnectionString.PARAM_STARTER).last().split(ConnectionString.PARAM_SEPARATOR).associate {
+        println("USERNAME: $username")
+        println("PASSWORD: $password")
+        val (hosts, path) = address.split(ConnectionString.PATH_SEPARATOR, limit = 2).let { split ->
+            if (split.size > 1) Pair(split[0], split[1])
+            else Pair(split[0], null)
+        }
+        println("HOSTS: $hosts")
+        println("PATH: $path")
+        val addresses = hosts.split(ConnectionString.ADDRESSES_SEPARATOR)
+        println("ADDRESSES: $addresses")
+        val queryParams = path?.split(ConnectionString.PARAM_STARTER)?.last()?.split(ConnectionString.PARAM_SEPARATOR)?.associate {
             val k = it.split(ConnectionString.PARAM_KEY_VALUE_SEPARATOR, limit = 2)
             k[0] to k[1]
         }
+        println("QUERY PARAMS: $queryParams")
 
         state.username = username
         state.password = URLDecoder.decode(password, Charset.defaultCharset())
-        state.cloudAddresses = addresses.toMutableList()
-        state.tlsEnabled = queryParams[ConnectionString.TLS_ENABLED]?.toBoolean() ?: false
+        if (addresses.getOrNull(0)?.contains(ConnectionString.ADDRESS_TRANSLATION_SEPARATOR) == true) {
+            state.cloudTranslatedAddresses.clear()
+            state.cloudTranslatedAddresses.addAll(
+                addresses.map {
+                    val splitAddresses = it.split(ConnectionString.ADDRESS_TRANSLATION_SEPARATOR, limit = 2)
+                    splitAddresses[0] to splitAddresses[1]
+                }
+            )
+        } else {
+            state.cloudAddresses.clear()
+            state.cloudAddresses.addAll(addresses)
+        }
+        state.tlsEnabled = queryParams?.get(ConnectionString.TLS_ENABLED)?.toBoolean() ?: false
     }
 
     @Composable

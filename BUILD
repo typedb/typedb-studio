@@ -58,7 +58,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    resources = ["//resources/icons/vaticle:vaticle-bot-32px"],
+    resources = ["//resources/icons/vaticle:vaticle-bot-32px", "//resources/icons/vaticle:vaticle-bot-256px"],
     tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio:{pom_version}"],
 )
 
