@@ -21,12 +21,12 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogWindowScope
-import androidx.compose.ui.window.WindowPosition.Aligned
-import androidx.compose.ui.window.DialogState as ComposeDialogState
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.typedb.studio.framework.common.KeyMapper
 import com.typedb.studio.framework.common.theme.Theme
 import com.typedb.studio.service.common.util.DialogState
+import androidx.compose.ui.window.DialogState as ComposeDialogState
 
 object Dialog {
 
@@ -52,7 +52,7 @@ object Dialog {
         content: @Composable DialogWindowScope.() -> Unit
     ) = Layout(state, title, padding,
         rememberDialogState(
-            position = Aligned(Alignment.Center),
+            position = WindowPosition.Aligned(Alignment.Center),
             size = DpSize(width, height)
         ),
         content

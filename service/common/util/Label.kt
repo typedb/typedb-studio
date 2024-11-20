@@ -119,7 +119,6 @@ object Label {
     const val KEY = "Key"
     const val LABEL = "Label"
     const val LEARN_MORE = "Learn More"
-    const val LOAD = "Load"
     const val LOG = "Log"
     const val MANAGE_CLOUD_ADDRESSES = "Manage Cloud Addresses"
     const val MANAGE_DATABASES = "Manage Databases"
