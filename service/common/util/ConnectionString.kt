@@ -6,18 +6,18 @@ import java.net.URLDecoder
 import java.nio.charset.Charset
 
 object ConnectionString {
-    const val SCHEME_CLOUD = "typedb-cloud"
-    const val SCHEME_CORE = "typedb-core"
+    private const val SCHEME_CLOUD = "typedb-cloud"
+    private const val SCHEME_CORE = "typedb-core"
     private const val SCHEME_SUFFIX = "://"
-    const val USERNAME_PASSWORD_SEPARATOR = ":"
-    const val AUTH_ADDRESS_SEPARATOR = "@"
+    private const val USERNAME_PASSWORD_SEPARATOR = ":"
+    private const val AUTH_ADDRESS_SEPARATOR = "@"
     private const val PATH_SEPARATOR = "/"
-    const val ADDRESSES_SEPARATOR = ","
-    const val ADDRESS_TRANSLATION_SEPARATOR = ";"
+    private const val ADDRESSES_SEPARATOR = ","
+    private const val ADDRESS_TRANSLATION_SEPARATOR = ";"
     private const val PARAM_PREFIX = "?"
-    const val PARAM_SEPARATOR = "&"
-    const val PARAM_KEY_VALUE_SEPARATOR = "="
-    const val TLS_ENABLED = "tlsEnabled"
+    private const val PARAM_SEPARATOR = "&"
+    private const val PARAM_KEY_VALUE_SEPARATOR = "="
+    private const val TLS_ENABLED = "tlsEnabled"
 
     fun buildCore(address: String) = listOf(SCHEME_CORE, SCHEME_SUFFIX, address).joinToString("")
 

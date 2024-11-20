@@ -484,12 +484,14 @@ object ServerDialog {
                         is ParsedCloudUntranslatedConnectionString -> {
                             state.useCloudTranslatedAddress = false
                             state.cloudAddresses.clear()
-                            state.cloudAddresses.addAll(parsedConnectionString.addresses)
+                            state.cloudAddresses.addAll(parsedConnectionString.addresses.filter { addressFormatIsValid(it) })
                         }
                         is ParsedCloudTranslatedConnectionString -> {
                             state.useCloudTranslatedAddress = true
                             state.cloudTranslatedAddresses.clear()
-                            state.cloudTranslatedAddresses.addAll(parsedConnectionString.addresses)
+                            state.cloudTranslatedAddresses.addAll(parsedConnectionString.addresses.filter {
+                                addressFormatIsValid(it.first) && addressFormatIsValid(it.second)
+                            })
                         }
                     }
                 }
