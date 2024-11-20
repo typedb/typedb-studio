@@ -31,7 +31,7 @@ kt_jvm_library(
         "//service/project",
         "//service/page",
 
-        # External Vaticle Dependencies
+        # External TypeDB Dependencies
         "@typedb_driver//java/api:api",
         "@typedb_driver//java:driver-java",
         "@typedb_dependencies//common/java:typedb-common",

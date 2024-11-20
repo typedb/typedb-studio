@@ -24,7 +24,7 @@ kt_jvm_library(
         "//framework/common:common",
         "//framework/material:material",
 
-        # External Vaticle Dependencies
+        # External TypeDB Dependencies
         "@typedb_driver//java/api:api",
         "@typedb_dependencies//common/java:typedb-common",
 

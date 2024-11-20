@@ -150,7 +150,7 @@ load("@google_bazel_common//:workspace_defs.bzl", "google_common_workspace_rules
 google_common_workspace_rules()
 
 ################################
-# Load @vaticle dependencies #
+# Load @typedb dependencies #
 ################################
 
 # Load repositories

@@ -42,7 +42,7 @@ kt_jvm_library(
         "//service/schema:schema",
         "//service:service",
 
-        # External Vaticle Dependencies
+        # External TypeDB Dependencies
         "@typedb_dependencies//common/java:typedb-common",
 
         # External Maven Dependencies
@@ -156,7 +156,7 @@ assemble_jvm_platform(
     }),
     description = "TypeDB's Integrated Development Environment",
     vendor = "Vaticle Ltd",
-    copyright = "Copyright (C) 2022 Vaticle",
+    copyright = "Copyright (C) 2024 TypeDB",
     license_file = ":LICENSE",
     version_file = ":VERSION",
     icon = select({

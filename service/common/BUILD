@@ -17,7 +17,7 @@ kt_jvm_library(
     name = "common",
     srcs = glob(["*.kt", "*/*.kt"]),
     deps = [
-        # External Vaticle Dependencies
+        # External TypeDB Dependencies
         "@typedb_dependencies//common/java:typedb-common",
 
         # External Maven Dependencies

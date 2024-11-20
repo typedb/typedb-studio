@@ -21,7 +21,7 @@ kt_jvm_library(
         "//framework/common:common",
         "//framework/material:material",
 
-        # External Vaticle Dependencies
+        # External TypeDB Dependencies
         "@typedb_force_graph//:force_graph",
         "@typedb_dependencies//common/java:typedb-common",
         "@typedb_driver//java/api:api",

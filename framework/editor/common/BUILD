@@ -15,7 +15,7 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     plugins = ["@typedb_dependencies//builder/compose:compiler_plugin"],
     deps = [
-        # External Vaticle Dependencies
+        # External TypeDB Dependencies
         "@typedb_dependencies//common/java:typedb-common",
 
         # External Maven Dependencies

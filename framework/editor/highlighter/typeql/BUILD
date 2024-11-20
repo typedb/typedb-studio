@@ -14,7 +14,7 @@ kt_jvm_library(
     deps = [
         "//framework/editor/highlighter/common:common",
 
-        # External Vaticle Dependencies
+        # External TypeDB Dependencies
         "@typedb_dependencies//common/java:typedb-common",
         "@typeql//grammar/java:typeql-grammar",
         "@typeql//java:typeql-lang",

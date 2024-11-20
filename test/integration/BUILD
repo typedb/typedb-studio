@@ -134,7 +134,7 @@ typedb_kt_test(
         "//service/page",
         "//service/schema",
 
-        # External Vaticle Dependencies
+        # External TypeDB Dependencies
         "@typedb_driver//java/api:api",
         "@typedb_dependencies//common/java:typedb-common",
 

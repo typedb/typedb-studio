@@ -21,7 +21,7 @@ kt_jvm_library(
         "//service/connection:connection",
         "//service/page:page",
 
-        # External Vaticle Dependencies
+        # External TypeDB Dependencies
         "@typedb_dependencies//common/java:typedb-common",
 
         # External Maven Dependencies
