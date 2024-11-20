@@ -246,7 +246,7 @@ object Label {
     const val USERS = "Users"
     const val VALUE = "Value"
     const val VALUE_TYPE = "Value Type"
-    const val VIEW_ADVANCED_CONFIG = "View advanced config"
+    const val ADVANCED_CONFIG = "Advanced config"
     const val WRITE = "Write"
     const val WRITE_TRANSACTION = "Write Transaction"
     const val YES = "Yes"

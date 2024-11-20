@@ -8,11 +8,14 @@ package com.typedb.studio.module.connection
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,10 +31,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogState as ComposeDialogState
 import androidx.compose.ui.window.WindowPosition.Aligned
 import androidx.compose.ui.window.rememberDialogState
 import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.common.theme.Theme.TOOLBAR_BUTTON_SIZE
 import com.typedb.studio.framework.material.ActionableList
 import com.typedb.studio.framework.material.Dialog
 import com.typedb.studio.framework.material.Form
@@ -44,8 +47,11 @@ import com.typedb.studio.framework.material.Form.RowSpacer
 import com.typedb.studio.framework.material.Form.Submission
 import com.typedb.studio.framework.material.Form.Text
 import com.typedb.studio.framework.material.Form.TextButton
+import com.typedb.studio.framework.material.Form.TextButtonArg
+import com.typedb.studio.framework.material.Form.TextButtonRow
 import com.typedb.studio.framework.material.Form.TextInput
 import com.typedb.studio.framework.material.Form.TextInputValidated
+import com.typedb.studio.framework.material.Form.toggleButtonColor
 import com.typedb.studio.framework.material.Icon
 import com.typedb.studio.framework.material.SelectFileDialog
 import com.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
@@ -66,12 +72,13 @@ import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
 import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 import com.vaticle.typedb.driver.api.TypeDBCredential
 import java.nio.file.Path
+import androidx.compose.ui.window.DialogState as ComposeDialogState
 
 object ServerDialog {
 
     private val WIDTH = 500.dp
-    private val SIMPLE_HEIGHT = 250.dp
-    private val ADVANCED_HEIGHT = 500.dp
+    private val SIMPLE_HEIGHT = 240.dp
+    private val ADVANCED_HEIGHT = 400.dp
     private val ADDRESS_MANAGER_WIDTH = 400.dp
     private val ADDRESS_MANAGER_HEIGHT = 500.dp
     private val appData = Service.data.connection
@@ -192,17 +199,33 @@ object ServerDialog {
     }
 
     @Composable
-    private fun AdvancedConfigToggleField(state: ConnectServerForm) = Field(label = Label.VIEW_ADVANCED_CONFIG) {
-        Checkbox(value = state.advancedConfigOpen) {
-            state.advancedConfigOpen = it
-            val currentHeight = dialogState!!.size.height
-            dialogState!!.size = DpSize(
-                width = dialogState!!.size.width,
-                height = if (state.advancedConfigOpen && currentHeight < ADVANCED_HEIGHT) ADVANCED_HEIGHT
-                    else if (!state.advancedConfigOpen && currentHeight == ADVANCED_HEIGHT) SIMPLE_HEIGHT
-                    else currentHeight
-            )
-        }
+    private fun ColumnScope.AdvancedConfigToggleButtons(state: ConnectServerForm) {
+        TextButtonRow(
+            height = TOOLBAR_BUTTON_SIZE,
+            buttons = listOf(
+                TextButtonArg(
+                    text = Label.CONNECTION_URI,
+                    onClick = { state.advancedConfigOpen = false; updateHeight() },
+                    color = { toggleButtonColor(!state.advancedConfigOpen) },
+                ),
+                TextButtonArg(
+                    text = Label.ADVANCED_CONFIG,
+                    onClick = { state.advancedConfigOpen = true; updateHeight() },
+                    color = { toggleButtonColor(state.advancedConfigOpen) },
+                )
+            ),
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+    }
+
+    private fun updateHeight() {
+        val currentHeight = dialogState!!.size.height
+        dialogState!!.size = DpSize(
+            width = dialogState!!.size.width,
+            height = if (state.advancedConfigOpen && currentHeight < ADVANCED_HEIGHT) ADVANCED_HEIGHT
+            else if (!state.advancedConfigOpen && currentHeight == ADVANCED_HEIGHT) SIMPLE_HEIGHT
+            else currentHeight
+        )
     }
 
     @Composable
@@ -218,8 +241,8 @@ object ServerDialog {
             composeDialogState = dialogState
         ) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
-                ConnectionURIFormField(state)
-                AdvancedConfigToggleField(state)
+                AdvancedConfigToggleButtons(state)
+                Divider()
                 if (state.advancedConfigOpen) {
                     ServerFormField(state)
                     if (state.server == TYPEDB_CLOUD) {
@@ -231,6 +254,8 @@ object ServerDialog {
                     } else if (state.server == TYPEDB_CORE) {
                         CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
                     }
+                } else {
+                    ConnectionURIFormField(state)
                 }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -463,18 +488,19 @@ object ServerDialog {
     @Composable
     private fun ConnectionURIFormField(
         state: ConnectServerForm
-    ) = Field(label = Label.CONNECTION_URI, fieldHeight = FIELD_HEIGHT * 3) {
-        MultilineTextInput(
-            value = state.connectionUri,
-            onValueChange = {
-                state.connectionUri = it
-                loadConnectionUri(state.connectionUri.text)
-            },
-            onTextLayout = { },
-            horizontalScroll = false,
-            enabled = !state.advancedConfigOpen
-        )
-    }
+    ) = MultilineTextInput(
+        value = state.connectionUri,
+        onValueChange = {
+            state.connectionUri = it
+            loadConnectionUri(state.connectionUri.text)
+        },
+        onTextLayout = { },
+        horizontalScroll = false,
+        enabled = !state.advancedConfigOpen,
+        modifier = Modifier.border(1.dp, Theme.studio.border, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS))
+            .height(FIELD_HEIGHT * 3),
+        placeholder = ConnectionUri.PLACEHOLDER_URI,
+    )
 
     private fun syncConnectionUri() {
         state.connectionUri = TextFieldValue(
@@ -498,8 +524,8 @@ object ServerDialog {
                 }
                 is ParsedCloudConnectionUri -> {
                     state.server = TYPEDB_CLOUD
-                    state.username = parsedConnectionUri.username
-                    state.password = parsedConnectionUri.password
+                    parsedConnectionUri.username?.let { state.username = it }
+                    parsedConnectionUri.password?.let { state.password = it }
                     state.tlsEnabled = parsedConnectionUri.tlsEnabled ?: false
                     when (parsedConnectionUri) {
                         is ParsedCloudUntranslatedConnectionUri -> {

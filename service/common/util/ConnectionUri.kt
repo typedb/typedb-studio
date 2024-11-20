@@ -18,6 +18,7 @@ object ConnectionUri {
     private const val PARAM_SEPARATOR = "&"
     private const val PARAM_KEY_VALUE_SEPARATOR = "="
     private const val TLS_ENABLED = "tlsEnabled"
+    val PLACEHOLDER_URI = buildCloud(Label.USERNAME.lowercase(), Label.PASSWORD.lowercase(), listOf(Label.ADDRESS.lowercase()), true)
 
     fun buildCore(address: String) = listOf(SCHEME_CORE, SCHEME_SUFFIX, address).joinToString("")
 
@@ -38,32 +39,41 @@ object ConnectionUri {
     data class ParsedCoreConnectionUri(val address: String): ParsedConnectionUri
 
     sealed interface ParsedCloudConnectionUri: ParsedConnectionUri {
-        val username: String
-        val password: String
+        val username: String?
+        val password: String?
         val tlsEnabled: Boolean?
     }
 
     data class ParsedCloudUntranslatedConnectionUri(
-        override val username: String, override val password: String, val addresses: List<String>, override val tlsEnabled: Boolean?
+        override val username: String?, override val password: String?, val addresses: List<String>, override val tlsEnabled: Boolean?
     ): ParsedCloudConnectionUri
 
     data class ParsedCloudTranslatedConnectionUri(
-        override val username: String, override val password: String, val addresses: List<Pair<String, String>>, override val tlsEnabled: Boolean?
+        override val username: String?, override val password: String?, val addresses: List<Pair<String, String>>, override val tlsEnabled: Boolean?
     ): ParsedCloudConnectionUri
 
     fun parse(connectionUri: String): ParsedConnectionUri? {
         val uri = try { URI(connectionUri) } catch (_: URISyntaxException) { return null }
 
-        val (auth, address) = uri.authority.split(AUTH_ADDRESS_SEPARATOR, limit = 2)
-        val (username, password) = auth.split(USERNAME_PASSWORD_SEPARATOR, limit = 2)
-        val addresses = address.split(ADDRESSES_SEPARATOR)
-        val queryParams = uri.query?.split(PARAM_SEPARATOR)?.associate {
-            val k = it.split(PARAM_KEY_VALUE_SEPARATOR, limit = 2)
-            k[0] to k[1]
-        }
+        val (username, password, addresses) = uri.authority?.let {
+            val (auth, address) = it.split(AUTH_ADDRESS_SEPARATOR, limit = 2).let {
+                if (it.size == 2) Pair(it[0], it[1])
+                else Pair(it[0], null)
+            }
+            val (username, password) = auth.split(USERNAME_PASSWORD_SEPARATOR, limit = 2).let {
+                if (it.size == 2) Pair(it[0], it[1])
+                else Pair(it[0], null)
+            }
+            val addresses = address?.split(ADDRESSES_SEPARATOR) ?: emptyList()
+            Triple(username, password, addresses)
+        } ?: Triple(null, null, emptyList())
+        val queryParams = uri.query?.split(PARAM_SEPARATOR)
+            ?.map { it.split(PARAM_KEY_VALUE_SEPARATOR, limit = 2) }
+            ?.filter { it.size == 2 }
+            ?.associate { it[0] to it[1] }
 
         if (uri.scheme == SCHEME_CLOUD) {
-            val decodedPassword = URLDecoder.decode(password, Charset.defaultCharset())
+            val decodedPassword = password?.let { URLDecoder.decode(it, Charset.defaultCharset()) }
             val tlsEnabled = queryParams?.get(TLS_ENABLED)?.toBoolean()
             if (addresses.getOrNull(0)?.contains(ADDRESS_TRANSLATION_SEPARATOR) == true) {
                 return ParsedCloudTranslatedConnectionUri(

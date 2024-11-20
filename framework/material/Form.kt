@@ -540,6 +540,9 @@ object Form {
         focusReq: FocusRequester = remember { FocusRequester() },
         horizontalScroll: Boolean = true,
         enabled: Boolean = true,
+        placeholder: String? = null,
+        textStyle: TextStyle = Theme.typography.body1,
+        fontColor: Color = Theme.studio.onSurface,
         onValueChange: (TextFieldValue) -> Unit,
         onTextLayout: (TextLayoutResult) -> Unit,
     ) {
@@ -562,10 +565,15 @@ object Form {
                         onValueChange = { state.updateValue(it); onValueChange(it) },
                         onTextLayout = { state.updateLayout(it, value); onTextLayout(it) },
                         cursorBrush = SolidColor(Theme.studio.secondary),
-                        textStyle = Theme.typography.body1.copy(Theme.studio.onSurface),
+                        textStyle = textStyle.copy(Theme.studio.onSurface),
                         modifier = Modifier.focusRequester(focusReq)
                             .defaultMinSize(minWidth = state.boxWidth - MULTILINE_INPUT_PADDING)
-                            .padding(textFieldPadding)
+                            .padding(textFieldPadding),
+                    )
+                    if (value.text.isEmpty()) Text(
+                        value = placeholder ?: "",
+                        textStyle = textStyle.copy(fontStyle = FontStyle.Italic),
+                        color = fadeable(fontColor, true, PLACEHOLDER_OPACITY)
                     )
                     Spacer(Modifier.width(MULTILINE_INPUT_PADDING))
                 }
@@ -591,7 +599,8 @@ object Form {
     fun TextButtonRow(
         buttons: List<TextButtonArg>,
         height: Dp = FIELD_HEIGHT,
-        bgColor: Color = Theme.studio.primary
+        bgColor: Color = Theme.studio.primary,
+        modifier: Modifier = Modifier,
     ) {
         @Composable
         fun TextButton(button: TextButtonArg, roundedCorners: RoundedCorners) {
@@ -607,7 +616,7 @@ object Form {
             )
         }
 
-        Row {
+        Row(modifier = modifier) {
             buttons.forEachIndexed { i, button ->
                 when (i) {
                     0 -> TextButton(button, RoundedCorners.LEFT)
