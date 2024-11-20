@@ -77,6 +77,7 @@ object ServerDialog {
     private val appData = Service.data.connection
 
     private val state by mutableStateOf(ConnectServerForm())
+    private var dialogState: ComposeDialogState? by mutableStateOf(null)
 
     private class ConnectServerForm : Form.State() {
         var server: Property.Server by mutableStateOf(appData.server ?: TYPEDB_CLOUD)
@@ -94,7 +95,6 @@ object ServerDialog {
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
         var connectionUri: TextFieldValue by mutableStateOf(TextFieldValue(""))
         var advancedConfigOpen: Boolean by mutableStateOf(false)
-        var dialogState: ComposeDialogState? by mutableStateOf(null)
 
         override fun cancel() = Service.driver.connectServerDialog.close()
         override fun isValid(): Boolean = when (server) {
@@ -195,9 +195,9 @@ object ServerDialog {
     private fun AdvancedConfigToggleField(state: ConnectServerForm) = Field(label = Label.VIEW_ADVANCED_CONFIG) {
         Checkbox(value = state.advancedConfigOpen) {
             state.advancedConfigOpen = it
-            val currentHeight = state.dialogState!!.size.height
-            state.dialogState!!.size = DpSize(
-                width = state.dialogState!!.size.width,
+            val currentHeight = dialogState!!.size.height
+            dialogState!!.size = DpSize(
+                width = dialogState!!.size.width,
                 height = if (state.advancedConfigOpen && currentHeight < ADVANCED_HEIGHT) ADVANCED_HEIGHT
                     else if (!state.advancedConfigOpen && currentHeight == ADVANCED_HEIGHT) SIMPLE_HEIGHT
                     else currentHeight
@@ -211,7 +211,7 @@ object ServerDialog {
             position = Aligned(Alignment.Center),
             size = DpSize(WIDTH, if (state.advancedConfigOpen) ADVANCED_HEIGHT else SIMPLE_HEIGHT)
         )
-        state.dialogState = dialogState
+        this.dialogState = dialogState
         Dialog.Layout(
             state = Service.driver.connectServerDialog,
             title = Label.CONNECT_TO_TYPEDB,
