@@ -98,7 +98,7 @@ import mu.KotlinLogging
 
 object Studio {
 
-    private const val VATICLE_BOT_ICON = "resources/icons/vaticle/256x256.png"
+    private const val VATICLE_BOT_ICON = "resources/icons/vaticle/vaticle-bot-32x.png"
     private val ERROR_WINDOW_WIDTH = 1000.dp
     private val ERROR_WINDOW_HEIGHT = 610.dp
     private val ERROR_WINDOW_CONTENT_PADDING = 10.dp

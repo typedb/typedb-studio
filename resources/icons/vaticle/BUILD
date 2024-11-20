@@ -26,11 +26,6 @@ filegroup(
     srcs = ["vaticle-bot-32px.png"],
 )
 
-filegroup(
-    name = "vaticle-bot-256px",
-    srcs = ["256x256.png"],
-)
-
 checkstyle_test(
     name = "checkstyle",
     include = glob(["*"]),
