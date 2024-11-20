@@ -40,8 +40,8 @@ kt_jvm_library(
         "@typeql//java/query:query",
 
         # External Maven Dependencies
-#        "@maven//:com_vaticle_typedb_typedb_runner",
-#        "@maven//:com_vaticle_typedb_typedb_cloud_runner",
+#        "@maven//:com_typedb_typedb_runner",
+#        "@maven//:com_typedb_typedb_cloud_runner",
         "@maven//:junit_junit",
         "@maven//:org_jetbrains_compose_runtime_runtime_desktop",
         "@maven//:org_jetbrains_compose_ui_ui_test_desktop",
