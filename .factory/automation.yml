@@ -14,25 +14,25 @@ build:
       owner: typedb
       branch: master
     dependency-analysis:
-      image: vaticle-ubuntu-22.04
+      image: typedb-ubuntu-22.04
       command: |
         bazel run @typedb_dependencies//factory/analysis:dependency-analysis
   correctness:
     build:
-      image: vaticle-ubuntu-22.04
+      image: typedb-ubuntu-22.04
       command: |
         bazel run @typedb_dependencies//tool/bazelinstall:remote_cache_setup.sh
         bazel build //...
         bazel run @typedb_dependencies//tool/checkstyle:test-coverage
         bazel test $(bazel query 'kind(checkstyle_test, //...)') --test_output=errors
     build-dependency:
-      image: vaticle-ubuntu-22.04
+      image: typedb-ubuntu-22.04
       command: |
         bazel run @typedb_dependencies//tool/bazelinstall:remote_cache_setup.sh
         dependencies/maven/update.sh
         git diff --exit-code dependencies/maven/artifacts.snapshot
     test-unit:
-      image: vaticle-ubuntu-22.04
+      image: typedb-ubuntu-22.04
       dependencies:
         - build
       command: |
@@ -40,7 +40,7 @@ build:
         bazel test $(bazel query 'kind(kt_jvm_test, //...) except kind(kt_jvm_test, //test/...)') --test_output=errors
     test-integration:
       machine: 8-core-32-gb
-      image: vaticle-ubuntu-22.04
+      image: typedb-ubuntu-22.04
       dependencies:
         - build
       command: |
@@ -54,13 +54,13 @@ release:
     branch: [master, development]
   validation:
     validate-release-notes:
-      image: vaticle-ubuntu-22.04
+      image: typedb-ubuntu-22.04
       command: |
         export NOTES_VALIDATE_TOKEN=$REPO_GITHUB_TOKEN
         bazel run @typedb_dependencies//tool/release/notes:validate --test_output=streamed -- $FACTORY_OWNER $FACTORY_REPO ./RELEASE_NOTES_LATEST.md
   deployment:
     trigger-release-circleci:
-      image: vaticle-ubuntu-22.04
+      image: typedb-ubuntu-22.04
       command: |
         git checkout -b release
         git push -f origin release
