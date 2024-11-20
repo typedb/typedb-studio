@@ -4,11 +4,11 @@
 
 insert $user isa user, has user-name "dmitrii-ubskii";
 insert $user isa user, has user-name "lolski";
-insert $user isa user, has user-name "vaticle";
+insert $user isa user, has user-name "typedb";
 insert $user isa user, has user-name "jmsfltchr";
 insert $user isa user, has user-name "krishnangovindraj";
 insert $user isa user, has user-name "haikalpribadi";
-match $user isa user, has user-name "vaticle"; insert $repo isa repo, has repo-id 208812506, has repo-name "typedb-behaviour", has repo-description "TypeDB Behaviour Test Specification"; $repo-creator(repo: $repo, owner: $user) isa repo-creator;
+match $user isa user, has user-name "typedb"; insert $repo isa repo, has repo-id 208812506, has repo-name "typedb-behaviour", has repo-description "TypeDB Behaviour Test Specification"; $repo-creator(repo: $repo, owner: $user) isa repo-creator;
 match $repo isa repo, has repo-name "typedb-behaviour"; insert $file isa file, has file-name "concept/type/relationtype.feature"; $repo-file(repo: $repo, file: $file) isa repo-file;
 match $repo isa repo, has repo-name "typedb-behaviour"; insert $file isa file, has file-name "concept/type/entitytype.feature"; $repo-file(repo: $repo, file: $file) isa repo-file;
 match $repo isa repo, has repo-name "typedb-behaviour"; insert $file isa file, has file-name "typeql/language/undefine.feature"; $repo-file(repo: $repo, file: $file) isa repo-file;

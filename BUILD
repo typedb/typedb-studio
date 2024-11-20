@@ -58,7 +58,7 @@ kt_jvm_library(
         "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    resources = ["//resources/icons/vaticle:vaticle-bot-32px"],
+    resources = ["//resources/icons/typedb:typedb-bot-32px"],
     tags = ["maven_coordinates=com.typedb:typedb-studio:{pom_version}"],
 )
 
@@ -155,14 +155,14 @@ assemble_jvm_platform(
         "//conditions:default": "INVALID",
     }),
     description = "TypeDB's Integrated Development Environment",
-    vendor = "Vaticle Ltd",
+    vendor = "TypeDB",
     copyright = "Copyright (C) 2024 TypeDB",
     license_file = ":LICENSE",
     version_file = ":VERSION",
     icon = select({
-        "@typedb_bazel_distribution//platform:is_mac": "//resources/icons/vaticle:vaticle-bot-mac",
-        "@typedb_bazel_distribution//platform:is_linux": "//resources/icons/vaticle:vaticle-bot-linux",
-        "@typedb_bazel_distribution//platform:is_windows": "//resources/icons/vaticle:vaticle-bot-windows",
+        "@typedb_bazel_distribution//platform:is_mac": "//resources/icons/typedb:typedb-bot-mac",
+        "@typedb_bazel_distribution//platform:is_linux": "//resources/icons/typedb:typedb-bot-linux",
+        "@typedb_bazel_distribution//platform:is_windows": "//resources/icons/typedb:typedb-bot-windows",
         "//conditions:default": "mac",
     }),
     java_deps = ":assemble-deps",

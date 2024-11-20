@@ -98,7 +98,7 @@ import mu.KotlinLogging
 
 object Studio {
 
-    private const val VATICLE_BOT_ICON = "resources/icons/vaticle/vaticle-bot-32px.png"
+    private const val TYPEDB_BOT_ICON = "resources/icons/typedb/typedb-bot-32px.png"
     private val ERROR_WINDOW_WIDTH = 1000.dp
     private val ERROR_WINDOW_HEIGHT = 610.dp
     private val ERROR_WINDOW_CONTENT_PADDING = 10.dp
@@ -139,7 +139,7 @@ object Studio {
         Window(
             title = getMainWindowTitle(),
             state = rememberWindowState(WindowPlacement.Maximized),
-            icon = painterResource(VATICLE_BOT_ICON),
+            icon = painterResource(TYPEDB_BOT_ICON),
             onPreviewKeyEvent = { handlePreviewKeyEvent(it, ::confirmClose) },
             onKeyEvent = { handleKeyEvent(it) },
             onCloseRequest = { if (error != null) exitApplicationFn() else confirmClose() },
