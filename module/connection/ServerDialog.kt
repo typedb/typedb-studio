@@ -26,7 +26,11 @@ import androidx.compose.ui.awt.ComposeDialog
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogState as ComposeDialogState
+import androidx.compose.ui.window.WindowPosition.Aligned
+import androidx.compose.ui.window.rememberDialogState
 import com.typedb.studio.framework.common.theme.Theme
 import com.typedb.studio.framework.material.ActionableList
 import com.typedb.studio.framework.material.Dialog
@@ -66,7 +70,8 @@ import java.nio.file.Path
 object ServerDialog {
 
     private val WIDTH = 500.dp
-    private val HEIGHT = 400.dp
+    private val SIMPLE_HEIGHT = 250.dp
+    private val ADVANCED_HEIGHT = 500.dp
     private val ADDRESS_MANAGER_WIDTH = 400.dp
     private val ADDRESS_MANAGER_HEIGHT = 500.dp
     private val appData = Service.data.connection
@@ -89,6 +94,7 @@ object ServerDialog {
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
         var connectionUri: TextFieldValue by mutableStateOf(TextFieldValue(""))
         var advancedConfigOpen: Boolean by mutableStateOf(false)
+        var dialogState: ComposeDialogState? by mutableStateOf(null)
 
         override fun cancel() = Service.driver.connectServerDialog.close()
         override fun isValid(): Boolean = when (server) {
@@ -187,39 +193,54 @@ object ServerDialog {
 
     @Composable
     private fun AdvancedConfigToggleField(state: ConnectServerForm) = Field(label = Label.VIEW_ADVANCED_CONFIG) {
-        Checkbox(value = state.advancedConfigOpen) { state.advancedConfigOpen = it }
+        Checkbox(value = state.advancedConfigOpen) {
+            state.advancedConfigOpen = it
+            val currentHeight = state.dialogState!!.size.height
+            state.dialogState!!.size = DpSize(
+                width = state.dialogState!!.size.width,
+                height = if (state.advancedConfigOpen && currentHeight < ADVANCED_HEIGHT) ADVANCED_HEIGHT
+                    else if (!state.advancedConfigOpen && currentHeight == ADVANCED_HEIGHT) SIMPLE_HEIGHT
+                    else currentHeight
+            )
+        }
     }
 
     @Composable
-    private fun ConnectServer() = Dialog.Layout(
-        state = Service.driver.connectServerDialog,
-        title = Label.CONNECT_TO_TYPEDB,
-        width = WIDTH,
-        height = HEIGHT
-    ) {
-        Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
-            ConnectionURIFormField(state)
-            AdvancedConfigToggleField(state)
-            if (state.advancedConfigOpen) {
-                ServerFormField(state)
-                if (state.server == TYPEDB_CLOUD) {
-                    ManageCloudAddressesButton(state = state, shouldFocus = Service.driver.isDisconnected)
-                    UsernameFormField(state)
-                    PasswordFormField(state)
-                    TLSEnabledFormField(state)
-                    if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
-                } else if (state.server == TYPEDB_CORE) {
-                    CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
+    private fun ConnectServer() {
+        val dialogState = rememberDialogState(
+            position = Aligned(Alignment.Center),
+            size = DpSize(WIDTH, if (state.advancedConfigOpen) ADVANCED_HEIGHT else SIMPLE_HEIGHT)
+        )
+        state.dialogState = dialogState
+        Dialog.Layout(
+            state = Service.driver.connectServerDialog,
+            title = Label.CONNECT_TO_TYPEDB,
+            composeDialogState = dialogState
+        ) {
+            Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
+                ConnectionURIFormField(state)
+                AdvancedConfigToggleField(state)
+                if (state.advancedConfigOpen) {
+                    ServerFormField(state)
+                    if (state.server == TYPEDB_CLOUD) {
+                        ManageCloudAddressesButton(state = state, shouldFocus = Service.driver.isDisconnected)
+                        UsernameFormField(state)
+                        PasswordFormField(state)
+                        TLSEnabledFormField(state)
+                        if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
+                    } else if (state.server == TYPEDB_CORE) {
+                        CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
+                    }
                 }
-            }
-            Spacer(Modifier.weight(1f))
-            Row(verticalAlignment = Alignment.Bottom) {
-                ServerConnectionStatus()
-                Spacer(modifier = Modifier.weight(1f))
-                when (Service.driver.status) {
-                    DISCONNECTED -> DisconnectedFormButtons(state)
-                    CONNECTING -> ConnectingFormButtons()
-                    CONNECTED -> ConnectedFormButtons(state)
+                Spacer(Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    ServerConnectionStatus()
+                    Spacer(modifier = Modifier.weight(1f))
+                    when (Service.driver.status) {
+                        DISCONNECTED -> DisconnectedFormButtons(state)
+                        CONNECTING -> ConnectingFormButtons()
+                        CONNECTED -> ConnectedFormButtons(state)
+                    }
                 }
             }
         }

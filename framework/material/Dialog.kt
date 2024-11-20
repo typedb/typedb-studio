@@ -21,7 +21,8 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogWindowScope
-import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.WindowPosition.Aligned
+import androidx.compose.ui.window.DialogState as ComposeDialogState
 import androidx.compose.ui.window.rememberDialogState
 import com.typedb.studio.framework.common.KeyMapper
 import com.typedb.studio.framework.common.theme.Theme
@@ -49,11 +50,22 @@ object Dialog {
         state: DialogState, title: String, width: Dp, height: Dp,
         padding: Dp = Theme.DIALOG_PADDING,
         content: @Composable DialogWindowScope.() -> Unit
-    ) = Dialog(
-        title = title, onCloseRequest = { state.close() }, state = rememberDialogState(
-            position = WindowPosition.Aligned(Alignment.Center),
+    ) = Layout(state, title, padding,
+        rememberDialogState(
+            position = Aligned(Alignment.Center),
             size = DpSize(width, height)
-        )
+        ),
+        content
+    )
+
+    @Composable
+    fun Layout(
+        state: DialogState, title: String,
+        padding: Dp = Theme.DIALOG_PADDING,
+        composeDialogState: ComposeDialogState,
+        content: @Composable DialogWindowScope.() -> Unit
+    ) = Dialog(
+        title = title, onCloseRequest = { state.close() }, state = composeDialogState
     ) {
         Box(Modifier.background(Theme.studio.backgroundMedium).padding(padding)
             .onKeyEvent { handleKeyEvent(it, state) }) {
