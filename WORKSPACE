@@ -7,7 +7,7 @@ workspace(name = "typedb_studio")
 ################################
 # Load @typedb_dependencies #
 ################################
-load("//dependencies/vaticle:repositories.bzl", "typedb_dependencies")
+load("//dependencies/typedb:repositories.bzl", "typedb_dependencies")
 typedb_dependencies()
 
 # Load Bazel
@@ -135,7 +135,7 @@ rules_pkg_dependencies()
 load("//dependencies/maven:artifacts.bzl", typedb_studio_artifacts = "artifacts")
 
 # Load artifacts
-load("//dependencies/vaticle:artifacts.bzl", "vaticle_typedb_artifact")
+load("//dependencies/typedb:artifacts.bzl", "vaticle_typedb_artifact")
 vaticle_typedb_artifact()
 
 # Load //docs
@@ -154,7 +154,7 @@ google_common_workspace_rules()
 ################################
 
 # Load repositories
-load("//dependencies/vaticle:repositories.bzl", "typedb_force_graph", "typedb_driver", "typeql")
+load("//dependencies/typedb:repositories.bzl", "typedb_force_graph", "typedb_driver", "typeql")
 typedb_force_graph()
 typedb_driver()
 typeql()
@@ -163,7 +163,7 @@ load("@typedb_driver//dependencies/typedb:repositories.bzl", "typedb_protocol")
 typedb_protocol()
 
 # Load Maven
-#load("//dependencies/vaticle:artifacts.bzl", typedb_studio_maven_artifacts = "maven_artifacts")
+#load("//dependencies/typedb:artifacts.bzl", typedb_studio_maven_artifacts = "maven_artifacts")
 load("@typeql//dependencies/maven:artifacts.bzl", typeql_artifacts = "artifacts")
 load("@typedb_driver//dependencies/maven:artifacts.bzl", typedb_driver_artifacts = "artifacts")
 load("@typedb_force_graph//dependencies/maven:artifacts.bzl", typedb_force_graph_artifacts = "artifacts")
