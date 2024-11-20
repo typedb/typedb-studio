@@ -47,11 +47,11 @@ import com.typedb.studio.framework.material.SelectFileDialog
 import com.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
 import com.typedb.studio.framework.material.Tooltip
 import com.typedb.studio.service.Service
-import com.typedb.studio.service.common.util.ConnectionString
-import com.typedb.studio.service.common.util.ConnectionString.ParsedCloudConnectionString
-import com.typedb.studio.service.common.util.ConnectionString.ParsedCloudTranslatedConnectionString
-import com.typedb.studio.service.common.util.ConnectionString.ParsedCloudUntranslatedConnectionString
-import com.typedb.studio.service.common.util.ConnectionString.ParsedCoreConnectionString
+import com.typedb.studio.service.common.util.ConnectionUri
+import com.typedb.studio.service.common.util.ConnectionUri.ParsedCloudConnectionUri
+import com.typedb.studio.service.common.util.ConnectionUri.ParsedCloudTranslatedConnectionUri
+import com.typedb.studio.service.common.util.ConnectionUri.ParsedCloudUntranslatedConnectionUri
+import com.typedb.studio.service.common.util.ConnectionUri.ParsedCoreConnectionUri
 import com.typedb.studio.service.common.util.Label
 import com.typedb.studio.service.common.util.Property
 import com.typedb.studio.service.common.util.Property.Server.TYPEDB_CLOUD
@@ -87,7 +87,7 @@ object ServerDialog {
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: true)
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
-        var connectionString: TextFieldValue by mutableStateOf(TextFieldValue(""))
+        var connectionUri: TextFieldValue by mutableStateOf(TextFieldValue(""))
         var advancedConfigOpen: Boolean by mutableStateOf(false)
 
         override fun cancel() = Service.driver.connectServerDialog.close()
@@ -144,7 +144,7 @@ object ServerDialog {
         override fun submit() {
             assert(isValid())
             state.cloudAddresses.add(server)
-            syncConnectionString()
+            syncConnectionUri()
             server = ""
         }
     }
@@ -198,7 +198,7 @@ object ServerDialog {
         height = HEIGHT
     ) {
         Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
-            ConnectionStringFormField(state)
+            ConnectionURIFormField(state)
             AdvancedConfigToggleField(state)
             if (state.advancedConfigOpen) {
                 ServerFormField(state)
@@ -394,7 +394,7 @@ object ServerDialog {
         TextInput(
             value = state.username,
             placeholder = Label.USERNAME.lowercase(),
-            onValueChange = { state.username = it; syncConnectionString() },
+            onValueChange = { state.username = it; syncConnectionUri() },
             enabled = Service.driver.isDisconnected,
             modifier = Modifier.fillMaxSize()
         )
@@ -405,7 +405,7 @@ object ServerDialog {
         TextInput(
             value = state.password,
             placeholder = Label.PASSWORD.lowercase(),
-            onValueChange = { state.password = it; syncConnectionString() },
+            onValueChange = { state.password = it; syncConnectionUri() },
             enabled = Service.driver.isDisconnected,
             isPassword = true,
             modifier = Modifier.fillMaxSize(),
@@ -414,7 +414,7 @@ object ServerDialog {
 
     @Composable
     private fun TLSEnabledFormField(state: ConnectServerForm) = Field(label = Label.ENABLE_TLS) {
-        Checkbox(value = state.tlsEnabled, enabled = Service.driver.isDisconnected) { state.tlsEnabled = it; syncConnectionString() }
+        Checkbox(value = state.tlsEnabled, enabled = Service.driver.isDisconnected) { state.tlsEnabled = it; syncConnectionUri() }
     }
 
     @Composable
@@ -440,14 +440,14 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ConnectionStringFormField(
+    private fun ConnectionURIFormField(
         state: ConnectServerForm
-    ) = Field(label = Label.CONNECTION_STRING, fieldHeight = FIELD_HEIGHT * 3) {
+    ) = Field(label = Label.CONNECTION_URI, fieldHeight = FIELD_HEIGHT * 3) {
         MultilineTextInput(
-            value = state.connectionString,
+            value = state.connectionUri,
             onValueChange = {
-                state.connectionString = it
-                loadConnectionString(state.connectionString.text)
+                state.connectionUri = it
+                loadConnectionUri(state.connectionUri.text)
             },
             onTextLayout = { },
             horizontalScroll = false,
@@ -455,41 +455,41 @@ object ServerDialog {
         )
     }
 
-    private fun syncConnectionString() {
-        state.connectionString = TextFieldValue(
+    private fun syncConnectionUri() {
+        state.connectionUri = TextFieldValue(
             when (state.server) {
-                TYPEDB_CORE -> ConnectionString.buildCore(state.coreAddress)
+                TYPEDB_CORE -> ConnectionUri.buildCore(state.coreAddress)
                 TYPEDB_CLOUD -> if (state.useCloudTranslatedAddress) {
-                    ConnectionString.buildCloudTranslated(state.username, state.password, state.cloudTranslatedAddresses, state.tlsEnabled)
+                    ConnectionUri.buildCloudTranslated(state.username, state.password, state.cloudTranslatedAddresses, state.tlsEnabled)
                 } else {
-                    ConnectionString.buildCloud(state.username, state.password, state.cloudAddresses, state.tlsEnabled)
+                    ConnectionUri.buildCloud(state.username, state.password, state.cloudAddresses, state.tlsEnabled)
                 }
             }
         )
     }
 
-    private fun loadConnectionString(connectionString: String) {
-        ConnectionString.parse(connectionString)?.let { parsedConnectionString ->
-            when (parsedConnectionString) {
-                is ParsedCoreConnectionString -> {
+    private fun loadConnectionUri(connectionUri: String) {
+        ConnectionUri.parse(connectionUri)?.let { parsedConnectionUri ->
+            when (parsedConnectionUri) {
+                is ParsedCoreConnectionUri -> {
                     state.server = TYPEDB_CORE
-                    state.coreAddress = parsedConnectionString.address
+                    state.coreAddress = parsedConnectionUri.address
                 }
-                is ParsedCloudConnectionString -> {
+                is ParsedCloudConnectionUri -> {
                     state.server = TYPEDB_CLOUD
-                    state.username = parsedConnectionString.username
-                    state.password = parsedConnectionString.password
-                    state.tlsEnabled = parsedConnectionString.tlsEnabled ?: false
-                    when (parsedConnectionString) {
-                        is ParsedCloudUntranslatedConnectionString -> {
+                    state.username = parsedConnectionUri.username
+                    state.password = parsedConnectionUri.password
+                    state.tlsEnabled = parsedConnectionUri.tlsEnabled ?: false
+                    when (parsedConnectionUri) {
+                        is ParsedCloudUntranslatedConnectionUri -> {
                             state.useCloudTranslatedAddress = false
                             state.cloudAddresses.clear()
-                            state.cloudAddresses.addAll(parsedConnectionString.addresses.filter { addressFormatIsValid(it) })
+                            state.cloudAddresses.addAll(parsedConnectionUri.addresses.filter { addressFormatIsValid(it) })
                         }
-                        is ParsedCloudTranslatedConnectionString -> {
+                        is ParsedCloudTranslatedConnectionUri -> {
                             state.useCloudTranslatedAddress = true
                             state.cloudTranslatedAddresses.clear()
-                            state.cloudTranslatedAddresses.addAll(parsedConnectionString.addresses.filter {
+                            state.cloudTranslatedAddresses.addAll(parsedConnectionUri.addresses.filter {
                                 addressFormatIsValid(it.first) && addressFormatIsValid(it.second)
                             })
                         }

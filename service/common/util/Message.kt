@@ -58,9 +58,6 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 )
             val TEXT_COPIED_TO_CLIPBOARD =
                 Framework(3, "Selected text has been successfully copied to the OS clipboard.")
-            val CONNECTION_STRING_PARSE_ERROR = Framework(
-                4, "Could not parse connection string"
-            )
         }
     }
 

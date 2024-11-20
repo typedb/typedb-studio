@@ -5,7 +5,7 @@ import java.net.URISyntaxException
 import java.net.URLDecoder
 import java.nio.charset.Charset
 
-object ConnectionString {
+object ConnectionUri {
     private const val SCHEME_CLOUD = "typedb-cloud"
     private const val SCHEME_CORE = "typedb-core"
     private const val SCHEME_SUFFIX = "://"
@@ -33,26 +33,26 @@ object ConnectionString {
         username, password, translatedAddresses.map { (a, b) -> "$a$ADDRESS_TRANSLATION_SEPARATOR$b" }, tlsEnabled
     )
 
-    sealed interface ParsedConnectionString
+    sealed interface ParsedConnectionUri
 
-    data class ParsedCoreConnectionString(val address: String): ParsedConnectionString
+    data class ParsedCoreConnectionUri(val address: String): ParsedConnectionUri
 
-    sealed interface ParsedCloudConnectionString: ParsedConnectionString {
+    sealed interface ParsedCloudConnectionUri: ParsedConnectionUri {
         val username: String
         val password: String
         val tlsEnabled: Boolean?
     }
 
-    data class ParsedCloudUntranslatedConnectionString(
+    data class ParsedCloudUntranslatedConnectionUri(
         override val username: String, override val password: String, val addresses: List<String>, override val tlsEnabled: Boolean?
-    ): ParsedCloudConnectionString
+    ): ParsedCloudConnectionUri
 
-    data class ParsedCloudTranslatedConnectionString(
+    data class ParsedCloudTranslatedConnectionUri(
         override val username: String, override val password: String, val addresses: List<Pair<String, String>>, override val tlsEnabled: Boolean?
-    ): ParsedCloudConnectionString
+    ): ParsedCloudConnectionUri
 
-    fun parse(connectionString: String): ParsedConnectionString? {
-        val uri = try { URI(connectionString) } catch (_: URISyntaxException) { return null }
+    fun parse(connectionUri: String): ParsedConnectionUri? {
+        val uri = try { URI(connectionUri) } catch (_: URISyntaxException) { return null }
 
         val (auth, address) = uri.authority.split(AUTH_ADDRESS_SEPARATOR, limit = 2)
         val (username, password) = auth.split(USERNAME_PASSWORD_SEPARATOR, limit = 2)
@@ -66,7 +66,7 @@ object ConnectionString {
             val decodedPassword = URLDecoder.decode(password, Charset.defaultCharset())
             val tlsEnabled = queryParams?.get(TLS_ENABLED)?.toBoolean()
             if (addresses.getOrNull(0)?.contains(ADDRESS_TRANSLATION_SEPARATOR) == true) {
-                return ParsedCloudTranslatedConnectionString(
+                return ParsedCloudTranslatedConnectionUri(
                     username = username,
                     password = decodedPassword,
                     addresses = addresses.map {
@@ -76,7 +76,7 @@ object ConnectionString {
                     tlsEnabled = tlsEnabled
                 )
             } else {
-                return ParsedCloudUntranslatedConnectionString(
+                return ParsedCloudUntranslatedConnectionUri(
                     username = username,
                     password = decodedPassword,
                     addresses = addresses,
@@ -84,7 +84,7 @@ object ConnectionString {
                 )
             }
         } else if (uri.scheme == SCHEME_CORE) {
-            return ParsedCoreConnectionString(addresses[0])
+            return ParsedCoreConnectionUri(addresses[0])
         } else {
             return null
         }

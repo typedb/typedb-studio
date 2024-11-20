@@ -43,7 +43,7 @@ object Label {
     const val CONFIRM_QUITTING_APPLICATION = "Confirm Quitting Application"
     const val CONFIRM_TYPE_DELETION = "Confirm Type Deletion"
     const val CONNECT = "Connect"
-    const val CONNECTION_STRING = "Connection String"
+    const val CONNECTION_URI = "Connection URI"
     const val CONNECTING = "Connecting..."
     const val CONNECT_TO_TYPEDB = "Connect to TypeDB"
     const val CONVERT_FILE_TYPE = "Converting File Type"
