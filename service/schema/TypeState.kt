@@ -13,8 +13,8 @@ import com.typedb.studio.service.common.NotificationService.Companion.launchAndH
 import com.typedb.studio.service.common.util.Label
 import com.typedb.studio.service.common.util.Message.Companion.UNKNOWN
 import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_RENAME_TYPE
-import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
-import com.vaticle.typedb.driver.api.concept.type.Type
+import com.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
+import com.typedb.driver.api.concept.type.Type
 import mu.KotlinLogging
 
 sealed class TypeState<T : Type, TS : TypeState<T, TS>> constructor(

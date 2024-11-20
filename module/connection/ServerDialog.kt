@@ -52,7 +52,7 @@ import com.typedb.studio.service.common.util.Sentence
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
 import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
-import com.vaticle.typedb.driver.api.TypeDBCredential
+import com.typedb.driver.api.TypeDBCredential
 import java.nio.file.Path
 
 object ServerDialog {

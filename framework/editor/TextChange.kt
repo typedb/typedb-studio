@@ -10,7 +10,7 @@ import com.typedb.studio.framework.editor.InputTarget.Cursor
 import com.typedb.studio.framework.editor.InputTarget.Cursor.Companion.min
 import com.typedb.studio.framework.editor.InputTarget.Selection
 import com.typedb.studio.framework.editor.common.GlyphLine
-import com.vaticle.typedb.common.collection.Either
+import com.typedb.common.collection.Either
 import kotlin.streams.toList
 
 internal class TextChange(val operations: List<Operation>) {

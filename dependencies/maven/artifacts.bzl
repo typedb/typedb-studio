@@ -10,6 +10,7 @@ artifacts = [
     "io.sentry:sentry",
     "org.antlr:antlr4-runtime",
     "org.slf4j:slf4j-api",
+    "org.yaml:snakeyaml", # TODO: why do we need to declare this dependency explicitly?
     "org.zeroturnaround:zt-exec",
 ]
 

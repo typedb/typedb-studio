@@ -313,7 +313,7 @@ jobs:
       image: ubuntu-2004:202101-01
     steps:
       - checkout
-      - run: git push --delete https://$REPO_GITHUB_TOKEN@github.com/vaticle/typedb-studio.git $CIRCLE_BRANCH
+      - run: git push --delete https://$REPO_GITHUB_TOKEN@github.com/typedb/typedb-studio.git $CIRCLE_BRANCH
 
 workflows:
   snapshot:

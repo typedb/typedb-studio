@@ -25,11 +25,11 @@ import com.typedb.studio.framework.common.geometry.Geometry.rectArcIntersectAngl
 import com.typedb.studio.framework.common.geometry.Geometry.rectIncomingLineIntersect
 import com.typedb.studio.framework.material.ConceptDisplay.attributeValue
 import com.vaticle.force.graph.impl.BasicVertex
-import com.vaticle.typedb.driver.api.concept.Concept
-import com.vaticle.typedb.driver.api.concept.type.AttributeType
-import com.vaticle.typedb.driver.api.concept.type.EntityType
-import com.vaticle.typedb.driver.api.concept.type.RelationType
-import com.vaticle.typedb.driver.api.concept.type.ThingType
+import com.typedb.driver.api.concept.Concept
+import com.typedb.driver.api.concept.type.AttributeType
+import com.typedb.driver.api.concept.type.EntityType
+import com.typedb.driver.api.concept.type.RelationType
+import com.typedb.driver.api.concept.type.ThingType
 import java.awt.Polygon
 import kotlin.math.pow
 
@@ -39,17 +39,17 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
     abstract val geometry: Geometry
     var readyToCompose = false
 
-    sealed class Thing(val thing: com.vaticle.typedb.driver.api.concept.thing.Thing, graph: Graph) :
+    sealed class Thing(val thing: com.typedb.driver.api.concept.thing.Thing, graph: Graph) :
         Vertex(thing, graph) {
 
         override val label = thing.type.label.name()
 
         companion object {
-            fun of(thing: com.vaticle.typedb.driver.api.concept.thing.Thing, graph: Graph): Thing {
+            fun of(thing: com.typedb.driver.api.concept.thing.Thing, graph: Graph): Thing {
                 return when (thing) {
-                    is com.vaticle.typedb.driver.api.concept.thing.Entity -> Entity(thing, graph)
-                    is com.vaticle.typedb.driver.api.concept.thing.Relation -> Relation(thing, graph)
-                    is com.vaticle.typedb.driver.api.concept.thing.Attribute -> Attribute(thing, graph)
+                    is com.typedb.driver.api.concept.thing.Entity -> Entity(thing, graph)
+                    is com.typedb.driver.api.concept.thing.Relation -> Relation(thing, graph)
+                    is com.typedb.driver.api.concept.thing.Attribute -> Attribute(thing, graph)
                     else -> throw IllegalStateException("[$thing]'s encoding is not supported by Vertex.Thing")
                 }
             }
@@ -67,12 +67,12 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             return graph.edges.filterIsInstance<Edge.Roleplayer>().filter { it.target == this }
         }
 
-        class Entity(val entity: com.vaticle.typedb.driver.api.concept.thing.Entity, graph: Graph) :
+        class Entity(val entity: com.typedb.driver.api.concept.thing.Entity, graph: Graph) :
             Thing(entity, graph) {
             override val geometry = Geometry.Entity()
         }
 
-        class Relation(relation: com.vaticle.typedb.driver.api.concept.thing.Relation, graph: Graph) :
+        class Relation(relation: com.typedb.driver.api.concept.thing.Relation, graph: Graph) :
             Thing(relation, graph) {
 
             override val label = relation.type.label.name()
@@ -83,7 +83,7 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
             }
         }
 
-        class Attribute(val attribute: com.vaticle.typedb.driver.api.concept.thing.Attribute, graph: Graph) :
+        class Attribute(val attribute: com.typedb.driver.api.concept.thing.Attribute, graph: Graph) :
             Thing(attribute, graph) {
 
             override val label = "${attribute.type.label.name()}: ${attributeValue(attribute)}"
@@ -92,14 +92,14 @@ sealed class Vertex(val concept: Concept, protected val graph: Graph) {
     }
 
     sealed class Type constructor(
-        val type: com.vaticle.typedb.driver.api.concept.type.Type,
+        val type: com.typedb.driver.api.concept.type.Type,
         graph: Graph
     ) : Vertex(type, graph) {
 
         override val label = type.label.name()
 
         companion object {
-            fun of(type: com.vaticle.typedb.driver.api.concept.type.Type, graph: Graph): Type {
+            fun of(type: com.typedb.driver.api.concept.type.Type, graph: Graph): Type {
                 return when (type) {
                     is EntityType -> Entity(type, graph)
                     is RelationType -> Relation(type, graph)

@@ -5,29 +5,29 @@
 workspace(name = "typedb_studio")
 
 ################################
-# Load @vaticle_dependencies #
+# Load @typedb_dependencies #
 ################################
-load("//dependencies/vaticle:repositories.bzl", "vaticle_dependencies")
-vaticle_dependencies()
+load("//dependencies/vaticle:repositories.bzl", "typedb_dependencies")
+typedb_dependencies()
 
 # Load Bazel
-load("@vaticle_dependencies//builder/bazel:deps.bzl", "bazel_toolchain")
+load("@typedb_dependencies//builder/bazel:deps.bzl", "bazel_toolchain")
 bazel_toolchain()
 
 # Load //builder/python
-load("@vaticle_dependencies//builder/python:deps.bzl", python_deps = "deps")
-python_deps()
+load("@typedb_dependencies//builder/python:deps.bzl", "rules_python")
+rules_python()
 load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
 py_repositories()
 
 # Load //builder/java
-load("@vaticle_dependencies//builder/java:deps.bzl", java_deps = "deps")
-java_deps()
+load("@typedb_dependencies//builder/java:deps.bzl", "rules_jvm_external")
+rules_jvm_external()
 
 # Load //builder/kotlin
 # FIXME studio kotlin dependency is held back, out of sync with dependencies
-# load("@vaticle_dependencies//builder/kotlin:deps.bzl", kotlin_deps = "deps")
-# kotlin_deps()
+#load("@typedb_dependencies//builder/kotlin:deps.bzl", "io_bazel_rules_kotlin")
+#io_bazel_rules_kotlin()
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 http_archive(
     name = "io_bazel_rules_kotlin",
@@ -46,22 +46,22 @@ load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
 kt_register_toolchains()
 
 # Load //builder/antlr (required by typedb_driver_java > typeql)
-load("@vaticle_dependencies//builder/antlr:deps.bzl", antlr_deps = "deps", "antlr_version")
-antlr_deps()
+load("@typedb_dependencies//builder/antlr:deps.bzl", "rules_antlr", "antlr_version")
+rules_antlr()
 
 load("@rules_antlr//antlr:lang.bzl", "JAVA")
 load("@rules_antlr//antlr:repositories.bzl", "rules_antlr_dependencies")
 rules_antlr_dependencies(antlr_version, JAVA)
 
 # Load //builder/proto_grpc (required by typedb_driver_java)
-load("@vaticle_dependencies//builder/proto_grpc:deps.bzl", grpc_deps = "deps")
-grpc_deps()
+load("@typedb_dependencies//builder/proto_grpc:deps.bzl", proto_grpc_deps = "deps")
+proto_grpc_deps()
 
 load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", com_github_grpc_grpc_deps = "grpc_deps")
 com_github_grpc_grpc_deps()
 
 # Load //builder/rust (required by typedb_driver_java)
-load("@vaticle_dependencies//builder/rust:deps.bzl", rust_deps = "deps")
+load("@typedb_dependencies//builder/rust:deps.bzl", rust_deps = "deps")
 rust_deps()
 
 load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_register_toolchains", "rust_analyzer_toolchain_repository")
@@ -80,51 +80,52 @@ rust_register_toolchains(
     rust_analyzer_version = rust_common.default_version,
 )
 
-load("@vaticle_dependencies//library/crates:crates.bzl", "fetch_crates")
+load("@typedb_dependencies//library/crates:crates.bzl", "fetch_crates")
 fetch_crates()
 load("@crates//:defs.bzl", "crate_repositories")
 crate_repositories()
 
-load("@vaticle_dependencies//tool/swig:deps.bzl", swig_deps = "deps")
-swig_deps()
+load("@typedb_dependencies//tool/swig:deps.bzl", "swig")
+swig()
 
 # Load Compose
-load("@vaticle_dependencies//builder/compose:deps.bzl", compose_deps = "deps")
+load("@typedb_dependencies//builder/compose:deps.bzl", compose_deps = "deps")
 compose_deps()
 
 # Load Checkstyle
-load("@vaticle_dependencies//tool/checkstyle:deps.bzl", checkstyle_deps = "deps")
+load("@typedb_dependencies//tool/checkstyle:deps.bzl", checkstyle_deps = "deps")
 checkstyle_deps()
 
 # Load Unused Deps
-load("@vaticle_dependencies//tool/unuseddeps:deps.bzl", unuseddeps_deps = "deps")
+load("@typedb_dependencies//tool/unuseddeps:deps.bzl", unuseddeps_deps = "deps")
 unuseddeps_deps()
 
 # Load //tool/common
-load("@vaticle_dependencies//tool/common:deps.bzl", "vaticle_dependencies_ci_pip",
-    vaticle_dependencies_tool_maven_artifacts = "maven_artifacts")
+load("@typedb_dependencies//tool/common:deps.bzl", "typedb_dependencies_ci_pip",
+    typedb_dependencies_tool_maven_artifacts = "maven_artifacts")
 
-#####################################################################
-# Load @vaticle_bazel_distribution from (@vaticle_dependencies) #
-#####################################################################
-load("//dependencies/vaticle:repositories.bzl", "vaticle_bazel_distribution")
-vaticle_bazel_distribution()
+###############################################################
+# Load @typedb_bazel_distribution from (@typedb_dependencies) #
+###############################################################
+load("@typedb_dependencies//distribution:deps.bzl", "typedb_bazel_distribution")
+typedb_bazel_distribution()
 
 # Load //pip
-load("@vaticle_bazel_distribution//pip:deps.bzl", pip_deps = "deps")
-pip_deps()
+load("@typedb_bazel_distribution//pip:deps.bzl", "typedb_bazel_distribution_pip")
+typedb_bazel_distribution_pip()
 
-# Load @vaticle_bazel_distribution_uploader
-load("@vaticle_bazel_distribution//common/uploader:deps.bzl", uploader_deps = "deps")
-uploader_deps()
-load("@vaticle_bazel_distribution_uploader//:requirements.bzl", install_uploader_deps = "install_deps")
-install_uploader_deps()
+# Load @typedb_bazel_distribution_uploader
+load("@typedb_bazel_distribution//common/uploader:deps.bzl", "typedb_bazel_distribution_uploader")
+typedb_bazel_distribution_uploader()
+load("@typedb_bazel_distribution_uploader//:requirements.bzl", uploader_install_deps = "install_deps")
+uploader_install_deps()
 
 # Load //github
-load("@vaticle_bazel_distribution//github:deps.bzl", github_deps = "deps")
-github_deps()
+load("@typedb_bazel_distribution//github:deps.bzl", "ghr_osx_zip", "ghr_linux_tar")
+ghr_osx_zip()
+ghr_linux_tar()
 
-load("@vaticle_bazel_distribution//common:deps.bzl", "rules_pkg")
+load("@typedb_bazel_distribution//common:deps.bzl", "rules_pkg")
 rules_pkg()
 
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
@@ -138,13 +139,13 @@ load("//dependencies/vaticle:artifacts.bzl", "vaticle_typedb_artifact")
 vaticle_typedb_artifact()
 
 # Load //docs
-load("@vaticle_bazel_distribution//docs:python/deps.bzl", docs_deps = "deps")
-docs_deps()
-load("@vaticle_dependencies_tool_docs//:requirements.bzl", install_doc_deps = "install_deps")
-install_doc_deps()
+load("@typedb_bazel_distribution//docs:python/deps.bzl", "typedb_bazel_distribution_docs_py")
+typedb_bazel_distribution_docs_py()
+load("@typedb_bazel_distribution_docs_py//:requirements.bzl", docs_py_install_deps = "install_deps")
+docs_py_install_deps()
 
-load("@vaticle_bazel_distribution//docs:java/deps.bzl", java_doc_deps = "deps")
-java_doc_deps()
+load("@typedb_bazel_distribution//docs:java/deps.bzl", "google_bazel_common")
+google_bazel_common()
 load("@google_bazel_common//:workspace_defs.bzl", "google_common_workspace_rules")
 google_common_workspace_rules()
 
@@ -153,19 +154,19 @@ google_common_workspace_rules()
 ################################
 
 # Load repositories
-load("//dependencies/vaticle:repositories.bzl", "vaticle_force_graph", "vaticle_typedb_driver", "vaticle_typeql")
-vaticle_force_graph()
-vaticle_typedb_driver()
-vaticle_typeql()
+load("//dependencies/vaticle:repositories.bzl", "typedb_force_graph", "typedb_driver", "typeql")
+typedb_force_graph()
+typedb_driver()
+typeql()
 
-load("@vaticle_typedb_driver//dependencies/vaticle:repositories.bzl", "vaticle_typedb_protocol")
-vaticle_typedb_protocol()
+load("@typedb_driver//dependencies/typedb:repositories.bzl", "typedb_protocol")
+typedb_protocol()
 
 # Load Maven
-load("//dependencies/vaticle:artifacts.bzl", typedb_studio_typedb_maven_artifacts = "maven_artifacts")
-load("@vaticle_typeql//dependencies/maven:artifacts.bzl", vaticle_typeql_artifacts = "artifacts")
-load("@vaticle_typedb_driver//dependencies/maven:artifacts.bzl", vaticle_typedb_driver_artifacts = "artifacts")
-load("@vaticle_force_graph//dependencies/maven:artifacts.bzl", vaticle_force_graph_artifacts = "artifacts")
+#load("//dependencies/vaticle:artifacts.bzl", typedb_studio_maven_artifacts = "maven_artifacts")
+load("@typeql//dependencies/maven:artifacts.bzl", typeql_artifacts = "artifacts")
+load("@typedb_driver//dependencies/maven:artifacts.bzl", typedb_driver_artifacts = "artifacts")
+load("@typedb_force_graph//dependencies/maven:artifacts.bzl", typedb_force_graph_artifacts = "artifacts")
 
 ############################
 # Load @maven dependencies #
@@ -184,17 +185,17 @@ stardoc_repositories()
 # FIXME studio compose dependencies are held back, out of sync with dependencies
 load("//:maven.bzl", "maven")
 maven(
-    vaticle_dependencies_tool_maven_artifacts +
-    vaticle_typeql_artifacts +
-    vaticle_typedb_driver_artifacts +
-    vaticle_force_graph_artifacts +
+    typedb_dependencies_tool_maven_artifacts +
+    typeql_artifacts +
+    typedb_driver_artifacts +
+    typedb_force_graph_artifacts +
     typedb_studio_artifacts,
-    internal_artifacts = typedb_studio_typedb_maven_artifacts,
+#    internal_artifacts = typedb_studio_maven_artifacts,
     fail_on_missing_checksum = False,
 )
 
 ###############################################
 # Create @typedb_studio_workspace_refs #
 ###############################################
-load("@vaticle_bazel_distribution//common:rules.bzl", "workspace_refs")
+load("@typedb_bazel_distribution//common:rules.bzl", "workspace_refs")
 workspace_refs(name = "typedb_studio_workspace_refs")

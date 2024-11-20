@@ -2,8 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-load("@vaticle_dependencies//distribution/artifact:rules.bzl", "native_artifact_files")
-load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
+load("@typedb_dependencies//distribution/artifact:rules.bzl", "native_artifact_files")
+load("@typedb_dependencies//distribution:deployment.bzl", "deployment")
 
 def vaticle_typedb_artifact():
     native_artifact_files(
@@ -16,6 +16,6 @@ def vaticle_typedb_artifact():
     )
 
 maven_artifacts = {
-    'com.vaticle.typedb:typedb-runner': '2.28.3',
-    'com.vaticle.typedb:typedb-cloud-runner': '2.28.3',
+    'com.typedb:typedb-runner': '2.28.3',
+    'com.typedb:typedb-cloud-runner': '2.28.3',
 }

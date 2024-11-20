@@ -15,13 +15,13 @@ import androidx.compose.ui.text.withStyle
 import com.typedb.studio.framework.common.theme.Color.FADED_OPACITY
 import com.typedb.studio.framework.common.theme.Theme
 import com.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.driver.api.concept.Concept
-import com.vaticle.typedb.driver.api.concept.thing.Attribute
-import com.vaticle.typedb.driver.api.concept.thing.Relation
-import com.vaticle.typedb.driver.api.concept.type.AttributeType
-import com.vaticle.typedb.driver.api.concept.type.RelationType
-import com.vaticle.typedb.driver.api.concept.type.ThingType
-import com.vaticle.typedb.driver.api.concept.type.Type
+import com.typedb.driver.api.concept.Concept
+import com.typedb.driver.api.concept.thing.Attribute
+import com.typedb.driver.api.concept.thing.Relation
+import com.typedb.driver.api.concept.type.AttributeType
+import com.typedb.driver.api.concept.type.RelationType
+import com.typedb.driver.api.concept.type.ThingType
+import com.typedb.driver.api.concept.type.Type
 import java.time.format.DateTimeFormatter
 
 object ConceptDisplay {

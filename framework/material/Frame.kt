@@ -38,7 +38,7 @@ import com.typedb.studio.framework.common.Context.LocalWindowContext
 import com.typedb.studio.framework.common.Util.mousePoint
 import com.typedb.studio.framework.common.Util.toDP
 import com.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.common.collection.Either
+import com.typedb.common.collection.Either
 import java.awt.Cursor
 
 object Frame {

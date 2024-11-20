@@ -16,11 +16,11 @@ import com.typedb.studio.service.common.util.Message
 import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_OPEN_SESSION
 import com.typedb.studio.service.common.util.Message.Connection.Companion.SESSION_CLOSED_ON_SERVER
 import com.typedb.studio.service.common.util.Message.Connection.Companion.SESSION_REOPENED
-import com.vaticle.typedb.driver.api.TypeDBOptions
-import com.vaticle.typedb.driver.api.TypeDBSession
-import com.vaticle.typedb.driver.api.TypeDBTransaction
-import com.vaticle.typedb.driver.api.TypeDBTransaction.Type.READ
-import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
+import com.typedb.driver.api.TypeDBOptions
+import com.typedb.driver.api.TypeDBSession
+import com.typedb.driver.api.TypeDBTransaction
+import com.typedb.driver.api.TypeDBTransaction.Type.READ
+import com.typedb.driver.common.exception.TypeDBDriverException
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference

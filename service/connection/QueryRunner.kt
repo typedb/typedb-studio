@@ -16,20 +16,20 @@ import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.TY
 import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.GET
 import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.INSERT
 import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.UPDATE
-import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.driver.api.answer.ConceptMap
-import com.vaticle.typedb.driver.api.answer.ConceptMapGroup
-import com.vaticle.typedb.driver.api.answer.JSON
-import com.vaticle.typedb.driver.api.answer.ValueGroup
-import com.vaticle.typeql.lang.TypeQL
-import com.vaticle.typeql.lang.query.TypeQLDefine
-import com.vaticle.typeql.lang.query.TypeQLDelete
-import com.vaticle.typeql.lang.query.TypeQLFetch
-import com.vaticle.typeql.lang.query.TypeQLGet
-import com.vaticle.typeql.lang.query.TypeQLInsert
-import com.vaticle.typeql.lang.query.TypeQLQuery
-import com.vaticle.typeql.lang.query.TypeQLUndefine
-import com.vaticle.typeql.lang.query.TypeQLUpdate
+import com.typedb.common.collection.Either
+import com.typedb.driver.api.answer.ConceptMap
+import com.typedb.driver.api.answer.ConceptMapGroup
+import com.typedb.driver.api.answer.JSON
+import com.typedb.driver.api.answer.ValueGroup
+import com.typeql.lang.TypeQL
+import com.typeql.lang.query.TypeQLDefine
+import com.typeql.lang.query.TypeQLDelete
+import com.typeql.lang.query.TypeQLFetch
+import com.typeql.lang.query.TypeQLGet
+import com.typeql.lang.query.TypeQLInsert
+import com.typeql.lang.query.TypeQLQuery
+import com.typeql.lang.query.TypeQLUndefine
+import com.typeql.lang.query.TypeQLUpdate
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -56,7 +56,7 @@ class QueryRunner constructor(
             enum class Type { INFO, SUCCESS, ERROR, TYPEQL }
         }
 
-        data class Value(val value: com.vaticle.typedb.driver.api.concept.value.Value?) : Response()
+        data class Value(val value: com.typedb.driver.api.concept.value.Value?) : Response()
 
         sealed class Stream<T> : Response() {
 

@@ -4,37 +4,30 @@
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
-def vaticle_bazel_distribution():
+def typedb_dependencies():
     git_repository(
-        name = "vaticle_bazel_distribution",
-        remote = "https://github.com/vaticle/bazel-distribution",
-        commit = "425493c9a92ef894b99b3b8071886dd2af8098cf",
+        name = "typedb_dependencies",
+        remote = "https://github.com/typedb/typedb-dependencies",
+        commit = "7255cf0d972402964755b61106566b4e2ec0045d", # sync-marker: do not remove this comment, this is used for sync-dependencies by @typedb_dependencies
     )
 
-def vaticle_dependencies():
+def typedb_force_graph():
     git_repository(
-        name = "vaticle_dependencies",
-        remote = "https://github.com/vaticle/dependencies",
-        commit = "294ef724c3853c9851e1e0c6bc04e0470c724e10", # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
+        name = "typedb_force_graph",
+        remote = "https://github.com/typedb/force-graph",
+        commit = "13ac7ec8a01809dc9aad11d404cbca0ebad61646",
     )
 
-def vaticle_force_graph():
+def typeql():
     git_repository(
-        name = "vaticle_force_graph",
-        remote = "https://github.com/vaticle/force-graph",
-        commit = "dc5e7119fc09bafae0acadab1bdc14241337bc7b",
+        name = "typeql",
+        remote = "https://github.com/typedb/typeql",
+        commit = "7e2a5b149b48b76fc029b0c883b7b28b2550f27b",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @typeql
     )
 
-def vaticle_typeql():
+def typedb_driver():
     git_repository(
-        name = "vaticle_typeql",
-        remote = "https://github.com/vaticle/typeql",
-        tag = "2.28.0",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typeql
-    )
-
-def vaticle_typedb_driver():
-    git_repository(
-        name = "vaticle_typedb_driver",
-        remote = "https://github.com/vaticle/typedb-driver",
-        tag = "2.28.0",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_driver
+        name = "typedb_driver",
+        remote = "https://github.com/typedb/typedb-driver",
+        commit = "b1998a3e0d62908551bdd2aaa6d01b0540506fbd",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @typedb_driver
     )

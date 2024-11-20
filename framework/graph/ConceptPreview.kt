@@ -28,11 +28,11 @@ import com.typedb.studio.framework.material.Form
 import com.typedb.studio.framework.material.Icon
 import com.typedb.studio.framework.material.Table
 import com.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.driver.api.concept.Concept
-import com.vaticle.typedb.driver.api.concept.thing.Attribute
-import com.vaticle.typedb.driver.api.concept.thing.Thing
-import com.vaticle.typedb.driver.api.concept.type.Type
+import com.typedb.common.collection.Either
+import com.typedb.driver.api.concept.Concept
+import com.typedb.driver.api.concept.thing.Attribute
+import com.typedb.driver.api.concept.thing.Thing
+import com.typedb.driver.api.concept.type.Type
 
 class ConceptPreview constructor(
     private val graphArea: GraphArea,

@@ -6,10 +6,10 @@
 
 package com.typedb.studio.service.schema
 
-import com.vaticle.typedb.driver.api.TypeDBTransaction
-import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
-import com.vaticle.typedb.driver.api.concept.type.EntityType
-import com.vaticle.typedb.driver.api.concept.type.Type
+import com.typedb.driver.api.TypeDBTransaction
+import com.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
+import com.typedb.driver.api.concept.type.EntityType
+import com.typedb.driver.api.concept.type.Type
 import kotlin.streams.toList
 
 class EntityTypeState internal constructor(

@@ -6,7 +6,7 @@
 
 package com.typedb.studio.service.common.util
 
-import com.vaticle.typedb.common.exception.ErrorMessage
+import com.typedb.common.exception.ErrorMessage
 
 // TODO: if you add a new nested class to ErrorMessage, please make sure to update ErrorMessage.loadClasses()
 abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: String, messageBody: String) :

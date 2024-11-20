@@ -12,18 +12,18 @@ import com.typedb.studio.service.common.util.Message.Visualiser.Companion.EXPLAI
 import com.typedb.studio.service.common.util.Message.Visualiser.Companion.FULLY_EXPLAINED
 import com.typedb.studio.service.common.util.Message.Visualiser.Companion.UNEXPECTED_ERROR
 import com.typedb.studio.service.connection.TransactionState
-import com.vaticle.typedb.driver.api.TypeDBTransaction
-import com.vaticle.typedb.driver.api.answer.ConceptMap
-import com.vaticle.typedb.driver.api.concept.Concept
-import com.vaticle.typedb.driver.api.concept.thing.Attribute
-import com.vaticle.typedb.driver.api.concept.thing.Relation
-import com.vaticle.typedb.driver.api.concept.thing.Thing
-import com.vaticle.typedb.driver.api.concept.type.RoleType
-import com.vaticle.typedb.driver.api.concept.type.ThingType
-import com.vaticle.typedb.driver.api.concept.type.Type
-import com.vaticle.typedb.driver.api.concept.value.Value
-import com.vaticle.typedb.driver.api.logic.Explanation
-import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
+import com.typedb.driver.api.TypeDBTransaction
+import com.typedb.driver.api.answer.ConceptMap
+import com.typedb.driver.api.concept.Concept
+import com.typedb.driver.api.concept.thing.Attribute
+import com.typedb.driver.api.concept.thing.Relation
+import com.typedb.driver.api.concept.thing.Thing
+import com.typedb.driver.api.concept.type.RoleType
+import com.typedb.driver.api.concept.type.ThingType
+import com.typedb.driver.api.concept.type.Type
+import com.typedb.driver.api.concept.value.Value
+import com.typedb.driver.api.logic.Explanation
+import com.typedb.driver.common.exception.TypeDBDriverException
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -296,7 +296,7 @@ class GraphBuilder(
 
     sealed class AnswerSource {
         object Query : AnswerSource()
-        class Explanation(val explanation: com.vaticle.typedb.driver.api.logic.Explanation) : AnswerSource()
+        class Explanation(val explanation: com.typedb.driver.api.logic.Explanation) : AnswerSource()
     }
 
     sealed class ThingEdgeCandidate {
@@ -330,7 +330,7 @@ class GraphBuilder(
         companion object {
             fun of(concept: Concept, vertex: Vertex, graphBuilder: GraphBuilder, transaction: TypeDBTransaction?): EdgeBuilder? {
                 return when (concept) {
-                    is com.vaticle.typedb.driver.api.concept.thing.Thing -> {
+                    is com.typedb.driver.api.concept.thing.Thing -> {
                         Thing(concept, vertex as Vertex.Thing, transaction, graphBuilder)
                     }
                     is ThingType -> {
@@ -342,7 +342,7 @@ class GraphBuilder(
         }
 
         class Thing(
-            val thing: com.vaticle.typedb.driver.api.concept.thing.Thing,
+            val thing: com.typedb.driver.api.concept.thing.Thing,
             private val thingVertex: Vertex.Thing,
             private val transaction: TypeDBTransaction?,
             ctx: GraphBuilder,

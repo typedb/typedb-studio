@@ -81,7 +81,7 @@ import com.typedb.studio.service.common.util.Message
 import com.typedb.studio.service.common.util.Sentence
 import com.typedb.studio.service.project.FileState
 import com.typedb.studio.service.schema.ThingTypeState
-import com.vaticle.typedb.common.collection.Either
+import com.typedb.common.collection.Either
 import io.sentry.Sentry
 import io.sentry.protocol.User
 import java.awt.Window

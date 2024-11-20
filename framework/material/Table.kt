@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.typedb.studio.framework.common.Util.toDP
 import com.typedb.studio.framework.common.theme.Theme
 import com.typedb.studio.service.common.util.Label
-import com.vaticle.typedb.common.collection.Either
+import com.typedb.common.collection.Either
 
 object Table {
 

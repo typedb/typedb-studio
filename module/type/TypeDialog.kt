@@ -38,7 +38,7 @@ import com.typedb.studio.service.schema.AttributeTypeState
 import com.typedb.studio.service.schema.SchemaService
 import com.typedb.studio.service.schema.ThingTypeState
 import com.typedb.studio.service.schema.TypeState
-import com.vaticle.typedb.driver.api.concept.value.Value
+import com.typedb.driver.api.concept.value.Value
 
 object TypeDialog {
 

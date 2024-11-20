@@ -11,7 +11,7 @@ import com.typedb.studio.framework.common.theme.Typography
 import com.typedb.studio.framework.common.theme.Typography.Style.BOLD
 import com.typedb.studio.framework.common.theme.Typography.Style.ITALIC
 import com.typedb.studio.framework.common.theme.Typography.Style.UNDERLINE
-import com.vaticle.typedb.common.yaml.YAML
+import com.typedb.common.yaml.YAML
 
 class Scope private constructor(val name: String, var parent: Scope?) {
 

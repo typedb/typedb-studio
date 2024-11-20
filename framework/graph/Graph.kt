@@ -23,8 +23,8 @@ import com.vaticle.force.graph.force.YForce
 import com.vaticle.force.graph.impl.BasicSimulation
 import com.vaticle.force.graph.impl.BasicVertex
 import com.vaticle.force.graph.util.RandomEffects
-import com.vaticle.typedb.driver.api.answer.ConceptMap
-import com.vaticle.typedb.driver.api.logic.Explanation
+import com.typedb.driver.api.answer.ConceptMap
+import com.typedb.driver.api.logic.Explanation
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean

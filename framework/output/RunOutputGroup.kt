@@ -20,7 +20,7 @@ import com.typedb.studio.service.common.StatusService.Key.QUERY_RESPONSE_TIME
 import com.typedb.studio.service.connection.QueryRunner
 import com.typedb.studio.service.connection.QueryRunner.Response
 import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.GET
-import com.vaticle.typedb.common.collection.Either
+import com.typedb.common.collection.Either
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue

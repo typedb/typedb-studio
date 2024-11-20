@@ -17,11 +17,11 @@ import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_
 import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DEFINE_RELATES_ROLE_TYPE
 import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_DELETE_TYPE
 import com.typedb.studio.service.common.util.Sentence
-import com.vaticle.typedb.driver.api.TypeDBTransaction
-import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
-import com.vaticle.typedb.driver.api.concept.type.RelationType
-import com.vaticle.typedb.driver.api.concept.type.RoleType
-import com.vaticle.typedb.driver.api.concept.type.Type
+import com.typedb.driver.api.TypeDBTransaction
+import com.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
+import com.typedb.driver.api.concept.type.RelationType
+import com.typedb.driver.api.concept.type.RoleType
+import com.typedb.driver.api.concept.type.Type
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 import mu.KotlinLogging

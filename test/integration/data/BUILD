@@ -2,21 +2,21 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@typedb_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 package(default_visibility = ["//test/integration:__subpackages__"])
 
 skiko_runtime_platform = select({
-     "@vaticle_bazel_distribution//platform:is_mac": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64"],
-     "@vaticle_bazel_distribution//platform:is_linux": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64"],
-     "@vaticle_bazel_distribution//platform:is_windows": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64"],
+     "@typedb_bazel_distribution//platform:is_mac": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_macos_x64"],
+     "@typedb_bazel_distribution//platform:is_linux": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_linux_x64"],
+     "@typedb_bazel_distribution//platform:is_windows": ["@maven//:org_jetbrains_skiko_skiko_awt_runtime_windows_x64"],
      "//conditions:default": ["INVALID"]})
 
 kt_jvm_library(
     name = "paths",
     srcs = ["Paths.kt"],
-    plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
+    plugins = ["@typedb_dependencies//builder/compose:compiler_plugin"],
     runtime_deps = skiko_runtime_platform,
     deps = [
         # External Maven Dependencies

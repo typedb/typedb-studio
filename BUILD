@@ -2,17 +2,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
-load("@vaticle_dependencies//builder/java:rules.bzl", "native_typedb_artifact")
-load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz", "unzip_file", "checksum", "java_deps")
-load("@vaticle_bazel_distribution//brew:rules.bzl", "deploy_brew")
-load("@vaticle_bazel_distribution//apt:rules.bzl", "deploy_apt")
+load("@typedb_dependencies//distribution:deployment.bzl", "deployment")
+load("@typedb_dependencies//builder/java:rules.bzl", "native_typedb_artifact")
+load("@typedb_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@typedb_bazel_distribution//common:rules.bzl", "assemble_targz", "unzip_file", "checksum", "java_deps")
+load("@typedb_bazel_distribution//brew:rules.bzl", "deploy_brew")
+load("@typedb_bazel_distribution//apt:rules.bzl", "deploy_apt")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
-load("@vaticle_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
-load("@vaticle_bazel_distribution//artifact:rules.bzl", "artifact_extractor", "deploy_artifact")
-load("@vaticle_bazel_distribution//platform:constraints.bzl", "constraint_linux_arm64", "constraint_linux_x86_64",
+load("@typedb_bazel_distribution//platform/jvm:rules.bzl", "assemble_jvm_platform")
+load("@typedb_bazel_distribution//artifact:rules.bzl", "artifact_extractor", "deploy_artifact")
+load("@typedb_bazel_distribution//platform:constraints.bzl", "constraint_linux_arm64", "constraint_linux_x86_64",
      "constraint_mac_arm64", "constraint_mac_x86_64", "constraint_win_x86_64")
 
 package(default_visibility = ["//test/integration:__subpackages__"])
@@ -22,7 +22,7 @@ exports_files(["VERSION"])
 kt_jvm_library(
     name = "studio",
     srcs = glob(["*.kt"]),
-    plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
+    plugins = ["@typedb_dependencies//builder/compose:compiler_plugin"],
     deps = [
         "//framework/common:common",
         "//framework/material:material",
@@ -43,7 +43,7 @@ kt_jvm_library(
         "//service:service",
 
         # External Vaticle Dependencies
-        "@vaticle_typeql//common/java:common",
+        "@typedb_dependencies//common/java:typedb-common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
@@ -59,7 +59,7 @@ kt_jvm_library(
         "@maven//:org_slf4j_slf4j_api",
     ],
     resources = ["//resources/icons/vaticle:vaticle-bot-32px"],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio:{pom_version}"],
+    tags = ["maven_coordinates=com.typedb:typedb-studio:{pom_version}"],
 )
 
 load("@io_bazel_rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
@@ -128,11 +128,11 @@ java_binary(
 java_deps(
     name = "assemble-deps",
     target = select({
-        "@vaticle_bazel_distribution//platform:is_mac_arm64": ":studio-bin-mac-arm64",
-        "@vaticle_bazel_distribution//platform:is_mac_x86_64": ":studio-bin-mac-x86_64",
-        "@vaticle_bazel_distribution//platform:is_linux_arm64": ":studio-bin-linux-arm64",
-        "@vaticle_bazel_distribution//platform:is_linux_x86_64": ":studio-bin-linux-x86_64",
-        "@vaticle_bazel_distribution//platform:is_windows_x86_64": ":studio-bin-windows-x86_64",
+        "@typedb_bazel_distribution//platform:is_mac_arm64": ":studio-bin-mac-arm64",
+        "@typedb_bazel_distribution//platform:is_mac_x86_64": ":studio-bin-mac-x86_64",
+        "@typedb_bazel_distribution//platform:is_linux_arm64": ":studio-bin-linux-arm64",
+        "@typedb_bazel_distribution//platform:is_linux_x86_64": ":studio-bin-linux-x86_64",
+        "@typedb_bazel_distribution//platform:is_windows_x86_64": ":studio-bin-windows-x86_64",
         "//conditions:default": "INVALID",
     }),
     java_deps_root = "lib/",
@@ -147,11 +147,11 @@ assemble_jvm_platform(
     name = "assemble-platform",
     image_name = "TypeDB Studio",
     image_filename = "typedb-studio-" + select({
-        "@vaticle_bazel_distribution//platform:is_mac_arm64": "mac-arm64",
-        "@vaticle_bazel_distribution//platform:is_mac_x86_64": "mac-x86_64",
-        "@vaticle_bazel_distribution//platform:is_linux_arm64": "linux-arm64",
-        "@vaticle_bazel_distribution//platform:is_linux_x86_64": "linux-x86_64",
-        "@vaticle_bazel_distribution//platform:is_windows_x86_64": "windows-x86_64",
+        "@typedb_bazel_distribution//platform:is_mac_arm64": "mac-arm64",
+        "@typedb_bazel_distribution//platform:is_mac_x86_64": "mac-x86_64",
+        "@typedb_bazel_distribution//platform:is_linux_arm64": "linux-arm64",
+        "@typedb_bazel_distribution//platform:is_linux_x86_64": "linux-x86_64",
+        "@typedb_bazel_distribution//platform:is_windows_x86_64": "windows-x86_64",
         "//conditions:default": "INVALID",
     }),
     description = "TypeDB's Integrated Development Environment",
@@ -160,9 +160,9 @@ assemble_jvm_platform(
     license_file = ":LICENSE",
     version_file = ":VERSION",
     icon = select({
-        "@vaticle_bazel_distribution//platform:is_mac": "//resources/icons/vaticle:vaticle-bot-mac",
-        "@vaticle_bazel_distribution//platform:is_linux": "//resources/icons/vaticle:vaticle-bot-linux",
-        "@vaticle_bazel_distribution//platform:is_windows": "//resources/icons/vaticle:vaticle-bot-windows",
+        "@typedb_bazel_distribution//platform:is_mac": "//resources/icons/vaticle:vaticle-bot-mac",
+        "@typedb_bazel_distribution//platform:is_linux": "//resources/icons/vaticle:vaticle-bot-linux",
+        "@typedb_bazel_distribution//platform:is_windows": "//resources/icons/vaticle:vaticle-bot-windows",
         "//conditions:default": "mac",
     }),
     java_deps = ":assemble-deps",
@@ -381,11 +381,11 @@ checkstyle_test(
 native_typedb_artifact(
     name = "native-typedb-artifact",
     native_artifacts = {
-        "@vaticle_bazel_distribution//platform:is_linux_arm64": ["@vaticle_typedb_artifact_linux-arm64//file"],
-        "@vaticle_bazel_distribution//platform:is_linux_x86_64": ["@vaticle_typedb_artifact_linux-x86_64//file"],
-        "@vaticle_bazel_distribution//platform:is_mac_arm64": ["@vaticle_typedb_artifact_mac-arm64//file"],
-        "@vaticle_bazel_distribution//platform:is_mac_x86_64": ["@vaticle_typedb_artifact_mac-x86_64//file"],
-        "@vaticle_bazel_distribution//platform:is_windows_x86_64": ["@vaticle_typedb_artifact_windows-x86_64//file"],
+        "@typedb_bazel_distribution//platform:is_linux_arm64": ["@vaticle_typedb_artifact_linux-arm64//file"],
+        "@typedb_bazel_distribution//platform:is_linux_x86_64": ["@vaticle_typedb_artifact_linux-x86_64//file"],
+        "@typedb_bazel_distribution//platform:is_mac_arm64": ["@vaticle_typedb_artifact_mac-arm64//file"],
+        "@typedb_bazel_distribution//platform:is_mac_x86_64": ["@vaticle_typedb_artifact_mac-x86_64//file"],
+        "@typedb_bazel_distribution//platform:is_windows_x86_64": ["@vaticle_typedb_artifact_windows-x86_64//file"],
     },
     output = "typedb-server-native.tar.gz",
     visibility = ["//test/integration:__subpackages__"],
@@ -400,9 +400,9 @@ artifact_extractor(
 filegroup(
     name = "tools",
     data = [
-        "@vaticle_dependencies//distribution/artifact:create-netrc",
-        "@vaticle_dependencies//tool/bazelinstall:remote_cache_setup.sh",
-        "@vaticle_dependencies//tool/checkstyle:test-coverage",
-        "@vaticle_dependencies//tool/release/notes:create",
+        "@typedb_dependencies//distribution/artifact:create-netrc",
+        "@typedb_dependencies//tool/bazelinstall:remote_cache_setup.sh",
+        "@typedb_dependencies//tool/checkstyle:test-coverage",
+        "@typedb_dependencies//tool/release/notes:create",
     ],
 )

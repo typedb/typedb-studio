@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@typedb_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 package(default_visibility = ["//framework/editor/highlighter:__subpackages__"])
@@ -10,12 +10,12 @@ package(default_visibility = ["//framework/editor/highlighter:__subpackages__"])
 kt_jvm_library(
     name = "common",
     srcs = glob(["*.kt"]),
-    plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
+    plugins = ["@typedb_dependencies//builder/compose:compiler_plugin"],
     deps = [
         "//framework/common:common",
 
         # External Vaticle Dependencies
-        "@vaticle_typeql//common/java:common",
+        "@typedb_dependencies//common/java:typedb-common",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
@@ -27,7 +27,7 @@ kt_jvm_library(
         "scope_definitions.yml",
         "//resources/schemes:schemes",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-framework-editor-highlighter-common:{pom_version}"],
+    tags = ["maven_coordinates=com.typedb:typedb-studio-framework-editor-highlighter-common:{pom_version}"],
 )
 
 checkstyle_test(

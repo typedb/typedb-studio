@@ -21,8 +21,8 @@ import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSA
 import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_COMMIT_FAILED
 import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_COMMIT_SUCCESSFULLY
 import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_ROLLBACK
-import com.vaticle.typedb.driver.api.TypeDBOptions
-import com.vaticle.typedb.driver.api.TypeDBTransaction
+import com.typedb.driver.api.TypeDBOptions
+import com.typedb.driver.api.TypeDBTransaction
 import java.util.concurrent.LinkedBlockingQueue
 import mu.KotlinLogging
 

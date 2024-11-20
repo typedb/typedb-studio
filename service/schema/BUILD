@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@typedb_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 package(default_visibility = [
@@ -16,21 +16,21 @@ package(default_visibility = [
 kt_jvm_library(
     name = "schema",
     srcs = glob(["*.kt"]),
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-state-schema:{pom_version}"],
+    tags = ["maven_coordinates=com.typedb:typedb-studio-state-schema:{pom_version}"],
     deps = [
         "//service/common",
         "//service/connection",
         "//service/page",
 
         # External Vaticle Dependencies
-        "@vaticle_typedb_driver//java/api",
-        "@vaticle_typedb_driver//java/common",
-        "@vaticle_typeql//common/java:common",
-        "@vaticle_typeql//java/common",
-        "@vaticle_typeql//java:typeql-lang",
-        "@vaticle_typeql//java/builder:builder",
-        "@vaticle_typeql//java/pattern:pattern",
-        "@vaticle_typeql//java/query:query",
+        "@typedb_driver//java/api",
+        "@typedb_driver//java/common",
+        "@typedb_dependencies//common/java:typedb-common",
+        "@typeql//java/common",
+        "@typeql//java:typeql-lang",
+        "@typeql//java/builder:builder",
+        "@typeql//java/pattern:pattern",
+        "@typeql//java/query:query",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",

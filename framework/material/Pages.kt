@@ -38,7 +38,7 @@ import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.util.Label
 import com.typedb.studio.service.common.util.Sentence
 import com.typedb.studio.service.page.Pageable
-import com.vaticle.typedb.common.collection.Either
+import com.typedb.common.collection.Either
 
 object Pages {
 

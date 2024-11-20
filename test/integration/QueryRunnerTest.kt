@@ -20,8 +20,8 @@ import com.typedb.studio.test.integration.common.StudioActions.writeDataInteract
 import com.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import com.typedb.studio.test.integration.data.Paths.SampleGitHubData
-import com.vaticle.typedb.driver.api.TypeDBSession
-import com.vaticle.typedb.driver.api.TypeDBTransaction
+import com.typedb.driver.api.TypeDBSession
+import com.typedb.driver.api.TypeDBTransaction
 import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
 import org.junit.Test

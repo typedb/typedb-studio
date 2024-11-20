@@ -67,11 +67,11 @@ import com.typedb.studio.service.schema.RelationTypeState
 import com.typedb.studio.service.schema.RoleTypeState
 import com.typedb.studio.service.schema.ThingTypeState
 import com.typedb.studio.service.schema.TypeState
-import com.vaticle.typedb.common.collection.Either
-import com.vaticle.typedb.driver.api.concept.type.AttributeType
-import com.vaticle.typedb.driver.api.concept.type.EntityType
-import com.vaticle.typedb.driver.api.concept.type.RelationType
-import com.vaticle.typedb.driver.api.concept.type.ThingType
+import com.typedb.common.collection.Either
+import com.typedb.driver.api.concept.type.AttributeType
+import com.typedb.driver.api.concept.type.EntityType
+import com.typedb.driver.api.concept.type.RelationType
+import com.typedb.driver.api.concept.type.ThingType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 

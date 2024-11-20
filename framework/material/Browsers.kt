@@ -28,7 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.typedb.studio.framework.common.theme.Theme
-import com.vaticle.typedb.common.collection.Either
+import com.typedb.common.collection.Either
 import java.util.concurrent.LinkedBlockingQueue
 
 object Browsers {

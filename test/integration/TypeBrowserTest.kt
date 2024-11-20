@@ -25,7 +25,7 @@ import com.typedb.studio.test.integration.common.StudioActions.waitUntilTrue
 import com.typedb.studio.test.integration.common.StudioActions.writeSchemaInteractively
 import com.typedb.studio.test.integration.common.TypeDBRunners.withTypeDB
 import com.typedb.studio.test.integration.data.Paths.SampleGitHubData
-import com.vaticle.typedb.driver.api.TypeDBSession
+import com.typedb.driver.api.TypeDBSession
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
