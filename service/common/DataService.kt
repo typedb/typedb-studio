@@ -66,6 +66,7 @@ class DataService {
         private val CONNECTION_USERNAME = "connection.username"
         private val CONNECTION_TLS_ENABLED = "connection.tls_enabled"
         private val CONNECTION_CA_CERTIFICATE = "connection.ca_certificate"
+        private val CONNECTION_CONNECTION_URI = "connection.connection_uri"
 
         var server: Property.Server?
             get() = properties?.getProperty(CONNECTION_SERVER)?.let { Property.Server.of(it) }
@@ -94,6 +95,9 @@ class DataService {
         var caCertificate: String?
             get() = properties?.getProperty(CONNECTION_CA_CERTIFICATE)
             set(value) = value?.let { setProperty(CONNECTION_CA_CERTIFICATE, it) } ?: Unit
+        var connectionUri: String?
+            get() = properties?.getProperty(CONNECTION_CONNECTION_URI)
+            set(value) = value?.let { setProperty(CONNECTION_CONNECTION_URI, it) } ?: Unit
     }
 
     inner class Preferences {

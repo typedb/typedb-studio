@@ -100,7 +100,7 @@ object ServerDialog {
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: true)
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
-        var connectionUri: TextFieldValue by mutableStateOf(TextFieldValue(""))
+        var connectionUri: TextFieldValue by mutableStateOf(TextFieldValue(appData.connectionUri ?: ""))
         var advancedConfigOpen: Boolean by mutableStateOf(false)
 
         override fun cancel() = Service.driver.connectServerDialog.close()
@@ -146,6 +146,7 @@ object ServerDialog {
             appData.username = username
             appData.tlsEnabled = tlsEnabled
             appData.caCertificate = caCertificate
+            appData.connectionUri = connectionUri.text
         }
     }
 
