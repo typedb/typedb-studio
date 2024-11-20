@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,14 +25,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.typedb.studio.framework.common.theme.Theme
 import com.typedb.studio.framework.material.ActionableList
 import com.typedb.studio.framework.material.Dialog
 import com.typedb.studio.framework.material.Form
 import com.typedb.studio.framework.material.Form.Checkbox
+import com.typedb.studio.framework.material.Form.FIELD_HEIGHT
 import com.typedb.studio.framework.material.Form.Field
 import com.typedb.studio.framework.material.Form.IconButton
+import com.typedb.studio.framework.material.Form.MultilineTextInput
 import com.typedb.studio.framework.material.Form.RowSpacer
 import com.typedb.studio.framework.material.Form.Submission
 import com.typedb.studio.framework.material.Form.Text
@@ -46,6 +48,10 @@ import com.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
 import com.typedb.studio.framework.material.Tooltip
 import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.util.ConnectionString
+import com.typedb.studio.service.common.util.ConnectionString.ParsedCloudConnectionString
+import com.typedb.studio.service.common.util.ConnectionString.ParsedCloudTranslatedConnectionString
+import com.typedb.studio.service.common.util.ConnectionString.ParsedCloudUntranslatedConnectionString
+import com.typedb.studio.service.common.util.ConnectionString.ParsedCoreConnectionString
 import com.typedb.studio.service.common.util.Label
 import com.typedb.studio.service.common.util.Property
 import com.typedb.studio.service.common.util.Property.Server.TYPEDB_CLOUD
@@ -55,10 +61,7 @@ import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
 import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 import com.vaticle.typedb.driver.api.TypeDBCredential
-import java.net.URLDecoder
-import java.nio.charset.Charset
 import java.nio.file.Path
-import mu.KotlinLogging
 
 object ServerDialog {
 
@@ -67,12 +70,11 @@ object ServerDialog {
     private val ADDRESS_MANAGER_WIDTH = 400.dp
     private val ADDRESS_MANAGER_HEIGHT = 500.dp
     private val appData = Service.data.connection
-    private val LOGGER = KotlinLogging.logger {}
 
     private val state by mutableStateOf(ConnectServerForm())
 
     private class ConnectServerForm : Form.State() {
-        var server: Property.Server by mutableStateOf(appData.server ?: Property.Server.TYPEDB_CORE)
+        var server: Property.Server by mutableStateOf(appData.server ?: TYPEDB_CLOUD)
         var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
         var cloudAddresses: MutableList<String> = mutableStateListOf<String>().also {
             appData.cloudAddresses?.let { saved -> it.addAll(saved) }
@@ -85,7 +87,8 @@ object ServerDialog {
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: true)
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
-        var connectionString: String by mutableStateOf("")
+        var connectionString: TextFieldValue by mutableStateOf(TextFieldValue(""))
+        var advancedConfigOpen: Boolean by mutableStateOf(false)
 
         override fun cancel() = Service.driver.connectServerDialog.close()
         override fun isValid(): Boolean = when (server) {
@@ -183,6 +186,11 @@ object ServerDialog {
     }
 
     @Composable
+    private fun AdvancedConfigToggleField(state: ConnectServerForm) = Field(label = Label.VIEW_ADVANCED_CONFIG) {
+        Checkbox(value = state.advancedConfigOpen) { state.advancedConfigOpen = it }
+    }
+
+    @Composable
     private fun ConnectServer() = Dialog.Layout(
         state = Service.driver.connectServerDialog,
         title = Label.CONNECT_TO_TYPEDB,
@@ -190,17 +198,19 @@ object ServerDialog {
         height = HEIGHT
     ) {
         Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
-            ServerFormField(state)
-            if (state.server == TYPEDB_CLOUD) {
-                ManageCloudAddressesButton(state = state, shouldFocus = Service.driver.isDisconnected)
-                UsernameFormField(state)
-                PasswordFormField(state)
-                TLSEnabledFormField(state)
-                if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
-                Divider()
-                ConnectionStringFormField(state)
-            } else if (state.server == TYPEDB_CORE) {
-                CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
+            ConnectionStringFormField(state)
+            AdvancedConfigToggleField(state)
+            if (state.advancedConfigOpen) {
+                ServerFormField(state)
+                if (state.server == TYPEDB_CLOUD) {
+                    ManageCloudAddressesButton(state = state, shouldFocus = Service.driver.isDisconnected)
+                    UsernameFormField(state)
+                    PasswordFormField(state)
+                    TLSEnabledFormField(state)
+                    if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
+                } else if (state.server == TYPEDB_CORE) {
+                    CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
+                }
             }
             Spacer(Modifier.weight(1f))
             Row(verticalAlignment = Alignment.Bottom) {
@@ -432,75 +442,59 @@ object ServerDialog {
     @Composable
     private fun ConnectionStringFormField(
         state: ConnectServerForm
-    ) = Field(label = Label.CONNECTION_STRING) {
-        TextInput(
-            placeholder = ConnectionString.build(
-                Label.USERNAME.lowercase(), Label.PASSWORD.lowercase(), listOf(Label.ADDRESS.lowercase()), true
-            ),
+    ) = Field(label = Label.CONNECTION_STRING, fieldHeight = FIELD_HEIGHT * 3) {
+        MultilineTextInput(
             value = state.connectionString,
             onValueChange = {
                 state.connectionString = it
-                try {
-                    loadConnectionString(state.connectionString)
-                } catch (_: Throwable) {}
+                loadConnectionString(state.connectionString.text)
             },
-            modifier = Modifier.weight(1f)
+            onTextLayout = { },
+            horizontalScroll = false,
+            enabled = !state.advancedConfigOpen
         )
-//        TextButton(text = Label.LOAD, enabled = state.connectionString.isNotBlank()) {
-//        }
     }
 
     private fun syncConnectionString() {
-        state.connectionString = if (state.useCloudTranslatedAddress) {
-            ConnectionString.buildTranslated(
-                state.username, state.password, state.cloudTranslatedAddresses, state.tlsEnabled
-            )
-        } else {
-            ConnectionString.build(
-                state.username, state.password, state.cloudAddresses, state.tlsEnabled
-            )
-        }
+        state.connectionString = TextFieldValue(
+            when (state.server) {
+                TYPEDB_CORE -> ConnectionString.buildCore(state.coreAddress)
+                TYPEDB_CLOUD -> if (state.useCloudTranslatedAddress) {
+                    ConnectionString.buildCloudTranslated(state.username, state.password, state.cloudTranslatedAddresses, state.tlsEnabled)
+                } else {
+                    ConnectionString.buildCloud(state.username, state.password, state.cloudAddresses, state.tlsEnabled)
+                }
+            }
+        )
     }
 
     private fun loadConnectionString(connectionString: String) {
-        assert(connectionString.startsWith(ConnectionString.SCHEME))
-        val strippedConnectionString = connectionString.removePrefix(ConnectionString.SCHEME)
-        println("STRIPPED: $strippedConnectionString")
-        val (auth, address) = strippedConnectionString.split(ConnectionString.AUTH_ADDRESS_SEPARATOR, limit = 2)
-        println("AUTH: $auth")
-        println("ADDRESS: $address")
-        val (username, password) = auth.split(ConnectionString.USERNAME_PASSWORD_SEPARATOR, limit = 2)
-        println("USERNAME: $username")
-        println("PASSWORD: $password")
-        val (hosts, path) = address.split(ConnectionString.PATH_SEPARATOR, limit = 2).let { split ->
-            if (split.size > 1) Pair(split[0], split[1])
-            else Pair(split[0], null)
-        }
-        println("HOSTS: $hosts")
-        println("PATH: $path")
-        val addresses = hosts.split(ConnectionString.ADDRESSES_SEPARATOR)
-        println("ADDRESSES: $addresses")
-        val queryParams = path?.split(ConnectionString.PARAM_STARTER)?.last()?.split(ConnectionString.PARAM_SEPARATOR)?.associate {
-            val k = it.split(ConnectionString.PARAM_KEY_VALUE_SEPARATOR, limit = 2)
-            k[0] to k[1]
-        }
-        println("QUERY PARAMS: $queryParams")
-
-        state.username = username
-        state.password = URLDecoder.decode(password, Charset.defaultCharset())
-        if (addresses.getOrNull(0)?.contains(ConnectionString.ADDRESS_TRANSLATION_SEPARATOR) == true) {
-            state.cloudTranslatedAddresses.clear()
-            state.cloudTranslatedAddresses.addAll(
-                addresses.map {
-                    val splitAddresses = it.split(ConnectionString.ADDRESS_TRANSLATION_SEPARATOR, limit = 2)
-                    splitAddresses[0] to splitAddresses[1]
+        ConnectionString.parse(connectionString)?.let { parsedConnectionString ->
+            when (parsedConnectionString) {
+                is ParsedCoreConnectionString -> {
+                    state.server = TYPEDB_CORE
+                    state.coreAddress = parsedConnectionString.address
                 }
-            )
-        } else {
-            state.cloudAddresses.clear()
-            state.cloudAddresses.addAll(addresses)
+                is ParsedCloudConnectionString -> {
+                    state.server = TYPEDB_CLOUD
+                    state.username = parsedConnectionString.username
+                    state.password = parsedConnectionString.password
+                    state.tlsEnabled = parsedConnectionString.tlsEnabled ?: false
+                    when (parsedConnectionString) {
+                        is ParsedCloudUntranslatedConnectionString -> {
+                            state.useCloudTranslatedAddress = false
+                            state.cloudAddresses.clear()
+                            state.cloudAddresses.addAll(parsedConnectionString.addresses)
+                        }
+                        is ParsedCloudTranslatedConnectionString -> {
+                            state.useCloudTranslatedAddress = true
+                            state.cloudTranslatedAddresses.clear()
+                            state.cloudTranslatedAddresses.addAll(parsedConnectionString.addresses)
+                        }
+                    }
+                }
+            }
         }
-        state.tlsEnabled = queryParams?.get(ConnectionString.TLS_ENABLED)?.toBoolean() ?: false
     }
 
     @Composable
