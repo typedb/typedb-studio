@@ -21,7 +21,7 @@ def maven(artifacts_org, internal_artifacts = {}, artifacts_repo={}, override_ta
         artifact = maven_artifact(a, artifacts_repo.get(a, maven_artifacts_org[a]))
         artifacts_selected.append(artifact)
     for coordinate, info in internal_artifacts.items():
-        if not coordinate.startswith("com.vaticle."):
+        if not coordinate.startswith("com.typedb."):
             fail("'" + coordinate + "' is not an internal dependency and must be declared in @typedb_dependencies")
         artifacts_selected.append(maven_artifact(coordinate, info))
     rje_maven_install(

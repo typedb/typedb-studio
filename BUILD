@@ -167,7 +167,7 @@ assemble_jvm_platform(
     }),
     java_deps = ":assemble-deps",
     java_deps_root = "lib/",
-    main_jar_path = "com-vaticle-typedb-typedb-studio-0.0.0.jar",
+    main_jar_path = "com-typedb-typedb-studio-0.0.0.jar",
     main_class = "com.typedb.studio.Studio",
     additional_files = assemble_files,
     verbose = True,

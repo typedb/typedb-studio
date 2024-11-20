@@ -24,7 +24,7 @@ import com.typedb.studio.framework.common.geometry.Geometry.ellipseIncomingLineI
 import com.typedb.studio.framework.common.geometry.Geometry.rectArcIntersectAngles
 import com.typedb.studio.framework.common.geometry.Geometry.rectIncomingLineIntersect
 import com.typedb.studio.framework.material.ConceptDisplay.attributeValue
-import com.vaticle.force.graph.impl.BasicVertex
+import com.typedb.force.graph.impl.BasicVertex
 import com.typedb.driver.api.concept.Concept
 import com.typedb.driver.api.concept.type.AttributeType
 import com.typedb.driver.api.concept.type.EntityType
