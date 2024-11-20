@@ -135,8 +135,8 @@ rules_pkg_dependencies()
 load("//dependencies/maven:artifacts.bzl", typedb_studio_artifacts = "artifacts")
 
 # Load artifacts
-load("//dependencies/typedb:artifacts.bzl", "vaticle_typedb_artifact")
-vaticle_typedb_artifact()
+load("//dependencies/typedb:artifacts.bzl", "typedb_artifact")
+typedb_artifact()
 
 # Load //docs
 load("@typedb_bazel_distribution//docs:python/deps.bzl", "typedb_bazel_distribution_docs_py")
