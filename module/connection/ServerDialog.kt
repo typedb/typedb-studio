@@ -31,6 +31,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogWindowScope
 import androidx.compose.ui.window.WindowPosition.Aligned
 import androidx.compose.ui.window.rememberDialogState
 import com.typedb.studio.framework.common.theme.Theme
@@ -248,16 +249,7 @@ object ServerDialog {
                 AdvancedConfigToggleButtons(state)
                 Divider()
                 if (state.advancedConfigSelected) {
-                    ServerFormField(state)
-                    if (state.server == TYPEDB_CLOUD) {
-                        ManageCloudAddressesButton(state = state, shouldFocus = Service.driver.isDisconnected)
-                        UsernameFormField(state)
-                        PasswordFormField(state)
-                        TLSEnabledFormField(state)
-                        if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
-                    } else if (state.server == TYPEDB_CORE) {
-                        CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
-                    }
+                    AdvancedConfig(state)
                 } else {
                     ConnectionURIFormField(state)
                 }
@@ -272,6 +264,20 @@ object ServerDialog {
                     }
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun DialogWindowScope.AdvancedConfig(state: ConnectServerForm) {
+        ServerFormField(state)
+        if (state.server == TYPEDB_CLOUD) {
+            ManageCloudAddressesButton(state = state, shouldFocus = Service.driver.isDisconnected)
+            UsernameFormField(state)
+            PasswordFormField(state)
+            TLSEnabledFormField(state)
+            if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
+        } else if (state.server == TYPEDB_CORE) {
+            CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
         }
     }
 
