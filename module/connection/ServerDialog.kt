@@ -278,7 +278,7 @@ object ServerDialog {
                 if (state.advancedConfigSelected) {
                     AdvancedConfig(state)
                 } else {
-                    ConnectionURIFormField(state)
+                    ConnectionUriFormField(state)
                 }
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -523,7 +523,7 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ConnectionURIFormField(
+    private fun ConnectionUriFormField(
         state: ConnectServerForm
     ) = MultilineTextInput(
         value = state.connectionUri,
