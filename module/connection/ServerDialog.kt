@@ -32,8 +32,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogWindowScope
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowPosition.Aligned
-import androidx.compose.ui.window.rememberDialogState
 import com.typedb.studio.framework.common.theme.Theme
 import com.typedb.studio.framework.common.theme.Theme.TOOLBAR_BUTTON_SIZE
 import com.typedb.studio.framework.material.ActionableList
@@ -85,7 +85,27 @@ object ServerDialog {
     private val appData = Service.data.connection
 
     private val state by mutableStateOf(ConnectServerForm())
-    private var dialogState: ComposeDialogState? by mutableStateOf(null)
+
+    private class ServerDialogState: ComposeDialogState {
+        override var position: WindowPosition by mutableStateOf(Aligned(Alignment.Center))
+
+        private var width = WIDTH
+        private var height = if (state.advancedConfigSelected) ADVANCED_HEIGHT else SIMPLE_HEIGHT
+
+        override var size: DpSize
+            get() = DpSize(
+                width,
+                if (state.advancedConfigSelected && height < ADVANCED_HEIGHT) ADVANCED_HEIGHT
+                else if (!state.advancedConfigSelected && height == ADVANCED_HEIGHT) SIMPLE_HEIGHT
+                else height
+            )
+            set(newSize) {
+                width = newSize.width
+                height = newSize.height
+            }
+    }
+
+    private var dialogState: ComposeDialogState = ServerDialogState()
 
     private class ConnectServerForm : Form.State() {
         var server: Property.Server by mutableStateOf(appData.server ?: TYPEDB_CLOUD)
@@ -101,8 +121,24 @@ object ServerDialog {
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: true)
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
-        var connectionUri: TextFieldValue by mutableStateOf(TextFieldValue(appData.connectionUri ?: ""))
+        var connectionUri: TextFieldValue by mutableStateOf(connectionUriFromAdvancedConfig())
         var advancedConfigSelected: Boolean by mutableStateOf(appData.advancedConfigSelected ?: false)
+
+        fun connectionUriFromAdvancedConfig() = TextFieldValue(
+            when (server) {
+                TYPEDB_CORE -> ConnectionUri.buildCore(coreAddress)
+                TYPEDB_CLOUD -> if (useCloudTranslatedAddress) {
+                    ConnectionUri.buildCloudTranslated(
+                        username,
+                        password,
+                        cloudTranslatedAddresses,
+                        tlsEnabled
+                    )
+                } else {
+                    ConnectionUri.buildCloud(username, password, cloudAddresses, tlsEnabled)
+                }
+            }
+        )
 
         override fun cancel() = Service.driver.connectServerDialog.close()
         override fun isValid(): Boolean = when (server) {
@@ -147,7 +183,6 @@ object ServerDialog {
             appData.username = username
             appData.tlsEnabled = tlsEnabled
             appData.caCertificate = caCertificate
-            appData.connectionUri = connectionUri.text
             appData.advancedConfigSelected = advancedConfigSelected
         }
     }
@@ -160,7 +195,6 @@ object ServerDialog {
         override fun submit() {
             assert(isValid())
             state.cloudAddresses.add(server)
-            syncConnectionUri()
             server = ""
         }
     }
@@ -208,12 +242,22 @@ object ServerDialog {
             buttons = listOf(
                 TextButtonArg(
                     text = Label.CONNECTION_URI,
-                    onClick = { state.advancedConfigSelected = false; updateHeight() },
+                    onClick = {
+                        if (state.advancedConfigSelected) {
+                            state.connectionUri = state.connectionUriFromAdvancedConfig()
+                            state.advancedConfigSelected = false
+                        }
+                    },
                     color = { toggleButtonColor(!state.advancedConfigSelected) },
                 ),
                 TextButtonArg(
                     text = Label.ADVANCED_CONFIG,
-                    onClick = { state.advancedConfigSelected = true; updateHeight() },
+                    onClick = {
+                        if (!state.advancedConfigSelected) {
+                            loadConnectionUri(state.connectionUri.text)
+                            state.advancedConfigSelected = true
+                        }
+                    },
                     color = { toggleButtonColor(state.advancedConfigSelected) },
                 )
             ),
@@ -221,25 +265,8 @@ object ServerDialog {
         )
     }
 
-    private fun updateHeight() {
-        val currentHeight = dialogState!!.size.height
-        dialogState!!.size = DpSize(
-            width = dialogState!!.size.width,
-            height = if (state.advancedConfigSelected && currentHeight < ADVANCED_HEIGHT) ADVANCED_HEIGHT
-            else if (!state.advancedConfigSelected && currentHeight == ADVANCED_HEIGHT) SIMPLE_HEIGHT
-            else currentHeight
-        )
-    }
-
     @Composable
     private fun ConnectServer() {
-        if (this.dialogState == null) {
-            val dialogState = rememberDialogState(
-                position = Aligned(Alignment.Center),
-                size = DpSize(WIDTH, if (state.advancedConfigSelected) ADVANCED_HEIGHT else SIMPLE_HEIGHT)
-            )
-            this.dialogState = dialogState
-        }
         Dialog.Layout(
             state = Service.driver.connectServerDialog,
             title = Label.CONNECT_TO_TYPEDB,
@@ -450,7 +477,7 @@ object ServerDialog {
         TextInput(
             value = state.username,
             placeholder = Label.USERNAME.lowercase(),
-            onValueChange = { state.username = it; syncConnectionUri() },
+            onValueChange = { state.username = it },
             enabled = Service.driver.isDisconnected,
             modifier = Modifier.fillMaxSize()
         )
@@ -461,7 +488,7 @@ object ServerDialog {
         TextInput(
             value = state.password,
             placeholder = Label.PASSWORD.lowercase(),
-            onValueChange = { state.password = it; syncConnectionUri() },
+            onValueChange = { state.password = it },
             enabled = Service.driver.isDisconnected,
             isPassword = true,
             modifier = Modifier.fillMaxSize(),
@@ -470,7 +497,7 @@ object ServerDialog {
 
     @Composable
     private fun TLSEnabledFormField(state: ConnectServerForm) = Field(label = Label.ENABLE_TLS) {
-        Checkbox(value = state.tlsEnabled, enabled = Service.driver.isDisconnected) { state.tlsEnabled = it; syncConnectionUri() }
+        Checkbox(value = state.tlsEnabled, enabled = Service.driver.isDisconnected) { state.tlsEnabled = it }
     }
 
     @Composable
@@ -511,19 +538,6 @@ object ServerDialog {
             .height(FIELD_HEIGHT * 3),
         placeholder = ConnectionUri.PLACEHOLDER_URI,
     )
-
-    private fun syncConnectionUri() {
-        state.connectionUri = TextFieldValue(
-            when (state.server) {
-                TYPEDB_CORE -> ConnectionUri.buildCore(state.coreAddress)
-                TYPEDB_CLOUD -> if (state.useCloudTranslatedAddress) {
-                    ConnectionUri.buildCloudTranslated(state.username, state.password, state.cloudTranslatedAddresses, state.tlsEnabled)
-                } else {
-                    ConnectionUri.buildCloud(state.username, state.password, state.cloudAddresses, state.tlsEnabled)
-                }
-            }
-        )
-    }
 
     private fun loadConnectionUri(connectionUri: String) {
         ConnectionUri.parse(connectionUri)?.let { parsedConnectionUri ->
