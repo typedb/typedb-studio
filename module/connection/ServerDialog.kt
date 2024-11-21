@@ -231,15 +231,17 @@ object ServerDialog {
 
     @Composable
     private fun ConnectServer() {
-        val dialogState = rememberDialogState(
-            position = Aligned(Alignment.Center),
-            size = DpSize(WIDTH, if (state.advancedConfigOpen) ADVANCED_HEIGHT else SIMPLE_HEIGHT)
-        )
-        this.dialogState = dialogState
+        if (this.dialogState == null) {
+            val dialogState = rememberDialogState(
+                position = Aligned(Alignment.Center),
+                size = DpSize(WIDTH, if (state.advancedConfigOpen) ADVANCED_HEIGHT else SIMPLE_HEIGHT)
+            )
+            this.dialogState = dialogState
+        }
         Dialog.Layout(
             state = Service.driver.connectServerDialog,
             title = Label.CONNECT_TO_TYPEDB,
-            composeDialogState = dialogState
+            composeDialogState = this.dialogState!!
         ) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 AdvancedConfigToggleButtons(state)
