@@ -101,7 +101,7 @@ object ServerDialog {
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: true)
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
         var connectionUri: TextFieldValue by mutableStateOf(TextFieldValue(appData.connectionUri ?: ""))
-        var advancedConfigOpen: Boolean by mutableStateOf(false)
+        var advancedConfigSelected: Boolean by mutableStateOf(appData.advancedConfigSelected ?: false)
 
         override fun cancel() = Service.driver.connectServerDialog.close()
         override fun isValid(): Boolean = when (server) {
@@ -147,6 +147,7 @@ object ServerDialog {
             appData.tlsEnabled = tlsEnabled
             appData.caCertificate = caCertificate
             appData.connectionUri = connectionUri.text
+            appData.advancedConfigSelected = advancedConfigSelected
         }
     }
 
@@ -206,13 +207,13 @@ object ServerDialog {
             buttons = listOf(
                 TextButtonArg(
                     text = Label.CONNECTION_URI,
-                    onClick = { state.advancedConfigOpen = false; updateHeight() },
-                    color = { toggleButtonColor(!state.advancedConfigOpen) },
+                    onClick = { state.advancedConfigSelected = false; updateHeight() },
+                    color = { toggleButtonColor(!state.advancedConfigSelected) },
                 ),
                 TextButtonArg(
                     text = Label.ADVANCED_CONFIG,
-                    onClick = { state.advancedConfigOpen = true; updateHeight() },
-                    color = { toggleButtonColor(state.advancedConfigOpen) },
+                    onClick = { state.advancedConfigSelected = true; updateHeight() },
+                    color = { toggleButtonColor(state.advancedConfigSelected) },
                 )
             ),
             modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -223,8 +224,8 @@ object ServerDialog {
         val currentHeight = dialogState!!.size.height
         dialogState!!.size = DpSize(
             width = dialogState!!.size.width,
-            height = if (state.advancedConfigOpen && currentHeight < ADVANCED_HEIGHT) ADVANCED_HEIGHT
-            else if (!state.advancedConfigOpen && currentHeight == ADVANCED_HEIGHT) SIMPLE_HEIGHT
+            height = if (state.advancedConfigSelected && currentHeight < ADVANCED_HEIGHT) ADVANCED_HEIGHT
+            else if (!state.advancedConfigSelected && currentHeight == ADVANCED_HEIGHT) SIMPLE_HEIGHT
             else currentHeight
         )
     }
@@ -234,7 +235,7 @@ object ServerDialog {
         if (this.dialogState == null) {
             val dialogState = rememberDialogState(
                 position = Aligned(Alignment.Center),
-                size = DpSize(WIDTH, if (state.advancedConfigOpen) ADVANCED_HEIGHT else SIMPLE_HEIGHT)
+                size = DpSize(WIDTH, if (state.advancedConfigSelected) ADVANCED_HEIGHT else SIMPLE_HEIGHT)
             )
             this.dialogState = dialogState
         }
@@ -246,7 +247,7 @@ object ServerDialog {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 AdvancedConfigToggleButtons(state)
                 Divider()
-                if (state.advancedConfigOpen) {
+                if (state.advancedConfigSelected) {
                     ServerFormField(state)
                     if (state.server == TYPEDB_CLOUD) {
                         ManageCloudAddressesButton(state = state, shouldFocus = Service.driver.isDisconnected)
@@ -499,7 +500,7 @@ object ServerDialog {
         },
         onTextLayout = { },
         horizontalScroll = false,
-        enabled = !state.advancedConfigOpen,
+        enabled = !state.advancedConfigSelected,
         modifier = Modifier.border(1.dp, Theme.studio.border, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS))
             .height(FIELD_HEIGHT * 3),
         placeholder = ConnectionUri.PLACEHOLDER_URI,
