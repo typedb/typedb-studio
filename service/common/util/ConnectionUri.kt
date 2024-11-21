@@ -56,21 +56,12 @@ object ConnectionUri {
         val uri = try { URI(connectionUri) } catch (_: URISyntaxException) { return null }
 
         val (username, password, addresses) = uri.authority?.let {
-            val (auth, address) = it.split(AUTH_ADDRESS_SEPARATOR, limit = 2).let {
-                if (it.size == 2) Pair(it[0], it[1])
-                else Pair(it[0], null)
-            }
-            val (username, password) = auth.split(USERNAME_PASSWORD_SEPARATOR, limit = 2).let {
-                if (it.size == 2) Pair(it[0], it[1])
-                else Pair(it[0], null)
-            }
+            val (auth, address) = it.splitInTwo(AUTH_ADDRESS_SEPARATOR)
+            val (username, password) = auth.splitInTwo(USERNAME_PASSWORD_SEPARATOR)
             val addresses = address?.split(ADDRESSES_SEPARATOR) ?: emptyList()
             Triple(username, password, addresses)
         } ?: Triple(null, null, emptyList())
-        val queryParams = uri.query?.split(PARAM_SEPARATOR)
-            ?.map { it.split(PARAM_KEY_VALUE_SEPARATOR, limit = 2) }
-            ?.filter { it.size == 2 }
-            ?.associate { it[0] to it[1] }
+        val queryParams = uri.query?.split(PARAM_SEPARATOR)?.associate { it.splitInTwo(PARAM_KEY_VALUE_SEPARATOR) }
 
         if (uri.scheme == SCHEME_CLOUD) {
             val decodedPassword = password?.let { URLDecoder.decode(it, Charset.defaultCharset()) }
@@ -79,10 +70,9 @@ object ConnectionUri {
                 return ParsedCloudTranslatedConnectionUri(
                     username = username,
                     password = decodedPassword,
-                    addresses = addresses.map {
-                        val splitAddresses = it.split(ADDRESS_TRANSLATION_SEPARATOR, limit = 2)
-                        splitAddresses[0] to splitAddresses[1]
-                    },
+                    addresses = addresses.map { it.splitInTwo(ADDRESS_TRANSLATION_SEPARATOR) }
+                        .filter { it.second != null }
+                        .map { it.first to it.second!! },
                     tlsEnabled = tlsEnabled
                 )
             } else {
@@ -98,5 +88,10 @@ object ConnectionUri {
         } else {
             return null
         }
+    }
+
+    private fun String.splitInTwo(separator: String): Pair<String, String?> = split(separator, limit = 2).let {
+        if (it.size == 2) Pair(it[0], it[1])
+        else Pair(it[0], null)
     }
 }
