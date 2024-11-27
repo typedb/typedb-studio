@@ -8,7 +8,7 @@ def typedb_dependencies():
     git_repository(
         name = "typedb_dependencies",
         remote = "https://github.com/typedb/typedb-dependencies",
-        commit = "7255cf0d972402964755b61106566b4e2ec0045d", # sync-marker: do not remove this comment, this is used for sync-dependencies by @typedb_dependencies
+        commit = "badb8e50302e3d40304dc987203e82b7cb3a85ed", # sync-marker: do not remove this comment, this is used for sync-dependencies by @typedb_dependencies
     )
 
 def typedb_force_graph():

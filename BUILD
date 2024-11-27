@@ -176,7 +176,7 @@ assemble_jvm_platform(
     mac_app_id = "com.typedb.studio",
     mac_entitlements = "//config/mac:entitlements-mac-plist",
     mac_code_signing_cert = "@vaticle_apple_developer_id_application_cert//file",
-    mac_deep_sign_jars_regex = ".*io-netty-netty.*",
+    mac_deep_sign_jars_regex = ".*(io-netty-netty|typedb-typedb-driver).*",
     windows_menu_group = "TypeDB Studio",
 )
 

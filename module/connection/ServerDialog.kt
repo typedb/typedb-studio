@@ -8,11 +8,14 @@ package com.typedb.studio.module.connection
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,25 +28,41 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogWindowScope
+import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.WindowPosition.Aligned
 import com.typedb.studio.framework.common.theme.Theme
+import com.typedb.studio.framework.common.theme.Theme.TOOLBAR_BUTTON_SIZE
 import com.typedb.studio.framework.material.ActionableList
 import com.typedb.studio.framework.material.Dialog
 import com.typedb.studio.framework.material.Form
 import com.typedb.studio.framework.material.Form.Checkbox
+import com.typedb.studio.framework.material.Form.FIELD_HEIGHT
 import com.typedb.studio.framework.material.Form.Field
 import com.typedb.studio.framework.material.Form.IconButton
+import com.typedb.studio.framework.material.Form.MultilineTextInput
 import com.typedb.studio.framework.material.Form.RowSpacer
 import com.typedb.studio.framework.material.Form.Submission
 import com.typedb.studio.framework.material.Form.Text
 import com.typedb.studio.framework.material.Form.TextButton
+import com.typedb.studio.framework.material.Form.TextButtonArg
+import com.typedb.studio.framework.material.Form.TextButtonRow
 import com.typedb.studio.framework.material.Form.TextInput
 import com.typedb.studio.framework.material.Form.TextInputValidated
+import com.typedb.studio.framework.material.Form.toggleButtonColor
 import com.typedb.studio.framework.material.Icon
 import com.typedb.studio.framework.material.SelectFileDialog
 import com.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
 import com.typedb.studio.framework.material.Tooltip
 import com.typedb.studio.service.Service
+import com.typedb.studio.service.common.util.ConnectionUri
+import com.typedb.studio.service.common.util.ConnectionUri.ParsedCloudConnectionUri
+import com.typedb.studio.service.common.util.ConnectionUri.ParsedCloudTranslatedConnectionUri
+import com.typedb.studio.service.common.util.ConnectionUri.ParsedCloudUntranslatedConnectionUri
+import com.typedb.studio.service.common.util.ConnectionUri.ParsedCoreConnectionUri
 import com.typedb.studio.service.common.util.Label
 import com.typedb.studio.service.common.util.Property
 import com.typedb.studio.service.common.util.Property.Server.TYPEDB_CLOUD
@@ -54,19 +73,42 @@ import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
 import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 import com.typedb.driver.api.TypeDBCredential
 import java.nio.file.Path
+import androidx.compose.ui.window.DialogState as ComposeDialogState
 
 object ServerDialog {
 
     private val WIDTH = 500.dp
-    private val HEIGHT = 340.dp
+    private val SIMPLE_HEIGHT = 240.dp
+    private val ADVANCED_HEIGHT = 400.dp
     private val ADDRESS_MANAGER_WIDTH = 400.dp
     private val ADDRESS_MANAGER_HEIGHT = 500.dp
     private val appData = Service.data.connection
 
     private val state by mutableStateOf(ConnectServerForm())
 
+    private class ServerDialogState: ComposeDialogState {
+        override var position: WindowPosition by mutableStateOf(Aligned(Alignment.Center))
+
+        private var width = WIDTH
+        private var height = if (state.advancedConfigSelected) ADVANCED_HEIGHT else SIMPLE_HEIGHT
+
+        override var size: DpSize
+            get() = DpSize(
+                width,
+                if (state.advancedConfigSelected && height < ADVANCED_HEIGHT) ADVANCED_HEIGHT
+                else if (!state.advancedConfigSelected && height == ADVANCED_HEIGHT) SIMPLE_HEIGHT
+                else height
+            )
+            set(newSize) {
+                width = newSize.width
+                height = newSize.height
+            }
+    }
+
+    private var dialogState: ComposeDialogState = ServerDialogState()
+
     private class ConnectServerForm : Form.State() {
-        var server: Property.Server by mutableStateOf(appData.server ?: Property.Server.TYPEDB_CORE)
+        var server: Property.Server by mutableStateOf(appData.server ?: TYPEDB_CLOUD)
         var coreAddress: String by mutableStateOf(appData.coreAddress ?: "")
         var cloudAddresses: MutableList<String> = mutableStateListOf<String>().also {
             appData.cloudAddresses?.let { saved -> it.addAll(saved) }
@@ -79,6 +121,24 @@ object ServerDialog {
         var password: String by mutableStateOf("")
         var tlsEnabled: Boolean by mutableStateOf(appData.tlsEnabled ?: true)
         var caCertificate: String by mutableStateOf(appData.caCertificate ?: "")
+        var connectionUri: TextFieldValue by mutableStateOf(connectionUriFromAdvancedConfig())
+        var advancedConfigSelected: Boolean by mutableStateOf(appData.advancedConfigSelected ?: false)
+
+        fun connectionUriFromAdvancedConfig() = TextFieldValue(
+            when (server) {
+                TYPEDB_CORE -> ConnectionUri.buildCore(coreAddress)
+                TYPEDB_CLOUD -> if (useCloudTranslatedAddress) {
+                    ConnectionUri.buildCloudTranslated(
+                        username,
+                        password,
+                        cloudTranslatedAddresses,
+                        tlsEnabled
+                    )
+                } else {
+                    ConnectionUri.buildCloud(username, password, cloudAddresses, tlsEnabled)
+                }
+            }
+        )
 
         override fun cancel() = Service.driver.connectServerDialog.close()
         override fun isValid(): Boolean = when (server) {
@@ -103,7 +163,7 @@ object ServerDialog {
                         val firstAddress = cloudTranslatedAddresses.first().first
                         val connectionName = "$username@$firstAddress"
                         Service.driver.tryConnectToTypeDBCloudAsync(
-                            connectionName, cloudTranslatedAddresses.associate { it }, credentials, onSuccess
+                            connectionName, cloudTranslatedAddresses.toMap(), credentials, onSuccess
                         )
                     } else {
                         val firstAddress = cloudAddresses.first()
@@ -123,6 +183,7 @@ object ServerDialog {
             appData.username = username
             appData.tlsEnabled = tlsEnabled
             appData.caCertificate = caCertificate
+            appData.advancedConfigSelected = advancedConfigSelected
         }
     }
 
@@ -175,33 +236,75 @@ object ServerDialog {
     }
 
     @Composable
-    private fun ConnectServer() = Dialog.Layout(
-        state = Service.driver.connectServerDialog,
-        title = Label.CONNECT_TO_TYPEDB,
-        width = WIDTH,
-        height = HEIGHT
-    ) {
-        Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
-            ServerFormField(state)
-            if (state.server == TYPEDB_CLOUD) {
-                ManageCloudAddressesButton(state = state, shouldFocus = Service.driver.isDisconnected)
-                UsernameFormField(state)
-                PasswordFormField(state)
-                TLSEnabledFormField(state)
-                if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
-            } else if (state.server == TYPEDB_CORE) {
-                CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
-            }
-            Spacer(Modifier.weight(1f))
-            Row(verticalAlignment = Alignment.Bottom) {
-                ServerConnectionStatus()
-                Spacer(modifier = Modifier.weight(1f))
-                when (Service.driver.status) {
-                    DISCONNECTED -> DisconnectedFormButtons(state)
-                    CONNECTING -> ConnectingFormButtons()
-                    CONNECTED -> ConnectedFormButtons(state)
+    private fun ColumnScope.AdvancedConfigToggleButtons(state: ConnectServerForm) {
+        TextButtonRow(
+            height = TOOLBAR_BUTTON_SIZE,
+            buttons = listOf(
+                TextButtonArg(
+                    text = Label.CONNECTION_URI,
+                    onClick = {
+                        if (state.advancedConfigSelected) {
+                            state.connectionUri = state.connectionUriFromAdvancedConfig()
+                            state.advancedConfigSelected = false
+                        }
+                    },
+                    color = { toggleButtonColor(!state.advancedConfigSelected) },
+                ),
+                TextButtonArg(
+                    text = Label.ADVANCED_CONFIG,
+                    onClick = {
+                        if (!state.advancedConfigSelected) {
+                            loadConnectionUri(state.connectionUri.text)
+                            state.advancedConfigSelected = true
+                        }
+                    },
+                    color = { toggleButtonColor(state.advancedConfigSelected) },
+                )
+            ),
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+    }
+
+    @Composable
+    private fun ConnectServer() {
+        Dialog.Layout(
+            state = Service.driver.connectServerDialog,
+            title = Label.CONNECT_TO_TYPEDB,
+            composeDialogState = this.dialogState
+        ) {
+            Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
+                AdvancedConfigToggleButtons(state)
+                Divider()
+                if (state.advancedConfigSelected) {
+                    AdvancedConfig(state)
+                } else {
+                    ConnectionUriFormField(state)
+                }
+                Spacer(Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    ServerConnectionStatus()
+                    Spacer(modifier = Modifier.weight(1f))
+                    when (Service.driver.status) {
+                        DISCONNECTED -> DisconnectedFormButtons(state)
+                        CONNECTING -> ConnectingFormButtons()
+                        CONNECTED -> ConnectedFormButtons(state)
+                    }
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun DialogWindowScope.AdvancedConfig(state: ConnectServerForm) {
+        ServerFormField(state)
+        if (state.server == TYPEDB_CLOUD) {
+            ManageCloudAddressesButton(state = state, shouldFocus = Service.driver.isDisconnected)
+            UsernameFormField(state)
+            PasswordFormField(state)
+            TLSEnabledFormField(state)
+            if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
+        } else if (state.server == TYPEDB_CORE) {
+            CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
         }
     }
 
@@ -416,6 +519,54 @@ object ServerDialog {
                 dialogWindow, Label.SELECT_CERTIFICATE_FILE, SelectorOptions.FILES_ONLY
             )
             if (selectedFilePath != null) state.caCertificate = selectedFilePath
+        }
+    }
+
+    @Composable
+    private fun ConnectionUriFormField(
+        state: ConnectServerForm
+    ) = MultilineTextInput(
+        value = state.connectionUri,
+        onValueChange = {
+            state.connectionUri = it
+            loadConnectionUri(state.connectionUri.text)
+        },
+        onTextLayout = { },
+        horizontalScroll = false,
+        enabled = !state.advancedConfigSelected,
+        modifier = Modifier.border(1.dp, Theme.studio.border, RoundedCornerShape(Theme.ROUNDED_CORNER_RADIUS))
+            .height(FIELD_HEIGHT * 3),
+        placeholder = ConnectionUri.PLACEHOLDER_URI,
+    )
+
+    private fun loadConnectionUri(connectionUri: String) {
+        ConnectionUri.parse(connectionUri)?.let { parsedConnectionUri ->
+            when (parsedConnectionUri) {
+                is ParsedCoreConnectionUri -> {
+                    state.server = TYPEDB_CORE
+                    state.coreAddress = parsedConnectionUri.address
+                }
+                is ParsedCloudConnectionUri -> {
+                    state.server = TYPEDB_CLOUD
+                    parsedConnectionUri.username?.let { state.username = it }
+                    parsedConnectionUri.password?.let { state.password = it }
+                    state.tlsEnabled = parsedConnectionUri.tlsEnabled ?: false
+                    when (parsedConnectionUri) {
+                        is ParsedCloudUntranslatedConnectionUri -> {
+                            state.useCloudTranslatedAddress = false
+                            state.cloudAddresses.clear()
+                            state.cloudAddresses.addAll(parsedConnectionUri.addresses.filter { addressFormatIsValid(it) })
+                        }
+                        is ParsedCloudTranslatedConnectionUri -> {
+                            state.useCloudTranslatedAddress = true
+                            state.cloudTranslatedAddresses.clear()
+                            state.cloudTranslatedAddresses.addAll(parsedConnectionUri.addresses.filter {
+                                addressFormatIsValid(it.first) && addressFormatIsValid(it.second)
+                            })
+                        }
+                    }
+                }
+            }
         }
     }
 

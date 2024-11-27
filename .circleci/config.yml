@@ -73,7 +73,13 @@ commands:
           # 2) jpackage does not support 0 as a major version
           # This writes VERSION-SHA1 into the VERSION file to be used by the assembly rule.
           echo $(cat VERSION)-$CIRCLE_SHA1 > VERSION
-          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt --spawn_strategy=local -- snapshot
+          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt \
+              --define APPLE_CODE_SIGN=yes \
+              --define APPLE_ID=$APPLE_ID \
+              --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD \
+              --define APPLE_TEAM_ID=$APPLE_TEAM_ID \
+              --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD \
+              --spawn_strategy=local -- snapshot
 
   deploy-mac-release:
     parameters:
@@ -310,7 +316,7 @@ jobs:
 
   release-cleanup:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:2023.10.1
     steps:
       - checkout
       - run: git push --delete https://$REPO_GITHUB_TOKEN@github.com/typedb/typedb-studio.git $CIRCLE_BRANCH

@@ -15,20 +15,21 @@ compatibility between Studio and TypeDB server.
 
 
 ## New Features
-- **Deploy to APT**
 
-Users of Ubuntu and other Debian-like Linux distributions will now be able to install the
-`typedb-studio` package from the TypeDB APT repo (https://repo.typedb.com/public/public-release/deb/ubuntu).
+- **Allow connection through Connection URIs**
 
-- **Introduce 'Close Database Session' button**
+We introduce the ability to connect to TypeDB through a "Connection URI". 
+This can be used as an alternative to the existing connection dialog.
 
-  
+Example Connection URIs:
+
+`typedb-core://localhost:1729`
+
+`typedb-cloud://admin:password@abc123-0.dep.cloud.typedb.com:1729/?tlsEnabled=true`
+
+
 ## Bugs Fixed
-- **Clean up ServerDialog and trim whitespaces from address input form**
-
 
 ## Code Refactors
 
-
 ## Other Improvements
-
