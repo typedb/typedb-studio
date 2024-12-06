@@ -49,19 +49,20 @@ object ConnectionUri {
     fun parse(connectionUri: String): ParsedConnectionUri? {
         val uri = try { URI(connectionUri) } catch (_: URISyntaxException) { return null }
 
-        val (username, password, addresses) = uri.authority?.let {
-            val (auth, address) = it.split("@", limit = 2)
-                .let { Pair(it[0], it.getOrNull(1)) }
-            val (username, password) = auth.split(":", limit = 2)
-                .let { Pair(it[0], it.getOrNull(1)) }
-            val addresses = address?.split(ADDRESSES_SEPARATOR) ?: emptyList()
-            Triple(username, password, addresses)
-        } ?: Triple(null, null, emptyList())
-        val queryParams = uri.query?.split("&")?.associate {
-            it.split("=", limit = 2).let { Pair(it[0], it.getOrNull(1)) }
-        }
-
         if (uri.scheme == SCHEME_CLOUD) {
+            val (username, password, addresses) = uri.authority?.let {
+                val (auth, address) = it.split("@", limit = 2)
+                    .let { Pair(it[0], it.getOrNull(1)) }
+                val (username, password) = auth.split(":", limit = 2)
+                    .let { Pair(it[0], it.getOrNull(1)) }
+                val addresses = address?.split(ADDRESSES_SEPARATOR) ?: emptyList()
+                Triple(username, password, addresses)
+            } ?: Triple(null, null, emptyList())
+
+            val queryParams = uri.query?.split("&")?.associate {
+                it.split("=", limit = 2).let { Pair(it[0], it.getOrNull(1)) }
+            }
+
             val decodedPassword = password?.let { URLDecoder.decode(it, Charset.defaultCharset()) }
             val tlsEnabled = queryParams?.get(TLS_ENABLED)?.toBoolean()
             if (addresses.getOrNull(0)?.contains(ADDRESS_TRANSLATION_SEPARATOR) == true) {
@@ -81,8 +82,8 @@ object ConnectionUri {
                     tlsEnabled = tlsEnabled
                 )
             }
-        } else if (uri.scheme == SCHEME_CORE) {
-            return ParsedCoreConnectionUri(addresses[0])
+        } else if (uri.scheme == SCHEME_CORE && !uri.authority.isNullOrBlank()) {
+            return ParsedCoreConnectionUri(uri.authority)
         } else {
             return null
         }
