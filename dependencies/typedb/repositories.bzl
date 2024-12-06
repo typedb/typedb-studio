@@ -29,5 +29,5 @@ def typedb_driver():
     git_repository(
         name = "typedb_driver",
         remote = "https://github.com/typedb/typedb-driver",
-        commit = "b1998a3e0d62908551bdd2aaa6d01b0540506fbd",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @typedb_driver
+        commit = "bcf1ab990b0bd9da341501a80bb7cebb0cfffe2f",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @typedb_driver
     )

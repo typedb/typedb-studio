@@ -33,7 +33,7 @@ import kotlin.io.path.isWritable
 import kotlin.io.path.notExists
 import mu.KotlinLogging
 
-class ProjectService constructor(
+class ProjectService(
     internal val preference: PreferenceService,
     internal val appData: DataService,
     internal val notification: NotificationService,

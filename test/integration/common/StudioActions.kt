@@ -137,7 +137,7 @@ object StudioActions {
         // clicked.
         composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
-        Service.driver.tryConnectToTypeDBCoreAsync(address) {}
+        Service.driver.tryConnectToTypeDBCoreAsync(address, credentials, connectionSettings) {}
 
         waitUntilTrue(composeRule) {
             Service.driver.isConnected

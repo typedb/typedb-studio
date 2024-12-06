@@ -9,6 +9,14 @@ package com.typedb.studio.service.connection
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.typedb.driver.TypeDB
+import com.typedb.driver.api.Credentials
+import com.typedb.driver.api.Driver
+import com.typedb.driver.api.DriverOptions
+import com.typedb.driver.api.Transaction
+import com.typedb.driver.api.user.UserManager
+import com.typedb.driver.common.exception.TypeDBDriverException
+import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.DataService
 import com.typedb.studio.service.common.NotificationService
 import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
@@ -17,28 +25,17 @@ import com.typedb.studio.service.common.atomic.AtomicBooleanState
 import com.typedb.studio.service.common.atomic.AtomicReferenceState
 import com.typedb.studio.service.common.util.DialogState
 import com.typedb.studio.service.common.util.Message
-import com.typedb.studio.service.common.util.Message.Connection.Companion.CREDENTIALS_EXPIRE_SOON_HOURS
 import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE
 import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_CREATE_DATABASE_DUE_TO_DUPLICATE
 import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_DELETE_DATABASE
-import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_UPDATE_PASSWORD
-import com.typedb.studio.service.common.util.Message.Connection.Companion.PASSWORD_UPDATED_SUCCESSFULLY
 import com.typedb.studio.service.common.util.Message.Connection.Companion.RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY
 import com.typedb.studio.service.common.util.Message.Connection.Companion.UNABLE_TO_CONNECT
 import com.typedb.studio.service.common.util.Message.Connection.Companion.UNEXPECTED_ERROR
+import com.typedb.studio.service.common.util.Property.Server.TYPEDB_CLOUD
+import com.typedb.studio.service.common.util.Property.Server.TYPEDB_CORE
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
 import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
-import com.typedb.driver.TypeDB
-import com.typedb.driver.api.TypeDBCredential
-import com.typedb.driver.api.TypeDBDriver
-import com.typedb.driver.api.TypeDBSession
-import com.typedb.driver.api.TypeDBSession.Type.DATA
-import com.typedb.driver.api.TypeDBTransaction
-import com.typedb.driver.common.exception.TypeDBDriverException
-import java.nio.file.Path
-import java.time.Duration
-import java.util.Optional
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
@@ -54,41 +51,13 @@ class DriverState(
 
     companion object {
         private const val DATABASE_LIST_REFRESH_RATE_MS = 100
-        private val PASSWORD_EXPIRY_WARN_DURATION = Duration.ofDays(7)
         private val LOGGER = KotlinLogging.logger {}
-    }
-
-    class ChangeInitialPasswordDialog(val driver: DriverState) : DialogState() {
-
-        var onCancel : (() -> Unit)? by mutableStateOf(null); private set
-        var onSubmit : ((old: String, new: String) -> Unit)? by mutableStateOf(null); private set
-
-        internal fun open(onCancel: (() -> Unit)?, onSubmit: ((old: String, new: String) -> Unit)?) {
-            this.onCancel = onCancel
-            this.onSubmit = onSubmit
-            isOpen = true
-        }
-
-        override fun close() {
-            isOpen = false
-        }
-
-        fun cancel() {
-            onCancel?.invoke()
-            close()
-        }
-
-        fun submit(old: String, new: String) {
-            onSubmit?.invoke(old, new)
-            close()
-        }
     }
 
     val connectServerDialog = DialogState.Base()
     val selectDBDialog = DialogState.Base()
     val manageDatabasesDialog = DialogState.Base()
     val manageAddressesDialog = DialogState.Base()
-    val updateDefaultPasswordDialog = ChangeInitialPasswordDialog(this)
     val status: Status get() = statusAtomic.state
     val isConnected: Boolean get() = status == CONNECTED
     val isConnecting: Boolean get() = status == CONNECTING
@@ -102,75 +71,51 @@ class DriverState(
     val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     val session = SessionState(this, notificationSrv, preferenceSrv)
+    val userManager: UserManager? get() = _driver?.users()
     private val statusAtomic = AtomicReferenceState(DISCONNECTED)
-    private var _driver: TypeDBDriver? by mutableStateOf(null)
+    private var _driver: Driver? by mutableStateOf(null)
     private var hasRunningCommandAtomic = AtomicBooleanState(false)
     private var databaseListRefreshedTime = System.currentTimeMillis()
     internal var isCloud: Boolean = false
 
     private val coroutines = CoroutineScope(Dispatchers.Default)
 
+    private fun connectionName(username: String, address: String) = "$username@$address"
+
     fun tryConnectToTypeDBCoreAsync(
-        address: String, onSuccess: () -> Unit
-    ) = tryConnectAsync(newConnectionName = address, onSuccess = onSuccess) { TypeDB.coreDriver(address) }
-
-    fun tryConnectToTypeDBCloudAsync(
-        connectionName: String, addresses: Set<String>, credentials: TypeDBCredential, onSuccess: (() -> Unit)? = null
-    ) {
-        val postLoginFn = {
-            onSuccess?.invoke()
-            if (needsToChangeDefaultPassword()) forcePasswordUpdate()
-            else mayWarnPasswordExpiry()
-        }
-        tryConnectAsync(newConnectionName = connectionName, postLoginFn) { TypeDB.cloudDriver(addresses, credentials) }
+        address: String,
+        username: String, password: String,
+        tlsEnabled: Boolean, caCertificate: String,
+        onSuccess: () -> Unit
+    ): Any = tryConnectAsync(connectionName(username, address), onSuccess) {
+        TypeDB.coreDriver(address, Credentials(username, password), DriverOptions(tlsEnabled, caCertificate))
     }
 
     fun tryConnectToTypeDBCloudAsync(
-        connectionName: String, addressTranslation: Map<String, String>, credentials: TypeDBCredential, onSuccess: (() -> Unit)? = null
-    ) {
-        val postLoginFn = {
-            onSuccess?.invoke()
-            if (needsToChangeDefaultPassword()) forcePasswordUpdate()
-            else mayWarnPasswordExpiry()
-        }
-        tryConnectAsync(newConnectionName = connectionName, postLoginFn) { TypeDB.cloudDriver(addressTranslation, credentials) }
+        addresses: Set<String>,
+        username: String, password: String,
+        tlsEnabled: Boolean, caCertificate: String,
+        onSuccess: () -> Unit
+    ): Any = tryConnectAsync(connectionName(username, addresses.first()), onSuccess) {
+        TypeDB.cloudDriver(addresses, Credentials(username, password), DriverOptions(tlsEnabled, caCertificate))
     }
 
-    private fun forcePasswordUpdate() = updateDefaultPasswordDialog.open(
-        onCancel = {
-            close()
-            connectServerDialog.open()
-        }
-    ) { oldPW, newPW ->
-        tryUpdateUserPassword(oldPW, newPW) {
-            updateDefaultPasswordDialog.close()
-            close()
-
-            val caCert = dataSrv.connection.caCertificate!!
-            val username = dataSrv.connection.username!!
-            val credentials = when {
-                caCert.isBlank() -> TypeDBCredential(username, newPW, dataSrv.connection.tlsEnabled!!)
-                else -> TypeDBCredential(username, newPW, Path.of(caCert))
-            }
-            val onSuccess = { notificationSrv.info(LOGGER, RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY) }
-
-            if (dataSrv.connection.useCloudAddressTranslation == true) tryConnectToTypeDBCloudAsync(
-                connectionName = connectionName!!,
-                addressTranslation = dataSrv.connection.cloudAddressTranslation!!.associate { it },
-                credentials = credentials,
-                onSuccess = onSuccess
-            ) else tryConnectToTypeDBCloudAsync(
-                connectionName = connectionName!!,
-                addresses = dataSrv.connection.cloudAddresses!!.toSet(),
-                credentials = credentials,
-                onSuccess = onSuccess
-            )
-        }
+    fun tryConnectToTypeDBCloudAsync(
+        addressTranslation: Map<String, String>,
+        username: String, password: String,
+        tlsEnabled: Boolean, caCertificate: String,
+        onSuccess: () -> Unit
+    ): Any = tryConnectAsync(connectionName(username, addressTranslation.values.first()), onSuccess) {
+        TypeDB.cloudDriver(
+            addressTranslation,
+            Credentials(username, password),
+            DriverOptions(tlsEnabled, caCertificate)
+        )
     }
 
     private fun tryConnectAsync(
-        newConnectionName: String, onSuccess: () -> Unit, driverConstructor: () -> TypeDBDriver
-    ) = coroutines.launchAndHandle(notificationSrv, LOGGER) {
+        newConnectionName: String, onSuccess: () -> Unit, driverConstructor: () -> Driver
+    ): Any = coroutines.launchAndHandle(notificationSrv, LOGGER) {
         if (isConnecting || isConnected) return@launchAndHandle
         statusAtomic.set(CONNECTING)
         try {
@@ -178,6 +123,7 @@ class DriverState(
             _driver = driverConstructor()
             statusAtomic.set(CONNECTED)
             onSuccess()
+
         } catch (e: TypeDBDriverException) {
             statusAtomic.set(DISCONNECTED)
             notificationSrv.userError(LOGGER, UNABLE_TO_CONNECT, e.message ?: "")
@@ -195,35 +141,29 @@ class DriverState(
         }
     }
 
-    private fun mayWarnPasswordExpiry() {
-        if (!this.isCloud) return
-        val passwordExpiryDurationOptional: Optional<Duration>? =
-            _driver?.user()?.passwordExpirySeconds()?.map { Duration.ofSeconds(it) }
-        if (passwordExpiryDurationOptional?.isPresent != true) return
-        val passwordExpiryDuration = passwordExpiryDurationOptional.get()
-        if (passwordExpiryDuration.minus(PASSWORD_EXPIRY_WARN_DURATION).isNegative) {
-            notificationSrv.userWarning(LOGGER, CREDENTIALS_EXPIRE_SOON_HOURS, passwordExpiryDuration.toHours() + 1)
+    fun tryReconnectAsync(newPassword: String) {
+        close()
+        val username = dataSrv.connection.username!!
+        val tlsEnabled = dataSrv.connection.tlsEnabled!!
+        val caCertificate = dataSrv.connection.caCertificate!!
+        val onSuccess = {
+            notificationSrv.info(LOGGER, RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY)
         }
-    }
-
-    // TODO: We need a proper way to check if default password needs to changed
-    fun needsToChangeDefaultPassword(): Boolean {
-        try {
-            _driver?.databases()?.all()
-        } catch (e: TypeDBDriverException) {
-            val errorString = e.toString()
-            return errorString.contains("ENT21") || errorString.contains("CLS21")
-        }
-        return false
-    }
-
-    fun tryUpdateUserPassword(passwordOld: String, passwordNew: String, onSuccess: (() -> Unit)?) {
-        try {
-            _driver?.user()?.passwordUpdate(passwordOld, passwordNew)
-            notificationSrv.info(LOGGER, PASSWORD_UPDATED_SUCCESSFULLY)
-            onSuccess?.invoke()
-        } catch (e: TypeDBDriverException) {
-            notificationSrv.userError(LOGGER, FAILED_TO_UPDATE_PASSWORD, e.message ?: e.toString())
+        when (dataSrv.connection.server!!) {
+            TYPEDB_CORE -> Service.driver.tryConnectToTypeDBCoreAsync(
+                dataSrv.connection.coreAddress!!,
+                username, newPassword, tlsEnabled, caCertificate, onSuccess
+            )
+            TYPEDB_CLOUD -> when {
+                dataSrv.connection.useCloudAddressTranslation!! -> Service.driver.tryConnectToTypeDBCloudAsync(
+                    dataSrv.connection.cloudAddressTranslation!!.toMap(),
+                    username, newPassword, tlsEnabled, caCertificate, onSuccess
+                )
+                else -> Service.driver.tryConnectToTypeDBCloudAsync(
+                    dataSrv.connection.cloudAddresses!!.toSet(),
+                    username, newPassword, tlsEnabled, caCertificate, onSuccess
+                )
+            }
         }
     }
 
@@ -231,7 +171,7 @@ class DriverState(
         session.transaction.sendStopSignal()
     }
 
-    fun tryUpdateTransactionType(type: TypeDBTransaction.Type) = mayRunCommandAsync {
+    fun tryUpdateTransactionType(type: Transaction.Type) = mayRunCommandAsync {
         if (session.transaction.type == type) return@mayRunCommandAsync
         session.transaction.close()
         session.transaction.type = type

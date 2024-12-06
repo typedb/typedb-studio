@@ -73,7 +73,7 @@ import com.typedb.studio.module.project.ProjectDialog
 import com.typedb.studio.module.type.TypeBrowser
 import com.typedb.studio.module.type.TypeDialog
 import com.typedb.studio.module.type.TypeEditor
-import com.typedb.studio.module.user.UpdateDefaultPasswordDialog
+import com.typedb.studio.module.user.UpdatePasswordDialog
 import com.typedb.studio.resources.version.Version
 import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.util.Label
@@ -155,7 +155,7 @@ object Studio {
                     PreferenceDialog.MayShowDialogs()
                     ProjectDialog.MayShowDialogs(window)
                     TypeDialog.MayShowDialogs()
-                    UpdateDefaultPasswordDialog.MayShowDialogs()
+                    UpdatePasswordDialog.MayShowDialogs()
                 }
             }
         }
