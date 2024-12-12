@@ -46,9 +46,7 @@ object ConnectionUri {
 
     fun parse(connectionUri: String): ParsedConnectionUri? {
         return if (connectionUri.startsWith(SCHEME_CLOUD)) {
-            val k = parseCloud(connectionUri.removePrefix(SCHEME_CLOUD))
-            println(k)
-            k
+            parseCloud(connectionUri.removePrefix(SCHEME_CLOUD))
         } else if (connectionUri.startsWith(SCHEME_CORE)) {
             parseCore(connectionUri.removePrefix(SCHEME_CORE))
         } else {
