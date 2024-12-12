@@ -223,7 +223,7 @@ object ServerDialog {
 
     private fun addressFormatIsValid(address: String): Boolean {
         if (address.isBlank()) return true
-        val tokens = address.split(":")
+        val tokens = address.split(Regex(":(?!//)"))
         val hostIsValid = tokens.isNotEmpty() && !tokens[0].contains(Regex("\\s"))
         val portIsValid = tokens.size > 1 && tokens[1].toIntOrNull()?.let { it in 0..65535 } == true
         return tokens.size == 2 && hostIsValid && portIsValid
