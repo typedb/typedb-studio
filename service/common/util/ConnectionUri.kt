@@ -62,7 +62,7 @@ object ConnectionUri {
         val (username, password) = auth.split(":", limit = 2).let { Pair(it[0], it.getOrNull(1)) }
         val decodedPassword = password?.let { URLDecoder.decode(it, Charset.defaultCharset()) }
 
-        val (addressesString, path) = connection?.split("(?<![:/])/".toRegex(), limit = 2)?.let { Pair(it[0], it.getOrNull(1)) } ?: Pair(null, null)
+        val (addressesString, path) = connection?.split(Regex("(?<![:/])/"), limit = 2)?.let { Pair(it[0], it.getOrNull(1)) } ?: Pair(null, null)
         val addresses = addressesString?.split(",").orEmpty()
         val queryParams = path?.split("?")?.lastOrNull()?.split("&")?.associate {
             it.split("=", limit = 2).let { Pair(it[0], it.getOrNull(1)) }
