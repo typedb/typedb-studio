@@ -72,8 +72,6 @@ import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
 import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 import com.vaticle.typedb.driver.api.TypeDBCredential
-import java.net.URI
-import java.net.URISyntaxException
 import java.nio.file.Path
 import androidx.compose.ui.window.DialogState as ComposeDialogState
 
