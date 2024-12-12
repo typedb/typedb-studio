@@ -72,6 +72,8 @@ import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
 import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 import com.vaticle.typedb.driver.api.TypeDBCredential
+import java.net.URI
+import java.net.URISyntaxException
 import java.nio.file.Path
 import androidx.compose.ui.window.DialogState as ComposeDialogState
 
@@ -223,7 +225,10 @@ object ServerDialog {
 
     private fun addressFormatIsValid(address: String): Boolean {
         if (address.isBlank()) return true
-        val tokens = address.split(":")
+        val cleanedAddress = if (address.contains("://")) {
+            address.split("://", limit = 2).getOrElse(1) { "" }
+        } else address
+        val tokens = cleanedAddress.split(":")
         val hostIsValid = tokens.isNotEmpty() && !tokens[0].contains(Regex("\\s"))
         val portIsValid = tokens.size > 1 && tokens[1].toIntOrNull()?.let { it in 0..65535 } == true
         return tokens.size == 2 && hostIsValid && portIsValid
