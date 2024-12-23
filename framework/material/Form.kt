@@ -867,7 +867,7 @@ object Form {
         values: List<T>,
         selected: T?,
         displayFn: @Composable (T) -> AnnotatedString = { AnnotatedString(it.toString()) },
-        onSelection: (value: T?) -> Unit,
+        onSelection: ((value: T?) -> Unit)? = null,
         onExpand: (() -> Unit)? = null,
         placeholder: String = "",
         modifier: Modifier = Modifier,
@@ -889,8 +889,8 @@ object Form {
             }
 
             fun select(value: T?) {
-                onSelection(value)
                 expanded = false
+                onSelection?.invoke(value)
             }
 
             fun mouseOutFrom(index: Int) {

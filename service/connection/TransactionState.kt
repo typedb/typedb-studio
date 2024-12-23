@@ -9,11 +9,14 @@ package com.typedb.studio.service.connection
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.typedb.driver.api.Transaction
 import com.typedb.studio.service.common.NotificationService
 import com.typedb.studio.service.common.PreferenceService
 import com.typedb.studio.service.common.atomic.AtomicBooleanState
 import com.typedb.studio.service.common.util.Message
 import com.typedb.studio.service.common.util.Message.Companion.UNKNOWN
+import com.typedb.studio.service.common.util.Message.Connection.Companion.CONNECTION_NOT_EXIST
+import com.typedb.studio.service.common.util.Message.Connection.Companion.DATABASE_NOT_SELECTED
 import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_OPEN_TRANSACTION
 import com.typedb.studio.service.common.util.Message.Connection.Companion.FAILED_TO_RUN_QUERY
 import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_CLOSED_IN_QUERY
@@ -21,13 +24,11 @@ import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSA
 import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_COMMIT_FAILED
 import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_COMMIT_SUCCESSFULLY
 import com.typedb.studio.service.common.util.Message.Connection.Companion.TRANSACTION_ROLLBACK
-import com.typedb.driver.api.TypeDBOptions
-import com.typedb.driver.api.TypeDBTransaction
 import java.util.concurrent.LinkedBlockingQueue
 import mu.KotlinLogging
 
-class TransactionState constructor(
-    private val session: SessionState,
+class TransactionState(
+    private val driver: DriverState,
     private val notificationSrv: NotificationService,
     private val preferenceSrv: PreferenceService
 ) {
@@ -36,66 +37,44 @@ class TransactionState constructor(
         private val LOGGER = KotlinLogging.logger {}
     }
 
-    class ConfigState constructor(
-        private val valueFn: (value: Boolean) -> Boolean,
-        private val canToggleFn: () -> Boolean
-    ) {
-        private var _value by mutableStateOf(false)
-        val value get() = valueFn(_value)
-        val canToggle get() = canToggleFn()
-
-        fun toggle() {
-            _value = !_value
-        }
-    }
-
-    var type by mutableStateOf(TypeDBTransaction.Type.READ); internal set
+    var database: String? by mutableStateOf(null)
+    var type by mutableStateOf(Transaction.Type.READ); internal set
     val isRead get() = type.isRead
     val isWrite get() = type.isWrite
+    val isSchema get() = type.isSchema
     val isOpen get() = isOpenAtomic.state
     val hasStopSignal get() = hasStopSignalAtomic.state
     val hasRunningQuery get() = hasRunningQueryAtomic.state
     private val onSchemaWriteReset = LinkedBlockingQueue<() -> Unit>()
-    internal val hasStopSignalAtomic = AtomicBooleanState(false)
+    private val hasStopSignalAtomic = AtomicBooleanState(false)
     private var hasRunningQueryAtomic = AtomicBooleanState(false)
     private val isOpenAtomic = AtomicBooleanState(false)
-    private var _transaction: TypeDBTransaction? by mutableStateOf(null)
+    private var _transaction: Transaction? by mutableStateOf(null)
     val transaction get() = _transaction
-
-    val snapshot = ConfigState(
-        valueFn = { it || type.isWrite },
-        canToggleFn = { session.isOpen && !type.isWrite }
-    )
-    val infer = ConfigState(
-        valueFn = { it && !type.isWrite },
-        canToggleFn = { session.isOpen && !type.isWrite }
-    )
-    val explain = ConfigState(
-        valueFn = { it && infer.value && snapshot.value },
-        canToggleFn = { session.isOpen && infer.value && snapshot.value }
-    )
 
     fun onSchemaWriteReset(function: () -> Unit) = onSchemaWriteReset.put(function)
 
     internal fun sendStopSignal() = hasStopSignalAtomic.set(true)
 
-    fun tryOpen(): TypeDBTransaction? {
-        return if (!session.isOpen) {
-            notificationSrv.userError(LOGGER, Message.Connection.SESSION_IS_CLOSED)
-            null
-        } else if (isOpen) _transaction
-        else try {
-            val transactionTimeoutMillis = preferenceSrv.transactionTimeoutMins * 60 * 1_000
+    fun trySelectDatabase(database: String) {
+        if (this.database == database) return
+        else if (isOpen) close()
+        this.database = database
+    }
 
-            val options = defaultTypeDBOptions()
-                .infer(infer.value)
-                .explain(explain.value)
-                .transactionTimeoutMillis(transactionTimeoutMillis.toInt())
-            session.transaction(type, options)!!.apply {
-                onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN) }
-            }.also {
-                isOpenAtomic.set(true)
-                _transaction = it
+    fun tryOpen(): Transaction? = database?.let {
+        if (isOpen) _transaction
+        else try {
+            driver.tryGet()?.let {
+                it.transaction(database!!, type)!!.apply {
+                    onClose { close(TRANSACTION_CLOSED_ON_SERVER, it?.message ?: UNKNOWN) }
+                }.also {
+                    isOpenAtomic.set(true)
+                    _transaction = it
+                }
+            } ?: let {
+                notificationSrv.userError(LOGGER, CONNECTION_NOT_EXIST)
+                null
             }
         } catch (e: Exception) {
             notificationSrv.userError(LOGGER, FAILED_TO_OPEN_TRANSACTION, e.message ?: UNKNOWN)
@@ -103,15 +82,17 @@ class TransactionState constructor(
             hasRunningQueryAtomic.set(false)
             null
         }
+    } ?: let {
+        notificationSrv.userError(LOGGER, DATABASE_NOT_SELECTED)
+        null
     }
 
-    internal fun runQuery(content: String): QueryRunner? {
-        return if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) try {
+    internal fun runQuery(content: String): QueryRunner? =
+        if (hasRunningQueryAtomic.compareAndSet(expected = false, new = true)) try {
             hasStopSignalAtomic.set(false)
             tryOpen()?.let {
                 QueryRunner(this, notificationSrv, preferenceSrv, content) {
-                    if (!snapshot.value) close()
-                    else if (!isOpen) close(TRANSACTION_CLOSED_IN_QUERY)
+                    if (!isOpen) close(TRANSACTION_CLOSED_IN_QUERY)
                     hasStopSignalAtomic.set(false)
                     hasRunningQueryAtomic.set(false)
                     mayExecOnSchemaWriteReset()
@@ -122,10 +103,9 @@ class TransactionState constructor(
             hasRunningQueryAtomic.set(false)
             null
         } else null
-    }
 
     private fun mayExecOnSchemaWriteReset() {
-        if (session.isSchema && isWrite) onSchemaWriteReset.forEach { it() }
+        if (isSchema) onSchemaWriteReset.forEach { it() }
     }
 
     internal fun commit() {
@@ -159,9 +139,5 @@ class TransactionState constructor(
             message?.let { notificationSrv.userError(LOGGER, it, *params) }
             mayExecOnSchemaWriteReset()
         }
-    }
-
-    internal fun defaultTypeDBOptions(): TypeDBOptions {
-        return TypeDBOptions()
     }
 }

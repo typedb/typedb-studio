@@ -40,7 +40,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
-class QueryRunner constructor(
+class QueryRunner(
     val transactionState: TransactionState, // TODO: restrict in the future, when TypeDB 3.0 answers return complete info
     private val notificationSrv: NotificationService,
     private val preferenceSrv: PreferenceService,
@@ -117,7 +117,7 @@ class QueryRunner constructor(
     val isRunning = AtomicBoolean(false)
     private val consumerLatch = CountDownLatch(1)
     private val coroutines = CoroutineScope(Dispatchers.Default)
-    private val hasStopSignal get() = transactionState.hasStopSignalAtomic
+    private val hasStopSignal get() = transactionState.hasStopSignal
     private val transaction get() = transactionState.transaction!!
     private val onClose = LinkedBlockingQueue<() -> Unit>()
 
@@ -144,18 +144,18 @@ class QueryRunner constructor(
             isRunning.set(false)
             responses.add(Response.Done)
             var isConsumed: Boolean
-            if (!hasStopSignal.state) {
+            if (!hasStopSignal) {
                 do {
                     isConsumed = consumerLatch.count == 0L
                     if (!isConsumed) delay(COUNT_DOWN_LATCH_PERIOD_MS)
-                } while (!isConsumed && !hasStopSignal.state)
+                } while (!isConsumed && !hasStopSignal)
             }
             onComplete()
         }
     }
 
     private fun runQueries(queries: List<TypeQLQuery>) = queries.forEach { query ->
-        if (hasStopSignal.state) return@forEach
+        if (hasStopSignal) return@forEach
         when (query) {
             is TypeQLDefine -> runDefineQuery(query)
             is TypeQLUndefine -> runUndefineQuery(query)
@@ -300,7 +300,7 @@ class QueryRunner constructor(
                 responses.put(stream)
                 started = true
             }.forEach {
-                if (hasStopSignal.state) return@forEach
+                if (hasStopSignal) return@forEach
                 stream.queue.put(Either.first(it))
             }
         } catch (e: Exception) {
@@ -308,14 +308,14 @@ class QueryRunner constructor(
             error = true
         } finally {
             if (started) stream.queue.put(Either.second(Response.Done))
-            if (error || hasStopSignal.state) collectMessage(ERROR, TERMINATED)
+            if (error || hasStopSignal) collectMessage(ERROR, TERMINATED)
             else if (started) collectMessage(INFO, COMPLETED)
             else collectMessage(SUCCESS, RESULT_ + noResultMsg)
         }
     }
 
     fun close() {
-        hasStopSignal.set(true)
+        transactionState.sendStopSignal()
         onClose.forEach { it() }
     }
 }

@@ -6,6 +6,7 @@
 
 package com.typedb.studio.framework.graph
 
+import com.typedb.driver.api.Transaction
 import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.NotificationService
 import com.typedb.studio.service.common.util.Message.Visualiser.Companion.EXPLAIN_NOT_ENABLED
@@ -50,7 +51,7 @@ class GraphBuilder(
     private val snapshotEnabled = transactionState.snapshot.value
     private val isInitialTransaction: Boolean
         get() = transactionState.transaction?.hashCode() == transactionID
-    private val transactionSnapshot: TypeDBTransaction?
+    private val transactionSnapshot: Transaction?
         get() = if (snapshotEnabled && isInitialTransaction) transactionState.transaction else null
 
     companion object {

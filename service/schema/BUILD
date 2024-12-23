@@ -16,7 +16,7 @@ package(default_visibility = [
 kt_jvm_library(
     name = "schema",
     srcs = glob(["*.kt"]),
-    tags = ["maven_coordinates=com.typedb:typedb-studio-state-schema:{pom_version}"],
+    tags = ["maven_coordinates=com.typedb:typedb-studio-service-schema:{pom_version}"],
     deps = [
         "//service/common",
         "//service/connection",

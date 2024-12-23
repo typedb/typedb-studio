@@ -47,6 +47,6 @@ object Service {
         driver = DriverState(notification, preference, data)
         project = ProjectService(preference, data, notification, confirmation, driver, pages)
         user = UserService(notification, driver)
-        schema = SchemaService(driver.session, pages, notification, confirmation, status)
+        schema = SchemaService(driver.transaction, pages, notification, confirmation, status)
     }
 }

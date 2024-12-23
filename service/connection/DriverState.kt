@@ -16,7 +16,6 @@ import com.typedb.driver.api.DriverOptions
 import com.typedb.driver.api.Transaction
 import com.typedb.driver.api.user.UserManager
 import com.typedb.driver.common.exception.TypeDBDriverException
-import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.DataService
 import com.typedb.studio.service.common.NotificationService
 import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
@@ -66,11 +65,11 @@ class DriverState(
     var mode: Mode by mutableStateOf(Mode.INTERACTIVE)
     val isScriptMode: Boolean get() = mode == Mode.SCRIPT
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
-    val hasRunningQuery get() = session.transaction.hasRunningQuery
+    val hasRunningQuery get() = transaction.hasRunningQuery
     val hasRunningCommand get() = hasRunningCommandAtomic.state
-    val isReadyToRunQuery get() = session.isOpen && !hasRunningQuery && !hasRunningCommand
+    val isReadyToRunQuery get() = transaction.isOpen && !hasRunningQuery && !hasRunningCommand
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
-    val session = SessionState(this, notificationSrv, preferenceSrv)
+    val transaction = TransactionState(this, notificationSrv, preferenceSrv)
     val userManager: UserManager? get() = _driver?.users()
     private val statusAtomic = AtomicReferenceState(DISCONNECTED)
     private var _driver: Driver? by mutableStateOf(null)
@@ -81,6 +80,8 @@ class DriverState(
     private val coroutines = CoroutineScope(Dispatchers.Default)
 
     private fun connectionName(username: String, address: String) = "$username@$address"
+
+    internal fun tryGet(): Driver? = _driver
 
     fun tryConnectToTypeDBCoreAsync(
         address: String,
@@ -150,16 +151,16 @@ class DriverState(
             notificationSrv.info(LOGGER, RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY)
         }
         when (dataSrv.connection.server!!) {
-            TYPEDB_CORE -> Service.driver.tryConnectToTypeDBCoreAsync(
+            TYPEDB_CORE -> tryConnectToTypeDBCoreAsync(
                 dataSrv.connection.coreAddress!!,
                 username, newPassword, tlsEnabled, caCertificate, onSuccess
             )
             TYPEDB_CLOUD -> when {
-                dataSrv.connection.useCloudAddressTranslation!! -> Service.driver.tryConnectToTypeDBCloudAsync(
+                dataSrv.connection.useCloudAddressTranslation!! -> tryConnectToTypeDBCloudAsync(
                     dataSrv.connection.cloudAddressTranslation!!.toMap(),
                     username, newPassword, tlsEnabled, caCertificate, onSuccess
                 )
-                else -> Service.driver.tryConnectToTypeDBCloudAsync(
+                else -> tryConnectToTypeDBCloudAsync(
                     dataSrv.connection.cloudAddresses!!.toSet(),
                     username, newPassword, tlsEnabled, caCertificate, onSuccess
                 )
@@ -168,24 +169,13 @@ class DriverState(
     }
 
     fun sendStopSignal() {
-        session.transaction.sendStopSignal()
+        transaction.sendStopSignal()
     }
 
     fun tryUpdateTransactionType(type: Transaction.Type) = mayRunCommandAsync {
-        if (session.transaction.type == type) return@mayRunCommandAsync
-        session.transaction.close()
-        session.transaction.type = type
-    }
-
-    fun tryUpdateSessionType(type: TypeDBSession.Type) {
-        if (session.type == type) return
-        tryOpenSession(session.database!!, type)
-    }
-
-    fun tryOpenSession(database: String) = tryOpenSession(database, session.type)
-
-    private fun tryOpenSession(database: String, type: TypeDBSession.Type) = mayRunCommandAsync {
-        session.tryOpen(database, type)
+        if (transaction.type == type) return@mayRunCommandAsync
+        transaction.close()
+        transaction.type = type
     }
 
     fun refreshDatabaseList() = mayRunCommandAsync { refreshDatabaseListFn() }
@@ -199,7 +189,7 @@ class DriverState(
     fun run(content: String): QueryRunner? {
         return if (!isReadyToRunQuery) null
         else if (isScriptMode) runScript(content)
-        else if (isInteractiveMode) session.transaction.runQuery(content)
+        else if (isInteractiveMode) transaction.runQuery(content)
         else throw IllegalStateException("Unrecognised TypeDB Studio run mode")
     }
 
@@ -222,7 +212,7 @@ class DriverState(
 
     fun tryDeleteDatabase(database: String) = mayRunCommandAsync {
         try {
-            if (session.database == database) session.close()
+            if (transaction.database == database) transaction.close()
             _driver?.databases()?.get(database)?.delete()
             refreshDatabaseListFn()
         } catch (e: Exception) {
@@ -234,19 +224,13 @@ class DriverState(
 
     fun tryFetchTypeSchema(database: String): String? = _driver?.databases()?.get(database)?.typeSchema()
 
-    fun session(database: String, type: TypeDBSession.Type = DATA): TypeDBSession? {
-        return _driver?.session(database, type)
-    }
+    fun commitTransaction() = mayRunCommandAsync { transaction.commit() }
 
-    fun commitTransaction() = mayRunCommandAsync { session.transaction.commit() }
-
-    fun rollbackTransaction() = mayRunCommandAsync { session.transaction.rollback() }
-
-    fun closeSession() = coroutines.launchAndHandle(notificationSrv, LOGGER) { session.close() }
+    fun rollbackTransaction() = mayRunCommandAsync { transaction.rollback() }
 
     fun closeTransactionAsync(
         message: Message? = null, vararg params: Any
-    ) = coroutines.launchAndHandle(notificationSrv, LOGGER) { session.transaction.close(message, *params) }
+    ) = coroutines.launchAndHandle(notificationSrv, LOGGER) { transaction.close(message, *params) }
 
     fun closeAsync() = coroutines.launchAndHandle(notificationSrv, LOGGER) { close() }
 
@@ -255,7 +239,7 @@ class DriverState(
             statusAtomic.compareAndSet(expected = CONNECTED, new = DISCONNECTED) ||
             statusAtomic.compareAndSet(expected = CONNECTING, new = DISCONNECTED)
         ) {
-            session.close()
+            transaction.close()
             _driver?.close()
             _driver = null
         }

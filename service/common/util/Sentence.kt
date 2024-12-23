@@ -156,9 +156,6 @@ object Sentence {
     const val SESSION_DATA_DESCRIPTION =
         "Data sessions allow you to only modify data in the database, and not the schema. This means inserting and deleting data. " +
                 "There is no limitation on performing reads on schema or data. " + BUTTON_ENABLED_WHEN_SESSION_OPEN
-    const val SESSION_SCHEMA_DESCRIPTION =
-        "Schema sessions allow you to only modify the schema of the database, and not data. This means defining and undefining schema. " +
-                "There is no limitation on performing reads on schema or data. " + BUTTON_ENABLED_WHEN_SESSION_OPEN
     const val STOP_SIGNAL_DESCRIPTION =
         "A stop signal allows you to stop the currently running query when the next server response is received. " +
                 "To stop the query immediately without waiting for any server response, close the transaction instead. " +
@@ -176,6 +173,10 @@ object Sentence {
     const val TRANSACTION_READ_DESCRIPTION =
         "Read transactions allow you to only read data from the database, and not write. For both data and schema sessions, " +
                 "this means reading any data and schema, but not inserting, deleting, defining, or undefining. " +
+                BUTTON_ENABLED_WHEN_SESSION_OPEN
+    const val TRANSACTION_SCHEMA_DESCRIPTION =
+        "Schema transactions allow you to only modify the schema of the database, and not data. This means defining and " +
+                "undefining types in the schema. There is no limitation on performing reads on schema or data. " +
                 BUTTON_ENABLED_WHEN_SESSION_OPEN
     const val TRANSACTION_ROLLBACK_DESCRIPTION =
         "Rolling back a transaction will delete all unsaved/uncommitted writes that you've made to the database through " +

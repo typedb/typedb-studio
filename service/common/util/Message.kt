@@ -72,18 +72,14 @@ abstract class Message(codePrefix: String, codeNumber: Int, messagePrefix: Strin
                 Connection(1, "Unexpected error occurred with the connection to TypeDB server.")
             val UNABLE_TO_CONNECT =
                 Connection(2, "Failed to connect to TypeDB server with the provided address and credentials: '%s'.")
-            val FAILED_TO_OPEN_SESSION =
-                Connection(3, "Failed to establish '%s' session to database '%s'.")
+            val CONNECTION_NOT_EXIST =
+                Connection(3, "No connection to TypeDB has been created.")
+            val DATABASE_NOT_SELECTED =
+                Connection(4 , "No database has been selected.")
             val FAILED_TO_OPEN_TRANSACTION =
-                Connection(4, "Failed to open transaction: %s")
+                Connection(5, "Failed to open transaction: %s")
             val FAILED_TO_RUN_QUERY =
-                Connection(5, "Failed to run query: %s")
-            val SESSION_IS_CLOSED =
-                Connection(6, "Session is closed on TypeDB Studio.")
-            val SESSION_CLOSED_ON_SERVER =
-                Connection(7, "Session was closed on TypeDB Server.")
-            val SESSION_REOPENED =
-                Connection(8, "Session reopened successfully.")
+                Connection(6, "Failed to run query: %s")
             val TRANSACTION_CLOSED_ON_SERVER =
                 Connection(9, "Transaction was closed, due to:\n%s")
             val TRANSACTION_CLOSED_IN_QUERY =

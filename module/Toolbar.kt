@@ -6,6 +6,7 @@
 
 package com.typedb.studio.module
 
+import com.typedb.driver.api.Transaction as TypeDBTransaction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -45,8 +46,6 @@ import com.typedb.studio.service.connection.DriverState
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
 import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
-import com.typedb.driver.api.TypeDBSession
-import com.typedb.driver.api.TypeDBTransaction
 
 object Toolbar {
 
@@ -55,23 +54,15 @@ object Toolbar {
     private val isConnected get() = Service.driver.isConnected
     private val isScript get() = Service.driver.isScriptMode
     private val isInteractive get() = Service.driver.isInteractiveMode
-    private val hasOpenSession get() = Service.driver.session.isOpen
-    private val hasOpenTx get() = Service.driver.session.transaction.isOpen
-    private val isSchemaSession get() = Service.driver.session.isSchema
-    private val isDataSession get() = Service.driver.session.isData
-    private val isReadTransaction get() = Service.driver.session.transaction.isRead
-    private val isWriteTransaction get() = Service.driver.session.transaction.isWrite
-    private val isSnapshotButtonActivated get() = Service.driver.session.transaction.snapshot.value
-    private val isSnapshotButtonEnabled get() = Service.driver.session.transaction.snapshot.canToggle
-    private val isInferButtonActivated get() = Service.driver.session.transaction.infer.value
-    private val isInferButtonEnabled get() = Service.driver.session.transaction.infer.canToggle
-    private val isExplainButtonActivated get() = Service.driver.session.transaction.explain.value
-    private val isExplainButtonEnabled get() = Service.driver.session.transaction.explain.canToggle
+    private val hasOpenTx get() = Service.driver.transaction.isOpen
+    private val isSchemaTransaction get() = Service.driver.transaction.isSchema
+    private val isWriteTransaction get() = Service.driver.transaction.isWrite
+    private val isReadTransaction get() = Service.driver.transaction.isRead
     private val isReadyToRunQuery get() = Service.driver.isReadyToRunQuery
     private val hasRunnablePage get() = Service.pages.active?.isRunnable == true
     private val hasRunningQuery get() = Service.driver.hasRunningQuery
     private val hasRunningCommand get() = Service.driver.hasRunningCommand || Service.schema.hasRunningCommand
-    private val hasStopSignal get() = Service.driver.session.transaction.hasStopSignal
+    private val hasStopSignal get() = Service.driver.transaction.hasStopSignal
 
     @Composable
     fun Layout() {
@@ -174,7 +165,6 @@ object Toolbar {
             internal fun Buttons(enabled: Boolean) = ToolbarRow {
                 ManageDatabasesButton(enabled && !hasOpenTx)
                 DatabaseDropdown(Modifier.height(TOOLBAR_BUTTON_SIZE), enabled = enabled && !hasOpenTx)
-                CloseDatabaseButton(enabled && hasOpenSession) // we want to be able to close session even when hasOpenTx==true
             }
 
             @Composable
@@ -190,30 +180,15 @@ object Toolbar {
                     description = Sentence.MANAGE_DATABASES_DESCRIPTION,
                 )
             )
-
-            @Composable
-            private fun CloseDatabaseButton(enabled: Boolean) = ToolbarIconButton(
-                icon = Icon.CLOSE_DATABASE,
-                color = Theme.studio.errorStroke,
-                onClick = { Service.driver.closeSession() },
-                enabled = enabled,
-                tooltip = Tooltip.Arg(
-                    title = Label.CLOSE_DATABASE_SESSION,
-                    description = Sentence.SESSION_CLOSE_DESCRIPTION,
-                )
-            )
         }
 
         object Transaction {
 
             @Composable
-            internal fun Buttons(enabled: Boolean) {
-                val txButtonsEnabled = enabled && hasOpenSession
-                ToolbarRow {
-                    Config.Buttons(txButtonsEnabled)
-                    VerticalSeparator()
-                    Controller.Buttons(txButtonsEnabled)
-                }
+            internal fun Buttons(enabled: Boolean) = ToolbarRow {
+                Config.Buttons(enabled)
+                VerticalSeparator()
+                Controller.Buttons(enabled)
             }
 
             object Config {
@@ -222,63 +197,32 @@ object Toolbar {
                 internal fun Buttons(enabled: Boolean) {
                     val configEnabled = enabled && !hasOpenTx
                     ToolbarRow {
-                        SessionTypeButton(configEnabled)
                         TransactionTypeButtons(configEnabled)
-                        OptionsButtons(configEnabled)
                     }
                 }
 
                 @Composable
-                private fun SessionTypeButton(enabled: Boolean) {
-                    val schema = TypeDBSession.Type.SCHEMA
-                    val data = TypeDBSession.Type.DATA
-                    TextButtonRow(
-                        height = TOOLBAR_BUTTON_SIZE,
-                        buttons = listOf(
-                            schemaSessionButtonArg(schema, enabled),
-                            dataSessionButtonArg(data, enabled)
-                        )
-                    )
-                }
-
-                private fun schemaSessionButtonArg(schema: TypeDBSession.Type, enabled: Boolean) = TextButtonArg(
-                    text = Label.SCHEMA.lowercase(),
-                    onClick = { Service.driver.tryUpdateSessionType(schema) },
-                    color = { toggleButtonColor(isSchemaSession) },
-                    enabled = enabled,
-                    tooltip = Tooltip.Arg(
-                        title = Label.SCHEMA_SESSION,
-                        description = Sentence.SESSION_SCHEMA_DESCRIPTION,
-                        url = URL.DOCS_SESSION_SCHEMA
-                    )
-                )
-
-                private fun dataSessionButtonArg(data: TypeDBSession.Type, enabled: Boolean) = TextButtonArg(
-                    text = Label.DATA.lowercase(),
-                    onClick = { Service.driver.tryUpdateSessionType(data) },
-                    color = { toggleButtonColor(isDataSession) },
-                    enabled = enabled,
-                    tooltip = Tooltip.Arg(
-                        title = Label.DATA_SESSION,
-                        description = Sentence.SESSION_DATA_DESCRIPTION,
-                        url = URL.DOCS_SESSION_DATA
-                    )
-                )
-
-                @Composable
                 private fun TransactionTypeButtons(enabled: Boolean) {
+                    val schema = TypeDBTransaction.Type.SCHEMA
                     val write = TypeDBTransaction.Type.WRITE
                     val read = TypeDBTransaction.Type.READ
                     TextButtonRow(
                         height = TOOLBAR_BUTTON_SIZE,
                         buttons = listOf(
                             TextButtonArg(
+                                text = Label.SCHEMA.lowercase(),
+                                onClick = { Service.driver.tryUpdateTransactionType(schema) },
+                                color = { toggleButtonColor(isSchemaTransaction) },
+                                enabled = enabled,
+                                tooltip = Tooltip.Arg(
+                                    title = Label.SCHEMA_TRANSACTION,
+                                    description = Sentence.TRANSACTION_SCHEMA_DESCRIPTION,
+                                    url = URL.DOCS_TRANSACTION_SCHEMA
+                                )
+                            ),
+                            TextButtonArg(
                                 text = Label.WRITE.lowercase(),
-                                onClick = {
-                                    Service.driver.tryUpdateTransactionType(
-                                        write
-                                    )
-                                },
+                                onClick = { Service.driver.tryUpdateTransactionType(write) },
                                 color = { toggleButtonColor(isWriteTransaction) },
                                 enabled = enabled,
                                 tooltip = Tooltip.Arg(
@@ -289,59 +233,13 @@ object Toolbar {
                             ),
                             TextButtonArg(
                                 text = Label.READ.lowercase(),
-                                onClick = {
-                                    Service.driver.tryUpdateTransactionType(
-                                        read
-                                    )
-                                },
+                                onClick = { Service.driver.tryUpdateTransactionType(read) },
                                 color = { toggleButtonColor(isReadTransaction) },
                                 enabled = enabled,
                                 tooltip = Tooltip.Arg(
                                     title = Label.READ_TRANSACTION,
                                     description = Sentence.TRANSACTION_READ_DESCRIPTION,
                                     url = URL.DOCS_TRANSACTION_READ
-                                )
-                            )
-                        )
-                    )
-                }
-
-                @Composable
-                private fun OptionsButtons(enabled: Boolean) {
-                    TextButtonRow(
-                        height = TOOLBAR_BUTTON_SIZE,
-                        buttons = listOf(
-                            TextButtonArg(
-                                text = Label.SNAPSHOT.lowercase(),
-                                onClick = { Service.driver.session.transaction.snapshot.toggle() },
-                                color = { toggleButtonColor(isSnapshotButtonActivated) },
-                                enabled = enabled && isSnapshotButtonEnabled,
-                                tooltip = Tooltip.Arg(
-                                    title = Label.ENABLE_SNAPSHOT,
-                                    description = Sentence.ENABLE_SNAPSHOT_DESCRIPTION,
-                                    url = URL.DOCS_ENABLE_SNAPSHOT
-                                )
-                            ),
-                            TextButtonArg(
-                                text = Label.INFER.lowercase(),
-                                onClick = { Service.driver.session.transaction.infer.toggle() },
-                                color = { toggleButtonColor(isInferButtonActivated) },
-                                enabled = enabled && isInferButtonEnabled,
-                                tooltip = Tooltip.Arg(
-                                    title = Label.ENABLE_INFERENCE,
-                                    description = Sentence.ENABLE_INFERENCE_DESCRIPTION,
-                                    url = URL.DOCS_ENABLE_INFERENCE
-                                )
-                            ),
-                            TextButtonArg(
-                                text = Label.EXPLAIN.lowercase(),
-                                onClick = { Service.driver.session.transaction.explain.toggle() },
-                                color = { toggleButtonColor(isExplainButtonActivated) },
-                                enabled = enabled && isExplainButtonEnabled,
-                                tooltip = Tooltip.Arg(
-                                    title = Label.ENABLE_INFERENCE_EXPLANATION,
-                                    description = Sentence.ENABLE_INFERENCE_EXPLANATION_DESCRIPTION,
-                                    url = URL.DOCS_ENABLE_INFERENCE_EXPLANATION,
                                 )
                             )
                         )
@@ -374,7 +272,7 @@ object Toolbar {
                         icon = Icon.ONLINE,
                         modifier = Modifier.size(TOOLBAR_BUTTON_SIZE),
                         iconColor = if (isInteractive && hasOpenTx) Theme.studio.secondary else Theme.studio.icon,
-                        enabled = isInteractive && hasOpenSession,
+                        enabled = isInteractive && isConnected,
                         tooltip = Tooltip.Arg(
                             title = Label.TRANSACTION_STATUS,
                             description = Sentence.TRANSACTION_STATUS_DESCRIPTION
