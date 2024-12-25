@@ -30,8 +30,8 @@ import com.typedb.studio.framework.material.Table
 import com.typedb.studio.service.common.util.Label
 import com.typedb.common.collection.Either
 import com.typedb.driver.api.concept.Concept
-import com.typedb.driver.api.concept.thing.Attribute
-import com.typedb.driver.api.concept.thing.Thing
+import com.typedb.driver.api.concept.instance.Attribute
+import com.typedb.driver.api.concept.instance.Instance
 import com.typedb.driver.api.concept.type.Type
 
 class ConceptPreview constructor(
@@ -85,7 +85,7 @@ class ConceptPreview constructor(
 
     @Composable
     private fun ConceptTypePreview(concept: Concept) {
-        val type = if (concept is Type) concept else concept.asThing().type
+        val type = if (concept is Type) concept else concept.asInstance().type
         Row(verticalAlignment = Alignment.CenterVertically) {
             ConceptDisplay.iconOf(type).let { Icon.Render(it.icon, it.color()) }
             Form.ButtonSpacer()
@@ -120,7 +120,7 @@ class ConceptPreview constructor(
     private fun propertiesOf(concept: Concept): List<Property> {
         return listOfNotNull(
             Property.Generic(Label.TYPE) { ConceptTypePreview(concept) },
-            if (concept is Thing) Property.String(Label.INTERNAL_ID, concept.iid) else null,
+            if (concept is Instance) Property.String(Label.INTERNAL_ID, concept.tryGetIID().get()) else null,
             if (concept is Attribute) Property.String(Label.VALUE, attributeValue(concept)) else null,
         )
     }

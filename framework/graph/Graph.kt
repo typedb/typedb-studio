@@ -23,7 +23,7 @@ import com.typedb.force.graph.force.YForce
 import com.typedb.force.graph.impl.BasicSimulation
 import com.typedb.force.graph.impl.BasicVertex
 import com.typedb.force.graph.util.RandomEffects
-import com.typedb.driver.api.answer.ConceptMap
+import com.typedb.driver.api.answer.ConceptRow
 import com.typedb.driver.api.logic.Explanation
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
@@ -250,7 +250,7 @@ class Graph(private val interactions: Interactions) {
 
     class Reasoning {
 
-        val explainables: MutableMap<Vertex.Thing, ConceptMap.Explainable> = ConcurrentHashMap()
+        val explainables: MutableMap<Vertex.Thing, ConceptRow.Explainable> = ConcurrentHashMap()
         val explanationIterators: MutableMap<Vertex.Thing, Iterator<Explanation>> = ConcurrentHashMap()
         private val vertexExplanations =
             Collections.synchronizedList(mutableListOf<Pair<Vertex.Thing, Explanation>>())

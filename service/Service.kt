@@ -15,7 +15,7 @@ import com.typedb.studio.service.common.StatusService
 import com.typedb.studio.service.connection.DriverState
 import com.typedb.studio.service.page.PageService
 import com.typedb.studio.service.project.ProjectService
-import com.typedb.studio.service.schema.SchemaService
+//import com.typedb.studio.service.schema.SchemaService
 import com.typedb.studio.service.user.UserService
 
 object Service {
@@ -30,7 +30,7 @@ object Service {
     lateinit var driver: DriverState
     lateinit var project: ProjectService
     lateinit var user: UserService
-    lateinit var schema: SchemaService
+//    lateinit var schema: SchemaService
 
     init {
         init()
@@ -47,6 +47,6 @@ object Service {
         driver = DriverState(notification, preference, data)
         project = ProjectService(preference, data, notification, confirmation, driver, pages)
         user = UserService(notification, driver)
-        schema = SchemaService(driver.transaction, pages, notification, confirmation, status)
+//        schema = SchemaService(driver.transaction, pages, notification, confirmation, status)
     }
 }

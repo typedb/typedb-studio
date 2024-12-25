@@ -13,7 +13,7 @@ import com.typedb.studio.framework.material.Form
 import com.typedb.studio.framework.material.Icon
 import com.typedb.studio.service.common.util.Label
 import com.typedb.studio.service.connection.TransactionState
-import com.typedb.driver.api.answer.ConceptMap
+import com.typedb.driver.api.answer.ConceptRow
 
 internal class TableOutput constructor(val transaction: TransactionState, number: Int) : RunOutput() {
 
@@ -21,7 +21,7 @@ internal class TableOutput constructor(val transaction: TransactionState, number
     override val icon: Icon = Icon.TABLE
     override val buttons: List<Form.IconButtonArg> = listOf()
 
-    internal fun outputFn(conceptMap: ConceptMap): () -> Unit {
+    internal fun outputFn(row: ConceptRow): () -> Unit {
         return {} // TODO
     }
 

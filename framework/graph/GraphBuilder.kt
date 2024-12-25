@@ -14,11 +14,11 @@ import com.typedb.studio.service.common.util.Message.Visualiser.Companion.FULLY_
 import com.typedb.studio.service.common.util.Message.Visualiser.Companion.UNEXPECTED_ERROR
 import com.typedb.studio.service.connection.TransactionState
 import com.typedb.driver.api.TypeDBTransaction
-import com.typedb.driver.api.answer.ConceptMap
+import com.typedb.driver.api.answer.ConceptRow
 import com.typedb.driver.api.concept.Concept
-import com.typedb.driver.api.concept.thing.Attribute
-import com.typedb.driver.api.concept.thing.Relation
-import com.typedb.driver.api.concept.thing.Thing
+import com.typedb.driver.api.concept.instance.Attribute
+import com.typedb.driver.api.concept.instance.Relation
+import com.typedb.driver.api.concept.instance.Thing
 import com.typedb.driver.api.concept.type.RoleType
 import com.typedb.driver.api.concept.type.ThingType
 import com.typedb.driver.api.concept.type.Type
@@ -44,7 +44,7 @@ class GraphBuilder(
     private val allTypeVertices = ConcurrentHashMap<String, Vertex.Type>()
     private val edges = ConcurrentLinkedQueue<Edge>()
     private val thingEdgeCandidates = ConcurrentHashMap<String, Collection<ThingEdgeCandidate>>()
-    private val explainables = ConcurrentHashMap<Vertex.Thing, ConceptMap.Explainable>()
+    private val explainables = ConcurrentHashMap<Vertex.Thing, ConceptRow.Explainable>()
     private val vertexExplanations = ConcurrentLinkedQueue<Pair<Vertex.Thing, Explanation>>()
     private val lock = ReentrantReadWriteLock(true)
     private val transactionID = transactionState.transaction?.hashCode()
@@ -60,7 +60,7 @@ class GraphBuilder(
         private val OWNS = "OWNS"
     }
 
-    fun loadConceptMap(conceptMap: ConceptMap, answerSource: AnswerSource = AnswerSource.Query) {
+    fun loadConceptRow(conceptMap: ConceptRow, answerSource: AnswerSource = AnswerSource.Query) {
         conceptMap.variables().forEach { varName: String ->
             val concept = conceptMap.get(varName)
             when {
@@ -201,7 +201,7 @@ class GraphBuilder(
 
 
     private fun addExplainables(
-        thing: Thing, thingVertex: Vertex.Thing, explainables: ConceptMap.Explainables, varName: String
+        thing: Thing, thingVertex: Vertex.Thing, explainables: ConceptRow.Explainables, varName: String
     ) {
         try {
             this.explainables.computeIfAbsent(thingVertex) {
@@ -287,7 +287,7 @@ class GraphBuilder(
         if (iterator.hasNext()) {
             val explanation = iterator.next()
             vertexExplanations += Pair(vertex, explanation)
-            loadConceptMap(explanation.condition(), AnswerSource.Explanation(explanation))
+            loadConceptRow(explanation.condition(), AnswerSource.Explanation(explanation))
         } else Service.notification.info(LOGGER, FULLY_EXPLAINED)
     }
 
@@ -331,7 +331,7 @@ class GraphBuilder(
         companion object {
             fun of(concept: Concept, vertex: Vertex, graphBuilder: GraphBuilder, transaction: TypeDBTransaction?): EdgeBuilder? {
                 return when (concept) {
-                    is com.typedb.driver.api.concept.thing.Thing -> {
+                    is com.typedb.driver.api.concept.instance.Thing -> {
                         Thing(concept, vertex as Vertex.Thing, transaction, graphBuilder)
                     }
                     is ThingType -> {
@@ -343,7 +343,7 @@ class GraphBuilder(
         }
 
         class Thing(
-            val thing: com.typedb.driver.api.concept.thing.Thing,
+            val thing: com.typedb.driver.api.concept.instance.Thing,
             private val thingVertex: Vertex.Thing,
             private val transaction: TypeDBTransaction?,
             ctx: GraphBuilder,

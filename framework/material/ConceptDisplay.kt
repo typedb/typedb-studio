@@ -16,11 +16,10 @@ import com.typedb.studio.framework.common.theme.Color.FADED_OPACITY
 import com.typedb.studio.framework.common.theme.Theme
 import com.typedb.studio.service.common.util.Label
 import com.typedb.driver.api.concept.Concept
-import com.typedb.driver.api.concept.thing.Attribute
-import com.typedb.driver.api.concept.thing.Relation
+import com.typedb.driver.api.concept.instance.Attribute
+import com.typedb.driver.api.concept.instance.Relation
 import com.typedb.driver.api.concept.type.AttributeType
 import com.typedb.driver.api.concept.type.RelationType
-import com.typedb.driver.api.concept.type.ThingType
 import com.typedb.driver.api.concept.type.Type
 import java.time.format.DateTimeFormatter
 
@@ -29,7 +28,7 @@ object ConceptDisplay {
     fun iconOf(concept: Concept) = when (concept) {
         is Relation, is RelationType -> Form.IconArg(Icon.RELATION) { Theme.graph.vertex.relationType }
         is Attribute, is AttributeType -> Form.IconArg(Icon.ATTRIBUTE) { Theme.graph.vertex.attributeType }
-        is ThingType -> Form.IconArg(Icon.THING) { Theme.graph.vertex.entityType }
+        is Type -> Form.IconArg(Icon.THING) { Theme.graph.vertex.entityType }
         else -> throw IllegalArgumentException("Type icon not defined for concept: $concept")
     }
 
@@ -40,10 +39,10 @@ object ConceptDisplay {
         baseFontColor: Color = Theme.studio.onPrimary
     ): AnnotatedString {
         val details = mutableListOf<String>()
-        if (concept is AttributeType) details.add(concept.valueType.name.lowercase())
+        if (concept is AttributeType) details.add(concept.tryGetValueType().get().lowercase())
         if (isAbstract) details.add(Label.ABSTRACT.lowercase())
         return buildAnnotatedString {
-            append(concept.label.scopedName())
+            append(concept.label)
             if (details.isNotEmpty()) details.joinToString(separator = ", ").let {
                 append(" ")
                 withStyle(SpanStyle(baseFontColor.copy(FADED_OPACITY))) { append("(${it})") }
@@ -52,6 +51,6 @@ object ConceptDisplay {
     }
 
     fun attributeValue(attribute: Attribute) =
-        if (attribute.value.isDateTime) attribute.value.asDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        if (attribute.value.isDatetime) attribute.value.datetime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
         else attribute.value.toString()
 }

@@ -20,7 +20,7 @@ kt_jvm_library(
         "//service/connection:connection",
         "//service/project:project",
         "//service/page:page",
-        "//service/schema:schema",
+#        "//service/schema:schema",
         "//service/user:user",
 
         # External Maven Dependencies

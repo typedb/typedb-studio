@@ -22,7 +22,7 @@ kt_jvm_library(
         "//service:service",
         "//framework/common:common",
         "//framework/editor:editor",
-        "//framework/graph:graph",
+#        "//framework/graph:graph",
         "//framework/material:material",
 
         # External TypeDB Dependencies

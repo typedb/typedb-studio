@@ -13,14 +13,12 @@ import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.ER
 import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.INFO
 import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.SUCCESS
 import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.TYPEQL
-import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.GET
-import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.INSERT
-import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.UPDATE
+import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptRows.Source.GET
+import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptRows.Source.INSERT
+import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptRows.Source.UPDATE
 import com.typedb.common.collection.Either
-import com.typedb.driver.api.answer.ConceptMap
-import com.typedb.driver.api.answer.ConceptMapGroup
+import com.typedb.driver.api.answer.ConceptRow
 import com.typedb.driver.api.answer.JSON
-import com.typedb.driver.api.answer.ValueGroup
 import com.typeql.lang.TypeQL
 import com.typeql.lang.query.TypeQLDefine
 import com.typeql.lang.query.TypeQLDelete
@@ -33,8 +31,8 @@ import com.typeql.lang.query.TypeQLUpdate
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.stream.Collectors
 import java.util.stream.Stream
-import kotlin.streams.toList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -56,16 +54,14 @@ class QueryRunner(
             enum class Type { INFO, SUCCESS, ERROR, TYPEQL }
         }
 
-        data class Value(val value: com.typedb.driver.api.concept.value.Value?) : Response()
+        data class Value(val value: com.typedb.driver.api.concept.value.Value) : Response()
 
         sealed class Stream<T> : Response() {
 
             val queue = LinkedBlockingQueue<Either<T, Done>>()
 
-            class ConceptMapGroups : Stream<ConceptMapGroup>()
-            class ValueGroups : Stream<ValueGroup>()
             class JSONs : Stream<JSON>()
-            class ConceptMaps constructor(val source: Source) : Stream<ConceptMap>() {
+            class ConceptRows constructor(val source: Source) : Stream<ConceptRow>() {
                 enum class Source { INSERT, UPDATE, GET }
             }
         }
@@ -135,7 +131,7 @@ class QueryRunner(
         try {
             isRunning.set(true)
             startTime = System.currentTimeMillis()
-            runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).toList())
+            runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).collect(Collectors.toList()))
         } catch (e: Exception) {
             collectEmptyLine()
             collectMessage(ERROR, ERROR_ + e.message)
@@ -164,8 +160,8 @@ class QueryRunner(
             is TypeQLUpdate -> runUpdateQuery(query)
             is TypeQLGet -> runGetQuery(query)
             is TypeQLGet.Aggregate -> runGetAggregateQuery(query)
-            is TypeQLGet.Group -> runGetGroupQuery(query)
-            is TypeQLGet.Group.Aggregate -> runGetGroupAggregateQuery(query)
+//            is TypeQLGet.Group -> runGetGroupQuery(query)
+//            is TypeQLGet.Group.Aggregate -> runGetGroupAggregateQuery(query)
             is TypeQLFetch -> runFetchQuery(query)
             else -> throw IllegalStateException("Unrecognised TypeQL query")
         }
@@ -175,74 +171,59 @@ class QueryRunner(
         name = DEFINE_QUERY,
         successMsg = DEFINE_QUERY_SUCCESS,
         queryStr = query.toString()
-    ) { transaction.query().define(query).resolve() }
+    ) { transaction.query(query.toString()).resolve() }
 
     private fun runUndefineQuery(query: TypeQLUndefine) = runUnitQuery(
         name = UNDEFINE_QUERY,
         successMsg = UNDEFINE_QUERY_SUCCESS,
         queryStr = query.toString()
-    ) { transaction.query().undefine(query).resolve() }
+    ) { transaction.query(query.toString()).resolve() }
 
     private fun runDeleteQuery(query: TypeQLDelete) = runUnitQuery(
         name = DELETE_QUERY,
         successMsg = DELETE_QUERY_SUCCESS,
         queryStr = query.toString()
-    ) { transaction.query().delete(query).resolve() }
+    ) { transaction.query(query.toString()).resolve() }
 
     private fun runInsertQuery(query: TypeQLInsert) = runStreamingQuery(
         name = INSERT_QUERY,
         successMsg = INSERT_QUERY_SUCCESS,
         noResultMsg = INSERT_QUERY_NO_RESULT,
         queryStr = query.toString(),
-        stream = Response.Stream.ConceptMaps(INSERT)
-    ) { transaction.query().insert(query, transactionState.defaultTypeDBOptions().prefetch(true)) }
+        stream = Response.Stream.ConceptRows(INSERT)
+    ) { transaction.query(query.toString()).resolve().asConceptRows().stream() } // TODO: prefetch = true option
 
     private fun runUpdateQuery(query: TypeQLUpdate) = runStreamingQuery(
         name = UPDATE_QUERY,
         successMsg = UPDATE_QUERY_SUCCESS,
         noResultMsg = UPDATE_QUERY_NO_RESULT,
         queryStr = query.toString(),
-        stream = Response.Stream.ConceptMaps(UPDATE)
-    ) { transaction.query().update(query, transactionState.defaultTypeDBOptions().prefetch(true)) }
+        stream = Response.Stream.ConceptRows(UPDATE)
+    ) { transaction.query(query.toString()).resolve().asConceptRows().stream() }
 
     private fun runGetQuery(query: TypeQLGet) = runStreamingQuery(
         name = GET_QUERY,
         successMsg = GET_QUERY_SUCCESS,
         noResultMsg = GET_QUERY_NO_RESULT,
         queryStr = query.toString(),
-        stream = Response.Stream.ConceptMaps(GET)
+        stream = Response.Stream.ConceptRows(GET)
     ) {
-        if (query.modifiers().limit().isPresent) {
-            transaction.query().get(query)
-        } else {
-            val queryWithLimit = TypeQLGet.Limited(query, preferenceSrv.getQueryLimit)
-            transaction.query().get(queryWithLimit)
-        }
+//        if (query.modifiers().limit().isPresent) {
+            transaction.query(query.toString()).resolve().asConceptRows().stream()
+//        } else {
+//            val queryWithLimit = TypeQLGet.Limited(query, preferenceSrv.getQueryLimit)
+//            transaction.query().get(queryWithLimit)
+//        }
     }
 
     private fun runGetAggregateQuery(query: TypeQLGet.Aggregate) {
-        printQueryStart(GET_AGGREGATE_QUERY, query.toString())
-        val result = transaction.query().get(query).resolve().orElse(null)
-        collectEmptyLine()
-        collectMessage(SUCCESS, RESULT_ + GET_AGGREGATE_QUERY_SUCCESS)
-        responses.put(Response.Value(result))
+        collectMessage(INFO, "runGetAggregateQuery: unsupported")
+//        printQueryStart(GET_AGGREGATE_QUERY, query.toString())
+//        val result = transaction.query(query.toString()).resolve()
+//        collectEmptyLine()
+//        collectMessage(SUCCESS, RESULT_ + GET_AGGREGATE_QUERY_SUCCESS)
+//        responses.put(Response.Value(result))
     }
-
-    private fun runGetGroupQuery(query: TypeQLGet.Group) = runStreamingQuery(
-        name = GET_GROUP_QUERY,
-        successMsg = GET_GROUP_QUERY_SUCCESS,
-        noResultMsg = GET_GROUP_QUERY_NO_RESULT,
-        queryStr = query.toString(),
-        stream = Response.Stream.ConceptMapGroups()
-    ) { transaction.query().get(query) }
-
-    private fun runGetGroupAggregateQuery(query: TypeQLGet.Group.Aggregate) = runStreamingQuery(
-        name = GET_GROUP_AGGREGATE_QUERY,
-        successMsg = GET_GROUP_AGGREGATE_QUERY_SUCCESS,
-        noResultMsg = GET_GROUP_AGGREGATE_QUERY_NO_RESULT,
-        queryStr = query.toString(),
-        stream = Response.Stream.ValueGroups()
-    ) { transaction.query().get(query) }
 
     private fun runFetchQuery(query: TypeQLFetch) = runStreamingQuery(
             name = FETCH_QUERY,
@@ -251,12 +232,12 @@ class QueryRunner(
             queryStr = query.toString(),
             stream = Response.Stream.JSONs()
     ) {
-        if (query.modifiers().limit().isPresent) {
-            transaction.query().fetch(query)
-        } else {
-            val queryWithLimit = TypeQLFetch.Limited(query, preferenceSrv.getQueryLimit)
-            transaction.query().fetch(queryWithLimit)
-        }
+//        if (query.modifiers().limit().isPresent) {
+            transaction.query(query.toString()).resolve().asConceptDocuments().stream()
+//        } else {
+//            val queryWithLimit = TypeQLFetch.Limited(query, preferenceSrv.getQueryLimit)
+//            transaction.query().fetch(queryWithLimit)
+//        }
     }
 
     private fun runUnitQuery(name: String, successMsg: String, queryStr: String, queryFn: () -> Unit) {

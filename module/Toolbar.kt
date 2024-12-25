@@ -61,7 +61,7 @@ object Toolbar {
     private val isReadyToRunQuery get() = Service.driver.isReadyToRunQuery
     private val hasRunnablePage get() = Service.pages.active?.isRunnable == true
     private val hasRunningQuery get() = Service.driver.hasRunningQuery
-    private val hasRunningCommand get() = Service.driver.hasRunningCommand || Service.schema.hasRunningCommand
+    private val hasRunningCommand get() = Service.driver.hasRunningCommand /*|| Service.schema.hasRunningCommand*/ // TODO
     private val hasStopSignal get() = Service.driver.transaction.hasStopSignal
 
     @Composable

@@ -31,7 +31,7 @@ kt_jvm_library(
         "//module/project:project",
         "//module/role:role",
         "//module/rule:rule",
-        "//module/type:type",
+#        "//module/type:type",
         "//module/user:user",
         "//module:module",
         "//resources/version:version",
@@ -39,11 +39,16 @@ kt_jvm_library(
         "//service/connection:connection",
         "//service/project:project",
         "//service/page:page",
-        "//service/schema:schema",
+#        "//service/schema:schema",
         "//service:service",
 
         # External TypeDB Dependencies
         "@typedb_dependencies//common/java:typedb-common",
+        "@typedb_driver//java:driver-java",
+                "@typedb_driver//java/api:api",
+                "@typedb_driver//java/common:common",
+                "@typedb_driver//java/concept:concept", #TODO: remove this after debugging
+                "@typedb_driver//java/connection:connection", #TODO: remove this after debugging
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",

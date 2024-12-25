@@ -15,7 +15,7 @@ import com.typedb.studio.framework.material.Separator
 import com.typedb.studio.framework.material.Tabs
 import com.typedb.studio.service.connection.TransactionState
 import com.typedb.common.collection.Either
-import com.typedb.driver.api.answer.ConceptMap
+import com.typedb.driver.api.answer.ConceptRow
 
 class GraphVisualiser constructor(transactionState: TransactionState) {
 
@@ -43,8 +43,8 @@ class GraphVisualiser constructor(transactionState: TransactionState) {
         key(this) { Frame.Row(frameState, modifier) }
     }
 
-    fun output(conceptMap: ConceptMap) {
-        graphArea.graphBuilder.loadConceptMap(conceptMap)
+    fun output(conceptMap: ConceptRow) {
+        graphArea.graphBuilder.loadConceptRow(conceptMap)
     }
 
     fun setCompleted() {
