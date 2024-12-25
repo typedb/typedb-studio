@@ -67,9 +67,9 @@ class DriverState(
     val isInteractiveMode: Boolean get() = mode == Mode.INTERACTIVE
     val hasRunningQuery get() = transaction.hasRunningQuery
     val hasRunningCommand get() = hasRunningCommandAtomic.state
-    val isReadyToRunQuery get() = transaction.isOpen && !hasRunningQuery && !hasRunningCommand
     var databaseList: List<String> by mutableStateOf(emptyList()); private set
     val transaction = TransactionState(this, notificationSrv, preferenceSrv)
+    val isReadyToRunQuery get() = transaction.database != null && !hasRunningQuery && !hasRunningCommand
     val userManager: UserManager? get() = _driver?.users()
     private val statusAtomic = AtomicReferenceState(DISCONNECTED)
     private var _driver: Driver? by mutableStateOf(null)
@@ -86,7 +86,7 @@ class DriverState(
     fun tryConnectToTypeDBCoreAsync(
         address: String,
         username: String, password: String,
-        tlsEnabled: Boolean, caCertificate: String,
+        tlsEnabled: Boolean, caCertificate: String?,
         onSuccess: () -> Unit
     ): Any = tryConnectAsync(connectionName(username, address), onSuccess) {
         TypeDB.coreDriver(address, Credentials(username, password), DriverOptions(tlsEnabled, caCertificate))
@@ -95,7 +95,7 @@ class DriverState(
     fun tryConnectToTypeDBCloudAsync(
         addresses: Set<String>,
         username: String, password: String,
-        tlsEnabled: Boolean, caCertificate: String,
+        tlsEnabled: Boolean, caCertificate: String?,
         onSuccess: () -> Unit
     ): Any = tryConnectAsync(connectionName(username, addresses.first()), onSuccess) {
         TypeDB.cloudDriver(addresses, Credentials(username, password), DriverOptions(tlsEnabled, caCertificate))
@@ -104,7 +104,7 @@ class DriverState(
     fun tryConnectToTypeDBCloudAsync(
         addressTranslation: Map<String, String>,
         username: String, password: String,
-        tlsEnabled: Boolean, caCertificate: String,
+        tlsEnabled: Boolean, caCertificate: String?,
         onSuccess: () -> Unit
     ): Any = tryConnectAsync(connectionName(username, addressTranslation.values.first()), onSuccess) {
         TypeDB.cloudDriver(

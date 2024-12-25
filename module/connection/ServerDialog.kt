@@ -35,8 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogWindowScope
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowPosition.Aligned
-import com.typedb.driver.api.Credentials
-import com.typedb.driver.api.DriverOptions
 import com.typedb.studio.framework.common.theme.Theme
 import com.typedb.studio.framework.common.theme.Theme.TOOLBAR_BUTTON_SIZE
 import com.typedb.studio.framework.material.ActionableList
@@ -150,6 +148,8 @@ object ServerDialog {
         }
 
         override fun submit() {
+            val passwordValue = password
+            val caCertValue = if (caCertificate.isNotBlank()) caCertificate else null
             password = ""
             appData.server = server
             appData.coreAddress = coreAddress
@@ -158,7 +158,7 @@ object ServerDialog {
             appData.useCloudAddressTranslation = useCloudTranslatedAddress
             appData.username = username
             appData.tlsEnabled = tlsEnabled
-            appData.caCertificate = caCertificate
+            appData.caCertificate = caCertValue
             appData.advancedConfigSelected = advancedConfigSelected
 
             val onSuccess = {
@@ -170,14 +170,14 @@ object ServerDialog {
             }
             when (server) {
                 TYPEDB_CORE -> Service.driver.tryConnectToTypeDBCoreAsync(
-                    coreAddress, username, password, tlsEnabled, caCertificate, onSuccess
+                    coreAddress, username, passwordValue, tlsEnabled, caCertValue, onSuccess
                 )
                 TYPEDB_CLOUD -> when {
                     useCloudTranslatedAddress -> Service.driver.tryConnectToTypeDBCloudAsync(
-                        cloudTranslatedAddresses.toMap(), username, password, tlsEnabled, caCertificate, onSuccess
+                        cloudTranslatedAddresses.toMap(), username, passwordValue, tlsEnabled, caCertValue, onSuccess
                     )
                     else -> Service.driver.tryConnectToTypeDBCloudAsync(
-                        cloudAddresses.toSet(), username, password, tlsEnabled, caCertificate, onSuccess
+                        cloudAddresses.toSet(), username, passwordValue, tlsEnabled, caCertValue, onSuccess
                     )
                 }
             }

@@ -131,7 +131,8 @@ class QueryRunner(
         try {
             isRunning.set(true)
             startTime = System.currentTimeMillis()
-            runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).collect(Collectors.toList()))
+            runQueries(queries)
+//            runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).collect(Collectors.toList()))
         } catch (e: Exception) {
             collectEmptyLine()
             collectMessage(ERROR, ERROR_ + e.message)
@@ -164,6 +165,23 @@ class QueryRunner(
 //            is TypeQLGet.Group.Aggregate -> runGetGroupAggregateQuery(query)
             is TypeQLFetch -> runFetchQuery(query)
             else -> throw IllegalStateException("Unrecognised TypeQL query")
+        }
+    }
+
+    private fun runQueries(queries: String) {
+        if (hasStopSignal) return
+        runStreamingQuery(
+            name = GET_QUERY,
+            successMsg = GET_QUERY_SUCCESS,
+            noResultMsg = GET_QUERY_NO_RESULT,
+            queryStr = queries,
+            stream = Response.Stream.ConceptRows(GET)
+        ) {
+            val answer = transaction.query(queries).resolve()
+            if (answer.isOk) return@runStreamingQuery Stream.empty()
+            else if (answer.isConceptRows) return@runStreamingQuery answer.asConceptRows().stream()
+//            else if (answer.isConceptDocuments) return@runStreamingQuery answer.asConceptDocuments().stream()
+            else throw IllegalArgumentException()
         }
     }
 
