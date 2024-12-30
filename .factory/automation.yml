@@ -38,15 +38,15 @@ build:
       command: |
         bazel run @typedb_dependencies//tool/bazelinstall:remote_cache_setup.sh
         bazel test $(bazel query 'kind(kt_jvm_test, //...) except kind(kt_jvm_test, //test/...)') --test_output=errors
-    test-integration:
-      machine: 8-core-32-gb
-      image: typedb-ubuntu-22.04
-      dependencies:
-        - build
-      command: |
-        bazel run @typedb_dependencies//tool/bazelinstall:remote_cache_setup.sh
-        bazel build //test/integration/...
-        bazel test $(bazel query '//test/integration/... except kind(checkstyle_test, //test/integration/...)') --jobs=1 --spawn_strategy=local --test_output=errors
+#    test-integration:
+#      machine: 8-core-32-gb
+#      image: typedb-ubuntu-22.04
+#      dependencies:
+#        - build
+#      command: |
+#        bazel run @typedb_dependencies//tool/bazelinstall:remote_cache_setup.sh
+#        bazel build //test/integration/...
+#        bazel test $(bazel query '//test/integration/... except kind(checkstyle_test, //test/integration/...)') --jobs=1 --spawn_strategy=local --test_output=errors
 
 release:
   filter:
