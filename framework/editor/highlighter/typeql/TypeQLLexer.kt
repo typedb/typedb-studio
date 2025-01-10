@@ -9,9 +9,9 @@ package com.typedb.studio.framework.editor.highlighter.typeql
 import com.typedb.studio.framework.editor.highlighter.common.Lexer
 import com.typedb.studio.framework.editor.highlighter.common.Lexer.Token
 import com.typedb.studio.framework.editor.highlighter.common.Scheme
-import com.vaticle.typedb.common.yaml.YAML
-import com.vaticle.typeql.grammar.TypeQLLexer.VOCABULARY
-import com.vaticle.typeql.lang.TypeQL
+import com.typedb.common.yaml.YAML
+import com.typeql.grammar.TypeQLLexer.VOCABULARY
+import com.typeql.lang.TypeQL
 import org.antlr.v4.runtime.CommonTokenStream
 
 // TODO: we should reimplement this using a JFlex lexer,

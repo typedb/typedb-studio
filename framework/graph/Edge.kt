@@ -21,7 +21,7 @@ sealed class Edge(open val source: Vertex, open val target: Vertex) {
     }
 
     val geometry = Geometry(this)
-    var curvePoint: com.vaticle.force.graph.api.Vertex? = null
+    var curvePoint: com.typedb.force.graph.api.Vertex? = null
     abstract val label: String
 
     interface Inferrable {
@@ -64,7 +64,7 @@ sealed class Edge(open val source: Vertex, open val target: Vertex) {
         override val label = Labels.ISA
     }
 
-    class Geometry(private val edge: Edge) : com.vaticle.force.graph.api.Edge {
+    class Geometry(private val edge: Edge) : com.typedb.force.graph.api.Edge {
 
         val isCurved get() = edge.curvePoint != null
         val midpoint

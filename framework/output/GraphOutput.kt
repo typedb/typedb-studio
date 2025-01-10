@@ -8,31 +8,31 @@ package com.typedb.studio.framework.output
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.typedb.studio.framework.graph.GraphVisualiser
+//import com.typedb.studio.framework.graph.GraphVisualiser
 import com.typedb.studio.framework.material.Form
 import com.typedb.studio.framework.material.Icon
 import com.typedb.studio.service.common.util.Label
 import com.typedb.studio.service.connection.TransactionState
-import com.vaticle.typedb.driver.api.answer.ConceptMap
+import com.typedb.driver.api.answer.ConceptRow
 
 internal class GraphOutput constructor(transactionState: TransactionState, number: Int) : RunOutput() {
 
-    private val graphVisualiser = GraphVisualiser(transactionState)
+//    private val graphVisualiser = GraphVisualiser(transactionState)
 
     override val name: String = "${Label.GRAPH} ($number)"
     override val icon: Icon = Icon.GRAPH
     override var buttons: List<Form.IconButtonArg> = emptyList()
 
-    fun output(conceptMap: ConceptMap) {
-        graphVisualiser.output(conceptMap)
+    fun output(row: ConceptRow) {
+//        graphVisualiser.output(row)
     }
 
     fun setCompleted() {
-        graphVisualiser.setCompleted()
+//        graphVisualiser.setCompleted()
     }
 
     @Composable
     override fun content(modifier: Modifier) {
-        graphVisualiser.Layout(modifier)
+//        graphVisualiser.Layout(modifier)
     }
 }

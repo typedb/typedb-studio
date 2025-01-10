@@ -70,18 +70,18 @@ import com.typedb.studio.module.preference.PreferenceDialog
 import com.typedb.studio.module.project.FilePage
 import com.typedb.studio.module.project.ProjectBrowser
 import com.typedb.studio.module.project.ProjectDialog
-import com.typedb.studio.module.type.TypeBrowser
-import com.typedb.studio.module.type.TypeDialog
-import com.typedb.studio.module.type.TypeEditor
-import com.typedb.studio.module.user.UpdateDefaultPasswordDialog
+//import com.typedb.studio.module.type.TypeBrowser
+//import com.typedb.studio.module.type.TypeDialog
+//import com.typedb.studio.module.type.TypeEditor
+import com.typedb.studio.module.user.UpdatePasswordDialog
 import com.typedb.studio.resources.version.Version
 import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.util.Label
 import com.typedb.studio.service.common.util.Message
 import com.typedb.studio.service.common.util.Sentence
 import com.typedb.studio.service.project.FileState
-import com.typedb.studio.service.schema.ThingTypeState
-import com.vaticle.typedb.common.collection.Either
+//import com.typedb.studio.service.schema.ThingTypeState
+import com.typedb.common.collection.Either
 import io.sentry.Sentry
 import io.sentry.protocol.User
 import java.awt.Window
@@ -98,7 +98,7 @@ import mu.KotlinLogging
 
 object Studio {
 
-    private const val VATICLE_BOT_ICON = "resources/icons/vaticle/vaticle-bot-32px.png"
+    private const val TYPEDB_BOT_ICON = "resources/icons/typedb/typedb-bot-32px.png"
     private val ERROR_WINDOW_WIDTH = 1000.dp
     private val ERROR_WINDOW_HEIGHT = 610.dp
     private val ERROR_WINDOW_CONTENT_PADDING = 10.dp
@@ -110,7 +110,7 @@ object Studio {
 
     private val browsers = listOf(
         ProjectBrowser(true, 1),
-        TypeBrowser(true, 2),
+//        TypeBrowser(true, 2),
         // RuleBrowser(false, 3),
         // UserBrowser(false, 4),
         // RoleBrowser(false, 5),
@@ -139,7 +139,7 @@ object Studio {
         Window(
             title = getMainWindowTitle(),
             state = rememberWindowState(WindowPlacement.Maximized),
-            icon = painterResource(VATICLE_BOT_ICON),
+            icon = painterResource(TYPEDB_BOT_ICON),
             onPreviewKeyEvent = { handlePreviewKeyEvent(it, ::confirmClose) },
             onKeyEvent = { handleKeyEvent(it) },
             onCloseRequest = { if (error != null) exitApplicationFn() else confirmClose() },
@@ -154,8 +154,8 @@ object Studio {
                     DatabaseDialog.MayShowDialogs()
                     PreferenceDialog.MayShowDialogs()
                     ProjectDialog.MayShowDialogs(window)
-                    TypeDialog.MayShowDialogs()
-                    UpdateDefaultPasswordDialog.MayShowDialogs()
+//                    TypeDialog.MayShowDialogs()
+                    UpdatePasswordDialog.MayShowDialogs()
                 }
             }
         }
@@ -188,7 +188,7 @@ object Studio {
                             Pages.Layout(enabled = Service.project.current != null) {
                                 when (it) {
                                     is FileState -> FilePage.create(it)
-                                    is ThingTypeState<*, *> -> TypeEditor.create(it)
+//                                    is ThingTypeState<*, *> -> TypeEditor.create(it)
                                     else -> throw IllegalStateException("Unrecognised pageable type")
                                 }
                             }

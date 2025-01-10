@@ -69,6 +69,7 @@ class QueryRunnerService {
             else launched[0]
         }
         launched.remove(runner)
+        saved.remove(runner)
     }
 
     fun close() {

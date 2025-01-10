@@ -10,4 +10,4 @@ index fefc608f..65fde3c5 100644
 +workspace(name = "ts")
  
  ################################
- # Load @vaticle_dependencies #
+ # Load @typedb_dependencies #

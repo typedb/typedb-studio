@@ -2,11 +2,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-# FIXME: Copied from @vaticle_dependencies//library/maven:rules.bzl
+# FIXME: Copied from @typedb_dependencies//library/maven:rules.bzl
 load("@rules_jvm_external//:defs.bzl", rje_maven_install = "maven_install")
 load("@rules_jvm_external//:specs.bzl", rje_maven = "maven", rje_parse = "parse")
-load("@vaticle_dependencies//library/maven:artifacts.bzl", maven_artifacts_org = "artifacts")
-load("@vaticle_dependencies//distribution:deployment.bzl", "deployment")
+load("@typedb_dependencies//library/maven:artifacts.bzl", maven_artifacts_org = "artifacts")
+load("@typedb_dependencies//distribution:deployment.bzl", "deployment")
 # FIXME: Studio compose dependencies are held back, out of sync with dependencies
 load("//dependencies/maven:artifacts.bzl", typedb_studio_maven_overrides = "version_overrides")
 
@@ -15,14 +15,14 @@ def maven(artifacts_org, internal_artifacts = {}, artifacts_repo={}, override_ta
         _warn("There are {} artifacts_repo found. Overriding artifacts_org with `artifacts_repo` is discouraged!".format(len(artifacts_repo)))
     for a in artifacts_org:
         if a not in maven_artifacts_org.keys():
-            fail("'" + a + "' has not been declared in @vaticle_dependencies")
+            fail("'" + a + "' has not been declared in @typedb_dependencies")
     artifacts_selected = []
     for a in artifacts_org:
         artifact = maven_artifact(a, artifacts_repo.get(a, maven_artifacts_org[a]))
         artifacts_selected.append(artifact)
     for coordinate, info in internal_artifacts.items():
-        if not coordinate.startswith("com.vaticle."):
-            fail("'" + coordinate + "' is not an internal dependency and must be declared in @vaticle_dependencies")
+        if not coordinate.startswith("com.typedb."):
+            fail("'" + coordinate + "' is not an internal dependency and must be declared in @typedb_dependencies")
         artifacts_selected.append(maven_artifact(coordinate, info))
     rje_maven_install(
         # FIXME studio compose dependencies are held back, out of sync with dependencies

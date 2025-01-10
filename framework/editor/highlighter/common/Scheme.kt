@@ -9,7 +9,7 @@ package com.typedb.studio.framework.editor.highlighter.common
 import androidx.compose.ui.graphics.Color
 import com.typedb.studio.framework.common.theme.Color.hexToColor
 import com.typedb.studio.framework.common.theme.Typography
-import com.vaticle.typedb.common.yaml.YAML
+import com.typedb.common.yaml.YAML
 
 class Scheme(val scopes: Map<String, Scope>) {
 

@@ -14,6 +14,17 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
+import com.typedb.driver.api.QueryType
+import com.typedb.driver.api.Transaction
+import com.typedb.driver.api.answer.ConceptRow
+import com.typedb.driver.api.answer.JSON
+import com.typedb.driver.api.concept.Concept
+import com.typedb.driver.api.concept.instance.Attribute
+import com.typedb.driver.api.concept.instance.Entity
+import com.typedb.driver.api.concept.instance.Instance
+import com.typedb.driver.api.concept.instance.Relation
+import com.typedb.driver.api.concept.type.Type
+import com.typedb.driver.api.concept.value.Value
 import com.typedb.studio.framework.common.Util
 import com.typedb.studio.framework.common.theme.Color
 import com.typedb.studio.framework.common.theme.Theme
@@ -32,18 +43,10 @@ import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.IN
 import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.SUCCESS
 import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.TYPEQL
 import com.typedb.studio.service.connection.TransactionState
-import com.vaticle.typedb.driver.api.answer.ConceptMap
-import com.vaticle.typedb.driver.api.answer.ConceptMapGroup
-import com.vaticle.typedb.driver.api.answer.JSON
-import com.vaticle.typedb.driver.api.answer.ValueGroup
-import com.vaticle.typedb.driver.api.concept.Concept
-import com.vaticle.typedb.driver.api.concept.thing.Attribute
-import com.vaticle.typedb.driver.api.concept.thing.Relation
-import com.vaticle.typedb.driver.api.concept.thing.Thing
-import com.vaticle.typedb.driver.api.concept.type.Type
-import com.vaticle.typedb.driver.api.concept.value.Value
-import com.vaticle.typeql.lang.common.TypeQLToken
-import com.vaticle.typeql.lang.common.util.Strings
+import com.typeql.lang.common.TypeQLToken
+import com.typeql.lang.common.util.Strings
+import java.io.PrintStream
+import java.util.Arrays
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.stream.Collectors
@@ -133,20 +136,10 @@ internal class LogOutput constructor(
 
     internal fun outputFn(message: Response.Message): () -> Unit = { output(message.type, message.text) }
 
-    internal fun outputFn(value: Value?): () -> Unit = { output(TYPEQL, printValue(value)) }
+    internal fun outputFn(value: Value): () -> Unit = { output(TYPEQL, valueDisplayString(value)) }
 
-    internal fun outputFn(conceptMap: ConceptMap): () -> Unit {
-        val output = loadToString(conceptMap)
-        return { output(TYPEQL, output) }
-    }
-
-    internal fun outputFn(conceptMapGroup: ConceptMapGroup): () -> Unit {
-        val output = loadToString(conceptMapGroup)
-        return { output(TYPEQL, output) }
-    }
-
-    internal fun outputFn(valueGroup: ValueGroup): () -> Unit {
-        val output = loadToString(valueGroup)
+    internal fun outputFn(row: ConceptRow): () -> Unit {
+        val output = loadToString(row)
         return { output(TYPEQL, output) }
     }
 
@@ -179,82 +172,229 @@ internal class LogOutput constructor(
         return builder.toAnnotatedString()
     }
 
-    private fun loadToString(group: ValueGroup): String {
-        return loadToString(group.owner()) + " => " + group.value().toString()
-    }
-
     private fun loadToString(json: JSON): String = json.toString()
 
-    private fun loadToString(group: ConceptMapGroup): String {
-        val str = StringBuilder(loadToString(group.owner()) + " => {\n")
-        group.conceptMaps().forEach { str.append(Strings.indent(loadToString(it))) }
-        str.append("\n}")
-        return str.toString()
+    private fun loadToString(row: ConceptRow): String {
+        val columnNames = row.columnNames().collect(Collectors.toList())
+        val columnsWidth = columnNames.stream().map { obj: String -> obj.length }
+            .max(Comparator.comparingInt { obj: Int -> obj }).orElse(0)
+        return conceptRowDisplayString(row, columnNames, columnsWidth)
     }
 
-    private fun loadToString(conceptMap: ConceptMap): String {
-        val content = conceptMap.variables().map {
-            formatVariable(it, conceptMap.get(it))
-        }.collect(Collectors.joining("\n"))
+//    private fun formatVariable(variable: String, concept: Concept): String {
+//        val str = StringBuilder()
+//        if (concept.isValue)
+//            str.append("?").append(variable).append(" = ")
+//        else
+//            str.append("$").append(variable).append(" ")
+//        str.append(loadToString(concept)).append(";")
+//        return str.toString()
+//    }
+//
+//    private fun loadToString(concept: Concept): String {
+//        return when (concept) {
+//            is Type -> printType(concept)
+//            is Thing -> printThing(concept)
+//            is Value -> printValue(concept)
+//            else -> throw IllegalStateException("Unrecognised TypeQL Concept")
+//        }
+//    }
 
-        val str = StringBuilder("{")
-        if (content.lines().size > 1) str.append("\n").append(Strings.indent(content)).append("\n")
-        else str.append(" ").append(content).append(" ")
-        str.append("}")
-        return str.toString()
+    private val TABLE_DASHES = 7
+    private val TABLE_INDENT = "   "
+    private val CONTENT_INDENT = "    "
+
+//    fun info(s: String?) {
+//        out!!.println(s)
+//    }
+//
+//    fun error(s: String) {
+//        err!!.println(colorError(s))
+//    }
+//
+//    fun value(answer: Value?) {
+//        out!!.println(stringifyNumericValue(answer))
+//    }
+
+//    private fun stringifyNumericValue(value: Value?): String {
+//        return value?.toString() ?: "NaN"
+//    }
+
+//    private fun conceptRowDisplayStringHeader(queryType: QueryType, columnsWidth: Int): String {
+//        val sb = StringBuilder()
+//        sb.append(QUERY_COMPILATION_SUCCESS)
+//        sb.append("\n")
+//
+//        if (queryType.isWrite) {
+//            sb.append(QUERY_WRITE_SUCCESS)
+//            sb.append(". ")
+//        }
+//
+//        assert(
+//            !queryType.isSchema // expected to return another type of answer
+//        )
+//        sb.append(QUERY_STREAMING_ROWS)
+//        sb.append("\n\n")
+//
+//        if (columnsWidth != 0) {
+//            sb.append(lineDashSeparator(columnsWidth))
+//        }
+//
+//        return sb.toString()
+//    }
+
+    private fun conceptRowDisplayString(
+        conceptRow: ConceptRow, columnNames: List<String>, columnsWidth: Int,
+    ): String {
+        val content = columnNames
+            .stream()
+            .map { columnName: String ->
+                val concept = conceptRow[columnName]
+                val sb = StringBuilder("$")
+                sb.append(columnName)
+                sb.append(" ".repeat(columnsWidth - columnName.length + 1))
+                sb.append("| ")
+                sb.append(conceptDisplayString(if (concept.isValue) concept.asValue() else concept))
+                sb.toString()
+            }.collect(Collectors.joining("\n"))
+
+        val sb = StringBuilder(indent(CONTENT_INDENT, content))
+        sb.append("\n")
+        sb.append(lineDashSeparator(columnsWidth))
+        return sb.toString()
     }
 
-    private fun formatVariable(variable: String, concept: Concept): String {
-        val str = StringBuilder()
-        if (concept.isValue)
-            str.append("?").append(variable).append(" = ")
-        else
-            str.append("$").append(variable).append(" ")
-        str.append(loadToString(concept)).append(";")
-        return str.toString()
+//    private fun conceptDocumentDisplayHeader(queryType: QueryType): String {
+//        val sb = java.lang.StringBuilder()
+//        sb.append(QUERY_COMPILATION_SUCCESS)
+//        sb.append("\n")
+//
+//        if (queryType.isWrite) {
+//            sb.append(QUERY_WRITE_SUCCESS)
+//            sb.append(". ")
+//        }
+//
+//        assert(
+//            !queryType.isSchema // expected to return another type of answer
+//        )
+//        sb.append(QUERY_STREAMING_DOCUMENTS)
+//        sb.append("\n")
+//        return sb.toString()
+//    }
+
+    private fun indent(indent: String, string: String): String {
+        return Arrays.stream(string.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
+            .map { s: String -> indent + s }
+            .collect(Collectors.joining("\n"))
     }
 
-    private fun loadToString(concept: Concept): String {
-        return when (concept) {
-            is Type -> printType(concept)
-            is Thing -> printThing(concept)
-            is Value -> printValue(concept)
-            else -> throw IllegalStateException("Unrecognised TypeQL Concept")
+    private fun lineDashSeparator(additionalDashesNum: Int): String {
+        return indent(TABLE_INDENT, "-".repeat(TABLE_DASHES + additionalDashesNum))
+    }
+
+    private fun conceptDisplayString(concept: Concept): String {
+        if (concept.isValue) return valueDisplayString(concept.asValue())
+
+        val sb = java.lang.StringBuilder()
+        if (concept.isType) {
+            sb.append(typeDisplayString(concept.asType()))
+        } else if (concept.isAttribute) {
+            sb.append(attributeDisplayString(concept.asAttribute()))
+        } else if (concept.isEntity) {
+            sb.append(entityDisplayKeyString(concept.asEntity()))
+        } else if (concept.isRelation) {
+            sb.append(relationDisplayKeyString(concept.asRelation()))
         }
-    }
 
-    private fun printType(type: Type): String {
-        var str = TypeQLToken.Constraint.TYPE.toString() + " " + type.label
-        transactionState.transaction?.let {
-            type.getSupertype(it).resolve()?.let {
-                str += " " + TypeQLToken.Constraint.SUB + " " + it.label.scopedName()
-            }
+        if (concept.isInstance) {
+            sb.append(" ").append(isaDisplayString(concept.asInstance()))
         }
-        return str
+
+        return sb.toString()
     }
 
-    private fun printThing(thing: Thing): String {
-        val str = StringBuilder()
-        when (thing) {
-            is Attribute -> str.append(Strings.valueToString(thing.value))
-            else -> str.append(TypeQLToken.Constraint.IID.toString() + " " + thing.asThing().iid)
-        }
-        if (thing is Relation) str.append(" ").append(printRolePlayers(thing.asThing().asRelation()))
-        str.append(" ").append(TypeQLToken.Constraint.ISA).append(" ")
-            .append(thing.asThing().type.label.scopedName())
-        return str.toString()
+    private fun valueDisplayString(value: Value): String {
+        val rawValue: Any
+        if (value.isDouble) rawValue = value.double
+        else if (value.isDecimal) rawValue = value.decimal
+        else if (value.isBoolean) rawValue = value.boolean
+        else if (value.isString) rawValue = value.string
+        else if (value.isDate) rawValue = value.date
+        else if (value.isDatetime) rawValue = value.datetime
+        else if (value.isDatetimeTZ) rawValue = value.datetimeTZ
+        else if (value.isDuration) rawValue = value.duration
+        else if (value.isStruct) rawValue = "Structs are not supported in log output now"
+        else throw IllegalArgumentException()
+        return rawValue.toString()
     }
 
-    private fun printRolePlayers(relation: Relation): String {
-        val rolePlayers = transactionState.transaction?.let {
-            relation.getPlayers(it).flatMap { (role, players) ->
-                players.map { player -> role.label.name() + ": " + TypeQLToken.Constraint.IID + " " + player.iid }
-            }.stream().collect(Collectors.joining(", "))
-        } ?: " "
-        return "($rolePlayers)"
+    private fun isaDisplayString(instance: Instance): String {
+        return "isa ${instance.type.label}"
     }
 
-    private fun printValue(value: Value?) = value?.let { Strings.valueToString(value) } ?: "NaN"
+    private fun entityDisplayKeyString(entity: Entity): String {
+        return "iid ${entity.iid}"
+    }
+
+    private fun relationDisplayKeyString(relation: Relation): String {
+        return "iid ${relation.iid}"
+    }
+
+    private fun typeDisplayString(type: Type): String {
+        return "type ${type.label}"
+    }
+
+    private fun attributeDisplayString(attribute: Attribute): String {
+        return attribute.value.toString()
+    }
+
+//    private fun colorKeyword(s: String): String {
+//        return AttributedString(s, AttributedStyle.DEFAULT.foreground(AttributedStyle.BLUE)).toAnsi()
+//    }
+//
+//    private fun colorType(s: String): String {
+//        return AttributedString(s, AttributedStyle.DEFAULT.foreground(AttributedStyle.MAGENTA)).toAnsi()
+//    }
+//
+//    private fun colorError(s: String): String {
+//        return AttributedString(s, AttributedStyle.DEFAULT.foreground(AttributedStyle.RED)).toAnsi()
+//    }
+//
+//    private fun colorJsonKey(s: String): String {
+//        return AttributedString(s, AttributedStyle.DEFAULT.foreground(AttributedStyle.BLUE)).toAnsi()
+//    }
+
+//    private fun printType(type: Type): String {
+//        var str = TypeQLToken.Constraint.TYPE.toString() + " " + type.label
+//        transactionState.transaction?.let {
+//            type.getSupertype(it).resolve()?.let {
+//                str += " " + TypeQLToken.Constraint.SUB + " " + it.label.scopedName()
+//            }
+//        }
+//        return str
+//    }
+//
+//    private fun printThing(thing: Thing): String {
+//        val str = StringBuilder()
+//        when (thing) {
+//            is Attribute -> str.append(Strings.valueToString(thing.value))
+//            else -> str.append(TypeQLToken.Constraint.IID.toString() + " " + thing.asThing().iid)
+//        }
+//        if (thing is Relation) str.append(" ").append(printRolePlayers(thing.asThing().asRelation()))
+//        str.append(" ").append(TypeQLToken.Constraint.ISA).append(" ")
+//            .append(thing.asThing().type.label.scopedName())
+//        return str.toString()
+//    }
+//
+//    private fun printRolePlayers(relation: Relation): String {
+//        val rolePlayers = transactionState.transaction?.let {
+//            relation.getPlayers(it).flatMap { (role, players) ->
+//                players.map { player -> role.label.name() + ": " + TypeQLToken.Constraint.IID + " " + player.iid }
+//            }.stream().collect(Collectors.joining(", "))
+//        } ?: " "
+//        return "($rolePlayers)"
+//    }
+//
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable

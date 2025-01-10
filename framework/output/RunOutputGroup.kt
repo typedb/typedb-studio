@@ -19,8 +19,7 @@ import com.typedb.studio.service.common.StatusService.Key.OUTPUT_RESPONSE_TIME
 import com.typedb.studio.service.common.StatusService.Key.QUERY_RESPONSE_TIME
 import com.typedb.studio.service.connection.QueryRunner
 import com.typedb.studio.service.connection.QueryRunner.Response
-import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptMaps.Source.GET
-import com.vaticle.typedb.common.collection.Either
+import com.typedb.common.collection.Either
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
@@ -154,9 +153,7 @@ internal class RunOutputGroup constructor(
         is Response.Message -> consumeMessageResponse(response)
         is Response.Value -> consumeValueResponse(response)
         is Response.Stream<*> -> when (response) {
-            is Response.Stream.ValueGroups -> consumeValueGroupStreamResponse(response)
-            is Response.Stream.ConceptMapGroups -> consumeConceptMapGroupStreamResponse(response)
-            is Response.Stream.ConceptMaps -> consumeConceptMapStreamResponse(response)
+            is Response.Stream.ConceptRows -> consumeConceptRowStreamResponse(response)
             is Response.Stream.JSONs -> consumeJSONStreamResponse(response)
         }
         is Response.Done -> {}
@@ -166,37 +163,21 @@ internal class RunOutputGroup constructor(
 
     private fun consumeValueResponse(response: Response.Value) = collectSerial(logOutput.outputFn(response.value))
 
-    private suspend fun consumeValueGroupStreamResponse(response: Response.Stream.ValueGroups) {
-        consumeStreamResponse(response) {
-            collectSerial(
-                launchCompletableFuture(
-                    Service.notification,
-                    LOGGER
-                ) { logOutput.outputFn(it) })
-        }
-    }
-
-    private suspend fun consumeConceptMapGroupStreamResponse(
-        response: Response.Stream.ConceptMapGroups
-    ) = consumeStreamResponse(response) {
-        collectSerial(launchCompletableFuture(Service.notification, LOGGER) { logOutput.outputFn(it) })
-    }
-
-    private suspend fun consumeConceptMapStreamResponse(response: Response.Stream.ConceptMaps) {
+    private suspend fun consumeConceptRowStreamResponse(response: Response.Stream.ConceptRows) {
         val notificationSrv = Service.notification
         // TODO: enable configuration of displaying GraphOutput for INSERT and UPDATE
-        val table = if (response.source != GET) null else TableOutput(
+        val table = TableOutput(
             transaction = runner.transactionState, number = tableCount.incrementAndGet()
         ) // TODO: .also { outputs.add(it) }
-        val graph =
-            if (response.source != GET || !Service.preference.graphOutputEnabled) null else GraphOutput(
-                transactionState = runner.transactionState, number = graphCount.incrementAndGet()
-            ).also { outputs.add(it); activate(it) }
+//        val graph =
+//            if (response.source != GET || !Service.preference.graphOutputEnabled) null else GraphOutput(
+//                transactionState = runner.transactionState, number = graphCount.incrementAndGet()
+//            ).also { outputs.add(it); activate(it) }
 
         consumeStreamResponse(response) {
             collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { logOutput.outputFn(it) })
-            table?.let { t -> collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { t.outputFn(it) }) }
-            graph?.let { g -> collectNonSerial(launchCompletableFuture(notificationSrv, LOGGER) { g.output(it) }) }
+            table.let { t -> collectSerial(launchCompletableFuture(notificationSrv, LOGGER) { t.outputFn(it) }) }
+//            graph?.let { g -> collectNonSerial(launchCompletableFuture(notificationSrv, LOGGER) { g.output(it) }) }
         }
     }
 

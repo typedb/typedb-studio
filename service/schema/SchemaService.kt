@@ -9,6 +9,15 @@ package com.typedb.studio.service.schema
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.typedb.driver.api.Transaction
+import com.typedb.driver.api.TypeDBSession
+import com.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
+import com.typedb.driver.api.concept.type.AttributeType
+import com.typedb.driver.api.concept.type.EntityType
+import com.typedb.driver.api.concept.type.RelationType
+import com.typedb.driver.api.concept.type.RoleType
+import com.typedb.driver.api.concept.type.ThingType
+import com.typedb.driver.common.exception.TypeDBDriverException
 import com.typedb.studio.service.common.ConfirmationService
 import com.typedb.studio.service.common.NotificationService
 import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
@@ -24,22 +33,13 @@ import com.typedb.studio.service.common.util.Message.Companion.UNKNOWN
 import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_OPEN_READ_TX
 import com.typedb.studio.service.common.util.Message.Schema.Companion.FAILED_TO_OPEN_WRITE_TX
 import com.typedb.studio.service.common.util.Message.Schema.Companion.UNEXPECTED_ERROR
-import com.typedb.studio.service.connection.SessionState
+import com.typedb.studio.service.connection.TransactionState
 import com.typedb.studio.service.page.Navigable
 import com.typedb.studio.service.page.PageService
 import com.typedb.studio.service.schema.AttributeTypeState.OwnedAttTypeProperties
 import com.typedb.studio.service.schema.RoleTypeState.PlayedRoleTypeProperties
 import com.typedb.studio.service.schema.RoleTypeState.RelatedRoleTypeProperties
-import com.vaticle.typedb.driver.api.TypeDBSession
-import com.vaticle.typedb.driver.api.TypeDBTransaction
-import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
-import com.vaticle.typedb.driver.api.concept.type.AttributeType
-import com.vaticle.typedb.driver.api.concept.type.EntityType
-import com.vaticle.typedb.driver.api.concept.type.RelationType
-import com.vaticle.typedb.driver.api.concept.type.RoleType
-import com.vaticle.typedb.driver.api.concept.type.ThingType
-import com.vaticle.typedb.driver.common.exception.TypeDBDriverException
-import com.vaticle.typeql.lang.common.TypeQLToken
+import com.typeql.lang.common.TypeQLToken
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicLong
@@ -52,7 +52,7 @@ import kotlinx.coroutines.delay
 import mu.KotlinLogging
 
 class SchemaService(
-    private val session: SessionState,
+    private val transaction: TransactionState,
     internal val pages: PageService,
     internal val notification: NotificationService,
     internal val confirmation: ConfirmationService,
@@ -109,7 +109,7 @@ class SchemaService(
     var rootRelationType: RelationTypeState? by mutableStateOf(null); private set
     var rootRoleType: RoleTypeState? by mutableStateOf(null); private set
     var rootAttributeType: AttributeTypeState? by mutableStateOf(null); private set
-    val isWritable: Boolean get() = session.isSchema && session.transaction.isWrite
+    val isWritable: Boolean get() = transaction.isSchema
     val createEntityTypeDialog = TypeDialogState<EntityTypeState>()
     val createAttributeTypeDialog = TypeDialogState<AttributeTypeState>()
     val createRelationTypeDialog = TypeDialogState<RelationTypeState>()
@@ -124,8 +124,8 @@ class SchemaService(
     val changeOverriddenRelatedRoleTypeDialog =
         TypePropertiesDialogState<RelationTypeState, RelatedRoleTypeProperties>()
     val changeAbstractDialog = TypeDialogState<ThingTypeState<*, *>>()
-    private var writeTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
-    private var readTx: AtomicReference<TypeDBTransaction?> = AtomicReference()
+    private var writeTx: AtomicReference<Transaction?> = AtomicReference()
+    private var readTx: AtomicReference<Transaction?> = AtomicReference()
     private val lastTransactionUse = AtomicLong(0)
     private val entityTypes = ConcurrentHashMap<EntityType, EntityTypeState>()
     private val attributeTypes = ConcurrentHashMap<AttributeType, AttributeTypeState>()
@@ -137,7 +137,7 @@ class SchemaService(
     private var countRunningReadAtomic = AtomicIntegerState(initValue = 0)
     private var currentSchemaExceptions = listOf<Notification>()
     private var viewedSchemaExceptions = listOf<Notification>()
-    internal val database: String? get() = session.database
+    internal val database: String? get() = transaction.database
     internal val coroutines = CoroutineScope(Dispatchers.Default)
 
     companion object {
@@ -148,7 +148,7 @@ class SchemaService(
     init {
         session.onOpen { refreshTypesAndOpen() }
         session.onClose { close() }
-        session.transaction.onSchemaWriteReset {
+        transaction.onSchemaWriteReset {
             closeReadTx()
             refreshTypesAndOpen()
             updateSchemaExceptionsStatus()
@@ -267,7 +267,7 @@ class SchemaService(
         session.typeSchema()?.let { onSuccess(it) }
     }
 
-    internal fun mayRunWriteTxAsync(function: (TypeDBTransaction) -> Unit) {
+    internal fun mayRunWriteTxAsync(function: (Transaction) -> Unit) {
         if (hasRunningWriteAtomic.compareAndSet(expected = false, new = true)) {
             coroutines.launchAndHandle(notification, LOGGER) {
                 openOrGetWriteTx()?.let { tx ->
@@ -280,12 +280,12 @@ class SchemaService(
         }
     }
 
-    internal fun <T : Any> mayRunReadTx(function: (TypeDBTransaction) -> T?): T? {
-        fun openOrGetReadTx(): TypeDBTransaction? = synchronized(this) {
+    internal fun <T : Any> mayRunReadTx(function: (Transaction) -> T?): T? {
+        fun openOrGetReadTx(): Transaction? = synchronized(this) {
             lastTransactionUse.set(System.currentTimeMillis())
-            if (isWritable && session.transaction.isOpen) return openOrGetWriteTx()
+            if (isWritable && transaction.isOpen) return openOrGetWriteTx()
             if (readTx.get() != null) return readTx.get()
-            readTx.set(session.transaction()?.also {
+            readTx.set(transaction.tryOpen()?.also {
                 resetLoadedConnectedTypes()
                 it.onClose { readTx.set(null) }
                 scheduleCloseReadTxAsync()
@@ -309,11 +309,11 @@ class SchemaService(
         return result
     }
 
-    private fun openOrGetWriteTx(): TypeDBTransaction? = synchronized(this) {
+    private fun openOrGetWriteTx(): Transaction? = synchronized(this) {
         if (!isWritable) return null
         if (readTx.get() != null) closeReadTx()
         if (writeTx.get() != null) return writeTx.get()
-        writeTx.set(session.transaction.tryOpen()?.also { it.onClose { writeTx.set(null) } })
+        writeTx.set(transaction.tryOpen()?.also { it.onClose { writeTx.set(null) } })
         resetLoadedConnectedTypes()
         return writeTx.get()
     }
@@ -331,7 +331,7 @@ class SchemaService(
     }
 
     private fun updateSchemaExceptionsStatus() = mayRunReadTx { tx ->
-        val exceptions = tx.concepts().schemaExceptions
+        val exceptions = tx.schemaExceptions
         currentSchemaExceptions = exceptions.map {
             Notification(Notification.Type.WARNING, it.code, it.message)
         }.toList()

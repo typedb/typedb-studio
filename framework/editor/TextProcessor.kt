@@ -23,7 +23,7 @@ import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.util.Message.Project.Companion.FILE_NOT_WRITABLE
 import com.typedb.studio.service.common.util.Property
 import com.typedb.studio.service.project.FileState
-import com.vaticle.typedb.common.collection.Either
+import com.typedb.common.collection.Either
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger

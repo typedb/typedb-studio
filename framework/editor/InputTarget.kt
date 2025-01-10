@@ -24,7 +24,7 @@ import com.typedb.studio.framework.common.Util.toDP
 import com.typedb.studio.framework.editor.common.GlyphLine
 import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.StatusService.Key.TEXT_CURSOR_POSITION
-import com.vaticle.typedb.common.collection.Either
+import com.typedb.common.collection.Either
 import kotlin.math.floor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

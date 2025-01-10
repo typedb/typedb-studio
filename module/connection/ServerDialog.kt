@@ -6,6 +6,7 @@
 
 package com.typedb.studio.module.connection
 
+import androidx.compose.ui.window.DialogState as ComposeDialogState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -71,9 +72,6 @@ import com.typedb.studio.service.common.util.Sentence
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
 import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
-import com.vaticle.typedb.driver.api.TypeDBCredential
-import java.nio.file.Path
-import androidx.compose.ui.window.DialogState as ComposeDialogState
 
 object ServerDialog {
 
@@ -141,39 +139,17 @@ object ServerDialog {
         )
 
         override fun cancel() = Service.driver.connectServerDialog.close()
-        override fun isValid(): Boolean = when (server) {
+        override fun isValid(): Boolean = username.isNotBlank() && password.isNotBlank() && when (server) {
             TYPEDB_CORE -> addressFormatIsValid(coreAddress)
-            TYPEDB_CLOUD -> username.isNotBlank() && password.isNotBlank() && if (useCloudTranslatedAddress) {
-                cloudTranslatedAddresses.isNotEmpty()
-                } else {
-                    cloudAddresses.isNotEmpty()
-                }
+            TYPEDB_CLOUD -> when {
+                useCloudTranslatedAddress -> cloudTranslatedAddresses.isNotEmpty()
+                else -> cloudAddresses.isNotEmpty()
+            }
         }
 
         override fun submit() {
-            when (server) {
-                TYPEDB_CORE -> Service.driver.tryConnectToTypeDBCoreAsync(coreAddress) {
-                    Service.driver.connectServerDialog.close()
-                }
-                TYPEDB_CLOUD -> {
-                    val credentials = if (caCertificate.isBlank()) TypeDBCredential(username, password, tlsEnabled)
-                        else TypeDBCredential(username, password, Path.of(caCertificate))
-                    val onSuccess = { Service.driver.connectServerDialog.close() }
-                    if (useCloudTranslatedAddress) {
-                        val firstAddress = cloudTranslatedAddresses.first().first
-                        val connectionName = "$username@$firstAddress"
-                        Service.driver.tryConnectToTypeDBCloudAsync(
-                            connectionName, cloudTranslatedAddresses.toMap(), credentials, onSuccess
-                        )
-                    } else {
-                        val firstAddress = cloudAddresses.first()
-                        val connectionName = "$username@$firstAddress"
-                        Service.driver.tryConnectToTypeDBCloudAsync(
-                            connectionName, cloudAddresses.toSet(), credentials, onSuccess
-                        )
-                    }
-                }
-            }
+            val passwordValue = password
+            val caCertValue = if (caCertificate.isNotBlank()) caCertificate else null
             password = ""
             appData.server = server
             appData.coreAddress = coreAddress
@@ -182,8 +158,29 @@ object ServerDialog {
             appData.useCloudAddressTranslation = useCloudTranslatedAddress
             appData.username = username
             appData.tlsEnabled = tlsEnabled
-            appData.caCertificate = caCertificate
+            appData.caCertificate = caCertValue
             appData.advancedConfigSelected = advancedConfigSelected
+
+            val onSuccess = {
+                Service.driver.connectServerDialog.close()
+                Service.user.mayUpdateDefaultPassword {
+                    Service.driver.close()
+                    Service.driver.connectServerDialog.open()
+                }
+            }
+            when (server) {
+                TYPEDB_CORE -> Service.driver.tryConnectToTypeDBCoreAsync(
+                    coreAddress, username, passwordValue, tlsEnabled, caCertValue, onSuccess
+                )
+                TYPEDB_CLOUD -> when {
+                    useCloudTranslatedAddress -> Service.driver.tryConnectToTypeDBCloudAsync(
+                        cloudTranslatedAddresses.toMap(), username, passwordValue, tlsEnabled, caCertValue, onSuccess
+                    )
+                    else -> Service.driver.tryConnectToTypeDBCloudAsync(
+                        cloudAddresses.toSet(), username, passwordValue, tlsEnabled, caCertValue, onSuccess
+                    )
+                }
+            }
         }
     }
 
@@ -270,16 +267,13 @@ object ServerDialog {
         Dialog.Layout(
             state = Service.driver.connectServerDialog,
             title = Label.CONNECT_TO_TYPEDB,
-            composeDialogState = this.dialogState!!
+            composeDialogState = this.dialogState
         ) {
             Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = false) {
                 AdvancedConfigToggleButtons(state)
                 Divider()
-                if (state.advancedConfigSelected) {
-                    AdvancedConfig(state)
-                } else {
-                    ConnectionUriFormField(state)
-                }
+                if (state.advancedConfigSelected) AdvancedConfig(state)
+                else ConnectionUriFormField(state)
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.Bottom) {
                     ServerConnectionStatus()
@@ -297,15 +291,14 @@ object ServerDialog {
     @Composable
     private fun DialogWindowScope.AdvancedConfig(state: ConnectServerForm) {
         ServerFormField(state)
-        if (state.server == TYPEDB_CLOUD) {
-            ManageCloudAddressesButton(state = state, shouldFocus = Service.driver.isDisconnected)
-            UsernameFormField(state)
-            PasswordFormField(state)
-            TLSEnabledFormField(state)
-            if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
-        } else if (state.server == TYPEDB_CORE) {
-            CoreAddressFormField(state, shouldFocus = Service.driver.isDisconnected)
+        when (state.server) {
+            TYPEDB_CLOUD -> ManageCloudAddressesButton(state, Service.driver.isDisconnected)
+            TYPEDB_CORE -> CoreAddressFormField(state, Service.driver.isDisconnected)
         }
+        UsernameFormField(state)
+        PasswordFormField(state)
+        TLSEnabledFormField(state)
+        if (state.tlsEnabled) CACertificateFormField(state = state, dialogWindow = window)
     }
 
     @Composable

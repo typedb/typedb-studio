@@ -28,7 +28,7 @@ if [ -z "$4" ]
     exclude="$exclude|$4"
 fi
 
-filter="filter('^(?!(//dependencies|@vaticle|//test$exclude).*$).*', kind(kt_jvm_library, deps($2)))"
+filter="filter('^(?!(//dependencies|@typedb|//test$exclude).*$).*', kind(kt_jvm_library, deps($2)))"
 bazel query $filter --output graph > "$1".dot
 dot -Tpng < "$1".dot > "$1".png
 open "$1".png

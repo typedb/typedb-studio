@@ -6,9 +6,9 @@
 
 package com.typedb.studio.test.integration.common
 
-import com.vaticle.typedb.cloud.tool.runner.TypeDBCloudRunner
-import com.vaticle.typedb.core.tool.runner.TypeDBCoreRunner
-import com.vaticle.typedb.core.tool.runner.TypeDBRunner
+import com.typedb.cloud.tool.runner.TypeDBCloudRunner
+import com.typedb.core.tool.runner.TypeDBCoreRunner
+import com.typedb.core.tool.runner.TypeDBRunner
 import kotlin.io.path.Path
 
 object TypeDBRunners {

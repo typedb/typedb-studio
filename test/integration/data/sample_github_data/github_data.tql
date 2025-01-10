@@ -4,16 +4,16 @@
 
 insert $user isa user, has user-name "dmitrii-ubskii";
 insert $user isa user, has user-name "lolski";
-insert $user isa user, has user-name "vaticle";
+insert $user isa user, has user-name "typedb";
 insert $user isa user, has user-name "jmsfltchr";
 insert $user isa user, has user-name "krishnangovindraj";
 insert $user isa user, has user-name "haikalpribadi";
-match $user isa user, has user-name "vaticle"; insert $repo isa repo, has repo-id 208812506, has repo-name "typedb-behaviour", has repo-description "TypeDB Behaviour Test Specification"; $repo-creator(repo: $repo, owner: $user) isa repo-creator;
+match $user isa user, has user-name "typedb"; insert $repo isa repo, has repo-id 208812506, has repo-name "typedb-behaviour", has repo-description "TypeDB Behaviour Test Specification"; $repo-creator(repo: $repo, owner: $user) isa repo-creator;
 match $repo isa repo, has repo-name "typedb-behaviour"; insert $file isa file, has file-name "concept/type/relationtype.feature"; $repo-file(repo: $repo, file: $file) isa repo-file;
 match $repo isa repo, has repo-name "typedb-behaviour"; insert $file isa file, has file-name "concept/type/entitytype.feature"; $repo-file(repo: $repo, file: $file) isa repo-file;
 match $repo isa repo, has repo-name "typedb-behaviour"; insert $file isa file, has file-name "typeql/language/undefine.feature"; $repo-file(repo: $repo, file: $file) isa repo-file;
 match $repo isa repo, has repo-name "typedb-behaviour"; insert $file isa file, has file-name "typeql/language/define.feature"; $repo-file(repo: $repo, file: $file) isa repo-file;
-match $repo isa repo, has repo-name "typedb-behaviour"; insert $file isa file, has file-name "dependencies/vaticle/repositories.bzl"; $repo-file(repo: $repo, file: $file) isa repo-file;
+match $repo isa repo, has repo-name "typedb-behaviour"; insert $file isa file, has file-name "dependencies/typedb/repositories.bzl"; $repo-file(repo: $repo, file: $file) isa repo-file;
 match $repo isa repo, has repo-name "typedb-behaviour"; insert $file isa file, has file-name "typeql/language/rule-validation.feature"; $repo-file(repo: $repo, file: $file) isa repo-file;
 match $repo isa repo, has repo-name "typedb-behaviour"; insert $file isa file, has file-name "typeql/reasoner/relation-inference.feature"; $repo-file(repo: $repo, file: $file) isa repo-file;
 match $repo isa repo, has repo-name "typedb-behaviour"; insert $file isa file, has file-name "typeql/reasoner/schema-queries.feature"; $repo-file(repo: $repo, file: $file) isa repo-file;
@@ -23,7 +23,7 @@ match $repo isa repo, has repo-name "typedb-behaviour"; insert $file isa file, h
 match $author isa user, has user-name "krishnangovindraj"; $repo isa repo, has repo-name "typedb-behaviour"; insert $commit isa commit, has commit-hash "8c92af7cd6dd6fc84dc7238cd7ddf0748d5531b1", has commit-date "Wed Jun 08 17:13:09 BST 2022"; $commit-author(commit: $commit, author: $author) isa commit-author; $commit-repo(commit: $commit, repo: $repo) isa commit-repo;
 match $file isa file, has file-name "typeql/reasoner/negation.feature"; $commit isa commit, has commit-hash "8c92af7cd6dd6fc84dc7238cd7ddf0748d5531b1";insert $commit-file(commit: $commit, file: $file) isa commit-file;
 match $author isa user, has user-name "lolski"; $repo isa repo, has repo-name "typedb-behaviour"; insert $commit isa commit, has commit-hash "e3efb4813cd4baa7b80d976045fd1c81ffdf81ca", has commit-date "Fri Jun 03 16:12:45 BST 2022"; $commit-author(commit: $commit, author: $author) isa commit-author; $commit-repo(commit: $commit, repo: $repo) isa commit-repo;
-match $file isa file, has file-name "dependencies/vaticle/repositories.bzl"; $commit isa commit, has commit-hash "e3efb4813cd4baa7b80d976045fd1c81ffdf81ca";insert $commit-file(commit: $commit, file: $file) isa commit-file;
+match $file isa file, has file-name "dependencies/typedb/repositories.bzl"; $commit isa commit, has commit-hash "e3efb4813cd4baa7b80d976045fd1c81ffdf81ca";insert $commit-file(commit: $commit, file: $file) isa commit-file;
 match $author isa user, has user-name "jmsfltchr"; $repo isa repo, has repo-name "typedb-behaviour"; insert $commit isa commit, has commit-hash "2a712c4470ccaaaa9f8d7aa5f70b114385c0a47a", has commit-date "Wed May 25 12:03:18 BST 2022"; $commit-author(commit: $commit, author: $author) isa commit-author; $commit-repo(commit: $commit, repo: $repo) isa commit-repo;
 match $file isa file, has file-name "typeql/language/rule-validation.feature"; $commit isa commit, has commit-hash "2a712c4470ccaaaa9f8d7aa5f70b114385c0a47a";insert $commit-file(commit: $commit, file: $file) isa commit-file;
 match $file isa file, has file-name "typeql/reasoner/negation.feature"; $commit isa commit, has commit-hash "2a712c4470ccaaaa9f8d7aa5f70b114385c0a47a";insert $commit-file(commit: $commit, file: $file) isa commit-file;

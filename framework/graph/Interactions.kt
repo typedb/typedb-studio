@@ -10,7 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
-import com.vaticle.typedb.driver.api.logic.Explanation
+import com.typedb.driver.api.logic.Explanation
 
 class Interactions constructor(private val graphArea: GraphArea) {
 

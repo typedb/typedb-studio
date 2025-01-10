@@ -13,18 +13,18 @@ import androidx.compose.ui.geometry.Offset
 import com.typedb.studio.framework.graph.Graph.Physics.Constants.COLLIDE_RADIUS
 import com.typedb.studio.framework.graph.Graph.Physics.Constants.CURVE_COLLIDE_RADIUS
 import com.typedb.studio.framework.graph.Graph.Physics.Constants.CURVE_COMPRESSION_POWER
-import com.vaticle.force.graph.api.Simulation
-import com.vaticle.force.graph.force.CenterForce
-import com.vaticle.force.graph.force.CollideForce
-import com.vaticle.force.graph.force.LinkForce
-import com.vaticle.force.graph.force.ManyBodyForce
-import com.vaticle.force.graph.force.XForce
-import com.vaticle.force.graph.force.YForce
-import com.vaticle.force.graph.impl.BasicSimulation
-import com.vaticle.force.graph.impl.BasicVertex
-import com.vaticle.force.graph.util.RandomEffects
-import com.vaticle.typedb.driver.api.answer.ConceptMap
-import com.vaticle.typedb.driver.api.logic.Explanation
+import com.typedb.force.graph.api.Simulation
+import com.typedb.force.graph.force.CenterForce
+import com.typedb.force.graph.force.CollideForce
+import com.typedb.force.graph.force.LinkForce
+import com.typedb.force.graph.force.ManyBodyForce
+import com.typedb.force.graph.force.XForce
+import com.typedb.force.graph.force.YForce
+import com.typedb.force.graph.impl.BasicSimulation
+import com.typedb.force.graph.impl.BasicVertex
+import com.typedb.force.graph.util.RandomEffects
+import com.typedb.driver.api.answer.ConceptRow
+import com.typedb.driver.api.logic.Explanation
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -97,7 +97,7 @@ class Graph(private val interactions: Interactions) {
             }
         val drag = Drag(this)
         var forceSource = ForceSource.QUERY
-        private var edgeCurveProviders = ConcurrentHashMap<Edge, com.vaticle.force.graph.api.Vertex>()
+        private var edgeCurveProviders = ConcurrentHashMap<Edge, com.typedb.force.graph.api.Vertex>()
 
         fun step() {
             if (isStable || graph.isEmpty()) return
@@ -112,7 +112,7 @@ class Graph(private val interactions: Interactions) {
             }
         }
 
-        fun placeVertex(vertex: com.vaticle.force.graph.api.Vertex) {
+        fun placeVertex(vertex: com.typedb.force.graph.api.Vertex) {
             simulation.placeVertex(vertex)
         }
 
@@ -250,7 +250,7 @@ class Graph(private val interactions: Interactions) {
 
     class Reasoning {
 
-        val explainables: MutableMap<Vertex.Thing, ConceptMap.Explainable> = ConcurrentHashMap()
+        val explainables: MutableMap<Vertex.Thing, ConceptRow.Explainable> = ConcurrentHashMap()
         val explanationIterators: MutableMap<Vertex.Thing, Iterator<Explanation>> = ConcurrentHashMap()
         private val vertexExplanations =
             Collections.synchronizedList(mutableListOf<Pair<Vertex.Thing, Explanation>>())

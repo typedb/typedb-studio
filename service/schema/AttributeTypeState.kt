@@ -9,13 +9,13 @@ package com.typedb.studio.service.schema
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.vaticle.typedb.driver.api.TypeDBTransaction
-import com.vaticle.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
-import com.vaticle.typedb.driver.api.concept.type.AttributeType
-import com.vaticle.typedb.driver.api.concept.type.ThingType
-import com.vaticle.typedb.driver.api.concept.type.ThingType.Annotation.key
-import com.vaticle.typedb.driver.api.concept.type.Type
-import com.vaticle.typedb.driver.api.concept.value.Value
+import com.typedb.driver.api.TypeDBTransaction
+import com.typedb.driver.api.concept.Concept.Transitivity.EXPLICIT
+import com.typedb.driver.api.concept.type.AttributeType
+import com.typedb.driver.api.concept.type.ThingType
+import com.typedb.driver.api.concept.type.ThingType.Annotation.key
+import com.typedb.driver.api.concept.type.Type
+import com.typedb.driver.api.concept.value.Value
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 

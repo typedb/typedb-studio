@@ -161,8 +161,8 @@ object DatabaseDialog {
         enabled: Boolean = true
     ) = Dropdown(
         values = Service.driver.databaseList,
-        selected = Service.driver.session.database,
-        onSelection = { it?.let { Service.driver.tryOpenSession(it) } ?: Service.driver.closeSession() },
+        selected = Service.driver.transaction.database,
+        onSelection = { it?.let { Service.driver.transaction.trySelectDatabase(it) } },
         onExpand = { Service.driver.refreshDatabaseList() },
         placeholder = Label.DATABASE.lowercase(),
         modifier = modifier,

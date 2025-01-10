@@ -21,12 +21,12 @@ import com.typedb.studio.framework.material.Icon
 import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.util.Label
 import com.typedb.studio.service.common.util.Message
-import com.vaticle.typedb.driver.TypeDB
-import com.vaticle.typedb.driver.api.TypeDBOptions
-import com.vaticle.typedb.driver.api.TypeDBSession
-import com.vaticle.typedb.driver.api.TypeDBTransaction
-import com.vaticle.typeql.lang.TypeQL
-import com.vaticle.typeql.lang.query.TypeQLGet
+import com.typedb.driver.TypeDB
+import com.typedb.driver.api.TypeDBOptions
+import com.typedb.driver.api.TypeDBSession
+import com.typedb.driver.api.TypeDBTransaction
+import com.typeql.lang.TypeQL
+import com.typeql.lang.query.TypeQLGet
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -137,7 +137,7 @@ object StudioActions {
         // clicked.
         composeRule.onAllNodesWithText(Label.CONNECT_TO_TYPEDB).assertAll(hasClickAction())
 
-        Service.driver.tryConnectToTypeDBCoreAsync(address) {}
+        Service.driver.tryConnectToTypeDBCoreAsync(address, credentials, connectionSettings) {}
 
         waitUntilTrue(composeRule) {
             Service.driver.isConnected

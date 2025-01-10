@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@typedb_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 package(default_visibility = ["//framework/editor/highlighter:__pkg__"])
@@ -10,14 +10,14 @@ package(default_visibility = ["//framework/editor/highlighter:__pkg__"])
 kt_jvm_library(
     name = "typeql",
     srcs = glob(["*.kt"]),
-    plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
+    plugins = ["@typedb_dependencies//builder/compose:compiler_plugin"],
     deps = [
         "//framework/editor/highlighter/common:common",
 
-        # External Vaticle Dependencies
-        "@vaticle_typeql//common/java:common",
-        "@vaticle_typeql//grammar/java:typeql-grammar",
-        "@vaticle_typeql//java:typeql-lang",
+        # External TypeDB Dependencies
+        "@typedb_dependencies//common/java:typedb-common",
+        "@typeql//grammar/java:typeql-grammar",
+        "@typeql//java:typeql-lang",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",
@@ -26,7 +26,7 @@ kt_jvm_library(
         "@maven//:org_slf4j_slf4j_api",
     ],
     resources = ["typeql_scopes.yml"],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-framework-editor-highlighter-typeql:{pom_version}"],
+    tags = ["maven_coordinates=com.typedb:typedb-studio-framework-editor-highlighter-typeql:{pom_version}"],
 )
 
 checkstyle_test(

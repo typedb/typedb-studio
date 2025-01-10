@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@typedb_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library", "kt_jvm_test")
 
 package(default_visibility = [
@@ -15,7 +15,7 @@ package(default_visibility = [
 kt_jvm_library(
     name = "common",
     srcs = glob(["*.kt", "*/*.kt"], exclude = ["*/*Test.kt"]),
-    plugins = ["@vaticle_dependencies//builder/compose:compiler_plugin"],
+    plugins = ["@typedb_dependencies//builder/compose:compiler_plugin"],
     deps = [
         "//service/common:common",
 
@@ -38,7 +38,7 @@ kt_jvm_library(
         "//resources/fonts/ubuntumono:ubuntu-mono",
         "//resources/icons/fontawesome:icons",
     ],
-    tags = ["maven_coordinates=com.vaticle.typedb:typedb-studio-framework-common:{pom_version}"],
+    tags = ["maven_coordinates=com.typedb:typedb-studio-framework-common:{pom_version}"],
 )
 
 kt_jvm_test(

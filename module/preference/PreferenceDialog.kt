@@ -66,7 +66,7 @@ import com.typedb.studio.service.common.util.Sentence.PREFERENCES_MATCH_QUERY_LI
 import com.typedb.studio.service.common.util.Sentence.PREFERENCES_TRANSACTION_TIMEOUT_CAPTION
 import com.typedb.studio.service.common.util.Sentence.PREFERENCES_TRANSACTION_TIMEOUT_INPUT_WARNING
 import com.typedb.studio.service.page.Navigable
-import com.vaticle.typedb.common.collection.Either
+import com.typedb.common.collection.Either
 
 object PreferenceDialog {
     private val WIDTH = 800.dp

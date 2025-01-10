@@ -20,7 +20,7 @@ import com.typedb.studio.service.common.util.Label
 import com.typedb.studio.service.common.util.Sentence.UPDATE_DEFAULT_PASSWORD_FOR_USERNAME
 import com.typedb.studio.service.common.util.Sentence.UPDATE_DEFAULT_PASSWORD_INSTRUCTION
 
-object UpdateDefaultPasswordDialog {
+object UpdatePasswordDialog {
 
     private val WIDTH = 500.dp
     private val HEIGHT = 300.dp
@@ -28,28 +28,27 @@ object UpdateDefaultPasswordDialog {
     private val state by mutableStateOf(UpdateDefaultPasswordForm())
 
     private class UpdateDefaultPasswordForm : Form.State() {
-        var oldPassword: String by mutableStateOf("")
         var newPassword: String by mutableStateOf("")
         var repeatPassword: String by mutableStateOf("")
 
         override fun cancel() {
-            Service.driver.updateDefaultPasswordDialog.cancel()
-            oldPassword = ""
+            Service.user.updatePasswordDialog.close()
             newPassword = ""
         }
         override fun submit() {
             assert(isValid())
-            Service.driver.updateDefaultPasswordDialog.submit(oldPassword, newPassword)
-            oldPassword = ""
-            newPassword = ""
+            Service.user.tryUpdatePassword(newPassword) {
+                Service.user.updatePasswordDialog.close()
+                newPassword = ""
+            }
         }
-        override fun isValid() = oldPassword.isNotEmpty() && newPassword.isNotEmpty()
-                    && oldPassword != newPassword && repeatPassword == newPassword
+
+        override fun isValid() = newPassword.isNotEmpty() && repeatPassword == newPassword
     }
 
     @Composable
     fun MayShowDialogs() {
-        if (Service.driver.updateDefaultPasswordDialog.isOpen) UpdateDefaultPassword()
+        if (Service.user.updatePasswordDialog.isOpen) UpdateDefaultPassword()
     }
 
     @Composable
@@ -61,20 +60,9 @@ object UpdateDefaultPasswordDialog {
     ) {
         Form.Submission(state = state, modifier = Modifier.fillMaxSize(), showButtons = true) {
             Form.Text(value = UPDATE_DEFAULT_PASSWORD_INSTRUCTION, softWrap = true)
-            OldPasswordFormField(state)
             NewPasswordFormField(state)
             RepeatPasswordFormField(state)
         }
-    }
-
-    @Composable
-    private fun OldPasswordFormField(state: UpdateDefaultPasswordForm) = Form.Field(label = Label.OLD_PASSWORD) {
-        Form.TextInput(
-            value = state.oldPassword,
-            onValueChange = { state.oldPassword = it },
-            isPassword = true,
-            modifier = Modifier.fillMaxSize(),
-        )
     }
 
     @Composable

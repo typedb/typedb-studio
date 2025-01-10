@@ -3,8 +3,8 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
 
-load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@vaticle_bazel_distribution//common:rules.bzl", "assemble_targz")
+load("@typedb_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@typedb_bazel_distribution//common:rules.bzl", "assemble_targz")
 
 package(default_visibility = ["//:__pkg__"])
 
