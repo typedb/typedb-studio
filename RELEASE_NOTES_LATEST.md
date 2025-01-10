@@ -2,22 +2,24 @@
 
 TypeDB Studio is available for Linux, Mac and Windows operating systems.
 
-- Installation instructions: https://typedb.com/docs/home/install/studio
-- Direct download: https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:2.28.6
+- Installation instructions: https://typedb.com/docs/home/install-tools#_studio
+- Direct download: https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:3.0.0
 - User manual: https://typedb.com/docs/manual/studio
 
 #### TypeDB Server Compatibility
 
-See the [compatibility table](https://typedb.com/docs/typedb/connecting/studio#_version_compatibility) to ensure
+TypeDB Studio 3.0 is compatible with TypeDB 3.0.
+
+See the [compatibility table](https://typedb.com/docs/manual/studio#_version_compatibility) to ensure
 compatibility between Studio and TypeDB server.
 
 ---
 
 ## New Features
 
-## Bugs Fixed
+TypeDB Studio now supports querying TypeDB 3.0.
 
-We fix an issue where attempting to parse `typedb-core://` connection URIs would cause crashes
+## Bugs Fixed
 
 ## Code Refactors
 
