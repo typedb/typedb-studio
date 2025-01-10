@@ -301,7 +301,7 @@ object Toolbar {
                         icon = Icon.ROLLBACK,
                         onClick = { Service.driver.rollbackTransaction() },
                         color = Theme.studio.warningStroke,
-                        enabled = enabled && isWriteTransaction,
+                        enabled = enabled && (isWriteTransaction || isSchemaTransaction),
                         tooltip = Tooltip.Arg(
                             title = Label.ROLLBACK_TRANSACTION,
                             description = Sentence.TRANSACTION_ROLLBACK_DESCRIPTION,
@@ -316,7 +316,7 @@ object Toolbar {
                         icon = Icon.COMMIT,
                         onClick = { Service.driver.commitTransaction() },
                         color = Theme.studio.secondary,
-                        enabled = enabled && isWriteTransaction,
+                        enabled = enabled && (isWriteTransaction || isSchemaTransaction),
                         tooltip = Tooltip.Arg(
                             title = Label.COMMIT_TRANSACTION,
                             description = Sentence.TRANSACTION_COMMIT_DESCRIPTION,

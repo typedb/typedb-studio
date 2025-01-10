@@ -13,25 +13,19 @@ import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.ER
 import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.INFO
 import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.SUCCESS
 import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.TYPEQL
-import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptRows.Source.GET
-import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptRows.Source.INSERT
-import com.typedb.studio.service.connection.QueryRunner.Response.Stream.ConceptRows.Source.UPDATE
 import com.typedb.common.collection.Either
 import com.typedb.driver.api.answer.ConceptRow
 import com.typedb.driver.api.answer.JSON
-import com.typeql.lang.TypeQL
 import com.typeql.lang.query.TypeQLDefine
 import com.typeql.lang.query.TypeQLDelete
 import com.typeql.lang.query.TypeQLFetch
 import com.typeql.lang.query.TypeQLGet
 import com.typeql.lang.query.TypeQLInsert
-import com.typeql.lang.query.TypeQLQuery
 import com.typeql.lang.query.TypeQLUndefine
 import com.typeql.lang.query.TypeQLUpdate
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.stream.Collectors
 import java.util.stream.Stream
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,9 +55,7 @@ class QueryRunner(
             val queue = LinkedBlockingQueue<Either<T, Done>>()
 
             class JSONs : Stream<JSON>()
-            class ConceptRows constructor(val source: Source) : Stream<ConceptRow>() {
-                enum class Source { INSERT, UPDATE, GET }
-            }
+            class ConceptRows : Stream<ConceptRow>()
         }
     }
 
@@ -73,6 +65,9 @@ class QueryRunner(
         const val RUNNING_ = "## Running> "
         const val COMPLETED = "## Completed"
         const val TERMINATED = "## Terminated"
+        const val QUERY = "Query:"
+        const val QUERY_SUCCESS = "Success."
+        const val QUERY_NO_RESULT = "Query returned no results."
         const val DEFINE_QUERY = "Define query:"
         const val DEFINE_QUERY_SUCCESS = "Define query successfully defined new types in the schema."
         const val UNDEFINE_QUERY = "Undefine query:"
@@ -131,7 +126,7 @@ class QueryRunner(
         try {
             isRunning.set(true)
             startTime = System.currentTimeMillis()
-            runQueries(queries)
+            runQuery(queries)
 //            runQueries(TypeQL.parseQueries<TypeQLQuery>(queries).collect(Collectors.toList()))
         } catch (e: Exception) {
             collectEmptyLine()
@@ -151,38 +146,89 @@ class QueryRunner(
         }
     }
 
-    private fun runQueries(queries: List<TypeQLQuery>) = queries.forEach { query ->
-        if (hasStopSignal) return@forEach
-        when (query) {
-            is TypeQLDefine -> runDefineQuery(query)
-            is TypeQLUndefine -> runUndefineQuery(query)
-            is TypeQLDelete -> runDeleteQuery(query)
-            is TypeQLInsert -> runInsertQuery(query)
-            is TypeQLUpdate -> runUpdateQuery(query)
-            is TypeQLGet -> runGetQuery(query)
-            is TypeQLGet.Aggregate -> runGetAggregateQuery(query)
-//            is TypeQLGet.Group -> runGetGroupQuery(query)
-//            is TypeQLGet.Group.Aggregate -> runGetGroupAggregateQuery(query)
-            is TypeQLFetch -> runFetchQuery(query)
-            else -> throw IllegalStateException("Unrecognised TypeQL query")
-        }
-    }
+//    private fun runQuery(queries: List<TypeQLQuery>) = queries.forEach { query ->
+//        if (hasStopSignal) return@forEach
+//        when (query) {
+//            is TypeQLDefine -> runDefineQuery(query)
+//            is TypeQLUndefine -> runUndefineQuery(query)
+//            is TypeQLDelete -> runDeleteQuery(query)
+//            is TypeQLInsert -> runInsertQuery(query)
+//            is TypeQLUpdate -> runUpdateQuery(query)
+//            is TypeQLGet -> runGetQuery(query)
+//            is TypeQLGet.Aggregate -> runGetAggregateQuery(query)
+////            is TypeQLGet.Group -> runGetGroupQuery(query)
+////            is TypeQLGet.Group.Aggregate -> runGetGroupAggregateQuery(query)
+//            is TypeQLFetch -> runFetchQuery(query)
+//            else -> throw IllegalStateException("Unrecognised TypeQL query")
+//        }
+//    }
 
-    private fun runQueries(queries: String) {
+    private fun runQuery(query: String) {
         if (hasStopSignal) return
-        runStreamingQuery(
-            name = GET_QUERY,
-            successMsg = GET_QUERY_SUCCESS,
-            noResultMsg = GET_QUERY_NO_RESULT,
-            queryStr = queries,
-            stream = Response.Stream.ConceptRows(GET)
-        ) {
-            val answer = transaction.query(queries).resolve()
-            if (answer.isOk) return@runStreamingQuery Stream.empty()
-            else if (answer.isConceptRows) return@runStreamingQuery answer.asConceptRows().stream()
-//            else if (answer.isConceptDocuments) return@runStreamingQuery answer.asConceptDocuments().stream()
-            else throw IllegalArgumentException()
-        }
+
+        collectEmptyLine()
+        collectMessage(INFO, RUNNING_)
+        collectMessage(TYPEQL, query)
+
+        val answer = transaction.query(query).resolve()
+
+        if (answer.isOk) {
+            collectEmptyLine()
+            collectMessage(SUCCESS, RESULT_ + QUERY_SUCCESS)
+            return
+        } else if (answer.isConceptRows) {
+            val streamRaw = answer.asConceptRows().stream()
+            val stream = Response.Stream.ConceptRows()
+
+            var started = false
+            var error = false
+            try {
+                collectEmptyLine()
+                streamRaw.peek {
+                    if (started) return@peek
+                    collectMessage(SUCCESS, RESULT_ + QUERY_SUCCESS)
+                    responses.put(stream)
+                    started = true
+                }.forEach {
+                    if (hasStopSignal) return@forEach
+                    stream.queue.put(Either.first(it))
+                }
+            } catch (e: Exception) {
+                collectMessage(ERROR, ERROR_ + e.message)
+                error = true
+            } finally {
+                if (started) stream.queue.put(Either.second(Response.Done))
+                if (error || hasStopSignal) collectMessage(ERROR, TERMINATED)
+                else if (started) collectMessage(INFO, COMPLETED)
+                else collectMessage(SUCCESS, RESULT_ + QUERY_NO_RESULT)
+            }
+        } else if (answer.isConceptDocuments) {
+            val streamRaw = answer.asConceptDocuments().stream()
+            val stream = Response.Stream.JSONs()
+
+            var started = false
+            var error = false
+            try {
+                collectEmptyLine()
+                streamRaw.peek {
+                    if (started) return@peek
+                    collectMessage(SUCCESS, RESULT_ + QUERY_SUCCESS)
+                    responses.put(stream)
+                    started = true
+                }.forEach {
+                    if (hasStopSignal) return@forEach
+                    stream.queue.put(Either.first(it))
+                }
+            } catch (e: Exception) {
+                collectMessage(ERROR, ERROR_ + e.message)
+                error = true
+            } finally {
+                if (started) stream.queue.put(Either.second(Response.Done))
+                if (error || hasStopSignal) collectMessage(ERROR, TERMINATED)
+                else if (started) collectMessage(INFO, COMPLETED)
+                else collectMessage(SUCCESS, RESULT_ + QUERY_SUCCESS)
+            }
+        } else throw IllegalArgumentException()
     }
 
     private fun runDefineQuery(query: TypeQLDefine) = runUnitQuery(
@@ -208,7 +254,7 @@ class QueryRunner(
         successMsg = INSERT_QUERY_SUCCESS,
         noResultMsg = INSERT_QUERY_NO_RESULT,
         queryStr = query.toString(),
-        stream = Response.Stream.ConceptRows(INSERT)
+        stream = Response.Stream.ConceptRows()
     ) { transaction.query(query.toString()).resolve().asConceptRows().stream() } // TODO: prefetch = true option
 
     private fun runUpdateQuery(query: TypeQLUpdate) = runStreamingQuery(
@@ -216,7 +262,7 @@ class QueryRunner(
         successMsg = UPDATE_QUERY_SUCCESS,
         noResultMsg = UPDATE_QUERY_NO_RESULT,
         queryStr = query.toString(),
-        stream = Response.Stream.ConceptRows(UPDATE)
+        stream = Response.Stream.ConceptRows()
     ) { transaction.query(query.toString()).resolve().asConceptRows().stream() }
 
     private fun runGetQuery(query: TypeQLGet) = runStreamingQuery(
@@ -224,7 +270,7 @@ class QueryRunner(
         successMsg = GET_QUERY_SUCCESS,
         noResultMsg = GET_QUERY_NO_RESULT,
         queryStr = query.toString(),
-        stream = Response.Stream.ConceptRows(GET)
+        stream = Response.Stream.ConceptRows()
     ) {
 //        if (query.modifiers().limit().isPresent) {
             transaction.query(query.toString()).resolve().asConceptRows().stream()
