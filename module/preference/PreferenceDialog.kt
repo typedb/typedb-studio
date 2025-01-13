@@ -227,7 +227,7 @@ object PreferenceDialog {
 
     class PreferencesForm : State() {
         private val preferenceGroups: List<PreferenceGroup> = listOf(
-            PreferenceGroup.GraphVisualiser(),
+//            PreferenceGroup.GraphVisualiser(),
             PreferenceGroup.TextEditor(),
             PreferenceGroup.Project(),
             PreferenceGroup.QueryRunner(),
