@@ -26,7 +26,7 @@ executors:
     working_directory: ~/typedb-studio
 
   win-x86_64:
-    resource_class: windows.xlarge
+    resource_class: windows.medium
     machine:
       image: windows-server-2022-gui:2024.01.1
     shell: cmd.exe
@@ -189,9 +189,7 @@ jobs:
           target-arch: x86_64
 
   deploy-windows-x86_64-snapshot:
-    executor:
-      name: win/default
-      shell: cmd.exe
+    executor: win-x86_64
     working_directory: ~/typedb-studio
     steps:
       - checkout
@@ -263,9 +261,7 @@ jobs:
           target-arch: x86_64
 
   deploy-windows-x86_64-release:
-    executor:
-      name: win/default
-      shell: cmd.exe
+    executor: win-x86_64
     working_directory: ~/typedb-studio
     steps:
       - checkout
