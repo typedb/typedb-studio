@@ -26,7 +26,7 @@ executors:
     working_directory: ~/typedb-studio
 
   win-x86_64:
-    resource_class: windows.medium
+    resource_class: windows.xlarge
     machine:
       image: windows-server-2022-gui:2024.01.1
     shell: cmd.exe
