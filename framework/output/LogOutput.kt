@@ -25,6 +25,7 @@ import com.typedb.driver.api.concept.instance.Instance
 import com.typedb.driver.api.concept.instance.Relation
 import com.typedb.driver.api.concept.type.Type
 import com.typedb.driver.api.concept.value.Value
+import com.typedb.driver.common.exception.TypeDBDriverException
 import com.typedb.studio.framework.common.Util
 import com.typedb.studio.framework.common.theme.Color
 import com.typedb.studio.framework.common.theme.Theme
@@ -249,16 +250,23 @@ internal class LogOutput constructor(
         val content = columnNames
             .stream()
             .map { columnName: String ->
-                val concept = conceptRow[columnName]
                 val sb = StringBuilder("$")
                 sb.append(columnName)
                 sb.append(" ".repeat(columnsWidth - columnName.length + 1))
                 sb.append("| ")
-                sb.append(conceptDisplayString(if (concept.isValue) concept.asValue() else concept))
+                try {
+                    val concept = conceptRow[columnName]
+                    sb.append(conceptDisplayString(if (concept.isValue) concept.asValue() else concept))
+                } catch (_: TypeDBDriverException) {
+                    // TODO: substitute the "try catch" by an optional processing when implemented
+                }
                 sb.toString()
             }.collect(Collectors.joining("\n"))
 
         val sb = StringBuilder(indent(CONTENT_INDENT, content))
+        if (content.isEmpty()) {
+            sb.append("Row does not have columns to show")
+        }
         sb.append("\n")
         sb.append(lineDashSeparator(columnsWidth))
         return sb.toString()
