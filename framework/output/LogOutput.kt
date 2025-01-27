@@ -14,6 +14,8 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
+import com.typedb.driver.api.QueryType
+import com.typedb.driver.api.Transaction
 import com.typedb.driver.api.answer.ConceptRow
 import com.typedb.driver.api.answer.JSON
 import com.typedb.driver.api.concept.Concept
@@ -23,7 +25,6 @@ import com.typedb.driver.api.concept.instance.Instance
 import com.typedb.driver.api.concept.instance.Relation
 import com.typedb.driver.api.concept.type.Type
 import com.typedb.driver.api.concept.value.Value
-import com.typedb.driver.common.exception.TypeDBDriverException
 import com.typedb.studio.framework.common.Util
 import com.typedb.studio.framework.common.theme.Color
 import com.typedb.studio.framework.common.theme.Theme
@@ -37,18 +38,24 @@ import com.typedb.studio.service.common.util.Label
 import com.typedb.studio.service.common.util.Message
 import com.typedb.studio.service.common.util.Property
 import com.typedb.studio.service.connection.QueryRunner.Response
-import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.*
+import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.ERROR
+import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.INFO
+import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.SUCCESS
+import com.typedb.studio.service.connection.QueryRunner.Response.Message.Type.TYPEQL
 import com.typedb.studio.service.connection.TransactionState
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import mu.KotlinLogging
-import java.util.*
+import com.typeql.lang.common.TypeQLToken
+import com.typeql.lang.common.util.Strings
+import java.io.PrintStream
+import java.util.Arrays
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.stream.Collectors
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import mu.KotlinLogging
 
 internal class LogOutput constructor(
     private val editorState: TextEditor.State,
