@@ -25,6 +25,7 @@ import com.typedb.driver.api.concept.instance.Instance
 import com.typedb.driver.api.concept.instance.Relation
 import com.typedb.driver.api.concept.type.Type
 import com.typedb.driver.api.concept.value.Value
+import com.typedb.driver.common.exception.TypeDBDriverException
 import com.typedb.studio.framework.common.Util
 import com.typedb.studio.framework.common.theme.Color
 import com.typedb.studio.framework.common.theme.Theme
