@@ -25,7 +25,6 @@ import com.typedb.driver.api.concept.instance.Instance
 import com.typedb.driver.api.concept.instance.Relation
 import com.typedb.driver.api.concept.type.Type
 import com.typedb.driver.api.concept.value.Value
-import com.typedb.driver.common.exception.TypeDBDriverException
 import com.typedb.studio.framework.common.Util
 import com.typedb.studio.framework.common.theme.Color
 import com.typedb.studio.framework.common.theme.Theme
@@ -254,11 +253,10 @@ internal class LogOutput constructor(
                 sb.append(columnName)
                 sb.append(" ".repeat(columnsWidth - columnName.length + 1))
                 sb.append("| ")
-                try {
-                    val concept = conceptRow[columnName]
+                val conceptOptional = conceptRow[columnName]
+                if (conceptOptional.isPresent) {
+                    val concept = conceptOptional.get()
                     sb.append(conceptDisplayString(if (concept.isValue) concept.asValue() else concept))
-                } catch (_: TypeDBDriverException) {
-                    // TODO: substitute the "try catch" by an optional processing when implemented
                 }
                 sb.toString()
             }.collect(Collectors.joining("\n"))
