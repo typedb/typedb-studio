@@ -11,9 +11,8 @@
 
 TypeDB Studio is the IDE for developing with **[TypeDB](https://github.com/typedb/typedb)**. It provides a consistent experience across different environments, including macOS, Linux, and Windows. With Studio, developers can easily manage databases, execute queries, and explore query results, all within a unified interface.
 
-- [Install TypeDB Studio](https://typedb.com/docs/home/install/studio)
-- For a quick overview, check out the [relevant lesson](https://typedb.com/docs/learn/2-environment-setup/2.2-using-typedb-studio) in our end-to-end [TypeDB Learning Course](https://typedb.com/docs/learn/overview).
-- For an in-depth guide to TypeDB Studio, check out the [manual](https://typedb.com/docs/manual/studio).
+- [Install TypeDB Studio](https://typedb.com/docs/home/install-tools#_studio)
+- For a quick overview of TypeDB Studio, check out the [manual](https://typedb.com/docs/manual/tools/studio).
 - Discover more of TypeDB’s unique [features](https://typedb.com/features).
 
 
@@ -21,53 +20,25 @@ TypeDB Studio is the IDE for developing with **[TypeDB](https://github.com/typed
 
 ## Features
 
-### GUI for data modeling
-
-On top of the ability to model your data with TypeQL,
-TypeDB Studio includes a type browser and a type editor with a graphical user interface,
-making it convenient to edit, visualize, and maintain data models.
-The user-friendly interface simplifies the process of creating, extending, exploring, and managing schemas,
-enabling developers to easily define the structure and relationships of their data.
-
-[![Type editor](./docs/images/edit.gif)](./docs/images/edit.gif)
-
-### Data and schema visualization
-
-One of the key features of TypeDB Studio is its interactive visualizer, 
-which allows developers to visualize query results and explore inferred data.
-The visualizer presents data in a hypergraph format,
-making it easy to navigate and visualize TypeDB responses.
-
-[![Response Visualisation](./docs/images/query.gif)](./docs/images/query.gif)
-
-### Fully-fledged IDE for developing with TypeDB
-
-TypeDB Studio covers all steps of the development process with TypeDB:
+TypeDB Studio helps you get started developing with TypeDB faster:
 
 - Graphical user interface for connecting to TypeDB without the use of command line tools, libraries, or Driver API.
 - Database manager to create and delete databases.
-- Type browser for exploring type hierarchy of a database's schema.
-- Type editor for adjusting existing types in a database.
 - Project file management to store your favorite queries.
 - Convenient multi-tab query editor with TypeQL syntax highlighting, auto-saving, query execution, response output, 
   and pop-up notifications for warnings and error messages that may occur during runtime/query execution.
-- Graph visualization engine for visualizing query results using user-modifiable, force-directed graph drawings.
-- Local syntax validation before sending instructions and queries to the server.
-- Automatic transaction management with full GUI control, including read/write transactions, schema/data sessions, as 
-  well as transaction control (commit/rollback/close) and transaction options.
-- Rule-based inference enabled with a click of a button (`infer`).
-- Explanations visualization displays the deductive reasoning behind inferred data for root cause analysis.
+- Automatic transaction management with full GUI control, including read/write/schema transactions, as 
+  well as transaction control (commit/rollback/close).
 
 ## Download TypeDB Studio
 
 You can download TypeDB Studio from the [GitHub Releases](https://github.com/typedb/typedb-studio/releases) page.
 For more information on how to install and run TypeDB Studio, see the 
-[Installation guide](https://typedb.com/docs/home/install#_studio).
+[Installation guide](https://typedb.com/docs/home/install-tools#_studio).
 
 ## Compile from source
 
-> Note: You **DO NOT NEED** to compile TypeDB Studio from source if you just want to use TypeDB Studio.
-> You can simply download TypeDB Studio following the _"Download TypeDB Studio"_ section above.
+> Note: For precompiled releases, simply download TypeDB Studio following the _"Download TypeDB Studio"_ section above.
 
 1. Make sure you have the following dependencies installed on your machine:
     - Java JDK 11 or higher
@@ -95,7 +66,7 @@ If you want to begin your journey with TypeDB, you can explore the following res
 
 * In-depth dive into TypeDB's [philosophy](https://typedb.com/philosophy)
 * Our [TypeDB quickstart](https://typedb.com/docs/typedb/quickstart-guide)
-* Our [TypeDB Studio documentation](https://typedb.com/docs/clients/studio)
+* Our [TypeDB Studio documentation](https://typedb.com/docs/manual/tools/studio)
 * **[TypeQL](https://github.com/typedb/typeql)**
 * **[TypeDB](https://github.com/typedb/typedb)**
 
