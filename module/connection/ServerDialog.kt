@@ -84,7 +84,7 @@ object ServerDialog {
 
     private val state by mutableStateOf(ConnectServerForm())
 
-    private class ServerDialogState: ComposeDialogState {
+    private class ServerDialogState : ComposeDialogState {
         override var position: WindowPosition by mutableStateOf(Aligned(Alignment.Center))
 
         private var width = WIDTH
@@ -168,19 +168,17 @@ object ServerDialog {
                     Service.driver.connectServerDialog.open()
                 }
             }
-            when (server) {
-                TYPEDB_CORE -> Service.driver.tryConnectToTypeDBCoreAsync(
-                    coreAddress, username, passwordValue, tlsEnabled, caCertValue, onSuccess
-                )
+            val address = when (server) {
+                TYPEDB_CORE -> coreAddress
+                // Cloud features are not available, just get the first available address and return an error in worst case scenario
                 TYPEDB_CLOUD -> when {
-                    useCloudTranslatedAddress -> Service.driver.tryConnectToTypeDBCloudAsync(
-                        cloudTranslatedAddresses.toMap(), username, passwordValue, tlsEnabled, caCertValue, onSuccess
-                    )
-                    else -> Service.driver.tryConnectToTypeDBCloudAsync(
-                        cloudAddresses.toSet(), username, passwordValue, tlsEnabled, caCertValue, onSuccess
-                    )
+                    useCloudTranslatedAddress -> cloudTranslatedAddresses.first().first
+                    else -> cloudAddresses.first()
                 }
             }
+            Service.driver.tryConnectToTypeDBAsync(
+                address, username, passwordValue, tlsEnabled, caCertValue, onSuccess
+            )
         }
     }
 
@@ -539,6 +537,7 @@ object ServerDialog {
                     state.server = TYPEDB_CORE
                     state.coreAddress = parsedConnectionUri.address
                 }
+
                 is ParsedCloudConnectionUri -> {
                     state.server = TYPEDB_CLOUD
                     parsedConnectionUri.username?.let { state.username = it }
@@ -550,6 +549,7 @@ object ServerDialog {
                             state.cloudAddresses.clear()
                             state.cloudAddresses.addAll(parsedConnectionUri.addresses.filter { addressFormatIsValid(it) })
                         }
+
                         is ParsedCloudTranslatedConnectionUri -> {
                             state.useCloudTranslatedAddress = true
                             state.cloudTranslatedAddresses.clear()

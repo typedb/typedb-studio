@@ -83,35 +83,13 @@ class DriverState(
 
     internal fun tryGet(): Driver? = _driver
 
-    fun tryConnectToTypeDBCoreAsync(
+    fun tryConnectToTypeDBAsync(
         address: String,
         username: String, password: String,
         tlsEnabled: Boolean, caCertificate: String?,
         onSuccess: () -> Unit
     ): Any = tryConnectAsync(connectionName(username, address), onSuccess) {
-        TypeDB.coreDriver(address, Credentials(username, password), DriverOptions(tlsEnabled, caCertificate))
-    }
-
-    fun tryConnectToTypeDBCloudAsync(
-        addresses: Set<String>,
-        username: String, password: String,
-        tlsEnabled: Boolean, caCertificate: String?,
-        onSuccess: () -> Unit
-    ): Any = tryConnectAsync(connectionName(username, addresses.first()), onSuccess) {
-        TypeDB.cloudDriver(addresses, Credentials(username, password), DriverOptions(tlsEnabled, caCertificate))
-    }
-
-    fun tryConnectToTypeDBCloudAsync(
-        addressTranslation: Map<String, String>,
-        username: String, password: String,
-        tlsEnabled: Boolean, caCertificate: String?,
-        onSuccess: () -> Unit
-    ): Any = tryConnectAsync(connectionName(username, addressTranslation.values.first()), onSuccess) {
-        TypeDB.cloudDriver(
-            addressTranslation,
-            Credentials(username, password),
-            DriverOptions(tlsEnabled, caCertificate)
-        )
+        TypeDB.driver(address, Credentials(username, password), DriverOptions(tlsEnabled, caCertificate))
     }
 
     private fun tryConnectAsync(
@@ -150,22 +128,18 @@ class DriverState(
         val onSuccess = {
             notificationSrv.info(LOGGER, RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY)
         }
-        when (dataSrv.connection.server!!) {
-            TYPEDB_CORE -> tryConnectToTypeDBCoreAsync(
-                dataSrv.connection.coreAddress!!,
-                username, newPassword, tlsEnabled, caCertificate, onSuccess
-            )
+
+        val address = when (dataSrv.connection.server!!) {
+            TYPEDB_CORE -> dataSrv.connection.coreAddress!!
+            // Cloud features are not available, just get the first available address and return an error in worst case scenario
             TYPEDB_CLOUD -> when {
-                dataSrv.connection.useCloudAddressTranslation!! -> tryConnectToTypeDBCloudAsync(
-                    dataSrv.connection.cloudAddressTranslation!!.toMap(),
-                    username, newPassword, tlsEnabled, caCertificate, onSuccess
-                )
-                else -> tryConnectToTypeDBCloudAsync(
-                    dataSrv.connection.cloudAddresses!!.toSet(),
-                    username, newPassword, tlsEnabled, caCertificate, onSuccess
-                )
+                dataSrv.connection.useCloudAddressTranslation!! -> dataSrv.connection.cloudAddressTranslation!!.first().first
+                else -> dataSrv.connection.cloudAddresses!!.first()
             }
         }
+        tryConnectToTypeDBAsync(
+            address, username, newPassword, tlsEnabled, caCertificate, onSuccess
+        )
     }
 
     fun sendStopSignal() {
