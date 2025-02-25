@@ -6,11 +6,24 @@
 
 package com.typedb.studio.module.connection
 
+import androidx.compose.ui.window.DialogState as ComposeDialogState
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
@@ -24,7 +37,9 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowPosition.Aligned
 import com.typedb.studio.framework.common.theme.Theme
 import com.typedb.studio.framework.common.theme.Theme.TOOLBAR_BUTTON_SIZE
-import com.typedb.studio.framework.material.*
+import com.typedb.studio.framework.material.ActionableList
+import com.typedb.studio.framework.material.Dialog
+import com.typedb.studio.framework.material.Form
 import com.typedb.studio.framework.material.Form.Checkbox
 import com.typedb.studio.framework.material.Form.FIELD_HEIGHT
 import com.typedb.studio.framework.material.Form.Field
@@ -39,7 +54,10 @@ import com.typedb.studio.framework.material.Form.TextButtonRow
 import com.typedb.studio.framework.material.Form.TextInput
 import com.typedb.studio.framework.material.Form.TextInputValidated
 import com.typedb.studio.framework.material.Form.toggleButtonColor
+import com.typedb.studio.framework.material.Icon
+import com.typedb.studio.framework.material.SelectFileDialog
 import com.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
+import com.typedb.studio.framework.material.Tooltip
 import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.util.ConnectionUri
 import com.typedb.studio.service.common.util.ConnectionUri.ParsedCloudConnectionUri
@@ -54,7 +72,6 @@ import com.typedb.studio.service.common.util.Sentence
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
 import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
-import androidx.compose.ui.window.DialogState as ComposeDialogState
 
 object ServerDialog {
 

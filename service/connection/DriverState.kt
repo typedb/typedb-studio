@@ -32,7 +32,9 @@ import com.typedb.studio.service.common.util.Message.Connection.Companion.UNABLE
 import com.typedb.studio.service.common.util.Message.Connection.Companion.UNEXPECTED_ERROR
 import com.typedb.studio.service.common.util.Property.Server.TYPEDB_CLOUD
 import com.typedb.studio.service.common.util.Property.Server.TYPEDB_CORE
-import com.typedb.studio.service.connection.DriverState.Status.*
+import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
+import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
+import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
