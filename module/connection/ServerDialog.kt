@@ -6,24 +6,11 @@
 
 package com.typedb.studio.module.connection
 
-import androidx.compose.ui.window.DialogState as ComposeDialogState
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
@@ -37,9 +24,7 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowPosition.Aligned
 import com.typedb.studio.framework.common.theme.Theme
 import com.typedb.studio.framework.common.theme.Theme.TOOLBAR_BUTTON_SIZE
-import com.typedb.studio.framework.material.ActionableList
-import com.typedb.studio.framework.material.Dialog
-import com.typedb.studio.framework.material.Form
+import com.typedb.studio.framework.material.*
 import com.typedb.studio.framework.material.Form.Checkbox
 import com.typedb.studio.framework.material.Form.FIELD_HEIGHT
 import com.typedb.studio.framework.material.Form.Field
@@ -54,10 +39,7 @@ import com.typedb.studio.framework.material.Form.TextButtonRow
 import com.typedb.studio.framework.material.Form.TextInput
 import com.typedb.studio.framework.material.Form.TextInputValidated
 import com.typedb.studio.framework.material.Form.toggleButtonColor
-import com.typedb.studio.framework.material.Icon
-import com.typedb.studio.framework.material.SelectFileDialog
 import com.typedb.studio.framework.material.SelectFileDialog.SelectorOptions
-import com.typedb.studio.framework.material.Tooltip
 import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.util.ConnectionUri
 import com.typedb.studio.service.common.util.ConnectionUri.ParsedCloudConnectionUri
@@ -72,6 +54,7 @@ import com.typedb.studio.service.common.util.Sentence
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
 import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
 import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
+import androidx.compose.ui.window.DialogState as ComposeDialogState
 
 object ServerDialog {
 
@@ -84,7 +67,7 @@ object ServerDialog {
 
     private val state by mutableStateOf(ConnectServerForm())
 
-    private class ServerDialogState: ComposeDialogState {
+    private class ServerDialogState : ComposeDialogState {
         override var position: WindowPosition by mutableStateOf(Aligned(Alignment.Center))
 
         private var width = WIDTH
@@ -168,19 +151,16 @@ object ServerDialog {
                     Service.driver.connectServerDialog.open()
                 }
             }
-            when (server) {
-                TYPEDB_CORE -> Service.driver.tryConnectToTypeDBCoreAsync(
-                    coreAddress, username, passwordValue, tlsEnabled, caCertValue, onSuccess
-                )
-                TYPEDB_CLOUD -> when {
-                    useCloudTranslatedAddress -> Service.driver.tryConnectToTypeDBCloudAsync(
-                        cloudTranslatedAddresses.toMap(), username, passwordValue, tlsEnabled, caCertValue, onSuccess
-                    )
-                    else -> Service.driver.tryConnectToTypeDBCloudAsync(
-                        cloudAddresses.toSet(), username, passwordValue, tlsEnabled, caCertValue, onSuccess
-                    )
+            val address = when (server) {
+                TYPEDB_CORE -> coreAddress
+                TYPEDB_CLOUD -> {
+                    assert(!useCloudTranslatedAddress) { "Address translation is not supported in 3.x" }
+                    cloudAddresses.first()
                 }
             }
+            Service.driver.tryConnectToTypeDBAsync(
+                address, username, passwordValue, tlsEnabled, caCertValue, onSuccess
+            )
         }
     }
 
@@ -539,6 +519,7 @@ object ServerDialog {
                     state.server = TYPEDB_CORE
                     state.coreAddress = parsedConnectionUri.address
                 }
+
                 is ParsedCloudConnectionUri -> {
                     state.server = TYPEDB_CLOUD
                     parsedConnectionUri.username?.let { state.username = it }
@@ -550,6 +531,7 @@ object ServerDialog {
                             state.cloudAddresses.clear()
                             state.cloudAddresses.addAll(parsedConnectionUri.addresses.filter { addressFormatIsValid(it) })
                         }
+
                         is ParsedCloudTranslatedConnectionUri -> {
                             state.useCloudTranslatedAddress = true
                             state.cloudTranslatedAddresses.clear()

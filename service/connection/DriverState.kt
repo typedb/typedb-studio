@@ -16,6 +16,7 @@ import com.typedb.driver.api.DriverOptions
 import com.typedb.driver.api.Transaction
 import com.typedb.driver.api.user.UserManager
 import com.typedb.driver.common.exception.TypeDBDriverException
+import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.DataService
 import com.typedb.studio.service.common.NotificationService
 import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
@@ -32,9 +33,7 @@ import com.typedb.studio.service.common.util.Message.Connection.Companion.UNABLE
 import com.typedb.studio.service.common.util.Message.Connection.Companion.UNEXPECTED_ERROR
 import com.typedb.studio.service.common.util.Property.Server.TYPEDB_CLOUD
 import com.typedb.studio.service.common.util.Property.Server.TYPEDB_CORE
-import com.typedb.studio.service.connection.DriverState.Status.CONNECTED
-import com.typedb.studio.service.connection.DriverState.Status.CONNECTING
-import com.typedb.studio.service.connection.DriverState.Status.DISCONNECTED
+import com.typedb.studio.service.connection.DriverState.Status.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
@@ -83,35 +82,13 @@ class DriverState(
 
     internal fun tryGet(): Driver? = _driver
 
-    fun tryConnectToTypeDBCoreAsync(
+    fun tryConnectToTypeDBAsync(
         address: String,
         username: String, password: String,
         tlsEnabled: Boolean, caCertificate: String?,
         onSuccess: () -> Unit
     ): Any = tryConnectAsync(connectionName(username, address), onSuccess) {
-        TypeDB.coreDriver(address, Credentials(username, password), DriverOptions(tlsEnabled, caCertificate))
-    }
-
-    fun tryConnectToTypeDBCloudAsync(
-        addresses: Set<String>,
-        username: String, password: String,
-        tlsEnabled: Boolean, caCertificate: String?,
-        onSuccess: () -> Unit
-    ): Any = tryConnectAsync(connectionName(username, addresses.first()), onSuccess) {
-        TypeDB.cloudDriver(addresses, Credentials(username, password), DriverOptions(tlsEnabled, caCertificate))
-    }
-
-    fun tryConnectToTypeDBCloudAsync(
-        addressTranslation: Map<String, String>,
-        username: String, password: String,
-        tlsEnabled: Boolean, caCertificate: String?,
-        onSuccess: () -> Unit
-    ): Any = tryConnectAsync(connectionName(username, addressTranslation.values.first()), onSuccess) {
-        TypeDB.cloudDriver(
-            addressTranslation,
-            Credentials(username, password),
-            DriverOptions(tlsEnabled, caCertificate)
-        )
+        TypeDB.driver(address, Credentials(username, password), DriverOptions(tlsEnabled, caCertificate))
     }
 
     private fun tryConnectAsync(
@@ -150,22 +127,17 @@ class DriverState(
         val onSuccess = {
             notificationSrv.info(LOGGER, RECONNECTED_WITH_NEW_PASSWORD_SUCCESSFULLY)
         }
-        when (dataSrv.connection.server!!) {
-            TYPEDB_CORE -> tryConnectToTypeDBCoreAsync(
-                dataSrv.connection.coreAddress!!,
-                username, newPassword, tlsEnabled, caCertificate, onSuccess
-            )
-            TYPEDB_CLOUD -> when {
-                dataSrv.connection.useCloudAddressTranslation!! -> tryConnectToTypeDBCloudAsync(
-                    dataSrv.connection.cloudAddressTranslation!!.toMap(),
-                    username, newPassword, tlsEnabled, caCertificate, onSuccess
-                )
-                else -> tryConnectToTypeDBCloudAsync(
-                    dataSrv.connection.cloudAddresses!!.toSet(),
-                    username, newPassword, tlsEnabled, caCertificate, onSuccess
-                )
+
+        val address = when (dataSrv.connection.server!!) {
+            TYPEDB_CORE -> dataSrv.connection.coreAddress!!
+            TYPEDB_CLOUD -> {
+                assert(!dataSrv.connection.useCloudAddressTranslation!!) { "Address translation is not supported in 3.x" }
+                dataSrv.connection.cloudAddresses!!.first()
             }
         }
+        Service.driver.tryConnectToTypeDBAsync(
+            address, username, newPassword, tlsEnabled, caCertificate, onSuccess
+        )
     }
 
     fun sendStopSignal() {
