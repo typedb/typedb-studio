@@ -153,9 +153,10 @@ object ServerDialog {
             }
             val address = when (server) {
                 TYPEDB_CORE -> coreAddress
-                TYPEDB_CLOUD -> {
-                    assert(!useCloudTranslatedAddress) { "Address translation is not supported in 3.x" }
-                    cloudAddresses.first()
+                // Cloud features are not available, just get the first available address and return an error in worst case scenario
+                TYPEDB_CLOUD -> when {
+                    useCloudTranslatedAddress -> cloudTranslatedAddresses.first().first
+                    else -> cloudAddresses.first()
                 }
             }
             Service.driver.tryConnectToTypeDBAsync(

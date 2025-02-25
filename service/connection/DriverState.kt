@@ -16,7 +16,6 @@ import com.typedb.driver.api.DriverOptions
 import com.typedb.driver.api.Transaction
 import com.typedb.driver.api.user.UserManager
 import com.typedb.driver.common.exception.TypeDBDriverException
-import com.typedb.studio.service.Service
 import com.typedb.studio.service.common.DataService
 import com.typedb.studio.service.common.NotificationService
 import com.typedb.studio.service.common.NotificationService.Companion.launchAndHandle
@@ -130,12 +129,13 @@ class DriverState(
 
         val address = when (dataSrv.connection.server!!) {
             TYPEDB_CORE -> dataSrv.connection.coreAddress!!
-            TYPEDB_CLOUD -> {
-                assert(!dataSrv.connection.useCloudAddressTranslation!!) { "Address translation is not supported in 3.x" }
-                dataSrv.connection.cloudAddresses!!.first()
+            // Cloud features are not available, just get the first available address and return an error in worst case scenario
+            TYPEDB_CLOUD -> when {
+                dataSrv.connection.useCloudAddressTranslation!! -> dataSrv.connection.cloudAddressTranslation!!.first().first
+                else -> dataSrv.connection.cloudAddresses!!.first()
             }
         }
-        Service.driver.tryConnectToTypeDBAsync(
+        tryConnectToTypeDBAsync(
             address, username, newPassword, tlsEnabled, caCertificate, onSuccess
         )
     }
