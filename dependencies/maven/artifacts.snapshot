@@ -1,5 +1,5 @@
-@maven//:ch_qos_logback_logback_classic_1_4_9
-@maven//:ch_qos_logback_logback_core_1_4_9
+@maven//:ch_qos_logback_logback_classic_1_4_14
+@maven//:ch_qos_logback_logback_core_1_4_14
 @maven//:com_eclipsesource_minimal_json_minimal_json_0_9_5
 @maven//:com_electronwill_night_config_core_3_6_5
 @maven//:com_electronwill_night_config_toml_3_6_5
