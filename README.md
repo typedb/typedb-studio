@@ -7,6 +7,8 @@
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typedb-796de3.svg)](https://stackoverflow.com/questions/tagged/typedb)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typeql-3dce8c.svg)](https://stackoverflow.com/questions/tagged/typeql)
 
+> **IMPORTANT NOTE:** As of March 2025, the TypeDB team is currently working on porting TypeDB Studio to the Web. Early access releases are expected to begin in early April. The new TypeDB Studio will have a web version and will still be downloadable as a desktop app. This is made possible by the recently-launched TypeDB REST API. Stay tuned for further updates!
+
 # Introducing TypeDB Studio
 
 TypeDB Studio is the IDE for developing with **[TypeDB](https://github.com/typedb/typedb)**. It provides a consistent experience across different environments, including macOS, Linux, and Windows. With Studio, developers can easily manage databases, execute queries, and explore query results, all within a unified interface.
