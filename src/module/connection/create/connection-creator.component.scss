@@ -1,0 +1,87 @@
+/*!
+ * This unpublished material is proprietary to Vaticle.
+ * All rights reserved. The methods and
+ * techniques described herein are considered trade secrets
+ * and/or confidential. Reproduction or distribution, in whole
+ * or in part, is forbidden except by express written permission
+ * of Vaticle.
+ */
+
+@use "primary";
+@use "secondary";
+@use "shapes";
+@use "typography";
+@use "@angular/material" as mat;
+
+tp-form,
+::ng-deep tp-form > form {
+    display: flex;
+}
+
+::ng-deep .dc-form > form > div {
+    height: fit-content;
+}
+
+.form-input-block {
+    position: relative;
+    max-width: 560px;
+    width: 100%;
+    margin: auto;
+
+    @media (min-width: 1200px) {
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    &.form-toggle-group-row, &.form-slider-row {
+        align-items: center;
+    }
+
+    > * {
+        width: 100%;
+    }
+
+    @media (max-width: 1199px) {
+        gap: 8px;
+
+        mat-form-field {
+            width: 100%;
+        }
+    }
+}
+
+tp-form.form {
+    flex-shrink: 0;
+    width: 560px;
+    margin: 5vh auto auto;
+}
+
+.advanced-config-toggle {
+    display: block;
+    margin-bottom: 16px;
+}
+
+.uri-input-row {
+    display: flex;
+    gap: 8px;
+
+    mat-form-field {
+        flex: 1;
+    }
+}
+
+.connection-uri-help-tooltip {
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    code {
+        margin-left: 4px;
+        font-size: inherit;
+    }
+}
+
+::ng-deep .mat-horizontal-content-container {
+    padding-top: 10vh;
+}

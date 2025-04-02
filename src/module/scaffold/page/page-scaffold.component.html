@@ -1,0 +1,42 @@
+<mat-sidenav-container>
+  <mat-sidenav class="left" disableClose mode="side" opened>
+    <div class="tp-sidenav-container left" [ngClass]="{ 'collapsed': leftSidebarState === 'collapsed' }" >
+      <tp-sidebar (expandedStateChange)="leftSidebarState = $event"/>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content [@sidebarLeftMargin]="leftSidebarState === 'collapsed' ? 'collapsed' : 'open'">
+    @switch (pageAvailability) {
+      @case ("ready") {
+        <div class="action-bar">
+          <button class="ts-connection-widget"><i class="db-icon fa-thin fa-server"></i> No connection selected <i class="ts-beacon fa-solid fa-circle error" matTooltip="Ping is 17ms" matTooltipPosition="below"></i></button>
+          <ng-content select="[actionBar]"/>
+          <div class="flex-spacer"></div>
+          <a href="https://typedb.com/blog/" target="_blank">
+            <tp-button buttonId="actionBarNews" buttonStyle="secondary">
+              <i class="fa-light fa-bullhorn"></i>
+              News
+            </tp-button>
+          </a>
+          <tp-button buttonId="actionBarSupport" buttonStyle="secondary" (click)="rightSidebar.toggle(undefined, 'mouse')">
+            Help
+            <i class="fa-light fa-chevron-right"></i>
+          </tp-button>
+        </div>
+        <ng-content/>
+      }
+      @case ("loading") {
+        <tp-spinner/>
+      }
+      @case (null) {
+        <tp-spinner/>
+      }
+      @default {
+      }
+    }
+  </mat-sidenav-content>
+
+  <mat-sidenav class="right" disableClose #rightSidebar mode="side" position="end">
+    <div class="tp-sidenav-container right"><tp-right-sidebar/></div>
+  </mat-sidenav>
+</mat-sidenav-container>

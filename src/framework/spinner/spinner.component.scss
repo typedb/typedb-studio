@@ -1,0 +1,20 @@
+/*!/*
+ * This unpublished material is proprietary to Vaticle.
+ * All rights reserved. The methods and
+ * techniques described herein are considered trade secrets
+ * and/or confidential. Reproduction or distribution, in whole
+ * or in part, is forbidden except by express written permission
+ * of Vaticle.
+ */
+
+@use "shapes";
+@use "primary";
+
+:host {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: primary.$grey;
+}

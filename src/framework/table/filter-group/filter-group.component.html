@@ -1,0 +1,64 @@
+<div class="filter-container">
+  <!--  Displaying and modifying an existing filter  -->
+  @for (formGroup of formGroups.controls; track formGroup; let i = $index) {
+    <div class="filter">
+      <form [formGroup]="formGroup">
+        <mat-form-field class="form-field-dense">
+          <mat-select [formControl]="formGroup.controls.filterSpec" panelClass="select-panel-dense" placeholder="Column Filter">
+            @for (filterSpec of filterSpecs; track filterSpec) {
+              <mat-option [value]="filterSpec">{{ filterSpec.property.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (formEntry(i)!.filterSpec) {
+          <mat-form-field class="form-field-dense filter-operator">
+            <mat-select [formControl]="formGroup.controls.operator" panelClass="select-panel-dense" placeholder="Select operator">
+              @for (operator of formEntry(i)!.filterSpec!.operators; track operator) {
+                <mat-option [value]="operator">{{ operator | filterOperator }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        @if (formEntry(i)!.operator && formEntry(i)!.filterSpec?.validValues) {
+          <mat-form-field class="form-field-dense filter-value">
+            <mat-select [formControl]="formGroup.controls.value" panelClass="select-panel-dense" placeholder="Select value">
+              @for (filterValue of formEntry(i)!.filterSpec!.validValues; track filterValue) {
+                <mat-option [value]="filterValue">{{ filterValue | filterValue }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        } @else if (formEntry(i)!.filterSpec) {
+          <div class="input-group">
+            <mat-form-field class="form-field-dense filter-value">
+              <input matInput
+                 [ngClass]="{'invalid': formGroup.errors?.['invalidValue']}"
+                 name="field-value-input"
+                 formControlName="value"
+                 [placeholder]="['long', 'double'].includes(formEntry(i)!.filterSpec!.valueType) ? '' : 'Input value'"
+              />
+            </mat-form-field>
+
+            <div style="width: 0; height: 0; position: relative">
+              @if (formGroup.errors?.['invalidValue']) {
+                <label class="invalid-label"> <!-- eslint-disable-line -->
+                  Please enter a valid value
+                </label>
+              }
+            </div>
+          </div>
+        }
+      </form>
+      <button
+        type="button" class="fg-delete" mat-fab aria-label="delete"
+        [disabled]="formGroups.controls.length <= 1 && !formEntry(0)?.filterSpec"
+        (click)="formGroups.controls.length > 1 ? formGroups.removeAt(i) : formGroups.controls.at(i)?.reset()"
+      >
+        <i class="fa-light fa-xmark"></i>
+      </button>
+    </div>
+  }
+
+  <button type="button" mat-fab aria-label="add" [disabled]="!canAddFilter" (click)="addFilter()">
+    <i class="fa-light fa-plus"></i>
+  </button>
+</div>

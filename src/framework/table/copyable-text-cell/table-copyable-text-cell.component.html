@@ -1,0 +1,5 @@
+<!-- Do not enclose {{text}} in any element - this breaks manual copy-pasting which ends up with additional newlines -->
+{{ text }}
+<button class="btn-copy" mat-icon-button aria-label="copy" (click)="copyText(); $event.stopPropagation();" matTooltip="Copy to clipboard">
+  <i class="fa-light fa-copy"></i>
+</button>

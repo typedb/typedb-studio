@@ -1,0 +1,45 @@
+/*!/*
+ * This unpublished material is proprietary to Vaticle.
+ * All rights reserved. The methods and
+ * techniques described herein are considered trade secrets
+ * and/or confidential. Reproduction or distribution, in whole
+ * or in part, is forbidden except by express written permission
+ * of Vaticle.
+ */
+
+@use "typography";
+
+:host {
+    height: 100%;
+}
+
+section-list {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.page-not-found-section {
+    text-align: center;
+    font-style: normal;
+}
+
+.light-banner {
+    @include typography.light-banner;
+    margin-bottom: 16px;
+}
+
+.light-banner-subtitle {
+    @include typography.subtitle;
+    margin-bottom: 8px;
+}
+
+p {
+    @include typography.p3;
+}
+
+tp-button {
+    display: inline-block;
+}

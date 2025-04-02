@@ -1,0 +1,18 @@
+<a
+  class="integration-card integration-card-gcp"
+  [ngClass]="{'integration-card-active': chip == 'active', 'integration-card-coming-soon' : chip == 'coming-soon', 'disabled': !enabled}"
+  [attr.href]="link" target="_blank" (click)="onLinkClick()"
+>
+  @if (imageIcon) {
+    <img [src]="imageIcon.src" [alt]="imageIcon.alt" />
+  } @else if (faIcon) {
+    <i [class]="faIcon"></i>
+  }
+  <div class="integration-info">
+    <h3>{{ title }}</h3>
+    <ng-content/>
+    <p class="integration-link" [style.visibility]="enabled ? 'visible' : 'hidden'">
+      @if (buttonLinkText) {{{ buttonLinkText }}}
+    </p>
+  </div>
+</a>

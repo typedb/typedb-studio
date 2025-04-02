@@ -1,0 +1,13 @@
+<ts-page-scaffold pageAvailability="ready">
+  <section class="page-not-found-section">
+    @if (data$ | async; as data) {
+      {{ data }}
+    } @else {
+      <div class="light-banner">200</div>
+      <div class="light-banner-subtitle">Page found</div>
+      <p>We're delighted to inform you, the page you requested could be found.</p>
+      <br/>
+      <tp-button buttonStyle="primary-outline green stroke" buttonId="goHome" (click)="showAGraph()">I like graphs. Show me one?</tp-button>
+    }
+  </section>
+</ts-page-scaffold>

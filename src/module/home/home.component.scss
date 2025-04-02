@@ -1,0 +1,217 @@
+/*!/*
+ * This unpublished material is proprietary to Vaticle.
+ * All rights reserved. The methods and
+ * techniques described herein are considered trade secrets
+ * and/or confidential. Reproduction or distribution, in whole
+ * or in part, is forbidden except by express written permission
+ * of Vaticle.
+ */
+
+@use "primary";
+@use "shapes";
+@use "typography";
+
+:host {
+    height: 100%;
+}
+
+section-list {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.page-not-found-section {
+    text-align: center;
+    font-style: normal;
+}
+
+.light-banner {
+    @include typography.light-banner;
+    margin-bottom: 16px;
+}
+
+.light-banner-subtitle {
+    @include typography.subtitle;
+    margin-bottom: 8px;
+}
+
+p {
+    @include typography.p3;
+}
+
+tp-button {
+    display: inline-block;
+}
+
+.no-clusters-deploy-cluster {
+    margin: 64px auto;
+
+    button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .no-clusters-title {
+        font-size: 22px;
+        line-height: 30px;
+        font-weight: var(--font-weight-semi-bold);
+    }
+
+    i {
+        width: 100%;
+        height: 48px;
+        font-size: 48px;
+    }
+}
+
+article {
+    height: 100%;
+    padding-left: 18%;
+    padding-right: 18%;
+    background: url("/assets/typedb-bot.png") #0e0d17e4 0 0 / 1400px no-repeat;
+    background-blend-mode: lighten;
+}
+
+.tp-deploy-cluster {
+
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    height: 220px;
+    min-height: 220px;
+
+    .tp-deploy-cluster-button-area {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .logo {
+        height: 100%;
+        display: flex;
+        --image-size: 1000px;
+        width: 0;
+        overflow: visible;
+
+        img {
+            opacity: 65%;
+            height: var(--image-size);
+            width: var(--image-size);
+            position: relative;
+            top: calc(-1 * var(--image-size)/2 - shapes.$card-padding);
+            left: calc(-1 * var(--image-size)/2 + shapes.$card-padding);
+
+            animation: 12s ease-in-out spin infinite paused;
+        }
+    }
+
+    &:has(tp-button:hover) .logo img {
+        animation-play-state: running;
+    }
+
+    a {
+        z-index: 1;
+    }
+}
+
+@keyframes spin {
+    0%, 1% {
+        transform: rotate(0deg);
+    }
+    24%, 26% {
+        transform: rotate(90deg);
+    }
+    49%, 51% {
+        transform: rotate(180deg);
+    }
+    74%, 76% {
+        transform: rotate(270deg);
+    }
+    99%, 100% {
+        transform: rotate(360deg);
+    }
+}
+
+.tp-icon-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    align-items: flex-start;
+
+    h3 {
+        display: initial;
+    }
+
+    i {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+    }
+
+    &:hover {
+        i, h3 {
+            color: primary.$green;
+        }
+    }
+
+    .tp-icon-card-content {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+
+        i {
+            display: inline-flex;
+            height: auto;
+            width: auto;
+            align-items: center;
+            font-size: inherit;
+            margin-left: 8px;
+        }
+    }
+}
+
+.tp-additional-resources {
+    display: grid;
+    grid-template: repeat(2, 1fr) / repeat(3, 1fr);
+    gap: 12px;
+
+    a {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: fit-content;
+    }
+
+    i {
+        width: 20px;
+        display: flex;
+    }
+
+    a:hover {
+        color: primary.$green;
+    }
+}
+
+.tp-title {
+    text-align: center;
+    margin: 24px 0 0;
+}
+
+.tp-subtitle {
+    align-self: center;
+    text-align: center;
+    //max-width: 360px;
+}

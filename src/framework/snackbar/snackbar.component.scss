@@ -1,0 +1,60 @@
+/*!/*
+ * This unpublished material is proprietary to Vaticle.
+ * All rights reserved. The methods and
+ * techniques described herein are considered trade secrets
+ * and/or confidential. Reproduction or distribution, in whole
+ * or in part, is forbidden except by express written permission
+ * of Vaticle.
+ */
+
+@use "shapes";
+@use "primary";
+@use "secondary";
+
+@mixin host-color-style($class, $base-color) {
+    &.#{$class} {
+        border-color: $base-color;
+        background: mix($base-color, primary.$black-purple, 15%);
+        box-shadow: inset 0 0 0 1px $base-color;
+
+        .sb-text i {
+            color: $base-color;
+        }
+    }
+}
+
+:host {
+    margin: 16px;
+    width: 372px;
+    border-radius: shapes.$border-radius;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    @include host-color-style(ok, primary.$green);
+    @include host-color-style(info, secondary.$blue);
+    @include host-color-style(warn, secondary.$yellow);
+    @include host-color-style(error, primary.$red);
+}
+
+:host-context(.mat-mdc-snack-bar-handset) {
+    width: 100%;
+    margin: 0;
+}
+
+.sb-text {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: primary.$white;
+
+    i {
+        flex-shrink: 0;
+    }
+}
+
+.sb-button i {
+    color: rgba(primary.$white, 0.8);
+}

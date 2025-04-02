@@ -1,0 +1,171 @@
+/*!
+ * This unpublished material is proprietary to Vaticle.
+ * All rights reserved. The methods and
+ * techniques described herein are considered trade secrets
+ * and/or confidential. Reproduction or distribution, in whole
+ * or in part, is forbidden except by express written permission
+ * of Vaticle.
+ */
+
+/* Monaco */
+@font-face {
+    font-family: "Monaco";
+    font-style: normal;
+    font-weight: 400;
+    src:
+        url(/assets/fonts/Monaco.woff2) format("woff2"),
+        url(/assets/fonts/Monaco.ttf) format("truetype");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC,
+    U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Darkmode";
+    font-style: normal;
+    font-weight: 200;
+    src: url(/assets/fonts/DarkmodeOn_Trial_Th.ttf) format("truetype");
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Darkmode";
+    font-style: italic;
+    font-weight: 200;
+    src: url(/assets/fonts/DarkmodeOn_Trial_ThIt.ttf) format("truetype");
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Darkmode";
+    font-style: normal;
+    font-weight: 300;
+    src: url(/assets/fonts/DarkmodeOn_Trial_Lt.ttf) format("truetype");
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Darkmode";
+    font-style: normal;
+    font-weight: 400;
+    src: url(/assets/fonts/DarkmodeOn_Trial_Rg.ttf) format("truetype");
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Darkmode";
+    font-style: normal;
+    font-weight: 500;
+    src: url(/assets/fonts/DarkmodeOn_Trial_Md.ttf) format("truetype");
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Darkmode";
+    font-style: normal;
+    font-weight: 600;
+    src: url(/assets/fonts/DarkmodeOn_Trial_SBd.ttf) format("truetype");
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Darkmode";
+    font-style: normal;
+    font-weight: 700;
+    src: url(/assets/fonts/DarkmodeOn_Trial_Bd.ttf) format("truetype");
+    font-display: swap;
+}
+
+$default-font-family: "Darkmode", sans-serif;
+
+$bold: 700;
+$semi-bold: 600;
+$medium: 500;
+$regular: 400;
+$italic: 400;
+$light: 300;
+$extra-light: 200;
+
+$letter-spacing: 0.02em;
+
+@mixin font-style($size, $weight, $lineheight, $letterspacing) {
+    font-size: $size;
+    font-weight: $weight;
+    line-height: $lineheight;
+    letter-spacing: $letterspacing;
+}
+
+@mixin h1 {
+    @include font-style(21px, $semi-bold, normal, $letter-spacing);
+}
+
+@mixin h2 {
+    @include font-style(19px, $semi-bold, normal, $letter-spacing);
+}
+
+@mixin h3 {
+    @include font-style(17px, $semi-bold, 24px, $letter-spacing);
+}
+
+@mixin h4 {
+    @include font-style(15px, $semi-bold, 22px, $letter-spacing);
+}
+
+@mixin h5 {
+    @include font-style(15px, $medium, 20px, $letter-spacing);
+}
+
+@mixin light-banner {
+    @include font-style(150px, $extra-light, 150px, $letter-spacing);
+}
+
+@mixin subtitle {
+    @include font-style(22px, $semi-bold, 33px, $letter-spacing);
+}
+
+@mixin p1 {
+    text-decoration: underline;
+    @include font-style(17px, $semi-bold, 24px, $letter-spacing);
+}
+
+@mixin p2 {
+    @include font-style(15px, $regular, 22px, $letter-spacing);
+}
+
+@mixin p3 {
+    @include font-style(14px, $regular, 22px, $letter-spacing);
+}
+
+@mixin button-large {
+    font-style: italic;
+    @include font-style(14px, $italic, 16px, $letter-spacing);
+}
+
+@mixin button-small {
+    @include font-style(14px, $regular, 20px, $letter-spacing);
+}
+
+@mixin caption1 {
+    @include font-style(14px, $semi-bold, 16px, $letter-spacing);
+}
+
+@mixin code {
+    font-family: Monaco, monospace;
+    @include font-style(14px, $regular, 22px, $letter-spacing);
+}
+
+@mixin info-text {
+    @include font-style(14px, $regular, normal, $letter-spacing);
+}
+
+@mixin small-info-text {
+    @include font-style(12px, $regular, normal, $letter-spacing);
+}
+
+@mixin line-clamp($lines) {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}

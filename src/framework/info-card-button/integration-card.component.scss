@@ -1,0 +1,100 @@
+/*!
+ * This unpublished material is proprietary to Vaticle.
+ * All rights reserved. The methods and
+ * techniques described herein are considered trade secrets
+ * and/or confidential. Reproduction or distribution, in whole
+ * or in part, is forbidden except by express written permission
+ * of Vaticle.
+ */
+
+@use "shapes";
+@use "primary";
+@use "secondary";
+@use "typography";
+
+:host {
+    display: inline-block;
+}
+
+@mixin chip($content, $text-color) {
+    padding: 0 5px 2px 5px;
+    background: secondary.$deep-grey;
+    color: $text-color;
+    border-radius: shapes.$border-radius;
+    content: $content;
+    font-size: 14px;
+    line-height: normal;
+    letter-spacing: normal;
+    white-space: nowrap;
+}
+
+@mixin coming-soon-chip {
+    @include chip("coming soon", primary.$white);
+}
+
+@mixin active-chip {
+    @include chip("active", primary.$green);
+}
+
+.integration-card {
+    @include shapes.standard-border;
+    background-color: primary.$deep-purple;
+    padding: 16px;
+    min-width: 340px;
+    max-width: 400px;
+    position: relative;
+    align-items: center;
+    display: flex;
+    gap: 16px;
+
+    &:not(.disabled) {
+        cursor: pointer;
+    }
+
+    &:hover:not(.disabled) {
+        border-color: primary.$green;
+    }
+
+    &.disabled {
+        img, i, .integration-info {
+            opacity: 25%;
+        }
+    }
+
+    img { width: 64px; }
+
+    i {
+        width: 64px;
+        height: 64px;
+        font-size: 56px;
+    }
+
+    &.integration-card-coming-soon::after {
+        position: absolute;
+        top: 4px;
+        right: 3px;
+        @include coming-soon-chip;
+    }
+
+    &.integration-card-active::after {
+        position: absolute;
+        top: 4px;
+        right: 3px;
+        @include active-chip;
+    }
+
+    .integration-info {
+        width: 100%;
+        gap: 8px;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .integration-link {
+        text-decoration: underline;
+        color: primary.$green;
+        text-align: left;
+    }
+}
+

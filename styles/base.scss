@@ -1,0 +1,612 @@
+/*!
+ * This unpublished material is proprietary to Vaticle.
+ * All rights reserved. The methods and
+ * techniques described herein are considered trade secrets
+ * and/or confidential. Reproduction or distribution, in whole
+ * or in part, is forbidden except by express written permission
+ * of Vaticle.
+ */
+
+@use "media";
+@use "primary";
+@use "secondary";
+@use "shapes";
+@use "tp";
+@use "typography";
+
+@use "topbar";
+
+@import "prism";
+@import "scrollbars";
+@import "vars";
+@import "material";
+
+html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: primary.$black-purple;
+    font-size: 15px;
+    line-height: 23px;
+
+    --mat-form-field-subscript-text-size: 14px;
+    letter-spacing: var(--body-letter-spacing);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: typography.$default-font-family;
+    overflow-x: hidden;
+
+    --font-size-code: 15px;
+    --line-height-code: 22px;
+}
+
+html, body {
+    color-scheme: dark;
+    height: 100%;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+article {
+    padding: 32px 32px 32px 16px;
+
+    section + section {
+        margin-top: 32px;
+        padding-top: 32px;
+        border-top: shapes.$border;
+    }
+}
+
+.tp-bento-container {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+
+    &.row {
+        flex-direction: row;
+        width: 100%;
+        max-width: 760px;
+
+        > * {
+            flex: 1;
+        }
+    }
+
+    &.col {
+        flex-direction: column;
+    }
+}
+
+.tp-bento-box {
+    @include shapes.standard-border;
+    border-radius: shapes.$border-radius-panel;
+    @include shapes.light-source-gradient(primary.$purple, primary.$deep-purple);
+    transition: background 0.1s linear;
+    padding: shapes.$card-padding;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    > div {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    &.hoverable:hover {
+        @include shapes.light-source-gradient(rgba(primary.$light-purple, 0.6), primary.$purple);
+    }
+}
+
+h1, h2, h3, h4, h5, h6, p, ul, ol, dl, dt, dd, pre, figure {
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    @include typography.h1;
+}
+
+h2 {
+    @include typography.h2;
+}
+
+h3 {
+    @include typography.h3;
+}
+
+h4 {
+    @include typography.h4;
+}
+
+h5 {
+    @include typography.h5;
+}
+
+.text-p1 {
+    font-size: var(--font-size-p1);
+    line-height: var(--line-height-p1);
+}
+
+.text-p2 {
+    font-size: var(--font-size-p2);
+    line-height: var(--line-height-p2);
+}
+
+.text-aside {
+    font-size: var(--font-size-aside);
+    line-height: var(--line-height-aside);
+}
+
+// TODO: use actual h1, h2, h3, h4 elements, not spans!
+.header {
+    @include typography.h2;
+    &.fullwidth {
+        width: 100%;
+        margin-bottom: 24px;
+    }
+}
+
+.section-title-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 32px;
+    width: 100%;
+    gap: 12px;
+
+    h2, h3 {
+        width: inherit;
+    }
+}
+
+strong {
+    font-weight: typography.$semi-bold;
+}
+
+.text-muted {
+    color: secondary.$light-grey;
+}
+
+a {
+    color: primary.$white;
+    text-decoration: none;
+    &.disabled {
+        pointer-events: none;
+        cursor: default;
+    }
+}
+
+@mixin text-link {
+    text-decoration: underline;
+    color: primary.$green;
+    cursor: pointer;
+}
+
+p a, aside a, th a, td a {
+    @include text-link;
+}
+
+a.link-quiet {
+    color: primary.$grey;
+    font-size: 14px;
+    text-decoration: none;
+
+    &:hover, &:focus {
+        color: primary.$green;
+        text-decoration: none;
+    }
+}
+
+a.tos-privacy-link {
+    color: primary.$white;
+    text-decoration: underline;
+
+    &:hover, &:focus {
+        color: primary.$green;
+    }
+}
+
+aside, .text-aside {
+    font-size: 14px;
+    line-height: 22px;
+    font-weight: typography.$regular;
+}
+
+pre, code, .text-code {
+    font-size: var(--font-size-code);
+    line-height: var(--line-height-code);
+}
+
+code, .text-code {
+    font-family: Monaco, monospace;
+}
+
+button {
+    appearance: none;
+    -webkit-appearance: none;
+    background: none;
+    border: 0;
+    font-size: unset;
+    font-family: unset;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    letter-spacing: var(--body-letter-spacing);
+
+    &:disabled {
+        cursor: not-allowed;
+        color: secondary.$mid-deep-grey;
+    }
+}
+
+/* NB: these button styles are from typedb-web */
+@mixin button {
+    display: flex;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: var(--border-radius);
+    justify-content: center;
+    align-items: center;
+    font-weight: var(--font-weight-semi-bold);
+    font-size: inherit;
+    font-family: inherit;
+    cursor: pointer;
+    transition-property: background-color, border, box-shadow, opacity;
+    transition-duration: 100ms;
+    transition-timing-function: ease;
+    text-decoration: none !important; // overrides various styles that set an underline on anchors
+
+    @media (min-width: media.$min-width-tablet) {
+        height: 48px;
+        width: 202px;
+    }
+
+    @media (max-width: media.$max-width-mobile) {
+        height: 40px;
+    }
+
+    &.td-button-disabled {
+        opacity: 50%;
+        cursor: default;
+    }
+
+    &.td-button-size-s {
+        height: 40px;
+    }
+}
+
+@mixin button-primary {
+    border-color: transparent;
+    background: var(--color-green);
+    color: var(--color-purple);
+
+    &:not(.td-button-disabled) {
+        &:hover,
+        &.container-hover {
+            box-shadow: 0 3px 26px 0 rgba(primary.$green, 0.4);
+        }
+
+        &:active {
+            background-color: mix(primary.$green, primary.$purple);
+        }
+    }
+}
+
+@mixin button-secondary {
+    border-color: var(--color-green);
+    background: transparent;
+    color: var(--color-green);
+
+    &:not(.td-button-disabled) {
+        &:hover,
+        &.container-hover {
+            background-color: var(--color-green);
+            color: var(--color-purple);
+        }
+    }
+}
+
+.button-primary {
+    @include button;
+    @include button-primary;
+}
+
+hr {
+    border-top: shapes.$border;
+    border-bottom: none;
+}
+
+form, .form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-input-row-description {
+    color: secondary.$light-grey;
+    font-size: 14px;
+    text-align: start;
+    margin: 12px 0;
+}
+
+th {
+    font-weight: typography.$semi-bold;
+}
+
+.flex-spacer {
+    flex-grow: 1;
+}
+
+.tp-invisible {
+    visibility: hidden;
+}
+
+i {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    display: inline-flex;
+    justify-content: center;
+
+    &.ok {
+        color: primary.$green;
+    }
+
+    &.info {
+        color: secondary.$blue;
+    }
+
+    &.warn {
+        color: secondary.$yellow;
+    }
+
+    &.error {
+        color: primary.$red;
+    }
+
+    &.inactive {
+        color: secondary.$light-grey;
+    }
+}
+
+.tp-green {
+    color: primary.$green;
+}
+
+.card {
+    @include shapes.card-appearance;
+    @include shapes.card-padding;
+
+    &.hoverable:hover:not(:disabled) {
+        border-color: primary.$green;
+
+        .link-tertiary {
+            color: primary.$green;
+            text-decoration: underline;
+        }
+    }
+}
+
+// copied over from typedb-docs-web
+.admonitionblock {
+    --important-color: #{secondary.$yellow};
+    --important-background: #{rgba(secondary.$yellow, 0.12)};
+    --note-color: #{secondary.$blue};
+    --note-background: #{rgba(secondary.$blue, 0.12)};
+    --tip-color: #{primary.$green};
+    --tip-background: #{rgba(primary.$green, 0.12)};
+    --warning-color: #{primary.$red};
+    --warning-background: #{rgba(primary.$red, 0.12)};
+
+    position: relative;
+    margin: 1.5rem 0 0;
+    padding: 16px;
+    border-radius: var(--border-radius);
+    color: var(--color-white);
+    width: 100%;
+
+    @media (max-width: media.$max-width-mobile) {
+        padding: var(--card-padding);
+    }
+
+    > table,
+    > table > tbody,
+    > table > tbody > tr,
+    > table > tbody > tr > td {
+        display: block;
+        padding: 0;
+    }
+
+    &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+    }
+
+    &.note {
+        background: var(--note-background);
+
+        .icon::after {
+            content: "Note";
+        }
+    }
+
+    &.note::before {
+        background: var(--note-color);
+    }
+
+    &.important, &.attention {
+        border-color: var(--important-color);
+        background: var(--important-background);
+
+        &::before {
+            background: var(--important-color);
+        }
+    }
+
+    &.important .icon::after {
+        content: "Important";
+    }
+
+    &.attention .icon::after {
+        content: "Attention";
+    }
+
+    &.tip {
+        background: var(--tip-background);
+
+        .icon::after {
+            content: "Advanced";
+        }
+    }
+
+    &.tip::before {
+        background: var(--tip-color);
+    }
+
+    &.warning {
+        background: var(--warning-background);
+
+        .icon::after {
+            content: "Warning";
+        }
+    }
+
+    &.warning::before {
+        background: var(--warning-color);
+    }
+
+    .icon {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 4px;
+
+        &::after {
+            font-weight: var(--font-weight-medium);
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: .5px;
+        }
+    }
+
+    .content {
+        margin-top: -0.5rem;
+    }
+}
+
+.admonitionblock.attention i {
+    color: secondary.$yellow;
+}
+
+.action-bar {
+    flex: 0 0 49px;
+    display: flex;
+    margin: 16px 32px 0 16px;
+    position: sticky;
+    top: 0;
+    background-color: primary.$black-purple;
+    z-index: 10;
+    align-items: center;
+
+    > a,
+    tp-button {
+        display: flex;
+        align-items: center;
+    }
+
+    > tp-button + tp-button::before,
+    > tp-button + a::before,
+    > a + tp-button::before,
+    > a + a::before, {
+        content: "";
+        width: 0;
+        height: 24px;
+        border-right: shapes.$border;
+    }
+}
+
+tp-form .form-row {
+    display: flex;
+    gap: 16px;
+
+    > * {
+        flex: 1;
+    }
+}
+
+tp-form-actions, .tp-form-actions {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-between;
+    width: 100%;
+    column-gap: 14px;
+    row-gap: 8px;
+    margin-top: 20px;
+
+    //tp-button {
+    //    flex: 1;
+    //}
+}
+
+.terms-privacy-additional-info {
+    @include typography.p3;
+    color: secondary.$light-grey;
+}
+
+tp-properties-table + tp-properties-table {
+    margin-top: 48px;
+}
+
+tp-org-area, tp-profile-scaffold {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+table td tp-user-avatar {
+    margin-top: 4px;
+}
+
+tp-form-input.capitalized-field {
+    text-transform: capitalize;
+}
+
+.help-tooltip-button {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: secondary.$pink;
+    cursor: pointer;
+}
+
+button.dangerous {
+    color: primary.$red;
+}
+
+.tp-sidebar-org-selection-panel.mat-mdc-select-panel {
+    background: rgba(primary.$light-purple, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+tp-setup, tp-setup-marketplace, tp-setup-project,
+tp-gcp-marketplace-integration, tp-aws-marketplace-integration, tp-azure-marketplace-integration {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}

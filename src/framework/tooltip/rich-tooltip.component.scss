@@ -1,0 +1,10 @@
+@use "secondary";
+@use "shapes";
+
+.tooltip-container {
+    border-radius: shapes.$border-radius;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 22px;
+    background: secondary.$mid-deep-grey;
+}

@@ -1,0 +1,34 @@
+/*!/*
+ * This unpublished material is proprietary to Vaticle.
+ * All rights reserved. The methods and
+ * techniques described herein are considered trade secrets
+ * and/or confidential. Reproduction or distribution, in whole
+ * or in part, is forbidden except by express written permission
+ * of Vaticle.
+ */
+
+@use "primary";
+
+$border: 1px solid primary.$light-purple;
+$border-radius: 8px;
+$border-radius-panel: 8px;
+$card-padding: 28px;
+
+@mixin standard-border {
+    border-radius: $border-radius;
+    border: $border;
+}
+
+@mixin card-appearance {
+    border-radius: $border-radius;
+    background-color: primary.$purple;
+    border: $border;
+}
+
+@mixin card-padding {
+    padding: $card-padding;
+}
+
+@mixin light-source-gradient($light-source-color, $background-color, $left: 80px, $top: 50px) {
+    background: $background-color radial-gradient(ellipse at $left $top, $light-source-color 0%, 60%, rgba($background-color, 0));
+}

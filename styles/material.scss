@@ -1,0 +1,755 @@
+/*!
+ * This unpublished material is proprietary to Vaticle.
+ * All rights reserved. The methods and
+ * techniques described herein are considered trade secrets
+ * and/or confidential. Reproduction or distribution, in whole
+ * or in part, is forbidden except by express written permission
+ * of Vaticle.
+ */
+
+@use "@angular/material" as mat;
+@use "primary";
+@use "secondary";
+@use "shapes";
+@use "tp";
+@use "typography";
+
+@include mat.core();
+$purple-palette: (
+    50: secondary.$purple,
+    100: secondary.$purple,
+    200: secondary.$purple,
+    300: secondary.$purple,
+    400: secondary.$purple,
+    500: secondary.$purple,
+    600: secondary.$purple,
+    700: secondary.$purple,
+    800: secondary.$purple,
+    900: secondary.$purple,
+    A100: secondary.$purple,
+    A200: secondary.$purple,
+    A400: secondary.$purple,
+    A700: secondary.$purple,
+    contrast: (
+        50: rgba(black, 0.87),
+        100: rgba(black, 0.87),
+        200: rgba(black, 0.87),
+        300: rgba(black, 0.87),
+        400: rgba(black, 0.87),
+        500: white,
+        600: white,
+        700: white,
+        800: white,
+        900: white,
+        A100: rgba(black, 0.87),
+        A200: rgba(black, 0.87),
+        A400: white,
+        A700: white,
+    )
+);
+$green-palette: (
+    50: primary.$green,
+    100: primary.$green,
+    200: primary.$green,
+    300: primary.$green,
+    400: primary.$green,
+    500: primary.$green,
+    600: primary.$green,
+    700: primary.$green,
+    800: primary.$green,
+    900: primary.$green,
+    A100: primary.$green,
+    A200: primary.$green,
+    A400: primary.$green,
+    A700: primary.$green,
+    contrast: (
+        50: rgba(black, 0.87),
+        100: rgba(black, 0.87),
+        200: rgba(black, 0.87),
+        300: rgba(black, 0.87),
+        400: rgba(black, 0.87),
+        500: white,
+        600: white,
+        700: white,
+        800: white,
+        900: white,
+        A100: rgba(black, 0.87),
+        A200: rgba(black, 0.87),
+        A400: white,
+        A700: white,
+    )
+);
+$red-palette: (
+    50: primary.$red,
+    100: primary.$red,
+    200: primary.$red,
+    300: primary.$red,
+    400: primary.$red,
+    500: primary.$red,
+    600: primary.$red,
+    700: primary.$red,
+    800: primary.$red,
+    900: primary.$red,
+    contrast: (
+        50: rgba(black, 0.87),
+        100: rgba(black, 0.87),
+        200: rgba(black, 0.87),
+        300: rgba(black, 0.87),
+        400: white,
+        500: white,
+        600: white,
+        700: white,
+        800: white,
+        900: white,
+    )
+);
+$typedb-primary: mat.define-palette($green-palette, 700, 300, 900);
+$typedb-accent: mat.define-palette($purple-palette, 300, 100, 500);
+$typedb-warn: mat.define-palette($red-palette, 700);
+$typedb-typography: mat.define-typography-config(
+    $font-family: typography.$default-font-family,
+);
+$typedb-theme: mat.define-dark-theme((
+    color: (
+        primary: $typedb-primary,
+        accent: $typedb-accent,
+        warn: $typedb-warn,
+    ),
+    typography: $typedb-typography,
+));
+@include mat.all-component-themes($typedb-theme);
+@include mat.all-component-densities(-1);
+
+/* Material CSS overrides */
+/* Mostly copied from typedb-web */
+body {
+    /* Button toggle */
+    .mat-button-toggle-group, .mat-button-toggle {
+        font-size: 14px;
+        --mat-standard-button-toggle-height: 32px;
+        --mat-standard-button-toggle-divider-color: #{primary.$light-purple};
+        --mat-standard-button-toggle-background-color: #{primary.$deep-purple};
+        --mat-standard-button-toggle-selected-state-background-color: #{secondary.$purple};
+        --mat-standard-button-toggle-selected-state-text-color: #{primary.$green};
+        --mat-standard-button-toggle-disabled-state-background-color: #{secondary.$dark-grey};
+        --mat-standard-button-toggle-disabled-selected-state-background-color: #{secondary.$deep-grey};
+        --mat-standard-button-toggle-shape: #{shapes.$border-radius};
+    }
+
+    .mat-button-toggle:hover button:not([disabled]) {
+        color: primary.$green;
+    }
+
+    .mat-button-toggle-appearance-standard.mat-button-toggle-disabled.mat-button-toggle-checked button:disabled {
+        color: var(--mat-standard-button-toggle-disabled-selected-state-text-color);
+        background-color: var(--mat-standard-button-toggle-disabled-selected-state-background-color);
+    }
+
+    /* Checkbox */
+    .mdc-checkbox__background {
+        border-radius: 3px;
+    }
+
+    /* Chips */
+    .mat-mdc-chip.mat-mdc-standard-chip {
+        --mdc-chip-elevated-container-color: #{secondary.$purple};
+        --mdc-chip-label-text-size: 14px;
+        --mdc-chip-label-text-tracking: var(--body-letter-spacing);
+        --mdc-chip-container-height: 40px;
+        --mdc-chip-focus-state-layer-opacity: 1;
+        @include shapes.standard-border;
+        transition: 100ms border-color ease;
+
+        &:hover, &.cdk-focused {
+            border-color: secondary.$grey;
+        }
+
+        &.mat-mdc-chip-selected.mat-primary {
+            --mdc-chip-label-text-color: #{primary.$purple};
+            border-color: #{primary.$green};
+            --mdc-chip-with-icon-selected-icon-color: #{primary.$purple};
+        }
+    }
+
+    .mat-mdc-chip-focus-overlay {
+        opacity: 0 !important; /* overrides Angular Material styles */
+    }
+
+    .mdc-evolution-chip-set .mdc-evolution-chip-set__chips {
+        margin: 0;
+        gap: 12px;
+    }
+
+    .mdc-evolution-chip-set .mdc-evolution-chip {
+        margin: 0;
+    }
+
+    .mat-mdc-standard-chip.mdc-evolution-chip--with-primary-graphic  {
+        .mdc-evolution-chip__graphic {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+        .mdc-evolution-chip__action--primary {
+            padding-right: 16px;
+        }
+    }
+
+    /* Dialog */
+    .mdc-dialog {
+        --mdc-dialog-container-color: #{primary.$purple};
+        --mdc-dialog-subhead-color: #{primary.$white};
+        --mdc-dialog-supporting-text-color: #{primary.$white};
+        --mdc-dialog-supporting-text-size: 15px;
+        --mdc-dialog-supporting-text-tracking: var(--body-letter-spacing);
+        --mdc-dialog-supporting-text-weight: #{typography.$regular};
+
+        .mdc-dialog__surface {
+            padding: 24px;
+            border-radius: shapes.$border-radius-panel;
+            background-color: var(--mdc-dialog-container-color);
+        }
+
+        .mdc-dialog__title {
+            padding: 0 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            &::before {
+                display: none;
+            }
+        }
+
+        .mdc-dialog__content {
+            padding: 0;
+        }
+    }
+
+    .mat-mdc-dialog-container .mdc-dialog__surface {
+        border: shapes.$border;
+        box-shadow: 0 11px 15px -7px rgba(0, 0, 0, 0.3), 0px 24px 38px 3px rgba(0, 0, 0, 0.21), 0px 9px 46px 8px rgba(0, 0, 0, 0.18);
+    }
+
+    .cdk-overlay-dark-backdrop {
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    /* Expansion */
+    mat-expansion-panel {
+        --mat-expansion-header-text-size: 16px;
+        --mat-expansion-header-expanded-state-height: 44px;
+        --mat-expansion-container-text-size: 15px;
+    }
+
+    .mat-expansion-panel-body {
+        padding: 0 28px 28px;
+    }
+
+    /* Form field */
+    .mat-mdc-form-field {
+        --mat-form-field-container-text-tracking: var(--body-letter-spacing);
+        --mdc-outlined-text-field-label-text-size: 15px;
+        --mdc-outlined-text-field-label-text-tracking: var(--body-letter-spacing);
+        --mat-form-field-subscript-text-tracking: var(--body-letter-spacing);
+        font-size: 15px;
+        --mat-select-trigger-text-size: 15px;
+
+        &:not(.form-field-dense) {
+            @include mat.private-form-field-density(-3);
+
+            &.mat-mdc-form-field-type-mat-select .mat-mdc-text-field-wrapper {
+                height: 44px;
+            }
+        }
+
+        &.form-field-dense {
+            @include mat.private-form-field-density(-5);
+        }
+
+        .mat-mdc-form-field-text-prefix {
+            opacity: 50%;
+        }
+    }
+
+    .mat-mdc-form-field .mat-mdc-floating-label.mdc-floating-label {
+        -webkit-font-smoothing: auto;
+    }
+
+    .mat-mdc-form-field-bottom-align::before {
+        content: unset;
+    }
+
+    .mat-mdc-form-field-hint-wrapper, .mat-mdc-form-field-error-wrapper {
+        position: static;
+    }
+
+    .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-floating-label {
+        top: 22px;
+    }
+
+    .mat-mdc-form-field.form-field-dense .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline--upgraded .mdc-floating-label--float-above {
+        --mat-mdc-form-field-label-transform: translateY(-27px) scale(.75);
+    }
+
+    .mat-mdc-form-field-error {
+        font-size: 14px;
+        letter-spacing: normal;
+        margin-top: 2px;
+    }
+
+    .mat-mdc-text-field-wrapper {
+        height: 100%;
+    }
+
+    /* Icon */
+    .mat-icon {
+        width: 1em;
+        height: 1em;
+
+        svg {
+            display: block;
+        }
+    }
+
+    /* Icon button */
+    .mdc-icon-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .mat-mdc-icon-button,
+    .mat-mdc-icon-button.mat-mdc-button-base {
+        padding: 0.25em;
+        margin: -0.25em;
+        width: 1.5em;
+        height: 1.5em;
+
+        .mat-icon {
+            display: block;
+            font-size: inherit;
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
+        }
+    }
+
+    .mat-mdc-form-field-icon-suffix button.mat-mdc-icon-button {
+        margin-right: 0.25em;
+        color: secondary.$light-grey;
+    }
+
+    .mat-icon,
+    .mat-mdc-icon-button {
+        font-size: 24px;
+
+        &.tp-icon-small {
+            font-size: 20px;
+        }
+
+        &.tp-icon-xs {
+            font-size: 16px;
+        }
+
+        &.tp-icon-large {
+            font-size: 32px;
+        }
+
+        &.tp-icon-xl {
+            font-size: 40px;
+        }
+    }
+
+    .mat-mdc-icon-button .mat-mdc-button-persistent-ripple {
+        display: none;
+    }
+
+    .mat-mdc-icon-button .mat-mdc-button-touch-target {
+        width: 40px;
+        height: 40px;
+    }
+
+    .mdc-fab {
+        --mdc-fab-container-color: #{secondary.$purple};
+        --mat-fab-foreground-color: #{primary.$grey};
+        --mat-fab-disabled-state-container-color: #{secondary.$purple};
+        --mat-fab-disabled-state-foreground-color: #{secondary.$mid-deep-grey};
+        --mdc-fab-container-shape: #{shapes.$border-radius};
+        --mdc-fab-small-icon-size: 16px;
+        border: shapes.$border;
+
+        .mat-icon {
+            font-size: unset;
+        }
+
+        &.disabled {
+            cursor: not-allowed;
+            background-color: var(--mat-fab-disabled-state-container-color);
+            color: var(--mat-fab-disabled-state-foreground-color);
+
+            .mat-mdc-button-persistent-ripple {
+                display: none;
+            }
+        }
+
+        .mdc-button__label {
+            display: flex;
+        }
+    }
+
+    .mat-mdc-fab {
+        width: 40px;
+        height: 40px;
+
+        .mat-mdc-button-touch-target {
+            width: 40px;
+            height: 40px;
+        }
+    }
+
+    .mat-mdc-mini-fab {
+        width: 32px;
+        height: 32px;
+
+        .mat-mdc-button-touch-target {
+            width: 32px;
+            height: 32px;
+        }
+    }
+
+    /* Input */
+    .mdc-text-field {
+        --mdc-outlined-text-field-input-text-color: #{primary.$white};
+        --mdc-outlined-text-field-outline-color: #{primary.$light-purple};
+        --mdc-outlined-text-field-hover-outline-color: #{secondary.$grey};
+        --mdc-outlined-text-field-label-text-weight: #{typography.$regular};
+        --mdc-outlined-text-field-input-text-placeholder-color: #{secondary.$grey};
+        --mdc-outlined-text-field-container-shape: #{shapes.$border-radius};
+    }
+
+    .mat-mdc-form-field-input-control {
+        -webkit-font-smoothing: auto !important; // overrides hacky Angular Material style
+    }
+
+    /* Menu */
+    .mat-mdc-menu-panel {
+        --mat-menu-container-color: #{mix(primary.$purple, #FFF, 96%)};
+        --mat-menu-item-label-text-font: #{typography.$default-font-family};
+        --mat-menu-item-label-text-size: 15px;
+        --mat-menu-item-label-text-tracking: var(--body-letter-spacing);
+
+        border-radius: shapes.$border-radius-panel;
+    }
+
+    .mat-mdc-menu-item {
+        min-height: 44px;
+
+        .mat-mdc-menu-item-text {
+            display: flex;
+            align-items: center;
+        }
+
+        mat-checkbox {
+            margin-left: -8px;
+        }
+    }
+
+    button.mat-mdc-menu-item:disabled {
+        color: var(--mat-menu-item-label-text-color); /* overrides button:disabled color */
+    }
+
+    /* Paginator */
+    mat-paginator {
+        --mat-paginator-container-background-color: transparent;
+        --mat-paginator-container-text-color: #{tp.$white70};
+        --mat-paginator-container-text-font: #{typography.$default-font-family};
+        --mat-paginator-container-text-size: 14px;
+        --mat-paginator-container-text-tracking: var(--body-letter-spacing);
+    }
+
+    /* Progress spinner */
+    .mat-mdc-progress-spinner {
+        --mdc-circular-progress-active-indicator-color: #{primary.$grey};
+    }
+
+    /* Select */
+    .mat-mdc-select {
+        --mat-select-trigger-text-tracking: var(--body-letter-spacing);
+        -webkit-font-smoothing: auto;
+    }
+
+    .form-field-dense {
+        --mat-select-trigger-text-size: 14px;
+    }
+
+    div.mat-mdc-select-panel {
+        --mat-select-panel-background-color: #{secondary.$purple};
+        --mat-option-label-text-size: 15px;
+        --mat-option-label-text-weight: #{typography.$regular};
+        border: shapes.$border;
+        border-radius: shapes.$border-radius-panel;
+
+        mat-pseudo-checkbox.mat-pseudo-checkbox-checked::after {
+            width: 12px;
+            height: 5px;
+        }
+
+        .mat-mdc-option {
+            min-height: 44px;
+        }
+
+        &.select-panel-dense {
+            --mat-option-label-text-size: 14px;
+
+            .mat-mdc-option {
+                min-height: 40px;
+            }
+        }
+    }
+
+    mat-select-trigger > span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0; // without this, the text in a flex container won't shrink
+    }
+
+    .mat-mdc-option {
+        --mat-option-label-text-tracking: var(--body-letter-spacing);
+        padding-left: 32px; // makes padding consistent whether or not the option is part of an optgroup
+
+        .mdc-list-item__primary-text {
+            width: 100%;
+            display: inline-flex;
+
+            > span {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+    }
+
+    .mat-mdc-optgroup {
+        --mat-optgroup-label-text-tracking: var(--body-letter-spacing);
+    }
+
+    /* Sidenav */
+    .mat-sidenav-container {
+        --mat-sidenav-container-background-color: transparent;
+        --mat-sidenav-container-divider-color: transparent;
+        --mat-sidenav-content-background-color: #{primary.$black-purple};
+        --mat-sidenav-scrim-color: #{rgba(#000, 0.4)};
+
+        height: 100%;
+    }
+
+    .mat-sidenav-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Slider */
+    .mat-mdc-slider {
+        --mdc-slider-handle-width: 8px;
+        --mdc-slider-handle-shape: 2px;
+    }
+
+    /* Slide toggle */
+
+    .mat-mdc-slide-toggle {
+        .mdc-switch:enabled, .mdc-switch:enabled:focus, .mdc-switch:enabled:hover:not(:focus) {
+            .mdc-switch__track::after {
+                background: primary.$light-purple;
+            }
+        }
+    }
+
+    /* Snack bar */
+    .mat-mdc-snack-bar-container {
+        --mdc-snackbar-supporting-text-size: 14px;
+        --mdc-snackbar-supporting-text-line-height: 22px;
+
+        .mdc-snackbar__surface {
+            padding: 0;
+            background: transparent;
+            box-shadow: none;
+
+            &::before {
+                display: none;
+            }
+        }
+        .mdc-snackbar__label {
+            padding: 0;
+        }
+    }
+
+    /* Stepper */
+    mat-stepper {
+        --mat-stepper-container-color: transparent;
+        --mat-stepper-header-selected-state-label-text-color: #{secondary.$light-grey};
+        --mat-stepper-header-label-text-size: 14px;
+        --mat-stepper-header-selected-state-label-text-size: 14px;
+        --mat-stepper-header-focus-state-layer-color: transparent;
+        --mat-stepper-header-hover-state-layer-color: transparent;
+    }
+
+    .mat-horizontal-stepper-header {
+        border-radius: shapes.$border-radius;
+        --mat-icon-color: #{primary.$purple};
+        --mat-stepper-header-icon-foreground-color: #{primary.$purple};
+        --mat-stepper-header-selected-state-icon-foreground-color: #{primary.$purple};
+    }
+
+    .mat-horizontal-content-container {
+        flex: 1;
+        overflow: visible;
+    }
+
+    .mat-horizontal-stepper-content {
+        height: 100%;
+    }
+
+    .mat-step-label.mat-step-label-selected {
+        color: #{primary.$white};
+    }
+
+    :has(> .mat-mdc-table) {
+        display: block;
+        overflow-x: auto;
+    }
+
+    /* Table */
+    .mat-mdc-table {
+        --mat-table-background-color: transparent;
+        --mat-table-header-container-height: 44px;
+        --mat-table-header-headline-color: #{primary.$white};
+        --mat-table-header-headline-size: 14px;
+        --mat-table-header-headline-weight: #{typography.$semi-bold};
+        --mat-table-row-item-container-height: 44px;
+        --mat-table-row-item-label-text-size: 14px;
+        --mat-table-row-item-label-text-tracking: var(--body-letter-spacing);
+
+        thead {
+            background: secondary.$purple;
+        }
+
+        tbody tr {
+            background: rgba(primary.$purple, 0.5);
+        }
+
+        tr th, tr td {
+            border-top: shapes.$border;
+            border-bottom: shapes.$border;
+            border-right: shapes.$border;
+
+            &:first-child {
+                border-left: shapes.$border;
+                border-radius: shapes.$border-radius 0 0 shapes.$border-radius;
+            }
+
+            &:last-child {
+                border-right: shapes.$border;
+                border-radius: 0 shapes.$border-radius shapes.$border-radius 0;
+            }
+        }
+
+        tr.table-row-clickable {
+            cursor: pointer;
+        }
+
+        tr.table-row-clickable:hover {
+            th, td {
+                border-top-color: secondary.$grey;
+                border-bottom-color: secondary.$grey;
+
+                &:first-child {
+                    border-left-color: secondary.$grey;
+                }
+
+                &:last-child {
+                    border-right-color: secondary.$grey;
+                }
+            }
+        }
+    }
+
+    .mdc-data-table__table {
+        border-spacing: 0 12px;
+        white-space: nowrap;
+    }
+
+    .mdc-data-table__cell, .mdc-data-table__header-cell {
+        padding: 0 14px 0 14px;
+    }
+
+    .mdc-data-table__row:last-child .mat-mdc-cell {
+        border-bottom: shapes.$border;
+    }
+
+    .mat-column-select {
+        width: 48px;
+    }
+
+    .mat-column-actions {
+        min-width: 44px;
+        width: 44px;
+        max-width: 44px;
+        padding: 0;
+        overflow: visible;
+        position: relative;
+
+        .mat-mdc-fab {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: auto;
+            height: auto;
+            border-width: 0;
+            box-shadow: none;
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            font-size: 24px;
+            background-color: transparent;
+
+            .mdc-fab__ripple {
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
+            }
+        }
+    }
+
+    .mat-column-status {
+        width: 48px;
+        padding: 0 12px;
+    }
+
+    .mat-column-avatar {
+        width: 34px;
+    }
+
+    /* Toolbar */
+    .mat-toolbar {
+        --mat-toolbar-container-background-color: #{primary.$deep-purple};
+
+        flex-shrink: 0;
+        border-bottom: shapes.$border;
+    }
+
+    /* Tooltip */
+    .mdc-tooltip {
+        --mdc-plain-tooltip-supporting-text-size: 14px;
+        --mdc-plain-tooltip-supporting-line-height: 22px;
+        --mdc-plain-tooltip-supporting-text-tracking: var(--body-letter-spacing);
+        --mdc-plain-tooltip-container-color: #{secondary.$mid-deep-grey};
+        --mdc-plain-tooltip-container-shape: #{shapes.$border-radius};
+    }
+
+    .mdc-tooltip__surface {
+        padding: 6px 10px;
+    }
+}

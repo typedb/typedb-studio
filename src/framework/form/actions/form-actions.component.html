@@ -1,0 +1,6 @@
+@if (this.cancellable) {
+  <tp-button type="button" [enabled]="cancelEnabled" [buttonStyle]="cancelButtonStyle" (click)="onCancel()" [buttonId]="buttonIdPrefix + '_cancel'">{{ cancelText }}</tp-button>
+}
+<tp-button type="submit" [enabled]="submitEnabled" [buttonStyle]="submitButtonStyle" (click)="onSubmit()" [buttonId]="buttonIdPrefix + '_submit'">
+  @if (isSubmitting) {<tp-spinner [size]="20"/>} @else {{{ submitText }}}
+</tp-button>

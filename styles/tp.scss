@@ -1,0 +1,21 @@
+/*!/*
+ * This unpublished material is proprietary to Vaticle.
+ * All rights reserved. The methods and
+ * techniques described herein are considered trade secrets
+ * and/or confidential. Reproduction or distribution, in whole
+ * or in part, is forbidden except by express written permission
+ * of Vaticle.
+ */
+
+@use "primary";
+@use "secondary";
+
+$white80: rgba(primary.$white, 0.8);
+$white70: rgba(primary.$white, 0.7);
+$white15: rgba(primary.$white, 0.15);
+$purple: rgba(primary.$purple, 0.5);
+$red: rgba(primary.$red, 0.15);
+$red80: rgba(primary.$red, 0.8);
+$yellow: rgba(secondary.$yellow, 0.15);
+$green: rgba(primary.$green, 0.15);
+$blue: rgba(secondary.$blue, 0.15);

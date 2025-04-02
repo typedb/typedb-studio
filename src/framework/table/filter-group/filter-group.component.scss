@@ -1,0 +1,88 @@
+/*!/*
+ * This unpublished material is proprietary to Vaticle.
+ * All rights reserved. The methods and
+ * techniques described herein are considered trade secrets
+ * and/or confidential. Reproduction or distribution, in whole
+ * or in part, is forbidden except by express written permission
+ * of Vaticle.
+ */
+
+@use "shapes";
+@use "typography";
+
+input, label {
+    display: flex;
+}
+
+form {
+    display: flex;
+    float: left;
+    flex-direction: row;
+    gap: 0;
+    width: unset;
+}
+
+.filter-container {
+    margin-right: 12px;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: inherit;
+}
+
+icon-button {
+    display: flex;
+}
+
+button.fg-delete {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+
+    ::ng-deep &.mat-mdc-fab:not(.mdc-fab--extended) .mdc-fab__ripple {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+}
+
+.input-group {
+    flex-direction: column;
+    display: flex;
+}
+
+.invalid-label {
+    color: #e96464;
+    position: absolute;
+    z-index: 1;
+    width: max-content;
+    @include typography.caption1;
+}
+
+:host {
+    ::ng-deep .mdc-notched-outline__trailing {
+        border-radius: 0 !important; /* overrides Angular Material style */
+    }
+
+    ::ng-deep .filter-operator .mdc-notched-outline__leading,
+    ::ng-deep .filter-value .mdc-notched-outline__leading {
+        border-radius: 0 !important; /* overrides Angular Material style */
+    }
+
+    ::ng-deep body .filter-operator .mdc-text-field--outlined:not(.mdc-text-field--disabled),
+    ::ng-deep body .filter-value .mdc-text-field--outlined:not(.mdc-text-field--disabled) {
+        background: transparent;
+    }
+
+    ::ng-deep .mat-mdc-form-field.form-field-dense .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix {
+        min-height: 40px;
+        padding-top: 8px !important; /* overrides material style */
+        padding-bottom: 8px !important; /* overrides material style */
+        width: 132px;
+
+        .mat-mdc-select-trigger {
+            gap: 8px;
+        }
+    }
+}

@@ -1,0 +1,43 @@
+<ts-page-scaffold [pageAvailability]="availability$ | async">
+  <tp-form class="form" [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
+    <h1>Create connection</h1>
+    <div class="form-input-block">
+      <div class="form-input-row-description"><p>Specify a name for this connection</p></div>
+      <div>
+        <tp-form-input [form]="form" field="name" placeholder="Connection name"/>
+      </div>
+    </div>
+    <div class="form-input-block">
+      <div class="form-input-row-description"><p>Specify connection parameters</p></div>
+      <tp-form-toggle-group class="advanced-config-toggle" [form]="form" field="advancedConfigActive" [options]="advancedConfigActiveOptions" />
+      <div class="uri-input-row">
+        <mat-form-field>
+          <input matInput [formControl]="form.controls.uri" [type]="connectionUriRevealed ? 'text' : 'password'" [placeholder]="connectionUriPlaceholder">
+          <div class="tp-password-input-suffix" matSuffix>
+            <button type="button" tabindex="-1" mat-icon-button (click)="connectionUriRevealed = !connectionUriRevealed" aria-label="Hide connection URI" aria-pressed="hide">
+              <i [class]="connectionUriRevealed ? 'fa-light fa-eye-slash' : 'fa-light fa-eye'"></i>
+            </button>
+          </div>
+          @if (form.controls.uri.getError("errorText")) {
+            <mat-error>{{ form.controls.uri.getError("errorText") }}</mat-error>
+          }
+        </mat-form-field>
+        <i class="help-tooltip-button fa-light fa-circle-question" richTooltip [richTooltipContent]="connectionUriHelpTooltipContent"></i>
+      </div>
+    </div>
+    <tp-form-actions
+      [isSubmitting]="isSubmitting$ | async" buttonIdPrefix="createOrg"
+      [submitDisabled]="!form.dirty || !form.valid" submitText="Create connection" cancelText="Go back home" [cancellable]="true"
+    />
+  </tp-form>
+</ts-page-scaffold>
+
+<ng-template #connectionUriHelpTooltipContent>
+  <div class="connection-uri-help-tooltip">
+    <h5>Connection URI</h5>
+    <p>Encoding of a TypeDB server address, optional user credentials, and TLS configuration.</p>
+    <p><strong>Format (with credentials):</strong> typedb://username:password&commat;address/?tlsEnabled=true</p>
+    <p><strong>Format (no credentials):</strong> typedb://address/?tlsEnabled=true</p>
+    <p><strong>Note:</strong> When connecting to TypeDB Cloud, navigate to the cluster in the Cloud dashboard and hit 'Connect' to view the Connection URI. Replace the 'db_password' placeholder.</p>
+  </div>
+</ng-template>
