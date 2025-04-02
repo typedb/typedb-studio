@@ -7,4 +7,19 @@
     font-size: 14px;
     line-height: 22px;
     background: secondary.$mid-deep-grey;
+
+    ::ng-deep > div {
+        max-width: 360px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        ul, ol {
+            margin-left: 12px;
+        }
+
+        code {
+            font-size: inherit;
+        }
+    }
 }

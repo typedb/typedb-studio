@@ -24,7 +24,7 @@ tp-form,
 
 .form-input-block {
     position: relative;
-    max-width: 560px;
+    max-width: 500px;
     width: 100%;
     margin: auto;
 
@@ -52,7 +52,7 @@ tp-form,
 
 tp-form.form {
     flex-shrink: 0;
-    width: 560px;
+    width: 500px;
     margin: 5vh auto auto;
 }
 
@@ -67,18 +67,6 @@ tp-form.form {
 
     mat-form-field {
         flex: 1;
-    }
-}
-
-.connection-uri-help-tooltip {
-    max-width: 360px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-
-    code {
-        margin-left: 4px;
-        font-size: inherit;
     }
 }
 

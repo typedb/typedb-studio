@@ -5,17 +5,20 @@
  */
 
 import { Injectable } from "@angular/core";
-import { Connection, SidebarState } from "../concept";
+import { ConnectionConfig, ConnectionJson } from "../concept/connection";
+import { SidebarState, Tool } from "../concept/view-state";
 import { StorageService, StorageWriteResult } from "./storage.service";
 
 const VIEW_STATE = "viewState";
 
 interface ViewStateData {
     sidebarState: SidebarState;
+    lastUsedTool: Tool;
 }
 
 const INITIAL_VIEW_STATE_DATA: ViewStateData = {
-    sidebarState: "expanded"
+    sidebarState: "expanded",
+    lastUsedTool: "query",
 };
 
 class ViewState {
@@ -48,11 +51,23 @@ class ViewState {
         viewState.sidebarState = value;
         this.writeStorage(viewState);
     }
+
+    lastUsedTool(): Tool {
+        const viewState = this.readStorage();
+        return viewState?.lastUsedTool || INITIAL_VIEW_STATE_DATA.lastUsedTool;
+    }
+
+    setLastUsedTool(value: Tool) {
+        const viewState = this.readStorage();
+        if (!viewState) return;
+        viewState.lastUsedTool = value;
+        this.writeStorage(viewState);
+    }
 }
 
 const CONNECTIONS = "connections";
 
-const INITIAL_CONNECTIONS: Connection[] = [];
+const INITIAL_CONNECTIONS: ConnectionConfig[] = [];
 
 class Connections {
 
@@ -62,15 +77,19 @@ class Connections {
         }
     }
 
-    list(): Connection[] {
+    list(): ConnectionConfig[] {
         const data = this.storage.read(CONNECTIONS);
-        if (data) return JSON.parse(data) as Connection[];
+        if (!data) return [];
+        const connectionJsons = JSON.parse(data) as Partial<ConnectionJson>[];
+        // TODO: throw / optionally report on illegal JSON
+        const connections = connectionJsons.map(x => ConnectionConfig.fromJSONOrNull(x));
+        if (connections.every(x => !!x)) return connections as ConnectionConfig[];
         else return [];
     }
 
-    placeAtFront(connection: Connection): StorageWriteResult {
-        const connections = [connection, ...this.list().filter(x => x.uri !== connection.uri)];
-        return this.storage.write(CONNECTIONS, JSON.stringify(connections));
+    placeAtFront(connection: ConnectionConfig): StorageWriteResult {
+        const connections = [connection, ...this.list().filter(x => x.url !== connection.url)];
+        return this.storage.write(CONNECTIONS, connections.map(x => x.toJSON()));
     }
 }
 

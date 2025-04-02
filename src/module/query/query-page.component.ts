@@ -10,6 +10,7 @@ import { Component, OnInit } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { map, Subject } from "rxjs";
 import { ButtonComponent } from "../../framework/button/button.component";
+import { AppDataService } from "../../service/app-data.service";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 
 @Component({
@@ -22,11 +23,11 @@ import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component"
 export class QueryPageComponent implements OnInit {
     data$ = new Subject<string>();
 
-    constructor(private http: HttpClient) {
+    constructor(private http: HttpClient, private appData: AppDataService) {
     }
 
     ngOnInit() {
-
+        this.appData.viewState.setLastUsedTool("query");
     }
 
     showAGraph() {

@@ -5,10 +5,9 @@
  */
 
 import { AsyncPipe } from "@angular/common";
-import { HttpClient } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import { BehaviorSubject, map, Subject } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { ButtonComponent } from "../../framework/button/button.component";
 import { PageScaffoldComponent, ResourceAvailability } from "../scaffold/page/page-scaffold.component";
 
@@ -20,19 +19,13 @@ import { PageScaffoldComponent, ResourceAvailability } from "../scaffold/page/pa
     imports: [ButtonComponent, RouterLink, AsyncPipe, PageScaffoldComponent],
 })
 export class HomeComponent implements OnInit {
-    data$ = new Subject<string>();
     availability$ = new BehaviorSubject<ResourceAvailability>("ready");
     hasConnections$ = new BehaviorSubject(false);
 
-    constructor(private http: HttpClient) {
+    constructor() {
     }
 
     ngOnInit() {
 
-    }
-
-    showAGraph() {
-        this.http.get(`https://raw.githubusercontent.com/alexjpwalker/typedb-studio-temp/refs/heads/master/graph.json`).pipe(map(x => JSON.stringify(x)))
-            .subscribe(x => this.data$.next(x));
     }
 }

@@ -6,7 +6,7 @@
 
 import { Component, EventEmitter, HostBinding, Input, Output, ViewChild } from "@angular/core";
 import { ActivatedRoute, RouterLink } from "@angular/router";
-import { SidebarState } from "../../../concept";
+import { SidebarState } from "../../../concept/view-state";
 import { AppDataService } from "../../../service/app-data.service";
 import { AsyncPipe, NgClass } from "@angular/common";
 import { SidebarLinkComponent } from "./link/sidebar-link.component";
@@ -17,7 +17,7 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { ModalComponent } from "../../../framework/modal";
 
 @Component({
-    selector: "tp-sidebar",
+    selector: "ts-sidebar",
     templateUrl: "./sidebar.component.html",
     styleUrls: ["./sidebar.component.scss"],
     standalone: true,

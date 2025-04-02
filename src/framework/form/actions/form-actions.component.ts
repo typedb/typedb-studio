@@ -11,6 +11,7 @@ import { SpinnerComponent } from "../../spinner/spinner.component";
 @Component({
     selector: "tp-form-actions",
     templateUrl: "form-actions.component.html",
+    styleUrls: ["form-actions.component.scss"],
     standalone: true,
     imports: [ButtonComponent, SpinnerComponent]
 })
@@ -32,6 +33,14 @@ export class FormActionsComponent {
 
     get submitEnabled(): boolean {
         return !this.isSubmitting && !this.submitDisabled;
+    }
+
+    get submitButtonClass(): string {
+        switch (this.submitButtonStyle) {
+            case "primary-outline green stroke": return `green`;
+            case "primary-outline red stroke": return `red`;
+            default: return ``;
+        }
     }
 
     onCancel() {

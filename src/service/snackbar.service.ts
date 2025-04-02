@@ -19,7 +19,7 @@ export class SnackbarService {
         const defaultConfig: MatSnackBarConfig<SnackbarData> = {
             data: { message, status },
             duration: undefined,
-            horizontalPosition: "center",
+            horizontalPosition: "right",
             verticalPosition: "bottom",
         };
         return this.snackbar.openFromComponent<SnackbarComponent, SnackbarData>(SnackbarComponent, Object.assign(defaultConfig, config));

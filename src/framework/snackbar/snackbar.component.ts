@@ -29,11 +29,13 @@ const statusIcons: Record<ColorStyle, string> = {
 })
 export class SnackbarComponent {
     readonly message: string;
+    readonly messageParts: string[];
     @HostBinding("class") readonly status: ColorStyle;
 
     constructor(private matSnackBarRef: MatSnackBarRef<SnackbarComponent>, @Inject(MAT_SNACK_BAR_DATA) data: SnackbarData) {
         this.message = data.message;
         this.status = data.status;
+        this.messageParts = data.message.split(`\n`);
     }
 
     close(): void {

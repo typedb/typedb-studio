@@ -1,7 +1,7 @@
 <mat-sidenav-container>
   <mat-sidenav class="left" disableClose mode="side" opened>
     <div class="tp-sidenav-container left" [ngClass]="{ 'collapsed': leftSidebarState === 'collapsed' }" >
-      <tp-sidebar (expandedStateChange)="leftSidebarState = $event"/>
+      <ts-sidebar (expandedStateChange)="leftSidebarState = $event"/>
     </div>
   </mat-sidenav>
 

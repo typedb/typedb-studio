@@ -10,7 +10,7 @@ import { AsyncPipe, NgClass, NgTemplateOutlet } from "@angular/common";
 import { map } from "rxjs";
 
 @Component({
-    selector: "tp-sidebar-link",
+    selector: "ts-sidebar-link",
     templateUrl: "./sidebar-link.component.html",
     styleUrls: ["./sidebar-link.component.scss"],
     standalone: true,

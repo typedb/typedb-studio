@@ -4,34 +4,110 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { ConnectionConfig, ConnectionStatus } from "../concept/connection";
-import { DriverStateService } from "./driver-state.service";
+import { catchError, map, switchMap, tap } from "rxjs";
+import { ConnectionConfig, ConnectionParams, isBasicParams } from "../concept/connection";
+
+export interface DriverConfig {
+    params: ConnectionParams;
+}
+
+function driverConfigOf(connectionConfig: ConnectionConfig): DriverConfig {
+    return { params: connectionConfig.params };
+}
 
 @Injectable({
     providedIn: "root",
 })
-export class ConnectionStateService {
+export class DriverStateService {
 
-    private _config?: ConnectionConfig;
+    private _status: "connected" | "connecting" | "disconnected" = "disconnected";
+    private _config?: DriverConfig;
 
-    constructor(private driver: DriverStateService) {}
+    constructor(private http: HttpClient) {}
 
     get status() {
-        return this.driver.status;
+        return this._status;
     }
 
     get config() {
         return this._config;
     }
 
-    init(config: ConnectionConfig) {
-        if (this.status !== "disconnected") throw `Internal error`; // TODO: error / report
-        this._config = config;
-        return this.driver.tryConnect(config);
+    tryConnect(config: ConnectionConfig) {
+        if (this._status !== "disconnected") throw `Internal error`; // TODO: error / report
+        this._status = "connecting";
+        this._config = driverConfigOf(config);
+        return this.signIn().pipe(
+            catchError((err) => {
+                this._status = "disconnected";
+                throw err;
+            }),
+            // switchMap((result) => {
+            //
+            // }),
+            // map((result) => {
+            //
+            // }),
+            // catchError((err) => {
+            // }),
+        );
+    }
+
+    private signIn() {
+        if (!this.config) throw `Internal error`;
+        return this.http.post(`${this.remoteOrigin}/v1/signin`, {
+            body: JSON.stringify({ username: this.config.params.username, password: this.config.params.password }),
+        }).pipe(
+            tap((result) => {
+                console.log(JSON.stringify(result));
+            }),
+        );
+    }
+
+    // private checkHealth() {
+    //     if (!this.config) return; // TODO: error / report
+    //     const origin = this.config.params;
+    //     const body = { username: this.config.params.username, password: this.config.params.password };
+    //     let response = await this.http.get(`${this.remoteOrigin}/api/v1/health`, {
+    //         headers: { "Content-Type": "application/json" },
+    //     });
+    //     if (response.ok) {
+    //         return { ok: new TypeDBHttpDriver(address, await response.text()) } as TypeDBResult<TypeDBHttpDriver>;
+    //     } else {
+    //         return { err: await response.text() } as TypeDBResult<TypeDBHttpDriver>;
+    //     }
+    // }
+
+    private get remoteOrigin(): string {
+        if (!this.config) throw `missing connection config`; // TODO: handle / report
+        const params = this.config.params;
+        if (isBasicParams(params)) return `http://${params.addresses[0]}`;
+        else return `http://${params.translatedAddresses[0].external}`; // TODO: ???
     }
 }
 
+// private fun tryConnectAsync(
+//     newConnectionName: String, onSuccess: () -> Unit, driverConstructor: () -> Driver
+// ): Any = coroutines.launchAndHandle(notificationSrv, LOGGER) {
+//     if (isConnecting || isConnected) return@launchAndHandle
+//     statusAtomic.set(CONNECTING)
+//     try {
+//         connectionName = newConnectionName
+//         _driver = driverConstructor()
+//         statusAtomic.set(CONNECTED)
+//         onSuccess()
+//
+//     } catch (e: TypeDBDriverException) {
+//         statusAtomic.set(DISCONNECTED)
+//         notificationSrv.userError(LOGGER, UNABLE_TO_CONNECT, e.message ?: "")
+//     } catch (e: java.lang.Exception) {
+//         statusAtomic.set(DISCONNECTED)
+//         notificationSrv.systemError(LOGGER, e, UNEXPECTED_ERROR)
+//     }
+// }
+//
 // private fun mayRunCommandAsync(function: () -> Unit) {
 //     if (hasRunningCommandAtomic.compareAndSet(expected = false, new = true)) {
 //         coroutines.launchAndHandle(notificationSrv, LOGGER) { function() }.invokeOnCompletion {
@@ -39,7 +115,7 @@ export class ConnectionStateService {
 //         }
 //     }
 // }
-
+//
 // fun tryReconnectAsync(newPassword: String) {
 //     close()
 //     val username = dataSrv.connection.username!!
@@ -71,7 +147,7 @@ export class ConnectionStateService {
 //     transaction.close()
 //     transaction.type = type
 // }
-
+//
 // fun refreshDatabaseList() = mayRunCommandAsync { refreshDatabaseListFn() }
 //
 // private fun refreshDatabaseListFn() {
@@ -127,7 +203,7 @@ export class ConnectionStateService {
 // ) = coroutines.launchAndHandle(notificationSrv, LOGGER) { transaction.close(message, *params) }
 //
 // fun closeAsync() = coroutines.launchAndHandle(notificationSrv, LOGGER) { close() }
-
+//
 // fun close() {
 //     if (
 //         statusAtomic.compareAndSet(expected = CONNECTED, new = DISCONNECTED) ||
