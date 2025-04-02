@@ -1,8 +1,0 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-match $file isa file, has file-name "typeql/reasoner/negation.feature";
-$file-collaborator(file: $file, collaborator: $c) isa file-collaborator;
-$c has user-name $user-name;
-get;
