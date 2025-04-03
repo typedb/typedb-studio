@@ -7,6 +7,8 @@
 import { Injectable } from "@angular/core";
 import { ConnectionConfig, ConnectionStatus } from "../concept/connection";
 import { DriverStateService } from "./driver-state.service";
+import { catchError } from "rxjs";
+import { SnackbarService } from "./snackbar.service";
 
 @Injectable({
     providedIn: "root",
@@ -15,7 +17,7 @@ export class ConnectionStateService {
 
     private _config?: ConnectionConfig;
 
-    constructor(private driver: DriverStateService) {}
+    constructor(private driver: DriverStateService, private snackbar: SnackbarService) {}
 
     get status() {
         return this.driver.status;
@@ -28,7 +30,14 @@ export class ConnectionStateService {
     init(config: ConnectionConfig) {
         if (this.status !== "disconnected") throw `Internal error`; // TODO: error / report
         this._config = config;
-        return this.driver.tryConnect(config);
+        this.snackbar.infoPersistent("Testing connection...");
+        return this.driver.tryConnect(config).pipe(
+            catchError((err) => {
+                // TODO: allow user to save this connection and proceed anyway
+                this._config = undefined;
+                throw err;
+            }),
+        );
     }
 }
 
