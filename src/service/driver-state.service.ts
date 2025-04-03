@@ -9,6 +9,8 @@ import { Injectable } from "@angular/core";
 import { catchError, map, switchMap, tap } from "rxjs";
 import { ConnectionConfig, ConnectionParams, isBasicParams } from "../concept/connection";
 
+export type DriverStatus = "connected" | "connecting" | "disconnected";
+
 export interface DriverConfig {
     params: ConnectionParams;
 }
@@ -17,15 +19,13 @@ function driverConfigOf(connectionConfig: ConnectionConfig): DriverConfig {
     return { params: connectionConfig.params };
 }
 
-@Injectable({
-    providedIn: "root",
-})
-export class DriverStateService {
+export class Driver {
 
-    private _status: "connected" | "connecting" | "disconnected" = "disconnected";
+    private _status: DriverStatus = "disconnected";
     private _config?: DriverConfig;
+    private api: Api;
 
-    constructor(private http: HttpClient) {}
+    constructor(private _http: HttpClient) {}
 
     get status() {
         return this._status;
@@ -35,50 +35,47 @@ export class DriverStateService {
         return this._config;
     }
 
+    private set status(value: DriverStatus) {
+        this._status = value;
+    }
+
+    private set config(value: DriverConfig | undefined) {
+        this._config = value;
+    }
+
     tryConnect(config: ConnectionConfig) {
-        if (this._status !== "disconnected") throw `Internal error`; // TODO: error / report
-        this._status = "connecting";
-        this._config = driverConfigOf(config);
-        return this.signIn().pipe(
+        if (this.status !== "disconnected") throw `Internal error`; // TODO: error / report
+        this.status = "connecting";
+        this.config = driverConfigOf(config);
+        return this.getAuthToken().pipe(
+            tap((resp) => this.token = resp.token),
+            switchMap(() => this.checkHealth()),
             catchError((err) => {
-                this._status = "disconnected";
+                this.status = "disconnected";
                 throw err;
             }),
-            // switchMap((result) => {
-            //
-            // }),
-            // map((result) => {
-            //
-            // }),
-            // catchError((err) => {
-            // }),
+            tap(() => this.status = "connected")
         );
     }
 
-    private signIn() {
+    private getAuthToken() {
         if (!this.config) throw `Internal error`;
-        return this.http.post(`${this.remoteOrigin}/v1/signin`, {
-            body: JSON.stringify({ username: this.config.params.username, password: this.config.params.password }),
-        }).pipe(
-            tap((result) => {
-                console.log(JSON.stringify(result));
-            }),
+        return this.http.post<SignInResponse>(
+            `${this.remoteOrigin}/v1/signin`,
+            { username: this.config.params.username, password: this.config.params.password, }
         );
     }
 
-    // private checkHealth() {
-    //     if (!this.config) return; // TODO: error / report
-    //     const origin = this.config.params;
-    //     const body = { username: this.config.params.username, password: this.config.params.password };
-    //     let response = await this.http.get(`${this.remoteOrigin}/api/v1/health`, {
-    //         headers: { "Content-Type": "application/json" },
-    //     });
-    //     if (response.ok) {
-    //         return { ok: new TypeDBHttpDriver(address, await response.text()) } as TypeDBResult<TypeDBHttpDriver>;
-    //     } else {
-    //         return { err: await response.text() } as TypeDBResult<TypeDBHttpDriver>;
-    //     }
-    // }
+    private checkHealth() {
+        if (!this.config || !this.token) throw `Internal error`;
+        return this.http.get(`${this.remoteOrigin}/v1/health`, {
+            headers: { "Authorization": `Bearer ${this.token}` },
+        });
+    }
+
+    private httpGet<RES = Object>(url: string, options?: { headers?: Record<string, string> }) {
+        return this._http
+    }
 
     private get remoteOrigin(): string {
         if (!this.config) throw `missing connection config`; // TODO: handle / report
@@ -88,26 +85,13 @@ export class DriverStateService {
     }
 }
 
-// private fun tryConnectAsync(
-//     newConnectionName: String, onSuccess: () -> Unit, driverConstructor: () -> Driver
-// ): Any = coroutines.launchAndHandle(notificationSrv, LOGGER) {
-//     if (isConnecting || isConnected) return@launchAndHandle
-//     statusAtomic.set(CONNECTING)
-//     try {
-//         connectionName = newConnectionName
-//         _driver = driverConstructor()
-//         statusAtomic.set(CONNECTED)
-//         onSuccess()
-//
-//     } catch (e: TypeDBDriverException) {
-//         statusAtomic.set(DISCONNECTED)
-//         notificationSrv.userError(LOGGER, UNABLE_TO_CONNECT, e.message ?: "")
-//     } catch (e: java.lang.Exception) {
-//         statusAtomic.set(DISCONNECTED)
-//         notificationSrv.systemError(LOGGER, e, UNEXPECTED_ERROR)
-//     }
-// }
-//
+class Api {
+
+    constructor(private driver: Driver, private http: HttpClient) {}
+
+
+}
+
 // private fun mayRunCommandAsync(function: () -> Unit) {
 //     if (hasRunningCommandAtomic.compareAndSet(expected = false, new = true)) {
 //         coroutines.launchAndHandle(notificationSrv, LOGGER) { function() }.invokeOnCompletion {
