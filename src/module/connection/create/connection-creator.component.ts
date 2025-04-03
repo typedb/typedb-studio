@@ -19,7 +19,7 @@ import { SnackbarService } from "../../../service/snackbar.service";
 import { PageScaffoldComponent, ResourceAvailability } from "../../scaffold/page/page-scaffold.component";
 import { Router } from "@angular/router";
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidatorFn } from "@angular/forms";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, combineLatest, filter, map, startWith, switchMap, tap } from "rxjs";
 import { FormActionsComponent, FormComponent, FormInputComponent, FormOption, FormToggleGroupComponent, requiredValidator } from "../../../framework/form";
 
 const connectionUrlValidator: ValidatorFn = (control: AbstractControl) => {
@@ -64,6 +64,14 @@ export class ConnectionCreatorComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        combineLatest([this.form.controls.url.valueChanges]).pipe(
+            filter(([url]) => !this.form.controls.name.dirty && !!url),
+            map(([url]) => parseConnectionUrlOrNull(url!)),
+            filter(params => !!params),
+            map(params => params!)
+        ).subscribe((params) => {
+            if (!this.form.controls.name.dirty) this.form.patchValue({ name: ConnectionConfig.autoName(params) });
+        });
     }
 
     get advancedConfigActive() {

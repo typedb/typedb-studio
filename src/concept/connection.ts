@@ -68,6 +68,11 @@ export function isTranslatedParams(params: ConnectionParams): params is Connecti
     return `translatedAddresses` in params;
 }
 
+export function remoteOrigin(params: ConnectionParams) {
+    if (isBasicParams(params)) return `http://${params.addresses[0]}`;
+    else return `http://${params.translatedAddresses[0].external}`;
+}
+
 export interface ConnectionPreferences {
     autoReconnectOnAppStartup: boolean;
 }

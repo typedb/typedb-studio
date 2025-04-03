@@ -4,26 +4,23 @@
       Welcome to TypeDB Studio
     </h1>
     <p class="tp-subtitle">Connect to TypeDB and explore your data in an interactive visual environment</p>
-    @if (hasConnections$ | async) {
-      <p>Hello World</p>
-    } @else {
-      <div class="tp-bento-container row">
-        <a class="tp-bento-box hoverable tp-icon-card" routerLink="/connections/new">
-          <i class="fa-thin fa-server"></i>
-          <div class="tp-icon-card-content">
-            <h3>Connect to instance</h3>
-            <p>Connect to a remote or local instance of TypeDB</p>
-          </div>
-        </a>
-        <a class="tp-bento-box hoverable tp-icon-card" href="https://typedb.com/docs/home/crash-course" target="_blank">
-          <i class="fa-thin fa-file-lines"></i>
-          <div class="tp-icon-card-content">
-            <h3>Browse tutorials<i class="fa-light fa-arrow-up-right"></i></h3>
-            <p>Learn TypeDB through our crash course and other resources</p>
-          </div>
-        </a>
-      </div>
-    }
+
+    <div class="tp-bento-container row">
+      <a class="tp-bento-box hoverable tp-icon-card" routerLink="/connections/new">
+        <i class="fa-thin fa-server"></i>
+        <div class="tp-icon-card-content">
+          <h3>Connect to instance</h3>
+          <p>Connect to a remote or local instance of TypeDB</p>
+        </div>
+      </a>
+      <a class="tp-bento-box hoverable tp-icon-card" href="https://typedb.com/docs/home/crash-course" target="_blank">
+        <i class="fa-thin fa-file-lines"></i>
+        <div class="tp-icon-card-content">
+          <h3>Browse tutorials<i class="fa-light fa-arrow-up-right"></i></h3>
+          <p>Learn TypeDB through our crash course and other resources</p>
+        </div>
+      </a>
+    </div>
 
     <div class="tp-bento-container row tp-bento-box">
       <div>

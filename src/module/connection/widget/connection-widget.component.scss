@@ -1,0 +1,57 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "shapes";
+@use "primary";
+@use "secondary";
+
+button {
+    padding: 8px 12px;
+    border-radius: shapes.$border-radius-panel;
+    display: flex;
+    align-items: center;
+
+    &:hover, &:active {
+        background: secondary.$purple;
+    }
+
+    i.db-icon {
+        margin-right: 8px;
+    }
+
+    i.ts-beacon {
+        font-size: 8px;
+        width: 8px;
+        height: 8px;
+        margin-left: 8px;
+
+        &.ok {
+            color: primary.$green;
+            //animation: beacon 3s ease-in-out 0s infinite;
+        }
+
+        &.warn {
+            color: secondary.$yellow;
+            animation: beacon 1.5s ease-in-out 0s infinite;
+        }
+
+        &.error {
+            color: primary.$red;
+        }
+
+        &.inactive {
+            color: secondary.$light-grey;
+        }
+    }
+}
+
+@keyframes beacon {
+    0% { opacity: 1 }
+    10% { opacity: 1 }
+    50% { opacity: 0.25 }
+    90% { opacity: 1 }
+    100% { opacity: 1 }
+}

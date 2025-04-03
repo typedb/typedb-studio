@@ -6,8 +6,8 @@
 
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { catchError, map, switchMap, tap } from "rxjs";
-import { ConnectionConfig, ConnectionParams, isBasicParams } from "../concept/connection";
+import { catchError, of, switchMap, tap } from "rxjs";
+import { ConnectionConfig, ConnectionParams, remoteOrigin } from "../concept/connection";
 
 export type DriverStatus = "connected" | "connecting" | "disconnected";
 
@@ -19,11 +19,20 @@ function driverConfigOf(connectionConfig: ConnectionConfig): DriverConfig {
     return { params: connectionConfig.params };
 }
 
-export class Driver {
+interface SignInOkResponse {
+    token: string;
+}
+
+type SignInResponse = SignInOkResponse;
+
+@Injectable({
+    providedIn: "root",
+})
+export class DriverStateService {
 
     private _status: DriverStatus = "disconnected";
     private _config?: DriverConfig;
-    private api: Api;
+    private token?: string;
 
     constructor(private _http: HttpClient) {}
 
@@ -47,49 +56,42 @@ export class Driver {
         if (this.status !== "disconnected") throw `Internal error`; // TODO: error / report
         this.status = "connecting";
         this.config = driverConfigOf(config);
-        return this.getAuthToken().pipe(
-            tap((resp) => this.token = resp.token),
-            switchMap(() => this.checkHealth()),
+        return this.checkHealth().pipe(
+            tap(() => this.status = "connected"),
             catchError((err) => {
                 this.status = "disconnected";
                 throw err;
             }),
-            tap(() => this.status = "connected")
-        );
-    }
-
-    private getAuthToken() {
-        if (!this.config) throw `Internal error`;
-        return this.http.post<SignInResponse>(
-            `${this.remoteOrigin}/v1/signin`,
-            { username: this.config.params.username, password: this.config.params.password, }
         );
     }
 
     private checkHealth() {
-        if (!this.config || !this.token) throw `Internal error`;
-        return this.http.get(`${this.remoteOrigin}/v1/health`, {
-            headers: { "Authorization": `Bearer ${this.token}` },
-        });
+        return this.apiGet(`/v1/health`);
     }
 
-    private httpGet<RES = Object>(url: string, options?: { headers?: Record<string, string> }) {
-        return this._http
+    // TODO: If unauthenticated, refresh token
+    private apiGet<RES = Object>(path: string, options?: { headers?: Record<string, string> }) {
+        return this.getToken().pipe(
+            switchMap((resp) => {
+                if (!this.config) throw `Internal error`;
+                return this._http.get<RES>(`${remoteOrigin(this.config.params)}${path}`, { headers: Object.assign({ "Authorization": `Bearer ${resp.token}` }, options?.headers || {})});
+            }),
+        );
     }
 
-    private get remoteOrigin(): string {
-        if (!this.config) throw `missing connection config`; // TODO: handle / report
-        const params = this.config.params;
-        if (isBasicParams(params)) return `http://${params.addresses[0]}`;
-        else return `http://${params.translatedAddresses[0].external}`; // TODO: ???
+    private getToken() {
+        if (this.token) {
+            const resp: SignInResponse = { token: this.token };
+            return of(resp);
+        }
+        if (!this.config) throw `Internal error`;
+        return this._http.post<SignInResponse>(
+            `${remoteOrigin(this.config.params)}/v1/signin`,
+            { username: this.config.params.username, password: this.config.params.password, }
+        ).pipe(
+            tap((resp) => this.token = resp.token)
+        );
     }
-}
-
-class Api {
-
-    constructor(private driver: Driver, private http: HttpClient) {}
-
-
 }
 
 // private fun mayRunCommandAsync(function: () -> Unit) {
