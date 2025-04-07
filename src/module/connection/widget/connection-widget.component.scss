@@ -8,11 +8,17 @@
 @use "primary";
 @use "secondary";
 
+:host {
+    display: flex;
+    align-items: center;
+}
+
 button {
     padding: 8px 12px;
     border-radius: shapes.$border-radius-panel;
     display: flex;
     align-items: center;
+    color: primary.$grey;
 
     &:hover, &:active {
         background: secondary.$purple;
@@ -30,7 +36,7 @@ button {
 
         &.ok {
             color: primary.$green;
-            //animation: beacon 3s ease-in-out 0s infinite;
+            //animation: shimmer 3s ease-in-out 0s infinite;
         }
 
         &.warn {
@@ -54,4 +60,9 @@ button {
     50% { opacity: 0.25 }
     90% { opacity: 1 }
     100% { opacity: 1 }
+}
+
+.fa-chevron-right {
+    margin-left: 10px;
+    margin-right: 6px;
 }

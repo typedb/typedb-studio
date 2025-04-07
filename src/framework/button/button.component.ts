@@ -25,7 +25,7 @@ export type ButtonStyle =
 })
 export class ButtonComponent {
     @Input() height = 40;
-    @Input() buttonStyle?: ButtonStyle;
+    @Input() buttonStyle: ButtonStyle = "secondary";
     @Input() enabled = true;
     @Input() type: HTMLButtonElement["type"] = "button";
     @Input({ required: true }) buttonId!: string;

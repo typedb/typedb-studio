@@ -1,13 +1,7 @@
 <ts-page-scaffold pageAvailability="ready">
-  <section class="page-not-found-section">
-    @if (data$ | async; as data) {
-      {{ data }}
-    } @else {
-      <div class="light-banner">200</div>
-      <div class="light-banner-subtitle">Page found</div>
-      <p>We're delighted to inform you, the page you requested could be found.</p>
-      <br/>
-      <tp-button buttonStyle="primary-outline green stroke" buttonId="goHome" (click)="showAGraph()">I hate graphs. Show me some plain text</tp-button>
-    }
-  </section>
+  <div class="action-bar">
+    <tp-button buttonId="openTransaction" (click)="openTransaction()" [enabled]="(canOpenTransaction$ | async)!">Open transaction</tp-button>
+    <tp-button buttonId="closeTransaction" (click)="closeTransaction()" [enabled]="(canCloseTransaction$ | async)!">Close transaction</tp-button>
+    <tp-button buttonId="commitTransaction" (click)="commitTransaction()" [enabled]="(canCommitTransaction$ | async)!">Commit transaction</tp-button>
+  </div>
 </ts-page-scaffold>

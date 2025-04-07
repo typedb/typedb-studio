@@ -137,3 +137,13 @@ export interface ConnectionJson {
 }
 
 export type ConnectionStatus = "connected" | "connecting" | "disconnected";
+
+export interface Database {
+    name: string;
+}
+
+export const DEFAULT_DATABASE_NAME = "default";
+
+export function databasesSortedByName(databases: Database[]) {
+    return [...databases].sort((a, b) => a.name.localeCompare(b.name));
+}

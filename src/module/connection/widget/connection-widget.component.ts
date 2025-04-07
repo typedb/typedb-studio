@@ -4,15 +4,17 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Component } from "@angular/core";
+import { AsyncPipe } from "@angular/common";
+import { Component, HostBinding } from "@angular/core";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { ConnectionStatus } from "../../../concept/connection";
-import { ConnectionStateService } from "../../../service/connection-state.service";
+import { combineLatest, map } from "rxjs";
+import { DriverStateService, DriverStatus } from "../../../service/driver-state.service";
 
-const statusStyleMap: { [K in ConnectionStatus]: string } = {
-    connected: "ok",
+const statusStyleMap: { [K in DriverStatus]: string } = {
+    initial: "error",
     connecting: "warn",
-    disconnected: "error",
+    connected: "ok",
+    reconnecting: "warn",
 };
 
 @Component({
@@ -20,17 +22,14 @@ const statusStyleMap: { [K in ConnectionStatus]: string } = {
     templateUrl: "./connection-widget.component.html",
     styleUrls: ["./connection-widget.component.scss"],
     standalone: true,
-    imports: [MatTooltipModule],
+    imports: [MatTooltipModule, AsyncPipe],
 })
 export class ConnectionWidgetComponent {
 
-    constructor(private connection: ConnectionStateService) {}
+    beaconClass$ = this.driver.status$.pipe(map(status => `ts-beacon fa-solid fa-circle ${statusStyleMap[status]}`));
+    connectionName$ = this.driver.config$.pipe(map(x => x?.name ?? `No connection selected`));
+    databaseWidgetVisible$ = this.driver.status$.pipe(map((status) => ["connected", "reconnecting"].includes(status)));
+    databaseName$ = this.driver.database$.pipe(map(db => db?.name ?? `No database selected`));
 
-    get connectionName(): string {
-        return this.connection.config?.name ?? `No connection selected`;
-    }
-
-    get beaconClass(): string {
-        return `ts-beacon fa-solid fa-circle ${statusStyleMap[this.connection.status]}`;
-    }
+    constructor(private driver: DriverStateService) {}
 }

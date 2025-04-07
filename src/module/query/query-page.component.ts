@@ -8,9 +8,10 @@ import { AsyncPipe } from "@angular/common";
 import { HttpClient } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import { map, Subject } from "rxjs";
+import { BehaviorSubject, map, Subject } from "rxjs";
 import { ButtonComponent } from "../../framework/button/button.component";
 import { AppDataService } from "../../service/app-data.service";
+import { DriverStateService } from "../../service/driver-state.service";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 
 @Component({
@@ -21,17 +22,27 @@ import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component"
     imports: [ButtonComponent, RouterLink, AsyncPipe, PageScaffoldComponent],
 })
 export class QueryPageComponent implements OnInit {
-    data$ = new Subject<string>();
+    transaction$ = new BehaviorSubject<string | null>(null);
+    canOpenTransaction$ = this.transaction$.pipe(map(x => x == null));
+    canCloseTransaction$ = this.transaction$.pipe(map(x => x != null));
+    canCommitTransaction$ = new BehaviorSubject(false);
 
-    constructor(private http: HttpClient, private appData: AppDataService) {
+    constructor(private driver: DriverStateService, private appData: AppDataService) {
     }
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
     }
 
-    showAGraph() {
-        this.http.get(`https://raw.githubusercontent.com/alexjpwalker/typedb-studio-temp/refs/heads/master/graph.json`).pipe(map(x => JSON.stringify(x)))
-            .subscribe(x => this.data$.next(x));
+    openTransaction() {
+
+    }
+
+    closeTransaction() {
+
+    }
+
+    commitTransaction() {
+
     }
 }

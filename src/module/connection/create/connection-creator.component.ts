@@ -13,13 +13,14 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { CONNECTION_URL_PLACEHOLDER, ConnectionConfig, parseConnectionUrlOrNull } from "../../../concept/connection";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
+import { INTERNAL_ERROR } from "../../../framework/util/strings";
 import { AppDataService } from "../../../service/app-data.service";
-import { ConnectionStateService } from "../../../service/connection-state.service";
+import { DriverStateService } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { PageScaffoldComponent, ResourceAvailability } from "../../scaffold/page/page-scaffold.component";
 import { Router } from "@angular/router";
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidatorFn } from "@angular/forms";
-import { BehaviorSubject, combineLatest, filter, map, startWith, switchMap, tap } from "rxjs";
+import { BehaviorSubject, combineLatest, filter, map } from "rxjs";
 import { FormActionsComponent, FormComponent, FormInputComponent, FormOption, FormToggleGroupComponent, requiredValidator } from "../../../framework/form";
 
 const connectionUrlValidator: ValidatorFn = (control: AbstractControl) => {
@@ -59,7 +60,7 @@ export class ConnectionCreatorComponent implements OnInit {
 
     constructor(
         private formBuilder: FormBuilder, private appData: AppDataService,
-        private connectionState: ConnectionStateService, private snackbar: SnackbarService, private location: Location,
+        private driver: DriverStateService, private snackbar: SnackbarService, private location: Location,
         private router: Router,
     ) {}
 
@@ -93,13 +94,13 @@ export class ConnectionCreatorComponent implements OnInit {
 
     submit() {
         const config = this.buildConnectionConfigOrNull();
-        if (!config) throw `Internal error`;
+        if (!config) throw INTERNAL_ERROR;
         this.form.disable();
-        this.connectionState.init(config).subscribe({
-            next: () => {
+        this.driver.tryConnectAndSetupDatabases(config).subscribe({
+            next: (databases) => {
                 this.snackbar.success(`Connected`);
                 this.router.navigate([this.lastUsedToolRoute()]).then((navigated) => {
-                    if (!navigated) throw `Internal error`;
+                    if (!navigated) throw INTERNAL_ERROR;
                 });
             },
             error: (err) => {

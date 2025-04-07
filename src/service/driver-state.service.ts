@@ -6,18 +6,12 @@
 
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { catchError, of, switchMap, tap } from "rxjs";
-import { ConnectionConfig, ConnectionParams, remoteOrigin } from "../concept/connection";
+import { BehaviorSubject, catchError, map, Observable, of, switchMap, tap } from "rxjs";
+import { ConnectionConfig, Database, databasesSortedByName, DEFAULT_DATABASE_NAME, remoteOrigin } from "../concept/connection";
+import { requireValue } from "../framework/util/observable";
+import { INTERNAL_ERROR } from "../framework/util/strings";
 
-export type DriverStatus = "connected" | "connecting" | "disconnected";
-
-export interface DriverConfig {
-    params: ConnectionParams;
-}
-
-function driverConfigOf(connectionConfig: ConnectionConfig): DriverConfig {
-    return { params: connectionConfig.params };
-}
+export type DriverStatus = "initial" | "connecting" | "connected" | "reconnecting";
 
 interface SignInOkResponse {
     token: string;
@@ -25,41 +19,63 @@ interface SignInOkResponse {
 
 type SignInResponse = SignInOkResponse;
 
+interface DatabasesListOkResponse {
+    databases: Database[];
+}
+
+type DatabasesListResponse = DatabasesListOkResponse;
+
 @Injectable({
     providedIn: "root",
 })
 export class DriverStateService {
 
-    private _status: DriverStatus = "disconnected";
-    private _config?: DriverConfig;
+    private _config$ = new BehaviorSubject<ConnectionConfig | null>(null);
+    private _status$ = new BehaviorSubject<DriverStatus>("initial");
     private token?: string;
+    private _database$ = new BehaviorSubject<Database | null>(null);
+    private _databaseList$ = new BehaviorSubject<Database[] | null>(null);
 
-    constructor(private _http: HttpClient) {}
+    constructor(private http: HttpClient) {}
 
-    get status() {
-        return this._status;
+    get status$(): Observable<DriverStatus> {
+        return this._status$;
     }
 
-    get config() {
-        return this._config;
+    get config$(): Observable<ConnectionConfig | null> {
+        return this._config$;
     }
 
-    private set status(value: DriverStatus) {
-        this._status = value;
+    get database$(): Observable<Database | null> {
+        return this._database$;
     }
 
-    private set config(value: DriverConfig | undefined) {
-        this._config = value;
+    get databaseList$(): Observable<Database[] | null> {
+        return this._databaseList$;
     }
 
-    tryConnect(config: ConnectionConfig) {
-        if (this.status !== "disconnected") throw `Internal error`; // TODO: error / report
-        this.status = "connecting";
-        this.config = driverConfigOf(config);
-        return this.checkHealth().pipe(
-            tap(() => this.status = "connected"),
+    private requireConfig() {
+        return requireValue(this._config$);
+    }
+
+    private requireDatabaseList() {
+        return requireValue(this._databaseList$);
+    }
+
+    tryConnectAndSetupDatabases(config: ConnectionConfig) {
+        if (this._status$.value !== "initial") throw INTERNAL_ERROR;
+        this._config$.next(config);
+        this._status$.next("connecting");
+
+        return this.refreshDatabaseList().pipe(
+            switchMap((res) => {
+                if (!res.databases.length) return this.setupDefaultDatabase();
+                if (res.databases.length === 1) this.selectDatabase(res.databases[0]);
+                return of(undefined); // TODO: connect to designated default database for this server
+            }),
+            tap(() => this._status$.next("connected")),
             catchError((err) => {
-                this.status = "disconnected";
+                this._status$.next("initial");
                 throw err;
             }),
         );
@@ -69,12 +85,58 @@ export class DriverStateService {
         return this.apiGet(`/v1/health`);
     }
 
+    private refreshDatabaseList() {
+        return this.apiGet<DatabasesListResponse>(`/v1/databases`).pipe(
+            tap((res) => this._databaseList$.next(databasesSortedByName(res.databases))),
+        );
+    }
+
+    private createDatabase(name: string) {
+        return this.apiPost(`/v1/databases/${name}`, {}).pipe(
+            tap(() => {
+                const databaseList = this.requireDatabaseList();
+                this._databaseList$.next(databasesSortedByName([...databaseList, { name }]));
+            }),
+        )
+    }
+
+    private setupDefaultDatabase() {
+        return this.createDatabase(DEFAULT_DATABASE_NAME).pipe(
+            tap(() => {
+                const databaseList = this.requireDatabaseList();
+                this.selectDatabase(databaseList[0])
+            })
+        );
+    }
+
+    selectDatabase(database: Database) {
+        const savedDatabase = this._databaseList$.value?.find(x => x.name === database.name);
+        if (!savedDatabase) throw INTERNAL_ERROR;
+        this._database$.next(savedDatabase);
+    }
+
     // TODO: If unauthenticated, refresh token
     private apiGet<RES = Object>(path: string, options?: { headers?: Record<string, string> }) {
         return this.getToken().pipe(
             switchMap((resp) => {
-                if (!this.config) throw `Internal error`;
-                return this._http.get<RES>(`${remoteOrigin(this.config.params)}${path}`, { headers: Object.assign({ "Authorization": `Bearer ${resp.token}` }, options?.headers || {})});
+                const { params } = this.requireConfig();
+                return this.http.get<RES>(
+                    `${remoteOrigin(params)}${path}`,
+                    { headers: Object.assign({ "Authorization": `Bearer ${resp.token}` }, options?.headers || {})}
+                );
+            }),
+        );
+    }
+
+    private apiPost<RES = Object, BODY = Object>(path: string, body: BODY, options?: { headers?: Record<string, string>}) {
+        return this.getToken().pipe(
+            switchMap((resp) => {
+                const { params } = this.requireConfig();
+                return this.http.post<RES>(
+                    `${remoteOrigin(params)}${path}`,
+                    body,
+                    { headers: Object.assign({ "Authorization": `Bearer ${resp.token}` }, options?.headers || {})}
+                );
             }),
         );
     }
@@ -84,10 +146,9 @@ export class DriverStateService {
             const resp: SignInResponse = { token: this.token };
             return of(resp);
         }
-        if (!this.config) throw `Internal error`;
-        return this._http.post<SignInResponse>(
-            `${remoteOrigin(this.config.params)}/v1/signin`,
-            { username: this.config.params.username, password: this.config.params.password, }
+        const { params } = this.requireConfig();
+        return this.http.post<SignInResponse>(
+            `${remoteOrigin(params)}/v1/signin`, { username: params.username, password: params.password }
         ).pipe(
             tap((resp) => this.token = resp.token)
         );

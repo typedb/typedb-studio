@@ -6,3 +6,4 @@
 
 export const LOADING = "Loading..."
 export const NO_ITEMS_SELECTED = "No items selected";
+export const INTERNAL_ERROR = `Internal error`;

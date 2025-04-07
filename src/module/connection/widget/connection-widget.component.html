@@ -1,3 +1,9 @@
 <button>
-  <i class="db-icon fa-thin fa-server"></i> {{ connectionName }} <i [class]="beaconClass" matTooltip="Ping is 17ms" matTooltipPosition="below"></i>
+  <i class="db-icon fa-light fa-server"></i> {{ connectionName$ | async }} <i [class]="beaconClass$ | async"></i>
 </button>
+@if (databaseWidgetVisible$ | async) {
+  <i class="fa-light fa-chevron-right"></i>
+  <button>
+    <i class="db-icon fa-light fa-database"></i> {{ databaseName$ | async }}
+  </button>
+}
