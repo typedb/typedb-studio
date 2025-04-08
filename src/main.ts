@@ -10,7 +10,7 @@ import { bootstrapApplication } from "@angular/platform-browser";
 import { provideAnimations } from "@angular/platform-browser/animations";
 import { environment } from "./environments/environment";
 import { RootComponent } from "./root.component";
-import { importProvidersFrom, inject } from "@angular/core";
+import { ErrorHandler, importProvidersFrom, inject } from "@angular/core";
 import { MAT_RIPPLE_GLOBAL_OPTIONS, RippleGlobalOptions } from "@angular/material/core";
 import { FirebaseOptions, initializeApp, provideFirebaseApp } from "@angular/fire/app";
 import { getAuth, provideAuth } from "@angular/fire/auth";
@@ -31,6 +31,7 @@ import "posthog-js/dist/tracing-headers";
 import "posthog-js/dist/web-vitals";
 import "posthog-js/dist/dead-clicks-autocapture";
 import posthog from "posthog-js/dist/module.no-external";
+import { StudioErrorHandler } from "./service/error-handler.service";
 
 const rippleGlobalConfig: RippleGlobalOptions = {
     disabled: true,
@@ -79,6 +80,7 @@ bootstrapApplication(RootComponent, {
         { provide: TitleStrategy, useClass: TypeDBStudioTitleStrategy },
         provideHttpClient(),
         provideAnimations(),
+        { provide: ErrorHandler, useClass: StudioErrorHandler },
         importProvidersFrom(
             provideFirebaseApp(() => initializeApp(firebaseOptions)),
             provideAuth(() => {

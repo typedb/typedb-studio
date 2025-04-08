@@ -26,10 +26,16 @@ const statusStyleMap: { [K in DriverStatus]: string } = {
 })
 export class ConnectionWidgetComponent {
 
-    beaconClass$ = this.driver.status$.pipe(map(status => `ts-beacon fa-solid fa-circle ${statusStyleMap[status]}`));
-    connectionName$ = this.driver.config$.pipe(map(x => x?.name ?? `No connection selected`));
+    connectionText$ = this.driver.config$.pipe(map(x => x?.name ?? `No connection selected`));
+    connectionBeaconClass$ = this.driver.status$.pipe(map(status => `ts-beacon fa-solid fa-circle ${statusStyleMap[status]}`));
+
     databaseWidgetVisible$ = this.driver.status$.pipe(map((status) => ["connected", "reconnecting"].includes(status)));
-    databaseName$ = this.driver.database$.pipe(map(db => db?.name ?? `No database selected`));
+    databaseText$ = this.driver.database$.pipe(map(db => db?.name ?? `No database selected`));
+
+    transactionWidgetVisible$ = this.driver.database$.pipe(map(db => !!db));
+    transactionText$ = this.driver.transaction$.pipe(map(tx => tx?.type ?? `No active transaction`));
+    transactionHasUncommittedChanges$ = this.driver.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
+    transactionWidgetTooltip$ = this.transactionHasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
 
     constructor(private driver: DriverStateService) {}
 }

@@ -1,6 +1,8 @@
 <ts-page-scaffold pageAvailability="ready">
   <div class="action-bar">
-    <tp-button buttonId="openTransaction" (click)="openTransaction()" [enabled]="(canOpenTransaction$ | async)!">Open transaction</tp-button>
+    <tp-button buttonId="openReadTransaction" (click)="openTransaction('read')" [enabled]="(canOpenTransaction$ | async)!">Open read transaction</tp-button>
+    <tp-button buttonId="openWriteTransaction" (click)="openTransaction('write')" [enabled]="(canOpenTransaction$ | async)!">Open write transaction</tp-button>
+    <tp-button buttonId="openSchemaTransaction" (click)="openTransaction('schema')" [enabled]="(canOpenTransaction$ | async)!">Open schema transaction</tp-button>
     <tp-button buttonId="closeTransaction" (click)="closeTransaction()" [enabled]="(canCloseTransaction$ | async)!">Close transaction</tp-button>
     <tp-button buttonId="commitTransaction" (click)="commitTransaction()" [enabled]="(canCommitTransaction$ | async)!">Commit transaction</tp-button>
   </div>

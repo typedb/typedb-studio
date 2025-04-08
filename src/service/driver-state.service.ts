@@ -4,26 +4,29 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { BehaviorSubject, catchError, map, Observable, of, switchMap, tap } from "rxjs";
 import { ConnectionConfig, Database, databasesSortedByName, DEFAULT_DATABASE_NAME, remoteOrigin } from "../concept/connection";
+import { Transaction, TransactionType } from "../concept/transaction";
 import { requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 
 export type DriverStatus = "initial" | "connecting" | "connected" | "reconnecting";
 
-interface SignInOkResponse {
+interface SignInResponse {
     token: string;
 }
 
-type SignInResponse = SignInOkResponse;
-
-interface DatabasesListOkResponse {
+interface DatabasesListResponse {
     databases: Database[];
 }
 
-type DatabasesListResponse = DatabasesListOkResponse;
+interface TransactionOpenResponse {
+    transactionId: string;
+}
+
+const HTTP_UNAUTHORIZED = 401;
 
 @Injectable({
     providedIn: "root",
@@ -35,6 +38,7 @@ export class DriverStateService {
     private token?: string;
     private _database$ = new BehaviorSubject<Database | null>(null);
     private _databaseList$ = new BehaviorSubject<Database[] | null>(null);
+    private _transaction$ = new BehaviorSubject<Transaction | null>(null);
 
     constructor(private http: HttpClient) {}
 
@@ -54,12 +58,24 @@ export class DriverStateService {
         return this._databaseList$;
     }
 
+    get transaction$(): Observable<Transaction | null> {
+        return this._transaction$;
+    }
+
     private requireConfig() {
         return requireValue(this._config$);
     }
 
+    private requireDatabase() {
+        return requireValue(this._database$);
+    }
+
     private requireDatabaseList() {
         return requireValue(this._databaseList$);
+    }
+
+    private requireTransaction() {
+        return requireValue(this._transaction$);
     }
 
     tryConnectAndSetupDatabases(config: ConnectionConfig) {
@@ -115,28 +131,67 @@ export class DriverStateService {
         this._database$.next(savedDatabase);
     }
 
-    // TODO: If unauthenticated, refresh token
+    openTransaction(type: TransactionType) {
+        const databaseName = this.requireDatabase().name;
+        return this.apiPost<TransactionOpenResponse>(`/v1/transactions/open`, { databaseName, transactionType: type }).pipe(
+            tap((res) => {
+                this._transaction$.next(new Transaction({ id: res.transactionId, type: type }));
+            })
+        );
+    }
+
+    commitTransaction() {
+        const transactionId = this.requireTransaction().id;
+        return this.apiPost(`/v1/transactions/${transactionId}/commit`, {}).pipe(
+            tap(() => {
+                this._transaction$.next(null);
+            })
+        );
+    }
+
+    closeTransaction() {
+        const transactionId = this.requireTransaction().id;
+        return this.apiPost(`/v1/transactions/${transactionId}/close`, {}).pipe(
+            tap(() => {
+                this._transaction$.next(null);
+            })
+        );
+    }
+
     private apiGet<RES = Object>(path: string, options?: { headers?: Record<string, string> }) {
+        const { params } = this.requireConfig();
+        const url = `${remoteOrigin(params)}${path}`;
         return this.getToken().pipe(
             switchMap((resp) => {
-                const { params } = this.requireConfig();
-                return this.http.get<RES>(
-                    `${remoteOrigin(params)}${path}`,
-                    { headers: Object.assign({ "Authorization": `Bearer ${resp.token}` }, options?.headers || {})}
-                );
+                const opts = { headers: Object.assign({ "Authorization": `Bearer ${resp.token}` }, options?.headers || {})};
+                return this.http.get<RES>(url, opts);
+            }),
+            catchError((err) => {
+                if (err instanceof HttpErrorResponse && err.status === HTTP_UNAUTHORIZED) {
+                    return this.refreshToken().pipe(switchMap((resp) => {
+                        const opts = { headers: Object.assign({ "Authorization": `Bearer ${resp.token}` }, options?.headers || {})};
+                        return this.http.get<RES>(url, opts);
+                    }));
+                } else throw err;
             }),
         );
     }
 
     private apiPost<RES = Object, BODY = Object>(path: string, body: BODY, options?: { headers?: Record<string, string>}) {
+        const { params } = this.requireConfig();
+        const url = `${remoteOrigin(params)}${path}`;
         return this.getToken().pipe(
             switchMap((resp) => {
-                const { params } = this.requireConfig();
-                return this.http.post<RES>(
-                    `${remoteOrigin(params)}${path}`,
-                    body,
-                    { headers: Object.assign({ "Authorization": `Bearer ${resp.token}` }, options?.headers || {})}
-                );
+                const opts = { headers: Object.assign({ "Authorization": `Bearer ${resp.token}` }, options?.headers || {})};
+                return this.http.post<RES>(url, body, opts);
+            }),
+            catchError((err) => {
+                if (err instanceof HttpErrorResponse && err.status === HTTP_UNAUTHORIZED) {
+                    return this.refreshToken().pipe(switchMap((resp) => {
+                        const opts = { headers: Object.assign({ "Authorization": `Bearer ${resp.token}` }, options?.headers || {})};
+                        return this.http.post<RES>(url, body, opts);
+                    }));
+                } else throw err;
             }),
         );
     }
@@ -145,7 +200,10 @@ export class DriverStateService {
         if (this.token) {
             const resp: SignInResponse = { token: this.token };
             return of(resp);
-        }
+        } else return this.refreshToken();
+    }
+
+    private refreshToken() {
         const { params } = this.requireConfig();
         return this.http.post<SignInResponse>(
             `${remoteOrigin(params)}/v1/signin`, { username: params.username, password: params.password }

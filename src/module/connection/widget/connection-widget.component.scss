@@ -24,8 +24,12 @@ button {
         background: secondary.$purple;
     }
 
-    i.db-icon {
+    i.fa-server, i.fa-database {
         margin-right: 8px;
+    }
+
+    i.fa-code-commit {
+        margin-right: 12px;
     }
 
     i.ts-beacon {

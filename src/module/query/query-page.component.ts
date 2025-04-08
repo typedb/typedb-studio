@@ -9,6 +9,7 @@ import { HttpClient } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { BehaviorSubject, map, Subject } from "rxjs";
+import { TransactionType } from "../../concept/transaction";
 import { ButtonComponent } from "../../framework/button/button.component";
 import { AppDataService } from "../../service/app-data.service";
 import { DriverStateService } from "../../service/driver-state.service";
@@ -22,9 +23,8 @@ import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component"
     imports: [ButtonComponent, RouterLink, AsyncPipe, PageScaffoldComponent],
 })
 export class QueryPageComponent implements OnInit {
-    transaction$ = new BehaviorSubject<string | null>(null);
-    canOpenTransaction$ = this.transaction$.pipe(map(x => x == null));
-    canCloseTransaction$ = this.transaction$.pipe(map(x => x != null));
+    canOpenTransaction$ = this.driver.transaction$.pipe(map(x => x == null));
+    canCloseTransaction$ = this.driver.transaction$.pipe(map(x => x != null));
     canCommitTransaction$ = new BehaviorSubject(false);
 
     constructor(private driver: DriverStateService, private appData: AppDataService) {
@@ -34,15 +34,15 @@ export class QueryPageComponent implements OnInit {
         this.appData.viewState.setLastUsedTool("query");
     }
 
-    openTransaction() {
-
+    openTransaction(type: TransactionType) {
+        this.driver.openTransaction(type).subscribe();
     }
 
     closeTransaction() {
-
+        this.driver.closeTransaction().subscribe();
     }
 
     commitTransaction() {
-
+        this.driver.commitTransaction().subscribe();
     }
 }

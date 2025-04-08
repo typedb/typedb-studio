@@ -1,9 +1,18 @@
 <button>
-  <i class="db-icon fa-light fa-server"></i> {{ connectionName$ | async }} <i [class]="beaconClass$ | async"></i>
+  <i class="fa-light fa-server"></i> {{ connectionText$ | async }} <i [class]="connectionBeaconClass$ | async"></i>
 </button>
+
 @if (databaseWidgetVisible$ | async) {
   <i class="fa-light fa-chevron-right"></i>
   <button>
-    <i class="db-icon fa-light fa-database"></i> {{ databaseName$ | async }}
+    <i class="fa-light fa-database"></i> {{ databaseText$ | async }}
+  </button>
+}
+
+@if (transactionWidgetVisible$ | async) {
+  <i class="fa-light fa-chevron-right"></i>
+  <button [matTooltip]="(transactionWidgetTooltip$ | async)!" matTooltipPosition="below">
+    <i class="fa-light fa-code-commit"></i> {{ transactionText$ | async }}
+    @if (transactionHasUncommittedChanges$ | async) { <i class="fa-light fa-asterisk"></i> }
   </button>
 }
