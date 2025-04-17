@@ -1,10 +1,7 @@
-/*!
- * This unpublished material is proprietary to Vaticle.
- * All rights reserved. The methods and
- * techniques described herein are considered trade secrets
- * and/or confidential. Reproduction or distribution, in whole
- * or in part, is forbidden except by express written permission
- * of Vaticle.
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 @use "media";
@@ -16,10 +13,11 @@
 
 @use "topbar";
 
+@import "codemirror";
+@import "material";
 @import "prism";
 @import "scrollbars";
 @import "vars";
-@import "material";
 
 html {
     height: 100%;
@@ -53,8 +51,6 @@ html, body {
 }
 
 article {
-    padding: 32px 32px 32px 16px;
-
     section + section {
         margin-top: 32px;
         padding-top: 32px;
@@ -64,17 +60,10 @@ article {
 
 .tp-bento-container {
     display: flex;
-    gap: 28px;
-    align-items: center;
 
     &.row {
         flex-direction: row;
         width: 100%;
-        max-width: 760px;
-
-        > * {
-            flex: 1;
-        }
     }
 
     &.col {
@@ -92,12 +81,6 @@ article {
     display: flex;
     flex-direction: column;
     gap: 12px;
-
-    > div {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
 
     &.hoverable:hover {
         @include shapes.light-source-gradient(rgba(primary.$light-purple, 0.6), primary.$purple);
@@ -213,9 +196,7 @@ a.tos-privacy-link {
 }
 
 aside, .text-aside {
-    font-size: 14px;
-    line-height: 22px;
-    font-weight: typography.$regular;
+    @include typography.p3;
 }
 
 pre, code, .text-code {
@@ -512,7 +493,7 @@ i {
 .action-bar {
     flex: 0 0 49px;
     display: flex;
-    margin: 16px 32px 0 16px;
+    margin: 16px 0 0 0;
     position: sticky;
     top: 0;
     background-color: primary.$black-purple;
@@ -523,6 +504,7 @@ i {
     tp-button {
         display: flex;
         align-items: center;
+        z-index: 20;
     }
 
     > tp-button + tp-button::before,

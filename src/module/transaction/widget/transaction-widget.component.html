@@ -1,0 +1,58 @@
+<mat-select [formControl]="form.controls.type" panelClass="transaction-select-panel">
+<!--  <mat-label>Transaction type</mat-label>-->
+  <mat-select-trigger>
+    <i [class]="transactionIconClass$ | async"></i> {{ form.controls.type.value }} <i class="fa-light fa-chevron-down"></i>
+  </mat-select-trigger>
+  @for (transactionType of transactionTypes; track transactionType) {
+    <mat-option [value]="transactionType">{{ transactionType }}</mat-option>
+  }
+</mat-select>
+
+@if (readModeControlVisible$ | async) {
+  <mat-select [formControl]="form.controls.readMode" panelClass="transaction-select-panel"
+              >
+  <!--  <mat-label>Transaction management</mat-label>-->
+    <mat-select-trigger>
+      <i class="fa-light fa-wrench"></i> {{ form.controls.readMode.value }} <i class="fa-light fa-chevron-down"></i>
+    </mat-select-trigger>
+    @for (readMode of readModes; track readMode) {
+      <mat-option [value]="readMode">{{ readMode }}</mat-option>
+    }
+  </mat-select>
+}
+
+@if (openButtonVisible$ | async) {
+  <button mat-button (click)="open()" [class]="openButtonClass$ | async" [disabled]="(openButtonDisabled$ | async) ?? true"
+          >
+    Open
+  </button>
+}
+
+@if (commitButtonVisible$ | async) {
+  <button mat-button (click)="commit()" class="commit-btn" [disabled]="(commitButtonDisabled$ | async) ?? true"
+          >
+    Commit
+  </button>
+}
+
+@if (closeButtonVisible$ | async) {
+  <button mat-button (click)="close()" class="close-btn" [disabled]="(closeButtonDisabled$ | async) ?? true"
+          >
+    Close
+  </button>
+}
+
+<!--<button mat-mini-fab (click)="open()" [class]="openButtonClass$ | async" [disabled]="(openButtonDisabled$ | async) ?? true"-->
+<!--        [matTooltip]="(openButtonTooltip$ | async) || ''" matTooltipPosition="below" matTooltipShowDelay="500">-->
+<!--  <i [class]="openButtonIconClass$ | async"></i>-->
+<!--</button>-->
+
+<!--<button mat-mini-fab (click)="commit()" class="commit-btn"[disabled]="(commitButtonDisabled$ | async) ?? true"-->
+<!--        matTooltip="Commit transaction" matTooltipPosition="below" matTooltipShowDelay="500">-->
+<!--  <i class="fa-regular fa-floppy-disk"></i>-->
+<!--</button>-->
+
+<!--<button mat-mini-fab (click)="close()" class="close-btn" [disabled]="(closeButtonDisabled$ | async) ?? true"-->
+<!--        matTooltip="Close transaction" matTooltipPosition="below" matTooltipShowDelay="500">-->
+<!--  <i class="fa-regular fa-stop"></i>-->
+<!--</button>-->

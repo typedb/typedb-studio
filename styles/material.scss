@@ -1,10 +1,7 @@
-/*!
- * This unpublished material is proprietary to Vaticle.
- * All rights reserved. The methods and
- * techniques described herein are considered trade secrets
- * and/or confidential. Reproduction or distribution, in whole
- * or in part, is forbidden except by express written permission
- * of Vaticle.
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 @use "@angular/material" as mat;
@@ -123,6 +120,16 @@ $typedb-theme: mat.define-dark-theme((
 /* Material CSS overrides */
 /* Mostly copied from typedb-web */
 body {
+    /* Button */
+    .mat-mdc-button {
+        --mdc-text-button-label-text-size: 13px;
+        --mdc-text-button-label-text-tracking: #{typography.$letter-spacing};
+        --mdc-text-button-label-text-weight: #{typography.$regular};
+        --mdc-text-button-container-height: 32px;
+        --mdc-text-button-container-shape: #{shapes.$border-radius-panel};
+        --mdc-text-button-label-text-color: #{primary.$grey};
+        --mdc-text-button-disabled-label-text-color: rgba(255, 255, 255, 0.25);
+    }
     /* Button toggle */
     .mat-button-toggle-group, .mat-button-toggle {
         font-size: 14px;
@@ -371,14 +378,14 @@ body {
         height: 40px;
     }
 
-    .mdc-fab {
-        --mdc-fab-container-color: #{secondary.$purple};
+    .mdc-fab.mat-accent {
+        --mdc-fab-container-color: transparent;
         --mat-fab-foreground-color: #{primary.$grey};
-        --mat-fab-disabled-state-container-color: #{secondary.$purple};
+        --mat-fab-disabled-state-container-color: transparent;
         --mat-fab-disabled-state-foreground-color: #{secondary.$mid-deep-grey};
         --mdc-fab-container-shape: #{shapes.$border-radius};
         --mdc-fab-small-icon-size: 16px;
-        border: shapes.$border;
+        border-radius: shapes.$border-radius-panel;
 
         .mat-icon {
             font-size: unset;
@@ -424,9 +431,18 @@ body {
         --mdc-outlined-text-field-input-text-color: #{primary.$white};
         --mdc-outlined-text-field-outline-color: #{primary.$light-purple};
         --mdc-outlined-text-field-hover-outline-color: #{secondary.$grey};
+        --mdc-outlined-text-field-focus-outline-color: #{secondary.$grey};
         --mdc-outlined-text-field-label-text-weight: #{typography.$regular};
         --mdc-outlined-text-field-input-text-placeholder-color: #{secondary.$grey};
         --mdc-outlined-text-field-container-shape: #{shapes.$border-radius};
+    }
+
+    .code-text-field .mdc-text-field {
+        --mat-form-field-container-text-font: #{typography.$code-font-family !important};
+        --mat-form-field-container-text-line-height: 22px !important;
+        --mat-form-field-container-text-size: 14px !important;
+        --mat-form-field-container-text-tracking: #{typography.$letter-spacing !important};
+        --mat-form-field-container-text-weight: #{typography.$regular !important};
     }
 
     .mat-mdc-form-field-input-control {
@@ -518,7 +534,7 @@ body {
 
     .mat-mdc-option {
         --mat-option-label-text-tracking: var(--body-letter-spacing);
-        padding-left: 32px; // makes padding consistent whether or not the option is part of an optgroup
+        //padding-left: 32px; // makes padding consistent whether or not the option is part of an optgroup
 
         .mdc-list-item__primary-text {
             width: 100%;
@@ -547,6 +563,7 @@ body {
     }
 
     .mat-sidenav-content {
+        margin-right: 16px;
         display: flex;
         flex-direction: column;
     }

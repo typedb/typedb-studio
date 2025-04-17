@@ -5,10 +5,12 @@
  */
 
 import { AsyncPipe } from "@angular/common";
-import { Component, HostBinding } from "@angular/core";
+import { Component, HostBinding, HostListener } from "@angular/core";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { combineLatest, map } from "rxjs";
-import { DriverStateService, DriverStatus } from "../../../service/driver-state.service";
+import { Router } from "@angular/router";
+import { combineLatest, first, map } from "rxjs";
+import { DriverState, DriverStatus } from "../../../service/driver-state.service";
+import { TransactionWidgetComponent } from "../../transaction/widget/transaction-widget.component";
 
 const statusStyleMap: { [K in DriverStatus]: string } = {
     initial: "error",
@@ -22,11 +24,11 @@ const statusStyleMap: { [K in DriverStatus]: string } = {
     templateUrl: "./connection-widget.component.html",
     styleUrls: ["./connection-widget.component.scss"],
     standalone: true,
-    imports: [MatTooltipModule, AsyncPipe],
+    imports: [MatTooltipModule, AsyncPipe, TransactionWidgetComponent],
 })
 export class ConnectionWidgetComponent {
 
-    connectionText$ = this.driver.config$.pipe(map(x => x?.name ?? `No connection selected`));
+    connectionText$ = this.driver.connection$.pipe(map(x => x?.name ?? `No connection selected`));
     connectionBeaconClass$ = this.driver.status$.pipe(map(status => `ts-beacon fa-solid fa-circle ${statusStyleMap[status]}`));
 
     databaseWidgetVisible$ = this.driver.status$.pipe(map((status) => ["connected", "reconnecting"].includes(status)));
@@ -37,5 +39,13 @@ export class ConnectionWidgetComponent {
     transactionHasUncommittedChanges$ = this.driver.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
     transactionWidgetTooltip$ = this.transactionHasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
 
-    constructor(private driver: DriverStateService) {}
+    constructor(private driver: DriverState, private router: Router) {}
+
+    onClick() {
+        this.driver.connection$.pipe(first()).subscribe((connection) => {
+            if (!connection) {
+                this.router.navigate(["/connections/new"]);
+            }
+        });
+    }
 }

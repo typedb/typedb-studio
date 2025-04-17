@@ -7,22 +7,35 @@
 @use "shapes";
 @use "primary";
 @use "secondary";
+@use "typography";
 
 :host {
     display: flex;
     align-items: center;
+    position: absolute;
+    inset: auto 0;
+}
+
+.root {
+    margin: 0 auto;
+    border-radius: shapes.$border-radius-panel;
+    @include shapes.standard-border;
+    @include shapes.light-source-gradient(rgba(primary.$light-purple, 0.9), primary.$purple, 80px, 16px);
+    transition: background 0.1s linear, width 500ms ease-in;
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    z-index: 40;
 }
 
 button {
-    padding: 8px 12px;
+    padding: 5px 8px;
     border-radius: shapes.$border-radius-panel;
     display: flex;
     align-items: center;
     color: primary.$grey;
-
-    &:hover, &:active {
-        background: secondary.$purple;
-    }
+    @include typography.p2;
 
     i.fa-server, i.fa-database {
         margin-right: 8px;
@@ -67,6 +80,14 @@ button {
 }
 
 .fa-chevron-right {
-    margin-left: 10px;
-    margin-right: 6px;
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+    margin-left: 8px;
+    margin-right: 4px;
+}
+
+.divider-vertical {
+    margin: 0 32px;
+    width: 0;
 }

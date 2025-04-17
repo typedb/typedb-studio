@@ -39,6 +39,14 @@ p {
     @include typography.p3;
 }
 
+.home-page-body {
+    max-width: 760px;
+    margin: 28px auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
 tp-button {
     display: inline-block;
 }
@@ -68,10 +76,7 @@ tp-button {
 
 article {
     height: 100%;
-    padding-left: 18%;
-    padding-right: 18%;
-    background: url("/assets/typedb-bot.png") #0e0d17e4 0 0 / 1400px no-repeat;
-    background-blend-mode: lighten;
+    background: url("/assets/typedb-bot.png") 0 0 / 1400px no-repeat;
 }
 
 .tp-deploy-cluster {
@@ -82,6 +87,7 @@ article {
     gap: 12px;
     height: 220px;
     min-height: 220px;
+    align-self: stretch;
 
     .tp-deploy-cluster-button-area {
         height: 100%;
@@ -93,19 +99,19 @@ article {
     .logo {
         height: 100%;
         display: flex;
-        --image-size: 1000px;
+        --image-size: 600px;
         width: 0;
         overflow: visible;
 
         img {
-            opacity: 65%;
+            opacity: 80%;
             height: var(--image-size);
             width: var(--image-size);
             position: relative;
-            top: calc(-1 * var(--image-size)/2 - shapes.$card-padding);
-            left: calc(-1 * var(--image-size)/2 + shapes.$card-padding);
+            top: -270px;
+            left: -370px;
 
-            animation: 12s ease-in-out spin infinite paused;
+            animation: 8s ease-in-out spin infinite paused;
         }
     }
 
@@ -119,21 +125,29 @@ article {
 }
 
 @keyframes spin {
-    0%, 1% {
+    0% {
         transform: rotate(0deg);
     }
-    24%, 26% {
-        transform: rotate(90deg);
-    }
-    49%, 51% {
-        transform: rotate(180deg);
-    }
-    74%, 76% {
-        transform: rotate(270deg);
-    }
-    99%, 100% {
+    100% {
         transform: rotate(360deg);
     }
+}
+
+.tp-bento-container {
+    align-items: center;
+    gap: 28px;
+}
+
+.tp-bento-container.row {
+    > * {
+        flex: 1;
+    }
+}
+
+.tp-bento-box > div {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .tp-icon-card {
@@ -210,5 +224,6 @@ article {
 .tp-subtitle {
     align-self: center;
     text-align: center;
+    margin-top: 20px;
     //max-width: 360px;
 }

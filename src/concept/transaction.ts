@@ -11,7 +11,7 @@ export class Transaction {
     readonly openedAtTimestamp: number;
     readonly committed: boolean;
     readonly closedAtTimestamp?: number;
-    readonly queryExecutions: QueryExecution[];
+    readonly queryRuns: QueryRun[];
 
     constructor(props: { id: string; type: TransactionType }) {
         this.id = props.id;
@@ -19,11 +19,11 @@ export class Transaction {
         this.openedAtTimestamp = Date.now();
         this.committed = false;
         this.closedAtTimestamp = undefined;
-        this.queryExecutions = [];
+        this.queryRuns = [];
     }
 
     get hasUncommittedChanges(): boolean {
-        return !!this.queryExecutions.length && this.type !== "read";
+        return !!this.queryRuns.length && this.type !== "read";
     }
 
     get displayName(): string {
@@ -44,8 +44,24 @@ export class Transaction {
 
 export type TransactionType = "read" | "write" | "schema";
 
-export interface QueryExecution {
+export type ReadMode = "auto" | "manual";
+
+export interface QueryRun {
     query: string;
+    status: "pending" | "success" | "error";
+    result?: Object;
+    startedAtTimestamp: number;
+    completedAtTimestamp?: number;
+}
+
+export type TransactionOperationType = "open" | "commit" | "close";
+
+export interface TransactionOperation {
+    operationType: TransactionOperationType;
+    status: "pending" | "success" | "error";
+    result?: Object;
+    startedAtTimestamp: number;
+    completedAtTimestamp?: number;
 }
 
 // export interface TransactionApiJson {

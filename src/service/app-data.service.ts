@@ -159,7 +159,7 @@ class Preferences {
 @Injectable({
     providedIn: "root",
 })
-export class AppDataService {
+export class AppData {
 
     readonly isAccessible = this.storage.isAccessible;
 

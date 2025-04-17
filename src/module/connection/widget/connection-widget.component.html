@@ -1,18 +1,17 @@
-<button>
-  <i class="fa-light fa-server"></i> {{ connectionText$ | async }} <i [class]="connectionBeaconClass$ | async"></i>
-</button>
-
-@if (databaseWidgetVisible$ | async) {
-  <i class="fa-light fa-chevron-right"></i>
+<div class="root" (click)="onClick()">
   <button>
-    <i class="fa-light fa-database"></i> {{ databaseText$ | async }}
+    <i class="fa-light fa-server"></i> {{ connectionText$ | async }} <i [class]="connectionBeaconClass$ | async"></i>
   </button>
-}
 
-@if (transactionWidgetVisible$ | async) {
-  <i class="fa-light fa-chevron-right"></i>
-  <button [matTooltip]="(transactionWidgetTooltip$ | async)!" matTooltipPosition="below">
-    <i class="fa-light fa-code-commit"></i> {{ transactionText$ | async }}
-    @if (transactionHasUncommittedChanges$ | async) { <i class="fa-light fa-asterisk"></i> }
-  </button>
-}
+  @if (databaseWidgetVisible$ | async) {
+    <i class="fa-light fa-chevron-right"></i>
+    <button>
+      <i class="fa-light fa-database"></i> {{ databaseText$ | async }}
+    </button>
+  }
+
+  @if (transactionWidgetVisible$ | async) {
+    <div class="divider-vertical"></div>
+    <ts-transaction-widget/>
+  }
+</div>

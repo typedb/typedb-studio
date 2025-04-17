@@ -14,8 +14,8 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { CONNECTION_URL_PLACEHOLDER, ConnectionConfig, parseConnectionUrlOrNull } from "../../../concept/connection";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
-import { AppDataService } from "../../../service/app-data.service";
-import { DriverStateService } from "../../../service/driver-state.service";
+import { AppData } from "../../../service/app-data.service";
+import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { PageScaffoldComponent, ResourceAvailability } from "../../scaffold/page/page-scaffold.component";
 import { Router } from "@angular/router";
@@ -59,8 +59,8 @@ export class ConnectionCreatorComponent implements OnInit {
     readonly isSubmitting$ = new BehaviorSubject(false);
 
     constructor(
-        private formBuilder: FormBuilder, private appData: AppDataService,
-        private driver: DriverStateService, private snackbar: SnackbarService, private location: Location,
+        private formBuilder: FormBuilder, private appData: AppData,
+        private driver: DriverState, private snackbar: SnackbarService, private location: Location,
         private router: Router,
     ) {}
 

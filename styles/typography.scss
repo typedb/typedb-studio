@@ -1,10 +1,7 @@
-/*!
- * This unpublished material is proprietary to Vaticle.
- * All rights reserved. The methods and
- * techniques described herein are considered trade secrets
- * and/or confidential. Reproduction or distribution, in whole
- * or in part, is forbidden except by express written permission
- * of Vaticle.
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 /* Monaco */
@@ -77,6 +74,7 @@
 }
 
 $default-font-family: "Darkmode", sans-serif;
+$code-font-family: "Monaco", monospace;
 
 $bold: 700;
 $semi-bold: 600;
@@ -96,23 +94,23 @@ $letter-spacing: 0.02em;
 }
 
 @mixin h1 {
-    @include font-style(21px, $semi-bold, normal, $letter-spacing);
+    @include font-style(22px, $semi-bold, normal, $letter-spacing);
 }
 
 @mixin h2 {
-    @include font-style(19px, $semi-bold, normal, $letter-spacing);
+    @include font-style(20px, $semi-bold, normal, $letter-spacing);
 }
 
 @mixin h3 {
-    @include font-style(17px, $semi-bold, 24px, $letter-spacing);
+    @include font-style(16px, $semi-bold, 24px, $letter-spacing);
 }
 
 @mixin h4 {
-    @include font-style(15px, $semi-bold, 22px, $letter-spacing);
+    @include font-style(16px, $medium, 22px, $letter-spacing);
 }
 
 @mixin h5 {
-    @include font-style(15px, $medium, 20px, $letter-spacing);
+    @include font-style(14px, $regular, 20px, $letter-spacing);
 }
 
 @mixin light-banner {
@@ -123,17 +121,26 @@ $letter-spacing: 0.02em;
     @include font-style(22px, $semi-bold, 33px, $letter-spacing);
 }
 
+@mixin subtitle1 {
+    font-style: italic;
+    @include font-style(14px, $italic, normal, $letter-spacing);
+}
+
+@mixin subtitle2 {
+    @include font-style(14px, $semi-bold, 24px, $letter-spacing);
+}
+
 @mixin p1 {
     text-decoration: underline;
-    @include font-style(17px, $semi-bold, 24px, $letter-spacing);
+    @include font-style(16px, $semi-bold, 24px, $letter-spacing);
 }
 
 @mixin p2 {
-    @include font-style(15px, $regular, 22px, $letter-spacing);
+    @include font-style(14px, $regular, 22px, $letter-spacing);
 }
 
 @mixin p3 {
-    @include font-style(14px, $regular, 22px, $letter-spacing);
+    @include font-style(13px, $regular, 20px, $letter-spacing);
 }
 
 @mixin button-large {
@@ -146,12 +153,17 @@ $letter-spacing: 0.02em;
 }
 
 @mixin caption1 {
-    @include font-style(14px, $semi-bold, 16px, $letter-spacing);
+    @include font-style(12px, $semi-bold, 16px, $letter-spacing);
 }
 
 @mixin code {
     font-family: Monaco, monospace;
     @include font-style(14px, $regular, 22px, $letter-spacing);
+}
+
+/* TODO: delete */
+@mixin modal-title {
+    @include font-style(22px, $semi-bold, normal, $letter-spacing);
 }
 
 @mixin info-text {

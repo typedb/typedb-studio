@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Component, Input } from "@angular/core";
+import { Component, HostBinding, Input } from "@angular/core";
 import { NgStyle, NgClass } from "@angular/common";
 import { SpinnerComponent } from "../spinner/spinner.component";
 
@@ -24,11 +24,20 @@ export type ButtonStyle =
     imports: [NgStyle, NgClass, SpinnerComponent],
 })
 export class ButtonComponent {
-    @Input() height = 40;
     @Input() buttonStyle: ButtonStyle = "secondary";
+    @Input("height") _height?: number;
     @Input() enabled = true;
     @Input() type: HTMLButtonElement["type"] = "button";
+    @Input() buttonClass?: string;
     @Input({ required: true }) buttonId!: string;
 
     constructor() {}
+
+    get height() {
+        return this._height || (this.buttonStyle === "secondary" ? 32 : 40);
+    }
+
+    get buttonClazz() {
+        return `${this.buttonStyle} ${this.buttonClass ?? ''}`;
+    }
 }

@@ -1,6 +1,6 @@
 <button
   [ngStyle]="{ 'height.px': height, cursor: enabled ? 'pointer' : 'not-allowed' }"
-  [attr.class]="buttonStyle" [disabled]="!enabled" [type]="type" [attr.id]="buttonId"
+  [attr.class]="buttonClazz" [disabled]="!enabled" [type]="type" [attr.id]="buttonId"
 >
   <ng-content/>
 </button>

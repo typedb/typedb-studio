@@ -9,8 +9,9 @@ import { Component, Input } from "@angular/core";
 import { MatSidenavModule } from "@angular/material/sidenav";
 import { ButtonComponent } from "../../../framework/button/button.component";
 import { SpinnerComponent } from "../../../framework/spinner/spinner.component";
-import { AppDataService } from "../../../service/app-data.service";
+import { AppData } from "../../../service/app-data.service";
 import { ConnectionWidgetComponent } from "../../connection/widget/connection-widget.component";
+import { TransactionWidgetComponent } from "../../transaction/widget/transaction-widget.component";
 import { SidebarComponent } from "../sidebar/sidebar.component";
 import { RightSidebarComponent } from "../sidebar/right/right-sidebar.component";
 import { NgClass } from "@angular/common";
@@ -23,7 +24,7 @@ export type ResourceAvailability = "ready" | "loading" | "failed";
     styleUrls: ["./page-scaffold.component.scss"],
     standalone: true,
     imports: [
-        SidebarComponent, RightSidebarComponent, SpinnerComponent, NgClass, MatSidenavModule, ButtonComponent, ConnectionWidgetComponent,
+        SidebarComponent, RightSidebarComponent, SpinnerComponent, NgClass, MatSidenavModule, ButtonComponent, ConnectionWidgetComponent, TransactionWidgetComponent,
     ],
     animations: [
         trigger("sidebarLeftMargin", [
@@ -35,8 +36,9 @@ export type ResourceAvailability = "ready" | "loading" | "failed";
 })
 export class PageScaffoldComponent {
     @Input() pageAvailability: ResourceAvailability | null = "ready";
+    @Input() hideTransactionWidget = false;
 
     leftSidebarState = this.appData.viewState.sidebarState();
 
-    constructor(private appData: AppDataService) {}
+    constructor(private appData: AppData) {}
 }

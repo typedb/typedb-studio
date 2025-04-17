@@ -1,0 +1,154 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "shapes";
+@use "primary";
+@use "secondary";
+@use "tp";
+@use "typography";
+
+:host {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+mat-select {
+    width: fit-content;
+    border-radius: shapes.$border-radius-panel;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    color: primary.$grey;
+    font-size: 14px;
+    line-height: 32px;
+
+    &.mat-mdc-select-disabled {
+        opacity: 0.38;
+    }
+
+    &:not(.mat-mdc-select-disabled) {
+        &:hover, &:active, &[aria-expanded='true'] {
+            background: secondary.$purple;
+        }
+    }
+
+    ::ng-deep .mat-mdc-select-arrow-wrapper {
+        display: none;
+    }
+
+    i.fa-server, i.fa-database {
+        margin-right: 8px;
+    }
+
+    i.ts-beacon {
+        font-size: 8px;
+        width: 8px;
+        height: 8px;
+        margin-left: 8px;
+
+        &.ok {
+            color: primary.$green;
+            //animation: shimmer 3s ease-in-out 0s infinite;
+        }
+
+        &.warn {
+            color: secondary.$yellow;
+            animation: beacon 1.5s ease-in-out 0s infinite;
+        }
+
+        &.error {
+            color: primary.$red;
+        }
+
+        &.inactive {
+            color: secondary.$light-grey;
+        }
+    }
+}
+
+mat-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    transition: color 100ms;
+
+    i {
+        transition: color 100ms;
+    }
+
+    i.fa-code-commit, i.fa-wrench {
+        width: 14px;
+        height: 14px;
+        font-size: 14px;
+        margin-right: 10px;
+
+        &.active {
+            color: primary.$green;
+            animation: beacon 3s ease-in-out 0s infinite;
+        }
+    }
+
+    i.fa-chevron-down {
+        width: 12px;
+        height: 12px;
+        font-size: 12px;
+        margin-left: 8px;
+    }
+
+    &:hover {
+        color: primary.$green;
+    }
+}
+
+.mdc-fab.mat-accent {
+    &.open-btn:enabled {
+        color: secondary.$deep-green;
+
+        &.active {
+            color: primary.$black-purple;
+            background: secondary.$deep-green;
+        }
+    }
+
+    &.commit-btn:enabled {
+        color: secondary.$deep-green;
+    }
+
+    &.close-btn:enabled {
+        background: primary.$red;
+    }
+}
+
+::ng-deep body div.mat-mdc-select-panel.transaction-select-panel {
+    --mat-select-panel-background-color: #{primary.$deep-purple};
+    --mat-option-label-text-line-height: 20px;
+    --mat-option-label-text-size: 13px;
+    border-top-left-radius: shapes.$border-radius-panel !important; // overrides Angular Material style
+    border-top-right-radius: shapes.$border-radius-panel !important;
+    margin-top: 8px;
+    margin-left: -8px;
+
+    .mat-mdc-option {
+        min-height: 32px;
+    }
+}
+
+@keyframes beacon {
+    0% { opacity: 0.75 }
+    10% { opacity: 0.75 }
+    50% { opacity: 1 }
+    90% { opacity: 0.75 }
+    100% { opacity: 0.75 }
+}
+
+.fa-chevron-right {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+    margin-left: 8px;
+    margin-right: 4px;
+}

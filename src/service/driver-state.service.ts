@@ -6,9 +6,9 @@
 
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, map, Observable, of, switchMap, tap } from "rxjs";
+import { BehaviorSubject, catchError, map, Observable, of, Subject, switchMap, tap } from "rxjs";
 import { ConnectionConfig, Database, databasesSortedByName, DEFAULT_DATABASE_NAME, remoteOrigin } from "../concept/connection";
-import { Transaction, TransactionType } from "../concept/transaction";
+import { QueryRun, Transaction, TransactionOperation, TransactionType } from "../concept/transaction";
 import { requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 
@@ -28,17 +28,145 @@ interface TransactionOpenResponse {
 
 const HTTP_UNAUTHORIZED = 401;
 
+interface DriverActionBase {
+    timestamp: number;
+    actionType: string;
+}
+
+export interface QueryRunAction extends DriverActionBase {
+    actionType: "queryRun";
+    queryRun: QueryRun;
+}
+
+export interface TransactionOperationAction extends DriverActionBase {
+    actionType: "transactionOperation";
+    transactionOperation: TransactionOperation;
+}
+
+function queryRunActionOf(queryRun: QueryRun): QueryRunAction {
+    return { actionType: "queryRun", queryRun: queryRun, timestamp: Date.now() };
+}
+
+function transactionOperationActionOf(operation: TransactionOperation): TransactionOperationAction {
+    return { actionType: "transactionOperation", transactionOperation: operation, timestamp: Date.now() };
+}
+
+export type DriverAction = QueryRunAction | TransactionOperationAction;
+
+export function isQueryRun(entry: DriverAction): entry is QueryRunAction {
+    return entry.actionType === "queryRun";
+}
+
+export function isTransactionOperation(entry: DriverAction): entry is TransactionOperationAction {
+    return entry.actionType === "transactionOperation";
+}
+
+export type TypeKind = "entityType" | "relationType" | "attributeType" | "roleType";
+
+export type ThingKind = "entity" | "relation" | "attribute";
+
+export type ValueKind = "value";
+
+export type ValueType = "boolean" | "integer" | "double" | "decimal" | "date" | "datetime" | "datetime-tz" | "duration" | "string" | "struct";
+
+export interface EntityType {
+    kind: "entityType";
+    label: string;
+}
+
+export interface RelationType {
+    kind: "relationType";
+    label: string;
+}
+
+export interface RoleType {
+    kind: "roleType";
+    label: string;
+}
+
+export type AttributeType = {
+    label: string,
+    kind: "attributeType";
+    valueType: ValueType;
+}
+
+export type Type = EntityType | RelationType | RoleType | AttributeType;
+
+export interface Entity {
+    kind: "entity";
+    iid: string,
+    type: EntityType;
+}
+
+export interface Relation {
+    kind: "relation";
+    iid: string;
+    type: RelationType;
+}
+
+export interface Attribute {
+    kind: "attribute";
+    iid: string;
+    value: any;
+    valueType: ValueType;
+    type: AttributeType;
+}
+
+export interface Value {
+    kind: ValueKind;
+    value: any;
+    valueType: ValueType;
+}
+
+export type Concept = Type | Entity | Relation | Attribute | Value;
+
+export interface QueryResponseBase {
+    queryType: QueryType;
+    answerType: AnswerType;
+    comment: string | null;
+}
+
+export interface OkQueryResponse extends QueryResponseBase {
+    answerType: "ok";
+}
+
+export interface ConceptRowsQueryResponse extends QueryResponseBase {
+    answerType: "conceptRows";
+    answers: ConceptRow[];
+}
+
+export interface ConceptDocumentsQueryResponse extends QueryResponseBase {
+    answerType: "conceptDocuments";
+    answers: ConceptDocument[];
+}
+
+export type QueryType = "read" | "write" | "schema";
+
+export type AnswerType = "ok" | "conceptRows" | "conceptDocuments";
+
+export interface ConceptRow {
+    [varName: string]: Concept;
+}
+
+export type ConceptDocument = Object;
+
+export type Answer = ConceptRow | ConceptDocument;
+
+export type QueryResponse = OkQueryResponse | ConceptRowsQueryResponse | ConceptDocumentsQueryResponse;
+
 @Injectable({
     providedIn: "root",
 })
-export class DriverStateService {
+export class DriverState {
 
-    private _config$ = new BehaviorSubject<ConnectionConfig | null>(null);
+    private _connection$ = new BehaviorSubject<ConnectionConfig | null>(null);
     private _status$ = new BehaviorSubject<DriverStatus>("initial");
     private token?: string;
     private _database$ = new BehaviorSubject<Database | null>(null);
     private _databaseList$ = new BehaviorSubject<Database[] | null>(null);
     private _transaction$ = new BehaviorSubject<Transaction | null>(null);
+    autoTransactionEnabled = true;
+    private _actions$ = new Subject<DriverAction>();
 
     constructor(private http: HttpClient) {}
 
@@ -46,8 +174,8 @@ export class DriverStateService {
         return this._status$;
     }
 
-    get config$(): Observable<ConnectionConfig | null> {
-        return this._config$;
+    get connection$(): Observable<ConnectionConfig | null> {
+        return this._connection$;
     }
 
     get database$(): Observable<Database | null> {
@@ -62,8 +190,12 @@ export class DriverStateService {
         return this._transaction$;
     }
 
+    get actions$(): Observable<DriverAction> {
+        return this._actions$;
+    }
+
     private requireConfig() {
-        return requireValue(this._config$);
+        return requireValue(this._connection$);
     }
 
     private requireDatabase() {
@@ -80,7 +212,7 @@ export class DriverStateService {
 
     tryConnectAndSetupDatabases(config: ConnectionConfig) {
         if (this._status$.value !== "initial") throw INTERNAL_ERROR;
-        this._config$.next(config);
+        this._connection$.next(config);
         this._status$.next("connecting");
 
         return this.refreshDatabaseList().pipe(
@@ -133,8 +265,12 @@ export class DriverStateService {
 
     openTransaction(type: TransactionType) {
         const databaseName = this.requireDatabase().name;
+        const operation: TransactionOperation = { operationType: "open", status: "pending", startedAtTimestamp: Date.now() };
+        const action = transactionOperationActionOf(operation);
+        this._actions$.next(action);
         return this.apiPost<TransactionOpenResponse>(`/v1/transactions/open`, { databaseName, transactionType: type }).pipe(
             tap((res) => {
+                this.updateTransactionOperationResult(operation, res);
                 this._transaction$.next(new Transaction({ id: res.transactionId, type: type }));
             })
         );
@@ -142,19 +278,56 @@ export class DriverStateService {
 
     commitTransaction() {
         const transactionId = this.requireTransaction().id;
+        const operation: TransactionOperation = { operationType: "commit", status: "pending", startedAtTimestamp: Date.now() };
+        const action = transactionOperationActionOf(operation);
+        this._actions$.next(action);
         return this.apiPost(`/v1/transactions/${transactionId}/commit`, {}).pipe(
-            tap(() => {
+            tap((res) => {
+                this.updateTransactionOperationResult(operation, res);
                 this._transaction$.next(null);
             })
         );
     }
 
     closeTransaction() {
-        const transactionId = this.requireTransaction().id;
+        const transactionId = this._transaction$.value?.id;
+        if (transactionId == null) return of({});
+        const operation: TransactionOperation = { operationType: "close", status: "pending", startedAtTimestamp: Date.now() };
+        const action = transactionOperationActionOf(operation);
+        this._actions$.next(action);
         return this.apiPost(`/v1/transactions/${transactionId}/close`, {}).pipe(
-            tap(() => {
+            tap((res) => {
+                this.updateTransactionOperationResult(operation, res);
                 this._transaction$.next(null);
             })
+        );
+    }
+
+    query(query: string) {
+        const maybeOpenTransaction$ = this.autoTransactionEnabled ? this.openTransaction("read") : of({ transactionId: this.requireTransaction().id });
+        let queryRun: QueryRun;
+        return maybeOpenTransaction$.pipe(
+            tap(() => {
+                const transaction = this.requireTransaction();
+                queryRun = { query: query, status: "pending", startedAtTimestamp: Date.now() };
+                transaction.queryRuns.push(queryRun);
+                const queryRunAction: QueryRunAction = queryRunActionOf(queryRun);
+                this._actions$.next(queryRunAction);
+            }),
+            switchMap((res) => this.apiPost<QueryResponse>(`/v1/transactions/${res.transactionId}/query`, { query })),
+            tap((res) => this.updateQueryRunResult(queryRun, res)),
+            // TODO: maybe extract TransactionStateService
+            tap(() => {
+                const transaction = this.requireTransaction();
+                if (!this.autoTransactionEnabled) this._transaction$.next(transaction);
+            }),
+            tap(() => {
+                if (this.autoTransactionEnabled) this.closeTransaction().subscribe();
+            }),
+            catchError((err) => {
+                if (this.autoTransactionEnabled) this.closeTransaction().subscribe();
+                throw err;
+            }),
         );
     }
 
@@ -210,6 +383,18 @@ export class DriverStateService {
         ).pipe(
             tap((resp) => this.token = resp.token)
         );
+    }
+
+    private updateQueryRunResult(queryRun: QueryRun, result: Object) {
+        queryRun.completedAtTimestamp = Date.now();
+        queryRun.status = "success";
+        queryRun.result = result;
+    }
+
+    private updateTransactionOperationResult(operation: TransactionOperation, result: Object) {
+        operation.completedAtTimestamp = Date.now();
+        operation.status = "success";
+        operation.result = result;
     }
 }
 

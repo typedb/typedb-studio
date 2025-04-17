@@ -7,8 +7,9 @@
 import { Component, EventEmitter, HostBinding, Input, Output, ViewChild } from "@angular/core";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { SidebarState } from "../../../concept/view-state";
-import { AppDataService } from "../../../service/app-data.service";
+import { AppData } from "../../../service/app-data.service";
 import { AsyncPipe, NgClass } from "@angular/common";
+import { ConnectionWidgetComponent } from "../../connection/widget/connection-widget.component";
 import { SidebarLinkComponent } from "./link/sidebar-link.component";
 import { MatSelect, MatSelectModule } from "@angular/material/select";
 import { MatDividerModule } from "@angular/material/divider";
@@ -23,7 +24,7 @@ import { ModalComponent } from "../../../framework/modal";
     standalone: true,
     imports: [
         SidebarLinkComponent, ModalComponent, AsyncPipe, MatSelectModule, MatDividerModule,
-        MatMenuModule, RouterLink, NgClass, MatTooltipModule
+        MatMenuModule, RouterLink, NgClass, MatTooltipModule, ConnectionWidgetComponent
     ],
 })
 export class SidebarComponent {
@@ -32,7 +33,7 @@ export class SidebarComponent {
     @Output() expandedStateChange = new EventEmitter<SidebarState>();
 
     constructor(
-        public app: AppDataService, private route: ActivatedRoute,
+        public app: AppData, private route: ActivatedRoute,
         // private dialog: MatDialog,
     ) {}
 

@@ -12,8 +12,8 @@ import { environment } from "./environments/environment";
 import { RootComponent } from "./root.component";
 import { ErrorHandler, importProvidersFrom, inject } from "@angular/core";
 import { MAT_RIPPLE_GLOBAL_OPTIONS, RippleGlobalOptions } from "@angular/material/core";
-import { FirebaseOptions, initializeApp, provideFirebaseApp } from "@angular/fire/app";
-import { getAuth, provideAuth } from "@angular/fire/auth";
+// import { FirebaseOptions, initializeApp, provideFirebaseApp } from "@angular/fire/app";
+// import { getAuth, provideAuth } from "@angular/fire/auth";
 import { provideHttpClient } from "@angular/common/http";
 import { routes } from "./routing/routes";
 import { TypeDBStudioTitleStrategy } from "./routing/title-strategy";
@@ -52,7 +52,7 @@ const checkboxGlobalConfig: MatCheckboxDefaultOptions = {
     color: "primary"
 };
 
-let firebaseOptions: FirebaseOptions & { tenantId: string } = { tenantId: "" };
+// let firebaseOptions: FirebaseOptions & { tenantId: string } = { tenantId: "" };
 
 if (environment.env !== "local") {
     const posthogProjectApiKey = environment.env === "production" ? "phc_w6b3dE1UxM9LKE2FLbDP9yiHFEXegbtxv1feHm0yigA" : "phc_kee7J4vlLnef61l6krVU8Fg5B6tYIgSEVOyW7yxwLSk";
@@ -71,7 +71,7 @@ if (environment.env !== "local") {
 Intercom({
     app_id: "zof896ic",
     hide_default_launcher: true,
-    custom_launcher_selector: "#sidebar_support",
+    custom_launcher_selector: ".ask-typedb-ai",
 });
 
 bootstrapApplication(RootComponent, {
@@ -82,12 +82,12 @@ bootstrapApplication(RootComponent, {
         provideAnimations(),
         { provide: ErrorHandler, useClass: StudioErrorHandler },
         importProvidersFrom(
-            provideFirebaseApp(() => initializeApp(firebaseOptions)),
-            provideAuth(() => {
-                const auth = getAuth();
-                auth.tenantId = firebaseOptions.tenantId;
-                return auth;
-            }),
+            // provideFirebaseApp(() => initializeApp(firebaseOptions)),
+            // provideAuth(() => {
+            //     const auth = getAuth();
+            //     auth.tenantId = firebaseOptions.tenantId;
+            //     return auth;
+            // }),
         ),
         {
             provide: MAT_DIALOG_SCROLL_STRATEGY,

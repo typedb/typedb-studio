@@ -1,0 +1,80 @@
+<ts-page-scaffold pageAvailability="ready">
+  <article class="query-page" style="display: flex; flex-direction: row;">
+    <div resizable [percent]="30" class="history-pane card">
+      <div class="card-header">
+        <i class="fa-light fa-notebook"></i>
+        <h4>History</h4>
+      </div>
+      <div class="history-container">
+        <ol>
+          @for (entry of state.history.entries; track entry) {
+            <li>
+              <aside class="text-muted">
+                <time>{{ entry.timestamp | date:'shortTime' }}</time>
+                <span class="bullet">•</span>
+                @if (isTransactionOperation(entry)) {
+                   <span class="transaction-operation-type">{{ transactionOperationString(entry) }}</span>
+                } @else {
+                  ran query
+                }
+                <span class="flex-spacer"></span>
+                @if (isPending(entry)) {
+                  <tp-spinner [size]="14"/>
+                } @else {
+                  {{ actionDurationString(entry) }}
+                }
+              </aside>
+              @if (isQueryRun(entry)) {
+                <mat-form-field>
+                  <textarea [value]="queryHistoryPreview(entry.queryRun.query)" readonly matInput
+                            cdkTextareaAutosize #autosize="cdkTextareaAutosize" cdkAutosizeMinRows="1" cdkAutosizeMaxRows="3">
+                  </textarea>
+                </mat-form-field>
+              }
+<!--              @if (!$last && isTransactionOperation(entry) && entry.transactionOperation.operationType === "close") {-->
+<!--                <mat-divider/>-->
+<!--              }-->
+            </li>
+          }
+        </ol>
+      </div>
+    </div>
+    <div class="main-panes" resizable [percent]="70" style="display: flex; flex-direction: column;">
+      <div resizable [percent]="40" class="query-pane card">
+        <div class="card-header">
+          <i class="fa-light fa-code"></i>
+          <h4>Query</h4>
+        </div>
+        <div class="code-editor-container">
+          <code-editor [extensions]="[codeEditorTheme]" [formControl]="state.queryControl"/>
+        </div>
+      </div>
+      <div resizable [percent]="60" class="run-pane card">
+        <div class="card-header">
+          <i class="fa-light fa-bolt"></i>
+          <h4>Run</h4>
+          <tp-button buttonId="actionBarSupport" buttonStyle="secondary" (click)="state.runQuery()">
+            <i class="fa-light fa-play"></i>
+          </tp-button>
+          <div>
+            <mat-button-toggle-group [formControl]="state.outputTypeControl">
+              @for (outputType of state.outputTypes; track outputType) {
+                <mat-button-toggle [value]="outputType">{{ outputType }}</mat-button-toggle>
+              }
+            </mat-button-toggle-group>
+          </div>
+        </div>
+        <div class="answers-text-container" [hidden]="state.outputTypeControl.value !== 'log'">
+          <mat-form-field class="code-text-field">
+            <textarea class="answers-text-box" [formControl]="state.logOutput.control" readonly matInput></textarea>
+          </mat-form-field>
+        </div>
+        <div class="answers-text-container" [hidden]="state.outputTypeControl.value !== 'raw'">
+          <mat-form-field class="code-text-field">
+            <textarea class="answers-text-box" [formControl]="state.rawOutput.control" readonly matInput></textarea>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+  </article>
+</ts-page-scaffold>

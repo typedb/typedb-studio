@@ -31,26 +31,24 @@
     }
 }
 
-.ts-logo-container {
-    margin-bottom: 16px;
+svg.tp-logo {
+    display: block;
+    height: 48px;
+    min-height: 48px;
+    width: 32px;
+    min-width: 32px;
+    color: var(--mat-select-enabled-trigger-text-color);
 
-    svg.ts-logo {
-        display: block;
-        height: 42px;
-        min-height: 42px;
-        color: var(--mat-select-enabled-trigger-text-color);
-
-        .tp-right-eye {
-            animation: 300s linear 0s infinite winkWink;
-            transform-origin: center;
-        }
+    .tp-right-eye {
+        animation: 90s linear 0s infinite winkWink;
+        transform-origin: center;
     }
 }
 
 @keyframes winkWink {
     0% { transform: scaleY(1); }
-    99.9% { transform: scaleY(1); }
-    99.95% { transform: translateY(24px) scaleY(0.01); }
+    99.8% { transform: scaleY(1); }
+    99.9% { transform: translateY(24px) scaleY(0.01); }
     100% { transform: scaleY(1); }
 }
 
