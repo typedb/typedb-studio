@@ -34,6 +34,7 @@ export class RootComponent implements OnInit, AfterViewInit {
             }
         })
     );
+    initialised = false;
 
     constructor(private analytics: AnalyticsService, private router: Router, private appData: AppData, private driver: DriverState, private snackbar: SnackbarService) {
         this.informAnalyticsOnPageView(router, analytics);
@@ -47,19 +48,23 @@ export class RootComponent implements OnInit, AfterViewInit {
     }
 
     ngOnInit() {
-        const initialConnectionConfig = this.appData.connections.findWithAutoReconnectOnAppStartup();
+        const initialConnectionConfig = this.appData.connections.findStartupConnection();
         if (initialConnectionConfig) {
-            this.driver.tryConnectAndSetupDatabases(initialConnectionConfig).subscribe({
+            this.driver.tryConnect(initialConnectionConfig).subscribe({
                 next: (databases) => {
-                    this.snackbar.success(`Connected to ${initialConnectionConfig.name}`);
+                    this.initialised = true;
                 },
                 error: (err) => {
-                    const msg = err?.message || err?.toString() || `Unknown error`;
-                    this.snackbar.info(`Error: ${msg}\n`
-                        + `Caused: Unable to connect to TypeDB server '${initialConnectionConfig.name}'.\n`
-                        + `Ensure the connection parameters are correct and the server is running.`);
+                    this.snackbar.infoPersistent(
+                        `Failed to reconnect to '${initialConnectionConfig.name}'.\n`
+                        + `Please reconnect manually via the 'Connect TypeDB server' page.`);
+                    console.warn(err);
+                    this.appData.connections.clearStartupConnection();
+                    this.initialised = true;
                 },
             });
+        } else {
+            this.initialised = true;
         }
     }
 

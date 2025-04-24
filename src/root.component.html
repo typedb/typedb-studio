@@ -1,4 +1,4 @@
-@if (routeIsLoading$ | async) {
+@if ((routeIsLoading$ | async) || !initialised) {
   <tp-spinner/>
 }
 

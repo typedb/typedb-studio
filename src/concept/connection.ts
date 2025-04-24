@@ -23,6 +23,14 @@ export class ConnectionConfig {
         return `${params.username}@${address}`;
     }
 
+    withDatabase(database: Database): ConnectionConfig {
+        return new ConnectionConfig({
+            name: this.name,
+            params: Object.assign({}, this.params, { database: database.name }),
+            preferences: this.preferences,
+        });
+    }
+
     toJSON(): ConnectionJson {
         return { name: this.name, url: this.url, preferences: this.preferences };
     }
@@ -44,6 +52,7 @@ export interface ConnectionParamsBasic {
     password: string;
     addresses: string[];
     tlsEnabled: boolean;
+    database?: string;
 }
 
 export interface ConnectionParamsTranslated {
@@ -51,6 +60,7 @@ export interface ConnectionParamsTranslated {
     password: string;
     translatedAddresses: TranslatedAddress[];
     tlsEnabled: boolean;
+    database?: string;
 }
 
 export interface TranslatedAddress {
@@ -74,7 +84,7 @@ export function remoteOrigin(params: ConnectionParams) {
 }
 
 export interface ConnectionPreferences {
-    autoReconnectOnAppStartup: boolean;
+    isStartupConnection: boolean;
 }
 
 const SCHEME = "typedb://";
@@ -87,14 +97,14 @@ export function connectionUrl(props: ConnectionParamsBasic | ConnectionParamsTra
 }
 
 function connectionUrlBasic(props: ConnectionParamsBasic) {
-    const { username, password, addresses, tlsEnabled } = props;
-    return `${SCHEME}${username}:${password}@${addresses.join(",")}${tlsEnabled ? `` : `/?${TLS_DISABLED}=true`}`;
+    const { username, password, addresses, tlsEnabled, database } = props;
+    return `${SCHEME}${username}:${password}@${addresses.join(",")}/${database ?? ''}${tlsEnabled ? `` : `?${TLS_DISABLED}=true`}`;
 }
 
 function connectionUrlTranslated(props: ConnectionParamsTranslated) {
-    const { username, password, translatedAddresses, tlsEnabled } = props;
+    const { username, password, translatedAddresses, tlsEnabled, database } = props;
     const translatedAddressStrings = translatedAddresses.map((x) => `${x.external};${x.internal}`);
-    return connectionUrlBasic({ username, password, addresses: translatedAddressStrings, tlsEnabled });
+    return connectionUrlBasic({ username, password, addresses: translatedAddressStrings, tlsEnabled, database });
 }
 
 export function parseConnectionUrlOrNull(rawValue: string): ConnectionParams | null {
@@ -115,7 +125,8 @@ function parseConnectionHostAndPathOrNull(rawValue: string): ConnectionParams | 
     const addresses = addressesRaw.split(`,`);
     if (!addresses.length) return null;
 
-    const queryParamsPairs = path?.split(`?`)?.at(-1)?.split(`&`).map(x => x.split(`=`, 2) as [string, string?]);
+    const database = path?.split(`?`)[0];
+    const queryParamsPairs = path?.split(`?`)?.at(1)?.split(`&`).map(x => x.split(`=`, 2) as [string, string?]);
     if (queryParamsPairs?.some(([_, x]) => x == undefined)) return null;
     const queryParams = queryParamsPairs ? Object.fromEntries(queryParamsPairs) as { [key: string]: string | undefined } : undefined;
     const tlsEnabled = queryParams && queryParams[TLS_DISABLED] ? !Boolean(queryParams[TLS_DISABLED]) : true;
@@ -124,9 +135,9 @@ function parseConnectionHostAndPathOrNull(rawValue: string): ConnectionParams | 
         const translatedAddressesRaw = addresses.map(x => x.split(`;`, 2));
         if (translatedAddressesRaw.some(x => !x[1])) return null;
         const translatedAddresses: TranslatedAddress[] = translatedAddressesRaw.map(([a, b]) => ({ external: a, internal: b }));
-        return { username, password, translatedAddresses, tlsEnabled };
+        return { username, password, translatedAddresses, tlsEnabled, database };
     } else {
-        return { username, password, addresses, tlsEnabled };
+        return { username, password, addresses, tlsEnabled, database };
     }
 }
 
@@ -135,8 +146,6 @@ export interface ConnectionJson {
     url: string;
     preferences: ConnectionPreferences;
 }
-
-export type ConnectionStatus = "connected" | "connecting" | "disconnected";
 
 export interface Database {
     name: string;

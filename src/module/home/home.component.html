@@ -8,14 +8,25 @@
     <div class="home-page-body">
       <div class="tp-bento-box tp-deploy-cluster">
         <div class="tp-deploy-cluster-button-area">
-          <h2>Connect to a TypeDB server</h2>
-          <p>Connect to TypeDB Cloud, Community Edition, or Enterprise</p>
-          <div class="flex-spacer"></div>
-          <a routerLink="/connect">
-            <tp-button buttonId="deployCluster" buttonStyle="primary-outline green stroke">
-              Connect
-            </tp-button>
-          </a>
+          @if (isConnected$ | async) {
+            <h2>Query your data</h2>
+            <p>Execute TypeQL queries using the query tool</p>
+            <div class="flex-spacer"></div>
+            <a routerLink="/query">
+              <tp-button buttonId="goToQueryTool" buttonStyle="primary-outline green stroke">
+                Query TypeDB
+              </tp-button>
+            </a>
+          } @else {
+            <h2>Connect to a TypeDB server</h2>
+            <p>Connect to TypeDB Cloud, Community Edition, or Enterprise</p>
+            <div class="flex-spacer"></div>
+            <a routerLink="/connect">
+              <tp-button buttonId="deployCluster" buttonStyle="primary-outline green stroke">
+                Connect
+              </tp-button>
+            </a>
+          }
         </div>
 
         <div class="flex-spacer"></div>

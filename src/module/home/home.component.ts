@@ -7,8 +7,9 @@
 import { AsyncPipe } from "@angular/common";
 import { Component, OnInit } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, map } from "rxjs";
 import { ButtonComponent } from "../../framework/button/button.component";
+import { DriverState } from "../../service/driver-state.service";
 import { PageScaffoldComponent, ResourceAvailability } from "../scaffold/page/page-scaffold.component";
 
 @Component({
@@ -20,9 +21,9 @@ import { PageScaffoldComponent, ResourceAvailability } from "../scaffold/page/pa
 })
 export class HomeComponent implements OnInit {
     availability$ = new BehaviorSubject<ResourceAvailability>("ready");
-    hasConnections$ = new BehaviorSubject(false);
+    isConnected$ = this.driver.status$.pipe(map(x => x === "connected"));
 
-    constructor() {
+    constructor(private driver: DriverState) {
     }
 
     ngOnInit() {

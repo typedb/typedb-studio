@@ -88,8 +88,8 @@ class Connections {
         }
     }
 
-    findWithAutoReconnectOnAppStartup(): ConnectionConfig | null {
-        return this.list().find(x => x.preferences.autoReconnectOnAppStartup) || null;
+    findStartupConnection(): ConnectionConfig | null {
+        return this.list().find(x => x.preferences.isStartupConnection) || null;
     }
 
     list(): ConnectionConfig[] {
@@ -101,12 +101,18 @@ class Connections {
         else return [];
     }
 
-    unshift(connection: ConnectionConfig): StorageWriteResult {
-        const list = [...this.list()];
+    push(connection: ConnectionConfig): StorageWriteResult {
+        const list = this.list();
         const connections = [connection, ...list.filter(x => x.url !== connection.url).slice(0, 9)];
-        if (connection.preferences.autoReconnectOnAppStartup) {
-            connections.slice(1).forEach(x => x.preferences.autoReconnectOnAppStartup = false);
+        if (connection.preferences.isStartupConnection) {
+            connections.slice(1).forEach(x => x.preferences.isStartupConnection = false);
         }
+        return this.storage.write(CONNECTIONS, connections.map(x => x.toJSON()));
+    }
+
+    clearStartupConnection(): StorageWriteResult {
+        const connections = this.list();
+        connections.forEach(conn => conn.preferences.isStartupConnection = false);
         return this.storage.write(CONNECTIONS, connections.map(x => x.toJSON()));
     }
 }

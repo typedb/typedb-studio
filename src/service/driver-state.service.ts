@@ -12,6 +12,7 @@ import { ConnectionConfig, Database, databasesSortedByName, DEFAULT_DATABASE_NAM
 import { QueryRun, Transaction, TransactionOperation, TransactionType } from "../concept/transaction";
 import { requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
+import { AppData } from "./app-data.service";
 
 export type DriverStatus = "disconnected" | "connecting" | "connected" | "reconnecting";
 
@@ -180,7 +181,7 @@ export class DriverState {
     autoTransactionEnabled = true;
     transactionHasUncommittedChanges$ = this.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private appData: AppData) {}
 
     get status$(): Observable<DriverStatus> {
         return this._status$;
@@ -206,23 +207,23 @@ export class DriverState {
         return this._actionLog$;
     }
 
-    private requireConfig() {
-        return requireValue(this._connection$);
+    private requireConnection(stack: string) {
+        return requireValue(this._connection$, stack);
     }
 
-    private requireDatabase() {
-        return requireValue(this._database$);
+    private requireDatabase(stack: string) {
+        return requireValue(this._database$, stack);
     }
 
-    private requireDatabaseList() {
-        return requireValue(this._databaseList$);
+    private requireDatabaseList(stack: string) {
+        return requireValue(this._databaseList$, stack);
     }
 
-    private requireTransaction() {
-        return requireValue(this._transaction$);
+    private requireTransaction(stack: string) {
+        return requireValue(this._transaction$, stack);
     }
 
-    tryConnectAndSetupDatabases(config: ConnectionConfig) {
+    tryConnect(config: ConnectionConfig): Observable<ConnectionConfig> {
         if (this._status$.value !== "disconnected") throw INTERNAL_ERROR;
         const lockId = uuid();
         return this.tryUseWriteLock(() => {
@@ -231,12 +232,21 @@ export class DriverState {
 
             return this.refreshDatabaseList().pipe(
                 switchMap((res) => {
-                    if (!res.databases.length) return this.setupDefaultDatabase(lockId);
-                    if (res.databases.length === 1) this.selectDatabase(res.databases[0]);
-                    return of(undefined); // TODO: connect to designated default database for this server
+                    if (!res.databases.length) return this.setupDefaultDatabase(lockId).pipe(map(() =>
+                        config.withDatabase(this.requireDatabase(`${this.constructor.name}.${this.tryConnect.name} > ${this.requireDatabase.name}`))
+                    ));
+                    if (res.databases.length === 1) this.selectDatabase(res.databases[0], lockId);
+                    else if (config.params.database
+                        && this.requireDatabaseList(`${this.constructor.name}.${this.tryConnect.name} > ${this.requireDatabaseList.name}`)
+                            .some(x => x.name === config.params.database)) {
+                        this.selectDatabase({ name: config.params.database }, lockId);
+                    }
+                    const database = this._database$.value;
+                    return of(database ? config.withDatabase(database) : config);
                 }),
                 tap(() => this._status$.next("connected")),
                 catchError((err) => {
+                    this._connection$.next(null); // TODO: revisit - is an 'errored' connection config still valid?
                     this._status$.next("disconnected");
                     throw err;
                 }),
@@ -266,13 +276,19 @@ export class DriverState {
         if (this._database$.value?.name === database.name) return;
         const savedDatabase = this._databaseList$.value?.find(x => x.name === database.name);
         if (!savedDatabase) throw INTERNAL_ERROR;
-        else this.tryUseWriteLock(() => this._database$.next(savedDatabase), lockId);
+        else this.tryUseWriteLock(() => {
+            this._database$.next(savedDatabase);
+            const currentConnection = this.requireConnection(`${this.constructor.name}.${this.selectDatabase.name} > ${this.requireConnection.name}`);
+            const connection = currentConnection.withDatabase(savedDatabase);
+            this._connection$.next(connection);
+            this.appData.connections.push(connection);
+        }, lockId);
     }
 
     createAndSelectDatabase(name: string, lockId?: string) {
         return this.tryUseWriteLock(() => this.apiPost(`/v1/databases/${name}`, {}).pipe(
             tap(() => {
-                const databaseList = this.requireDatabaseList();
+                const databaseList = this.requireDatabaseList(`${this.constructor.name}.${this.createAndSelectDatabase.name} > ${this.requireDatabaseList.name}`);
                 this._databaseList$.next(databasesSortedByName([...databaseList, { name }]));
                 this.selectDatabase({ name }, lockId);
             }),
@@ -280,7 +296,7 @@ export class DriverState {
     }
 
     openTransaction(type: TransactionType) {
-        const databaseName = this.requireDatabase().name;
+        const databaseName = this.requireDatabase(`${this.constructor.name}.${this.openTransaction.name} > ${this.requireDatabase.name}`).name;
         const operation: TransactionOperation = { operationType: "open", status: "pending", startedAtTimestamp: Date.now() };
         const action = transactionOperationActionOf(operation);
         this._actionLog$.next(action);
@@ -293,7 +309,7 @@ export class DriverState {
     }
 
     commitTransaction() {
-        const transactionId = this.requireTransaction().id;
+        const transactionId = this.requireTransaction(`${this.constructor.name}.${this.commitTransaction.name} > ${this.requireTransaction.name}`).id;
         const operation: TransactionOperation = { operationType: "commit", status: "pending", startedAtTimestamp: Date.now() };
         const action = transactionOperationActionOf(operation);
         this._actionLog$.next(action);
@@ -320,11 +336,13 @@ export class DriverState {
     }
 
     query(query: string) {
-        const maybeOpenTransaction$ = this.autoTransactionEnabled ? this.openTransaction("read") : of({ transactionId: this.requireTransaction().id });
+        const maybeOpenTransaction$ = this.autoTransactionEnabled
+            ? this.openTransaction("read")
+            : of({ transactionId: this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`).id });
         let queryRun: QueryRun;
         return maybeOpenTransaction$.pipe(
             tap(() => {
-                const transaction = this.requireTransaction();
+                const transaction = this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`);
                 queryRun = { query: query, status: "pending", startedAtTimestamp: Date.now() };
                 transaction.queryRuns.push(queryRun);
                 const queryRunAction: QueryRunAction = queryRunActionOf(queryRun);
@@ -334,7 +352,7 @@ export class DriverState {
             tap((res) => this.updateQueryRunResult(queryRun, res)),
             // TODO: maybe extract TransactionStateService
             tap(() => {
-                const transaction = this.requireTransaction();
+                const transaction = this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`);
                 if (!this.autoTransactionEnabled) this._transaction$.next(transaction);
             }),
             tap(() => {
@@ -368,7 +386,7 @@ export class DriverState {
     }
 
     private apiGet<RES = Object>(path: string, options?: { headers?: Record<string, string> }) {
-        const { params } = this.requireConfig();
+        const { params } = this.requireConnection(`${this.constructor.name}.${this.apiGet.name} > ${this.requireConnection.name}`);
         const url = `${remoteOrigin(params)}${path}`;
         return this.getToken().pipe(
             switchMap((resp) => {
@@ -388,7 +406,7 @@ export class DriverState {
     }
 
     private apiPost<RES = Object, BODY = Object>(path: string, body: BODY, options?: { headers?: Record<string, string>}) {
-        const { params } = this.requireConfig();
+        const { params } = this.requireConnection(`${this.constructor.name}.${this.apiPost.name} > ${this.requireConnection.name}`);
         const url = `${remoteOrigin(params)}${path}`;
         return this.getToken().pipe(
             switchMap((resp) => {
@@ -415,7 +433,7 @@ export class DriverState {
     }
 
     private refreshToken() {
-        const { params } = this.requireConfig();
+        const { params } = this.requireConnection(`DriverState.refreshToken > requireConfig`);
         return this.http.post<SignInResponse>(
             `${remoteOrigin(params)}/v1/signin`, { username: params.username, password: params.password }
         ).pipe(

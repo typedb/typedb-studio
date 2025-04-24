@@ -53,7 +53,7 @@ export class ConnectionCreatorComponent implements OnInit {
     passwordRevealed = false;
 
     readonly form = this.formBuilder.group({
-        name: ["", [(control: AbstractControl) => this.connectionNameUniqueValidator(control)]],
+        name: ["", [requiredValidator]],
         advancedConfigActive: [this.appData.preferences.connection.showAdvancedConfigByDefault(), [requiredValidator]],
         url: ["", [requiredValidator, connectionUrlValidator]],
         saveConnectionDetails: [false, [requiredValidator]],
@@ -128,7 +128,7 @@ export class ConnectionCreatorComponent implements OnInit {
             name: this.form.value.name || ConnectionConfig.autoName(connectionParams),
             params: connectionParams,
             preferences: {
-                autoReconnectOnAppStartup: true
+                isStartupConnection: true
             },
         });
     }
@@ -137,10 +137,10 @@ export class ConnectionCreatorComponent implements OnInit {
         const config = this.buildConnectionConfigOrNull();
         if (!config) throw INTERNAL_ERROR;
         this.form.disable();
-        this.driver.tryConnectAndSetupDatabases(config).subscribe({
+        this.driver.tryConnect(config).subscribe({
             next: (databases) => {
                 this.snackbar.success(`Connected to ${config.name}`);
-                this.appData.connections.unshift(config);
+                this.appData.connections.push(config);
                 this.router.navigate([this.appData.viewState.lastUsedToolRoute()]).then((navigated) => {
                     if (!navigated) throw INTERNAL_ERROR;
                 });
