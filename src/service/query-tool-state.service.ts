@@ -4,6 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+import { DatePipe } from "@angular/common";
 import { Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { BehaviorSubject, combineLatest, map, Observable, startWith, Subject } from "rxjs";
@@ -57,7 +58,7 @@ export class QueryToolState {
         this.tableOutput.clear();
         this.rawOutput.clear();
 
-        this.logOutput.appendLines(RUNNING, query);
+        this.logOutput.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);
         this.tableOutput.statusText = STATUS_RUNNING_QUERY;
     }
 
@@ -93,6 +94,7 @@ export class HistoryWindowState {
 }
 
 const RUNNING = `## Running> `;
+const TIMESTAMP = `## Timestamp> `;
 const RESULT = `## Result> `;
 const SUCCESS = `Success`;
 const SUCCESS_RAW = `success`;

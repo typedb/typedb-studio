@@ -128,6 +128,14 @@ tp-button ::ng-deep button {
         display: none;
     }
 
+    ::ng-deep .mdc-text-field {
+        --mdc-outlined-text-field-input-text-color: #{secondary.$pink};
+    }
+
+    ::ng-deep .mat-mdc-form-field:not(.form-field-dense) .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix {
+        padding: 4px 2px 4px 6px;
+    }
+
     .answers-text-box {
         height: 100% !important;
         resize: none;

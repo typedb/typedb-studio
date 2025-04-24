@@ -17,7 +17,7 @@ const base00 = '#0e0d17',
     base0B = '#8abeb7',
     base0C = '#b5bd68',
     base0D = '#02dac9',
-    base0E = '#cc99cc',
+    base0E = '#ff87dc',
     base0F = '#6987AF'
 
 const invalid = base09,
@@ -32,12 +32,18 @@ const invalid = base09,
 export const basicDarkTheme = EditorView.theme(
     {
         '&': {
-            color: base07,
+            color: base0E,
             backgroundColor: background
         },
 
         '.cm-content': {
             caretColor: cursor
+        },
+
+        '.cm-scroller': {
+            fontSize: '14px',
+            lineHeight: '21px',
+            fontFamily: '"Monaco", monospace',
         },
 
         '.cm-cursor, .cm-dropCursor': { borderLeftColor: cursor },
@@ -177,7 +183,10 @@ export const basicDarkHighlightStyle = HighlightStyle.define([
     },
     { tag: [t.meta], color: base08 },
     { tag: [t.comment], color: base06, fontStyle: 'italic' },
-    { tag: t.monospace, color: base01 },
+    {
+        tag: t.monospace,
+        color: base01,
+    },
     { tag: t.strong, fontWeight: 'bold', color: base0A },
     { tag: t.emphasis, fontStyle: 'italic', color: base0D },
     { tag: t.strikethrough, textDecoration: 'line-through' },
