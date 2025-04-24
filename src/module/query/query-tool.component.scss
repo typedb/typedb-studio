@@ -4,6 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+@use "media";
 @use "primary";
 @use "secondary";
 @use "typography";
@@ -44,6 +45,10 @@
 .main-panes {
     flex: 1;
     gap: 4px !important;
+
+    @media (max-width: media.$max-width-mobile) {
+        margin-left: -8px;
+    }
 }
 
 .history-pane, .query-pane, .run-pane {
@@ -148,6 +153,12 @@ tp-button ::ng-deep button {
     height: 100%;
     border: 1px solid primary.$light-purple;
     background: primary.$black-purple;
+    display: flex;
+
+    .status-text {
+        @include typography.p1;
+        margin: auto;
+    }
 }
 
 .answers-placeholder-container {
@@ -162,6 +173,10 @@ tp-button ::ng-deep button {
 }
 
 .history-pane {
+    @media (max-width: media.$max-width-mobile) {
+        display: none;
+    }
+
     .history-container {
         height: 100%;
         overflow: auto;

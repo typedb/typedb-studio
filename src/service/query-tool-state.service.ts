@@ -308,7 +308,16 @@ export class TableOutputState {
                 break;
             }
             case "conceptDocuments": {
-                // TODO: documents
+                if (res.answers.length) {
+                    const keys = Object.keys(res.answers[0]);
+                    if (keys.length) {
+                        this.status = "ok";
+                        this.appendColumns(...keys);
+                        setTimeout(() => {
+                            this.appendRows(...res.answers);
+                        });
+                    } else this.status = "noColumns";
+                } else this.status = "noAnswers";
                 break;
             }
             default:
