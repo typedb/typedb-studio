@@ -92,7 +92,7 @@ export class ConnectionWidgetComponent implements OnInit {
 
     disconnect() {
         this.driver.tryDisconnect().subscribe(() => {
-            this.snackbar.success(`Disconnected`);
+            this.snackbar.info(`Disconnected`);
         });
     }
 

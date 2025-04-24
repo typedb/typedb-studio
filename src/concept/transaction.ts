@@ -4,6 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+import { QueryResponse } from "../service/driver-state.service";
+
 export class Transaction {
 
     readonly id: string;
@@ -49,7 +51,7 @@ export type ReadMode = "auto" | "manual";
 export interface QueryRun {
     query: string;
     status: "pending" | "success" | "error";
-    result?: Object;
+    result?: QueryResponse;
     startedAtTimestamp: number;
     completedAtTimestamp?: number;
 }

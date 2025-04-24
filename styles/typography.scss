@@ -131,8 +131,7 @@ $letter-spacing: 0.02em;
 }
 
 @mixin p1 {
-    text-decoration: underline;
-    @include font-style(16px, $semi-bold, 24px, $letter-spacing);
+    @include font-style(15px, $regular, 23px, $letter-spacing);
 }
 
 @mixin p2 {

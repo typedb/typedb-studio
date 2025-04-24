@@ -9,11 +9,12 @@ import { Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { BehaviorSubject, combineLatest, map, Observable, startWith, Subject } from "rxjs";
 import { INTERNAL_ERROR } from "../framework/util/strings";
-import { Concept, ConceptDocument, ConceptRow, DriverAction, DriverState, QueryResponse, Value } from "./driver-state.service";
+import { Concept, ConceptDocument, ConceptRow, DriverAction, DriverState, isApiErrorResponse, QueryResponse, Value } from "./driver-state.service";
 
 export type OutputType = "raw" | "log" | "table" | "structure";
 
 const NO_SERVER_CONNECTED = `No server connected`;
+const NO_DATABASE_SELECTED = `No database selected`;
 const QUERY_BLANK = `Query text is blank`;
 
 @Injectable({
@@ -29,9 +30,14 @@ export class QueryToolState {
     readonly tableOutput = new TableOutputState();
     readonly rawOutput = new RawOutputState();
     answersOutputEnabled = true;
-    readonly runDisabledReason$ = combineLatest([this.driver.status$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))]).pipe(
-        map(([status, query]) => status === "connected" ? (query.length ? null : QUERY_BLANK) : NO_SERVER_CONNECTED)
-    );
+    readonly runDisabledReason$ = combineLatest(
+        [this.driver.status$, this.driver.database$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))]
+    ).pipe(map(([status, db, query]) => {
+        if (status !== "connected") return NO_SERVER_CONNECTED;
+        else if (db == null) return NO_DATABASE_SELECTED;
+        else if (!query.length) return QUERY_BLANK;
+        else return null;
+    }));
     readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
     readonly runEnabled$ = this.runDisabledReason$.pipe(map(x => x == null));
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
@@ -59,7 +65,7 @@ export class QueryToolState {
         this.rawOutput.clear();
 
         this.logOutput.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);
-        this.tableOutput.statusText = STATUS_RUNNING_QUERY;
+        this.tableOutput.status = "running";
     }
 
     private outputQueryResponse(res: QueryResponse) {
@@ -77,7 +83,7 @@ export class QueryToolState {
     private outputQueryResponseNoAnswers() {
         this.logOutput.appendBlankLine();
         this.logOutput.appendLines(`${RESULT}${SUCCESS}`);
-        this.tableOutput.statusText = STATUS_COMPLETED_ANSWER_OUTPUT_DISABLED;
+        this.tableOutput.status = "answerOutputDisabled";
         this.rawOutput.push(SUCCESS_RAW);
     }
 }
@@ -98,6 +104,7 @@ const TIMESTAMP = `## Timestamp> `;
 const RESULT = `## Result> `;
 const SUCCESS = `Success`;
 const SUCCESS_RAW = `success`;
+const ERROR = `Error`;
 const TABLE_INDENT = "   ";
 const CONTENT_INDENT = "    ";
 const TABLE_DASHES = 7;
@@ -168,8 +175,12 @@ export class LogOutputState {
     }
 
     appendQueryResult(res: QueryResponse) {
-        this.appendLines(`${RESULT}${SUCCESS}`);
-        this.appendBlankLine();
+        if (isApiErrorResponse(res)) {
+            this.appendLines(`${RESULT}${ERROR}`, ``, res.err.message);
+            return;
+        }
+
+        this.appendLines(`${RESULT}${SUCCESS}`, ``);
 
         switch (res.answerType) {
             case "ok": {
@@ -242,17 +253,14 @@ export class LogOutputState {
 
 const COLUMN_RESULT = `result`;
 const CELL_SUCCESS = `success`;
-const STATUS_RUNNING_QUERY = `Running query. Answers will be displayed here when they are ready.`;
-const STATUS_COMPLETED_ANSWERLESS_QUERY_TYPE = `Query completed successfully. This query type does not return answers.`;
-const STATUS_COMPLETED_ANSWER_OUTPUT_DISABLED = `Query completed successfully. Answer output is currently disabled.`;
-const STATUS_NO_COLUMNS = `The answers to this query do not have any columns.`;
-const STATUS_NO_ANSWERS = `This query did not return any answers.`;
+
+type TableOutputStatus = "ok" | "running" | "answerlessQueryType" | "answerOutputDisabled" | "noColumns" | "noAnswers" | "error";
 
 type TableRow = { [column: string]: any };
 
 export class TableOutputState {
 
-    statusText?: string;
+    status: TableOutputStatus = "ok";
     private _data$ = new BehaviorSubject<TableRow[]>([]);
     private _columns: string[] = [];
     private _displayedColumns: string[] = [];
@@ -276,23 +284,27 @@ export class TableOutputState {
     }
 
     push(res: QueryResponse) {
+        if (isApiErrorResponse(res)) {
+            this.status = "error";
+            return;
+        }
+
         switch (res.answerType) {
             case "ok": {
-                this.statusText = STATUS_COMPLETED_ANSWERLESS_QUERY_TYPE;
+                this.status = "answerlessQueryType";
                 break;
             }
             case "conceptRows": {
                 if (res.answers.length) {
                     const varNames = Object.keys(res.answers[0]);
                     if (varNames.length) {
+                        this.status = "ok";
                         this.appendColumns(...varNames);
                         setTimeout(() => {
                             this.appendConceptRows(...res.answers);
                         });
-                    } else this.statusText = STATUS_NO_COLUMNS;
-                } else {
-                    this.statusText = STATUS_NO_ANSWERS;
-                }
+                    } else this.status = "noColumns";
+                } else this.status = "noAnswers";
                 break;
             }
             case "conceptDocuments": {
@@ -341,7 +353,7 @@ export class TableOutputState {
     }
 
     clearStatus() {
-        this.statusText = undefined;
+        this.status = "ok";
     }
 
     clear() {

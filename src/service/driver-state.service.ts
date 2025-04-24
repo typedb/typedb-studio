@@ -28,6 +28,7 @@ interface TransactionOpenResponse {
     transactionId: string;
 }
 
+const HTTP_BAD_REQUEST = 400;
 const HTTP_UNAUTHORIZED = 401;
 
 interface DriverActionBase {
@@ -154,11 +155,26 @@ export type ConceptDocument = Object;
 
 export type Answer = ConceptRow | ConceptDocument;
 
-export type QueryResponse = OkQueryResponse | ConceptRowsQueryResponse | ConceptDocumentsQueryResponse;
+export type QueryResponse = OkQueryResponse | ConceptRowsQueryResponse | ConceptDocumentsQueryResponse | ApiErrorResponse;
+
+export function isApiErrorResponse(res: QueryResponse): res is ApiErrorResponse {
+    return "err" in res;
+}
 
 interface Semaphore {
     id: string;
     count: number;
+}
+
+export type ApiError = { code: string; message: string };
+
+export interface ApiErrorResponse {
+    err: ApiError;
+    status: number;
+}
+
+function isApiError(err: any): err is ApiError {
+    return typeof err.code === "string" && typeof err.message === "string";
 }
 
 @Injectable({
@@ -348,7 +364,11 @@ export class DriverState {
                 const queryRunAction: QueryRunAction = queryRunActionOf(queryRun);
                 this._actionLog$.next(queryRunAction);
             }),
-            switchMap((res) => this.apiPost<QueryResponse>(`/v1/transactions/${res.transactionId}/query`, { query })),
+            switchMap((res) => this.apiPost<QueryResponse>(
+                `/v1/transactions/${res.transactionId}/query`,
+                { query },
+                { handleError: (err, status) => of<ApiErrorResponse>({ err, status }) })
+            ),
             tap((res) => this.updateQueryRunResult(queryRun, res)),
             // TODO: maybe extract TransactionStateService
             tap(() => {
@@ -385,7 +405,7 @@ export class DriverState {
         return res;
     }
 
-    private apiGet<RES = Object>(path: string, options?: { headers?: Record<string, string> }) {
+    private apiGet<RES = Object>(path: string, options?: { headers?: Record<string, string>, handleError?: (err: ApiError, status: number) => Observable<RES> }) {
         const { params } = this.requireConnection(`${this.constructor.name}.${this.apiGet.name} > ${this.requireConnection.name}`);
         const url = `${remoteOrigin(params)}${path}`;
         return this.getToken().pipe(
@@ -394,18 +414,21 @@ export class DriverState {
                 return this.http.get<RES>(url, opts);
             }),
             catchError((err) => {
-                if (err instanceof HttpErrorResponse && err.status === HTTP_UNAUTHORIZED) {
+                if (!(err instanceof HttpErrorResponse)) throw err;
+                if (err.status === HTTP_UNAUTHORIZED) {
                     return this.refreshToken().pipe(switchMap((resp) => {
                         const opts = { headers: Object.assign({ "Authorization": `Bearer ${resp.token}` }, options?.headers || {})};
                         return this.http.get<RES>(url, opts);
                     }));
+                } else if (isApiError(err.error) && options?.handleError) {
+                    return options.handleError(err.error, err.status);
                 } else throw err;
             }),
             takeUntil(this._stopSignal$), // TODO: test
         );
     }
 
-    private apiPost<RES = Object, BODY = Object>(path: string, body: BODY, options?: { headers?: Record<string, string>}) {
+    private apiPost<RES = Object, BODY = Object>(path: string, body: BODY, options?: { headers?: Record<string, string>, handleError?: (err: ApiError, status: number) => Observable<RES> }) {
         const { params } = this.requireConnection(`${this.constructor.name}.${this.apiPost.name} > ${this.requireConnection.name}`);
         const url = `${remoteOrigin(params)}${path}`;
         return this.getToken().pipe(
@@ -414,11 +437,14 @@ export class DriverState {
                 return this.http.post<RES>(url, body, opts);
             }),
             catchError((err) => {
-                if (err instanceof HttpErrorResponse && err.status === HTTP_UNAUTHORIZED) {
+                if (!(err instanceof HttpErrorResponse)) throw err;
+                if (err.status === HTTP_UNAUTHORIZED) {
                     return this.refreshToken().pipe(switchMap((resp) => {
                         const opts = { headers: Object.assign({ "Authorization": `Bearer ${resp.token}` }, options?.headers || {})};
                         return this.http.post<RES>(url, body, opts);
                     }));
+                } else if (isApiError(err.error) && options?.handleError) {
+                    return options.handleError(err.error, err.status);
                 } else throw err;
             }),
             takeUntil(this._stopSignal$),
@@ -441,10 +467,10 @@ export class DriverState {
         );
     }
 
-    private updateQueryRunResult(queryRun: QueryRun, result: Object) {
+    private updateQueryRunResult(queryRun: QueryRun, res: QueryResponse) {
         queryRun.completedAtTimestamp = Date.now();
-        queryRun.status = "success";
-        queryRun.result = result;
+        queryRun.status = isApiErrorResponse(res) ? "error" : "success";
+        queryRun.result = res;
     }
 
     private updateTransactionOperationResult(operation: TransactionOperation, result: Object) {
