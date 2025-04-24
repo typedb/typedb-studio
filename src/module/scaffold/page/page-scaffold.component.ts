@@ -5,16 +5,15 @@
  */
 
 import { animate, state, style, transition, trigger } from "@angular/animations";
-import { Component, Input } from "@angular/core";
+import { NgClass } from "@angular/common";
+import { AfterViewInit, Component, ElementRef, Input, ViewChild } from "@angular/core";
 import { MatSidenavModule } from "@angular/material/sidenav";
 import { ButtonComponent } from "../../../framework/button/button.component";
 import { SpinnerComponent } from "../../../framework/spinner/spinner.component";
 import { AppData } from "../../../service/app-data.service";
 import { ConnectionWidgetComponent } from "../../connection/widget/connection-widget.component";
-import { TransactionWidgetComponent } from "../../transaction/widget/transaction-widget.component";
-import { SidebarComponent } from "../sidebar/sidebar.component";
 import { RightSidebarComponent } from "../sidebar/right/right-sidebar.component";
-import { NgClass } from "@angular/common";
+import { SidebarComponent } from "../sidebar/sidebar.component";
 
 export type ResourceAvailability = "ready" | "loading" | "failed";
 
@@ -24,21 +23,46 @@ export type ResourceAvailability = "ready" | "loading" | "failed";
     styleUrls: ["./page-scaffold.component.scss"],
     standalone: true,
     imports: [
-        SidebarComponent, RightSidebarComponent, SpinnerComponent, NgClass, MatSidenavModule, ButtonComponent, ConnectionWidgetComponent, TransactionWidgetComponent,
+        SidebarComponent, RightSidebarComponent, SpinnerComponent, NgClass, MatSidenavModule, ButtonComponent, ConnectionWidgetComponent,
     ],
     animations: [
         trigger("sidebarLeftMargin", [
             state("open", style({ "margin-left": "289px" })),
             state("collapsed", style({ "margin-left": "101px" })),
-            transition("open <=> collapsed", animate("250ms ease"))
+            transition("open <=> collapsed", animate("250ms ease")),
+            transition("void => collapsed", [style({ "margin-left": "101px" })]),
+            transition("void => open", [style({ "margin-left": "289px" })])
         ])
     ],
 })
-export class PageScaffoldComponent {
+export class PageScaffoldComponent implements AfterViewInit {
+    @ViewChild("actionBar") actionBar!: ElementRef;
     @Input() pageAvailability: ResourceAvailability | null = "ready";
     @Input() hideTransactionWidget = false;
 
     leftSidebarState = this.appData.viewState.sidebarState();
+    condensed = false;
 
     constructor(private appData: AppData) {}
+
+    ngAfterViewInit() {
+        const observer = new ResizeObserver(entries => {
+            const actionBarWidth = entries[0].contentRect.width;
+            this.condensed = actionBarWidth < 1080;
+        });
+
+        observer.observe(this.actionBar.nativeElement);
+    }
+
+    get sidebarLeftMarginAnimationState() {
+        return this.leftSidebarState === 'collapsed' ? 'collapsed' : 'open';
+    }
+
+    get actionBarClass() {
+        return this.condensed ? `action-bar condensed` : `action-bar`;
+    }
+
+    onActionBarResize(e: any) {
+        console.log(e);
+    }
 }

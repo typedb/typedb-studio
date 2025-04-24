@@ -22,52 +22,61 @@
     @include shapes.standard-border;
     @include shapes.light-source-gradient(rgba(primary.$light-purple, 0.9), primary.$purple, 80px, 16px);
     transition: background 0.1s linear, width 500ms ease-in;
-    padding: 6px 8px;
+    padding: 3px 8px;
     display: flex;
     align-items: center;
-    cursor: pointer;
     z-index: 40;
+    cursor: pointer;
+
+    button {
+        padding: 5px 8px;
+        border-radius: shapes.$border-radius-panel;
+        display: flex;
+        align-items: center;
+        color: primary.$grey;
+        @include typography.p2;
+
+        i.fa-database {
+            margin-right: 8px;
+        }
+
+        i.fa-code-commit {
+            margin-right: 12px;
+        }
+    }
+
+    button:hover {
+        color: primary.$green;
+    }
+
+    .connection-area {
+        display: flex;
+        align-items: center;
+    }
 }
 
-button {
-    padding: 5px 8px;
-    border-radius: shapes.$border-radius-panel;
-    display: flex;
-    align-items: center;
-    color: primary.$grey;
-    @include typography.p2;
+i.ts-beacon {
+    font-size: 8px;
+    width: 8px;
+    height: 8px;
+    margin-right: 8px;
 
-    i.fa-server, i.fa-database {
-        margin-right: 8px;
+    &.ok {
+        color: primary.$green;
+        //animation: shimmer 3s ease-in-out 0s infinite;
     }
 
-    i.fa-code-commit {
-        margin-right: 12px;
+    &.warn {
+        color: secondary.$yellow;
+        animation: beacon 1.5s ease-in-out 0s infinite;
     }
 
-    i.ts-beacon {
-        font-size: 8px;
-        width: 8px;
-        height: 8px;
-        margin-left: 8px;
+    &.error {
+        color: primary.$red;
+    }
 
-        &.ok {
-            color: primary.$green;
-            //animation: shimmer 3s ease-in-out 0s infinite;
-        }
-
-        &.warn {
-            color: secondary.$yellow;
-            animation: beacon 1.5s ease-in-out 0s infinite;
-        }
-
-        &.error {
-            color: primary.$red;
-        }
-
-        &.inactive {
-            color: secondary.$light-grey;
-        }
+    &.inactive {
+        color: secondary.$light-grey;
     }
 }
 
@@ -88,6 +97,33 @@ button {
 }
 
 .divider-vertical {
-    margin: 0 32px;
+    margin: 0 24px;
     width: 0;
+}
+
+.menu-content {
+    aside {
+        margin: 6px 16px;
+        @include typography.aside;
+        color: secondary.$light-grey;
+    }
+
+    mat-divider {
+        margin: 4px 8px;
+    }
+
+    i {
+        width: 14px;
+        height: 14px;
+        font-size: 14px;
+    }
+
+    i.fa-swap-arrows {
+        margin-left: -3px;
+        margin-right: 3px;
+    }
+
+    button.selected {
+        color: primary.$green;
+    }
 }

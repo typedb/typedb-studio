@@ -13,7 +13,7 @@ import { QueryToolComponent } from "../module/query/query-tool.component";
 
 export const routes: Routes = [
     { path: "", component: HomeComponent, title: "Home", pathMatch: "full" },
-    { path: "connections/new", component: ConnectionCreatorComponent, title: "Create connection" },
+    { path: "connect", component: ConnectionCreatorComponent, title: "Connect" },
     { path: "query", component: QueryToolComponent, title: "Query" },
     { path: "**", component: _404PageComponent, title: "404" },
 ];

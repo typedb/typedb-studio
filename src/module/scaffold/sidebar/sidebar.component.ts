@@ -16,6 +16,8 @@ import { MatDividerModule } from "@angular/material/divider";
 import { MatMenuModule } from "@angular/material/menu";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { ModalComponent } from "../../../framework/modal";
+import { MatDialog } from "@angular/material/dialog";
+import { AppInfoDialogComponent } from "../../about/app-info-dialog.component";
 
 @Component({
     selector: "ts-sidebar",
@@ -29,12 +31,12 @@ import { ModalComponent } from "../../../framework/modal";
 })
 export class SidebarComponent {
     @ViewChild(MatSelect) orgSelector!: MatSelect;
-    expandedState = this.app.viewState.sidebarState();
+    expandedState: SidebarState = this.app.viewState.sidebarState();
     @Output() expandedStateChange = new EventEmitter<SidebarState>();
 
     constructor(
         public app: AppData, private route: ActivatedRoute,
-        // private dialog: MatDialog,
+        private dialog: MatDialog,
     ) {}
 
     get collapsed(): boolean {
@@ -45,5 +47,9 @@ export class SidebarComponent {
         this.expandedState = this.expandedState === "expanded" ? "collapsed" : "expanded";
         this.app.viewState.setSidebarState(this.expandedState);
         this.expandedStateChange.emit(this.expandedState);
+    }
+
+    showAppInfoDialog() {
+        this.dialog.open(AppInfoDialogComponent, { width: "360px" });
     }
 }

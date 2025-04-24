@@ -3,7 +3,7 @@ import { Extension } from '@codemirror/state'
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { tags as t } from '@lezer/highlight'
 
-const base00 = 'transparent',
+const base00 = '#0e0d17',
     base01 = '#232135',
     base02 = '#2d2a46',
     base03 = '#383649',
@@ -21,7 +21,7 @@ const base00 = 'transparent',
     base0F = '#6987AF'
 
 const invalid = base09,
-    darkBackground = 'transparent',
+    darkBackground = base00,
     highlightBackground = base02 + '90',
     background = base00,
     tooltipBackground = base01,

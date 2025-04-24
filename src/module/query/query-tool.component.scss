@@ -74,13 +74,14 @@ mat-form-field {
     width: 100%;
 }
 
-tp-button {
-    align-self: flex-start;
-}
+tp-button ::ng-deep button {
+    i.fa-play {
+        margin: 0;
+    }
 
-i.fa-play {
-    color: secondary.$deep-green;
-    margin: 0;
+    &:enabled i.fa-play {
+        color: secondary.$deep-green;
+    }
 }
 
 .query-text-box {
@@ -94,12 +95,20 @@ i.fa-play {
 
 .code-editor-container {
     height: 100%;
-    overflow: scroll;
+    overflow: auto;
+    border: 1px solid primary.$light-purple;
+    background: primary.$black-purple;
+
+    code-editor {
+        height: 100%;
+    }
 }
 
 .answers-text-container {
     height: 100%;
-    overflow: scroll;
+    overflow: auto;
+    border: 1px solid primary.$light-purple;
+    background: primary.$black-purple;
 
     mat-form-field {
         flex: 1;
@@ -126,10 +135,28 @@ i.fa-play {
     }
 }
 
+.answers-table-container {
+    overflow: auto;
+    height: 100%;
+    border: 1px solid primary.$light-purple;
+    background: primary.$black-purple;
+}
+
+.answers-placeholder-container {
+    height: 100%;
+    overflow: auto;
+    border: 3px dashed primary.$light-purple;
+    border-radius: shapes.$border-radius-panel;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: primary.$black-purple;
+}
+
 .history-pane {
     .history-container {
         height: 100%;
-        overflow: scroll;
+        overflow: auto;
         padding-right: 16px;
         margin-right: -16px;
     }

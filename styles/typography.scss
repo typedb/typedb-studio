@@ -143,6 +143,10 @@ $letter-spacing: 0.02em;
     @include font-style(13px, $regular, 20px, $letter-spacing);
 }
 
+@mixin aside {
+    @include font-style(12px, $regular, normal, $letter-spacing);
+}
+
 @mixin button-large {
     font-style: italic;
     @include font-style(14px, $italic, 16px, $letter-spacing);
@@ -168,10 +172,6 @@ $letter-spacing: 0.02em;
 
 @mixin info-text {
     @include font-style(14px, $regular, normal, $letter-spacing);
-}
-
-@mixin small-info-text {
-    @include font-style(12px, $regular, normal, $letter-spacing);
 }
 
 @mixin line-clamp($lines) {

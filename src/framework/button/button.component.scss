@@ -51,6 +51,10 @@
     }
 }
 
+.secondary.stroke {
+    color: primary.$grey;
+}
+
 .secondary:not(.stroke) {
     color: primary.$grey;
     font-weight: var(--font-weight-regular);
@@ -61,13 +65,20 @@
     @include typography.p3;
 
     &:enabled {
-        &:hover, &:active {
+        &:hover {
             background: secondary.$purple;
+        }
+        &:active, &.active {
+            background: primary.$light-purple;
         }
     }
 
     &:disabled {
         color: secondary.$deep-grey;
+
+        ::ng-deep i {
+            color: secondary.$mid-deep-grey;
+        }
     }
 }
 

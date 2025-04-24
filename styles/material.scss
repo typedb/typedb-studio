@@ -121,15 +121,38 @@ $typedb-theme: mat.define-dark-theme((
 /* Mostly copied from typedb-web */
 body {
     /* Button */
-    .mat-mdc-button {
-        --mdc-text-button-label-text-size: 13px;
+    .mdc-button {
+        --mdc-text-button-label-text-size: 14px;
         --mdc-text-button-label-text-tracking: #{typography.$letter-spacing};
         --mdc-text-button-label-text-weight: #{typography.$regular};
         --mdc-text-button-container-height: 32px;
         --mdc-text-button-container-shape: #{shapes.$border-radius-panel};
         --mdc-text-button-label-text-color: #{primary.$grey};
         --mdc-text-button-disabled-label-text-color: rgba(255, 255, 255, 0.25);
+
+        --mdc-filled-button-label-text-size: 14px;
+        --mdc-filled-button-label-text-tracking: 0.02em;
+        --mdc-filled-button-label-text-weight: #{typography.$regular};
+        --mdc-filled-button-label-text-color: #{primary.$grey};
+        --mdc-filled-button-disabled-container-color: rgba(255, 255, 255, 0.12);
+        --mdc-filled-button-disabled-label-text-color: rgba(255, 255, 255, 0.25);
+        --mdc-filled-button-container-shape: #{shapes.$border-radius-panel};
+        --mat-filled-button-state-layer-color: #fff;
+        --mat-filled-button-ripple-color: rgba(255, 255, 255, 0.1);
+        --mat-filled-button-hover-state-layer-opacity: 0.08;
+        --mat-filled-button-focus-state-layer-opacity: 0.24;
+        --mat-filled-button-pressed-state-layer-opacity: 0.24;
     }
+
+    .mat-mdc-unelevated-button {
+        --mdc-filled-button-container-height: 40px;
+        @include shapes.standard-border;
+    }
+
+    .mat-mdc-unelevated-button:not(:disabled) {
+        @include shapes.light-source-gradient(rgba(primary.$light-purple, 0.9), primary.$purple, 80px, 16px);
+    }
+
     /* Button toggle */
     .mat-button-toggle-group, .mat-button-toggle {
         font-size: 14px;
@@ -138,6 +161,7 @@ body {
         --mat-standard-button-toggle-background-color: #{primary.$deep-purple};
         --mat-standard-button-toggle-selected-state-background-color: #{secondary.$purple};
         --mat-standard-button-toggle-selected-state-text-color: #{primary.$green};
+        --mat-standard-button-toggle-disabled-selected-state-text-color: #{rgba(primary.$grey, 0.63)};
         --mat-standard-button-toggle-disabled-state-background-color: #{secondary.$dark-grey};
         --mat-standard-button-toggle-disabled-selected-state-background-color: #{secondary.$deep-grey};
         --mat-standard-button-toggle-shape: #{shapes.$border-radius};
@@ -145,6 +169,10 @@ body {
 
     .mat-button-toggle:hover button:not([disabled]) {
         color: primary.$green;
+    }
+
+    .mat-button-toggle-disabled .mat-button-toggle-button {
+        cursor: not-allowed;
     }
 
     .mat-button-toggle-appearance-standard.mat-button-toggle-disabled.mat-button-toggle-checked button:disabled {
@@ -451,16 +479,16 @@ body {
 
     /* Menu */
     .mat-mdc-menu-panel {
-        --mat-menu-container-color: #{mix(primary.$purple, #FFF, 96%)};
+        --mat-menu-container-color: #{primary.$deep-purple};
         --mat-menu-item-label-text-font: #{typography.$default-font-family};
-        --mat-menu-item-label-text-size: 15px;
+        --mat-menu-item-label-text-size: 13px;
         --mat-menu-item-label-text-tracking: var(--body-letter-spacing);
 
         border-radius: shapes.$border-radius-panel;
     }
 
     .mat-mdc-menu-item {
-        min-height: 44px;
+        min-height: 32px;
 
         .mat-mdc-menu-item-text {
             display: flex;
@@ -641,60 +669,37 @@ body {
     /* Table */
     .mat-mdc-table {
         --mat-table-background-color: transparent;
-        --mat-table-header-container-height: 44px;
+        --mat-table-header-container-height: 32px;
         --mat-table-header-headline-color: #{primary.$white};
-        --mat-table-header-headline-size: 14px;
+        --mat-table-header-headline-size: 15px;
         --mat-table-header-headline-weight: #{typography.$semi-bold};
-        --mat-table-row-item-container-height: 44px;
-        --mat-table-row-item-label-text-size: 14px;
-        --mat-table-row-item-label-text-tracking: var(--body-letter-spacing);
+        --mat-table-row-item-container-height: 40px;
+        --mat-table-row-item-outline-width: 0;
 
         thead {
             background: secondary.$purple;
         }
 
-        tbody tr {
-            background: rgba(primary.$purple, 0.5);
+        tbody tr:nth-child(odd) {
+            background: primary.$deep-purple;
+        }
+
+        tbody tr:nth-child(even) {
+            background: primary.$purple;
         }
 
         tr th, tr td {
-            border-top: shapes.$border;
-            border-bottom: shapes.$border;
-            border-right: shapes.$border;
-
             &:first-child {
-                border-left: shapes.$border;
-                border-radius: shapes.$border-radius 0 0 shapes.$border-radius;
+                //border-radius: shapes.$border-radius 0 0 shapes.$border-radius;
             }
 
             &:last-child {
-                border-right: shapes.$border;
-                border-radius: 0 shapes.$border-radius shapes.$border-radius 0;
-            }
-        }
-
-        tr.table-row-clickable {
-            cursor: pointer;
-        }
-
-        tr.table-row-clickable:hover {
-            th, td {
-                border-top-color: secondary.$grey;
-                border-bottom-color: secondary.$grey;
-
-                &:first-child {
-                    border-left-color: secondary.$grey;
-                }
-
-                &:last-child {
-                    border-right-color: secondary.$grey;
-                }
+                //border-radius: 0 shapes.$border-radius shapes.$border-radius 0;
             }
         }
     }
 
     .mdc-data-table__table {
-        border-spacing: 0 12px;
         white-space: nowrap;
     }
 
@@ -703,7 +708,7 @@ body {
     }
 
     .mdc-data-table__row:last-child .mat-mdc-cell {
-        border-bottom: shapes.$border;
+        //border-bottom: shapes.$border;
     }
 
     .mat-column-select {

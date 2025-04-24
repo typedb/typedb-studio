@@ -30,6 +30,7 @@
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "typedb-web-common" : "file:typedb-web/common",
+    "uuid": "11.1.0",
     "zone.js": "~0.14.2",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2"

@@ -1,17 +1,52 @@
-<div class="root" (click)="onClick()">
-  <button>
-    <i class="fa-light fa-server"></i> {{ connectionText$ | async }} <i [class]="connectionBeaconClass$ | async"></i>
-  </button>
-
-  @if (databaseWidgetVisible$ | async) {
-    <i class="fa-light fa-chevron-right"></i>
-    <button>
-      <i class="fa-light fa-database"></i> {{ databaseText$ | async }}
+<div [ngClass]="rootNgClass$ | async" (click)="onClick()">
+  <div class="connection-area" (mouseenter)="onConnectionAreaMouseEnter()" (mouseleave)="onConnectionAreaMouseLeave()">
+    <button [matTooltip]="connectionTooltip" matTooltipPosition="below"
+            [matMenuTriggerFor]="connectionMenuRef">
+      <i class="fa-light fa-server"></i><span class="connection-text"> {{ connectionText$ | async }}</span>
     </button>
-  }
+
+    @if (databaseVisible$ | async) {
+      <i class="fa-light fa-chevron-right"></i>
+      <button [matMenuTriggerFor]="databaseMenuRef">
+        <i class="fa-light fa-database"></i> {{ databaseText$ | async }}
+      </button>
+    }
+
+    <i [class]="connectionBeaconClass$ | async" [matTooltip]="(connectionBeaconTooltip$ | async) || ''" matTooltipPosition="below"></i>
+  </div>
 
   @if (transactionWidgetVisible$ | async) {
     <div class="divider-vertical"></div>
     <ts-transaction-widget/>
   }
 </div>
+
+<mat-menu #connectionMenuRef="matMenu" [overlapTrigger]="false">
+  <span class="menu-content" (mouseenter)="onConnectionMenuMouseEnter()" (mouseleave)="onConnectionMenuMouseLeave()">
+    <aside>{{ connectionText$ | async }}</aside>
+    <mat-divider/>
+    <button mat-menu-item routerLink="/connect"><i class="fa-light fa-swap-arrows"></i><span>Change connection</span></button>
+    <button mat-menu-item (click)="disconnect()"><i class="fa-light fa-xmark"></i><span>Disconnect</span></button>
+  </span>
+</mat-menu>
+
+<mat-menu #databaseMenuRef="matMenu" [overlapTrigger]="false">
+  <span class="menu-content" (mouseenter)="onConnectionMenuMouseEnter()" (mouseleave)="onConnectionMenuMouseLeave()">
+    <aside>Databases</aside>
+    <mat-divider/>
+    @for (database of (driver.databaseList$ | async)!; track database) {
+      @if (database.name == (driver.database$ | async)?.name) {
+        <button mat-menu-item class="selected">
+          <i class="fa-light fa-check"></i> <span>{{ database.name }}</span>
+        </button>
+      } @else {
+        <button mat-menu-item (click)="selectDatabase(database)">
+          <i class="fa-light fa-check invisible"></i> <span>{{ database.name }}</span>
+        </button>
+      }
+    }
+    <mat-divider/>
+    <button mat-menu-item (click)="openCreateDatabaseDialog()"><i class="fa-light fa-plus"></i><span>New database</span></button>
+    <button mat-menu-item (click)="refreshDatabaseList()"><i class="fa-light fa-arrows-rotate"></i><span>Refresh database list</span></button>
+  </span>
+</mat-menu>

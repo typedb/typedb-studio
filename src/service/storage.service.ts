@@ -29,14 +29,21 @@ export class StorageService {
 
     write(key: string, value: Object): StorageWriteResult {
         try {
-            localStorage.setItem(`${TYPEDB_STUDIO}.${key}`, value.toString());
+            localStorage.setItem(`${TYPEDB_STUDIO}.${key}`, JSON.stringify(value));
             return ok;
         } catch (e) {
             return err(e);
         }
     }
 
-    read(key: string): string | null {
-        return localStorage.getItem(`${TYPEDB_STUDIO}.${key}`);
+    read<OBJ = Object>(key: string, deserializeFn: (obj: Object) => OBJ | null): OBJ | null {
+        try {
+            const raw = localStorage.getItem(`${TYPEDB_STUDIO}.${key}`);
+            return raw == null ? null : deserializeFn(JSON.parse(raw));
+        } catch (e) {
+            console.warn(e);
+            localStorage.removeItem(`${TYPEDB_STUDIO}.${key}`);
+            return null;
+        }
     }
 }

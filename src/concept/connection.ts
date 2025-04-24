@@ -81,7 +81,7 @@ const SCHEME = "typedb://";
 const TLS_DISABLED = "tlsDisabled";
 export const CONNECTION_URL_PLACEHOLDER = connectionUrlBasic({ username: "username", password: "password", addresses: ["address"], tlsEnabled: true });
 
-function connectionUrl(props: ConnectionParamsBasic | ConnectionParamsTranslated) {
+export function connectionUrl(props: ConnectionParamsBasic | ConnectionParamsTranslated) {
     if (`translatedAddresses` in props) return connectionUrlTranslated(props);
     else return connectionUrlBasic(props);
 }

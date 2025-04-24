@@ -325,7 +325,7 @@ th {
     flex-grow: 1;
 }
 
-.tp-invisible {
+.invisible {
     visibility: hidden;
 }
 
@@ -355,6 +355,10 @@ i {
     &.inactive {
         color: secondary.$light-grey;
     }
+}
+
+button i + span, button span + i {
+    margin-left: 8px;
 }
 
 .tp-green {
@@ -516,9 +520,15 @@ i {
         height: 24px;
         border-right: shapes.$border;
     }
+
+    &.condensed {
+        ts-connection-widget .has-transaction-widget .connection-text {
+            display: none;
+        }
+    }
 }
 
-tp-form .form-row {
+tp-form .form-row, .form .form-row {
     display: flex;
     gap: 16px;
 

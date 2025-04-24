@@ -6,10 +6,14 @@
 
 import { Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
+import { BehaviorSubject, combineLatest, map, Observable, startWith, Subject } from "rxjs";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { Concept, ConceptDocument, ConceptRow, DriverAction, DriverState, QueryResponse, Value } from "./driver-state.service";
 
 export type OutputType = "raw" | "log" | "table" | "structure";
+
+const NO_SERVER_CONNECTED = `No server connected`;
+const QUERY_BLANK = `Query text is blank`;
 
 @Injectable({
     providedIn: "root",
@@ -18,13 +22,25 @@ export class QueryToolState {
 
     queryControl = new FormControl("", {nonNullable: true});
     outputTypeControl = new FormControl("log" as OutputType, { nonNullable: true });
-    outputTypes: OutputType[] = ["log", "table", "structure", "raw"];
+    outputTypes: OutputType[] = ["log", "table", "raw"];
     readonly history = new HistoryWindowState(this.driver);
     readonly logOutput = new LogOutputState();
+    readonly tableOutput = new TableOutputState();
     readonly rawOutput = new RawOutputState();
     answersOutputEnabled = true;
+    readonly runDisabledReason$ = combineLatest([this.driver.status$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))]).pipe(
+        map(([status, query]) => status === "connected" ? (query.length ? null : QUERY_BLANK) : NO_SERVER_CONNECTED)
+    );
+    readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
+    readonly runEnabled$ = this.runDisabledReason$.pipe(map(x => x == null));
+    readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
 
-    constructor(private driver: DriverState) {}
+    constructor(private driver: DriverState) {
+        this.outputDisabled$.subscribe((disabled) => {
+            if (disabled) this.outputTypeControl.disable();
+            else this.outputTypeControl.enable();
+        });
+    }
 
     // TODO: LIMIT 1000 by default, configurable
 
@@ -38,9 +54,11 @@ export class QueryToolState {
 
     private initialiseOutput(query: string) {
         this.logOutput.clear();
+        this.tableOutput.clear();
         this.rawOutput.clear();
 
         this.logOutput.appendLines(RUNNING, query);
+        this.tableOutput.statusText = STATUS_RUNNING_QUERY;
     }
 
     private outputQueryResponse(res: QueryResponse) {
@@ -51,14 +69,14 @@ export class QueryToolState {
     private outputQueryResponseWithAnswers(res: QueryResponse) {
         this.logOutput.appendBlankLine();
         this.logOutput.appendQueryResult(res);
-
+        this.tableOutput.push(res);
         this.rawOutput.push(JSON.stringify(res, null, 2));
     }
 
     private outputQueryResponseNoAnswers() {
         this.logOutput.appendBlankLine();
         this.logOutput.appendLines(`${RESULT}${SUCCESS}`);
-
+        this.tableOutput.statusText = STATUS_COMPLETED_ANSWER_OUTPUT_DISABLED;
         this.rawOutput.push(SUCCESS_RAW);
     }
 }
@@ -68,7 +86,7 @@ export class HistoryWindowState {
     readonly entries: DriverAction[] = [];
 
     constructor(private driver: DriverState) {
-        this.driver.actions$.subscribe((action) => {
+        this.driver.actionLog$.subscribe((action) => {
             this.entries.unshift(action);
         });
     }
@@ -81,6 +99,57 @@ const SUCCESS_RAW = `success`;
 const TABLE_INDENT = "   ";
 const CONTENT_INDENT = "    ";
 const TABLE_DASHES = 7;
+
+function conceptDisplayString(concept: Concept | undefined): string {
+    if (!concept) return "";
+
+    switch (concept.kind) {
+        case "entityType":
+            return formatType(concept.label);
+        case "relationType":
+            return formatType(concept.label);
+        case "roleType":
+            return formatType(concept.label);
+        case "attributeType":
+            return formatType(concept.label);
+        case "entity":
+            return `${concept.type ? formatIsa(concept.type.label) : ""}, ${formatIid(concept.iid)}`;
+        case "relation":
+            return `${concept.type ? formatIsa(concept.type.label) : ""}, ${formatIid(concept.iid)}`;
+        case "attribute":
+            return `${concept.type ? formatIsa(concept.type.label) : ""} ${formatValue(concept.value)}`;
+        case "value":
+            return formatValue(concept);
+    }
+}
+
+// TODO: syntax highlighting
+function formatType(label: string): string {
+    return label;
+    // return `\x1b[95m${label}\x1b[0m`;
+}
+
+function formatIid(iid: string): string {
+    return `${formatKeyword("iid")} ${iid}`;
+}
+
+function formatIsa(label: string): string {
+    return `${formatKeyword("isa")} ${label}`;
+    // return `${this.formatKeyword("isa")} \x1b[95m${label}\x1b[0m`;
+}
+
+function formatValue(value: Value): string {
+    return value.toString();
+}
+
+function formatKeyword(keyword: string): string {
+    return keyword;
+    // return `\x1b[94m${keyword}\x1b[0m`;
+}
+
+function indent(indentation: string, string: string): string {
+    return string.split('\n').map(s => `${indentation}${s}`).join('\n');
+}
 
 export class LogOutputState {
 
@@ -154,10 +223,100 @@ export class LogOutputState {
     private conceptRowDisplayString(row: ConceptRow, variableColumnWidth: number) {
         const columnNames = Object.keys(row);
         const contents = columnNames.map((columnName) =>
-            `\$${columnName}${" ".repeat(variableColumnWidth - columnName.length + 1)}| ${this.conceptDisplayString(row[columnName])}`
+            `\$${columnName}${" ".repeat(variableColumnWidth - columnName.length + 1)}| ${conceptDisplayString(row[columnName])}`
         );
         const content = contents.join("\n");
-        return `${this.indent(CONTENT_INDENT, content)}\n${this.lineDashSeparator(variableColumnWidth)}`;
+        return `${indent(CONTENT_INDENT, content)}\n${this.lineDashSeparator(variableColumnWidth)}`;
+    }
+
+    private lineDashSeparator(additionalDashesNum: number): string {
+        return indent(TABLE_INDENT, "-".repeat(TABLE_DASHES + additionalDashesNum));
+    }
+
+    clear() {
+        this.control.patchValue(``);
+    }
+}
+
+const COLUMN_RESULT = `result`;
+const CELL_SUCCESS = `success`;
+const STATUS_RUNNING_QUERY = `Running query. Answers will be displayed here when they are ready.`;
+const STATUS_COMPLETED_ANSWERLESS_QUERY_TYPE = `Query completed successfully. This query type does not return answers.`;
+const STATUS_COMPLETED_ANSWER_OUTPUT_DISABLED = `Query completed successfully. Answer output is currently disabled.`;
+const STATUS_NO_COLUMNS = `The answers to this query do not have any columns.`;
+const STATUS_NO_ANSWERS = `This query did not return any answers.`;
+
+type TableRow = { [column: string]: any };
+
+export class TableOutputState {
+
+    statusText?: string;
+    private _data$ = new BehaviorSubject<TableRow[]>([]);
+    private _columns: string[] = [];
+    private _displayedColumns: string[] = [];
+
+    constructor() {}
+
+    get data$(): Observable<TableRow[]> {
+        return this._data$;
+    }
+
+    get columns(): string[] {
+        return this._columns;
+    }
+
+    get displayedColumns(): string[] {
+        return this._displayedColumns;
+    }
+
+    handleMatSortChange(e: any) {
+        // TODO
+    }
+
+    push(res: QueryResponse) {
+        switch (res.answerType) {
+            case "ok": {
+                this.statusText = STATUS_COMPLETED_ANSWERLESS_QUERY_TYPE;
+                break;
+            }
+            case "conceptRows": {
+                if (res.answers.length) {
+                    const varNames = Object.keys(res.answers[0]);
+                    if (varNames.length) {
+                        this.appendColumns(...varNames);
+                        setTimeout(() => {
+                            this.appendConceptRows(...res.answers);
+                        });
+                    } else this.statusText = STATUS_NO_COLUMNS;
+                } else {
+                    this.statusText = STATUS_NO_ANSWERS;
+                }
+                break;
+            }
+            case "conceptDocuments": {
+                // TODO: documents
+                break;
+            }
+            default:
+                throw INTERNAL_ERROR;
+        }
+    }
+
+    private appendConceptRows(...rows: ConceptRow[]) {
+        const tableRows: TableRow[] = rows.map(x => Object.fromEntries(Object.entries(x).map(
+            ([varName, concept]) => [varName, this.conceptDisplayString(concept)]
+        )));
+        this.appendRows(...tableRows);
+    }
+
+    private appendColumns(...columns: string[]) {
+        this.columns.push(...columns);
+        this.displayedColumns.push(...columns);
+    }
+
+    private appendRows(...rows: { [column: string]: any }[]) {
+        this._data$.value.push(...rows);
+        this._data$.next(this._data$.value);
     }
 
     private conceptDisplayString(concept: Concept | undefined): string {
@@ -165,58 +324,29 @@ export class LogOutputState {
 
         switch (concept.kind) {
             case "entityType":
-                return this.formatType(concept.label);
             case "relationType":
-                return this.formatType(concept.label);
             case "roleType":
-                return this.formatType(concept.label);
             case "attributeType":
-                return this.formatType(concept.label);
+                return concept.label;
             case "entity":
-                return `${concept.type ? this.formatIsa(concept.type.label) : ""}, ${this.formatIid(concept.iid)}`;
             case "relation":
-                return `${concept.type ? this.formatIsa(concept.type.label) : ""}, ${this.formatIid(concept.iid)}`;
+                return `iid ${(concept.iid)}`;
             case "attribute":
-                return `${concept.type ? this.formatIsa(concept.type.label) : ""} ${this.formatValue(concept.value)}`;
+                return `${concept.value}`;
             case "value":
-                return this.formatValue(concept);
+                return `${concept}`;
         }
     }
 
-    // TODO: syntax highlighting
-    private formatType(label: string): string {
-        return label;
-        // return `\x1b[95m${label}\x1b[0m`;
-    }
-
-    private formatIid(iid: string): string {
-        return `${this.formatKeyword("iid")} ${iid}`;
-    }
-
-    private formatIsa(label: string): string {
-        return `${this.formatKeyword("isa")} ${label}`;
-        // return `${this.formatKeyword("isa")} \x1b[95m${label}\x1b[0m`;
-    }
-
-    private formatValue(value: Value): string {
-        return value.toString();
-    }
-
-    private formatKeyword(keyword: string): string {
-        return keyword;
-        // return `\x1b[94m${keyword}\x1b[0m`;
-    }
-
-    private indent(indentation: string, string: string): string {
-        return string.split('\n').map(s => `${indentation}${s}`).join('\n');
-    }
-
-    private lineDashSeparator(additionalDashesNum: number): string {
-        return this.indent(TABLE_INDENT, "-".repeat(TABLE_DASHES + additionalDashesNum));
+    clearStatus() {
+        this.statusText = undefined;
     }
 
     clear() {
-        this.control.patchValue(``);
+        this.clearStatus();
+        this.columns.length = 0;
+        this.displayedColumns.length = 0;
+        this._data$.next([]);
     }
 }
 
@@ -832,130 +962,5 @@ private fun <T : Any> collectResponseStream(
         transactionState.sendStopSignal()
         onClose.forEach { it() }
     }
-}
- */
-
-
-
-
-
-
-
-/*
-const QUERY_TYPE_TEMPLATE: &'static str = "<QUERY TYPE>";
-const QUERY_COMPILATION_SUCCESS: &'static str = "Finished <QUERY TYPE> query validation and compilation...";
-const QUERY_WRITE_FINISHED_STREAMING_ROWS: &'static str = "Finished writes. Streaming rows...";
-const QUERY_WRITE_FINISHED_STREAMING_DOCUMENTS: &'static str = "Finished writes. Streaming rows...";
-const QUERY_STREAMING_ROWS: &'static str = "Streaming rows...";
-const QUERY_STREAMING_DOCUMENTS: &'static str = "Streaming documents...";
-const ANSWER_COUNT_TEMPLATE: &'static str = "<ANSWER COUNT>";
-const QUERY_FINISHED_COUNT: &'static str = "Finished. Total answers: <ANSWER COUNT>";
-
-fn query_type_str(query_type: QueryType) -> &'static str {
-    match query_type {
-        QueryType::ReadQuery => "read",
-        QueryType::WriteQuery => "write",
-        QueryType::SchemaQuery => "schema",
-    }
-}
-
-fn execute_query(context: &mut ConsoleContext, query: String, logging: bool) -> Result<(), typedb_driver::Error> {
-    let (transaction, has_writes) =
-        context.transaction.take().expect("Transaction query run without active transaction.");
-    let (transaction, result, write_succes) = context.background_runtime.run(async move {
-        let result = transaction.query(query).await;
-        if logging {
-            // note: print results in the async block so we don't have to collect first
-            match result {
-                Ok(answer) => {
-                    match answer {
-                        QueryAnswer::Ok(query_type) => {
-                            println!("Finished {} query.", query_type_str(query_type));
-                            let write_query = !matches!(query_type, QueryType::ReadQuery);
-                            (transaction, Ok(()), write_query)
-                        }
-                        QueryAnswer::ConceptRowStream(header, mut rows_stream) => {
-                            println!(
-                                "{}",
-                                QUERY_COMPILATION_SUCCESS
-                                    .replace(QUERY_TYPE_TEMPLATE, query_type_str(header.query_type))
-                            );
-                            let write_query = if matches!(header.query_type, QueryType::WriteQuery) {
-                                println!("{}", QUERY_WRITE_FINISHED_STREAMING_ROWS);
-                                true
-                            } else {
-                                println!("{}", QUERY_STREAMING_ROWS);
-                                false
-                            };
-                            let has_columns = !header.column_names.is_empty();
-                            if !has_columns {
-                                println!("\nNo columns to show.\n");
-                            }
-                            let mut count = 0;
-                            while let Some(result) = rows_stream.next().await {
-                                match result {
-                                    Ok(row) => {
-                                        if has_columns {
-                                            print_row(row, count == 0);
-                                        }
-                                        count += 1;
-                                    }
-                                    Err(err) => return (transaction, Err(err), false),
-                                }
-                            }
-                            println!("{}", QUERY_FINISHED_COUNT.replace(ANSWER_COUNT_TEMPLATE, &count.to_string()));
-                            (transaction, Ok(()), write_query)
-                        }
-                        QueryAnswer::ConceptDocumentStream(header, mut documents_stream) => {
-                            println!(
-                                "{}",
-                                QUERY_COMPILATION_SUCCESS
-                                    .replace(QUERY_TYPE_TEMPLATE, query_type_str(header.query_type))
-                            );
-                            let write_query = if matches!(header.query_type, QueryType::WriteQuery) {
-                                println!("{}", QUERY_WRITE_FINISHED_STREAMING_DOCUMENTS);
-                                true
-                            } else {
-                                println!("{}", QUERY_STREAMING_DOCUMENTS);
-                                false
-                            };
-
-                            let mut count = 0;
-                            while let Some(result) = documents_stream.next().await {
-                                match result {
-                                    Ok(document) => {
-                                        print_document(document);
-                                        count += 1;
-                                    }
-                                    // Note: we don't necessarily have to terminate the transaction when we get an error
-                                    // but the signalling isn't in place to do this canonically either!
-                                    Err(err) => return (transaction, Err(err), false),
-                                }
-                            }
-                            println!("{}", QUERY_FINISHED_COUNT.replace(ANSWER_COUNT_TEMPLATE, &count.to_string()));
-                            (transaction, Ok(()), write_query)
-                        }
-                    }
-                }
-                Err(err) => (transaction, Err(err), false),
-            }
-        } else {
-            match result {
-                Ok(answer) => {
-                    let write_query = !matches!(answer.get_query_type(), QueryType::ReadQuery);
-                    (transaction, Ok(()), write_query)
-                }
-                Err(err) => (transaction, Err(err), false),
-            }
-        }
-    });
-    if !transaction.is_open() {
-        // drop transaction
-        // TODO: would be better to return a repl END type. In other places, return repl START(repl)
-        context.repl_stack.pop();
-    } else {
-        context.transaction = Some((transaction, has_writes || write_succes));
-    };
-    result
 }
  */

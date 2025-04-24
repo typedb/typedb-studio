@@ -1,5 +1,5 @@
 <ts-page-scaffold pageAvailability="ready">
-  <article class="query-page" style="display: flex; flex-direction: row;">
+  <article #articleRef class="query-page" style="display: flex; flex-direction: row;">
     <div resizable [percent]="30" class="history-pane card">
       <div class="card-header">
         <i class="fa-light fa-notebook"></i>
@@ -46,34 +46,59 @@
           <h4>Query</h4>
         </div>
         <div class="code-editor-container">
-          <code-editor [extensions]="[codeEditorTheme]" [formControl]="state.queryControl"/>
+          @if (!codeEditorHidden) {
+            <code-editor [extensions]="[codeEditorTheme]" [formControl]="state.queryControl"/>
+          }
         </div>
       </div>
       <div resizable [percent]="60" class="run-pane card">
         <div class="card-header">
           <i class="fa-light fa-bolt"></i>
           <h4>Run</h4>
-          <tp-button buttonId="actionBarSupport" buttonStyle="secondary" (click)="state.runQuery()">
+          <tp-button buttonId="actionBarSupport" buttonStyle="secondary" [enabled]="(state.runEnabled$ | async) ?? false"
+                     [matTooltip]="(state.runDisabledReason$ | async) || ''" matTooltipPosition="below" (click)="state.runQuery()">
             <i class="fa-light fa-play"></i>
           </tp-button>
           <div>
-            <mat-button-toggle-group [formControl]="state.outputTypeControl">
+            <mat-button-toggle-group [formControl]="state.outputTypeControl" [matTooltip]="(state.outputDisabledReason$ | async) || ''" matTooltipPosition="below">
               @for (outputType of state.outputTypes; track outputType) {
                 <mat-button-toggle [value]="outputType">{{ outputType }}</mat-button-toggle>
               }
             </mat-button-toggle-group>
           </div>
         </div>
-        <div class="answers-text-container" [hidden]="state.outputTypeControl.value !== 'log'">
-          <mat-form-field class="code-text-field">
-            <textarea class="answers-text-box" [formControl]="state.logOutput.control" readonly matInput></textarea>
-          </mat-form-field>
-        </div>
-        <div class="answers-text-container" [hidden]="state.outputTypeControl.value !== 'raw'">
-          <mat-form-field class="code-text-field">
-            <textarea class="answers-text-box" [formControl]="state.rawOutput.control" readonly matInput></textarea>
-          </mat-form-field>
-        </div>
+        @if ((driver.status$ | async) === "connected") {
+          <div class="answers-text-container" [hidden]="state.outputTypeControl.value !== 'log'">
+            <mat-form-field class="code-text-field">
+              <textarea class="answers-text-box" [formControl]="state.logOutput.control" readonly matInput></textarea>
+            </mat-form-field>
+          </div>
+          @if (state.outputTypeControl.value === 'table') {
+            <div class="answers-table-container">
+              <table mat-table [dataSource]="state.tableOutput.data$" matSort (matSortChange)="state.tableOutput.handleMatSortChange($event)">
+                @for (column of state.tableOutput.columns; track column) {
+                  <ng-container [matColumnDef]="column">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ column }}</th>
+                    <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
+                  </ng-container>
+                }
+                <tr mat-header-row *matHeaderRowDef="state.tableOutput.displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: state.tableOutput.displayedColumns"></tr>
+              </table>
+            </div>
+          }
+          <div class="answers-text-container" [hidden]="state.outputTypeControl.value !== 'raw'">
+            <mat-form-field class="code-text-field">
+              <textarea class="answers-text-box" [formControl]="state.rawOutput.control" readonly matInput></textarea>
+            </mat-form-field>
+          </div>
+        } @else {
+          <div class="answers-placeholder-container">
+            <button mat-flat-button id="answersPlaceholderConnect" routerLink="/connect">
+              <i class="fa-light fa-bolt"></i><span>Connect TypeDB server</span>
+            </button>
+          </div>
+        }
       </div>
     </div>
   </article>

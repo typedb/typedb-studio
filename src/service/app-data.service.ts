@@ -9,6 +9,10 @@ import { ConnectionConfig, ConnectionJson } from "../concept/connection";
 import { SidebarState, Tool } from "../concept/view-state";
 import { StorageService, StorageWriteResult } from "./storage.service";
 
+function isObjectWithFields<FIELD extends string>(obj: unknown, fields: FIELD[]): obj is { [K in typeof fields[number]]: unknown } {
+    return obj != null && typeof obj === "object" && fields.every(x => x in obj);
+}
+
 const VIEW_STATE = "viewState";
 
 interface ViewStateData {
@@ -16,8 +20,12 @@ interface ViewStateData {
     lastUsedTool: Tool;
 }
 
+function parseViewStateDataOrNull(obj: Object): ViewStateData | null {
+    return isObjectWithFields(obj, ["sidebarState", "lastUsedTool"]) ? obj as ViewStateData : null;
+}
+
 const INITIAL_VIEW_STATE_DATA: ViewStateData = {
-    sidebarState: "expanded",
+    sidebarState: "collapsed",
     lastUsedTool: "query",
 };
 
@@ -31,13 +39,11 @@ class ViewState {
 
     private readStorage(): ViewStateData | null {
         if (!this.storage.isAccessible) return null;
-        const data = this.storage.read(VIEW_STATE);
-        if (data) return JSON.parse(data) as ViewStateData;
-        else return null;
+        return this.storage.read<ViewStateData>(VIEW_STATE, parseViewStateDataOrNull);
     }
 
     private writeStorage(prefs: ViewStateData): StorageWriteResult {
-        return this.storage.write(VIEW_STATE, JSON.stringify(prefs));
+        return this.storage.write(VIEW_STATE, prefs);
     }
 
     sidebarState(): SidebarState {
@@ -63,6 +69,11 @@ class ViewState {
         viewState.lastUsedTool = value;
         this.writeStorage(viewState);
     }
+
+    lastUsedToolRoute(): string {
+        const lastUsedTool = this.lastUsedTool();
+        return lastUsedTool === "query" ? `/query` : `/explore`;
+    }
 }
 
 const CONNECTIONS = "connections";
@@ -72,23 +83,30 @@ const INITIAL_CONNECTIONS: ConnectionConfig[] = [];
 class Connections {
 
     constructor(private storage: StorageService) {
-        if (this.storage.isAccessible && this.storage.read(CONNECTIONS) == null) {
+        if (this.storage.isAccessible && this.storage.read(CONNECTIONS, (obj) => obj as ConnectionJson[]) == null) {
             this.storage.write(CONNECTIONS, INITIAL_CONNECTIONS);
         }
     }
 
+    findWithAutoReconnectOnAppStartup(): ConnectionConfig | null {
+        return this.list().find(x => x.preferences.autoReconnectOnAppStartup) || null;
+    }
+
     list(): ConnectionConfig[] {
-        const data = this.storage.read(CONNECTIONS);
+        const data = this.storage.read(CONNECTIONS, (obj) => obj as ConnectionJson[]);
         if (!data) return [];
-        const connectionJsons = JSON.parse(data) as Partial<ConnectionJson>[];
         // TODO: throw / optionally report on illegal JSON
-        const connections = connectionJsons.map(x => ConnectionConfig.fromJSONOrNull(x));
+        const connections = data.map(x => ConnectionConfig.fromJSONOrNull(x));
         if (connections.every(x => !!x)) return connections as ConnectionConfig[];
         else return [];
     }
 
-    placeAtFront(connection: ConnectionConfig): StorageWriteResult {
-        const connections = [connection, ...this.list().filter(x => x.url !== connection.url)];
+    unshift(connection: ConnectionConfig): StorageWriteResult {
+        const list = [...this.list()];
+        const connections = [connection, ...list.filter(x => x.url !== connection.url).slice(0, 9)];
+        if (connection.preferences.autoReconnectOnAppStartup) {
+            connections.slice(1).forEach(x => x.preferences.autoReconnectOnAppStartup = false);
+        }
         return this.storage.write(CONNECTIONS, connections.map(x => x.toJSON()));
     }
 }
@@ -100,6 +118,10 @@ interface PreferencesData {
         showAdvancedConfigByDefault: boolean;
         savePasswordsByDefault: boolean;
     };
+}
+
+function parsePreferencesDataOrNull(obj: Object): PreferencesData | null {
+    return isObjectWithFields(obj, ["connections"]) && isObjectWithFields(obj.connections, ["showAdvancedConfigByDefault", "savePasswordsByDefault"]) ? obj as PreferencesData : null;
 }
 
 const INITIAL_PREFERENCES: PreferencesData = {
@@ -125,13 +147,11 @@ class Preferences {
     }
 
     private readStorage(): PreferencesData | null {
-        const data = this.storage.read(PREFERENCES);
-        if (data) return JSON.parse(data) as PreferencesData;
-        else return null;
+        return this.storage.read(PREFERENCES, parsePreferencesDataOrNull);
     }
 
     private writeStorage(prefs: PreferencesData): StorageWriteResult {
-        return this.storage.write(PREFERENCES, JSON.stringify(prefs));
+        return this.storage.write(PREFERENCES, prefs);
     }
 
     readonly connection = {

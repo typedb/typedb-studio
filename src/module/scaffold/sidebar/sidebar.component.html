@@ -35,7 +35,7 @@
 <!--  <ts-sidebar-link [matTooltip]="collapsed ? 'Settings' : ''" matTooltipPosition="right" link="/settings" domain="settings" idSuffix="settings">-->
 <!--    <i class="fa-light fa-gear"></i>@if (!collapsed) { <span>Settings</span> }-->
 <!--  </ts-sidebar-link>-->
-  <ts-sidebar-link [matTooltip]="collapsed ? 'App info' : ''" matTooltipPosition="right" link="/app-info" domain="app-info" idSuffix="app-info">
+  <ts-sidebar-link [matTooltip]="collapsed ? 'App info' : ''" matTooltipPosition="right" (click)="showAppInfoDialog()" domain="app-info" idSuffix="app-info">
     <i class="fa-light fa-info-circle"></i>@if (!collapsed) { <span>App info</span> }
   </ts-sidebar-link>
 

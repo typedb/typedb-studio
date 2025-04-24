@@ -37,11 +37,10 @@ export class TransactionWidgetComponent {
 
     transactionWidgetVisible$ = this.driver.database$.pipe(map(db => !!db));
     transactionText$ = this.driver.transaction$.pipe(map(tx => tx?.type ?? `No active transaction`));
-    transactionHasUncommittedChanges$ = this.driver.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
-    commitButtonDisabled$ = this.transactionHasUncommittedChanges$.pipe(map(x => !x));
-    transactionWidgetTooltip$ = this.transactionHasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
+    commitButtonDisabled$ = this.driver.transactionHasUncommittedChanges$.pipe(map(x => !x));
+    transactionWidgetTooltip$ = this.driver.transactionHasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
     closeButtonDisabled$ = this.driver.transaction$.pipe(map(tx => !tx));
-    transactionIconClass$ = this.driver.transaction$.pipe(map(tx => tx ? "fa-regular fa-code-commit active" : "fa-regular fa-code-commit"));
+    transactionIconClass$ = this.driver.transaction$.pipe(map(tx => tx ? "fa-solid fa-code-commit active" : "fa-regular fa-code-commit"));
     openButtonClass$ = this.driver.transaction$.pipe(map(tx => tx ? "open-btn active" : "open-btn"));
     openButtonIconClass$ = this.driver.transaction$.pipe(map(tx => tx ? "fa-regular fa-arrow-rotate-right" : "fa-regular fa-play"));
     openButtonTooltip$ = this.driver.transaction$.pipe(map(tx => tx ? `Reopen ${this.form.value.type} transaction` : `Open ${this.form.value.type} transaction`));

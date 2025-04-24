@@ -6,13 +6,14 @@
 
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, map, Observable, of, Subject, switchMap, tap } from "rxjs";
+import { BehaviorSubject, catchError, map, Observable, of, Subject, switchMap, takeUntil, tap } from "rxjs";
+import { v4 as uuid } from "uuid";
 import { ConnectionConfig, Database, databasesSortedByName, DEFAULT_DATABASE_NAME, remoteOrigin } from "../concept/connection";
 import { QueryRun, Transaction, TransactionOperation, TransactionType } from "../concept/transaction";
 import { requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 
-export type DriverStatus = "initial" | "connecting" | "connected" | "reconnecting";
+export type DriverStatus = "disconnected" | "connecting" | "connected" | "reconnecting";
 
 interface SignInResponse {
     token: string;
@@ -145,7 +146,7 @@ export type QueryType = "read" | "write" | "schema";
 export type AnswerType = "ok" | "conceptRows" | "conceptDocuments";
 
 export interface ConceptRow {
-    [varName: string]: Concept;
+    [varName: string]: Concept | undefined;
 }
 
 export type ConceptDocument = Object;
@@ -154,19 +155,30 @@ export type Answer = ConceptRow | ConceptDocument;
 
 export type QueryResponse = OkQueryResponse | ConceptRowsQueryResponse | ConceptDocumentsQueryResponse;
 
+interface Semaphore {
+    id: string;
+    count: number;
+}
+
 @Injectable({
     providedIn: "root",
 })
 export class DriverState {
 
+    private _status$ = new BehaviorSubject<DriverStatus>("disconnected");
     private _connection$ = new BehaviorSubject<ConnectionConfig | null>(null);
-    private _status$ = new BehaviorSubject<DriverStatus>("initial");
-    private token?: string;
     private _database$ = new BehaviorSubject<Database | null>(null);
-    private _databaseList$ = new BehaviorSubject<Database[] | null>(null);
     private _transaction$ = new BehaviorSubject<Transaction | null>(null);
+
+    private _databaseList$ = new BehaviorSubject<Database[] | null>(null);
+    private _actionLog$ = new Subject<DriverAction>();
+    private _writeLock$ = new BehaviorSubject<Semaphore | null>(null);
+    private _stopSignal$ = new Subject<void>();
+
+    private token?: string;
+
     autoTransactionEnabled = true;
-    private _actions$ = new Subject<DriverAction>();
+    transactionHasUncommittedChanges$ = this.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
 
     constructor(private http: HttpClient) {}
 
@@ -190,8 +202,8 @@ export class DriverState {
         return this._transaction$;
     }
 
-    get actions$(): Observable<DriverAction> {
-        return this._actions$;
+    get actionLog$(): Observable<DriverAction> {
+        return this._actionLog$;
     }
 
     private requireConfig() {
@@ -211,63 +223,67 @@ export class DriverState {
     }
 
     tryConnectAndSetupDatabases(config: ConnectionConfig) {
-        if (this._status$.value !== "initial") throw INTERNAL_ERROR;
-        this._connection$.next(config);
-        this._status$.next("connecting");
+        if (this._status$.value !== "disconnected") throw INTERNAL_ERROR;
+        const lockId = uuid();
+        return this.tryUseWriteLock(() => {
+            this._connection$.next(config);
+            this._status$.next("connecting");
 
-        return this.refreshDatabaseList().pipe(
-            switchMap((res) => {
-                if (!res.databases.length) return this.setupDefaultDatabase();
-                if (res.databases.length === 1) this.selectDatabase(res.databases[0]);
-                return of(undefined); // TODO: connect to designated default database for this server
-            }),
-            tap(() => this._status$.next("connected")),
-            catchError((err) => {
-                this._status$.next("initial");
-                throw err;
-            }),
-        );
+            return this.refreshDatabaseList().pipe(
+                switchMap((res) => {
+                    if (!res.databases.length) return this.setupDefaultDatabase(lockId);
+                    if (res.databases.length === 1) this.selectDatabase(res.databases[0]);
+                    return of(undefined); // TODO: connect to designated default database for this server
+                }),
+                tap(() => this._status$.next("connected")),
+                catchError((err) => {
+                    this._status$.next("disconnected");
+                    throw err;
+                }),
+            );
+        }, lockId);
     }
 
-    private checkHealth() {
-        return this.apiGet(`/v1/health`);
+    tryDisconnect() {
+        if (this._status$.value === "disconnected") throw INTERNAL_ERROR;
+        if (this._transaction$.value?.hasUncommittedChanges) throw INTERNAL_ERROR;
+        const maybeCloseTransaction$ = this._transaction$.value ? this.closeTransaction() : of({});
+        return maybeCloseTransaction$.pipe(tap(() => this.tryUseWriteLock(() => {
+            this._connection$.next(null);
+            this._database$.next(null);
+            this._status$.next("disconnected");
+        })));
     }
 
-    private refreshDatabaseList() {
+    refreshDatabaseList() {
+        if (!this._connection$.value) throw INTERNAL_ERROR;
         return this.apiGet<DatabasesListResponse>(`/v1/databases`).pipe(
             tap((res) => this._databaseList$.next(databasesSortedByName(res.databases))),
         );
     }
 
-    private createDatabase(name: string) {
-        return this.apiPost(`/v1/databases/${name}`, {}).pipe(
+    selectDatabase(database: Database, lockId?: string) {
+        if (this._database$.value?.name === database.name) return;
+        const savedDatabase = this._databaseList$.value?.find(x => x.name === database.name);
+        if (!savedDatabase) throw INTERNAL_ERROR;
+        else this.tryUseWriteLock(() => this._database$.next(savedDatabase), lockId);
+    }
+
+    createAndSelectDatabase(name: string, lockId?: string) {
+        return this.tryUseWriteLock(() => this.apiPost(`/v1/databases/${name}`, {}).pipe(
             tap(() => {
                 const databaseList = this.requireDatabaseList();
                 this._databaseList$.next(databasesSortedByName([...databaseList, { name }]));
+                this.selectDatabase({ name }, lockId);
             }),
-        )
-    }
-
-    private setupDefaultDatabase() {
-        return this.createDatabase(DEFAULT_DATABASE_NAME).pipe(
-            tap(() => {
-                const databaseList = this.requireDatabaseList();
-                this.selectDatabase(databaseList[0])
-            })
-        );
-    }
-
-    selectDatabase(database: Database) {
-        const savedDatabase = this._databaseList$.value?.find(x => x.name === database.name);
-        if (!savedDatabase) throw INTERNAL_ERROR;
-        this._database$.next(savedDatabase);
+        ), lockId);
     }
 
     openTransaction(type: TransactionType) {
         const databaseName = this.requireDatabase().name;
         const operation: TransactionOperation = { operationType: "open", status: "pending", startedAtTimestamp: Date.now() };
         const action = transactionOperationActionOf(operation);
-        this._actions$.next(action);
+        this._actionLog$.next(action);
         return this.apiPost<TransactionOpenResponse>(`/v1/transactions/open`, { databaseName, transactionType: type }).pipe(
             tap((res) => {
                 this.updateTransactionOperationResult(operation, res);
@@ -280,7 +296,7 @@ export class DriverState {
         const transactionId = this.requireTransaction().id;
         const operation: TransactionOperation = { operationType: "commit", status: "pending", startedAtTimestamp: Date.now() };
         const action = transactionOperationActionOf(operation);
-        this._actions$.next(action);
+        this._actionLog$.next(action);
         return this.apiPost(`/v1/transactions/${transactionId}/commit`, {}).pipe(
             tap((res) => {
                 this.updateTransactionOperationResult(operation, res);
@@ -294,7 +310,7 @@ export class DriverState {
         if (transactionId == null) return of({});
         const operation: TransactionOperation = { operationType: "close", status: "pending", startedAtTimestamp: Date.now() };
         const action = transactionOperationActionOf(operation);
-        this._actions$.next(action);
+        this._actionLog$.next(action);
         return this.apiPost(`/v1/transactions/${transactionId}/close`, {}).pipe(
             tap((res) => {
                 this.updateTransactionOperationResult(operation, res);
@@ -312,7 +328,7 @@ export class DriverState {
                 queryRun = { query: query, status: "pending", startedAtTimestamp: Date.now() };
                 transaction.queryRuns.push(queryRun);
                 const queryRunAction: QueryRunAction = queryRunActionOf(queryRun);
-                this._actions$.next(queryRunAction);
+                this._actionLog$.next(queryRunAction);
             }),
             switchMap((res) => this.apiPost<QueryResponse>(`/v1/transactions/${res.transactionId}/query`, { query })),
             tap((res) => this.updateQueryRunResult(queryRun, res)),
@@ -331,6 +347,26 @@ export class DriverState {
         );
     }
 
+    sendStopSignal() {
+        this._stopSignal$.next();
+    }
+
+    private checkHealth() {
+        return this.apiGet(`/v1/health`);
+    }
+
+    private setupDefaultDatabase(lockId?: string) {
+        return this.createAndSelectDatabase(DEFAULT_DATABASE_NAME, lockId);
+    }
+
+    private tryUseWriteLock<RES = any>(job: () => RES, lockId = uuid()): RES {
+        if (this._writeLock$.value != null && this._writeLock$.value.id !== lockId) throw `Another operation is already in progress`;
+        this._writeLock$.next({ id: lockId, count: (this._writeLock$.value?.count ?? 0) + 1 });
+        const res = job();
+        this._writeLock$.next(this._writeLock$.value!.count > 1 ? { id: this._writeLock$.value!.id, count: this._writeLock$.value!.count - 1 } : null);
+        return res;
+    }
+
     private apiGet<RES = Object>(path: string, options?: { headers?: Record<string, string> }) {
         const { params } = this.requireConfig();
         const url = `${remoteOrigin(params)}${path}`;
@@ -347,6 +383,7 @@ export class DriverState {
                     }));
                 } else throw err;
             }),
+            takeUntil(this._stopSignal$), // TODO: test
         );
     }
 
@@ -366,6 +403,7 @@ export class DriverState {
                     }));
                 } else throw err;
             }),
+            takeUntil(this._stopSignal$),
         );
     }
 

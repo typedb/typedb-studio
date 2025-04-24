@@ -23,10 +23,9 @@ tp-form,
     position: relative;
     max-width: 500px;
     width: 100%;
-    margin: auto;
+    margin: 16px auto 0;
 
     @media (min-width: 1200px) {
-        justify-content: space-between;
         gap: 16px;
     }
 
@@ -34,7 +33,7 @@ tp-form,
         align-items: center;
     }
 
-    > * {
+    > mat-form-field {
         width: 100%;
     }
 
@@ -47,8 +46,28 @@ tp-form,
     }
 }
 
+.form-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-checkbox-row {
+    align-self: flex-start;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    color: primary.$grey;
+    cursor: pointer;
+
+    &:hover {
+        color: primary.$white;
+    }
+}
+
 .form-input-row-description {
-    margin: 20px 0 12px;
+    margin: 0 0 12px;
 }
 
 tp-form.form {
@@ -59,7 +78,6 @@ tp-form.form {
 
 .advanced-config-toggle {
     display: block;
-    margin-bottom: 16px;
 }
 
 .uri-input-row {

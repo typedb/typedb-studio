@@ -23,7 +23,7 @@ export class FormActionsComponent {
     @Input() cancelText: string = "Cancel";
     @Output() cancel = new EventEmitter<void>();
     @Input({ required: true }) isSubmitting?: boolean | null;
-    @Input() cancelButtonStyle: ButtonStyle = "primary-outline white stroke";
+    @Input() cancelButtonStyle: ButtonStyle = "secondary stroke";
     @Input() submitButtonStyle: ButtonStyle = "primary-outline green stroke";
     @Input({ required: true }) buttonIdPrefix!: string;
 

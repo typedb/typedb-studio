@@ -5,14 +5,14 @@
     </div>
   </mat-sidenav>
 
-  <mat-sidenav-content [@sidebarLeftMargin]="leftSidebarState === 'collapsed' ? 'collapsed' : 'open'">
+  <mat-sidenav-content [@sidebarLeftMargin]="sidebarLeftMarginAnimationState">
     @switch (pageAvailability) {
       @case ("ready") {
-        <div class="action-bar">
+        <div #actionBar [class]="actionBarClass">
 <!--          @if (!hideTransactionWidget) {-->
 <!--            <ts-transaction-widget/>-->
 <!--          }-->
-          <ts-connection-widget/>
+          <ts-connection-widget [condensed]="condensed"/>
           <ng-content select="[actionBar]"/>
           <div class="flex-spacer"></div>
 <!--          <a href="https://typedb.com/blog/" target="_blank">-->
@@ -22,12 +22,10 @@
 <!--            </tp-button>-->
 <!--          </a>-->
           <tp-button buttonId="actionBarSupport" buttonClass="ask-typedb-ai" buttonStyle="secondary">
-            <span>Ask TypeDB AI</span>
-            <i class="fa-light fa-wand-magic-sparkles"></i>
+            <span>Ask AI</span><i class="fa-light fa-wand-magic-sparkles"></i>
           </tp-button>
-          <tp-button buttonId="actionBarSupport" buttonStyle="secondary" (click)="rightSidebar.toggle(undefined, 'mouse')">
-            Browse help
-            <i class="fa-light fa-chevron-right"></i>
+          <tp-button buttonId="actionBarSupport" buttonStyle="secondary" [buttonClass]="rightSidebar.opened ? 'active' : ''" (click)="rightSidebar.toggle(undefined, 'mouse')">
+            <span>Learn</span><i class="fa-light fa-graduation-cap"></i>
           </tp-button>
         </div>
         <ng-content/>

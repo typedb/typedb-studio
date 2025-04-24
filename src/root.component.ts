@@ -4,12 +4,16 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { AfterViewInit, Component } from "@angular/core";
+import { AfterViewInit, Component, OnInit } from "@angular/core";
 import { SpinnerComponent } from "./framework/spinner/spinner.component";
+import { INTERNAL_ERROR } from "./framework/util/strings";
 import { AnalyticsService } from "./service/analytics.service";
 import { GuardsCheckEnd, GuardsCheckStart, NavigationCancel, Router, RouterOutlet, Event as RouterEvent, NavigationEnd } from "@angular/router";
 import { EMPTY, filter, of, switchMap } from "rxjs";
 import { AsyncPipe } from "@angular/common";
+import { AppData } from "./service/app-data.service";
+import { DriverState } from "./service/driver-state.service";
+import { SnackbarService } from "./service/snackbar.service";
 
 @Component({
     selector: "ts-root", // eslint-disable-line @angular-eslint/component-selector
@@ -18,7 +22,7 @@ import { AsyncPipe } from "@angular/common";
     standalone: true,
     imports: [RouterOutlet, SpinnerComponent, AsyncPipe],
 })
-export class RootComponent implements AfterViewInit {
+export class RootComponent implements OnInit, AfterViewInit {
     routeIsLoading$ = this.router.events.pipe(
         switchMap((event) => {
             if (event instanceof GuardsCheckStart) {
@@ -31,7 +35,7 @@ export class RootComponent implements AfterViewInit {
         })
     );
 
-    constructor(private analytics: AnalyticsService, private router: Router) {
+    constructor(private analytics: AnalyticsService, private router: Router, private appData: AppData, private driver: DriverState, private snackbar: SnackbarService) {
         this.informAnalyticsOnPageView(router, analytics);
     }
 
@@ -40,6 +44,23 @@ export class RootComponent implements AfterViewInit {
             analytics.posthog.capturePageView();
             analytics.cio.page();
         });
+    }
+
+    ngOnInit() {
+        const initialConnectionConfig = this.appData.connections.findWithAutoReconnectOnAppStartup();
+        if (initialConnectionConfig) {
+            this.driver.tryConnectAndSetupDatabases(initialConnectionConfig).subscribe({
+                next: (databases) => {
+                    this.snackbar.success(`Connected to ${initialConnectionConfig.name}`);
+                },
+                error: (err) => {
+                    const msg = err?.message || err?.toString() || `Unknown error`;
+                    this.snackbar.info(`Error: ${msg}\n`
+                        + `Caused: Unable to connect to TypeDB server '${initialConnectionConfig.name}'.\n`
+                        + `Ensure the connection parameters are correct and the server is running.`);
+                },
+            });
+        }
     }
 
     ngAfterViewInit() {

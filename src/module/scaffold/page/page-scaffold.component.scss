@@ -31,10 +31,10 @@
     }
 }
 
-mat-sidenav-content {
-    transition: margin-left 250ms ease;
-    transition-duration: 0s;
-}
+//mat-sidenav-content {
+//    transition: margin-left 250ms ease;
+//    transition-duration: 0s;
+//}
 
 mat-sidenav {
     padding-top: 16px;
@@ -67,12 +67,6 @@ tp-button i {
     width: 14px;
     height: 14px;
     font-size: 14px;
-}
-
-tp-button i.fa-chevron-right {
-    width: 12px;
-    height: 12px;
-    font-size: 12px;
     margin-right: 0;
     margin-left: 4px;
 }
@@ -90,6 +84,4 @@ tp-button i.fa-wand-magic-sparkles {
     width: auto;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-left: 4px;
-    margin-right: 0;
 }

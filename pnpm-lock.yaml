@@ -42,6 +42,7 @@ specifiers:
   tslib: ^2.3.0
   typedb-web-common: file:typedb-web/common
   typescript: 5.2.2
+  uuid: 11.1.0
   zone.js: ~0.14.2
 
 dependencies:
@@ -67,6 +68,7 @@ dependencies:
   rxjs: 7.8.2
   tslib: 2.8.1
   typedb-web-common: file:typedb-web/common_prismjs@1.29.0
+  uuid: 11.1.0
   zone.js: 0.14.10
 
 devDependencies:
@@ -10589,6 +10591,11 @@ packages:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
     dev: true
+
+  /uuid/11.1.0:
+    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+    hasBin: true
+    dev: false
 
   /uuid/8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}

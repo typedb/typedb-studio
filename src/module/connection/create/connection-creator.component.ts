@@ -7,11 +7,12 @@
 import { AsyncPipe, Location } from "@angular/common";
 import { Component, OnInit } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
+import { MatCheckboxModule } from "@angular/material/checkbox";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { CONNECTION_URL_PLACEHOLDER, ConnectionConfig, parseConnectionUrlOrNull } from "../../../concept/connection";
+import { CONNECTION_URL_PLACEHOLDER, ConnectionConfig, ConnectionParams, connectionUrl, isBasicParams, parseConnectionUrlOrNull } from "../../../concept/connection";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
 import { AppData } from "../../../service/app-data.service";
@@ -19,8 +20,8 @@ import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { PageScaffoldComponent, ResourceAvailability } from "../../scaffold/page/page-scaffold.component";
 import { Router } from "@angular/router";
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidatorFn } from "@angular/forms";
-import { BehaviorSubject, combineLatest, filter, map } from "rxjs";
+import { AbstractControl, FormBuilder, FormControl, ReactiveFormsModule, ValidatorFn } from "@angular/forms";
+import { BehaviorSubject, combineLatest, filter, map, tap } from "rxjs";
 import { FormActionsComponent, FormComponent, FormInputComponent, FormOption, FormToggleGroupComponent, requiredValidator } from "../../../framework/form";
 
 const connectionUrlValidator: ValidatorFn = (control: AbstractControl) => {
@@ -29,14 +30,14 @@ const connectionUrlValidator: ValidatorFn = (control: AbstractControl) => {
 };
 
 @Component({
-    selector: "tp-config-creator",
+    selector: "tp-connection-creator",
     templateUrl: "./connection-creator.component.html",
     styleUrls: ["./connection-creator.component.scss"],
     standalone: true,
     imports: [
         PageScaffoldComponent, AsyncPipe, MatFormFieldModule, MatSelectModule, MatTooltipModule,
         ReactiveFormsModule, FormInputComponent, FormComponent, FormActionsComponent,
-        FormToggleGroupComponent, MatButtonModule, MatInputModule, RichTooltipDirective,
+        FormToggleGroupComponent, MatButtonModule, MatInputModule, RichTooltipDirective, MatCheckboxModule,
     ],
 })
 export class ConnectionCreatorComponent implements OnInit {
@@ -49,12 +50,20 @@ export class ConnectionCreatorComponent implements OnInit {
     ];
     connectionUrlRevealed = false;
     connectionUrlPlaceholder = CONNECTION_URL_PLACEHOLDER;
+    passwordRevealed = false;
 
     readonly form = this.formBuilder.group({
         name: ["", [(control: AbstractControl) => this.connectionNameUniqueValidator(control)]],
         advancedConfigActive: [this.appData.preferences.connection.showAdvancedConfigByDefault(), [requiredValidator]],
         url: ["", [requiredValidator, connectionUrlValidator]],
         saveConnectionDetails: [false, [requiredValidator]],
+    });
+    // TODO: support multiple addresses
+    readonly advancedForm = this.formBuilder.group({
+        address: ["", [requiredValidator]],
+        username: ["", [requiredValidator]],
+        password: ["", [requiredValidator]],
+        tlsDisabled: [false, [requiredValidator]],
     });
     readonly isSubmitting$ = new BehaviorSubject(false);
 
@@ -65,6 +74,11 @@ export class ConnectionCreatorComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        this.updateNameAndAdvancedConfigOnUrlChanges();
+        this.updateNameAndUrlOnAdvancedConfigChanges();
+    }
+
+    private updateNameAndAdvancedConfigOnUrlChanges() {
         combineLatest([this.form.controls.url.valueChanges]).pipe(
             filter(([url]) => !this.form.controls.name.dirty && !!url),
             map(([url]) => parseConnectionUrlOrNull(url!)),
@@ -72,11 +86,38 @@ export class ConnectionCreatorComponent implements OnInit {
             map(params => params!)
         ).subscribe((params) => {
             if (!this.form.controls.name.dirty) this.form.patchValue({ name: ConnectionConfig.autoName(params) });
+            this.advancedForm.patchValue({
+                address: isBasicParams(params) ? params.addresses[0] : params.translatedAddresses[0].external,
+                username: params.username,
+                password: params.password,
+                tlsDisabled: !params.tlsEnabled,
+            }, { emitEvent: false });
         });
     }
 
-    get advancedConfigActive() {
-        return this.form.value.advancedConfigActive === true;
+    private updateNameAndUrlOnAdvancedConfigChanges() {
+        this.advancedForm.valueChanges.pipe(
+            map((value) => {
+                const params: ConnectionParams = {
+                    addresses: [value.address || ""],
+                    username: value.username || "",
+                    password: value.password || "",
+                    tlsEnabled: !value.tlsDisabled,
+                };
+                return params;
+            }),
+            tap((params) => {
+                if (!params.addresses[0]?.length || !params.username) return;
+                if (!this.form.controls.name.dirty) this.form.patchValue({ name: ConnectionConfig.autoName(params) });
+            }),
+            map((params) => connectionUrl(params)),
+        ).subscribe(url => {
+            this.form.patchValue({ url }, { emitEvent: false });
+        });
+    }
+
+    get canSubmit() {
+        return this.form.dirty && this.form.valid;
     }
 
     private buildConnectionConfigOrNull(): ConnectionConfig | null {
@@ -87,7 +128,7 @@ export class ConnectionCreatorComponent implements OnInit {
             name: this.form.value.name || ConnectionConfig.autoName(connectionParams),
             params: connectionParams,
             preferences: {
-                autoReconnectOnAppStartup: false // TODO
+                autoReconnectOnAppStartup: true
             },
         });
     }
@@ -98,38 +139,21 @@ export class ConnectionCreatorComponent implements OnInit {
         this.form.disable();
         this.driver.tryConnectAndSetupDatabases(config).subscribe({
             next: (databases) => {
-                this.snackbar.success(`Connected`);
-                this.router.navigate([this.lastUsedToolRoute()]).then((navigated) => {
+                this.snackbar.success(`Connected to ${config.name}`);
+                this.appData.connections.unshift(config);
+                this.router.navigate([this.appData.viewState.lastUsedToolRoute()]).then((navigated) => {
                     if (!navigated) throw INTERNAL_ERROR;
                 });
             },
             error: (err) => {
                 const msg = err?.message || err?.toString() || `Unknown error`;
                 this.snackbar.errorPersistent(`Error: ${msg}\n`
-                    + `Caused: Unable to connect to TypeDB server.\n`
+                    + `Caused: Unable to connect to TypeDB server '${config.name}'.\n`
                     + `Ensure the connection parameters are correct and the server is running.`);
                 this.form.enable();
                 this.isSubmitting$.next(false);
             },
         });
-        // this.clusterApi.deployCluster(cluster).subscribe({
-        //     next: () => {
-        //         this.analytics.google.reportAdConversion(cluster.machineType.isFree ? "deployFreeCluster" : "deployPaidCluster");
-        //         this.router.navigate([clusterDetailsPath(cluster, this.org)], { queryParams: { [DIALOG]: CONNECT, [SETUP]: TRUE } });
-        //     },
-        //     error: () => {
-        //         this.isSubmitting$.next(false);
-        //     }
-        // });
-    }
-
-    private lastUsedToolRoute(): string {
-        const lastUsedTool = this.appData.viewState.lastUsedTool();
-        return lastUsedTool === "query" ? `/query` : `/explore`;
-    }
-
-    cancel() {
-        this.location.back();
     }
 
     private connectionNameUniqueValidator(control: AbstractControl<string>) {

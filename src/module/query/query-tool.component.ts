@@ -6,14 +6,19 @@
 
 import { CodeEditor, Theme } from "@acrodata/code-editor";
 import { AsyncPipe, DatePipe } from "@angular/common";
-import { AfterViewInit, Component, OnInit, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
 import { FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
+import { MatSortModule } from "@angular/material/sort";
+import { MatTableModule } from "@angular/material/table";
+import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
+import { map } from "rxjs";
 import { QueryRun } from "../../concept/transaction";
 import { ButtonComponent } from "../../framework/button/button.component";
 import { basicDark } from "../../framework/code-editor/theme";
@@ -30,22 +35,36 @@ import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component"
     standalone: true,
     imports: [
         ButtonComponent, RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule,
-        MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective, DatePipe, SpinnerComponent,
+        MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
+        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule,
     ],
 })
 export class QueryToolComponent implements OnInit, AfterViewInit {
 
     @ViewChild(CodeEditor) codeEditor!: CodeEditor;
+    @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
+    @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     readonly codeEditorTheme = basicDark;
+    codeEditorHidden = true;
 
-    constructor(protected state: QueryToolState, private driver: DriverState, private appData: AppData) {
+    constructor(protected state: QueryToolState, public driver: DriverState, private appData: AppData) {
     }
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
+        this.renderCodeEditorWithDelay();
+    }
+
+    renderCodeEditorWithDelay() {
+        // omitting this causes the left sidebar to flicker
+        setTimeout(() => {
+            this.codeEditorHidden = false;
+        }, 0);
     }
 
     ngAfterViewInit() {
+        const articleWidth = this.articleRef.nativeElement.clientWidth;
+        this.resizables.first.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
     }
 
     queryHistoryPreview(query: string) {
@@ -74,4 +93,5 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
 
     readonly isQueryRun = isQueryRun;
     readonly isTransactionOperation = isTransactionOperation;
+    readonly JSON = JSON;
 }
