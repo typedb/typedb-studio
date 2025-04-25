@@ -20,7 +20,8 @@ export class ConnectionConfig {
 
     static autoName(params: ConnectionParams) {
         const address = isBasicParams(params) ? params.addresses[0] : params.translatedAddresses[0].external;
-        return `${params.username}@${address}`;
+        const host = address.split("/").at(-1);
+        return `${params.username}@${host}`;
     }
 
     withDatabase(database: Database): ConnectionConfig {
@@ -79,8 +80,8 @@ export function isTranslatedParams(params: ConnectionParams): params is Connecti
 }
 
 export function remoteOrigin(params: ConnectionParams) {
-    if (isBasicParams(params)) return `http://${params.addresses[0]}`;
-    else return `http://${params.translatedAddresses[0].external}`;
+    if (isBasicParams(params)) return `${params.addresses[0]}`;
+    else return `${params.translatedAddresses[0].external}`;
 }
 
 export interface ConnectionPreferences {
