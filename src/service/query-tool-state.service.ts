@@ -7,9 +7,15 @@
 import { DatePipe } from "@angular/common";
 import { Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { BehaviorSubject, combineLatest, map, Observable, startWith, Subject } from "rxjs";
+import { BehaviorSubject, combineLatest, map, Observable, ReplaySubject, startWith, Subject } from "rxjs";
+import Sigma from "sigma";
+import { TypeDBStudio } from "../framework/graph/studio/studio";
+import { ConceptDocument, ConceptRow } from "../framework/typedb-driver/answer";
+import { Concept, Value } from "../framework/typedb-driver/concept";
+import { ApiResponse, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
+import { requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
-import { Concept, ConceptDocument, ConceptRow, DriverAction, DriverState, isApiErrorResponse, QueryResponse, Value } from "./driver-state.service";
+import { DriverAction, DriverState } from "./driver-state.service";
 
 export type OutputType = "raw" | "log" | "table" | "structure";
 
@@ -24,10 +30,11 @@ export class QueryToolState {
 
     queryControl = new FormControl("", {nonNullable: true});
     outputTypeControl = new FormControl("log" as OutputType, { nonNullable: true });
-    outputTypes: OutputType[] = ["log", "table", "raw"];
+    outputTypes: OutputType[] = ["log", "table", "structure", "raw"];
     readonly history = new HistoryWindowState(this.driver);
     readonly logOutput = new LogOutputState();
     readonly tableOutput = new TableOutputState();
+    readonly structureOutput = new StructureOutputState();
     readonly rawOutput = new RawOutputState();
     answersOutputEnabled = true;
     readonly runDisabledReason$ = combineLatest(
@@ -41,6 +48,7 @@ export class QueryToolState {
     readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
     readonly runEnabled$ = this.runDisabledReason$.pipe(map(x => x == null));
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
+    studio: TypeDBStudio | null = null;
 
     constructor(private driver: DriverState) {
         this.outputDisabled$.subscribe((disabled) => {
@@ -62,21 +70,27 @@ export class QueryToolState {
     private initialiseOutput(query: string) {
         this.logOutput.clear();
         this.tableOutput.clear();
+        this.structureOutput.clear();
         this.rawOutput.clear();
 
         this.logOutput.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);
         this.tableOutput.status = "running";
+        this.structureOutput.status = "running";
+        this.structureOutput.query = query;
+        this.structureOutput.database = this.driver.requireDatabase(`${this.constructor.name}.${this.initialiseOutput.name} > requireValue(driver.database$)`).name;
+        this.structureOutput.studio = this.studio;
     }
 
-    private outputQueryResponse(res: QueryResponse) {
+    private outputQueryResponse(res: ApiResponse<QueryResponse>) {
         if (this.answersOutputEnabled) this.outputQueryResponseWithAnswers(res);
         else this.outputQueryResponseNoAnswers();
     }
 
-    private outputQueryResponseWithAnswers(res: QueryResponse) {
+    private outputQueryResponseWithAnswers(res: ApiResponse<QueryResponse>) {
         this.logOutput.appendBlankLine();
         this.logOutput.appendQueryResult(res);
         this.tableOutput.push(res);
+        this.structureOutput.push(res, this.studio!);
         this.rawOutput.push(JSON.stringify(res, null, 2));
     }
 
@@ -84,6 +98,7 @@ export class QueryToolState {
         this.logOutput.appendBlankLine();
         this.logOutput.appendLines(`${RESULT}${SUCCESS}`);
         this.tableOutput.status = "answerOutputDisabled";
+        this.structureOutput.status = "answerOutputDisabled";
         this.rawOutput.push(SUCCESS_RAW);
     }
 }
@@ -174,7 +189,7 @@ export class LogOutputState {
         this.appendLines(``);
     }
 
-    appendQueryResult(res: QueryResponse) {
+    appendQueryResult(res: ApiResponse<QueryResponse>) {
         if (isApiErrorResponse(res)) {
             this.appendLines(`${RESULT}${ERROR}`, ``, res.err.message);
             return;
@@ -182,32 +197,32 @@ export class LogOutputState {
 
         this.appendLines(`${RESULT}${SUCCESS}`, ``);
 
-        switch (res.answerType) {
+        switch (res.ok.answerType) {
             case "ok": {
-                this.appendLines(`Finished ${res.queryType} query.`);
+                this.appendLines(`Finished ${res.ok.queryType} query.`);
                 break;
             }
             case "conceptRows": {
-                this.appendLines(`Finished ${res.queryType} query compilation and validation...`);
-                if (res.queryType === "write") this.appendLines(`Finished writes. Printing rows...`);
+                this.appendLines(`Finished ${res.ok.queryType} query compilation and validation...`);
+                if (res.ok.queryType === "write") this.appendLines(`Finished writes. Printing rows...`);
                 else this.appendLines(`Printing rows...`);
 
-                if (res.answers.length) {
-                    const varNames = Object.keys(res.answers[0]);
+                if (res.ok.answers.length) {
+                    const varNames = Object.keys(res.ok.answers[0]);
                     if (varNames.length) {
-                        res.answers.forEach(((x, idx) => this.appendConceptRow(x, idx === 0)));
+                        res.ok.answers.forEach(((x, idx) => this.appendConceptRow(x.data, idx === 0)));
                     } else this.appendLines(`No columns to show.`);
                 }
 
-                this.appendLines(`Finished. Total rows: ${res.answers.length}`);
+                this.appendLines(`Finished. Total rows: ${res.ok.answers.length}`);
                 break;
             }
             case "conceptDocuments": {
-                this.appendLines(`Finished ${res.queryType} query compilation and validation...`);
-                if (res.queryType === "write") this.appendLines(`Finished writes. Printing documents...`);
+                this.appendLines(`Finished ${res.ok.queryType} query compilation and validation...`);
+                if (res.ok.queryType === "write") this.appendLines(`Finished writes. Printing documents...`);
                 else this.appendLines(`Printing documents...`);
-                res.answers.forEach(x => this.appendConceptDocument(x));
-                this.appendLines(`Finished. Total documents: ${res.answers.length}`);
+                res.ok.answers.forEach(x => this.appendConceptDocument(x));
+                this.appendLines(`Finished. Total documents: ${res.ok.answers.length}`);
                 break;
             }
             default:
@@ -251,9 +266,6 @@ export class LogOutputState {
     }
 }
 
-const COLUMN_RESULT = `result`;
-const CELL_SUCCESS = `success`;
-
 type TableOutputStatus = "ok" | "running" | "answerlessQueryType" | "answerOutputDisabled" | "noColumns" | "noAnswers" | "error";
 
 type TableRow = { [column: string]: any };
@@ -283,38 +295,40 @@ export class TableOutputState {
         // TODO
     }
 
-    push(res: QueryResponse) {
+    push(res: ApiResponse<QueryResponse>) {
         if (isApiErrorResponse(res)) {
             this.status = "error";
             return;
         }
 
-        switch (res.answerType) {
+        switch (res.ok.answerType) {
             case "ok": {
                 this.status = "answerlessQueryType";
                 break;
             }
             case "conceptRows": {
-                if (res.answers.length) {
-                    const varNames = Object.keys(res.answers[0]);
+                const answers = res.ok.answers;
+                if (res.ok.answers.length) {
+                    const varNames = Object.keys(answers[0].data);
                     if (varNames.length) {
                         this.status = "ok";
                         this.appendColumns(...varNames);
                         setTimeout(() => {
-                            this.appendConceptRows(...res.answers);
+                            this.appendConceptRows(...answers.map(x => x.data));
                         });
                     } else this.status = "noColumns";
                 } else this.status = "noAnswers";
                 break;
             }
             case "conceptDocuments": {
-                if (res.answers.length) {
-                    const keys = Object.keys(res.answers[0]);
+                const answers = res.ok.answers;
+                if (answers.length) {
+                    const keys = Object.keys(answers[0]);
                     if (keys.length) {
                         this.status = "ok";
                         this.appendColumns(...keys);
                         setTimeout(() => {
-                            this.appendRows(...res.answers);
+                            this.appendRows(...answers);
                         });
                     } else this.status = "noColumns";
                 } else this.status = "noAnswers";
@@ -370,6 +384,72 @@ export class TableOutputState {
         this.columns.length = 0;
         this.displayedColumns.length = 0;
         this._data$.next([]);
+    }
+}
+
+type StructureOutputStatus = "ok" | "running" | "answerlessQueryType" | "answerOutputDisabled" | "noAnswers" | "error";
+
+export class StructureOutputState {
+
+    status: StructureOutputStatus = "ok";
+    studio: TypeDBStudio | null = null;
+    query?: string;
+    database?: string;
+    valueChanges = new ReplaySubject<any>();
+
+    constructor() {
+    }
+
+    push(res: ApiResponse<QueryResponse>, studio: TypeDBStudio) {
+        this.studio = studio;
+
+        if (isApiErrorResponse(res)) {
+            this.status = "error";
+            return;
+        }
+
+        switch (res.ok.answerType) {
+            case "ok": {
+                this.status = "answerlessQueryType";
+                break;
+            }
+            case "conceptRows": {
+                studio.handleQueryResponse(res, this.database!);
+                let highlightedQuery = "";
+                if (res.ok.queryStructure) {
+                    highlightedQuery = studio.colorQuery(this.query!, res.ok.queryStructure);
+                }
+                studio.colorEdgesByConstraintIndex(false);
+                this.status = "ok";
+                // document.getElementById("query-highlight-div").innerHTML = highlightedQuery;
+                // if (res.queryStructure != null) {
+                //     highlightedQuery = studio.colorQuery(form.query.value, query_result.queryStructure);
+                //     studio.colorEdgesByConstraintIndex(false);
+                // }
+                // document.getElementById("query-highlight-div").innerHTML = highlightedQuery;
+                // if (res.answers.length) {
+                //     const varNames = Object.keys(res.answers[0]);
+                //     if (varNames.length) {
+                //         this.status = "ok";
+                //         this.appendColumns(...varNames);
+                //         setTimeout(() => {
+                //             this.appendConceptRows(...res.answers);
+                //         });
+                //     } else this.status = "noColumns";
+                // } else this.status = "noAnswers";
+                break;
+            }
+            case "conceptDocuments": {
+                // TODO: documents
+                break;
+            }
+            default:
+                throw INTERNAL_ERROR;
+        }
+    }
+
+    clear() {
+
     }
 }
 

@@ -50,12 +50,33 @@ dependencies:
   '@intercom/messenger-js-sdk':
     specifier: 0.0.14
     version: 0.0.14
+  '@sigma/edge-curve':
+    specifier: 3.1.0
+    version: 3.1.0(sigma@3.0.1)
+  '@sigma/node-square':
+    specifier: 3.0.0
+    version: 3.0.0(sigma@3.0.1)
   '@tauri-apps/api':
     specifier: ^2
     version: 2.3.0
   '@tauri-apps/plugin-opener':
     specifier: ^2
     version: 2.2.6
+  chroma-js:
+    specifier: 3.1.2
+    version: 3.1.2
+  graphology:
+    specifier: 0.26.0
+    version: 0.26.0(graphology-types@0.24.8)
+  graphology-layout-force:
+    specifier: 0.2.4
+    version: 0.2.4(graphology-types@0.24.8)
+  graphology-layout-forceatlas2:
+    specifier: 0.10.1
+    version: 0.10.1(graphology-types@0.24.8)
+  graphology-layout-noverlap:
+    specifier: 0.4.2
+    version: 0.4.2(graphology-types@0.24.8)
   posthog-js:
     specifier: 1.187.2
     version: 1.187.2
@@ -65,6 +86,9 @@ dependencies:
   rxjs:
     specifier: ~7.8.0
     version: 7.8.2
+  sigma:
+    specifier: 3.0.1
+    version: 3.0.1(graphology-types@0.24.8)
   tslib:
     specifier: ^2.3.0
     version: 2.8.1
@@ -112,6 +136,9 @@ devDependencies:
   '@tauri-apps/cli':
     specifier: ^2
     version: 2.3.1
+  '@types/chroma-js':
+    specifier: 3.1.1
+    version: 3.1.1
   '@types/jasmine':
     specifier: ~5.1.0
     version: 5.1.7
@@ -4010,6 +4037,22 @@ packages:
       - supports-color
     dev: false
 
+  /@sigma/edge-curve@3.1.0(sigma@3.0.1):
+    resolution: {integrity: sha512-OFWkfAXEsm+X8l1K4K49cC0psB0gQ+gqxKA08HG5piNPdzrDZ5gG9Gza6htZ5AirOVwd/4/uq/gPpD5En+H+3Q==}
+    peerDependencies:
+      sigma: '>=3.0.0-beta.10'
+    dependencies:
+      sigma: 3.0.1(graphology-types@0.24.8)
+    dev: false
+
+  /@sigma/node-square@3.0.0(sigma@3.0.1):
+    resolution: {integrity: sha512-hPX2oWo7WeaSe6M3D56AXsrLyg3F+7N/YsodaJh4Sw3KTce0GAFVWWPZZklu9CITz0xi3kEmlCGulqAH0cVG2w==}
+    peerDependencies:
+      sigma: '>=3.0.0-beta.17'
+    dependencies:
+      sigma: 3.0.1(graphology-types@0.24.8)
+    dev: false
+
   /@sigstore/bundle@2.3.2:
     resolution: {integrity: sha512-wueKWDk70QixNLB363yHc2D2ItTgYiMTdPwK8D9dKQMR3ZQ0c35IxP5xnwQ8cNLoCgCRcHf14kE+CLIvNX1zmA==}
     engines: {node: ^16.14.0 || >=18.0.0}
@@ -5238,6 +5281,10 @@ packages:
       '@types/node': 22.13.10
     dev: true
 
+  /@types/chroma-js@3.1.1:
+    resolution: {integrity: sha512-SFCr4edNkZ1bGaLzGz7rgR1bRzVX4MmMxwsIa3/Bh6ose8v+hRpneoizHv0KChdjxaXyjRtaMq7sCuZSzPomQA==}
+    dev: true
+
   /@types/connect-history-api-fallback@1.5.4:
     resolution: {integrity: sha512-n6Cr2xS1h4uAulPRdlw6Jl6s1oG8KrVilPN2yUITEs+K48EzMJJ3W1xy8K5eWuFvjp3R74AOIGSmp2UfBJ8HFw==}
     dependencies:
@@ -6124,6 +6171,10 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
+  /chroma-js@3.1.2:
+    resolution: {integrity: sha512-IJnETTalXbsLx1eKEgx19d5L6SRM7cH4vINw/99p/M11HCuXGRWL+6YmCm7FWFGIo6dtWuQoQi1dc5yQ7ESIHg==}
+    dev: false
+
   /chrome-trace-event@1.0.4:
     resolution: {integrity: sha512-rNjApaLzuwaOTjCiT8lSDdGN1APCiqkChLMJxJPWLunPAt5fy8xgU9/jNOchV84wfIxrA0lRQB7oCT8jrn/wrQ==}
     engines: {node: '>=6.0'}
@@ -6995,7 +7046,6 @@ packages:
   /events@3.3.0:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
-    dev: true
 
   /eventsource@2.0.2:
     resolution: {integrity: sha512-IzUmBGPR3+oUG9dUeXynyNmf91/3zUSJg1lCktzKw47OXuhco54U3r9B7O4XX+Rb1Itm9OZ2b0RkTs10bICOxA==}
@@ -7481,6 +7531,54 @@ packages:
 
   /graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
+
+  /graphology-layout-force@0.2.4(graphology-types@0.24.8):
+    resolution: {integrity: sha512-NYZz0YAnDkn5pkm30cvB0IScFoWGtbzJMrqaiH070dYlYJiag12Oc89dbVfaMaVR/w8DMIKxn/ix9Bqj+Umm9Q==}
+    peerDependencies:
+      graphology-types: '>=0.19.0'
+    dependencies:
+      graphology-types: 0.24.8
+      graphology-utils: 2.5.2(graphology-types@0.24.8)
+    dev: false
+
+  /graphology-layout-forceatlas2@0.10.1(graphology-types@0.24.8):
+    resolution: {integrity: sha512-ogzBeF1FvWzjkikrIFwxhlZXvD2+wlY54lqhsrWprcdPjopM2J9HoMweUmIgwaTvY4bUYVimpSsOdvDv1gPRFQ==}
+    peerDependencies:
+      graphology-types: '>=0.19.0'
+    dependencies:
+      graphology-types: 0.24.8
+      graphology-utils: 2.5.2(graphology-types@0.24.8)
+    dev: false
+
+  /graphology-layout-noverlap@0.4.2(graphology-types@0.24.8):
+    resolution: {integrity: sha512-13WwZSx96zim6l1dfZONcqLh3oqyRcjIBsqz2c2iJ3ohgs3605IDWjldH41Gnhh462xGB1j6VGmuGhZ2FKISXA==}
+    peerDependencies:
+      graphology-types: '>=0.19.0'
+    dependencies:
+      graphology-types: 0.24.8
+      graphology-utils: 2.5.2(graphology-types@0.24.8)
+    dev: false
+
+  /graphology-types@0.24.8:
+    resolution: {integrity: sha512-hDRKYXa8TsoZHjgEaysSRyPdT6uB78Ci8WnjgbStlQysz7xR52PInxNsmnB7IBOM1BhikxkNyCVEFgmPKnpx3Q==}
+    dev: false
+
+  /graphology-utils@2.5.2(graphology-types@0.24.8):
+    resolution: {integrity: sha512-ckHg8MXrXJkOARk56ZaSCM1g1Wihe2d6iTmz1enGOz4W/l831MBCKSayeFQfowgF8wd+PQ4rlch/56Vs/VZLDQ==}
+    peerDependencies:
+      graphology-types: '>=0.23.0'
+    dependencies:
+      graphology-types: 0.24.8
+    dev: false
+
+  /graphology@0.26.0(graphology-types@0.24.8):
+    resolution: {integrity: sha512-8SSImzgUUYC89Z042s+0r/vMibY7GX/Emz4LDO5e7jYXhuoWfHISPFJYjpRLUSJGq6UQ6xlenvX1p/hJdfXuXg==}
+    peerDependencies:
+      graphology-types: '>=0.24.0'
+    dependencies:
+      events: 3.3.0
+      graphology-types: 0.24.8
+    dev: false
 
   /handle-thing@2.0.1:
     resolution: {integrity: sha512-9Qn4yBxelxoh2Ow62nP+Ka/kMnOXRi8BXnRaUwezLNhqelnN49xKz4F/dPP8OYLxLxq6JDtZb2i9XznUQbNPTg==}
@@ -10015,6 +10113,15 @@ packages:
       side-channel-map: 1.0.1
       side-channel-weakmap: 1.0.2
     dev: true
+
+  /sigma@3.0.1(graphology-types@0.24.8):
+    resolution: {integrity: sha512-z67BX1FhIpD+wLs2WJ7QS2aR49TcSr3YaVZ2zU8cAc5jMiUYlSbeDp4EI6euBDUpm3/lzO4pfytP/gW4BhXWuA==}
+    dependencies:
+      events: 3.3.0
+      graphology-utils: 2.5.2(graphology-types@0.24.8)
+    transitivePeerDependencies:
+      - graphology-types
+    dev: false
 
   /signal-exit@3.0.7:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}

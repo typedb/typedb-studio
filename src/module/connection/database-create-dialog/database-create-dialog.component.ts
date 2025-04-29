@@ -11,7 +11,6 @@ import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { Subject } from "rxjs";
-import { Database } from "../../../concept/connection";
 import { ButtonComponent } from "../../../framework/button/button.component";
 import { FormActionsComponent, FormComponent, FormInputComponent, patternValidator, requiredValidator } from "../../../framework/form";
 import { ModalComponent } from "../../../framework/modal";

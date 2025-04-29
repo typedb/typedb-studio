@@ -25,7 +25,11 @@
   <span class="menu-content" (mouseenter)="onConnectionMenuMouseEnter()" (mouseleave)="onConnectionMenuMouseLeave()">
     <aside>{{ connectionText$ | async }}</aside>
     <mat-divider/>
-    <button mat-menu-item routerLink="/connect"><i class="fa-light fa-swap-arrows"></i><span>Change connection</span></button>
+    @if (driver.connection$ | async) {
+      <button mat-menu-item routerLink="/connect"><i class="fa-light fa-swap-arrows"></i><span>Change connection</span></button>
+    } @else {
+      <button mat-menu-item routerLink="/connect"><i class="fa-light fa-server">Connect TypeDB server</i></button>
+    }
     <button mat-menu-item (click)="disconnect()"><i class="fa-light fa-xmark"></i><span>Disconnect</span></button>
   </span>
 </mat-menu>

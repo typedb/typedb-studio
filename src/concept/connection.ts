@@ -4,6 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+import { Database } from "../framework/typedb-driver/database";
+import { DriverParams, DriverParamsBasic, DriverParamsTranslated, isBasicParams, TranslatedAddress } from "../framework/typedb-driver/params";
+
 export class ConnectionConfig {
 
     readonly name: string;
@@ -27,7 +30,7 @@ export class ConnectionConfig {
     withDatabase(database: Database): ConnectionConfig {
         return new ConnectionConfig({
             name: this.name,
-            params: Object.assign({}, this.params, { database: database.name }),
+            params: Object.assign({}, this.params, { database }),
             preferences: this.preferences,
         });
     }
@@ -48,67 +51,32 @@ export class ConnectionConfig {
     }
 }
 
-export interface ConnectionParamsBasic {
-    username: string;
-    password: string;
-    addresses: string[];
-    tlsEnabled: boolean;
-    database?: string;
-}
-
-export interface ConnectionParamsTranslated {
-    username: string;
-    password: string;
-    translatedAddresses: TranslatedAddress[];
-    tlsEnabled: boolean;
-    database?: string;
-}
-
-export interface TranslatedAddress {
-    external: string;
-    internal: string;
-}
-
-export type ConnectionParams = ConnectionParamsBasic | ConnectionParamsTranslated;
-
-export function isBasicParams(params: ConnectionParams): params is ConnectionParamsBasic {
-    return `addresses` in params;
-}
-
-export function isTranslatedParams(params: ConnectionParams): params is ConnectionParamsTranslated {
-    return `translatedAddresses` in params;
-}
-
-export function remoteOrigin(params: ConnectionParams) {
-    if (isBasicParams(params)) return `${params.addresses[0]}`;
-    else return `${params.translatedAddresses[0].external}`;
-}
-
 export interface ConnectionPreferences {
     isStartupConnection: boolean;
 }
 
-const SCHEME = "typedb://";
-const TLS_DISABLED = "tlsDisabled";
-export const CONNECTION_URL_PLACEHOLDER = connectionUrlBasic({ username: "username", password: "password", addresses: ["address"], tlsEnabled: true });
+export type ConnectionParams = DriverParams & { database?: string };
 
-export function connectionUrl(props: ConnectionParamsBasic | ConnectionParamsTranslated) {
+const SCHEME = "typedb://";
+export const CONNECTION_URL_PLACEHOLDER = connectionUrlBasic({ username: "username", password: "password", addresses: ["address"] });
+
+export function connectionUrl(props: ConnectionParams) {
     if (`translatedAddresses` in props) return connectionUrlTranslated(props);
     else return connectionUrlBasic(props);
 }
 
-function connectionUrlBasic(props: ConnectionParamsBasic) {
-    const { username, password, addresses, tlsEnabled, database } = props;
-    return `${SCHEME}${username}:${password}@${addresses.join(",")}/${database ?? ''}${tlsEnabled ? `` : `?${TLS_DISABLED}=true`}`;
+function connectionUrlBasic(props: DriverParamsBasic & { database?: string }) {
+    const { username, password, addresses, database } = props;
+    return `${SCHEME}${username}:${password}@${addresses.join(",")}/${database ?? ''}`;
 }
 
-function connectionUrlTranslated(props: ConnectionParamsTranslated) {
-    const { username, password, translatedAddresses, tlsEnabled, database } = props;
+function connectionUrlTranslated(props: DriverParamsTranslated & { database?: string }) {
+    const { username, password, translatedAddresses, database } = props;
     const translatedAddressStrings = translatedAddresses.map((x) => `${x.external};${x.internal}`);
-    return connectionUrlBasic({ username, password, addresses: translatedAddressStrings, tlsEnabled, database });
+    return connectionUrlBasic({ username, password, addresses: translatedAddressStrings, database });
 }
 
-export function parseConnectionUrlOrNull(rawValue: string): ConnectionParams | null {
+export function parseConnectionUrlOrNull(rawValue: string): (DriverParams & { database?: string }) | null {
     if (rawValue.startsWith(SCHEME)) return parseConnectionHostAndPathOrNull(rawValue.substring(SCHEME.length));
     else return null;
 }
@@ -126,19 +94,15 @@ function parseConnectionHostAndPathOrNull(rawValue: string): ConnectionParams | 
     const addresses = addressesRaw.split(`,`);
     if (!addresses.length) return null;
 
-    const database = path?.split(`?`)[0];
-    const queryParamsPairs = path?.split(`?`)?.at(1)?.split(`&`).map(x => x.split(`=`, 2) as [string, string?]);
-    if (queryParamsPairs?.some(([_, x]) => x == undefined)) return null;
-    const queryParams = queryParamsPairs ? Object.fromEntries(queryParamsPairs) as { [key: string]: string | undefined } : undefined;
-    const tlsEnabled = queryParams && queryParams[TLS_DISABLED] ? !Boolean(queryParams[TLS_DISABLED]) : true;
+    const database = path?.length ? path : undefined;
 
     if (addresses[0].includes(`;`)) {
         const translatedAddressesRaw = addresses.map(x => x.split(`;`, 2));
         if (translatedAddressesRaw.some(x => !x[1])) return null;
         const translatedAddresses: TranslatedAddress[] = translatedAddressesRaw.map(([a, b]) => ({ external: a, internal: b }));
-        return { username, password, translatedAddresses, tlsEnabled, database };
+        return { username, password, translatedAddresses, database };
     } else {
-        return { username, password, addresses, tlsEnabled, database };
+        return { username, password, addresses, database };
     }
 }
 
@@ -146,10 +110,6 @@ export interface ConnectionJson {
     name: string;
     url: string;
     preferences: ConnectionPreferences;
-}
-
-export interface Database {
-    name: string;
 }
 
 export const DEFAULT_DATABASE_NAME = "default";

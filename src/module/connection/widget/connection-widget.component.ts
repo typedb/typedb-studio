@@ -14,8 +14,8 @@ import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { Router, RouterLink } from "@angular/router";
 import { combineLatest, first, map } from "rxjs";
-import { Database } from "../../../concept/connection";
 import { HoverMenuComponent } from "../../../framework/menu/hover-menu.component";
+import { Database } from "../../../framework/typedb-driver/database";
 import { DriverState, DriverStatus } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { TransactionWidgetComponent } from "../../transaction/widget/transaction-widget.component";
@@ -34,8 +34,8 @@ const statusStyleMap: { [K in DriverStatus]: string } = {
     styleUrls: ["./connection-widget.component.scss"],
     standalone: true,
     imports: [
-        MatTooltipModule, AsyncPipe, TransactionWidgetComponent, HoverMenuComponent, MatMenuModule, MatDividerModule,
-        RouterLink, NgClass, CdkMenuItemCheckbox, MatCheckboxModule
+        MatTooltipModule, AsyncPipe, TransactionWidgetComponent, MatMenuModule, MatDividerModule,
+        RouterLink, NgClass, MatCheckboxModule
     ],
 })
 export class ConnectionWidgetComponent implements OnInit {

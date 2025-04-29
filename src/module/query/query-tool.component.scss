@@ -109,12 +109,21 @@ tp-button ::ng-deep button {
     }
 }
 
-.answers-text-container {
+.answers-outer-container {
     height: 100%;
-    overflow: auto;
+    width: 100%;
     border: 1px solid primary.$light-purple;
     background: primary.$black-purple;
+    position: relative;
+}
 
+.answers-container {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+}
+
+.answers-text-container {
     mat-form-field {
         flex: 1;
         display: flex;
@@ -149,16 +158,13 @@ tp-button ::ng-deep button {
 }
 
 .answers-table-container {
-    overflow: auto;
-    height: 100%;
-    border: 1px solid primary.$light-purple;
-    background: primary.$black-purple;
     display: flex;
+}
 
-    .status-text {
-        @include typography.p1;
-        margin: auto;
-    }
+.status-text {
+    @include typography.p1;
+    margin: auto;
+    z-index: 10;
 }
 
 .answers-placeholder-container {
@@ -170,6 +176,12 @@ tp-button ::ng-deep button {
     justify-content: center;
     align-items: center;
     background: primary.$black-purple;
+}
+
+#structureView {
+    width: 100%;
+    height: 100%;
+    display: flex;
 }
 
 .history-pane {

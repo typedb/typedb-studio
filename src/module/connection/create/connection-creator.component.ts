@@ -12,8 +12,9 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { CONNECTION_URL_PLACEHOLDER, ConnectionConfig, ConnectionParams, connectionUrl, isBasicParams, parseConnectionUrlOrNull } from "../../../concept/connection";
+import { CONNECTION_URL_PLACEHOLDER, ConnectionConfig, connectionUrl, parseConnectionUrlOrNull } from "../../../concept/connection";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
+import { DriverParams, isBasicParams } from "../../../framework/typedb-driver/params";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
 import { AppData } from "../../../service/app-data.service";
 import { DriverState } from "../../../service/driver-state.service";
@@ -90,7 +91,6 @@ export class ConnectionCreatorComponent implements OnInit {
                 address: isBasicParams(params) ? params.addresses[0] : params.translatedAddresses[0].external,
                 username: params.username,
                 password: params.password,
-                tlsDisabled: !params.tlsEnabled,
             }, { emitEvent: false });
         });
     }
@@ -98,11 +98,10 @@ export class ConnectionCreatorComponent implements OnInit {
     private updateNameAndUrlOnAdvancedConfigChanges() {
         this.advancedForm.valueChanges.pipe(
             map((value) => {
-                const params: ConnectionParams = {
+                const params: DriverParams = {
                     addresses: [value.address || ""],
                     username: value.username || "",
                     password: value.password || "",
-                    tlsEnabled: !value.tlsDisabled,
                 };
                 return params;
             }),
