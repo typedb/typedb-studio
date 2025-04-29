@@ -1,0 +1,18 @@
+<tp-modal [dialogTitle]="data.title" [isBusy]="isSubmitting$ | async">
+  <div style="display: flex; flex-direction: column; align-items: center">
+    @if (data.body) {
+      <p class="content-wrapper">{{ data.body }}</p>
+    }
+
+    <div class="content-wrapper">Please type '{{ data.strongConfirmationString }}' to confirm:</div>
+    <mat-form-field>
+      <input matInput [placeholder]="data.strongConfirmationString" style="width: 100%;" type="text" [(ngModel)]="strongConfirmationEntry"/>
+    </mat-form-field>
+
+    <tp-form-actions
+      [submitText]="data.confirmText || 'Confirm'" [submitButtonStyle]="data.confirmButtonStyle || 'primary-outline red stroke'"
+      [submitDisabled]="confirmButtonDisabled" buttonIdPrefix="strongConfirmationModal"
+      [isSubmitting]="isSubmitting$ | async" (submitClick)="confirm()" [cancellable]="true" (cancel)="close()"
+    />
+  </div>
+</tp-modal>

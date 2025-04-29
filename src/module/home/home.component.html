@@ -1,0 +1,104 @@
+<ts-page-scaffold [pageAvailability]="availability$ | async" [hideTransactionWidget]="true">
+  <article>
+    <h1 class="tp-title">
+      Welcome to TypeDB Studio
+    </h1>
+    <p class="tp-subtitle">Connect to TypeDB and explore your data in an interactive visual environment</p>
+
+    <div class="home-page-body">
+      <div class="tp-bento-box tp-deploy-cluster">
+        <div class="tp-deploy-cluster-button-area">
+          @if (isConnected$ | async) {
+            <h2>Query your data</h2>
+            <p>Execute TypeQL queries using the query tool</p>
+            <div class="flex-spacer"></div>
+            <a routerLink="/query">
+              <tp-button buttonId="goToQueryTool" buttonStyle="primary-outline green stroke">
+                Query TypeDB
+              </tp-button>
+            </a>
+          } @else {
+            <h2>Connect to a TypeDB server</h2>
+            <p>Supported server versions: TypeDB Community Edition >= 3.2.0-rc0</p>
+            <div class="flex-spacer"></div>
+            <a routerLink="/connect">
+              <tp-button buttonId="deployCluster" buttonStyle="primary-outline green stroke">
+                Connect
+              </tp-button>
+            </a>
+          }
+        </div>
+
+        <div class="flex-spacer"></div>
+        <div class="logo">
+          <img src="/assets/water-wheel.svg" alt=""/>
+        </div>
+      </div>
+
+      <div class="tp-bento-container row">
+        <a class="tp-bento-box hoverable tp-icon-card" target="_blank" href="https://typedb.com/docs/home/quickstart">
+          <i class="fa-thin fa-screwdriver-wrench"></i>
+          <div class="tp-icon-card-content">
+            <h3>Quickstart<i class="fa-light fa-arrow-up-right"></i></h3>
+            <p>Follow the TypeDB Quickstart tutorial to get started with TypeDB</p>
+          </div>
+        </a>
+        <a class="tp-bento-box hoverable tp-icon-card" href="https://typedb.com/docs/home/crash-course" target="_blank">
+          <i class="fa-thin fa-file-lines"></i>
+          <div class="tp-icon-card-content">
+            <h3>Crash Course<i class="fa-light fa-arrow-up-right"></i></h3>
+            <p>Learn more about TypeDB through our crash course</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="tp-bento-container row tp-bento-box">
+        <div>
+          <h3>Additional Resources</h3>
+          <p>Check out the community or learn more about TypeDB</p>
+          <div class="tp-additional-resources">
+            <a href="https://typedb.com" target="_blank">
+              <svg width="20" height="20" viewBox="0 0 22 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" id="typedb">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M22 13.1675C22 7.18494 17.0751 2.33508 11 2.33508C4.92487 2.33508 0 7.18494 0 13.1675C0 19.1501 4.92487 24 11 24C17.0751 24 22 19.1501 22 13.1675ZM6.57074 7.91736L15.29 7.91734C18.2677 7.91734 20.6816 10.2945 20.6816 13.2268C20.6816 16.1569 18.2695 18.5322 15.2941 18.5322L6.63986 18.5258C3.66107 18.5236 1.24319 16.153 1.22788 13.2196C1.21267 10.3062 3.59858 7.93239 6.55697 7.91741L6.57074 7.91736Z" fill="currentColor"/>
+                <path d="M9.95701 13.2586C9.95701 14.5064 8.89424 15.518 7.58325 15.518C6.27226 15.518 5.20949 14.5064 5.20949 13.2586C5.20949 12.0107 6.27226 10.9991 7.58325 10.9991C8.89424 10.9991 9.95701 12.0107 9.95701 13.2586Z" fill="currentColor"/>
+                <path d="M17.1772 13.2586C17.1772 14.5064 16.1144 15.518 14.8034 15.518C13.4924 15.518 12.4296 14.5064 12.4296 13.2586C12.4296 12.0107 13.4924 10.9991 14.8034 10.9991C16.1144 10.9991 17.1772 12.0107 17.1772 13.2586Z" fill="currentColor"/>
+                <path d="M2.53263 0C3.70092 0 4.64801 0.932665 4.64801 2.08317C4.64801 2.93559 4.12809 3.66844 3.38351 3.99095L3.38348 8.70508H1.69117L1.69115 3.995C0.941541 3.6746 0.417241 2.93918 0.417241 2.08317C0.417241 0.932665 1.36433 0 2.53263 0Z" fill="currentColor"/>
+              </svg>
+              <span>typedb.com</span>
+              <i class="fa-light fa-arrow-up-right"></i>
+            </a>
+            <a href="https://typedb.com/discord" target="_blank">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" id="discord">
+                <path d="M12.4357 14.6C11.1897 14.8255 9.91039 14.8209 8.66614 14.5864C8.44823 14.5456 8.13975 14.4735 7.74213 14.3715L6.4389 16C3.22257 15.9007 2 13.8286 2 13.8286C2 9.22871 4.09564 5.49953 4.09564 5.49953C6.19128 3.95806 8.18503 4.00024 8.18503 4.00024L8.75529 4.71451C8.80784 4.70742 8.86074 4.70288 8.91377 4.7009C10.0008 4.56236 11.1024 4.56694 12.1881 4.71451L12.8136 4.00024C12.8136 4.00024 14.8087 3.95806 16.9029 5.50089C16.9029 5.50089 19 9.22871 19 13.8286C19 13.8286 17.7619 15.8993 14.5455 16L13.1206 14.4572C12.8937 14.5117 12.6653 14.5589 12.4357 14.6Z" stroke="currentColor"/>
+                <path d="M8.00039 9C7.44162 9 7 9.45 7 10C7 10.55 7.45092 11 8.00039 11C8.55823 11 8.99986 10.55 8.99986 10C9.00916 9.45 8.55916 9 8.00039 9Z" fill="currentColor"/>
+                <path d="M12.9995 9C12.4417 9 12 9.45 12 10C12 10.55 12.451 11 12.9995 11C13.5583 11 14 10.55 14 10C14 9.45 13.5583 9 12.9995 9Z" fill="currentColor"/>
+              </svg>
+              <span>Chat Server</span>
+              <i class="fa-light fa-arrow-up-right"></i>
+            </a>
+            <a href="https://forum.typedb.com" target="_blank">
+              <i class="fa-light fa-message-dots"></i>
+              <span>Forum</span>
+              <i class="fa-light fa-arrow-up-right"></i>
+            </a>
+            <a href="https://typedb.com/docs" target="_blank">
+              <i class="fa-light fa-files"></i>
+              <span>Docs</span>
+              <i class="fa-light fa-arrow-up-right"></i>
+            </a>
+            <a href="https://typedb.com/docs/manual/" target="_blank">
+              <i class="fa-light fa-files"></i>
+              <span>TypeDB Manual</span>
+              <i class="fa-light fa-arrow-up-right"></i>
+            </a>
+            <a href="https://typedb.com/docs/typeql/" target="_blank">
+              <i class="fa-light fa-files"></i>
+              <span>TypeQL Guide</span>
+              <i class="fa-light fa-arrow-up-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+</ts-page-scaffold>

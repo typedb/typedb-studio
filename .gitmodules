@@ -1,0 +1,3 @@
+[submodule "typedb-web"]
+	path = typedb-web
+	url = git@github.com:typedb/typedb-web.git

@@ -1,0 +1,14 @@
+<div class="cs-root text-code">
+  @if (snippet.language && snippet.language !== 'typedb-console') {
+    <div class="cs-line-numbers">
+      <ol>
+        @for (lineNumber of lineNumbers; track lineNumber) {
+          <li>{{ lineNumber }}</li>
+        }
+      </ol>
+    </div>
+  }
+  <div class="cs-code-area">
+    <pre><code [class]="snippet.language ? 'language-' + snippet.language : undefined" [innerHTML]="snippet.code"></code></pre>
+  </div>
+</div>

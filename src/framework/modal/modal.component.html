@@ -1,0 +1,10 @@
+<div mat-dialog-title>
+  <h1>{{ dialogTitle }}</h1>
+  <tp-modal-close-button />
+</div>
+<div mat-dialog-content>
+  <ng-content/>
+</div>
+@if (isBusy) {
+  <mat-progress-bar mode="indeterminate" />
+}

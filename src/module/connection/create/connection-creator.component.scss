@@ -1,0 +1,94 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "primary";
+@use "secondary";
+@use "shapes";
+@use "typography";
+@use "@angular/material" as mat;
+
+tp-form,
+::ng-deep tp-form > form {
+    display: flex;
+}
+
+::ng-deep .dc-form > form > div {
+    height: fit-content;
+}
+
+.form-input-block {
+    position: relative;
+    max-width: 500px;
+    width: 100%;
+    margin: 16px auto 0;
+
+    @media (min-width: 1200px) {
+        gap: 16px;
+    }
+
+    &.form-toggle-group-row, &.form-slider-row {
+        align-items: center;
+    }
+
+    > mat-form-field {
+        width: 100%;
+    }
+
+    @media (max-width: 1199px) {
+        gap: 8px;
+
+        mat-form-field {
+            width: 100%;
+        }
+    }
+}
+
+.form-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-checkbox-row {
+    align-self: flex-start;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    color: primary.$grey;
+    cursor: pointer;
+
+    &:hover {
+        color: primary.$white;
+    }
+}
+
+.form-input-row-description {
+    margin: 0 0 12px;
+}
+
+tp-form.form {
+    flex-shrink: 0;
+    width: 500px;
+    margin: 5vh auto auto;
+}
+
+.advanced-config-toggle {
+    display: block;
+}
+
+.uri-input-row {
+    display: flex;
+    gap: 8px;
+
+    mat-form-field {
+        flex: 1;
+    }
+}
+
+::ng-deep .mat-horizontal-content-container {
+    padding-top: 10vh;
+}

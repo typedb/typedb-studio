@@ -1,0 +1,38 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+ @use "primary";
+ @use "shapes";
+
+ :host {
+    text-align: center;
+ }
+
+ .body {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+ }
+
+p {
+    margin-bottom: 24px;
+}
+
+.tp-logo {
+    max-width: 96px;
+}
+
+tp-form-actions {
+    width: unset;
+}
+
+tp-form-actions ::ng-deep tp-button {
+    display: block;
+    min-width: 140px;
+}

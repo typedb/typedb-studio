@@ -1,0 +1,9 @@
+<tp-modal dialogTitle="Edit Cluster" [isBusy]="isSubmitting$ | async">
+  <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
+    <tp-form-input type="text" [form]="form" field="id" label="Cluster ID" />
+    <tp-form-actions
+      [cancellable]="true" [submitDisabled]="!form.dirty" submitText="Save" [isSubmitting]="isSubmitting$ | async"
+      buttonIdPrefix="editClusterModal" (cancel)="close()"
+    />
+  </tp-form>
+</tp-modal>

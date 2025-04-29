@@ -1,9 +1,0 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-try-import ./.bazel-remote-cache.rc
-
-build --incompatible_strict_action_env --javacopt='--release 11' --java_runtime_version=remotejdk_11 --enable_runfiles
-run --incompatible_strict_action_env --jvmopt='-ea' --java_runtime_version=remotejdk_11
-test --incompatible_strict_action_env --jvmopt='-ea' --java_runtime_version=remotejdk_11

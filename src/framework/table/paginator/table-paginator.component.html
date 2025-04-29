@@ -1,0 +1,28 @@
+<form [formGroup]="formGroup" class="pagination-container">
+  <div class="pagination-group">
+    <label> Rows per page </label>
+
+    <mat-form-field class="tp-rows-per-page form-field-dense">
+      <mat-select [formControl]="rowsPerPage" panelClass="select-panel-dense">
+        @for (option of itemsPerPageOptions; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="pagination-group">
+    <label for="page-number">{{ currentPageInfoText$ | async }}</label>
+    <div class="paginator">
+      <button mat-icon-button [disabled]="!prevPageButtonEnabled" (click)="toPreviousPage()">
+        <i class="fa-light fa-chevron-left"></i>
+      </button>
+      <div class="paginator-separator"></div>
+      <span>{{ pageNumber.value }}</span>
+      <div class="paginator-separator"></div>
+      <button mat-icon-button [disabled]="(!(nextPageButtonEnabled$ | async)) || true" (click)="toNextPage()">
+        <i class="fa-light fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</form>

@@ -1,42 +1,42 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# See http://help.github.com/ignore-files/ for more about ignoring files.
 
-# macOS
-.DS_Store
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
 
-# Bazel
-bazel-*
-.bazel-remote-cache.rc
-.bazel-cache-credential.json
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
 
-# IntelliJ IDEA
+# IDEs and editors
 .idea/
-*.iml
-*.ipr
-*.iws
-*.geany
-.ijwb/
-
-# TypeDB Studio
-.typedb-studio
-
-# VS Code
-.vscode/
-.settings/
 .project
 .classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
-# Eclipse
-.metadata/
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml #
-hs_err_pid*
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
 
-# Log
-logs/
-*.log
-
-# VIM swap
-*.swp
-*.swo
+# System files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,12 @@
+<tp-modal [dialogTitle]="data.title" [isBusy]="isSubmitting$ | async">
+  <div style="display: flex; flex-direction: column; align-items: center">
+    @if (data.body) {
+      <p class="content-wrapper">{{ data.body }}</p>
+    }
+    <tp-form-actions
+      [submitText]="data.confirmText || 'Confirm'" [submitButtonStyle]="data.confirmButtonStyle || 'primary-outline green stroke'"
+      buttonIdPrefix="confirmationModal"
+      [isSubmitting]="isSubmitting$ | async" (submitClick)="confirm()" [cancellable]="true" (cancel)="close()"
+    />
+  </div>
+</tp-modal>

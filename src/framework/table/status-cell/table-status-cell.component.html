@@ -1,0 +1,9 @@
+@if ($any(status).loading && !$any(status).paused) {
+  <tp-spinner [size]="20"/>
+}
+@else if ($any(status).color) {
+  <i [class]="'fa-solid fa-circle ' + $any(status).color"></i>
+}
+@else if ($any(status).paused) {
+  <i class="fa-solid fa-circle inactive"></i>
+}

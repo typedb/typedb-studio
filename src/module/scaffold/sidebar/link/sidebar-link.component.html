@@ -1,0 +1,19 @@
+@if (external) {
+  <a [attr.href]="link" target="blank" [id]="linkId">
+    <ng-container *ngTemplateOutlet="linkspan"/>
+  </a>
+} @else {
+  <a [attr.href]="link" target="_self" [routerLink]="link" [ngClass]="{ selected: selected$ | async, internal: true }" [id]="linkId">
+    <ng-container *ngTemplateOutlet="linkspan"/>
+  </a>
+}
+
+<ng-template #linkspan>
+  <span class="linkspan">
+    <ng-content/>
+    @if (external) {
+      <div class="flex-spacer"></div>
+      <i class="fa-light fa-arrow-up-right-from-square"></i>
+    }
+  </span>
+</ng-template>

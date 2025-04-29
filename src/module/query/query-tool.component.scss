@@ -1,0 +1,221 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "media";
+@use "primary";
+@use "secondary";
+@use "typography";
+@use "shapes";
+
+:host {
+    height: 100%;
+}
+
+.query-page-rough {
+    height: 100%;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.query-page {
+    height: 100%;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    gap: 4px !important;
+
+    ::ng-deep app-drag-handle span {
+        display: none;
+    }
+}
+
+.tp-bento-container {
+    gap: 16px;
+}
+
+.tool-windows {
+    flex: 0 0 360px;
+}
+
+.main-panes {
+    flex: 1;
+    gap: 4px !important;
+
+    @media (max-width: media.$max-width-mobile) {
+        margin-left: -8px;
+    }
+}
+
+.history-pane, .query-pane, .run-pane {
+    display: flex;
+    flex-direction: column;
+}
+
+.run-pane mat-form-field {
+    height: 100%;
+}
+
+.card {
+    @include shapes.standard-border;
+    border-radius: shapes.$border-radius-panel;
+    @include shapes.light-source-gradient(primary.$purple, primary.$deep-purple);
+    transition: background 0.1s linear;
+    padding: 16px;
+}
+
+.card-header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+mat-form-field {
+    width: 100%;
+}
+
+tp-button ::ng-deep button {
+    i.fa-play {
+        margin: 0;
+    }
+
+    &:enabled i.fa-play {
+        color: secondary.$deep-green;
+    }
+}
+
+.query-text-box {
+    resize: none;
+    font-family: "Monaco" !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 22px !important;
+    letter-spacing: 0.02em !important;
+}
+
+.code-editor-container {
+    height: 100%;
+    overflow: auto;
+    border: 1px solid primary.$light-purple;
+    background: primary.$black-purple;
+
+    code-editor {
+        height: 100%;
+    }
+}
+
+.answers-text-container {
+    height: 100%;
+    overflow: auto;
+    border: 1px solid primary.$light-purple;
+    background: primary.$black-purple;
+
+    mat-form-field {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    ::ng-deep .mdc-text-field,
+    ::ng-deep .mat-mdc-form-field-flex,
+    ::ng-deep .mat-mdc-form-field-infix {
+        width: 100%;
+        height: 100%;
+        --mdc-outlined-text-field-container-shape: 0;
+    }
+
+    ::ng-deep .mdc-notched-outline {
+        display: none;
+    }
+
+    ::ng-deep .mdc-text-field {
+        --mdc-outlined-text-field-input-text-color: #{secondary.$pink};
+    }
+
+    ::ng-deep .mat-mdc-form-field:not(.form-field-dense) .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix {
+        padding: 4px 2px 4px 6px;
+    }
+
+    .answers-text-box {
+        height: 100% !important;
+        resize: none;
+        @include typography.code;
+    }
+}
+
+.answers-table-container {
+    overflow: auto;
+    height: 100%;
+    border: 1px solid primary.$light-purple;
+    background: primary.$black-purple;
+    display: flex;
+
+    .status-text {
+        @include typography.p1;
+        margin: auto;
+    }
+}
+
+.answers-placeholder-container {
+    height: 100%;
+    overflow: auto;
+    border: 3px dashed primary.$light-purple;
+    border-radius: shapes.$border-radius-panel;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: primary.$black-purple;
+}
+
+.history-pane {
+    @media (max-width: media.$max-width-mobile) {
+        display: none;
+    }
+
+    .history-container {
+        height: 100%;
+        overflow: auto;
+        padding-right: 16px;
+        margin-right: -16px;
+    }
+
+    ol li {
+        list-style: none;
+        margin-top: 8px;
+
+        aside {
+            display: flex;
+            align-items: center;
+
+            .bullet {
+                margin: 0 4px;
+            }
+
+            tp-spinner {
+                width: unset;
+            }
+        }
+
+        .mat-divider {
+            margin-top: 8px;
+        }
+    }
+
+    mat-form-field {
+        margin-top: 4px;
+
+        ::ng-deep .mdc-notched-outline {
+
+        }
+
+        textarea {
+            resize: none;
+            @include typography.code;
+        }
+    }
+}
