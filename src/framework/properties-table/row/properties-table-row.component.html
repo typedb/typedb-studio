@@ -1,0 +1,7 @@
+<div class="key cell">
+  <span>{{ key }}</span>
+</div>
+<div class="value cell">
+  <ng-content/>
+  @if (loading) {<tp-spinner [size]="20"/>}
+</div>

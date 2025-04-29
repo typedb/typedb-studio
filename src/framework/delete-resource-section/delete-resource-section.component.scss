@@ -1,0 +1,39 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "primary";
+@use "shapes";
+@use "typography";
+
+:host {
+    margin-top: 32px;
+    padding-top: 32px;
+    border-top: shapes.$border;
+    display: flex;
+    flex-direction: column;
+}
+
+.dr-body {
+    display: flex;
+    flex-direction: row;
+    flex: 1 1 0;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.deletion {
+    margin-top: 6px;
+    color: primary.$red;
+}
+
+.disabled {
+    opacity: 50%;
+}
+
+.text {
+    @include typography.p2;
+    align-items: center;
+}

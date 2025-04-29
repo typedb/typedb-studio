@@ -1,0 +1,55 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "shapes";
+@use "primary";
+@use "secondary";
+@use "tp";
+@use "typography";
+
+:host {
+    width: 100%;
+}
+
+a {
+    height: 47px;
+    color: primary.$white;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    @include typography.h5;
+}
+
+a:hover, a.selected {
+    color: primary.$green;
+}
+
+.linkspan {
+    gap: 8px;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+a.selected .linkspan {
+    @include typography.h5;
+    font-weight: var(--font-weight-semi-bold);
+    position: relative;
+
+    &::before {
+        content: "";
+        position: absolute;
+        left: -16px;
+        height: 16px;
+        width: 4px;
+        background-color: primary.$green;
+        border-top-right-radius: 2px;
+        border-bottom-right-radius: 2px;
+    }
+}

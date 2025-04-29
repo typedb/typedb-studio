@@ -1,0 +1,22 @@
+@use "primary";
+
+:host tp-button {
+    position: relative;
+
+    ::ng-deep span.submitting {
+        visibility: hidden;
+    }
+
+    ::ng-deep tp-spinner {
+        position: absolute;
+        margin: auto;
+    }
+
+    &.green ::ng-deep tp-spinner .mat-mdc-progress-spinner {
+        --mdc-circular-progress-active-indicator-color: #{primary.$green};
+    }
+
+    &.red ::ng-deep tp-spinner .mat-mdc-progress-spinner {
+        --mdc-circular-progress-active-indicator-color: #{primary.$red};
+    }
+}

@@ -1,0 +1,15 @@
+<mat-form-field [title]="title">
+  @if (label) {
+    <mat-label>{{ label }}</mat-label>
+  }
+  <mat-select [formControl]="formControl">
+    @for (option of options; track option) {
+      <mat-option [matTooltip]="option.tooltip ?? ''" [value]="option.value">
+        <span>{{ option.viewValue || option.value }}</span>
+      </mat-option>
+    }
+  </mat-select>
+  @if (formControl.getError("errorText")) {
+    <mat-error>{{ formControl.getError("errorText") }}</mat-error>
+  }
+</mat-form-field>

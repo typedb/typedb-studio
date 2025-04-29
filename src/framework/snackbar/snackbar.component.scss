@@ -1,0 +1,61 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "shapes";
+@use "primary";
+@use "secondary";
+
+@mixin host-color-style($class, $base-color) {
+    &.#{$class} {
+        border-color: $base-color;
+        background: mix($base-color, primary.$black-purple, 15%);
+        box-shadow: inset 0 0 0 1px $base-color;
+
+        .sb-text i {
+            color: $base-color;
+        }
+    }
+}
+
+:host {
+    margin: 24px;
+    width: 480px;
+    border-radius: shapes.$border-radius;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    @include host-color-style(ok, primary.$green);
+    @include host-color-style(info, secondary.$blue);
+    @include host-color-style(warn, secondary.$yellow);
+    @include host-color-style(error, primary.$red);
+
+    p + p {
+        margin-top: 0.5em;
+    }
+}
+
+:host-context(.mat-mdc-snack-bar-handset) {
+    width: 100%;
+    margin: 0;
+}
+
+.sb-text {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: primary.$white;
+
+    i {
+        flex-shrink: 0;
+    }
+}
+
+.sb-button i {
+    color: rgba(primary.$white, 0.8);
+}

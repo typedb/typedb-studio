@@ -1,0 +1,48 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "shapes";
+@use "primary";
+@use "tp";
+@use "typography";
+
+:host {
+    @include shapes.standard-border;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.cell {
+    display: flex;
+    padding: 0 19px;
+    align-items: center;
+    box-sizing: border-box;
+    height: 48px;
+    @include typography.p3;
+}
+
+.title {
+    color: primary.$white;
+    background-color: tp.$purple;
+    @include typography.h2;
+}
+
+:host.dark {
+    .title {
+        background-color: primary.$black-purple;
+    }
+
+    ::ng-deep tp-properties-table-row {
+        &:nth-child(even) {
+            background-color: primary.$deep-purple;
+        }
+
+        &:nth-child(odd) {
+            background-color: primary.$black-purple;
+        }
+    }
+}

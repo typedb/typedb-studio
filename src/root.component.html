@@ -1,0 +1,5 @@
+@if ((routeIsLoading$ | async) || !initialised) {
+  <tp-spinner/>
+}
+
+<router-outlet/>

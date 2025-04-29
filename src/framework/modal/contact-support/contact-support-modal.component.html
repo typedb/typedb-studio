@@ -1,0 +1,6 @@
+<tp-modal [dialogTitle]="data.title">
+  <p>Currently, this action can only be performed by sending an email to {{ emailAddress }}.</p>
+  <a [href]="'mailto:' + emailAddress" target="_blank" (click)="dialogRef.close()">
+    <tp-button buttonStyle="primary-outline green stroke" buttonId="contactSupport">Contact support</tp-button>
+  </a>
+</tp-modal>

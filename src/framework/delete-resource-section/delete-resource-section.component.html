@@ -1,0 +1,12 @@
+<h3 class="deletion">{{ title }}</h3>
+
+<div class="dr-body">
+  <p class="text deletion">{{ bodyText }}</p>
+  <tp-button
+    buttonStyle="primary-outline red stroke" (click)="onButtonClick()" [enabled]="isEnabled()"
+    [matTooltip]="isEnabled() ? '' : bodyText" buttonId="deleteResource"
+  >
+    @if (buttonIconClass) {<i [class]="buttonIconClass"></i>}
+    {{ buttonText }}
+  </tp-button>
+</div>

@@ -1,0 +1,12 @@
+<ng-content/>
+
+@for (direction of directions; track direction) {
+  <div
+       [class]="'rg-' + direction"
+       rszDragHandle
+       (DragStart)="dragStart($event, direction);"
+       (DragEnd)="dragEnd($event)"
+       (Drag)="dragging($event)">
+      <span></span>
+  </div>
+}

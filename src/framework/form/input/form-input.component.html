@@ -1,0 +1,18 @@
+<mat-form-field [floatLabel]="(prefix.childNodes.length == 0 && !placeholder) ? 'auto' : 'always'">
+  <div #prefix matTextPrefix>
+    <ng-content select="[inputTextPrefix]"/>
+  </div>
+  @if (label) {
+    <mat-label>{{ label }}</mat-label>
+  }
+  <input #input matInput [formControl]="formControl" [attr.autocomplete]="autocomplete" [placeholder]="placeholder ?? ''">
+  <div matSuffix>
+    <ng-content select="[inputSuffix]"/>
+  </div>
+  @if (hint) {
+    <mat-hint>{{ hint }}</mat-hint>
+  }
+  @if (formControl.getError("errorText")) {
+    <mat-error>{{ formControl.getError("errorText") }}</mat-error>
+  }
+</mat-form-field>

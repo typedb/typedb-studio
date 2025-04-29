@@ -1,0 +1,126 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "@angular/material" as mat;
+@use "primary";
+@use "secondary";
+@use "shapes";
+@use "typography";
+
+:host {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+    height: 100%;
+
+    .links {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        height: 100%;
+
+        mat-divider {
+            width: 100%;
+            --mat-divider-color: #{secondary.$deep-grey};
+            margin: 8px 0;
+        }
+    }
+}
+
+svg.tp-logo {
+    display: block;
+    height: 48px;
+    min-height: 48px;
+    width: 32px;
+    min-width: 32px;
+    color: var(--mat-select-enabled-trigger-text-color);
+
+    .tp-right-eye {
+        animation: 90s linear 0s infinite winkWink;
+        transform-origin: center;
+    }
+}
+
+@keyframes winkWink {
+    0% { transform: scaleY(1); }
+    99.8% { transform: scaleY(1); }
+    99.9% { transform: translateY(24px) scaleY(0.01); }
+    100% { transform: scaleY(1); }
+}
+
+.selector-button {
+    width: 100%;
+    margin-top: -8px;
+    margin-bottom: -8px;
+    font-weight: typography.$semi-bold;
+    color: primary.$white;
+
+    i {
+        width: auto;
+        min-width: auto;
+        font-size: 18px;
+        position: absolute;
+        margin-left: -16px;
+    }
+
+    span {
+        margin-left: 12px;
+    }
+}
+
+i {
+    font-size: 20px;
+    height: 20px;
+    width: 32px;
+    min-width: 32px;
+    text-align: center;
+
+    &.fa-chevron-right {
+        height: 48px;
+        display: flex;
+        align-items: center;
+    }
+}
+
+.ts-sidebar-user-avatar {
+    display: flex;
+    height: 42px;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding-top: 8px;
+
+    &:hover {
+        color: primary.$green;
+
+        tp-user-avatar {
+            outline: 1px solid primary.$green;
+        }
+    }
+
+    span {
+        @include typography.h5;
+    }
+}
+
+.tp-user-info-area {
+    padding: 0 16px 4px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.tp-menu-button-internal {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+::ng-deep mat-form-field.tp-org-selector  .mdc-text-field {
+    background: transparent;
+}

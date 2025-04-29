@@ -1,0 +1,114 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "shapes";
+@use "primary";
+@use "secondary";
+@use "tp";
+@use "typography";
+
+:host {
+    height: min-content;
+    white-space: nowrap;
+}
+
+.primary-outline {
+    background-color: transparent;
+    font-weight: var(--font-weight-medium);
+
+    &.white {
+        color: primary.$white;
+    }
+    &.green {
+        color: primary.$green;
+    }
+    &.red {
+        color: primary.$red;
+    }
+    &.white:hover:enabled {
+        background-color: tp.$white15;
+    }
+    &.red:hover:enabled {
+        background-color: tp.$red;
+    }
+    &.green:hover:enabled {
+        background-color: tp.$green;
+    }
+    &.white:active,
+    &.red:active,
+    &.green:active {
+        background-color: transparent;
+        opacity: 80%;
+    }
+    &.white:disabled,
+    &.red:disabled,
+    &.green:disabled {
+        background-color: transparent;
+        opacity: 38%;
+    }
+}
+
+.secondary.stroke {
+    color: primary.$grey;
+}
+
+.secondary:not(.stroke) {
+    color: primary.$grey;
+    font-weight: var(--font-weight-regular);
+    padding: 6px 8px;
+    border-radius: shapes.$border-radius-panel;
+    display: flex;
+    align-items: center;
+    @include typography.p3;
+
+    &:enabled {
+        &:hover {
+            background: secondary.$purple;
+        }
+        &:active, &.active {
+            background: primary.$light-purple;
+        }
+    }
+
+    &:disabled {
+        color: secondary.$deep-grey;
+
+        ::ng-deep i {
+            color: secondary.$mid-deep-grey;
+        }
+    }
+}
+
+button {
+    width: 100%;
+    justify-content: center;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    @include shapes.standard-border;
+    border-color: transparent;
+    background-color: transparent;
+    padding: 0 12px;
+    &.stroke {
+        border-color: currentColor;
+    }
+
+    &.grey-stroke {
+        border-color: secondary.$mid-deep-grey;
+        &:hover:not(:disabled) {
+            border-color: secondary.$light-grey;
+        }
+    }
+}
+
+:host ::ng-deep {
+    i {
+        font-size: 16px;
+        margin-right: 8px;
+        white-space: nowrap;
+    }
+}

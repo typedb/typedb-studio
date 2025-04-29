@@ -1,0 +1,33 @@
+<h3>{{ tableTitle }}</h3>
+<div class="flex-spacer"></div>
+<div style="display: flex;">
+  @for (action of actions; track action) {
+    <tp-button
+      [buttonStyle]="action.style || 'secondary stroke'" [buttonId]="buttonId(action)"
+      [enabled]="action.enabled || false" (click)="action.onClick()" style="margin-right: 12px;"
+    >
+      {{ action.text }}
+    </tp-button>
+  }
+  <tp-filter-group
+    [filterSpecs]="availableFilterSpecs" (filtersChange)="table.filters$.next($event)" [identifier]="filterGroupId"
+  />
+  <div>
+    <button type="button" class="column-switcher" [matMenuTriggerFor]="columnSwitcherMenu">
+      <i class="fa-light fa-columns-3"></i>
+      <div class="arrow-icon">
+        <mat-icon>arrow_drop_down</mat-icon>
+      </div>
+    </button>
+    <mat-menu #columnSwitcherMenu="matMenu">
+      @for (item of columnSwitcherMenuItems; track item) {
+        <button mat-menu-item (click)="item.action(); $event.stopPropagation();" [disabled]="item.disabled ? 'disabled' : undefined">
+          @if (item.checkbox) {
+            <mat-checkbox [checked]="isDisplayedColumn(item)" (change)="item.action()" (click)="$event.stopPropagation()"/>
+          }
+          <span>{{ item.label }}</span>
+        </button>
+      }
+    </mat-menu>
+  </div>
+</div>

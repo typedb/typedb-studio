@@ -1,0 +1,49 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "shapes";
+@use "primary";
+@use "secondary";
+@use "tp";
+@use "typography";
+
+:host {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+
+    &:nth-child(even) {
+        background-color: primary.$purple;
+    }
+
+    &:nth-child(odd) {
+        background-color: primary.$deep-purple;
+    }
+}
+
+.cell {
+    display: flex;
+    padding: 0 19px;
+    align-items: center;
+    box-sizing: border-box;
+    height: 48px;
+    @include typography.p3;
+    flex: 1 1 0;
+
+    &.key {
+        color: secondary.$light-grey;
+    }
+
+    &.value {
+        color: primary.$white;
+        border-left: shapes.$border;
+    }
+}
+
+tp-spinner {
+    margin-left: 16px;
+    width: unset;
+}

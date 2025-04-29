@@ -1,0 +1,34 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "primary";
+@use "secondary";
+@use "shapes";
+
+:host {
+    display: flex;
+}
+
+button i {
+    color: secondary.$grey;
+    transition: color 100ms ease;
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+
+    &:hover, &:active, &:focus {
+        color: primary.$white;
+    }
+
+    &:active, &:focus {
+        background: primary.$light-purple;
+    }
+}
+
+.i {
+    border-radius: shapes.$border-radius;
+    transition: background 100ms ease;
+}

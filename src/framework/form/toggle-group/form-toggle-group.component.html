@@ -1,0 +1,8 @@
+<mat-button-toggle-group [formControl]="formControl" [disabled]="disabled || false">
+  @for (option of options; track option) {
+    <mat-button-toggle [value]="option.value" [disabled]="disabled || false">{{ option.viewValue || option.value }}</mat-button-toggle>
+  }
+</mat-button-toggle-group>
+@if (formControl.getError("errorText")) {
+  <mat-error>{{ formControl.getError("errorText") }}</mat-error>
+}

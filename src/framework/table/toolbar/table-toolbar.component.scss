@@ -1,0 +1,47 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "shapes";
+@use "primary";
+@use "secondary";
+@use "typography";
+
+:host {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+tp-filter-group {
+    display: flex;
+    min-height: 40px;
+}
+
+.column-switcher {
+    @include shapes.standard-border;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    color: primary.$white;
+    padding: 7px 11px;
+    height: 40px;
+    background-color: secondary.$purple;
+    width: min-content;
+    transition: border-color 30ms ease;
+
+    &:hover {
+        border-color: #63607c; /* Angular Material outline colour */
+    }
+}
+
+.arrow-icon {
+    display: flex;
+    color: primary.$grey;
+    padding-left: 6px;
+    margin-right: -6px;
+}

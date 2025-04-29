@@ -1,0 +1,87 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "shapes";
+@use "primary";
+@use "secondary";
+
+.tp-sidenav-container {
+    @include shapes.standard-border;
+    border-radius: shapes.$border-radius-panel;
+
+    height: 100%;
+    padding: 16px;
+
+    transition: width 250ms ease;
+
+    &.left {
+        width: 256px;
+
+        &.collapsed {
+            width: 68px;
+        }
+    }
+
+    &.right {
+        width: 320px;
+        margin-left: 16px;
+    }
+}
+
+//mat-sidenav-content {
+//    transition: margin-left 250ms ease;
+//    transition-duration: 0s;
+//}
+
+mat-sidenav {
+    padding-top: 16px;
+    padding-bottom: 16px;
+
+    &.left {
+        padding-left: 16px;
+        padding-right: 16px;
+
+        .tp-sidenav-container {
+            @include shapes.light-source-gradient(rgba(primary.$green, 0.08), primary.$purple, $left: 30%, $top: 20%);
+        }
+    }
+
+    &.right {
+        padding-left: 0;
+        padding-right: 16px;
+
+        .tp-sidenav-container {
+            @include shapes.light-source-gradient(rgba(primary.$green, 0.08), primary.$purple, $left: 70%, $top: 80%);
+        }
+    }
+}
+
+ts-transaction-widget {
+    margin-right: 24px;
+}
+
+tp-button i {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+    margin-right: 0;
+    margin-left: 4px;
+}
+
+@keyframes beacon {
+    0% { opacity: 1 }
+    10% { opacity: 1 }
+    50% { opacity: 0 }
+    90% { opacity: 1 }
+    100% { opacity: 1 }
+}
+
+tp-button i.fa-wand-magic-sparkles {
+    background: linear-gradient(105deg, #F96480 0%, #FDD257 100%);
+    width: auto;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}

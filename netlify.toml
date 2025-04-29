@@ -1,0 +1,14 @@
+[build]
+command = "pnpm run build"
+publish = "dist/typedb-studio/browser"
+
+[build.environment]
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1317118973443309649/CqydmmRN9Ao1G49fg6QWroNujeoLJm7Qx__bO6gn1yHX9jKHWbQwyV3GMdD9GxzW9FnX"
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+
+[[plugins]]
+package = "netlify-plugin-discord"

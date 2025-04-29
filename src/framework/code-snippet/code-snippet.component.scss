@@ -1,0 +1,48 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+
+@use "typography";
+
+:host {
+    display: block;
+    height: 100%;
+    overflow: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+    }
+}
+
+.cs-root {
+    min-height: 100%;
+    width: 100%;
+    display: flex;
+    gap: 4px;
+}
+
+.cs-line-numbers {
+    flex-shrink: 0;
+    padding: 0 7px;
+    color: #66637f;
+    overflow: hidden;
+}
+
+.cs-code-area {
+    flex: 1;
+    cursor: text;
+
+    code {
+        display: block;
+    }
+}
+
+ol {
+    list-style: none;
+    height: 0;
+}

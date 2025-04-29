@@ -1,0 +1,18 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "primary";
+@use "secondary";
+
+$white80: rgba(primary.$white, 0.8);
+$white70: rgba(primary.$white, 0.7);
+$white15: rgba(primary.$white, 0.15);
+$purple: rgba(primary.$purple, 0.5);
+$red: rgba(primary.$red, 0.15);
+$red80: rgba(primary.$red, 0.8);
+$yellow: rgba(secondary.$yellow, 0.15);
+$green: rgba(primary.$green, 0.15);
+$blue: rgba(secondary.$blue, 0.15);
