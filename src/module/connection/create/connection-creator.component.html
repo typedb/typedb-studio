@@ -22,9 +22,6 @@
               <mat-error>{{ advancedForm.controls.password.getError("errorText") }}</mat-error>
             }
           </mat-form-field>
-          <div class="form-checkbox-row" (click)="advancedForm.controls.tlsDisabled.patchValue(!advancedForm.controls.tlsDisabled.value)">
-            <mat-checkbox [formControl]="advancedForm.controls.tlsDisabled" (click)="$event.stopPropagation()"/> Disable TLS
-          </div>
         </div>
       </div>
     } @else {

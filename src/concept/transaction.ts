@@ -4,7 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { QueryResponse } from "../service/driver-state.service";
+import { ApiResponse, QueryResponse } from "../framework/typedb-driver/response";
+import { TransactionType } from "../framework/typedb-driver/transaction";
 
 export class Transaction {
 
@@ -44,14 +45,12 @@ export class Transaction {
     // }
 }
 
-export type TransactionType = "read" | "write" | "schema";
-
 export type ReadMode = "auto" | "manual";
 
 export interface QueryRun {
     query: string;
     status: "pending" | "success" | "error";
-    result?: QueryResponse;
+    result?: ApiResponse<QueryResponse>;
     startedAtTimestamp: number;
     completedAtTimestamp?: number;
 }

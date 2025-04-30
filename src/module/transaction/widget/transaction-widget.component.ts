@@ -12,7 +12,8 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { combineLatest, map, startWith } from "rxjs";
-import { ReadMode, Transaction, TransactionType } from "../../../concept/transaction";
+import { ReadMode, Transaction } from "../../../concept/transaction";
+import { TransactionType } from "../../../framework/typedb-driver/transaction";
 import { requireValue } from "../../../framework/util/observable";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
 import { DriverState, DriverStatus } from "../../../service/driver-state.service";
@@ -52,10 +53,6 @@ export class TransactionWidgetComponent {
     commitButtonVisible$ = this.typeControlValueChanges$.pipe(map(x => x !== "read"));
     closeButtonVisible$ = this.openButtonVisible$;
     readModeControlVisible$ = this.typeControlValueChanges$.pipe(map(x => x === "read"));
-    readModeTooltip$ = this.readModeControlValueChanges$.pipe(map(x => {
-        if (x === "auto") return `Auto: Each read query will automatically run in its own transaction`;
-        else return `Snapshot: Open and close read transactions manually`;
-    }));
 
     constructor(private driver: DriverState, private formBuilder: FormBuilder) {
         this.transactionConfigDisabled$.subscribe((disabled) => {
@@ -65,7 +62,7 @@ export class TransactionWidgetComponent {
         combineLatest([this.typeControlValueChanges$, this.readModeControlValueChanges$]).subscribe(([type, readMode]) => {
             // TODO: confirm before closing with uncommitted changes
             this.driver.closeTransaction().subscribe();
-            this.driver.autoTransactionEnabled = type === "read" && readMode === "auto";
+            this.driver.autoTransactionEnabled$.next(type === "read" && readMode === "auto");
         });
     }
 

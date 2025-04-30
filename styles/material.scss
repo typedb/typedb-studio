@@ -131,7 +131,7 @@ body {
         --mdc-text-button-disabled-label-text-color: rgba(255, 255, 255, 0.25);
 
         --mdc-filled-button-label-text-size: 14px;
-        --mdc-filled-button-label-text-tracking: 0.02em;
+        --mdc-filled-button-label-text-tracking: #{typography.$letter-spacing};
         --mdc-filled-button-label-text-weight: #{typography.$regular};
         --mdc-filled-button-label-text-color: #{primary.$grey};
         --mdc-filled-button-disabled-container-color: rgba(255, 255, 255, 0.12);
@@ -142,6 +142,22 @@ body {
         --mat-filled-button-hover-state-layer-opacity: 0.08;
         --mat-filled-button-focus-state-layer-opacity: 0.24;
         --mat-filled-button-pressed-state-layer-opacity: 0.24;
+
+        --mdc-outlined-button-label-text-size: 14px;
+        --mdc-outlined-button-label-text-tracking: #{typography.$letter-spacing};
+        --mdc-outlined-button-label-text-weight: #{typography.$regular};
+        --mdc-outlined-button-disabled-outline-color: #{rgba(255, 255, 255, 0.12)};
+        --mdc-outlined-button-disabled-label-text-color: rgba(255, 255, 255, 0.25);
+        --mdc-outlined-button-label-text-color: #{primary.$grey};
+        --mdc-outlined-button-outline-color: #{primary.$light-purple};
+        --mdc-outlined-button-container-shape: #{shapes.$border-radius-panel};
+
+        &[disabled] {
+            pointer-events: all;
+            --mat-filled-button-state-layer-color: transparent;
+            --mat-outlined-button-state-layer-color: transparent;
+            --mat-outlined-button-ripple-color: transparent;
+        }
     }
 
     .mat-mdc-unelevated-button {
@@ -156,7 +172,7 @@ body {
     /* Button toggle */
     .mat-button-toggle-group, .mat-button-toggle {
         font-size: 14px;
-        --mat-standard-button-toggle-height: 32px;
+        --mat-standard-button-toggle-height: 30px;
         --mat-standard-button-toggle-divider-color: #{primary.$light-purple};
         --mat-standard-button-toggle-background-color: #{primary.$deep-purple};
         --mat-standard-button-toggle-selected-state-background-color: #{secondary.$purple};
