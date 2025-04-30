@@ -2,8 +2,8 @@ import Sigma from "sigma";
 import MultiGraph from "graphology";
 import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "sigma/types";
 import {StudioConverterStyleParameters} from "./config";
-import {StudioState} from "./studio";
-import {SpecialVertexKind} from "../graph.js";
+import {SpecialVertexKind} from "./graph";
+import { StudioState } from "./index";
 
 // Ref: https://www.sigmajs.org/docs/advanced/events/
 // and: https://www.sigmajs.org/storybook/?path=/story/mouse-manipulations--story
@@ -13,7 +13,7 @@ interface InteractionState {
     highlightedAnswer: number | null; // demonstrative
 }
 
-export class StudioInteractionHandler {
+export class InteractionHandler {
     graph: MultiGraph;
     renderer: Sigma;
     state: InteractionState;

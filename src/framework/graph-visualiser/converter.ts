@@ -1,8 +1,8 @@
-import { Attribute, AttributeType, Entity, EntityType, Relation, RelationType, RoleType, Type, Value } from "../../typedb-driver/concept";
-import { Edge, QueryStructure } from "../../typedb-driver/query-structure";
-import {LogicalVertex, StructureEdgeCoordinates, VertexExpression, VertexFunction, VertexUnavailable} from "../graph";
+import { Attribute, AttributeType, Entity, EntityType, Relation, RelationType, RoleType, Type, Value } from "../typedb-driver/concept";
+import { Edge, QueryStructure } from "../typedb-driver/query-structure";
+import {LogicalVertex, StructureEdgeCoordinates, VertexExpression, VertexFunction, VertexUnavailable} from "./graph";
 import chroma from "chroma-js";
-import {ILogicalGraphConverter} from "../visualisation";
+import {ILogicalGraphConverter} from "./visualisation";
 import MultiGraph from "graphology";
 import {StudioConverterStructureParameters, StudioConverterStyleParameters} from "./config";
 

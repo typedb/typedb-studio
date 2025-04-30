@@ -1,12 +1,14 @@
 import Sigma from "sigma";
 import MultiGraph from "graphology";
 import ForceSupervisor from "graphology-layout-force/worker";
-import { QueryStructure } from "../../typedb-driver/query-structure";
-import { ApiResponse, isApiErrorResponse, QueryResponse } from "../../typedb-driver/response";
+import { QueryStructure } from "../typedb-driver/query-structure";
+import { ApiResponse, isApiErrorResponse, QueryResponse } from "../typedb-driver/response";
+import { StudioConverterStructureParameters, StudioConverterStyleParameters } from "./config";
 
 import * as studioDefaultSettings from "./defaults";
-import {StudioInteractionHandler} from "./interaction";
-import {StudioVisualiser} from "./visualiser";
+import { constructGraphFromRowsResult } from "./graph";
+import {InteractionHandler} from "./interaction";
+import { convertLogicalGraphWith } from "./visualisation";
 import {LayoutWrapper} from "./layouts";
 import chroma from "chroma-js";
 import { mustDrawEdge, StudioConverter } from "./converter";
@@ -15,23 +17,21 @@ export interface StudioState {
     activeQueryDatabase: string | null;
 }
 
-export class TypeDBStudio {
+export class GraphVisualiser {
     graph: MultiGraph;
-    renderer: Sigma;
-    layout:  LayoutWrapper;
-    interactionHandler: StudioInteractionHandler;
-    visualiser: StudioVisualiser;
+    sigma: Sigma;
+    layout: LayoutWrapper;
+    interactionHandler: InteractionHandler;
     state: StudioState;
+    private styleParameters: StudioConverterStyleParameters = studioDefaultSettings.defaultQueryStyleParameters;
+    private structureParameters: StudioConverterStructureParameters = studioDefaultSettings.defaultStructureParameters;
 
-    constructor(graph: MultiGraph, renderer: Sigma, layout: LayoutWrapper) {
+    constructor(graph: MultiGraph, sigma: Sigma, layout: LayoutWrapper) {
         this.graph = graph;
-        this.renderer = renderer;
+        this.sigma = sigma;
         this.layout = layout;
-
         this.state = { activeQueryDatabase: null };
-
-        this.visualiser = new StudioVisualiser(graph, studioDefaultSettings.defaultQueryStyleParameters, studioDefaultSettings.defaultStructureParameters);
-        this.interactionHandler = new StudioInteractionHandler(graph, renderer, this.state, studioDefaultSettings.defaultQueryStyleParameters);
+        this.interactionHandler = new InteractionHandler(graph, sigma, this.state, studioDefaultSettings.defaultQueryStyleParameters);
     }
 
     handleQueryResponse(res: ApiResponse<QueryResponse>, database: string) {
@@ -39,8 +39,29 @@ export class TypeDBStudio {
 
         if (res.ok.answerType === "conceptRows") {
             this.state.activeQueryDatabase = database;
-            this.visualiser.handleQueryResult(res);
+            this.handleQueryResult(res);
             this.layout.startOrRedraw();
+        }
+    }
+
+    handleQueryResult(res: ApiResponse<QueryResponse>) {
+        if (isApiErrorResponse(res)) return;
+
+        if (res.ok.answerType == "conceptRows" && res.ok.queryStructure != null) {
+            let converter = new StudioConverter(this.graph, res.ok.queryStructure, false, this.structureParameters, this.styleParameters);
+            let logicalGraph = constructGraphFromRowsResult(res.ok); // In memory, not visualised
+            this.graph.clear();
+            convertLogicalGraphWith(logicalGraph, converter);
+        }
+    }
+
+    handleExplorationQueryResult(res: ApiResponse<QueryResponse>) {
+        if (isApiErrorResponse(res)) return;
+
+        if (res.ok.answerType == "conceptRows" && res.ok.queryStructure != null) {
+            let converter = new StudioConverter(this.graph, res.ok.queryStructure, true, this.structureParameters, this.styleParameters);
+            let logicalGraph = constructGraphFromRowsResult(res.ok); // In memory, not visualised
+            convertLogicalGraphWith(logicalGraph, converter);
         }
     }
 
@@ -66,18 +87,18 @@ export class TypeDBStudio {
     }
 
     colorEdgesByConstraintIndex(reset: boolean): void {
-
-        function getColorForEdge(graph: MultiGraph, edgeKey: string): chroma.Color {
-            let attributes = graph.getEdgeAttributes(edgeKey);
-            let constraintIndex = attributes["metadata"].structureEdgeCoordinates.constraintIndex;
-            return TypeDBStudio.getColorForConstraintIndex(constraintIndex);
-        }
         this.graph.edges().forEach(edgeKey => {
             let color = reset ?
                 this.interactionHandler.styleParameters.edge_color :
-                getColorForEdge(this.graph, edgeKey);
+                this.getColorForEdge(this.graph, edgeKey);
             this.graph.setEdgeAttribute(edgeKey, "color", color.hex());
         })
+    }
+
+    private getColorForEdge(graph: MultiGraph, edgeKey: string): chroma.Color {
+        let attributes = graph.getEdgeAttributes(edgeKey);
+        let constraintIndex = attributes["metadata"].structureEdgeCoordinates.constraintIndex;
+        return this.getColorForConstraintIndex(constraintIndex);
     }
 
     colorQuery(queryString: string, queryStructure: QueryStructure): string {
@@ -107,7 +128,7 @@ export class TypeDBStudio {
                 if (constraintIndexOrEnd == -1) {
                     highlighted += "</span>"
                 } else {
-                    let color = TypeDBStudio.getColorForConstraintIndex(constraintIndexOrEnd)
+                    let color = this.getColorForConstraintIndex(constraintIndexOrEnd)
                     highlighted += "<span style=\"color: " + color.hex() + "\">";
                 }
                 se_index += 1;
@@ -118,10 +139,14 @@ export class TypeDBStudio {
         return highlighted;
     }
 
-    private static getColorForConstraintIndex(constraintIndex: number): chroma.Color {
+    private getColorForConstraintIndex(constraintIndex: number): chroma.Color {
         let r = ((constraintIndex+1) * 153 % 256);
         let g = ((constraintIndex+1) * 173 % 256);
         let b = ((constraintIndex+1) * 199 % 256);
         return chroma([r,g,b]);
+    }
+
+    clear() {
+        this.sigma = this.sigma.clear();
     }
 }

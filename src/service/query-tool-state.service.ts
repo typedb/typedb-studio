@@ -4,15 +4,16 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { DatePipe } from "@angular/common";
 import { Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { BehaviorSubject, combineLatest, map, Observable, ReplaySubject, startWith, Subject } from "rxjs";
-import Sigma from "sigma";
-import { TypeDBStudio } from "../framework/graph/studio/studio";
+import MultiGraph from "graphology";
+import { BehaviorSubject, combineLatest, map, Observable, ReplaySubject, startWith } from "rxjs";
+import { GraphVisualiser } from "../framework/graph-visualiser";
+import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
+import { Layouts } from "../framework/graph-visualiser/layouts";
+import { createSigmaRenderer } from "../framework/graph-visualiser/visualisation";
 import { Concept, Value } from "../framework/typedb-driver/concept";
 import { ApiResponse, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
-import { requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverAction, DriverState } from "./driver-state.service";
 
@@ -47,7 +48,6 @@ export class QueryToolState {
     readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
     readonly runEnabled$ = this.runDisabledReason$.pipe(map(x => x == null));
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
-    studio: TypeDBStudio | null = null;
 
     constructor(private driver: DriverState) {
         this.outputDisabled$.subscribe((disabled) => {
@@ -77,7 +77,6 @@ export class QueryToolState {
         this.structureOutput.status = "running";
         this.structureOutput.query = query;
         this.structureOutput.database = this.driver.requireDatabase(`${this.constructor.name}.${this.initialiseOutput.name} > requireValue(driver.database$)`).name;
-        this.structureOutput.studio = this.studio;
     }
 
     private outputQueryResponse(res: ApiResponse<QueryResponse>) {
@@ -89,7 +88,7 @@ export class QueryToolState {
         this.logOutput.appendBlankLine();
         this.logOutput.appendQueryResult(res);
         this.tableOutput.push(res);
-        this.structureOutput.push(res, this.studio!);
+        this.structureOutput.push(res);
         this.rawOutput.push(JSON.stringify(res, null, 2));
     }
 
@@ -391,16 +390,22 @@ type StructureOutputStatus = "ok" | "running" | "answerlessQueryType" | "answerO
 export class StructureOutputState {
 
     status: StructureOutputStatus = "ok";
-    studio: TypeDBStudio | null = null;
+    canvasEl!: HTMLElement;
+    visualiser: GraphVisualiser | null = null;
     query?: string;
     database?: string;
-    valueChanges = new ReplaySubject<any>();
 
     constructor() {
     }
 
-    push(res: ApiResponse<QueryResponse>, studio: TypeDBStudio) {
-        this.studio = studio;
+    push(res: ApiResponse<QueryResponse>) {
+        if (!this.canvasEl) throw `Missing canvas element`;
+
+        const graph = new MultiGraph();
+        const sigma = createSigmaRenderer(this.canvasEl, defaultSigmaSettings as any, graph);
+        let layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
+        // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
+        this.visualiser = new GraphVisualiser(graph, sigma, layout);
 
         if (isApiErrorResponse(res)) {
             this.status = "error";
@@ -413,12 +418,12 @@ export class StructureOutputState {
                 break;
             }
             case "conceptRows": {
-                studio.handleQueryResponse(res, this.database!);
+                this.visualiser.handleQueryResponse(res, this.database!);
                 let highlightedQuery = "";
                 if (res.ok.queryStructure) {
-                    highlightedQuery = studio.colorQuery(this.query!, res.ok.queryStructure);
+                    highlightedQuery = this.visualiser.colorQuery(this.query!, res.ok.queryStructure);
                 }
-                studio.colorEdgesByConstraintIndex(false);
+                this.visualiser.colorEdgesByConstraintIndex(false);
                 this.status = "ok";
                 // document.getElementById("query-highlight-div").innerHTML = highlightedQuery;
                 // if (res.queryStructure != null) {
@@ -448,7 +453,7 @@ export class StructureOutputState {
     }
 
     clear() {
-
+        this.visualiser?.clear();
     }
 }
 

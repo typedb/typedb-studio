@@ -19,13 +19,14 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
 import MultiGraph from "graphology";
+import { first, map } from "rxjs";
 import Sigma from "sigma";
 import { ButtonComponent } from "../../framework/button/button.component";
 import { basicDark } from "../../framework/code-editor/theme";
-import * as studioDefaults from "../../framework/graph/studio/defaults";
-import { Layouts } from "../../framework/graph/studio/layouts";
-import { TypeDBStudio } from "../../framework/graph/studio/studio";
-import { createSigmaRenderer } from "../../framework/graph/visualisation";
+import { GraphVisualiser } from "../../framework/graph-visualiser";
+import { defaultSigmaSettings } from "../../framework/graph-visualiser/defaults";
+import { Layouts } from "../../framework/graph-visualiser/layouts";
+import { createSigmaRenderer } from "../../framework/graph-visualiser/visualisation";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { AppData } from "../../service/app-data.service";
 import { DriverAction, DriverState, isQueryRun, isTransactionOperation, TransactionOperationAction } from "../../service/driver-state.service";
@@ -47,11 +48,10 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
 
     @ViewChild(CodeEditor) codeEditor!: CodeEditor;
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
-    @ViewChild("structureViewRef") structureViewRef!: ElementRef<HTMLElement>;
+    @ViewChildren("structureViewRef") structureViewRef!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
-    sigma?: Sigma;
 
     constructor(protected state: QueryToolState, public driver: DriverState, private appData: AppData) {
     }
@@ -71,23 +71,16 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
     ngAfterViewInit() {
         const articleWidth = this.articleRef.nativeElement.clientWidth;
         this.resizables.first.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
+        this.structureViewRef.changes.pipe(
+            map(x => x as QueryList<ElementRef<HTMLElement>>),
+            first(queryList => queryList.length > 0)
+        ).subscribe((queryList) => {
+            this.state.structureOutput.canvasEl = queryList.first.nativeElement;
+        });
     }
 
     runQuery() {
-        this.initStructureView();
         this.state.runQuery();
-    }
-
-    private initStructureView() {
-        const graph = new MultiGraph();
-        if (this.sigma) {
-            this.sigma = this.sigma.clear();
-        } else {
-            this.sigma = createSigmaRenderer(this.structureViewRef.nativeElement, studioDefaults.defaultSigmaSettings as any, graph);
-        }
-        let layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
-        // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
-        this.state.studio = new TypeDBStudio(graph, this.sigma, layout);
     }
 
     queryHistoryPreview(query: string) {

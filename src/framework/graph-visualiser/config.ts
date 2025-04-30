@@ -1,6 +1,6 @@
-import { RoleType } from "../../typedb-driver/concept";
-import { EdgeKind } from "../../typedb-driver/query-structure";
-import {LogicalVertex, LogicalVertexKind, VertexUnavailable} from "../graph";
+import { RoleType } from "../typedb-driver/concept";
+import { EdgeKind } from "../typedb-driver/query-structure";
+import {LogicalVertex, LogicalVertexKind, VertexUnavailable} from "./graph";
 import {Color} from "chroma-js";
 
 export interface StudioConverterStyleParameters {

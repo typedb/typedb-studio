@@ -1,5 +1,5 @@
 import ForceSupervisor from "graphology-layout-force/worker";
-import * as studioDefaultSettings from "./defaults.js";
+import * as studioDefaultSettings from "./defaults";
 import Graph from "graphology";
 import MultiGraph from "graphology";
 import {ForceLayoutSettings} from "graphology-layout-force";
