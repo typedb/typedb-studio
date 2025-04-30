@@ -1,44 +1,21 @@
-import { ConceptRow } from "../typedb-driver/answer";
-import { ConceptRowsQueryResponse } from "../typedb-driver/response";
-import {
-    Attribute,
-    ConceptAny,
-    EdgeKind,
-    ObjectAny,
-    RoleType,
-    ThingKind,
-    TypeAny,
-    TypeDBValue,
-    TypeKind,
-    ValueKind
-} from "./typedb/concept";
-import {
-    TypeDBRowData,
-    StructureEdge,
-    StructureEdgTypeAny,
-    StructureVertex,
-    StructureVertexKind, StructureVertexLabel,
-    StructureVertexVariable, StructureVertexUnavailable, StructureVertexFunction, StructureVertexExpression
-} from "./typedb/answer"
+import { Attribute, Concept, RoleType, ThingKind, Type, TypeKind, ValueKind } from "../typedb-driver/concept";
+import { EdgeKind, Edge, EdgeType, Vertex } from "../typedb-driver/query-structure";
+import { ConceptRow, ConceptRowsQueryResponse } from "../typedb-driver/response";
 
 //////////////////////////
 // Logical TypeDB Graph //
 //////////////////////////
 
-export enum SpecialVertexKind {
-    unavailable = "unavailable",
-    expr = "expression",
-    func = "functionCall",
-}
+export type SpecialVertexKind = "unavailable" | "expression" | "functionCall";
 
-export type VertexUnavailable = { kind: SpecialVertexKind.unavailable, variable: string, answerIndex: number, vertex_map_key: string };
-export type VertexExpression = { kind: SpecialVertexKind.expr, repr: string, answerIndex: number, vertex_map_key: string };
-export type VertexFunction = { kind: SpecialVertexKind.func, repr: string, answerIndex: number, vertex_map_key: string };
+export type VertexUnavailable = { kind: "unavailable", variable: string, answerIndex: number, vertex_map_key: string };
+export type VertexExpression = { kind: "expression", repr: string, answerIndex: number, vertex_map_key: string };
+export type VertexFunction = { kind: "functionCall", repr: string, answerIndex: number, vertex_map_key: string };
 export type LogicalVertexSpecial = VertexUnavailable | VertexFunction | VertexExpression;
 export type EdgeParameter = RoleType | VertexUnavailable | string | null;
 
 export type LogicalVertexKind = ThingKind | TypeKind | ValueKind | SpecialVertexKind;
-export type LogicalVertex = ConceptAny | LogicalVertexSpecial;
+export type LogicalVertex = Concept | LogicalVertexSpecial;
 export type LogicalVertexID = string;
 
 export type StructureEdgeCoordinates = { branchIndex: number, constraintIndex: number };
@@ -86,7 +63,7 @@ class LogicalGraphBuilder {
         return { vertices: this.vertexMap, answers: this.answers };
     }
 
-    substitute_variables(branchIndex: number, answerIndex: number, branch: Array<StructureEdge>, data: ConceptRow) : Array<LogicalEdge> {
+    substitute_variables(branchIndex: number, answerIndex: number, branch: Array<Edge>, data: ConceptRow) : Array<LogicalEdge> {
         return branch.map((structure_edge, constraintIndex) => {
             let coordinates = { branchIndex: branchIndex, constraintIndex: constraintIndex } ;
             let edge_type = this.extract_edge_type(structure_edge.type, answerIndex, data);
@@ -96,42 +73,40 @@ class LogicalGraphBuilder {
         });
     }
 
-    register_vertex(structure_vertex: StructureVertex, answerIndex: number, data: ConceptRow): LogicalVertexID {
+    register_vertex(structure_vertex: Vertex, answerIndex: number, data: ConceptRow): LogicalVertexID {
         let vertex = this.translate_vertex(structure_vertex, answerIndex, data);
         let key = null;
         switch (vertex.kind) {
-            case ThingKind.attribute:{
-                let attribute = vertex as Attribute;
-                key = attribute.type.label + ":" + attribute.value;
+            case "attribute": {
+                key = vertex.type.label + ":" + vertex.value;
                 break;
             }
-            case ThingKind.entity:
-            case ThingKind.relation: {
-                key = (vertex as ObjectAny).iid;
+            case "entity":
+            case "relation": {
+                key = vertex.iid;
                 break;
             }
-            case TypeKind.attributeType:
-            case TypeKind.entityType:
-            case TypeKind.relationType:
-            case TypeKind.roleType: {
-                key = (vertex as TypeAny).label;
+            case "attributeType":
+            case "entityType":
+            case "relationType":
+            case "roleType": {
+                key = vertex.label;
                 break;
             }
             case "value": {
-                let value = vertex as TypeDBValue;
-                key = (value.valueType + ":" + value.value);
+                key = (vertex.valueType + ":" + vertex.value);
                 break;
             }
-            case SpecialVertexKind.unavailable: {
-                key = (vertex as VertexUnavailable).vertex_map_key;
+            case "unavailable": {
+                key = vertex.vertex_map_key;
                 break;
             }
-            case SpecialVertexKind.func: {
-                key = (vertex as VertexFunction).vertex_map_key;
+            case "functionCall": {
+                key = vertex.vertex_map_key;
                 break;
             }
-            case SpecialVertexKind.expr:{
-                key = (vertex as VertexExpression).vertex_map_key;
+            case "expression": {
+                key = vertex.vertex_map_key;
                 break;
             }
         }
@@ -140,58 +115,58 @@ class LogicalGraphBuilder {
         return vertex_id;
     }
 
-    translate_vertex(structure_vertex: StructureVertex, answerIndex: number, data: ConceptRow): LogicalVertex {
+    translate_vertex(structure_vertex: Vertex, answerIndex: number, data: ConceptRow): LogicalVertex {
         switch (structure_vertex.kind) {
-            case StructureVertexKind.variable: {
-                return data[(structure_vertex.value as StructureVertexVariable).variable] as ConceptAny;
+            case "variable": {
+                return data[structure_vertex.value.variable] as Concept;
             } 
-            case StructureVertexKind.label:{
-                let vertex= structure_vertex.value as StructureVertexLabel;
-                return { kind: vertex.kind, label: vertex.label } as TypeAny;
+            case "label": {
+                let vertex= structure_vertex.value;
+                return { kind: vertex.kind, label: vertex.label } as Type;
             }
-            case StructureVertexKind.value:{
-                return structure_vertex.value as TypeDBValue;
+            case "value": {
+                return structure_vertex.value;
             }
-            case StructureVertexKind.unavailable: {
-                let vertex = structure_vertex.value as StructureVertexUnavailable;
+            case "unavailableVariable": {
+                let vertex = structure_vertex.value;
                 let key = "unavailable[" + vertex.variable + "][" + answerIndex + "]";
                 return { kind: "unavailable", vertex_map_key: key, answerIndex: answerIndex, variable: vertex.variable } as VertexUnavailable;
             }
-            case StructureVertexKind.expr: {
-                let vertex = structure_vertex.value as StructureVertexExpression;
+            case "expression": {
+                let vertex = structure_vertex.value;
                 let key = vertex.repr + "[" + answerIndex + "]";
-                return { kind: SpecialVertexKind.expr , vertex_map_key: key, answerIndex: answerIndex, repr: vertex.repr } as VertexExpression;
+                return { kind: "expression", vertex_map_key: key, answerIndex: answerIndex, repr: vertex.repr } as VertexExpression;
             }
-            case StructureVertexKind.func:{
-                let vertex = structure_vertex.value as StructureVertexFunction;
+            case "functionCall": {
+                let vertex = structure_vertex.value;
                 let key = vertex.repr + "[" + answerIndex + "]";
-                return { kind: SpecialVertexKind.func, vertex_map_key: key, answerIndex: answerIndex, repr: vertex.repr } as VertexFunction;
+                return { kind: "functionCall", vertex_map_key: key, answerIndex: answerIndex, repr: vertex.repr } as VertexFunction;
             }
             default: {
-                throw new Error("Unsupported vertex type: " + structure_vertex.kind);
+                throw new Error("Unsupported vertex type: " + structure_vertex);
             }
         }
     }
 
-    extract_edge_type(structure_edge_type: StructureEdgTypeAny, answerIndex: number, data: ConceptRow): LogicalEdgeType {
+    extract_edge_type(structure_edge_type: EdgeType, answerIndex: number, data: ConceptRow): LogicalEdgeType {
         switch (structure_edge_type.kind) {
-            case EdgeKind.isa:
-            case EdgeKind.has:
-            case EdgeKind.sub:
-            case EdgeKind.owns:
-            case EdgeKind.relates:
-            case EdgeKind.plays:
-            case EdgeKind.isaExact:
-            case EdgeKind.subExact:
+            case "isa":
+            case "has":
+            case "sub":
+            case "owns":
+            case "relates":
+            case "plays":
+            case "isaExact":
+            case "subExact":
             {
                 return { kind: structure_edge_type.kind, param: null };
             }
-            case EdgeKind.links: {
-                let role = this.translate_vertex(structure_edge_type.param as StructureVertex, answerIndex, data);
+            case "links": {
+                let role = this.translate_vertex(structure_edge_type.param as Vertex, answerIndex, data);
                 return { kind: structure_edge_type.kind, param: role as RoleType | VertexUnavailable };
             }
-            case EdgeKind.assigned:
-            case EdgeKind.argument:{
+            case "assigned":
+            case "argument":{
                 return { kind: structure_edge_type.kind, param: structure_edge_type.param as string };
             }
             default: {

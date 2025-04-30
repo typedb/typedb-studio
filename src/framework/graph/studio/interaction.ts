@@ -2,9 +2,7 @@ import Sigma from "sigma";
 import MultiGraph from "graphology";
 import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "sigma/types";
 import {StudioConverterStyleParameters} from "./config";
-import {ThingKind, TypeKind} from "../typedb/concept";
 import {StudioState} from "./studio";
-import {TypeDBQueryType} from "../typedb/answer.js";
 import {SpecialVertexKind} from "../graph.js";
 
 // Ref: https://www.sigmajs.org/docs/advanced/events/
@@ -153,7 +151,7 @@ export class StudioInteractionHandler {
         //         break;
         //     }
         //     case TypeKind.roleType:
-        //     case ThingKind.attribute:
+        //     case "attribute":
         //     case "value":
         //     case SpecialVertexKind.unavailable:
         //     case SpecialVertexKind.func:

@@ -1,5 +1,5 @@
-import {EdgeKind, RoleType, ThingKind, TypeKind} from "../typedb/concept";
 import chroma from "chroma-js";
+import { RoleType } from "../../typedb-driver/concept";
 import {LogicalVertex, SpecialVertexKind, VertexUnavailable} from "../graph";
 import {NodeSquareProgram} from "@sigma/node-square";
 import EdgeCurveProgram from "@sigma/edge-curve";
@@ -10,30 +10,30 @@ import {StudioConverterStructureParameters, StudioConverterStyleParameters} from
 
 export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
     vertex_colors: {
-        [ThingKind.entity]: chroma("pink"),
-        [ThingKind.relation]: chroma("yellow"),
-        [ThingKind.attribute]: chroma("green"),
-        [TypeKind.entityType]: chroma("magenta"),
-        [TypeKind.relationType]: chroma("orange"),
-        [TypeKind.attributeType]: chroma("darkgreen"),
-        [TypeKind.roleType]: chroma("darkorange"),
+        entity: chroma("pink"),
+        relation: chroma("yellow"),
+        attribute: chroma("green"),
+        entityType: chroma("magenta"),
+        relationType: chroma("orange"),
+        attributeType: chroma("darkgreen"),
+        roleType: chroma("darkorange"),
         value: chroma("white"),
-        [SpecialVertexKind.unavailable]: chroma("darkgrey"),
-        [SpecialVertexKind.expr]: chroma("black"),
-        [SpecialVertexKind.func]: chroma("black")
+        unavailable: chroma("darkgrey"),
+        expression: chroma("black"),
+        functionCall: chroma("black")
     },
     vertex_shapes: {
-        [ThingKind.entity]: "circle",
-        [ThingKind.relation]: "square",
-        [ThingKind.attribute]: "circle",
-        [TypeKind.entityType]: "circle",
-        [TypeKind.relationType]: "square",
-        [TypeKind.attributeType]: "circle",
-        [TypeKind.roleType]: "circle",
+        entity: "circle",
+        relation: "square",
+        attribute: "circle",
+        entityType: "circle",
+        relationType: "square",
+        attributeType: "circle",
+        roleType: "circle",
         value: "circle",
-        [SpecialVertexKind.unavailable]: "circle",
-        [SpecialVertexKind.expr]: "circle",
-        [SpecialVertexKind.func]: "circle",
+        unavailable: "circle",
+        expression: "circle",
+        functionCall: "circle",
     },
     vertex_size: 6,
 
@@ -43,61 +43,61 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
 
     vertex_default_label(vertex: LogicalVertex): string {
         switch (vertex.kind) {
-            case TypeKind.entityType:
-            case TypeKind.relationType:
-            case TypeKind.roleType:
-            case TypeKind.attributeType: {
+            case "entityType":
+            case "relationType":
+            case "roleType":
+            case "attributeType": {
                 return vertex.label;
             }
 
-            case ThingKind.entity:
-            case ThingKind.relation:{
+            case "entity":
+            case "relation":{
                 return vertex.type.label;
             }
-            case ThingKind.attribute: {
+            case "attribute": {
                 return vertex.value;
             }
             case "value": {
                 return vertex.value;
             }
-            case SpecialVertexKind.unavailable: {
-                return "?" + vertex.variable + "?";
+            case "unavailable": {
+                return `?${vertex.variable}?`;
             }
-            case SpecialVertexKind.func: {
+            case "functionCall": {
                 let argStart = vertex.repr.indexOf("(");
                 return vertex.repr.substring(0, argStart) + "(...)";
             }
-            case SpecialVertexKind.expr: {
+            case "expression": {
                 let parts = vertex.repr.split("=");
-                return parts[0] + "=" + "(...)"
+                return `${parts[0]}=(...)`
             }
         }
     },
 
     vertex_hover_label(vertex: LogicalVertex): string {
         switch (vertex.kind) {
-            case TypeKind.entityType:
-            case TypeKind.relationType:
-            case TypeKind.roleType:
-            case TypeKind.attributeType: {
+            case "entityType":
+            case "relationType":
+            case "roleType":
+            case "attributeType": {
                 return vertex.label;
             }
 
-            case ThingKind.entity:
-            case ThingKind.relation: {
-                return vertex.type.label + ":" + vertex.iid;
+            case "entity":
+            case "relation": {
+                return `${vertex.type.label}:${vertex.iid}`;
             }
-            case ThingKind.attribute: {
-                return vertex.type.label + ":" + vertex.value;
+            case "attribute": {
+                return `${vertex.type.label}:${vertex.value}`;
             }
             case "value": {
-                return vertex.valueType +":" + vertex.value;
+                return `${vertex.valueType}:${vertex.value}`;
             }
-            case SpecialVertexKind.unavailable: {
+            case "unavailable": {
                 return unavailable_key(vertex);
             }
-            case SpecialVertexKind.func:
-            case SpecialVertexKind.expr: {
+            case "functionCall":
+            case "expression": {
                 return vertex.repr;
             }
         }
@@ -127,7 +127,7 @@ export const defaultExplorationQueryStyleParameters: StudioConverterStyleParamet
 
 
 export const defaultStructureParameters: StudioConverterStructureParameters = {
-    ignoreEdgesInvolvingLabels: [EdgeKind.isa, EdgeKind.sub, EdgeKind.relates, EdgeKind.plays],
+    ignoreEdgesInvolvingLabels: ["isa", "sub", "relates", "plays"],
 };
 
 export const defaultSigmaSettings: Partial<SigmaSettings> = {

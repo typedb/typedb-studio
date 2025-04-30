@@ -1,31 +1,10 @@
 import MultiGraph from "graphology";
 import Sigma from "sigma";
 import {Settings as SigmaSettings} from "sigma/settings";
+import { Attribute, AttributeType, Concept, Entity, EntityType, Relation, RelationType, RoleType, Value } from "../typedb-driver/concept";
 import {
-  Attribute,
-  AttributeType,
-  ConceptAny,
-  EdgeKind,
-  Entity,
-  EntityType,
-  ObjectAny,
-  ObjectType,
-  Relation,
-  RelationType,
-  RoleType,
-  ThingKind,
-  TypeDBValue,
-  TypeKind,
-} from "./typedb/concept";
-import {
-  LogicalEdge,
-  LogicalGraph,
-  LogicalVertex,
-  SpecialVertexKind,
-  StructureEdgeCoordinates,
-  VertexExpression,
-  VertexFunction,
-  VertexUnavailable
+    LogicalEdge, LogicalGraph, LogicalVertex, SpecialVertexKind, StructureEdgeCoordinates, VertexExpression,
+    VertexFunction, VertexUnavailable
 } from "./graph";
 
 export function createSigmaRenderer(containerEl: HTMLElement, sigma_settings: SigmaSettings, graph: MultiGraph) : Sigma {
@@ -64,7 +43,7 @@ export interface ILogicalGraphConverter {
 
   put_role_type_for_type_constraint(answer_index: number, structureEdgeCoordinates: StructureEdgeCoordinates, vertex: RoleType): void;
 
-  put_vertex_value(answer_index: number, structureEdgeCoordinates: StructureEdgeCoordinates, vertex: TypeDBValue): void;
+  put_vertex_value(answer_index: number, structureEdgeCoordinates: StructureEdgeCoordinates, vertex: Value): void;
 
   put_vertex_expression(answer_index: number, structureEdgeCoordinates: StructureEdgeCoordinates, vertex: VertexExpression): void;
 
@@ -91,9 +70,9 @@ export interface ILogicalGraphConverter {
 
   put_sub_exact(answer_index: number, structureEdgeCoordinates: StructureEdgeCoordinates, subtype: EntityType | RelationType | AttributeType, supertype: EntityType | RelationType | AttributeType): void;
 
-  put_assigned(answer_index: number, structureEdgeCoordinates: StructureEdgeCoordinates, expr_or_func: VertexExpression | VertexFunction, assigned: TypeDBValue, var_name: string): void;
+  put_assigned(answer_index: number, structureEdgeCoordinates: StructureEdgeCoordinates, expr_or_func: VertexExpression | VertexFunction, assigned: Value, var_name: string): void;
 
-  put_argument(answer_index: number, structureEdgeCoordinates: StructureEdgeCoordinates, argument: TypeDBValue | Attribute, expr_or_func: VertexExpression | VertexFunction, var_name: string): void;
+  put_argument(answer_index: number, structureEdgeCoordinates: StructureEdgeCoordinates, argument: Value | Attribute, expr_or_func: VertexExpression | VertexFunction, var_name: string): void;
 }
 
 export function convertLogicalGraphWith(logicalGraph: LogicalGraph, converter: ILogicalGraphConverter) {
@@ -106,52 +85,52 @@ export function convertLogicalGraphWith(logicalGraph: LogicalGraph, converter: I
 
 function putVertex(converter: ILogicalGraphConverter, answer_index: number, structureEdgeCoordinates: StructureEdgeCoordinates, vertex: LogicalVertex) {
   switch (vertex.kind) {
-    case ThingKind.entity: {
-      converter.put_entity(answer_index, structureEdgeCoordinates, vertex as Entity);
+    case "entity": {
+      converter.put_entity(answer_index, structureEdgeCoordinates, vertex);
       break;
     }
-    case ThingKind.attribute : {
-      converter.put_attribute(answer_index, structureEdgeCoordinates, vertex as Attribute);
+    case "attribute" : {
+      converter.put_attribute(answer_index, structureEdgeCoordinates, vertex);
       break;
     }
-    case ThingKind.relation : {
-      converter.put_relation(answer_index, structureEdgeCoordinates, vertex as Relation);
+    case "relation": {
+      converter.put_relation(answer_index, structureEdgeCoordinates, vertex);
       break;
     }
-    case TypeKind.attributeType : {
-      converter.put_attribute_type(answer_index, structureEdgeCoordinates, vertex as AttributeType);
+    case "attributeType": {
+      converter.put_attribute_type(answer_index, structureEdgeCoordinates, vertex);
       break;
     }
-    case  TypeKind.entityType : {
-      converter.put_entity_type(answer_index, structureEdgeCoordinates, vertex as EntityType);
+    case "entityType": {
+      converter.put_entity_type(answer_index, structureEdgeCoordinates, vertex);
       break;
     }
-    case TypeKind.relationType : {
-      converter.put_relation_type(answer_index, structureEdgeCoordinates, vertex as RelationType);
+    case "relationType": {
+      converter.put_relation_type(answer_index, structureEdgeCoordinates, vertex);
       break;
     }
-    case TypeKind.roleType : {
-      converter.put_role_type_for_type_constraint(answer_index, structureEdgeCoordinates, vertex as RoleType);
+    case "roleType": {
+      converter.put_role_type_for_type_constraint(answer_index, structureEdgeCoordinates, vertex);
       break;
     }
     case "value": {
-      converter.put_vertex_value(answer_index, structureEdgeCoordinates, vertex as TypeDBValue);
+      converter.put_vertex_value(answer_index, structureEdgeCoordinates, vertex);
       break;
     }
-    case SpecialVertexKind.unavailable : {
-      converter.put_vertex_unavailable(answer_index, structureEdgeCoordinates, vertex as VertexUnavailable);
+    case "unavailable": {
+      converter.put_vertex_unavailable(answer_index, structureEdgeCoordinates, vertex);
       break;
     }
-    case SpecialVertexKind.func: {
-      converter.put_vertex_function(answer_index, structureEdgeCoordinates, vertex as VertexFunction);
+    case "functionCall": {
+      converter.put_vertex_function(answer_index, structureEdgeCoordinates, vertex);
       break;
     }
-    case SpecialVertexKind.expr: {
-      converter.put_vertex_expression(answer_index, structureEdgeCoordinates, vertex as VertexExpression);
+    case "expression": {
+      converter.put_vertex_expression(answer_index, structureEdgeCoordinates, vertex);
       break;
     }
 
-    default : {
+    default: {
       console.log("VertexKind not yet supported: " + vertex);
     }
   }
@@ -162,57 +141,55 @@ function putEdge(converter: ILogicalGraphConverter, answer_index: number, struct
   let to = logicalGraph.vertices.get(edge.to);
   let edgeParam = edge.type.param;
   // First put vertices, then the edge
-  putVertex(converter, answer_index, structureEdgeCoordinates, from as ConceptAny);
-  putVertex(converter, answer_index, structureEdgeCoordinates, to as ConceptAny);
+  putVertex(converter, answer_index, structureEdgeCoordinates, from as Concept);
+  putVertex(converter, answer_index, structureEdgeCoordinates, to as Concept);
 
   switch (edge.type.kind) {
-    case EdgeKind.isa:{
-      converter.put_isa(answer_index, structureEdgeCoordinates, from as ObjectAny | Attribute, to as ObjectType | AttributeType);
+    case "isa":{
+      converter.put_isa(answer_index, structureEdgeCoordinates, from as Entity | Relation | Attribute, to as EntityType | RelationType | AttributeType);
       break;
     }
-    case EdgeKind.has: {
-      converter.put_has(answer_index, structureEdgeCoordinates, from as ObjectAny, to as Attribute);
+    case "has": {
+      converter.put_has(answer_index, structureEdgeCoordinates, from as Entity | Relation, to as Attribute);
       break;
     }
-    case EdgeKind.links : {
-      converter.put_links(answer_index, structureEdgeCoordinates, from as Relation, to as ObjectAny, edgeParam as RoleType | VertexUnavailable);
+    case "links": {
+      converter.put_links(answer_index, structureEdgeCoordinates, from as Relation, to as Entity | Relation, edgeParam as RoleType | VertexUnavailable);
       break;
     }
-
-    case EdgeKind.sub: {
-      converter.put_sub(answer_index, structureEdgeCoordinates, from as ObjectType | AttributeType, to as ObjectType | AttributeType);
+    case "sub": {
+      converter.put_sub(answer_index, structureEdgeCoordinates, from as EntityType | RelationType | AttributeType, to as EntityType | RelationType | AttributeType);
       break;
     }
-    case EdgeKind.owns: {
-      converter.put_owns(answer_index, structureEdgeCoordinates, from as ObjectType, to as AttributeType);
+    case "owns": {
+      converter.put_owns(answer_index, structureEdgeCoordinates, from as EntityType | RelationType, to as AttributeType);
       break;
     }
-    case EdgeKind.relates: {
+    case "relates": {
       converter.put_relates(answer_index, structureEdgeCoordinates, from as RelationType, to as RoleType | VertexUnavailable);
       break;
     }
-    case EdgeKind.plays: {
+    case "plays": {
       converter.put_plays(answer_index, structureEdgeCoordinates, from as EntityType | RelationType, to as RoleType | VertexUnavailable);
       break;
     }
-    case EdgeKind.isaExact: {
-      converter.put_isa_exact(answer_index, structureEdgeCoordinates, from as ObjectAny | Attribute, to as ObjectType | AttributeType);
+    case "isaExact": {
+      converter.put_isa_exact(answer_index, structureEdgeCoordinates, from as Entity | Relation | Attribute, to as EntityType | RelationType | AttributeType);
       break;
     }
-    case EdgeKind.subExact: {
-      converter.put_sub_exact(answer_index, structureEdgeCoordinates, from as ObjectType, to as ObjectType);
+    case "subExact": {
+      converter.put_sub_exact(answer_index, structureEdgeCoordinates, from as EntityType | RelationType | AttributeType, to as EntityType | RelationType | AttributeType);
       break;
     }
-    case EdgeKind.assigned: {
-      converter.put_assigned(answer_index, structureEdgeCoordinates, from as VertexExpression|VertexFunction, to as TypeDBValue, edge.type.param as string);
+    case "assigned": {
+      converter.put_assigned(answer_index, structureEdgeCoordinates, from as VertexExpression | VertexFunction, to as Value, edge.type.param as string);
       break;
     }
-    case EdgeKind.argument: {
-      converter.put_argument(answer_index, structureEdgeCoordinates, from as TypeDBValue | Attribute, to as VertexExpression|VertexFunction, edge.type.param as string);
+    case "argument": {
+      converter.put_argument(answer_index, structureEdgeCoordinates, from as Value | Attribute, to as VertexExpression | VertexFunction, edge.type.param as string);
       break;
     }
-
-    default : {
+    default: {
       throw new Error();
     }
   }

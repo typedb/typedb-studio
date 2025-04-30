@@ -1,12 +1,12 @@
 import Sigma from "sigma";
 import MultiGraph from "graphology";
 import ForceSupervisor from "graphology-layout-force/worker";
+import { QueryStructure } from "../../typedb-driver/query-structure";
 import { ApiResponse, isApiErrorResponse, QueryResponse } from "../../typedb-driver/response";
 
 import * as studioDefaultSettings from "./defaults";
 import {StudioInteractionHandler} from "./interaction";
 import {StudioVisualiser} from "./visualiser";
-import {TypeDBQueryStructure} from "../typedb/answer";
 import {LayoutWrapper} from "./layouts";
 import chroma from "chroma-js";
 import { mustDrawEdge, StudioConverter } from "./converter";
@@ -80,7 +80,7 @@ export class TypeDBStudio {
         })
     }
 
-    colorQuery(queryString: string, queryStructure: TypeDBQueryStructure): string {
+    colorQuery(queryString: string, queryStructure: QueryStructure): string {
         let spans: Array<Array<number>> = [];
         queryStructure.branches.forEach(branch => {
             branch.edges.forEach((edge, constraintIndex) => {

@@ -4,9 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { TypeDBQueryStructure } from "../graph/typedb/answer";
-import { ConceptDocument, ConceptRow } from "./answer";
+import { Concept } from "./concept";
 import { Database } from "./database";
+import { QueryStructure } from "./query-structure";
 
 export interface SignInResponse {
     token: string;
@@ -24,10 +24,22 @@ export type QueryType = "read" | "write" | "schema";
 
 export type AnswerType = "ok" | "conceptRows" | "conceptDocuments";
 
+export interface ConceptRow {
+    [varName: string]: Concept | undefined;
+}
+
+export interface ConceptRowAnswer {
+    data: ConceptRow;
+}
+
+export type ConceptDocument = Object;
+
+export type Answer = ConceptRowAnswer | ConceptDocument;
+
 export interface QueryResponseBase {
     queryType: QueryType;
     answerType: AnswerType;
-    queryStructure: TypeDBQueryStructure | null;
+    queryStructure: QueryStructure | null;
     comment: string | null;
 }
 
