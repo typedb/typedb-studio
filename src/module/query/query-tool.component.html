@@ -44,6 +44,11 @@
         <div class="card-header">
           <i class="fa-light fa-code"></i>
           <h4>Query</h4>
+          <button mat-stroked-button [disabled]="!(state.runEnabled$ | async)"
+                  [matTooltip]="(state.runDisabledReason$ | async) || ''" matTooltipPosition="below" (click)="runQuery()">
+            <i class="fa-light fa-play"></i>
+            <span>Run</span>
+          </button>
         </div>
         <div class="code-editor-container">
           @if (!codeEditorHidden) {
@@ -53,12 +58,8 @@
       </div>
       <div resizable [percent]="60" class="run-pane card">
         <div class="card-header">
-          <i class="fa-light fa-bolt"></i>
-          <h4>Run</h4>
-          <tp-button buttonId="actionBarSupport" buttonStyle="secondary" [enabled]="(state.runEnabled$ | async) ?? false"
-                     [matTooltip]="(state.runDisabledReason$ | async) || ''" matTooltipPosition="below" (click)="runQuery()">
-            <i class="fa-light fa-play"></i>
-          </tp-button>
+          <i class="fa-light fa-arrow-progress"></i>
+          <h4>Output</h4>
           <div>
             <mat-button-toggle-group [formControl]="state.outputTypeControl" [matTooltip]="(state.outputDisabledReason$ | async) || ''" matTooltipPosition="below">
               @for (outputType of state.outputTypes; track outputType) {
