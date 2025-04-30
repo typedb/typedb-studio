@@ -31,11 +31,11 @@ export class QueryToolState {
 
     queryControl = new FormControl("", {nonNullable: true});
     outputTypeControl = new FormControl("log" as OutputType, { nonNullable: true });
-    outputTypes: OutputType[] = ["log", "table", "structure", "raw"];
+    outputTypes: OutputType[] = ["log", "table"/*, "structure"*/, "raw"];
     readonly history = new HistoryWindowState(this.driver);
     readonly logOutput = new LogOutputState();
     readonly tableOutput = new TableOutputState();
-    readonly structureOutput = new StructureOutputState();
+    // readonly structureOutput = new StructureOutputState();
     readonly rawOutput = new RawOutputState();
     answersOutputEnabled = true;
     readonly runDisabledReason$ = combineLatest(
@@ -71,14 +71,14 @@ export class QueryToolState {
     private initialiseOutput(query: string) {
         this.logOutput.clear();
         this.tableOutput.clear();
-        this.structureOutput.clear();
+        // this.structureOutput.clear();
         this.rawOutput.clear();
 
         this.logOutput.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);
         this.tableOutput.status = "running";
-        this.structureOutput.status = "running";
-        this.structureOutput.query = query;
-        this.structureOutput.database = this.driver.requireDatabase(`${this.constructor.name}.${this.initialiseOutput.name} > requireValue(driver.database$)`).name;
+        // this.structureOutput.status = "running";
+        // this.structureOutput.query = query;
+        // this.structureOutput.database = this.driver.requireDatabase(`${this.constructor.name}.${this.initialiseOutput.name} > requireValue(driver.database$)`).name;
     }
 
     private outputQueryResponse(res: ApiResponse<QueryResponse>) {
@@ -90,7 +90,7 @@ export class QueryToolState {
         this.logOutput.appendBlankLine();
         this.logOutput.appendQueryResult(res);
         this.tableOutput.push(res);
-        this.structureOutput.push(res);
+        // this.structureOutput.push(res);
         this.rawOutput.push(JSON.stringify(res, null, 2));
     }
 
@@ -98,7 +98,7 @@ export class QueryToolState {
         this.logOutput.appendBlankLine();
         this.logOutput.appendLines(`${RESULT}${SUCCESS}`);
         this.tableOutput.status = "answerOutputDisabled";
-        this.structureOutput.status = "answerOutputDisabled";
+        // this.structureOutput.status = "answerOutputDisabled";
         this.rawOutput.push(SUCCESS_RAW);
     }
 }

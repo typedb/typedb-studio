@@ -157,10 +157,6 @@ button {
     }
 }
 
-.answers-table-container {
-    display: flex;
-}
-
 .status-text {
     @include typography.p1;
     margin: auto;

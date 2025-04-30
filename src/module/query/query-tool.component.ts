@@ -65,12 +65,12 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
     ngAfterViewInit() {
         const articleWidth = this.articleRef.nativeElement.clientWidth;
         this.resizables.first.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
-        this.structureViewRef.changes.pipe(
-            map(x => x as QueryList<ElementRef<HTMLElement>>),
-            first(queryList => queryList.length > 0)
-        ).subscribe((queryList) => {
-            this.state.structureOutput.canvasEl = queryList.first.nativeElement;
-        });
+        // this.structureViewRef.changes.pipe(
+        //     map(x => x as QueryList<ElementRef<HTMLElement>>),
+        //     first(queryList => queryList.length > 0)
+        // ).subscribe((queryList) => {
+        //     this.state.structureOutput.canvasEl = queryList.first.nativeElement;
+        // });
     }
 
     runQuery() {

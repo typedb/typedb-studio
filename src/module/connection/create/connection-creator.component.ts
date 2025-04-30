@@ -47,7 +47,7 @@ export class ConnectionCreatorComponent implements OnInit {
     savedConnections = this.appData.connections.list();
     advancedConfigActiveOptions: FormOption<boolean>[] = [
         { value: false, viewValue: `Connection URL` },
-        { value: true, viewValue: `Advanced config` },
+        { value: true, viewValue: `Manual config` },
     ];
     connectionUrlRevealed = false;
     connectionUrlPlaceholder = CONNECTION_URL_PLACEHOLDER;
