@@ -21,6 +21,7 @@ export type OutputType = "raw" | "log" | "table" | "structure";
 
 const NO_SERVER_CONNECTED = `No server connected`;
 const NO_DATABASE_SELECTED = `No database selected`;
+const NO_OPEN_TRANSACTION = `No open transaction`;
 const QUERY_BLANK = `Query text is blank`;
 
 @Injectable({
@@ -38,10 +39,11 @@ export class QueryToolState {
     readonly rawOutput = new RawOutputState();
     answersOutputEnabled = true;
     readonly runDisabledReason$ = combineLatest(
-        [this.driver.status$, this.driver.database$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))]
-    ).pipe(map(([status, db, query]) => {
+        [this.driver.status$, this.driver.database$, this.driver.autoTransactionEnabled$, this.driver.transaction$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))]
+    ).pipe(map(([status, db, autoTransactionEnabled, tx, query]) => {
         if (status !== "connected") return NO_SERVER_CONNECTED;
         else if (db == null) return NO_DATABASE_SELECTED;
+        else if (!autoTransactionEnabled && !tx) return NO_OPEN_TRANSACTION;
         else if (!query.length) return QUERY_BLANK;
         else return null;
     }));

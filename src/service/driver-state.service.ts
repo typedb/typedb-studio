@@ -75,7 +75,7 @@ export class DriverState {
 
     private driver?: TypeDBHttpDriver;
 
-    autoTransactionEnabled = true;
+    autoTransactionEnabled$ = new BehaviorSubject(true);
     transactionHasUncommittedChanges$ = this.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
 
     constructor(private appData: AppData) {}
@@ -256,7 +256,7 @@ export class DriverState {
     }
 
     query(query: string) {
-        const maybeOpenTransaction$ = this.autoTransactionEnabled
+        const maybeOpenTransaction$ = this.autoTransactionEnabled$.value
             ? this.openTransaction("read")
             : of({ ok: { transactionId: this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`).id } });
         let queryRun: QueryRun;
@@ -277,13 +277,13 @@ export class DriverState {
             // TODO: maybe extract TransactionStateService
             tap(() => {
                 const transaction = this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`);
-                if (!this.autoTransactionEnabled) this._transaction$.next(transaction);
+                if (!this.autoTransactionEnabled$.value) this._transaction$.next(transaction);
             }),
             tap(() => {
-                if (this.autoTransactionEnabled) this.closeTransaction().subscribe();
+                if (this.autoTransactionEnabled$.value) this.closeTransaction().subscribe();
             }),
             catchError((err) => {
-                if (this.autoTransactionEnabled) this.closeTransaction().subscribe();
+                if (this.autoTransactionEnabled$.value) this.closeTransaction().subscribe();
                 throw err;
             }),
             takeUntil(this._stopSignal$)

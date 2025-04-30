@@ -53,10 +53,6 @@ export class TransactionWidgetComponent {
     commitButtonVisible$ = this.typeControlValueChanges$.pipe(map(x => x !== "read"));
     closeButtonVisible$ = this.openButtonVisible$;
     readModeControlVisible$ = this.typeControlValueChanges$.pipe(map(x => x === "read"));
-    readModeTooltip$ = this.readModeControlValueChanges$.pipe(map(x => {
-        if (x === "auto") return `Auto: Each read query will automatically run in its own transaction`;
-        else return `Snapshot: Open and close read transactions manually`;
-    }));
 
     constructor(private driver: DriverState, private formBuilder: FormBuilder) {
         this.transactionConfigDisabled$.subscribe((disabled) => {
@@ -66,7 +62,7 @@ export class TransactionWidgetComponent {
         combineLatest([this.typeControlValueChanges$, this.readModeControlValueChanges$]).subscribe(([type, readMode]) => {
             // TODO: confirm before closing with uncommitted changes
             this.driver.closeTransaction().subscribe();
-            this.driver.autoTransactionEnabled = type === "read" && readMode === "auto";
+            this.driver.autoTransactionEnabled$.next(type === "read" && readMode === "auto");
         });
     }
 
