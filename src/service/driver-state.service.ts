@@ -197,7 +197,7 @@ export class DriverState {
         const driver = this.requireDriver(`${this.constructor.name}.${this.createAndSelectDatabase.name} > ${this.requireDriver.name}`);
         return this.tryUseWriteLock(() => fromPromise(driver.createDatabase(name)).pipe(
             tap((res) => {
-                if (isApiErrorResponse(res)) throw res;
+                if (isApiErrorResponse(res)) throw res.err;
                 const databaseList = this.requireDatabaseList(`${this.constructor.name}.${this.createAndSelectDatabase.name} > ${this.requireDatabaseList.name}`);
                 this._databaseList$.next(databasesSortedByName([...databaseList, { name }]));
                 this.selectDatabase({ name }, lockId);
@@ -214,7 +214,7 @@ export class DriverState {
         const driver = this.requireDriver(`${this.constructor.name}.${this.openTransaction.name} > ${this.requireDriver.name}`);
         return this.tryUseWriteLock(() => fromPromise(driver.openTransaction(databaseName, type)).pipe(
             tap((res) => {
-                if (isApiErrorResponse(res)) throw res;
+                if (isApiErrorResponse(res)) throw res.err;
                 this.updateTransactionOperationResult(operation, res);
                 this._transaction$.next(new Transaction({ id: res.ok.transactionId, type: type }));
             }),
@@ -230,7 +230,7 @@ export class DriverState {
         const driver = this.requireDriver(`${this.constructor.name}.${this.commitTransaction.name} > ${this.requireDriver.name}`);
         return this.tryUseWriteLock(() => fromPromise(driver.commitTransaction(transactionId)).pipe(
             tap((res) => {
-                if (isApiErrorResponse(res)) throw res;
+                if (isApiErrorResponse(res)) throw res.err;
                 this.updateTransactionOperationResult(operation, res);
                 this._transaction$.next(null);
             }),
@@ -247,7 +247,7 @@ export class DriverState {
         const driver = this.requireDriver(`${this.constructor.name}.${this.closeTransaction.name} > ${this.requireDriver.name}`);
         return this.tryUseWriteLock(() => fromPromise(driver.closeTransaction(transactionId)).pipe(
             tap((res) => {
-                if (isApiErrorResponse(res)) throw res;
+                if (isApiErrorResponse(res)) throw res.err;
                 this.updateTransactionOperationResult(operation, res);
                 this._transaction$.next(null);
             }),
@@ -270,7 +270,7 @@ export class DriverState {
                 this._actionLog$.next(queryRunAction);
             }),
             switchMap((res) => {
-                if (isApiErrorResponse(res)) throw res;
+                if (isApiErrorResponse(res)) throw res.err;
                 return fromPromise(driver.query(res.ok.transactionId, query));
             }),
             tap((res) => this.updateQueryRunResult(queryRun, res)),
