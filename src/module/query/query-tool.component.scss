@@ -207,6 +207,16 @@ button {
             tp-spinner {
                 width: unset;
             }
+
+            .action-status i {
+                margin-left: 6px;
+                font-size: 12px;
+
+                &.fa-xmark {
+                    color: #{primary.$red};
+                    cursor: pointer;
+                }
+            }
         }
 
         .mat-divider {

@@ -8,9 +8,9 @@
       <div class="history-container">
         <ol>
           @for (entry of state.history.entries; track entry) {
-            <li>
+            <li class="history-entry">
               <aside class="text-muted">
-                <time>{{ entry.timestamp | date:'shortTime' }}</time>
+                <time>{{ entry.startedAtTimestamp | date:'shortTime' }}</time>
                 <span class="bullet">•</span>
                 @if (isTransactionOperation(entry)) {
                    <span class="transaction-operation-type">{{ transactionOperationString(entry) }}</span>
@@ -18,15 +18,22 @@
                   ran query
                 }
                 <span class="flex-spacer"></span>
-                @if (isPending(entry)) {
-                  <tp-spinner [size]="14"/>
-                } @else {
-                  {{ actionDurationString(entry) }}
-                }
+                <div class="action-status">
+                  @if (entry.status === "pending") {
+                    <tp-spinner [size]="14"/>
+                  } @else {
+                      <span>{{ actionDurationString(entry) }}</span>
+                      @if (entry.status === "success") {
+                        <i class="fa-light fa-check"></i>
+                      } @else {
+                        <i class="fa-light fa-xmark" richTooltip [richTooltipContent]="historyEntryErrorTooltip(entry)" (click)="copyHistoryEntryErrorTooltip(entry)"></i>
+                      }
+                  }
+                </div>
               </aside>
               @if (isQueryRun(entry)) {
                 <mat-form-field>
-                  <textarea [value]="queryHistoryPreview(entry.queryRun.query)" readonly matInput
+                  <textarea [value]="queryHistoryPreview(entry.query)" readonly matInput
                             cdkTextareaAutosize #autosize="cdkTextareaAutosize" cdkAutosizeMinRows="1" cdkAutosizeMaxRows="3">
                   </textarea>
                 </mat-form-field>

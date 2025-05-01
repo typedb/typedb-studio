@@ -8,6 +8,7 @@ import { Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import MultiGraph from "graphology";
 import { BehaviorSubject, combineLatest, map, Observable, ReplaySubject, startWith } from "rxjs";
+import { DriverAction } from "../concept/action";
 import { GraphVisualiser } from "../framework/graph-visualiser";
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
 import { Layouts } from "../framework/graph-visualiser/layouts";
@@ -15,7 +16,7 @@ import { createSigmaRenderer } from "../framework/graph-visualiser/visualisation
 import { Concept, Value } from "../framework/typedb-driver/concept";
 import { ApiResponse, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
 import { INTERNAL_ERROR } from "../framework/util/strings";
-import { DriverAction, DriverState } from "./driver-state.service";
+import { DriverState } from "./driver-state.service";
 
 export type OutputType = "raw" | "log" | "table" | "structure";
 

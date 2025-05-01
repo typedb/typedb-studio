@@ -10,11 +10,18 @@ import { Component, Input, OnInit, TemplateRef } from "@angular/core";
 })
 export class RichTooltipComponent implements OnInit {
 
-    @Input({ required: true }) content!: TemplateRef<any>;
+    @Input({ required: true }) content!: string | TemplateRef<any>;
 
     constructor() { }
 
     ngOnInit() {
     }
 
+    contentIsString() {
+        return typeof this.content === "string";
+    }
+
+    get contentLines(): string[] | null {
+        return this.contentIsString() ? (this.content as string).split(`\n`) : null;
+    }
 }

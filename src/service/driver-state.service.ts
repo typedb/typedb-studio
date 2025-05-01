@@ -8,50 +8,18 @@ import { Injectable } from "@angular/core";
 import { BehaviorSubject, catchError, map, Observable, of, Subject, switchMap, takeUntil, tap } from "rxjs";
 import { fromPromise } from "rxjs/internal/observable/innerFrom";
 import { v4 as uuid } from "uuid";
+import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
 import { ConnectionConfig, databasesSortedByName, DEFAULT_DATABASE_NAME } from "../concept/connection";
-import { QueryRun, Transaction, TransactionOperation } from "../concept/transaction";
+import { Transaction } from "../concept/transaction";
 import { TypeDBHttpDriver } from "../framework/typedb-driver";
 import { Database } from "../framework/typedb-driver/database";
 import { ApiResponse, isApiErrorResponse, isOkResponse, QueryResponse } from "../framework/typedb-driver/response";
-import { TransactionType } from "../framework/typedb-driver/transaction";
 import { requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { AppData } from "./app-data.service";
+import { TransactionType } from "../framework/typedb-driver/transaction";
 
 export type DriverStatus = "disconnected" | "connecting" | "connected" | "reconnecting";
-
-interface DriverActionBase {
-    timestamp: number;
-    actionType: string;
-}
-
-export interface QueryRunAction extends DriverActionBase {
-    actionType: "queryRun";
-    queryRun: QueryRun;
-}
-
-export interface TransactionOperationAction extends DriverActionBase {
-    actionType: "transactionOperation";
-    transactionOperation: TransactionOperation;
-}
-
-function queryRunActionOf(queryRun: QueryRun): QueryRunAction {
-    return { actionType: "queryRun", queryRun: queryRun, timestamp: Date.now() };
-}
-
-function transactionOperationActionOf(operation: TransactionOperation): TransactionOperationAction {
-    return { actionType: "transactionOperation", transactionOperation: operation, timestamp: Date.now() };
-}
-
-export type DriverAction = QueryRunAction | TransactionOperationAction;
-
-export function isQueryRun(entry: DriverAction): entry is QueryRunAction {
-    return entry.actionType === "queryRun";
-}
-
-export function isTransactionOperation(entry: DriverAction): entry is TransactionOperationAction {
-    return entry.actionType === "transactionOperation";
-}
 
 interface Semaphore {
     id: string;
@@ -197,7 +165,7 @@ export class DriverState {
         const driver = this.requireDriver(`${this.constructor.name}.${this.createAndSelectDatabase.name} > ${this.requireDriver.name}`);
         return this.tryUseWriteLock(() => fromPromise(driver.createDatabase(name)).pipe(
             tap((res) => {
-                if (isApiErrorResponse(res)) throw res;
+                if (isApiErrorResponse(res)) throw res.err;
                 const databaseList = this.requireDatabaseList(`${this.constructor.name}.${this.createAndSelectDatabase.name} > ${this.requireDatabaseList.name}`);
                 this._databaseList$.next(databasesSortedByName([...databaseList, { name }]));
                 this.selectDatabase({ name }, lockId);
@@ -206,88 +174,90 @@ export class DriverState {
         ), lockId);
     }
 
-    openTransaction(type: TransactionType) {
+    openTransaction(type: TransactionType, lockId?: string) {
         const databaseName = this.requireDatabase(`${this.constructor.name}.${this.openTransaction.name} > ${this.requireDatabase.name}`).name;
-        const operation: TransactionOperation = { operationType: "open", status: "pending", startedAtTimestamp: Date.now() };
-        const action = transactionOperationActionOf(operation);
+        const action = transactionOperationActionOf("open");
         this._actionLog$.next(action);
         const driver = this.requireDriver(`${this.constructor.name}.${this.openTransaction.name} > ${this.requireDriver.name}`);
         return this.tryUseWriteLock(() => fromPromise(driver.openTransaction(databaseName, type)).pipe(
             tap((res) => {
-                if (isApiErrorResponse(res)) throw res;
-                this.updateTransactionOperationResult(operation, res);
+                this.updateActionResult(action, res);
+                if (isApiErrorResponse(res)) throw res.err;
                 this._transaction$.next(new Transaction({ id: res.ok.transactionId, type: type }));
             }),
             takeUntil(this._stopSignal$)
-        ));
+        ), lockId);
     }
 
     commitTransaction() {
         const transactionId = this.requireTransaction(`${this.constructor.name}.${this.commitTransaction.name} > ${this.requireTransaction.name}`).id;
-        const operation: TransactionOperation = { operationType: "commit", status: "pending", startedAtTimestamp: Date.now() };
-        const action = transactionOperationActionOf(operation);
+        const action = transactionOperationActionOf("commit");
         this._actionLog$.next(action);
         const driver = this.requireDriver(`${this.constructor.name}.${this.commitTransaction.name} > ${this.requireDriver.name}`);
         return this.tryUseWriteLock(() => fromPromise(driver.commitTransaction(transactionId)).pipe(
             tap((res) => {
-                if (isApiErrorResponse(res)) throw res;
-                this.updateTransactionOperationResult(operation, res);
+                this.updateActionResult(action, res);
                 this._transaction$.next(null);
+                if (isApiErrorResponse(res)) throw res.err;
             }),
             takeUntil(this._stopSignal$)
         ));
     }
 
-    closeTransaction() {
+    closeTransaction(lockId?: string) {
         const transactionId = this._transaction$.value?.id;
         if (transactionId == null) return of({});
-        const operation: TransactionOperation = { operationType: "close", status: "pending", startedAtTimestamp: Date.now() };
-        const action = transactionOperationActionOf(operation);
+        const action = transactionOperationActionOf("close");
         this._actionLog$.next(action);
         const driver = this.requireDriver(`${this.constructor.name}.${this.closeTransaction.name} > ${this.requireDriver.name}`);
         return this.tryUseWriteLock(() => fromPromise(driver.closeTransaction(transactionId)).pipe(
             tap((res) => {
-                if (isApiErrorResponse(res)) throw res;
-                this.updateTransactionOperationResult(operation, res);
+                this.updateActionResult(action, res);
+                if (isApiErrorResponse(res)) throw res.err;
                 this._transaction$.next(null);
             }),
             takeUntil(this._stopSignal$)
-        ));
+        ), lockId);
     }
 
+    // TODO: convoluted logic
     query(query: string) {
+        const lockId = uuid();
         const maybeOpenTransaction$ = this.autoTransactionEnabled$.value
-            ? this.openTransaction("read")
+            ? this.openTransaction("read", lockId)
             : of({ ok: { transactionId: this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`).id } });
-        let queryRun: QueryRun;
+        let queryRunAction: QueryRunAction;
         const driver = this.requireDriver(`${this.constructor.name}.${this.query.name} > ${this.requireDriver.name}`);
-        return maybeOpenTransaction$.pipe(
+        return this.tryUseWriteLock(() => maybeOpenTransaction$.pipe(
             tap(() => {
                 const transaction = this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`);
-                queryRun = { query: query, status: "pending", startedAtTimestamp: Date.now() };
-                transaction.queryRuns.push(queryRun);
-                const queryRunAction: QueryRunAction = queryRunActionOf(queryRun);
+                queryRunAction = queryRunActionOf(query);
+                transaction.queryRuns.push(queryRunAction);
                 this._actionLog$.next(queryRunAction);
             }),
             switchMap((res) => {
                 if (isApiErrorResponse(res)) throw res;
                 return fromPromise(driver.query(res.ok.transactionId, query));
             }),
-            tap((res) => this.updateQueryRunResult(queryRun, res)),
+            tap((res) => this.updateActionResult(queryRunAction, res)),
             // TODO: maybe extract TransactionStateService
             tap(() => {
                 const transaction = this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`);
                 if (!this.autoTransactionEnabled$.value) this._transaction$.next(transaction);
             }),
             tap(() => {
-                if (this.autoTransactionEnabled$.value) this.closeTransaction().subscribe();
+                if (this.autoTransactionEnabled$.value) this.closeTransaction(lockId).subscribe();
             }),
             catchError((err) => {
-                if (this.autoTransactionEnabled$.value) this.closeTransaction().subscribe();
+                if (queryRunAction) {
+                    if (isApiErrorResponse(err)) this.updateActionResult(queryRunAction, err);
+                    else this.updateActionResultUnexpectedError(queryRunAction, err);
+                }
+                if (this.autoTransactionEnabled$.value) this.closeTransaction(lockId).subscribe();
                 throw err;
             }),
             takeUntil(this._stopSignal$)
-        );
+        ), lockId);
     }
 
     sendStopSignal() {
@@ -306,15 +276,15 @@ export class DriverState {
         return res;
     }
 
-    private updateQueryRunResult(queryRun: QueryRun, res: ApiResponse<QueryResponse>) {
-        queryRun.completedAtTimestamp = Date.now();
-        queryRun.status = isApiErrorResponse(res) ? "error" : "success";
-        queryRun.result = res;
+    private updateActionResult(action: DriverAction, res: ApiResponse) {
+        action.completedAtTimestamp = Date.now();
+        action.status = isApiErrorResponse(res) ? "error" : "success";
+        action.result = res;
     }
 
-    private updateTransactionOperationResult(operation: TransactionOperation, result: Object) {
-        operation.completedAtTimestamp = Date.now();
-        operation.status = "success";
-        operation.result = result;
+    private updateActionResultUnexpectedError(action: DriverAction, err: any) {
+        action.completedAtTimestamp = Date.now();
+        action.status = "error";
+        action.result = err;
     }
 }
