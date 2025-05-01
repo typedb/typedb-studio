@@ -1,5 +1,11 @@
 <div>
   <div class="tooltip-container">
-    <ng-container *ngTemplateOutlet="content"/>
+    @if (contentLines) {
+      @for (line of contentLines; track line) {
+        <p>{{ line }}</p>
+      }
+    } @else {
+      <ng-container *ngTemplateOutlet="$any(content)"/>
+    }
   </div>
 </div>

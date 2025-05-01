@@ -18,13 +18,14 @@ import { MatTableModule } from "@angular/material/table";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
-import { first, map } from "rxjs";
-import { ButtonComponent } from "../../framework/button/button.component";
+import { DriverAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
+import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
-import { DriverAction, DriverState, isQueryRun, isTransactionOperation, TransactionOperationAction } from "../../service/driver-state.service";
+import { DriverState } from "../../service/driver-state.service";
 import { QueryToolState } from "../../service/query-tool-state.service";
+import { SnackbarService } from "../../service/snackbar.service";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 
 @Component({
@@ -33,9 +34,9 @@ import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component"
     styleUrls: ["query-tool.component.scss"],
     standalone: true,
     imports: [
-        ButtonComponent, RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule,
+        RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
-        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule,
+        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
     ],
 })
 export class QueryToolComponent implements OnInit, AfterViewInit {
@@ -47,7 +48,7 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
 
-    constructor(protected state: QueryToolState, public driver: DriverState, private appData: AppData) {
+    constructor(protected state: QueryToolState, public driver: DriverState, private appData: AppData, private snackbar: SnackbarService) {
     }
 
     ngOnInit() {
@@ -83,22 +84,33 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
 
     // TODO: any angular dev with a shred of self-respect would make this be a pipe
     actionDurationString(action: DriverAction) {
-        const startedAtTimestamp = isQueryRun(action) ? action.queryRun.startedAtTimestamp : action.transactionOperation.startedAtTimestamp;
-        const completedAtTimestamp = isQueryRun(action) ? action.queryRun.completedAtTimestamp : action.transactionOperation.completedAtTimestamp;
-        if (completedAtTimestamp == undefined) return ``;
-        return `${completedAtTimestamp - startedAtTimestamp}ms`;
+        if (action.completedAtTimestamp == undefined) return ``;
+        return `${action.completedAtTimestamp - action.startedAtTimestamp}ms`;
     }
 
     transactionOperationString(action: TransactionOperationAction) {
-        switch (action.transactionOperation.operationType) {
+        switch (action.operation) {
             case "open": return "opened transaction";
             case "commit": return "committed transaction";
             case "close": return "closed transaction";
         }
     }
 
-    isPending(historyEntry: DriverAction) {
-        return isQueryRun(historyEntry) ? historyEntry.queryRun.status === "pending" : historyEntry.transactionOperation.status === "pending";
+    historyEntryErrorTooltip(entry: DriverAction) {
+        if (!entry.result) return ``;
+        else if ("err" in entry.result && !!entry.result.err?.message) return entry.result.err.message;
+        else return entry.result.toString();
+    }
+
+    async copyHistoryEntryErrorTooltip(entry: DriverAction) {
+        const tooltip = this.historyEntryErrorTooltip(entry);
+        if (!tooltip) return;
+        try {
+            await navigator.clipboard.writeText(tooltip);
+            this.snackbar.success("Error text copied", { duration: 2500 });
+        } catch (e) {
+            console.warn(e);
+        }
     }
 
     readonly isQueryRun = isQueryRun;

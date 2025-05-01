@@ -4,8 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { ApiResponse, QueryResponse } from "../framework/typedb-driver/response";
 import { TransactionType } from "../framework/typedb-driver/transaction";
+import { QueryRunAction } from "./action";
 
 export class Transaction {
 
@@ -14,7 +14,7 @@ export class Transaction {
     readonly openedAtTimestamp: number;
     readonly committed: boolean;
     readonly closedAtTimestamp?: number;
-    readonly queryRuns: QueryRun[];
+    readonly queryRuns: QueryRunAction[];
 
     constructor(props: { id: string; type: TransactionType }) {
         this.id = props.id;
@@ -47,23 +47,7 @@ export class Transaction {
 
 export type ReadMode = "auto" | "manual";
 
-export interface QueryRun {
-    query: string;
-    status: "pending" | "success" | "error";
-    result?: ApiResponse<QueryResponse>;
-    startedAtTimestamp: number;
-    completedAtTimestamp?: number;
-}
-
-export type TransactionOperationType = "open" | "commit" | "close";
-
-export interface TransactionOperation {
-    operationType: TransactionOperationType;
-    status: "pending" | "success" | "error";
-    result?: Object;
-    startedAtTimestamp: number;
-    completedAtTimestamp?: number;
-}
+export type TransactionOperation = "open" | "commit" | "close";
 
 // export interface TransactionApiJson {
 //     name: string;

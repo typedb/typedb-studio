@@ -22,4 +22,8 @@
             font-size: inherit;
         }
     }
+
+    p + p {
+        margin-top: 0.5em;
+    }
 }

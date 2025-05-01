@@ -10,7 +10,7 @@ import { RichTooltipComponent } from "./rich-tooltip.component";
 export class RichTooltipDirective {
 
     @Input() showTooltip = true;
-    @Input({ required: true }) richTooltipContent!: TemplateRef<any>;
+    @Input({ required: true }) richTooltipContent!: string | TemplateRef<any>;
 
     private _overlayRef!: OverlayRef;
 
