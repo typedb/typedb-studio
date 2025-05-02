@@ -18,6 +18,7 @@ import { MatTableModule } from "@angular/material/table";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
+import { first, map } from "rxjs";
 import { DriverAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
@@ -66,12 +67,12 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
     ngAfterViewInit() {
         const articleWidth = this.articleRef.nativeElement.clientWidth;
         this.resizables.first.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
-        // this.structureViewRef.changes.pipe(
-        //     map(x => x as QueryList<ElementRef<HTMLElement>>),
-        //     first(queryList => queryList.length > 0)
-        // ).subscribe((queryList) => {
-        //     this.state.structureOutput.canvasEl = queryList.first.nativeElement;
-        // });
+        this.structureViewRef.changes.pipe(
+            map(x => x as QueryList<ElementRef<HTMLElement>>),
+            first(queryList => queryList.length > 0)
+        ).subscribe((queryList) => {
+            this.state.structureOutput.canvasEl = queryList.first.nativeElement;
+        });
     }
 
     runQuery() {
