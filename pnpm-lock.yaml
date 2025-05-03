@@ -41,6 +41,9 @@ dependencies:
   '@angular/router':
     specifier: 17.0.9
     version: 17.0.9(@angular/common@17.0.9)(@angular/core@17.0.9)(@angular/platform-browser@17.0.9)(rxjs@7.8.2)
+  '@codemirror/lint':
+    specifier: 6.8.5
+    version: 6.8.5
   '@customerio/cdp-analytics-browser':
     specifier: 0.2.0
     version: 0.2.0
@@ -50,6 +53,9 @@ dependencies:
   '@intercom/messenger-js-sdk':
     specifier: 0.0.14
     version: 0.0.14
+  '@lezer/lr':
+    specifier: 1.4.2
+    version: 1.4.2
   '@sigma/edge-curve':
     specifier: 3.1.0
     version: 3.1.0(sigma@3.0.1)
@@ -166,6 +172,9 @@ devDependencies:
   typescript:
     specifier: 5.2.2
     version: 5.2.2
+  unplugin-lezer:
+    specifier: 1.0.1
+    version: 1.0.1(vite@4.5.1)(webpack@5.89.0)
 
 packages:
 
@@ -3074,6 +3083,14 @@ packages:
 
   /@lezer/common@1.2.3:
     resolution: {integrity: sha512-w7ojc8ejBqr2REPsWxJjrMFsA/ysDCFICn8zEOR9mrqzOu2amhITYuLD8ag6XZf0CFXDrhKqw7+tW8cX66NaDA==}
+
+  /@lezer/generator@1.7.3:
+    resolution: {integrity: sha512-vAI2O1tPF8QMMgp+bdUeeJCneJNkOZvqsrtyb4ohnFVFdboSqPwBEacnt0HH4E+5h+qsIwTHUSAhffU4hzKl1A==}
+    hasBin: true
+    dependencies:
+      '@lezer/common': 1.2.3
+      '@lezer/lr': 1.4.2
+    dev: true
 
   /@lezer/highlight@1.2.1:
     resolution: {integrity: sha512-Z5duk4RN/3zuVO7Jq0pGLJ3qynpxUVsh7IbUbGj88+uV2ApSAn6kWg2au3iJb+0Zi7kKtqffIESgNcRXWZWmSA==}
@@ -10731,6 +10748,37 @@ packages:
     engines: {node: '>= 0.8'}
     dev: true
 
+  /unplugin-lezer@1.0.1(vite@4.5.1)(webpack@5.89.0):
+    resolution: {integrity: sha512-7N725kKC+fYEMLpr3GIe4wNjLsCfxYIdpQTPTp6Zkzsw6jJjViDR8+ypsp0hfFhbYntwf0yR5at8xWTgEKBqIA==}
+    peerDependencies:
+      esbuild: '*'
+      rollup: ^3 || ^4
+      vite: '>=3'
+      webpack: ^4 || ^5
+    peerDependenciesMeta:
+      esbuild:
+        optional: true
+      rollup:
+        optional: true
+      vite:
+        optional: true
+      webpack:
+        optional: true
+    dependencies:
+      '@lezer/generator': 1.7.3
+      unplugin: 1.16.1
+      vite: 4.5.1(less@4.2.0)(sass@1.69.5)(terser@5.24.0)
+      webpack: 5.89.0(esbuild@0.19.5)
+    dev: true
+
+  /unplugin@1.16.1:
+    resolution: {integrity: sha512-4/u/j4FrCKdi17jaxuJA0jClGxB1AvU2hw/IuayPc4ay1XGaJs/rbb4v5WKwAjNifjmXK9PIFyuPiaK8azyR9w==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      acorn: 8.14.1
+      webpack-virtual-modules: 0.6.2
+    dev: true
+
   /update-browserslist-db@1.1.3(browserslist@4.24.4):
     resolution: {integrity: sha512-UxhIZQ+QInVdunkDAaiazvvT/+fXL5Osr0JZlJulepYu6Jd7qJtDZjlur0emRlT71EN3ScPoE7gvsuIKKNavKw==}
     hasBin: true
@@ -10962,6 +11010,10 @@ packages:
     dependencies:
       typed-assert: 1.0.9
       webpack: 5.89.0(esbuild@0.19.5)
+    dev: true
+
+  /webpack-virtual-modules@0.6.2:
+    resolution: {integrity: sha512-66/V2i5hQanC51vBQKPH4aI8NMAcBW59FVBs+rC7eGHupMyfn34q7rZIE+ETlJ+XTevqfUhVVBgSUNSW2flEUQ==}
     dev: true
 
   /webpack@5.89.0(esbuild@0.19.5):
