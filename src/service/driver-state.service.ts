@@ -117,7 +117,10 @@ export class DriverState {
                         return of(database ? config.withDatabase(database) : config);
                     } else throw res;
                 }),
-                tap(() => this._status$.next("connected")),
+                tap(() => {
+                    this._status$.next("connected");
+                    this.appData.connections.push(config);
+                }),
                 catchError((err) => {
                     this._connection$.next(null); // TODO: revisit - is an 'errored' connection config still valid?
                     this._status$.next("disconnected");
@@ -130,6 +133,7 @@ export class DriverState {
     tryDisconnect() {
         if (this._status$.value === "disconnected") throw INTERNAL_ERROR;
         if (this._transaction$.value?.hasUncommittedChanges) throw INTERNAL_ERROR;
+        this.appData.connections.clearStartupConnection();
         const maybeCloseTransaction$ = this._transaction$.value ? this.closeTransaction() : of({});
         return maybeCloseTransaction$.pipe(tap(() => this.tryUseWriteLock(() => {
             this._connection$.next(null);
