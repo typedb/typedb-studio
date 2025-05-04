@@ -58,12 +58,7 @@
 
 <ng-template #connectionUriHelpTooltipContent>
   <div class="rich-tooltip">
-    <p><strong>Format (with credentials):</strong> typedb://username:password&commat;address</p>
-    <p><strong>Format (no credentials):</strong> typedb://address</p>
-    <p><strong>Query parameters</strong></p>
-    <ul>
-      <li><strong>tlsDisabled: </strong> Set to <strong>true</strong> to disable TLS.</li>
-    </ul>
-    <p><strong>Note:</strong> For TypeDB Cloud, go to the cluster page in Cloud and hit 'Connect' to view the Connection URL. Replace the 'db_password' placeholder.</p>
+    <p><strong>Format:</strong> typedb://username:password&commat;address</p>
+    <p><strong>Note:</strong> For TypeDB Cloud, you should have a credentials file containing your Connection URL.</p>
   </div>
 </ng-template>

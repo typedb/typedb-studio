@@ -27,7 +27,7 @@ import { FormActionsComponent, FormComponent, FormInputComponent, FormOption, Fo
 
 const connectionUrlValidator: ValidatorFn = (control: AbstractControl) => {
     if (parseConnectionUrlOrNull(control.value)) return null;
-    else return { errorText: `Enter a valid connection URL, or use advanced configuration` };
+    else return { errorText: `Format: typedb://username:password@address` };
 };
 
 @Component({
@@ -49,7 +49,7 @@ export class ConnectionCreatorComponent implements OnInit {
         { value: false, viewValue: `Connection URL` },
         { value: true, viewValue: `Manual config` },
     ];
-    connectionUrlRevealed = false;
+    connectionUrlRevealed = true;
     connectionUrlPlaceholder = CONNECTION_URL_PLACEHOLDER;
     passwordRevealed = false;
 
@@ -137,9 +137,8 @@ export class ConnectionCreatorComponent implements OnInit {
         if (!config) throw INTERNAL_ERROR;
         this.form.disable();
         this.driver.tryConnect(config).subscribe({
-            next: (databases) => {
+            next: () => {
                 this.snackbar.success(`Connected to ${config.name}`);
-                this.appData.connections.push(config);
                 this.router.navigate([this.appData.viewState.lastUsedToolRoute()]).then((navigated) => {
                     if (!navigated) throw INTERNAL_ERROR;
                 });
