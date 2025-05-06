@@ -154,6 +154,10 @@ export class ConnectionCreatorComponent implements OnInit {
         });
     }
 
+    cancel() {
+        this.router.navigate(["/"]);
+    }
+
     private connectionNameUniqueValidator(control: AbstractControl<string>) {
         if (this.savedConnections.some(x => x.name === control.value)) {
             return { errorText: `A connection named '${control.value}' already exists` };

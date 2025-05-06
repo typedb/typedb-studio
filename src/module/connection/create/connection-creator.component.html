@@ -50,7 +50,7 @@
       </div>
     </div>
     <tp-form-actions
-      [isSubmitting]="isSubmitting$ | async" buttonIdPrefix="createOrg"
+      [isSubmitting]="isSubmitting$ | async" buttonIdPrefix="createOrg" (cancel)="cancel()"
       [submitDisabled]="!canSubmit" submitText="Connect" cancelText="Cancel" [cancellable]="true"
     />
   </tp-form>
