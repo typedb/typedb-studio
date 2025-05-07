@@ -4,6 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-export type SidebarState = "expanded" | "collapsed";
+export const sidebarStates = ["expanded", "collapsed"] as const;
+export type SidebarState = typeof sidebarStates[number];
 
-export type Tool = "query" | "explore";
+export const tools = ["query", "explore"] as const;
+export type Tool = typeof tools[number];
