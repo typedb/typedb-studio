@@ -101,6 +101,7 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
     historyEntryErrorTooltip(entry: DriverAction) {
         if (!entry.result) return ``;
         else if ("err" in entry.result && !!entry.result.err?.message) return entry.result.err.message;
+        else if ("message" in entry.result) return entry.result.message as string;
         else return entry.result.toString();
     }
 

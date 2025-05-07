@@ -17,6 +17,7 @@ import { Concept, Value } from "../framework/typedb-driver/concept";
 import { ApiResponse, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
+import { SnackbarService } from "./snackbar.service";
 
 export type OutputType = "raw" | "log" | "table" | "structure";
 
@@ -52,7 +53,7 @@ export class QueryToolState {
     readonly runEnabled$ = this.runDisabledReason$.pipe(map(x => x == null));
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
 
-    constructor(private driver: DriverState) {
+    constructor(private driver: DriverState, private snackbar: SnackbarService) {
         this.outputDisabled$.subscribe((disabled) => {
             if (disabled) this.outputTypeControl.disable();
             else this.outputTypeControl.enable();
@@ -64,8 +65,30 @@ export class QueryToolState {
     runQuery() {
         const query = this.queryControl.value;
         this.initialiseOutput(query);
-        this.driver.query(query).subscribe((res) => {
-            this.outputQueryResponse(res);
+        this.driver.query(query).subscribe({
+            next: (res) => {
+                this.outputQueryResponse(res);
+            },
+            error: (err) => {
+                this.driver.checkHealth().subscribe({
+                    next: () => {
+                        const msg = err?.message || err?.toString() || `Unknown error`;
+                        this.snackbar.errorPersistent(`Error: ${msg}\n`
+                            + `Caused: Failed to execute query.`);
+                    },
+                    error: () => {
+                        this.driver.connection$.subscribe((connection) => {
+                            if (connection && connection.url.includes(`localhost`)) {
+                                this.snackbar.errorPersistent(`Unable to connect to TypeDB server.\n`
+                                    + `Ensure the server is still running.`);
+                            } else {
+                                this.snackbar.errorPersistent(`Unable to connect to TypeDB server.\n`
+                                    + `Check your network connection and ensure the server is still running.`);
+                            }
+                        });
+                    }
+                });
+            },
         });
     }
 

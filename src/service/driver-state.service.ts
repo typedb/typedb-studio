@@ -196,7 +196,11 @@ export class DriverState {
                 if (isApiErrorResponse(res)) throw res.err;
                 this._transaction$.next(new Transaction({ id: res.ok.transactionId, type: type }));
             }),
-            takeUntil(this._stopSignal$)
+            takeUntil(this._stopSignal$),
+            catchError((err) => {
+                this.updateActionResultUnexpectedError(action, err);
+                throw err;
+            }),
         ), lockId);
     }
 
@@ -211,7 +215,11 @@ export class DriverState {
                 this._transaction$.next(null);
                 if (isApiErrorResponse(res)) throw res.err;
             }),
-            takeUntil(this._stopSignal$)
+            takeUntil(this._stopSignal$),
+            catchError((err) => {
+                this.updateActionResultUnexpectedError(action, err);
+                throw err;
+            }),
         ), lockId);
     }
 
@@ -227,7 +235,11 @@ export class DriverState {
                 if (isApiErrorResponse(res)) throw res.err;
                 this._transaction$.next(null);
             }),
-            takeUntil(this._stopSignal$)
+            takeUntil(this._stopSignal$),
+            catchError((err) => {
+                this.updateActionResultUnexpectedError(action, err);
+                throw err;
+            }),
         ), lockId);
     }
 
@@ -270,15 +282,17 @@ export class DriverState {
                 }
             }),
             catchError((err) => {
-                if (queryRunAction) {
-                    if (isApiErrorResponse(err)) this.updateActionResult(queryRunAction, err);
-                    else this.updateActionResultUnexpectedError(queryRunAction, err);
-                }
+                if (queryRunAction) this.updateActionResultUnexpectedError(queryRunAction, err);
                 if (this.autoTransactionEnabled$.value) this.closeTransaction(lockId).subscribe();
                 throw err;
             }),
             takeUntil(this._stopSignal$)
         ), lockId);
+    }
+
+    checkHealth() {
+        const driver = this.requireDriver(`${this.constructor.name}.${this.checkHealth.name} > ${this.requireDriver.name}`);
+        return fromPromise(driver.health());
     }
 
     sendStopSignal() {
