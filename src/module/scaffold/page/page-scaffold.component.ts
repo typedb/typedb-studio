@@ -48,7 +48,7 @@ export class PageScaffoldComponent implements AfterViewInit {
     ngAfterViewInit() {
         const observer = new ResizeObserver(entries => {
             const actionBarWidth = entries[0].contentRect.width;
-            this.condensed = actionBarWidth < 1080;
+            this.condensed = actionBarWidth < 1200;
         });
 
         observer.observe(this.actionBar.nativeElement);

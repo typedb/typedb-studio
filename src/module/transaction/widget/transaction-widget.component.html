@@ -8,18 +8,15 @@
   }
 </mat-select>
 
-@if (readModeControlVisible$ | async) {
-  <mat-select [formControl]="form.controls.readMode" panelClass="transaction-select-panel"
-              >
-  <!--  <mat-label>Transaction management</mat-label>-->
-    <mat-select-trigger>
-      <i class="fa-light fa-wrench"></i> {{ form.controls.readMode.value }} <i class="fa-light fa-chevron-down"></i>
-    </mat-select-trigger>
-    @for (readMode of readModes; track readMode) {
-      <mat-option [value]="readMode">{{ readMode }}</mat-option>
-    }
-  </mat-select>
-}
+<mat-select [formControl]="form.controls.operationMode" panelClass="transaction-select-panel">
+<!--  <mat-label>Transaction management</mat-label>-->
+  <mat-select-trigger>
+    <i class="fa-light fa-wrench"></i> {{ form.controls.operationMode.value }} <i class="fa-light fa-chevron-down"></i>
+  </mat-select-trigger>
+  @for (readMode of operationModes; track readMode) {
+    <mat-option [value]="readMode">{{ readMode }}</mat-option>
+  }
+</mat-select>
 
 @if (openButtonVisible$ | async) {
   <button mat-button (click)="open()" [class]="openButtonClass$ | async" [disabled]="(openButtonDisabled$ | async) ?? true"

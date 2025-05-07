@@ -158,6 +158,12 @@ button {
     }
 }
 
+.status-text-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+
 .status-text {
     @include typography.p1;
     margin: auto;

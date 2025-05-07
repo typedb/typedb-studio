@@ -43,6 +43,7 @@ export class DriverState {
 
     private driver?: TypeDBHttpDriver;
 
+    private _transactionType$ = new BehaviorSubject<TransactionType>("read");
     autoTransactionEnabled$ = new BehaviorSubject(true);
     transactionHasUncommittedChanges$ = this.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
 
@@ -70,6 +71,10 @@ export class DriverState {
 
     get actionLog$(): Observable<DriverAction> {
         return this._actionLog$;
+    }
+
+    get transactionType$(): Observable<TransactionType> {
+        return this._transactionType$;
     }
 
     private requireConnection(stack: string) {
@@ -195,7 +200,7 @@ export class DriverState {
         ), lockId);
     }
 
-    commitTransaction() {
+    commitTransaction(lockId?: string) {
         const transactionId = this.requireTransaction(`${this.constructor.name}.${this.commitTransaction.name} > ${this.requireTransaction.name}`).id;
         const action = transactionOperationActionOf("commit");
         this._actionLog$.next(action);
@@ -207,7 +212,7 @@ export class DriverState {
                 if (isApiErrorResponse(res)) throw res.err;
             }),
             takeUntil(this._stopSignal$)
-        ));
+        ), lockId);
     }
 
     closeTransaction(lockId?: string) {
@@ -226,11 +231,18 @@ export class DriverState {
         ), lockId);
     }
 
+    selectTransactionType(transactionType: TransactionType) {
+        // TODO: fail if has uncommitted changes
+        return this.tryUseWriteLock(() => {
+            this._transactionType$.next(transactionType);
+        });
+    }
+
     // TODO: convoluted logic
-    query(query: string) {
+    query(query: string): Observable<ApiResponse<QueryResponse>> {
         const lockId = uuid();
         const maybeOpenTransaction$ = this.autoTransactionEnabled$.value
-            ? this.openTransaction("read", lockId)
+            ? this.openTransaction(this._transactionType$.value, lockId)
             : of({ ok: { transactionId: this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`).id } });
         let queryRunAction: QueryRunAction;
         const driver = this.requireDriver(`${this.constructor.name}.${this.query.name} > ${this.requireDriver.name}`);
@@ -252,7 +264,10 @@ export class DriverState {
                 if (!this.autoTransactionEnabled$.value) this._transaction$.next(transaction);
             }),
             tap(() => {
-                if (this.autoTransactionEnabled$.value) this.closeTransaction(lockId).subscribe();
+                if (this.autoTransactionEnabled$.value) {
+                    if (this._transactionType$.value === "read") this.closeTransaction(lockId).subscribe();
+                    else this.commitTransaction(lockId).subscribe();
+                }
             }),
             catchError((err) => {
                 if (queryRunAction) {

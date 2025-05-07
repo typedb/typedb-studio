@@ -154,6 +154,7 @@ body {
 
         &[disabled] {
             pointer-events: all;
+            --mat-text-button-state-layer-color: transparent;
             --mat-filled-button-state-layer-color: transparent;
             --mat-outlined-button-state-layer-color: transparent;
             --mat-outlined-button-ripple-color: transparent;
