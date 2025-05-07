@@ -94,14 +94,16 @@ export class DriverState {
     }
 
     tryConnect(config: ConnectionConfig): Observable<ConnectionConfig> {
-        if (this._status$.value !== "disconnected") throw INTERNAL_ERROR;
         const lockId = uuid();
         return this.tryUseWriteLock(() => {
-            this._connection$.next(config);
-            this._status$.next("connecting");
-            this.driver = new TypeDBHttpDriver(config.params);
-
-            return this.refreshDatabaseList().pipe(
+            const maybeTryDisconnect$ = this._status$.value === "connected" ? this.tryDisconnect(lockId) : of({});
+            return maybeTryDisconnect$.pipe(
+                tap(() => {
+                    this._connection$.next(config);
+                    this._status$.next("connecting");
+                    this.driver = new TypeDBHttpDriver(config.params);
+                }),
+                switchMap(() => this.refreshDatabaseList()),
                 switchMap((res) => {
                     if (isOkResponse(res)) {
                         if (!res.ok.databases.length) return this.setupDefaultDatabase(lockId).pipe(map(() =>
@@ -130,16 +132,16 @@ export class DriverState {
         }, lockId);
     }
 
-    tryDisconnect() {
+    tryDisconnect(lockId?: string) {
         if (this._status$.value === "disconnected") throw INTERNAL_ERROR;
         if (this._transaction$.value?.hasUncommittedChanges) throw INTERNAL_ERROR;
         this.appData.connections.clearStartupConnection();
-        const maybeCloseTransaction$ = this._transaction$.value ? this.closeTransaction() : of({});
+        const maybeCloseTransaction$ = this._transaction$.value ? this.closeTransaction(lockId) : of({});
         return maybeCloseTransaction$.pipe(tap(() => this.tryUseWriteLock(() => {
             this._connection$.next(null);
             this._database$.next(null);
             this._status$.next("disconnected");
-        })));
+        }, lockId)));
     }
 
     refreshDatabaseList() {

@@ -317,6 +317,13 @@ form, .form {
     margin: 12px 0;
 }
 
+input, select, textarea {
+    &::placeholder {
+        color: rgba(secondary.$light-grey, 0.8);
+        font-weight: typography.$regular;
+    }
+}
+
 th {
     font-weight: typography.$semi-bold;
 }
