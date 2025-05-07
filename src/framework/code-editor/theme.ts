@@ -24,7 +24,7 @@ const invalid = base09,
     darkBackground = base00,
     highlightBackground = base02 + '90',
     background = base00,
-    tooltipBackground = base01,
+    tooltipBackground = base03 + 'A0',
     selection = base06,
     cursor = base07
 
@@ -94,7 +94,7 @@ export const basicDarkTheme = EditorView.theme(
 
         '.cm-tooltip': {
             border: 'none',
-            backgroundColor: tooltipBackground
+            backgroundColor: tooltipBackground,
         },
         '.cm-tooltip .cm-tooltip-arrow:before': {
             borderTopColor: 'transparent',
@@ -106,10 +106,13 @@ export const basicDarkTheme = EditorView.theme(
         },
         '.cm-tooltip-autocomplete': {
             '& > ul > li[aria-selected]': {
-                backgroundColor: highlightBackground,
-                color: base03
+                backgroundColor: tooltipBackground,
+                color: base07
             }
-        }
+        },
+        '.cm-tooltip.cm-completionInfo': {
+            fontSize: "13px",
+        },
     },
     { dark: true }
 )
