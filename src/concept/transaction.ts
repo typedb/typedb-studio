@@ -45,7 +45,7 @@ export class Transaction {
     // }
 }
 
-export type ReadMode = "auto" | "manual";
+export type OperationMode = "auto" | "manual";
 
 export type TransactionOperation = "open" | "commit" | "close";
 

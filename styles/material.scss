@@ -154,6 +154,7 @@ body {
 
         &[disabled] {
             pointer-events: all;
+            --mat-text-button-state-layer-color: transparent;
             --mat-filled-button-state-layer-color: transparent;
             --mat-outlined-button-state-layer-color: transparent;
             --mat-outlined-button-ripple-color: transparent;
@@ -479,6 +480,7 @@ body {
         --mdc-outlined-text-field-label-text-weight: #{typography.$regular};
         --mdc-outlined-text-field-input-text-placeholder-color: #{secondary.$grey};
         --mdc-outlined-text-field-container-shape: #{shapes.$border-radius};
+        --mdc-outlined-text-field-label-text-color: #{rgba(secondary.$light-grey, 0.8)};
     }
 
     .code-text-field .mdc-text-field {

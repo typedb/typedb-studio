@@ -16,18 +16,19 @@ import { CONNECTION_URL_PLACEHOLDER, ConnectionConfig, connectionUrl, parseConne
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 import { DriverParams, isBasicParams } from "../../../framework/typedb-driver/params";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
+import { ADDRESS, USERNAME } from "../../../framework/util/url-params";
 import { AppData } from "../../../service/app-data.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { PageScaffoldComponent, ResourceAvailability } from "../../scaffold/page/page-scaffold.component";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { AbstractControl, FormBuilder, FormControl, ReactiveFormsModule, ValidatorFn } from "@angular/forms";
-import { BehaviorSubject, combineLatest, filter, map, tap } from "rxjs";
+import { BehaviorSubject, combineLatest, filter, first, map, tap } from "rxjs";
 import { FormActionsComponent, FormComponent, FormInputComponent, FormOption, FormToggleGroupComponent, requiredValidator } from "../../../framework/form";
 
 const connectionUrlValidator: ValidatorFn = (control: AbstractControl) => {
     if (parseConnectionUrlOrNull(control.value)) return null;
-    else return { errorText: `Enter a valid connection URL, or use advanced configuration` };
+    else return { errorText: `Format: typedb://username:password@address` };
 };
 
 @Component({
@@ -41,15 +42,15 @@ const connectionUrlValidator: ValidatorFn = (control: AbstractControl) => {
         FormToggleGroupComponent, MatButtonModule, MatInputModule, RichTooltipDirective, MatCheckboxModule,
     ],
 })
-export class ConnectionCreatorComponent implements OnInit {
+export class ConnectionCreatorComponent {
 
     readonly availability$ = new BehaviorSubject<ResourceAvailability>("ready");
     savedConnections = this.appData.connections.list();
     advancedConfigActiveOptions: FormOption<boolean>[] = [
-        { value: false, viewValue: `Connection URL` },
-        { value: true, viewValue: `Manual config` },
+        { value: true, viewValue: `Use address and credentials` },
+        { value: false, viewValue: `Use connection URL` },
     ];
-    connectionUrlRevealed = false;
+    connectionUrlRevealed = true;
     connectionUrlPlaceholder = CONNECTION_URL_PLACEHOLDER;
     passwordRevealed = false;
 
@@ -64,19 +65,23 @@ export class ConnectionCreatorComponent implements OnInit {
         address: ["", [requiredValidator]],
         username: ["", [requiredValidator]],
         password: ["", [requiredValidator]],
-        tlsDisabled: [false, [requiredValidator]],
     });
     readonly isSubmitting$ = new BehaviorSubject(false);
 
     constructor(
         private formBuilder: FormBuilder, private appData: AppData,
         private driver: DriverState, private snackbar: SnackbarService, private location: Location,
-        private router: Router,
-    ) {}
-
-    ngOnInit() {
+        private router: Router, route: ActivatedRoute,
+    ) {
+        (window as any).connectionCreator = this;
         this.updateNameAndAdvancedConfigOnUrlChanges();
         this.updateNameAndUrlOnAdvancedConfigChanges();
+        route.queryParamMap.pipe(first()).subscribe((params) => {
+            this.advancedForm.patchValue({
+                address: params.get(ADDRESS) ?? ``,
+                username: params.get(USERNAME) ?? ``,
+            });
+        });
     }
 
     private updateNameAndAdvancedConfigOnUrlChanges() {
@@ -116,7 +121,7 @@ export class ConnectionCreatorComponent implements OnInit {
     }
 
     get canSubmit() {
-        return this.form.dirty && this.form.valid;
+        return (this.form.dirty || this.advancedForm.dirty) && this.form.valid;
     }
 
     private buildConnectionConfigOrNull(): ConnectionConfig | null {
@@ -137,9 +142,8 @@ export class ConnectionCreatorComponent implements OnInit {
         if (!config) throw INTERNAL_ERROR;
         this.form.disable();
         this.driver.tryConnect(config).subscribe({
-            next: (databases) => {
+            next: () => {
                 this.snackbar.success(`Connected to ${config.name}`);
-                this.appData.connections.push(config);
                 this.router.navigate([this.appData.viewState.lastUsedToolRoute()]).then((navigated) => {
                     if (!navigated) throw INTERNAL_ERROR;
                 });
@@ -153,6 +157,10 @@ export class ConnectionCreatorComponent implements OnInit {
                 this.isSubmitting$.next(false);
             },
         });
+    }
+
+    cancel() {
+        this.router.navigate(["/"]);
     }
 
     private connectionNameUniqueValidator(control: AbstractControl<string>) {

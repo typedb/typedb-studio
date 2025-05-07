@@ -43,6 +43,7 @@ export class DriverState {
 
     private driver?: TypeDBHttpDriver;
 
+    private _transactionType$ = new BehaviorSubject<TransactionType>("read");
     autoTransactionEnabled$ = new BehaviorSubject(true);
     transactionHasUncommittedChanges$ = this.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
 
@@ -72,6 +73,10 @@ export class DriverState {
         return this._actionLog$;
     }
 
+    get transactionType$(): Observable<TransactionType> {
+        return this._transactionType$;
+    }
+
     private requireConnection(stack: string) {
         return requireValue(this._connection$, stack);
     }
@@ -94,14 +99,16 @@ export class DriverState {
     }
 
     tryConnect(config: ConnectionConfig): Observable<ConnectionConfig> {
-        if (this._status$.value !== "disconnected") throw INTERNAL_ERROR;
         const lockId = uuid();
         return this.tryUseWriteLock(() => {
-            this._connection$.next(config);
-            this._status$.next("connecting");
-            this.driver = new TypeDBHttpDriver(config.params);
-
-            return this.refreshDatabaseList().pipe(
+            const maybeTryDisconnect$ = this._status$.value === "connected" ? this.tryDisconnect(lockId) : of({});
+            return maybeTryDisconnect$.pipe(
+                tap(() => {
+                    this._connection$.next(config);
+                    this._status$.next("connecting");
+                    this.driver = new TypeDBHttpDriver(config.params);
+                }),
+                switchMap(() => this.refreshDatabaseList()),
                 switchMap((res) => {
                     if (isOkResponse(res)) {
                         if (!res.ok.databases.length) return this.setupDefaultDatabase(lockId).pipe(map(() =>
@@ -117,7 +124,10 @@ export class DriverState {
                         return of(database ? config.withDatabase(database) : config);
                     } else throw res;
                 }),
-                tap(() => this._status$.next("connected")),
+                tap(() => {
+                    this._status$.next("connected");
+                    this.appData.connections.push(config);
+                }),
                 catchError((err) => {
                     this._connection$.next(null); // TODO: revisit - is an 'errored' connection config still valid?
                     this._status$.next("disconnected");
@@ -127,15 +137,16 @@ export class DriverState {
         }, lockId);
     }
 
-    tryDisconnect() {
+    tryDisconnect(lockId?: string) {
         if (this._status$.value === "disconnected") throw INTERNAL_ERROR;
         if (this._transaction$.value?.hasUncommittedChanges) throw INTERNAL_ERROR;
-        const maybeCloseTransaction$ = this._transaction$.value ? this.closeTransaction() : of({});
+        this.appData.connections.clearStartupConnection();
+        const maybeCloseTransaction$ = this._transaction$.value ? this.closeTransaction(lockId) : of({});
         return maybeCloseTransaction$.pipe(tap(() => this.tryUseWriteLock(() => {
             this._connection$.next(null);
             this._database$.next(null);
             this._status$.next("disconnected");
-        })));
+        }, lockId)));
     }
 
     refreshDatabaseList() {
@@ -185,11 +196,15 @@ export class DriverState {
                 if (isApiErrorResponse(res)) throw res.err;
                 this._transaction$.next(new Transaction({ id: res.ok.transactionId, type: type }));
             }),
-            takeUntil(this._stopSignal$)
+            takeUntil(this._stopSignal$),
+            catchError((err) => {
+                this.updateActionResultUnexpectedError(action, err);
+                throw err;
+            }),
         ), lockId);
     }
 
-    commitTransaction() {
+    commitTransaction(lockId?: string) {
         const transactionId = this.requireTransaction(`${this.constructor.name}.${this.commitTransaction.name} > ${this.requireTransaction.name}`).id;
         const action = transactionOperationActionOf("commit");
         this._actionLog$.next(action);
@@ -200,8 +215,12 @@ export class DriverState {
                 this._transaction$.next(null);
                 if (isApiErrorResponse(res)) throw res.err;
             }),
-            takeUntil(this._stopSignal$)
-        ));
+            takeUntil(this._stopSignal$),
+            catchError((err) => {
+                this.updateActionResultUnexpectedError(action, err);
+                throw err;
+            }),
+        ), lockId);
     }
 
     closeTransaction(lockId?: string) {
@@ -216,15 +235,26 @@ export class DriverState {
                 if (isApiErrorResponse(res)) throw res.err;
                 this._transaction$.next(null);
             }),
-            takeUntil(this._stopSignal$)
+            takeUntil(this._stopSignal$),
+            catchError((err) => {
+                this.updateActionResultUnexpectedError(action, err);
+                throw err;
+            }),
         ), lockId);
     }
 
+    selectTransactionType(transactionType: TransactionType) {
+        // TODO: fail if has uncommitted changes
+        return this.tryUseWriteLock(() => {
+            this._transactionType$.next(transactionType);
+        });
+    }
+
     // TODO: convoluted logic
-    query(query: string) {
+    query(query: string): Observable<ApiResponse<QueryResponse>> {
         const lockId = uuid();
         const maybeOpenTransaction$ = this.autoTransactionEnabled$.value
-            ? this.openTransaction("read", lockId)
+            ? this.openTransaction(this._transactionType$.value, lockId)
             : of({ ok: { transactionId: this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`).id } });
         let queryRunAction: QueryRunAction;
         const driver = this.requireDriver(`${this.constructor.name}.${this.query.name} > ${this.requireDriver.name}`);
@@ -246,18 +276,23 @@ export class DriverState {
                 if (!this.autoTransactionEnabled$.value) this._transaction$.next(transaction);
             }),
             tap(() => {
-                if (this.autoTransactionEnabled$.value) this.closeTransaction(lockId).subscribe();
+                if (this.autoTransactionEnabled$.value) {
+                    if (this._transactionType$.value === "read") this.closeTransaction(lockId).subscribe();
+                    else this.commitTransaction(lockId).subscribe();
+                }
             }),
             catchError((err) => {
-                if (queryRunAction) {
-                    if (isApiErrorResponse(err)) this.updateActionResult(queryRunAction, err);
-                    else this.updateActionResultUnexpectedError(queryRunAction, err);
-                }
+                if (queryRunAction) this.updateActionResultUnexpectedError(queryRunAction, err);
                 if (this.autoTransactionEnabled$.value) this.closeTransaction(lockId).subscribe();
                 throw err;
             }),
             takeUntil(this._stopSignal$)
         ), lockId);
+    }
+
+    checkHealth() {
+        const driver = this.requireDriver(`${this.constructor.name}.${this.checkHealth.name} > ${this.requireDriver.name}`);
+        return fromPromise(driver.health());
     }
 
     sendStopSignal() {

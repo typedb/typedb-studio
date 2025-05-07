@@ -13,18 +13,18 @@ const base00 = '#0e0d17',
     base07 = '#d7d4e5',
     base08 = '#A54543',
     base09 = '#fc6d24',
-    base0A = '#fda331',
+    constraint = '#c099f3',
     base0B = '#8abeb7',
-    base0C = '#b5bd68',
-    base0D = '#02dac9',
-    base0E = '#ff87dc',
+    string_ = '#ffe4a7',
+    variable = '#55eae2',
+    keyword = '#ff7abd',
     base0F = '#6987AF'
 
 const invalid = base09,
     darkBackground = base00,
     highlightBackground = base02 + '90',
     background = base00,
-    tooltipBackground = base01,
+    tooltipBackground = base03 + 'A0',
     selection = base06,
     cursor = base07
 
@@ -32,7 +32,7 @@ const invalid = base09,
 export const basicDarkTheme = EditorView.theme(
     {
         '&': {
-            color: base0E,
+            color: base07,
             backgroundColor: background
         },
 
@@ -94,7 +94,7 @@ export const basicDarkTheme = EditorView.theme(
 
         '.cm-tooltip': {
             border: 'none',
-            backgroundColor: tooltipBackground
+            backgroundColor: tooltipBackground,
         },
         '.cm-tooltip .cm-tooltip-arrow:before': {
             borderTopColor: 'transparent',
@@ -106,71 +106,74 @@ export const basicDarkTheme = EditorView.theme(
         },
         '.cm-tooltip-autocomplete': {
             '& > ul > li[aria-selected]': {
-                backgroundColor: highlightBackground,
-                color: base03
+                backgroundColor: tooltipBackground,
+                color: base07
             }
-        }
+        },
+        '.cm-tooltip.cm-completionInfo': {
+            fontSize: "13px",
+        },
     },
     { dark: true }
 )
 
 /// The highlighting style for code in the Basic Light theme.
 export const basicDarkHighlightStyle = HighlightStyle.define([
-    { tag: t.keyword, color: base0A },
-    {
-        tag: [t.name, t.deleted, t.character, t.propertyName, t.macroName],
-        color: base0C
-    },
-    { tag: [t.variableName], color: base0D },
-    { tag: [t.function(t.variableName)], color: base0A },
+    { tag: t.keyword, color: constraint },
+    // {
+    //     tag: [t.name, t.deleted, t.character, t.propertyName, t.macroName],
+    //     color: base0C
+    // },
+    { tag: [t.variableName], color: variable },
+    { tag: [t.function(t.variableName)], color: constraint },
     { tag: [t.labelName], color: base09 },
     {
         tag: [t.color, t.constant(t.name), t.standard(t.name)],
-        color: base0A
+        color: constraint
     },
-    { tag: [t.definition(t.name), t.separator], color: base0E },
-    { tag: [t.brace], color: base0E },
+    { tag: [t.definition(t.name), t.separator], color: keyword },
+    { tag: [t.brace], color: keyword },
     {
         tag: [t.annotation],
         color: invalid
     },
     {
         tag: [t.number, t.changed, t.annotation, t.modifier, t.self, t.namespace],
-        color: base0A
+        color: constraint
     },
-    {
-        tag: [t.typeName, t.className],
-        color: base0D
-    },
+    // {
+    //     tag: [t.typeName, t.className],
+    //     color: variable
+    // },
     {
         tag: [t.operator, t.operatorKeyword],
-        color: base0E
+        color: keyword
     },
     {
         tag: [t.tagName],
-        color: base0A
+        color: constraint
     },
     {
         tag: [t.squareBracket],
-        color: base0E
+        color: keyword
     },
     {
         tag: [t.angleBracket],
-        color: base0E
+        color: keyword
     },
     {
         tag: [t.attributeName],
-        color: base0D
+        color: variable
     },
     {
         tag: [t.regexp],
-        color: base0A
+        color: constraint
     },
     {
         tag: [t.quote],
         color: base01
     },
-    { tag: [t.string], color: base0C },
+    { tag: [t.string], color: string_ },
     {
         tag: t.link,
         color: base0F,
@@ -187,21 +190,21 @@ export const basicDarkHighlightStyle = HighlightStyle.define([
         tag: t.monospace,
         color: base01,
     },
-    { tag: t.strong, fontWeight: 'bold', color: base0A },
-    { tag: t.emphasis, fontStyle: 'italic', color: base0D },
+    { tag: t.strong, fontWeight: 'bold', color: constraint },
+    { tag: t.emphasis, fontStyle: 'italic', color: variable },
     { tag: t.strikethrough, textDecoration: 'line-through' },
-    { tag: t.heading, fontWeight: 'bold', color: base01 },
-    { tag: t.special(t.heading1), fontWeight: 'bold', color: base01 },
-    { tag: t.heading1, fontWeight: 'bold', color: base01 },
-    {
-        tag: [t.heading2, t.heading3, t.heading4],
-        fontWeight: 'bold',
-        color: base01
-    },
-    {
-        tag: [t.heading5, t.heading6],
-        color: base01
-    },
+    { tag: t.heading, color: keyword },
+    // { tag: t.special(t.heading1), fontWeight: 'bold', color: base01 },
+    // { tag: t.heading1, fontWeight: 'bold', color: base01 },
+    // {
+    //     tag: [t.heading2, t.heading3, t.heading4],
+    //     fontWeight: 'bold',
+    //     color: base01
+    // },
+    // {
+    //     tag: [t.heading5, t.heading6],
+    //     color: base01
+    // },
     { tag: [t.atom, t.bool, t.special(t.variableName)], color: base0B },
     {
         tag: [t.processingInstruction, t.inserted],
@@ -209,7 +212,7 @@ export const basicDarkHighlightStyle = HighlightStyle.define([
     },
     {
         tag: [t.contentSeparator],
-        color: base0D
+        color: variable
     },
     { tag: t.invalid, color: base02, borderBottom: `1px dotted ${invalid}` }
 ])

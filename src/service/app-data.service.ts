@@ -6,7 +6,7 @@
 
 import { Injectable } from "@angular/core";
 import { ConnectionConfig, ConnectionJson } from "../concept/connection";
-import { SidebarState, Tool } from "../concept/view-state";
+import { SidebarState, sidebarStates, Tool, tools } from "../concept/view-state";
 import { StorageService, StorageWriteResult } from "./storage.service";
 
 function isObjectWithFields<FIELD extends string>(obj: unknown, fields: FIELD[]): obj is { [K in typeof fields[number]]: unknown } {
@@ -21,7 +21,10 @@ interface ViewStateData {
 }
 
 function parseViewStateDataOrNull(obj: Object): ViewStateData | null {
-    return isObjectWithFields(obj, ["sidebarState", "lastUsedTool"]) ? obj as ViewStateData : null;
+    if (!isObjectWithFields(obj, ["sidebarState", "lastUsedTool"])) return null;
+    if (!sidebarStates.includes(obj.sidebarState as SidebarState)) return null;
+    if (!tools.includes(obj.lastUsedTool as Tool)) return null;
+    return obj as ViewStateData;
 }
 
 const INITIAL_VIEW_STATE_DATA: ViewStateData = {
@@ -132,14 +135,14 @@ function parsePreferencesDataOrNull(obj: Object): PreferencesData | null {
 
 const INITIAL_PREFERENCES: PreferencesData = {
     connections: {
-        showAdvancedConfigByDefault: false,
+        showAdvancedConfigByDefault: true,
         savePasswordsByDefault: true,
     }
 };
 
 const FALLBACK_PREFERENCES: PreferencesData = {
     connections: {
-        showAdvancedConfigByDefault: false,
+        showAdvancedConfigByDefault: true,
         savePasswordsByDefault: false,
     }
 };
