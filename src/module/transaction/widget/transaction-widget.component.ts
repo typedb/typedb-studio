@@ -16,6 +16,7 @@ import { OperationMode } from "../../../concept/transaction";
 import { TransactionType } from "../../../framework/typedb-driver/transaction";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
 import { DriverState } from "../../../service/driver-state.service";
+import { SnackbarService } from "../../../service/snackbar.service";
 
 @Component({
     selector: "ts-transaction-widget",
@@ -35,8 +36,9 @@ export class TransactionWidgetComponent {
     private typeControlValueChanges$ = this.form.controls.type.valueChanges.pipe(startWith(this.form.value.type!));
     private operationModeControlValueChanges = this.form.controls.operationMode.valueChanges.pipe(startWith(this.form.value.operationMode));
 
-    commitButtonDisabled$ = this.driver.transactionHasUncommittedChanges$.pipe(map(x => !x));
-    transactionWidgetTooltip$ = this.driver.transactionHasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
+    hasUncommittedChanges$ = this.driver.transactionHasUncommittedChanges$;
+    commitButtonDisabled$ = this.hasUncommittedChanges$.pipe(map(x => !x));
+    transactionWidgetTooltip$ = this.hasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
     closeButtonDisabled$ = this.driver.transaction$.pipe(map(tx => !tx));
     transactionIconClass$ = this.driver.transaction$.pipe(map(tx => tx ? "fa-solid fa-code-commit active" : "fa-regular fa-code-commit"));
     openButtonClass$ = this.driver.transaction$.pipe(map(tx => tx ? "open-btn active" : "open-btn"));
@@ -49,7 +51,7 @@ export class TransactionWidgetComponent {
     );
     closeButtonVisible$ = this.openButtonVisible$;
 
-    constructor(private driver: DriverState, private formBuilder: FormBuilder) {
+    constructor(private driver: DriverState, private formBuilder: FormBuilder, private snackbar: SnackbarService) {
         this.transactionConfigDisabled$.subscribe((disabled) => {
             if (disabled) this.form.disable();
             else this.form.enable();
