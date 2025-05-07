@@ -42,11 +42,11 @@ export class QueryToolState {
     answersOutputEnabled = true;
     readonly runDisabledReason$ = combineLatest(
         [this.driver.status$, this.driver.database$, this.driver.autoTransactionEnabled$, this.driver.transaction$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))]
-    ).pipe(map(([status, db, autoTransactionEnabled, tx, query]) => {
+    ).pipe(map(([status, db, autoTransactionEnabled, tx, _query]) => {
         if (status !== "connected") return NO_SERVER_CONNECTED;
         else if (db == null) return NO_DATABASE_SELECTED;
         else if (!autoTransactionEnabled && !tx) return NO_OPEN_TRANSACTION;
-        else if (!query.length) return QUERY_BLANK;
+        else if (!this.queryControl.value.length) return QUERY_BLANK; // _query becomes blank after a page navigation for some reason
         else return null;
     }));
     readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
@@ -54,6 +54,7 @@ export class QueryToolState {
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
 
     constructor(private driver: DriverState, private snackbar: SnackbarService) {
+        (window as any)["queryToolState"] = this;
         this.outputDisabled$.subscribe((disabled) => {
             if (disabled) this.outputTypeControl.disable();
             else this.outputTypeControl.enable();
