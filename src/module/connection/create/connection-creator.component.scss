@@ -80,7 +80,7 @@ tp-form.form {
     display: block;
 }
 
-.uri-input-row {
+.help-input-row {
     display: flex;
     gap: 8px;
 
@@ -91,4 +91,15 @@ tp-form.form {
 
 ::ng-deep .mat-horizontal-content-container {
     padding-top: 10vh;
+}
+
+.regenerate-id-button {
+    height: 46px;
+    width: 48px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border-left: shapes.$border;
 }

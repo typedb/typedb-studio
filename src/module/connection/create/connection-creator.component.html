@@ -10,24 +10,30 @@
         <div class="form-input-group">
           <tp-form-input [form]="advancedForm" field="address" label="Address" autocomplete="url"/>
           <tp-form-input [form]="advancedForm" field="username" label="Username"/>
-          <mat-form-field>
-            <mat-label>Password</mat-label>
-            <input matInput [formControl]="advancedForm.controls.password" [type]="passwordRevealed ? 'text' : 'password'">
-            <div class="tp-password-input-suffix" matSuffix>
-              <button type="button" tabindex="-1" mat-icon-button (click)="passwordRevealed = !passwordRevealed" aria-label="Hide password" aria-pressed="hide">
-                <i [class]="passwordRevealed ? 'fa-light fa-eye-slash' : 'fa-light fa-eye'"></i>
-              </button>
-            </div>
-            @if (advancedForm.controls.password.getError("errorText")) {
-              <mat-error>{{ advancedForm.controls.password.getError("errorText") }}</mat-error>
-            }
-          </mat-form-field>
+          <div class="help-input-row">
+            <mat-form-field>
+              <mat-label>Password</mat-label>
+              <input matInput [formControl]="advancedForm.controls.password" [type]="passwordRevealed ? 'text' : 'password'">
+              <div class="tp-password-input-suffix" matSuffix>
+                <button type="button" tabindex="-1" mat-icon-button (click)="passwordRevealed = !passwordRevealed" aria-label="Hide password" aria-pressed="hide">
+                  <i [class]="passwordRevealed ? 'fa-light fa-eye-slash' : 'fa-light fa-eye'"></i>
+                </button>
+                <div class="regenerate-id-button" type="button" buttonId="regenerateId">
+                  <i class="help-tooltip-button fa-light fa-circle-question" matTooltip="For TypeDB Cloud, check your credentials file (if you have it)"></i>
+                </div>
+              </div>
+              @if (advancedForm.controls.password.getError("errorText")) {
+                <mat-error>{{ advancedForm.controls.password.getError("errorText") }}</mat-error>
+              }
+            </mat-form-field>
+
+          </div>
         </div>
       </div>
     } @else {
       <div class="form-input-block">
         <div class="form-input-row-description"><p>Enter connection URL</p></div>
-        <div class="uri-input-row">
+        <div class="help-input-row">
           <mat-form-field>
             <input matInput [formControl]="form.controls.url" [type]="connectionUrlRevealed ? 'text' : 'password'" [placeholder]="connectionUrlPlaceholder">
             <div class="tp-password-input-suffix" matSuffix>

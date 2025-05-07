@@ -559,6 +559,12 @@ tp-form-actions, .tp-form-actions {
     //}
 }
 
+.tp-password-input-suffix {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
 .terms-privacy-additional-info {
     @include typography.p3;
     color: secondary.$light-grey;
