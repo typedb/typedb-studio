@@ -5,18 +5,18 @@
  */
 
 import { AsyncPipe } from "@angular/common";
-import { Component, HostBinding } from "@angular/core";
-import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from "@angular/forms";
+import { Component } from "@angular/core";
+import { FormBuilder, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { combineLatest, map, startWith } from "rxjs";
-import { ReadMode, Transaction } from "../../../concept/transaction";
+import { combineLatest, map, startWith, switchMap } from "rxjs";
+import { OperationMode } from "../../../concept/transaction";
 import { TransactionType } from "../../../framework/typedb-driver/transaction";
-import { requireValue } from "../../../framework/util/observable";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
-import { DriverState, DriverStatus } from "../../../service/driver-state.service";
+import { DriverState } from "../../../service/driver-state.service";
+import { SnackbarService } from "../../../service/snackbar.service";
 
 @Component({
     selector: "ts-transaction-widget",
@@ -29,40 +29,43 @@ export class TransactionWidgetComponent {
 
     form = this.formBuilder.nonNullable.group({
         type: ["read" as TransactionType, []],
-        readMode: ["auto" as ReadMode, []],
+        operationMode: ["auto" as OperationMode, []],
     });
     transactionTypes: TransactionType[] = ["read", "write", "schema"];
-    readModes: ReadMode[] = ["auto", "manual"];
-    private typeControlValueChanges$ = this.form.controls.type.valueChanges.pipe(startWith(this.form.value.type));
-    private readModeControlValueChanges$ = this.form.controls.readMode.valueChanges.pipe(startWith(this.form.value.readMode));
+    operationModes: OperationMode[] = ["auto", "manual"];
+    private typeControlValueChanges$ = this.form.controls.type.valueChanges.pipe(startWith(this.form.value.type!));
+    private operationModeControlValueChanges = this.form.controls.operationMode.valueChanges.pipe(startWith(this.form.value.operationMode));
 
-    transactionWidgetVisible$ = this.driver.database$.pipe(map(db => !!db));
-    transactionText$ = this.driver.transaction$.pipe(map(tx => tx?.type ?? `No active transaction`));
-    commitButtonDisabled$ = this.driver.transactionHasUncommittedChanges$.pipe(map(x => !x));
-    transactionWidgetTooltip$ = this.driver.transactionHasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
+    hasUncommittedChanges$ = this.driver.transactionHasUncommittedChanges$;
+    commitButtonDisabled$ = this.hasUncommittedChanges$.pipe(map(x => !x));
+    transactionWidgetTooltip$ = this.hasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
     closeButtonDisabled$ = this.driver.transaction$.pipe(map(tx => !tx));
     transactionIconClass$ = this.driver.transaction$.pipe(map(tx => tx ? "fa-solid fa-code-commit active" : "fa-regular fa-code-commit"));
     openButtonClass$ = this.driver.transaction$.pipe(map(tx => tx ? "open-btn active" : "open-btn"));
     openButtonIconClass$ = this.driver.transaction$.pipe(map(tx => tx ? "fa-regular fa-arrow-rotate-right" : "fa-regular fa-play"));
-    openButtonTooltip$ = this.driver.transaction$.pipe(map(tx => tx ? `Reopen ${this.form.value.type} transaction` : `Open ${this.form.value.type} transaction`));
     transactionConfigDisabled$ = this.driver.database$.pipe(map(db => !db));
     openButtonDisabled$ = combineLatest([this.driver.database$, this.driver.transaction$]).pipe(map(([db, tx]) => !db || !!tx));
-    openButtonVisible$ = combineLatest([this.typeControlValueChanges$, this.readModeControlValueChanges$]).pipe(
-        map(([type, readMode]) => type !== "read" || readMode !== "auto")
+    openButtonVisible$ = this.operationModeControlValueChanges.pipe(map((mode) => mode !== "auto"));
+    commitButtonVisible$ = combineLatest([this.typeControlValueChanges$, this.operationModeControlValueChanges]).pipe(
+        map(([type, mode]) => type !== "read" && mode === "manual")
     );
-    commitButtonVisible$ = this.typeControlValueChanges$.pipe(map(x => x !== "read"));
     closeButtonVisible$ = this.openButtonVisible$;
-    readModeControlVisible$ = this.typeControlValueChanges$.pipe(map(x => x === "read"));
 
-    constructor(private driver: DriverState, private formBuilder: FormBuilder) {
+    constructor(private driver: DriverState, private formBuilder: FormBuilder, private snackbar: SnackbarService) {
         this.transactionConfigDisabled$.subscribe((disabled) => {
             if (disabled) this.form.disable();
             else this.form.enable();
         });
-        combineLatest([this.typeControlValueChanges$, this.readModeControlValueChanges$]).subscribe(([type, readMode]) => {
+        this.typeControlValueChanges$.subscribe((type) => {
+            // TODO: confirm before closing with uncommitted changes
+            this.driver.closeTransaction().subscribe(() => {
+                this.driver.selectTransactionType(type);
+            });
+        });
+        this.operationModeControlValueChanges.subscribe((operationMode) => {
             // TODO: confirm before closing with uncommitted changes
             this.driver.closeTransaction().subscribe();
-            this.driver.autoTransactionEnabled$.next(type === "read" && readMode === "auto");
+            this.driver.autoTransactionEnabled$.next(operationMode === "auto");
         });
     }
 

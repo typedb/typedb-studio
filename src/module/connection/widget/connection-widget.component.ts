@@ -44,8 +44,15 @@ export class ConnectionWidgetComponent implements OnInit {
     @ViewChild(MatMenuTrigger) connectionMenuTrigger!: MatMenuTrigger;
 
     connectionText$ = this.driver.connection$.pipe(map(x => x?.name ?? `No server connected`));
-    connectionBeaconClass$ = this.driver.status$.pipe(map(status => `ts-beacon fa-solid fa-circle ${statusStyleMap[status]}`));
-    connectionBeaconTooltip$ = this.driver.status$.pipe(map(status => `${status[0].toUpperCase()}${status.substring(1)}`));
+    connectionBeaconStatusClass$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, database]) => {
+        if (status === "disconnected") return "error";
+        if (status === "connected") return database == null ? "inactive" : "ok";
+        return "warn";
+    }));
+    connectionBeaconTooltip$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, database]) => {
+        if (status === "connected") return database == null ? "" : "Connected";
+        return `${status[0].toUpperCase()}${status.substring(1)}`;
+    }));
     private transactionWidgetVisible = false;
     connectionText = ``;
     connectionAreaHovered = false;

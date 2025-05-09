@@ -19,6 +19,7 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
 import { first, map } from "rxjs";
+import { TypeQL } from "../../framework/codemirror-lang-typeql";
 import { DriverAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
@@ -100,6 +101,7 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
     historyEntryErrorTooltip(entry: DriverAction) {
         if (!entry.result) return ``;
         else if ("err" in entry.result && !!entry.result.err?.message) return entry.result.err.message;
+        else if ("message" in entry.result) return entry.result.message as string;
         else return entry.result.toString();
     }
 
@@ -117,4 +119,5 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
     readonly isQueryRun = isQueryRun;
     readonly isTransactionOperation = isTransactionOperation;
     readonly JSON = JSON;
+    readonly TypeQL = TypeQL;
 }

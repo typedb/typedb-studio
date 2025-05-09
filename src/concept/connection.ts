@@ -30,7 +30,7 @@ export class ConnectionConfig {
     withDatabase(database: Database): ConnectionConfig {
         return new ConnectionConfig({
             name: this.name,
-            params: Object.assign({}, this.params, { database }),
+            params: Object.assign<{}, ConnectionParams, Partial<ConnectionParams>>({}, this.params, { database: database.name }),
             preferences: this.preferences,
         });
     }
@@ -55,7 +55,11 @@ export interface ConnectionPreferences {
     isStartupConnection: boolean;
 }
 
-export type ConnectionParams = DriverParams & { database?: string };
+export type ConnectionParamsBasic = DriverParamsBasic & { database?: string };
+
+export type ConnectionParamsTranslated = DriverParamsTranslated & { database?: string };
+
+export type ConnectionParams = ConnectionParamsBasic | ConnectionParamsTranslated;
 
 const SCHEME = "typedb://";
 export const CONNECTION_URL_PLACEHOLDER = connectionUrlBasic({ username: "username", password: "password", addresses: ["address"] });
@@ -65,12 +69,12 @@ export function connectionUrl(props: ConnectionParams) {
     else return connectionUrlBasic(props);
 }
 
-function connectionUrlBasic(props: DriverParamsBasic & { database?: string }) {
+function connectionUrlBasic(props: ConnectionParamsBasic) {
     const { username, password, addresses, database } = props;
     return `${SCHEME}${username}:${password}@${addresses.join(",")}/${database ?? ''}`;
 }
 
-function connectionUrlTranslated(props: DriverParamsTranslated & { database?: string }) {
+function connectionUrlTranslated(props: ConnectionParamsTranslated) {
     const { username, password, translatedAddresses, database } = props;
     const translatedAddressStrings = translatedAddresses.map((x) => `${x.external};${x.internal}`);
     return connectionUrlBasic({ username, password, addresses: translatedAddressStrings, database });

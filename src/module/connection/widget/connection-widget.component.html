@@ -12,7 +12,7 @@
       </button>
     }
 
-    <i [class]="connectionBeaconClass$ | async" [matTooltip]="(connectionBeaconTooltip$ | async) || ''" matTooltipPosition="below"></i>
+    <i class="ts-beacon fa-solid fa-circle" [class]="connectionBeaconStatusClass$ | async" [matTooltip]="(connectionBeaconTooltip$ | async) || ''" matTooltipPosition="below"></i>
   </div>
 
   @if (transactionWidgetVisible$ | async) {
