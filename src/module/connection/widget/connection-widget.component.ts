@@ -13,7 +13,7 @@ import { MatDividerModule } from "@angular/material/divider";
 import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { Router, RouterLink } from "@angular/router";
-import { combineLatest, first, map } from "rxjs";
+import { combineLatest, distinctUntilChanged, first, map } from "rxjs";
 import { HoverMenuComponent } from "../../../framework/menu/hover-menu.component";
 import { Database } from "../../../framework/typedb-driver/database";
 import { DriverState, DriverStatus } from "../../../service/driver-state.service";
@@ -61,7 +61,7 @@ export class ConnectionWidgetComponent implements OnInit {
     databaseVisible$ = this.driver.status$.pipe(map((status) => ["connected", "reconnecting"].includes(status)));
     databaseText$ = this.driver.database$.pipe(map(db => db?.name ?? `No database selected`));
 
-    transactionWidgetVisible$ = this.driver.database$.pipe(map(db => !!db));
+    transactionWidgetVisible$ = this.driver.database$.pipe(map(db => !!db), distinctUntilChanged());
     transactionText$ = this.driver.transaction$.pipe(map(tx => tx?.type ?? `No active transaction`));
     transactionWidgetTooltip$ = this.driver.transactionHasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
 

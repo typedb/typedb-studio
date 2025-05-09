@@ -11,7 +11,7 @@ import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { combineLatest, map, startWith, switchMap } from "rxjs";
+import { combineLatest, distinctUntilChanged, filter, map, startWith, switchMap } from "rxjs";
 import { OperationMode } from "../../../concept/transaction";
 import { TransactionType } from "../../../framework/typedb-driver/transaction";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
@@ -33,8 +33,18 @@ export class TransactionWidgetComponent {
     });
     transactionTypes: TransactionType[] = ["read", "write", "schema"];
     operationModes: OperationMode[] = ["auto", "manual"];
-    private typeControlValueChanges$ = this.form.controls.type.valueChanges.pipe(startWith(this.form.value.type!));
-    private operationModeControlValueChanges = this.form.controls.operationMode.valueChanges.pipe(startWith(this.form.value.operationMode));
+    private typeControlValueChanges$ = this.form.valueChanges.pipe(
+        filter((changes) => !!changes.type),
+        map((changes) => changes.type!),
+        startWith(this.form.value.type!),
+        distinctUntilChanged(),
+    );
+    private operationModeControlValueChanges = this.form.valueChanges.pipe(
+        filter(changes => !!changes.operationMode),
+        map(changes => changes.operationMode!),
+        startWith(this.form.value.operationMode!),
+        distinctUntilChanged(),
+    );
 
     hasUncommittedChanges$ = this.driver.transactionHasUncommittedChanges$;
     commitButtonDisabled$ = this.hasUncommittedChanges$.pipe(map(x => !x));

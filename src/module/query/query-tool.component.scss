@@ -194,9 +194,8 @@ button {
 
     .history-container {
         height: 100%;
+        width: 100%;
         overflow: auto;
-        padding-right: 16px;
-        margin-right: -16px;
     }
 
     ol li {
@@ -246,5 +245,9 @@ button {
             resize: none;
             @include typography.code;
         }
+    }
+
+    .transaction-operation-type {
+        min-width: 140px;
     }
 }

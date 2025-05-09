@@ -7,7 +7,7 @@
 import { Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import MultiGraph from "graphology";
-import { BehaviorSubject, combineLatest, map, Observable, ReplaySubject, startWith } from "rxjs";
+import { BehaviorSubject, combineLatest, first, map, Observable, ReplaySubject, startWith } from "rxjs";
 import { DriverAction } from "../concept/action";
 import { GraphVisualiser } from "../framework/graph-visualiser";
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
@@ -78,7 +78,7 @@ export class QueryToolState {
                             + `Caused: Failed to execute query.`);
                     },
                     error: () => {
-                        this.driver.connection$.subscribe((connection) => {
+                        this.driver.connection$.pipe(first()).subscribe((connection) => {
                             if (connection && connection.url.includes(`localhost`)) {
                                 this.snackbar.errorPersistent(`Unable to connect to TypeDB server.\n`
                                     + `Ensure the server is still running.`);
@@ -396,7 +396,7 @@ export class TableOutputState {
             case "attribute":
                 return `${concept.value}`;
             case "value":
-                return `${concept}`;
+                return `${concept.value}`;
         }
     }
 
