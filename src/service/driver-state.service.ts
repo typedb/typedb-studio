@@ -47,7 +47,9 @@ export class DriverState {
     autoTransactionEnabled$ = new BehaviorSubject(true);
     transactionHasUncommittedChanges$ = this.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
 
-    constructor(private appData: AppData) {}
+    constructor(private appData: AppData) {
+        (window as any)["driverState"] = this;
+    }
 
     get status$(): Observable<DriverStatus> {
         return this._status$;
@@ -137,7 +139,7 @@ export class DriverState {
         }, lockId);
     }
 
-    tryDisconnect(lockId?: string) {
+    tryDisconnect(lockId = uuid()) {
         if (this._status$.value === "disconnected") throw INTERNAL_ERROR;
         if (this._transaction$.value?.hasUncommittedChanges) throw INTERNAL_ERROR;
         this.appData.connections.clearStartupConnection();
@@ -159,7 +161,7 @@ export class DriverState {
         );
     }
 
-    selectDatabase(database: Database, lockId?: string) {
+    selectDatabase(database: Database, lockId = uuid()) {
         if (this._database$.value?.name === database.name) return;
         const savedDatabase = this._databaseList$.value?.find(x => x.name === database.name);
         if (!savedDatabase) throw INTERNAL_ERROR;
@@ -172,7 +174,7 @@ export class DriverState {
         }, lockId);
     }
 
-    createAndSelectDatabase(name: string, lockId?: string) {
+    createAndSelectDatabase(name: string, lockId = uuid()) {
         const driver = this.requireDriver(`${this.constructor.name}.${this.createAndSelectDatabase.name} > ${this.requireDriver.name}`);
         return this.tryUseWriteLock(() => fromPromise(driver.createDatabase(name)).pipe(
             tap((res) => {
@@ -185,7 +187,7 @@ export class DriverState {
         ), lockId);
     }
 
-    openTransaction(type: TransactionType, lockId?: string) {
+    openTransaction(type: TransactionType, lockId = uuid()) {
         const databaseName = this.requireDatabase(`${this.constructor.name}.${this.openTransaction.name} > ${this.requireDatabase.name}`).name;
         const action = transactionOperationActionOf("open");
         this._actionLog$.next(action);
@@ -204,7 +206,7 @@ export class DriverState {
         ), lockId);
     }
 
-    commitTransaction(lockId?: string) {
+    commitTransaction(lockId = uuid()) {
         const transactionId = this.requireTransaction(`${this.constructor.name}.${this.commitTransaction.name} > ${this.requireTransaction.name}`).id;
         const action = transactionOperationActionOf("commit");
         this._actionLog$.next(action);
@@ -223,7 +225,7 @@ export class DriverState {
         ), lockId);
     }
 
-    closeTransaction(lockId?: string) {
+    closeTransaction(lockId = uuid()) {
         const transactionId = this._transaction$.value?.id;
         if (transactionId == null) return of({});
         const action = transactionOperationActionOf("close");
