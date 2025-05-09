@@ -277,10 +277,10 @@ export class DriverState {
                 const transaction = this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`);
                 if (!this.autoTransactionEnabled$.value) this._transaction$.next(transaction);
             }),
-            tap(() => {
+            tap((res) => {
                 if (this.autoTransactionEnabled$.value) {
-                    if (this._transactionType$.value === "read") this.closeTransaction(lockId).subscribe();
-                    else this.commitTransaction(lockId).subscribe();
+                    if (this._transactionType$.value !== "read" && isOkResponse(res)) this.commitTransaction(lockId).subscribe();
+                    else this.closeTransaction(lockId).subscribe();
                 }
             }),
             catchError((err) => {
