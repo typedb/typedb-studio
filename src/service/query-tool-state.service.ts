@@ -396,7 +396,7 @@ export class TableOutputState {
             case "attribute":
                 return `${concept.value}`;
             case "value":
-                return `${concept}`;
+                return `${concept.value}`;
         }
     }
 
