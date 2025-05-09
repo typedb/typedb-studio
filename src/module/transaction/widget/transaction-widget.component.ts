@@ -67,7 +67,6 @@ export class TransactionWidgetComponent {
             else this.form.enable();
         });
         this.typeControlValueChanges$.subscribe((type) => {
-            console.log(type);
             // TODO: confirm before closing with uncommitted changes
             this.driver.closeTransaction().subscribe(() => {
                 this.driver.selectTransactionType(type);
