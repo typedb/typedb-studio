@@ -13,9 +13,9 @@
                 <time>{{ entry.startedAtTimestamp | date:'shortTime' }}</time>
                 <span class="bullet">•</span>
                 @if (isTransactionOperation(entry)) {
-                   <span class="transaction-operation-type">{{ transactionOperationString(entry) }}</span>
+                   <p class="transaction-operation-type">{{ transactionOperationString(entry) }}</p>
                 } @else {
-                  ran query
+                  <p class="transaction-operation-type">ran query</p>
                 }
                 <span class="flex-spacer"></span>
                 <div class="action-status">
