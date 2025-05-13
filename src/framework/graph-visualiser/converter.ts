@@ -61,46 +61,16 @@ export class StudioConverter implements ILogicalGraphConverter {
         return `${from_id}:${to_id}:${edge_type_id}`;
     }
 
-    private maybeCreateNode(edgeCoordinates: QueryCoordinates, key: string, attributes: VertexAttributes) {
-            if (!this.graph.hasNode(key)) {
-                this.graph.addNode(key, attributes);
-            }
-    }
-
     private maybeCreateEdge(edge: DataEdge, from: string, to:string, edge_label:string, attributes: EdgeAttributes) {
         if (this.shouldCreateEdge(edge)) {
             let key = this.edgeKey(from, to, edge_label);
             if (!this.graph.hasDirectedEdge(key)) {
                 // TODO: If there is an edge between the two vertices, make it curved
                 if (this.graph.hasDirectedEdge(from, to)) {
-                    attributes.type = "curved"
+                    attributes.type = "curved";
                 }
-                this.graph.addDirectedEdgeWithKey(key, from, to, attributes)
+                this.graph.addDirectedEdgeWithKey(key, from, to, attributes);
             }
-        }
-    }
-
-    private getKeyForVertex(vertex: DataVertex): string {
-        switch (vertex.kind) {
-            case "attribute":
-                return safe_attribute(vertex);
-            case "entity":
-            case "relation":
-                return vertex.iid;
-            case "attributeType":
-            case "entityType":
-            case "relationType":
-            case "roleType":
-                return vertex.label;
-            case "value":
-                return safe_value(vertex);
-            case "expression":
-            case "functionCall":
-                return vertex.vertex_map_key;
-            case "unavailable":
-                return unavailable_key(vertex);
-            default:
-                throw `Unexpected vertex type: ${vertex}`;
         }
     }
 
@@ -109,7 +79,7 @@ export class StudioConverter implements ILogicalGraphConverter {
     put_vertex(answerIndex: number, vertex: DataVertex, queryVertex: QueryVertex): void {
         if (!this.shouldCreateNode(vertex, queryVertex)) return;
 
-        const key = this.getKeyForVertex(vertex);
+        const key = vertexMapKey(vertex);
         if (this.graph.hasNode(key)) return;
 
         this.graph.addNode(key, this.vertexAttributes(vertex));
@@ -118,54 +88,55 @@ export class StudioConverter implements ILogicalGraphConverter {
     // Edges
     put_isa(answerIndex: number, edge: DataEdge, thing: Entity | Relation | Attribute, type: EntityType | RelationType | AttributeType): void {
         const attributes = this.edgeAttributes("isa", this.edgeMetadata(answerIndex, edge));
-        this.maybeCreateEdge(edge, safe_iid(thing), safe_label(type), "isa", attributes);
+        this.maybeCreateEdge(edge, vertexMapKey(thing), vertexMapKey(type), "isa", attributes);
     }
 
     put_has(answerIndex: number, edge: DataEdge, owner: Entity | Relation, attribute: Attribute): void {
         let attributes = this.edgeAttributes("has", this.edgeMetadata(answerIndex, edge));
-        this.maybeCreateEdge(edge, safe_iid(owner), safe_attribute(attribute), "has", attributes);
+        this.maybeCreateEdge(edge, vertexMapKey(owner), vertexMapKey(attribute), "has", attributes);
     }
 
     put_links(answerIndex: number, edge: DataEdge, relation: Relation, player: Entity | Relation, role: RoleType | VertexUnavailable): void {
-        let role_label = (role.kind == "roleType") ? safe_role_name(role) : `?`;
-        let attributes = this.edgeAttributes(role_label, this.edgeMetadata(answerIndex, edge));
-        this.maybeCreateEdge(edge, safe_iid(relation), safe_iid(player), role_label, attributes);
+        const roleLabel = role.kind === "roleType" ? role.label.split(":").at(-1) : `?`;
+        if (!roleLabel) throw `${this.put_links.name}: invalid role label '${JSON.stringify(role)}'`;
+        let attributes = this.edgeAttributes(roleLabel, this.edgeMetadata(answerIndex, edge));
+        this.maybeCreateEdge(edge, vertexMapKey(relation), vertexMapKey(player), roleLabel, attributes);
     }
 
     put_sub(answerIndex: number, edge: DataEdge, subtype: EntityType | RelationType | AttributeType, supertype: EntityType | RelationType | AttributeType): void {
         const attributes = this.edgeAttributes("sub", this.edgeMetadata(answerIndex, edge));
-        this.maybeCreateEdge(edge, safe_label(subtype), safe_label(supertype), "sub", attributes);
+        this.maybeCreateEdge(edge, vertexMapKey(subtype), vertexMapKey(supertype), "sub", attributes);
     }
 
     put_owns(answerIndex: number, edge: DataEdge, owner: EntityType | RelationType, attribute: AttributeType): void {
         let attributes = this.edgeAttributes("owns", this.edgeMetadata(answerIndex, edge));
-        this.maybeCreateEdge(edge, safe_label(owner), safe_label(attribute), "owns", attributes);
+        this.maybeCreateEdge(edge, vertexMapKey(owner), vertexMapKey(attribute), "owns", attributes);
     }
 
     put_relates(answerIndex: number, edge: DataEdge, relation: RelationType, role: RoleType): void {
         let attributes = this.edgeAttributes("relates", this.edgeMetadata(answerIndex, edge));
-        this.maybeCreateEdge(edge, safe_label(relation), safe_label(role), "relates", attributes);
+        this.maybeCreateEdge(edge, vertexMapKey(relation), vertexMapKey(role), "relates", attributes);
     }
 
     put_plays(answerIndex: number, edge: DataEdge, player: EntityType | RelationType, role: RoleType): void {
         let attributes = this.edgeAttributes("plays", this.edgeMetadata(answerIndex, edge));
-        this.maybeCreateEdge(edge, safe_label(player), safe_label(role), "plays", attributes);
+        this.maybeCreateEdge(edge, vertexMapKey(player), vertexMapKey(role), "plays", attributes);
     }
 
     put_isa_exact(answerIndex: number, edge: DataEdge, thing: Entity | Relation | Attribute, type: EntityType | RelationType | AttributeType): void {
         let attributes = this.edgeAttributes("isaExact", this.edgeMetadata(answerIndex, edge));
-        this.maybeCreateEdge(edge, safe_iid(thing), safe_label(type), "isaExact", attributes);
+        this.maybeCreateEdge(edge, vertexMapKey(thing), vertexMapKey(type), "isaExact", attributes);
     }
 
     put_sub_exact(answerIndex: number, edge: DataEdge, subtype: EntityType | RelationType | AttributeType, supertype: EntityType | RelationType | AttributeType): void {
         let attributes = this.edgeAttributes("subExact", this.edgeMetadata(answerIndex, edge));
-        this.maybeCreateEdge(edge, safe_label(subtype), safe_label(supertype), "subExact", attributes);
+        this.maybeCreateEdge(edge, vertexMapKey(subtype), vertexMapKey(supertype), "subExact", attributes);
     }
 
     put_assigned(answerIndex: number, edge: DataEdge, expr_or_func: VertexExpression | VertexFunction, assigned: Value, var_name: string): void {
         let label = "assign[" + var_name + "]";
         let attributes = this.edgeAttributes(label, this.edgeMetadata(answerIndex, edge));
-        this.maybeCreateEdge(edge, expr_or_func.vertex_map_key, safe_value(assigned), "assigned", attributes);
+        this.maybeCreateEdge(edge, expr_or_func.vertex_map_key, vertexMapKey(assigned), "assigned", attributes);
     }
 
     put_argument(answerIndex: number, edge: DataEdge, argument: Value | Attribute, expr_or_func: VertexExpression | VertexFunction, var_name: string): void {
@@ -174,11 +145,11 @@ export class StudioConverter implements ILogicalGraphConverter {
         let from_vertex_key = null;
         switch (argument.kind) {
             case "value": {
-                from_vertex_key = safe_value(argument);
+                from_vertex_key = vertexMapKey(argument);
                 break;
             }
             case "attribute": {
-                from_vertex_key = safe_iid(argument);
+                from_vertex_key = vertexMapKey(argument);
                 break;
             }
         }
@@ -202,31 +173,26 @@ export function shouldCreateEdge(edge: QueryEdge) {
     return shouldCreateNode(edge.from) && shouldCreateNode(edge.to);
 }
 
-function safe_iid(vertex: Entity | Relation | Attribute | VertexUnavailable) {
-    return (vertex.kind == "unavailable") ? unavailable_key(vertex) : vertex.iid;
-}
-
-function safe_label(vertex: Type | VertexUnavailable) {
-    return (vertex.kind == "unavailable") ? unavailable_key(vertex) : vertex.label;
-}
-
-function safe_value(vertex: Value | VertexUnavailable) {
-    return vertex.kind == "unavailable" ? unavailable_key(vertex) : `${vertex.valueType}:${vertex.value}`;
-}
-
-function safe_attribute(vertex: Attribute | VertexUnavailable) {
-    return vertex.kind == "unavailable" ? unavailable_key(vertex) : `${vertex.type.label}:${vertex.value}`;
-}
-
-function safe_role_name(vertex: RoleType | VertexUnavailable) {
-    if (vertex.kind == "unavailable") {
-        return unavailable_key(vertex);
-    } else {
-        let parts = vertex.label.split(":");
-        return parts[parts.length - 1];
+export function vertexMapKey(vertex: DataVertex): string {
+    switch (vertex.kind) {
+        case "attribute":
+            return `${vertex.type.label}:${vertex.value}`;
+        case "entity":
+        case "relation":
+            return vertex.iid;
+        case "attributeType":
+        case "entityType":
+        case "relationType":
+        case "roleType":
+            return vertex.label;
+        case "value":
+            return `${vertex.valueType}:${vertex.value}`;
+        case "expression":
+        case "functionCall":
+            return vertex.vertex_map_key;
+        case "unavailable":
+            return `unavailable[${vertex.variable}][${vertex.answerIndex}]`;
+        default:
+            throw `Unexpected vertex type: ${vertex}`;
     }
-}
-
-export function unavailable_key(vertex: VertexUnavailable): string {
-    return `unavailable[${vertex.variable}][${vertex.answerIndex}]`;
 }

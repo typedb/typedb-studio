@@ -1,11 +1,11 @@
 import chroma from "chroma-js";
 import { RoleType } from "../typedb-driver/concept";
+import { vertexMapKey } from "./converter";
 import {DataVertex, SpecialVertexKind, VertexUnavailable} from "./graph";
 import {NodeSquareProgram} from "@sigma/node-square";
 import EdgeCurveProgram from "@sigma/edge-curve";
 import {ForceLayoutSettings} from "graphology-layout-force";
 import {Settings as SigmaSettings} from "sigma/settings";
-import {unavailable_key} from "./converter";
 import {StudioConverterStructureParameters, StudioConverterStyleParameters} from "./config";
 
 export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
@@ -82,7 +82,6 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
             case "attributeType": {
                 return vertex.label;
             }
-
             case "entity":
             case "relation": {
                 return `${vertex.type.label}:${vertex.iid}`;
@@ -94,7 +93,7 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
                 return `${vertex.valueType}:${vertex.value}`;
             }
             case "unavailable": {
-                return unavailable_key(vertex);
+                return vertexMapKey(vertex);
             }
             case "functionCall":
             case "expression": {
