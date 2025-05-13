@@ -14,6 +14,7 @@ import { Subject } from "rxjs";
 import { ButtonComponent } from "../../../framework/button/button.component";
 import { FormActionsComponent, FormComponent, FormInputComponent, patternValidator, requiredValidator } from "../../../framework/form";
 import { ModalComponent } from "../../../framework/modal";
+import { isApiErrorResponse } from "../../../framework/typedb-driver/response";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 
@@ -33,6 +34,7 @@ export class DatabaseCreateDialogComponent {
     readonly form = this.formBuilder.nonNullable.group({
         name: ["", [patternValidator(/\w+/, `Special characters are not allowed`), requiredValidator]],
     });
+    errorLines: string[] = [];
 
     constructor(
         private dialogRef: MatDialogRef<DatabaseCreateDialogComponent>,
@@ -46,8 +48,15 @@ export class DatabaseCreateDialogComponent {
                 this.close();
                 this.snackbar.success("Database created successfully");
             },
-            error: () => {
+            error: (err) => {
                 this.isSubmitting$.next(false);
+                let error = ``;
+                if (isApiErrorResponse(err)) {
+                    error = err.err.message;
+                } else {
+                    error = err?.message ?? err?.toString();
+                }
+                this.errorLines = error.split(`\n`);
             },
         });
     }
