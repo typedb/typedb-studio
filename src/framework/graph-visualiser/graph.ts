@@ -1,38 +1,75 @@
-import { Attribute, Concept, RoleType, ThingKind, Type, TypeKind, ValueKind } from "../typedb-driver/concept";
-import { EdgeKind, Edge, EdgeType, Vertex } from "../typedb-driver/query-structure";
+import { Concept, EdgeKind, RoleType, ThingKind, Type, TypeKind, ValueKind } from "../typedb-driver/concept";
+import { QueryEdge, QueryEdgeType, QueryVertex } from "../typedb-driver/query-structure";
 import { ConceptRow, ConceptRowsQueryResponse } from "../typedb-driver/response";
+import { MultiGraph } from "graphology";
 
-//////////////////////////
-// Logical TypeDB Graph //
-//////////////////////////
+///////////////////////
+// TypeDB Data Graph //
+///////////////////////
 
 export type SpecialVertexKind = "unavailable" | "expression" | "functionCall";
 
 export type VertexUnavailable = { kind: "unavailable", variable: string, answerIndex: number, vertex_map_key: string };
 export type VertexExpression = { kind: "expression", repr: string, answerIndex: number, vertex_map_key: string };
 export type VertexFunction = { kind: "functionCall", repr: string, answerIndex: number, vertex_map_key: string };
-export type LogicalVertexSpecial = VertexUnavailable | VertexFunction | VertexExpression;
+export type DataVertexSpecial = VertexUnavailable | VertexFunction | VertexExpression;
 export type EdgeParameter = RoleType | VertexUnavailable | string | null;
 
-export type LogicalVertexKind = ThingKind | TypeKind | ValueKind | SpecialVertexKind;
-export type LogicalVertex = Concept | LogicalVertexSpecial;
-export type LogicalVertexID = string;
+export type DataVertexKind = ThingKind | TypeKind | ValueKind | SpecialVertexKind;
+export type DataVertex = Concept | DataVertexSpecial;
+export type DataVertexID = string;
 
-export type StructureEdgeCoordinates = { branchIndex: number, constraintIndex: number };
-export type LogicalEdge = { structureEdgeCoordinates: StructureEdgeCoordinates, type: LogicalEdgeType, from: LogicalVertexID, to: LogicalVertexID };
-export type LogicalEdgeType = { kind: EdgeKind, param: EdgeParameter };
+export type QueryCoordinates = { branch: number, constraint: number };
+export type DataEdge = { queryEdge: QueryEdge, type: DataEdgeType, from: DataVertexID, to: DataVertexID, queryCoordinates: QueryCoordinates };
+export type DataEdgeType = { kind: EdgeKind, param: EdgeParameter };
 
-export type VertexMap = Map<LogicalVertexID, LogicalVertex>;
+export type VertexMap = Map<DataVertexID, DataVertex>;
 
-export type LogicalGraph = {
+export type DataGraph = {
   vertices: VertexMap;
-  answers: Array<Array<LogicalEdge>>;
+  answers: DataEdge[][];
 }
+
+export interface VertexMetadata {
+    defaultLabel: string;
+    hoverLabel: string;
+    concept: DataVertex;
+}
+
+export interface VertexAttributes {
+    label: string;
+    color: string;
+    size: number;
+    type: string;
+    x: number;
+    y: number;
+    metadata: VertexMetadata;
+    highlighted: boolean;
+}
+
+export interface EdgeMetadata {
+    answerIndex: number;
+    dataEdge: DataEdge;
+}
+
+export interface EdgeAttributes {
+    label: string;
+    color: string;
+    size: number;
+    type: string;
+    metadata: EdgeMetadata;
+}
+
+export interface GraphAttributes {}
+
+export type VisualGraph = MultiGraph<VertexAttributes, EdgeAttributes, GraphAttributes>;
+
+export const newVisualGraph: () => VisualGraph = () => new MultiGraph<VertexAttributes, EdgeAttributes, GraphAttributes>();
 
 ///////////////////////////////////
 // TypeDB server -> logical graph
 ///////////////////////////////////
-export function constructGraphFromRowsResult(rows_result: ConceptRowsQueryResponse) : LogicalGraph {
+export function constructGraphFromRowsResult(rows_result: ConceptRowsQueryResponse) : DataGraph {
     return new LogicalGraphBuilder().build(rows_result);
 }
 
@@ -44,15 +81,15 @@ function is_branch_involved(provenanceBitArray: Array<number>, branchIndex: numb
 
 class LogicalGraphBuilder {
     vertexMap: VertexMap;
-    answers : Array<Array<LogicalEdge>> = [];
+    answers : Array<Array<DataEdge>> = [];
     constructor() {
         this.vertexMap = new Map();
         this.answers = [];
     }
 
-    build(rows_result: ConceptRowsQueryResponse) : LogicalGraph {
+    build(rows_result: ConceptRowsQueryResponse) : DataGraph {
         rows_result.answers.forEach((row, answerIndex) => {
-            let current_answer_edges: Array<LogicalEdge> = [];
+            let current_answer_edges: Array<DataEdge> = [];
             rows_result.queryStructure!.branches.forEach((branch, branchIndex) => {
                 if ( is_branch_involved(row.provenanceBitArray, branchIndex) ){
                     current_answer_edges.push(...this.substitute_variables(branchIndex, answerIndex, branch.edges, row.data))
@@ -63,17 +100,17 @@ class LogicalGraphBuilder {
         return { vertices: this.vertexMap, answers: this.answers };
     }
 
-    substitute_variables(branchIndex: number, answerIndex: number, branch: Array<Edge>, data: ConceptRow) : Array<LogicalEdge> {
-        return branch.map((structure_edge, constraintIndex) => {
-            let coordinates = { branchIndex: branchIndex, constraintIndex: constraintIndex } ;
-            let edge_type = this.extract_edge_type(structure_edge.type, answerIndex, data);
-            let from = this.register_vertex(structure_edge.from, answerIndex, data);
-            let to = this.register_vertex(structure_edge.to, answerIndex, data);
-            return { structureEdgeCoordinates: coordinates, type: edge_type, from: from, to: to }
+    substitute_variables(branchIndex: number, answerIndex: number, branch: Array<QueryEdge>, data: ConceptRow) : DataEdge[] {
+        return branch.map((queryEdge, constraintIndex) => {
+            const coordinates: QueryCoordinates = { branch: branchIndex, constraint: constraintIndex } ;
+            const edge_type = this.extract_edge_type(queryEdge.type, answerIndex, data);
+            const from = this.register_vertex(queryEdge.from, answerIndex, data);
+            const to = this.register_vertex(queryEdge.to, answerIndex, data);
+            return { queryEdge, type: edge_type, from: from, to: to, queryCoordinates: coordinates };
         });
     }
 
-    register_vertex(structure_vertex: Vertex, answerIndex: number, data: ConceptRow): LogicalVertexID {
+    register_vertex(structure_vertex: QueryVertex, answerIndex: number, data: ConceptRow): DataVertexID {
         let vertex = this.translate_vertex(structure_vertex, answerIndex, data);
         let key = null;
         switch (vertex.kind) {
@@ -115,7 +152,7 @@ class LogicalGraphBuilder {
         return vertex_id;
     }
 
-    translate_vertex(structure_vertex: Vertex, answerIndex: number, data: ConceptRow): LogicalVertex {
+    translate_vertex(structure_vertex: QueryVertex, answerIndex: number, data: ConceptRow): DataVertex {
         switch (structure_vertex.kind) {
             case "variable": {
                 return data[structure_vertex.value.variable] as Concept;
@@ -148,7 +185,7 @@ class LogicalGraphBuilder {
         }
     }
 
-    extract_edge_type(structure_edge_type: EdgeType, answerIndex: number, data: ConceptRow): LogicalEdgeType {
+    extract_edge_type(structure_edge_type: QueryEdgeType, answerIndex: number, data: ConceptRow): DataEdgeType {
         switch (structure_edge_type.kind) {
             case "isa":
             case "has":
@@ -162,7 +199,7 @@ class LogicalGraphBuilder {
                 return { kind: structure_edge_type.kind, param: null };
             }
             case "links": {
-                let role = this.translate_vertex(structure_edge_type.param as Vertex, answerIndex, data);
+                let role = this.translate_vertex(structure_edge_type.param as QueryVertex, answerIndex, data);
                 return { kind: structure_edge_type.kind, param: role as RoleType | VertexUnavailable };
             }
             case "assigned":

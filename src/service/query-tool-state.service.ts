@@ -9,10 +9,10 @@ import { FormControl } from "@angular/forms";
 import MultiGraph from "graphology";
 import { BehaviorSubject, combineLatest, first, map, Observable, ReplaySubject, startWith } from "rxjs";
 import { DriverAction } from "../concept/action";
-import { GraphVisualiser } from "../framework/graph-visualiser";
+import { createSigmaRenderer, GraphVisualiser } from "../framework/graph-visualiser";
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
+import { newVisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
-import { createSigmaRenderer } from "../framework/graph-visualiser/visualisation";
 import { Concept, Value } from "../framework/typedb-driver/concept";
 import { ApiResponse, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
 import { INTERNAL_ERROR } from "../framework/util/strings";
@@ -428,7 +428,7 @@ export class StructureOutputState {
     push(res: ApiResponse<QueryResponse>) {
         if (!this.canvasEl) throw `Missing canvas element`;
 
-        const graph = new MultiGraph();
+        const graph = newVisualGraph();
         const sigma = createSigmaRenderer(this.canvasEl, defaultSigmaSettings as any, graph);
         let layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
         // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);

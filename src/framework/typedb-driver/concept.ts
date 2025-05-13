@@ -12,6 +12,8 @@ export type ValueKind = "value";
 
 export type ValueType = "boolean" | "integer" | "double" | "decimal" | "date" | "datetime" | "datetime-tz" | "duration" | "string" | "struct";
 
+export type EdgeKind = "isa" | "has" | "links" | "sub" | "owns" | "relates" | "plays" | "isaExact" | "subExact" | "assigned" | "argument";
+
 export interface EntityType {
     kind: "entityType";
     label: string;

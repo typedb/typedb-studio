@@ -1,6 +1,6 @@
 import chroma from "chroma-js";
 import { RoleType } from "../typedb-driver/concept";
-import {LogicalVertex, SpecialVertexKind, VertexUnavailable} from "./graph";
+import {DataVertex, SpecialVertexKind, VertexUnavailable} from "./graph";
 import {NodeSquareProgram} from "@sigma/node-square";
 import EdgeCurveProgram from "@sigma/edge-curve";
 import {ForceLayoutSettings} from "graphology-layout-force";
@@ -41,7 +41,7 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
     edge_highlight_color: chroma("cyan"),
     edge_size: 2,
 
-    vertex_default_label(vertex: LogicalVertex): string {
+    vertex_default_label(vertex: DataVertex): string {
         switch (vertex.kind) {
             case "entityType":
             case "relationType":
@@ -74,7 +74,7 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
         }
     },
 
-    vertex_hover_label(vertex: LogicalVertex): string {
+    vertex_hover_label(vertex: DataVertex): string {
         switch (vertex.kind) {
             case "entityType":
             case "relationType":

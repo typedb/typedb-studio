@@ -4,53 +4,51 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { TypeKind, Value } from "./concept";
+import { EdgeKind, TypeKind, Value } from "./concept";
 
-export type EdgeKind = "isa" | "has" | "links" | "sub" | "owns" | "relates" | "plays" | "isaExact" | "subExact" | "assigned" | "argument";
+export type QueryVertexKind = "variable" | "label" | "value" | "unavailableVariable" | "expression" | "functionCall";
 
-export type QueryStructure = { branches: Array<{ edges: Array<Edge> }> };
-
-export type Edge = {
-    type: EdgeType,
-    to: Vertex,
-    from: Vertex,
-    span: { begin: number, end: number }
-};
-export type EdgeType = { kind: EdgeKind, param: Vertex | null | string };
-
-export type VertexKind = "variable" | "label" | "value" | "unavailableVariable" | "expression" | "functionCall";
-
-export interface VertexVariable {
+export interface QueryVertexVariable {
     kind: "variable";
     value: { variable: string };
 }
 
-export interface VertexLabel {
+export interface QueryVertexLabel {
     kind: "label";
     value: { kind: TypeKind, label: string };
 }
 
-export interface VertexValue {
+export interface QueryVertexValue {
     kind: "value";
     value: Value;
 }
 
-export interface VertexExpression {
+export interface QueryVertexExpression {
     kind: "expression";
     value: { repr: string };
 }
 
-export interface VertexFunction {
+export interface QueryVertexFunction {
     kind: "functionCall";
     value: { repr: string };
 }
 
-export interface VertexUnavailable {
+export interface QueryVertexUnavailable {
     kind: "unavailableVariable";
     value: { variable: string };
 }
 
-export type Vertex = VertexVariable | VertexLabel | VertexValue | VertexExpression | VertexFunction | VertexUnavailable;
+export type QueryVertex = QueryVertexVariable | QueryVertexLabel | QueryVertexValue | QueryVertexExpression | QueryVertexFunction | QueryVertexUnavailable;
 // TODO:
 // export enum VertexKindOther = { }
 
+export type QueryEdge = {
+    type: QueryEdgeType,
+    to: QueryVertex,
+    from: QueryVertex,
+    span: { begin: number, end: number }
+};
+
+export type QueryEdgeType = { kind: EdgeKind, param: QueryVertex | null | string };
+
+export type QueryStructure = { branches: { edges: QueryEdge[] }[] };
