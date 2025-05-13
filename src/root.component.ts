@@ -52,6 +52,7 @@ export class RootComponent implements OnInit, AfterViewInit {
         if (initialConnectionConfig) {
             this.driver.tryConnect(initialConnectionConfig).subscribe({
                 next: (databases) => {
+                    this.snackbar.info(`Connected to ${initialConnectionConfig.name}`);
                     this.initialised = true;
                 },
                 error: (err) => {
