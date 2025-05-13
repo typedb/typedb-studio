@@ -30,7 +30,7 @@ export class SnackbarService {
     }
 
     info(message: string, config?: MatSnackBarConfig<SnackbarData>) {
-        return this.open(message, "info", Object.assign({ duration: 10000 }, config));
+        return this.open(message, "info", Object.assign({ duration: 4000 }, config));
     }
 
     infoPersistent(message: string, config?: MatSnackBarConfig<SnackbarData>) {
@@ -38,7 +38,7 @@ export class SnackbarService {
     }
 
     warn(message: string, config?: MatSnackBarConfig<SnackbarData>) {
-        return this.open(message, "warn", Object.assign({ duration: 10000 }, config));
+        return this.open(message, "warn", Object.assign({ duration: 4000 }, config));
     }
 
     warnPersistent(message: string, config?: MatSnackBarConfig<SnackbarData>) {
