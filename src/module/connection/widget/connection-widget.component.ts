@@ -105,6 +105,7 @@ export class ConnectionWidgetComponent implements OnInit {
 
     selectDatabase(database: Database) {
         this.driver.selectDatabase(database);
+        this.snackbar.info(`Now using database '${database.name}'`);
     }
 
     openCreateDatabaseDialog() {

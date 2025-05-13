@@ -69,6 +69,9 @@ export class QueryToolState {
         this.driver.query(query).subscribe({
             next: (res) => {
                 this.outputQueryResponse(res);
+                if (isApiErrorResponse(res)) {
+                    this.snackbar.errorPersistent(res.err.message);
+                }
             },
             error: (err) => {
                 this.driver.checkHealth().subscribe({

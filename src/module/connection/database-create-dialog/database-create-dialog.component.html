@@ -1,10 +1,13 @@
 <tp-modal dialogTitle="Create database" [isBusy]="isSubmitting$ | async">
-  <p>A database is an isolated data store comprising its own schema and dataset.</p>
+  <p class="description">A database is an isolated data store comprising its own schema and dataset.</p>
   <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
     <tp-form-input type="text" [form]="form" field="name" label="Database name" />
     <tp-form-actions
       [cancellable]="true" submitText="Create database" [isSubmitting]="isSubmitting$ | async"
       buttonIdPrefix="createDatabaseModal" (cancel)="close()"
     />
+    @if (errorLines) {
+      <mat-error>@for (line of errorLines; track line) {<p>{{ line }}</p>}</mat-error>
+    }
   </tp-form>
 </tp-modal>
