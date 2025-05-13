@@ -166,9 +166,9 @@ function conceptDisplayString(concept: Concept | undefined): string {
         case "relation":
             return `${concept.type ? formatIsa(concept.type.label) : ""}, ${formatIid(concept.iid)}`;
         case "attribute":
-            return `${concept.type ? formatIsa(concept.type.label) : ""} ${formatValue(concept.value)}`;
+            return `${concept.type ? formatIsa(concept.type.label) : ""} ${concept.value}`;
         case "value":
-            return formatValue(concept);
+            return `${concept.value}`;
     }
 }
 
@@ -185,10 +185,6 @@ function formatIid(iid: string): string {
 function formatIsa(label: string): string {
     return `${formatKeyword("isa")} ${label}`;
     // return `${this.formatKeyword("isa")} \x1b[95m${label}\x1b[0m`;
-}
-
-function formatValue(value: Value): string {
-    return value.toString();
 }
 
 function formatKeyword(keyword: string): string {
