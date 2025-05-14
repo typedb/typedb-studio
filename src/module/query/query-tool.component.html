@@ -119,7 +119,7 @@
               </div>
             }
             <div class="answers-container answers-structure-container" [class]="state.outputTypeControl.value === 'graph' ? '' : 'invisible'">
-              <div id="structureView" #structureViewRef>
+              <div id="structureView" #graphViewRef>
                 @switch (state.graphOutput.status) {
                   @case ("error") {
                     <p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p>
