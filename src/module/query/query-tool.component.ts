@@ -72,7 +72,7 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
             map(x => x as QueryList<ElementRef<HTMLElement>>),
             first(queryList => queryList.length > 0)
         ).subscribe((queryList) => {
-            this.state.structureOutput.canvasEl = queryList.first.nativeElement;
+            this.state.graphOutput.canvasEl = queryList.first.nativeElement;
         });
     }
 
