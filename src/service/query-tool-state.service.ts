@@ -292,7 +292,7 @@ export class LogOutputState {
 
 type TableOutputStatus = "ok" | "running" | "answerlessQueryType" | "answerOutputDisabled" | "noColumns" | "noAnswers" | "error";
 
-type TableRow = { [column: string]: any };
+type TableRow = { [column: string]: string };
 
 export class TableOutputState {
 
@@ -352,7 +352,7 @@ export class TableOutputState {
                         this.status = "ok";
                         this.appendColumns(...keys);
                         setTimeout(() => {
-                            this.appendRows(...answers);
+                            this.appendRows(...answers.map(answer => Object.fromEntries(Object.entries(answer).map(([k, v]) => [k, JSON.stringify(v)]))));
                         });
                     } else this.status = "noColumns";
                 } else this.status = "noAnswers";
@@ -375,8 +375,8 @@ export class TableOutputState {
         this.displayedColumns.push(...columns);
     }
 
-    private appendRows(...rows: { [column: string]: any }[]) {
-        this._data$.value.push(Object.fromEntries(Object.entries(rows).map(([k, v]) => [k, JSON.stringify(v)])));
+    private appendRows(...rows: { [column: string]: string }[]) {
+        this._data$.value.push(...rows);
         this._data$.next(this._data$.value);
     }
 
@@ -411,7 +411,7 @@ export class TableOutputState {
     }
 }
 
-type GraphOutputStatus = "ok" | "running" | "answerlessQueryType" | "answerOutputDisabled" | "noAnswers" | "error";
+type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noAnswers" | "error";
 
 export class GraphOutputState {
 
@@ -440,7 +440,7 @@ export class GraphOutputState {
 
         switch (res.ok.answerType) {
             case "ok": {
-                this.status = "answerlessQueryType";
+                this.status = "graphlessQueryType";
                 break;
             }
             case "conceptRows": {
@@ -470,7 +470,7 @@ export class GraphOutputState {
                 break;
             }
             case "conceptDocuments": {
-                // TODO: documents
+                this.status = "graphlessQueryType";
                 break;
             }
             default:
