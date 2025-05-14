@@ -6,11 +6,11 @@
 
 import { AsyncPipe } from "@angular/common";
 import { Component, Inject } from "@angular/core";
-import { FormBuilder, FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { AbstractControl, AsyncValidatorFn, FormBuilder, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
-import { Subject } from "rxjs";
+import { combineLatest, first, map, Subject } from "rxjs";
 import { ButtonComponent } from "../../../framework/button/button.component";
 import { FormActionsComponent, FormComponent, FormInputComponent, patternValidator, requiredValidator } from "../../../framework/form";
 import { ModalComponent } from "../../../framework/modal";
@@ -30,9 +30,17 @@ import { SnackbarService } from "../../../service/snackbar.service";
 })
 export class DatabaseCreateDialogComponent {
 
+    private uniqueValidator: AsyncValidatorFn = (control: AbstractControl<string>) => {
+        return this.driver.databaseList$.pipe(
+            first(),
+            map((databases) => databases?.some(x => x.name === control.value) ?? false),
+            map((hasConflict) => hasConflict ? { errorText: `A database named '${control.value}' already exists` } : null)
+        );
+    }
+
     readonly isSubmitting$ = new Subject<boolean>();
     readonly form = this.formBuilder.nonNullable.group({
-        name: ["", [patternValidator(/\w+/, `Special characters are not allowed`), requiredValidator]],
+        name: ["", [patternValidator(/^[\w-_]+$/, `Spaces and special characters are not allowed (except - and _)`), requiredValidator], [this.uniqueValidator]],
     });
     errorLines: string[] = [];
 
@@ -46,7 +54,7 @@ export class DatabaseCreateDialogComponent {
         this.driver.createAndSelectDatabase(this.form.value.name!).subscribe({
             next: () => {
                 this.close();
-                this.snackbar.success("Database created successfully");
+                this.snackbar.success(`Database '${this.form.value.name}' created successfully`);
             },
             error: (err) => {
                 this.isSubmitting$.next(false);
