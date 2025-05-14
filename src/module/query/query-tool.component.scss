@@ -166,8 +166,17 @@ button {
 
 .status-text {
     @include typography.p1;
-    margin: auto;
-    z-index: 10;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    text-align: center;
+    z-index: 10; /* Ensure it's above the canvas elements */
+    white-space: normal !important;
+    overflow-wrap: break-word;
+    padding: 10px;
+    margin: 0;
 }
 
 .answers-placeholder-container {
