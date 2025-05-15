@@ -13,7 +13,7 @@ import { ConnectionConfig, databasesSortedByName, DEFAULT_DATABASE_NAME } from "
 import { Transaction } from "../concept/transaction";
 import { TypeDBHttpDriver } from "../framework/typedb-driver";
 import { Database } from "../framework/typedb-driver/database";
-import { ApiResponse, isApiErrorResponse, isOkResponse, QueryResponse } from "../framework/typedb-driver/response";
+import { ApiResponse, isApiErrorResponse, isOkResponse, QueryResponse, VersionResponse } from "../framework/typedb-driver/response";
 import { requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { AppData } from "./app-data.service";
@@ -24,6 +24,13 @@ export type DriverStatus = "disconnected" | "connecting" | "connected" | "reconn
 interface Semaphore {
     id: string;
     count: number;
+}
+
+interface ServerVersion {
+    major: number;
+    minor: number;
+    patch: number;
+    suffix?: string;
 }
 
 @Injectable({
@@ -109,6 +116,16 @@ export class DriverState {
                     this._connection$.next(config);
                     this._status$.next("connecting");
                     this.driver = new TypeDBHttpDriver(config.params);
+                }),
+                switchMap(() => this.checkServerVersion()),
+                tap((res) => {
+                    if (isOkResponse(res) && res.ok != null) {
+                        const rawVersion = (res.ok as Partial<VersionResponse>).version;
+                        const parsedVersion = this.parseServerVersionOrNull(rawVersion);
+                        if (parsedVersion?.major === 3 && parsedVersion.minor >= 3) return;
+                        else if (parsedVersion == null) throw { customError: `Unsupported TypeDB server version.\nTypeDB Studio supports TypeDB 3.3.0 and above.` };
+                        else throw { customError: `Unsupported TypeDB server version: ${rawVersion}.\nTypeDB Studio supports TypeDB 3.3.0 and above.` };
+                    } else throw res;
                 }),
                 switchMap(() => this.refreshDatabaseList()),
                 switchMap((res) => {
@@ -295,6 +312,18 @@ export class DriverState {
     checkHealth() {
         const driver = this.requireDriver(`${this.constructor.name}.${this.checkHealth.name} > ${this.requireDriver.name}`);
         return fromPromise(driver.health());
+    }
+
+    checkServerVersion() {
+        const driver = this.requireDriver(`${this.constructor.name}.${this.checkServerVersion.name} > ${this.requireDriver.name}`);
+        return fromPromise(driver.version());
+    }
+
+    private parseServerVersionOrNull(raw: string | undefined): ServerVersion | null {
+        if (!raw?.length) return null;
+        const [body, suffix] = raw.split(`-`) as [string, string?];
+        const [major, minor, patch] = body.split(`.`).map(x => parseInt(x));
+        return { major, minor, patch, suffix };
     }
 
     sendStopSignal() {

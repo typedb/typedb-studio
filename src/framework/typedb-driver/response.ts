@@ -12,6 +12,13 @@ export interface SignInResponse {
     token: string;
 }
 
+export type Distribution = `TypeDB Cluster` | `TypeDB CE`;
+
+export interface VersionResponse {
+    distribution: Distribution;
+    version: string;
+}
+
 export interface DatabasesListResponse {
     databases: Database[];
 }
@@ -73,9 +80,9 @@ export function isApiError(err: any): err is ApiError {
     return typeof err.code === "string" && typeof err.message === "string";
 }
 
-export type ApiResponse<OK_RES = {}> = { ok: OK_RES } | ApiErrorResponse;
+export type ApiResponse<OK_RES = {} | null> = { ok: OK_RES } | ApiErrorResponse;
 
-export function isOkResponse(res: ApiResponse): res is { ok: {} } {
+export function isOkResponse<OK_RES>(res: ApiResponse<OK_RES>): res is { ok: OK_RES } {
     return "ok" in res;
 }
 
