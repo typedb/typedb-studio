@@ -50,7 +50,7 @@ export interface OkQueryResponse extends QueryResponseBase {
 export interface ConceptRowsQueryResponse extends QueryResponseBase {
     answerType: "conceptRows";
     answers: {
-        provenanceBitArray: number[];
+        involvedBlocks: number[];
         data: ConceptRow
     }[];
 }

@@ -35,7 +35,8 @@ export type AttributeType = {
     valueType: ValueType;
 }
 
-export type Type = EntityType | RelationType | RoleType | AttributeType;
+export type Type = InstantiableType | RoleType;
+export type InstantiableType = EntityType | RelationType | AttributeType;
 
 export interface Entity {
     kind: "entity";

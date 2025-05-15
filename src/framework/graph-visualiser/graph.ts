@@ -1,7 +1,31 @@
-import { Concept, EdgeKind, RoleType, ThingKind, Type, TypeKind, ValueKind } from "../typedb-driver/concept";
-import { QueryEdge, QueryEdgeType, QueryVertex } from "../typedb-driver/query-structure";
-import { ConceptRow, ConceptRowsQueryResponse } from "../typedb-driver/response";
-import { MultiGraph } from "graphology";
+import {
+    Attribute, AttributeType,
+    Concept,
+    EdgeKind, Entity, EntityType,
+    InstantiableType, Relation, RelationType,
+    RoleType,
+    ThingKind,
+    Type,
+    TypeKind, Value,
+    ValueKind
+} from "../typedb-driver/concept";
+import {
+    QueryConstraintAny,
+    QueryConstraintExpression,
+    QueryConstraintFunction,
+    QueryConstraintHas,
+    QueryConstraintIsa,
+    QueryConstraintIsaExact,
+    QueryConstraintLinks,
+    QueryConstraintOwns,
+    QueryConstraintPlays,
+    QueryConstraintRelates,
+    QueryConstraintSpan,
+    QueryConstraintSub, QueryConstraintSubExact,
+    QueryVertex,
+} from "../typedb-driver/query-structure";
+import {ConceptRow, ConceptRowsQueryResponse} from "../typedb-driver/response";
+import {MultiGraph} from "graphology";
 
 ///////////////////////
 // TypeDB Data Graph //
@@ -13,21 +37,137 @@ export type VertexUnavailable = { kind: "unavailable", variable: string, answerI
 export type VertexExpression = { kind: "expression", repr: string, answerIndex: number, vertex_map_key: string };
 export type VertexFunction = { kind: "functionCall", repr: string, answerIndex: number, vertex_map_key: string };
 export type DataVertexSpecial = VertexUnavailable | VertexFunction | VertexExpression;
-export type EdgeParameter = RoleType | VertexUnavailable | string | null;
 
 export type DataVertexKind = ThingKind | TypeKind | ValueKind | SpecialVertexKind;
 export type DataVertex = Concept | DataVertexSpecial;
-export type DataVertexID = string;
 
 export type QueryCoordinates = { branch: number, constraint: number };
-export type DataEdge = { queryEdge: QueryEdge, type: DataEdgeType, from: DataVertexID, to: DataVertexID, queryCoordinates: QueryCoordinates };
-export type DataEdgeType = { kind: EdgeKind, param: EdgeParameter };
-
-export type VertexMap = Map<DataVertexID, DataVertex>;
 
 export type DataGraph = {
-  vertices: VertexMap;
-  answers: DataEdge[][];
+    answers: DataConstraintAny[][];
+}
+
+export type DataConstraintAny = DataConstraintIsa | DataConstraintIsaExact | DataConstraintHas | DataConstraintLinks |
+    DataConstraintSub | DataConstraintSubExact | DataConstraintOwns | DataConstraintRelates | DataConstraintPlays |
+    DataConstraintExpression | DataConstraintFunction;
+
+export type DataConstraintSpan = QueryConstraintSpan;
+
+// Instance
+export interface DataConstraintIsa {
+    tag: "isa",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: QueryConstraintIsa,
+
+    instance: Entity | Relation | Attribute | VertexUnavailable,
+    type: InstantiableType | VertexUnavailable,
+}
+
+export interface DataConstraintIsaExact {
+    tag: "isa!",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: QueryConstraintIsaExact,
+
+    instance: Entity | Relation | Attribute | VertexUnavailable,
+    type: InstantiableType | VertexUnavailable,
+}
+
+export interface DataConstraintHas {
+    tag: "has",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: QueryConstraintHas,
+
+    owner: Entity | Relation | VertexUnavailable,
+    attribute: Attribute | VertexUnavailable,
+}
+
+
+export interface DataConstraintLinks {
+    tag: "links",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: QueryConstraintLinks,
+
+    relation: Relation | VertexUnavailable,
+    player: Relation | Entity | VertexUnavailable,
+    role: RoleType | VertexUnavailable,
+}
+
+// Type
+export interface DataConstraintSub {
+    tag: "sub",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: QueryConstraintSub,
+
+    subtype: Type | VertexUnavailable,
+    supertype: Type | VertexUnavailable,
+}
+
+export interface DataConstraintSubExact {
+    tag: "sub!",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: QueryConstraintSubExact,
+
+    subtype: Type | VertexUnavailable,
+    supertype: Type | VertexUnavailable,
+}
+
+export interface DataConstraintOwns {
+    tag: "owns",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: QueryConstraintOwns,
+
+    owner: EntityType | RelationType | VertexUnavailable,
+    attribute: AttributeType | VertexUnavailable,
+}
+
+export interface DataConstraintRelates {
+    tag: "relates",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: QueryConstraintRelates,
+
+    relation: RelationType | VertexUnavailable,
+    role: RoleType | VertexUnavailable,
+}
+
+export interface DataConstraintPlays {
+    tag: "plays",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: QueryConstraintPlays,
+
+    player: EntityType | RelationType | VertexUnavailable,
+    role: RoleType | VertexUnavailable,
+}
+
+// Function
+export interface DataConstraintExpression {
+    tag: "expression",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: QueryConstraintExpression,
+
+    text: string,
+    arguments: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
+    assigned: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
+}
+
+export interface DataConstraintFunction {
+    tag: "function",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: QueryConstraintFunction,
+
+    name: string,
+    arguments: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
+    assigned: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
 }
 
 export interface VertexMetadata {
@@ -49,7 +189,7 @@ export interface VertexAttributes {
 
 export interface EdgeMetadata {
     answerIndex: number;
-    dataEdge: DataEdge;
+    dataEdge: DataConstraintAny;
 }
 
 export interface EdgeAttributes {
@@ -60,7 +200,8 @@ export interface EdgeAttributes {
     metadata: EdgeMetadata;
 }
 
-export interface GraphAttributes {}
+export interface GraphAttributes {
+}
 
 export type VisualGraph = MultiGraph<VertexAttributes, EdgeAttributes, GraphAttributes>;
 
@@ -69,7 +210,7 @@ export const newVisualGraph: () => VisualGraph = () => new MultiGraph<VertexAttr
 ///////////////////////////////////
 // TypeDB server -> logical graph
 ///////////////////////////////////
-export function constructGraphFromRowsResult(rows_result: ConceptRowsQueryResponse) : DataGraph {
+export function constructGraphFromRowsResult(rows_result: ConceptRowsQueryResponse): DataGraph {
     return new LogicalGraphBuilder().build(rows_result);
 }
 
@@ -80,104 +221,45 @@ function is_branch_involved(provenanceBitArray: Array<number>, branchIndex: numb
 }
 
 class LogicalGraphBuilder {
-    vertexMap: VertexMap;
-    answers : Array<Array<DataEdge>> = [];
     constructor() {
-        this.vertexMap = new Map();
-        this.answers = [];
     }
 
-    build(rows_result: ConceptRowsQueryResponse) : DataGraph {
+    build(rows_result: ConceptRowsQueryResponse): DataGraph {
+        let answers: DataConstraintAny[][] = [];
         rows_result.answers.forEach((row, answerIndex) => {
-            let current_answer_edges: Array<DataEdge> = [];
-            rows_result.queryStructure!.branches.forEach((branch, branchIndex) => {
-                if ( is_branch_involved(row.provenanceBitArray, branchIndex) ){
-                    current_answer_edges.push(...this.substitute_variables(branchIndex, answerIndex, branch.edges, row.data))
-                }
+            let current_answer_edges = row.involvedBlocks.flatMap(branchIndex => {
+                return rows_result.queryStructure!.blocks[branchIndex].constraints.map((constraint, constraintIndex) => {
+                    return this.toDataConstraint(answerIndex, constraint, row.data, {
+                        branch: branchIndex,
+                        constraint: constraintIndex
+                    });
+                });
             });
-            this.answers.push(current_answer_edges);
+            answers.push(current_answer_edges);
         });
-        return { vertices: this.vertexMap, answers: this.answers };
-    }
-
-    substitute_variables(branchIndex: number, answerIndex: number, branch: Array<QueryEdge>, data: ConceptRow) : DataEdge[] {
-        return branch.map((queryEdge, constraintIndex) => {
-            const coordinates: QueryCoordinates = { branch: branchIndex, constraint: constraintIndex } ;
-            const edge_type = this.extract_edge_type(queryEdge.type, answerIndex, data);
-            const from = this.register_vertex(queryEdge.from, answerIndex, data);
-            const to = this.register_vertex(queryEdge.to, answerIndex, data);
-            return { queryEdge, type: edge_type, from: from, to: to, queryCoordinates: coordinates };
-        });
-    }
-
-    register_vertex(structure_vertex: QueryVertex, answerIndex: number, data: ConceptRow): DataVertexID {
-        let vertex = this.translate_vertex(structure_vertex, answerIndex, data);
-        let key = null;
-        switch (vertex.kind) {
-            case "attribute": {
-                key = vertex.type.label + ":" + vertex.value;
-                break;
-            }
-            case "entity":
-            case "relation": {
-                key = vertex.iid;
-                break;
-            }
-            case "attributeType":
-            case "entityType":
-            case "relationType":
-            case "roleType": {
-                key = vertex.label;
-                break;
-            }
-            case "value": {
-                key = (vertex.valueType + ":" + vertex.value);
-                break;
-            }
-            case "unavailable": {
-                key = vertex.vertex_map_key;
-                break;
-            }
-            case "functionCall": {
-                key = vertex.vertex_map_key;
-                break;
-            }
-            case "expression": {
-                key = vertex.vertex_map_key;
-                break;
-            }
-        }
-        let vertex_id = key;
-        this.vertexMap.set(vertex_id, vertex);
-        return vertex_id;
+        return {answers: answers};
     }
 
     translate_vertex(structure_vertex: QueryVertex, answerIndex: number, data: ConceptRow): DataVertex {
-        switch (structure_vertex.kind) {
+        switch (structure_vertex.tag) {
             case "variable": {
-                return data[structure_vertex.value.variable] as Concept;
-            } 
+                return data[structure_vertex.variable] as Concept;
+            }
             case "label": {
-                let vertex= structure_vertex.value;
-                return { kind: vertex.kind, label: vertex.label } as Type;
+                let vertex = structure_vertex.type;
+                return {kind: vertex.kind, label: vertex.label} as Type;
             }
             case "value": {
                 return structure_vertex.value;
             }
             case "unavailableVariable": {
-                let vertex = structure_vertex.value;
-                let key = "unavailable[" + vertex.variable + "][" + answerIndex + "]";
-                return { kind: "unavailable", vertex_map_key: key, answerIndex: answerIndex, variable: vertex.variable } as VertexUnavailable;
-            }
-            case "expression": {
-                let vertex = structure_vertex.value;
-                let key = vertex.repr + "[" + answerIndex + "]";
-                return { kind: "expression", vertex_map_key: key, answerIndex: answerIndex, repr: vertex.repr } as VertexExpression;
-            }
-            case "functionCall": {
-                let vertex = structure_vertex.value;
-                let key = vertex.repr + "[" + answerIndex + "]";
-                return { kind: "functionCall", vertex_map_key: key, answerIndex: answerIndex, repr: vertex.repr } as VertexFunction;
+                let key = "unavailable[" + structure_vertex.variable + "][" + answerIndex + "]";
+                return {
+                    kind: "unavailable",
+                    vertex_map_key: key,
+                    answerIndex: answerIndex,
+                    variable: structure_vertex.variable
+                } as VertexUnavailable;
             }
             default: {
                 throw new Error("Unsupported vertex type: " + structure_vertex);
@@ -185,30 +267,135 @@ class LogicalGraphBuilder {
         }
     }
 
-    extract_edge_type(structure_edge_type: QueryEdgeType, answerIndex: number, data: ConceptRow): DataEdgeType {
-        switch (structure_edge_type.kind) {
-            case "isa":
-            case "has":
-            case "sub":
-            case "owns":
-            case "relates":
-            case "plays":
-            case "isaExact":
-            case "subExact":
-            {
-                return { kind: structure_edge_type.kind, param: null };
+    private toDataConstraint(answerIndex: number, constraint: QueryConstraintAny, data: ConceptRow, coordinates: QueryCoordinates): DataConstraintAny {
+        switch (constraint.tag) {
+            case "isa": {
+                return {
+                    tag: "isa",
+                    textSpan: constraint.textSpan,
+                    queryCoordinates: coordinates,
+                    queryConstraint: constraint,
+
+                    instance: this.translate_vertex(constraint.instance, answerIndex, data) as (Entity | Relation | Attribute | VertexUnavailable),
+                    type: this.translate_vertex(constraint.type, answerIndex, data) as (InstantiableType | VertexUnavailable),
+                }
+            }
+            case "isa!": {
+                return {
+                    tag: "isa!",
+                    textSpan: constraint.textSpan,
+                    queryCoordinates: coordinates,
+                    queryConstraint: constraint,
+
+                    instance: this.translate_vertex(constraint.instance, answerIndex, data) as (Entity | Relation | Attribute | VertexUnavailable),
+                    type: this.translate_vertex(constraint.type, answerIndex, data) as (InstantiableType | VertexUnavailable),
+                }
+            }
+            case "has": {
+                return {
+                    tag: "has",
+                    textSpan: constraint.textSpan,
+                    queryCoordinates: coordinates,
+                    queryConstraint: constraint,
+
+                    owner: this.translate_vertex(constraint.owner, answerIndex, data) as (Entity | Relation | VertexUnavailable),
+                    attribute: this.translate_vertex(constraint.attribute, answerIndex, data) as (Attribute | VertexUnavailable),
+                }
             }
             case "links": {
-                let role = this.translate_vertex(structure_edge_type.param as QueryVertex, answerIndex, data);
-                return { kind: structure_edge_type.kind, param: role as RoleType | VertexUnavailable };
+                return {
+                    tag: "links",
+                    textSpan: constraint.textSpan,
+                    queryCoordinates: coordinates,
+                    queryConstraint: constraint,
+
+                    relation: this.translate_vertex(constraint.relation, answerIndex, data) as (Relation | VertexUnavailable),
+                    player: this.translate_vertex(constraint.player, answerIndex, data) as (Entity | Relation | VertexUnavailable),
+                    role: this.translate_vertex(constraint.role, answerIndex, data) as (RoleType | VertexUnavailable),
+                }
             }
-            case "assigned":
-            case "argument":{
-                return { kind: structure_edge_type.kind, param: structure_edge_type.param as string };
+            case "sub": {
+                return {
+                    tag: "sub",
+                    textSpan: constraint.textSpan,
+                    queryCoordinates: coordinates,
+                    queryConstraint: constraint,
+
+                    subtype: this.translate_vertex(constraint.subtype, answerIndex, data) as (Type | VertexUnavailable),
+                    supertype: this.translate_vertex(constraint.supertype, answerIndex, data) as (Type | VertexUnavailable),
+                }
+            }
+            case "sub!": {
+                return {
+                    tag: "sub!",
+                    textSpan: constraint.textSpan,
+                    queryCoordinates: coordinates,
+                    queryConstraint: constraint,
+
+                    subtype: this.translate_vertex(constraint.subtype, answerIndex, data) as (Type | VertexUnavailable),
+                    supertype: this.translate_vertex(constraint.supertype, answerIndex, data) as (Type | VertexUnavailable),
+                }
+            }
+            case "owns": {
+                return {
+                    tag: "owns",
+                    textSpan: constraint.textSpan,
+                    queryCoordinates: coordinates,
+                    queryConstraint: constraint,
+
+                    owner: this.translate_vertex(constraint.owner, answerIndex, data) as (EntityType | RelationType | VertexUnavailable),
+                    attribute: this.translate_vertex(constraint.attribute, answerIndex, data) as (AttributeType | VertexUnavailable),
+                }
+            }
+            case "relates": {
+                return {
+                    tag: "relates",
+                    textSpan: constraint.textSpan,
+                    queryCoordinates: coordinates,
+                    queryConstraint: constraint,
+
+                    relation: this.translate_vertex(constraint.relation, answerIndex, data) as (RelationType | VertexUnavailable),
+                    role: this.translate_vertex(constraint.role, answerIndex, data) as (RoleType | VertexUnavailable),
+                }
+            }
+            case "plays": {
+                return {
+                    tag: "plays",
+                    textSpan: constraint.textSpan,
+                    queryCoordinates: coordinates,
+                    queryConstraint: constraint,
+
+                    player: this.translate_vertex(constraint.player, answerIndex, data) as (EntityType | RelationType | VertexUnavailable),
+                    role: this.translate_vertex(constraint.role, answerIndex, data) as (RoleType | VertexUnavailable),
+                }
+            }
+            case "expression": {
+                return {
+                    tag: "expression",
+                    textSpan: constraint.textSpan,
+                    queryCoordinates: coordinates,
+                    queryConstraint: constraint,
+
+                    text: constraint.text,
+                    arguments: constraint.arguments.map(vertex => this.translate_vertex(vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
+                    assigned: constraint.assigned.map(vertex => this.translate_vertex(vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
+                }
+            }
+            case "functionCall": {
+                return {
+                    tag: "function",
+                    textSpan: constraint.textSpan,
+                    queryCoordinates: coordinates,
+                    queryConstraint: constraint,
+
+                    name: constraint.name,
+                    arguments: constraint.arguments.map(vertex => this.translate_vertex(vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
+                    assigned: constraint.assigned.map(vertex => this.translate_vertex(vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
+                }
             }
             default: {
-                console.log("Unsupported EdgeKind:"+ structure_edge_type)
-                throw new Error("Unsupported EdgeKind:"+ structure_edge_type.kind);
+                console.log("Unsupported Constraint:" + constraint)
+                throw new Error("Unsupported Constraint:" + constraint);
             }
         }
     }

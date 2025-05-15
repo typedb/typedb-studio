@@ -17,10 +17,10 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
         relationType: chroma("orange"),
         attributeType: chroma("darkgreen"),
         roleType: chroma("darkorange"),
-        value: chroma("white"),
+        value: chroma("grey"),
         unavailable: chroma("darkgrey"),
-        expression: chroma("black"),
-        functionCall: chroma("black")
+        expression: chroma("white"),
+        functionCall: chroma("white")
     },
     vertex_shapes: {
         entity: "circle",
