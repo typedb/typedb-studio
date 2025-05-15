@@ -99,7 +99,7 @@ export class QueryToolState {
     private initialiseOutput(query: string) {
         this.logOutput.clear();
         this.tableOutput.clear();
-        this.graphOutput.clear();
+        this.graphOutput.destroy();
         this.rawOutput.clear();
 
         this.logOutput.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);
@@ -478,8 +478,8 @@ export class GraphOutputState {
         }
     }
 
-    clear() {
-        this.visualiser?.clear();
+    destroy() {
+        this.visualiser?.destroy();
     }
 }
 

@@ -175,15 +175,12 @@ export class GraphVisualiser {
         return chroma([r,g,b]);
     }
 
-    clear() {
-        this.sigma = this.sigma.clear();
+    destroy() {
+        this.sigma.kill();
     }
 }
 
 export function createSigmaRenderer(containerEl: HTMLElement, sigma_settings: SigmaSettings, graph: MultiGraph) : Sigma {
     // Create the sigma
     return new Sigma(graph, containerEl, sigma_settings);
-    // return () => {
-    //   renderer.kill();
-    // };
 }
