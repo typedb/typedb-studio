@@ -18,7 +18,7 @@ import { MatTableModule } from "@angular/material/table";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
-import { distinctUntilChanged, filter, first, map } from "rxjs";
+import { distinctUntilChanged, filter, first, map, startWith } from "rxjs";
 import { TypeQL } from "../../framework/codemirror-lang-typeql";
 import { DriverAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
@@ -70,9 +70,9 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
         this.resizables.first.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
         this.graphViewRef.changes.pipe(
             map(x => x as QueryList<ElementRef<HTMLElement>>),
+            startWith(this.graphViewRef),
             filter(queryList => queryList.length > 0),
             map(x => x.first.nativeElement),
-            distinctUntilChanged(),
         ).subscribe((canvasEl) => {
             this.state.graphOutput.canvasEl = canvasEl;
         });
