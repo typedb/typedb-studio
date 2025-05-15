@@ -133,6 +133,9 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
     zoomToSizeRatioFunction: (x) => x,
     minCameraRatio: 0.1,
     maxCameraRatio: 10,
+    labelColor: {
+        color: `#958fa8`,
+    },
     renderEdgeLabels: true,
     nodeProgramClasses: {
         square: NodeSquareProgram,
