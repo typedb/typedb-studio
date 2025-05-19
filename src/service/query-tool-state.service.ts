@@ -9,17 +9,17 @@ import { FormControl } from "@angular/forms";
 import MultiGraph from "graphology";
 import { BehaviorSubject, combineLatest, first, map, Observable, ReplaySubject, startWith } from "rxjs";
 import { DriverAction } from "../concept/action";
-import { GraphVisualiser } from "../framework/graph-visualiser";
+import { createSigmaRenderer, GraphVisualiser } from "../framework/graph-visualiser";
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
+import { newVisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
-import { createSigmaRenderer } from "../framework/graph-visualiser/visualisation";
 import { Concept, Value } from "../framework/typedb-driver/concept";
 import { ApiResponse, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
 import { SnackbarService } from "./snackbar.service";
 
-export type OutputType = "raw" | "log" | "table" | "structure";
+export type OutputType = "raw" | "log" | "table" | "graph";
 
 const NO_SERVER_CONNECTED = `No server connected`;
 const NO_DATABASE_SELECTED = `No database selected`;
@@ -33,11 +33,11 @@ export class QueryToolState {
 
     queryControl = new FormControl("", {nonNullable: true});
     outputTypeControl = new FormControl("log" as OutputType, { nonNullable: true });
-    outputTypes: OutputType[] = ["log", "table"/*, "structure"*/, "raw"];
+    outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
     readonly history = new HistoryWindowState(this.driver);
     readonly logOutput = new LogOutputState();
     readonly tableOutput = new TableOutputState();
-    // readonly structureOutput = new StructureOutputState();
+    readonly graphOutput = new GraphOutputState();
     readonly rawOutput = new RawOutputState();
     answersOutputEnabled = true;
     readonly runDisabledReason$ = combineLatest(
@@ -99,14 +99,14 @@ export class QueryToolState {
     private initialiseOutput(query: string) {
         this.logOutput.clear();
         this.tableOutput.clear();
-        // this.structureOutput.clear();
+        this.graphOutput.destroy();
         this.rawOutput.clear();
 
         this.logOutput.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);
         this.tableOutput.status = "running";
-        // this.structureOutput.status = "running";
-        // this.structureOutput.query = query;
-        // this.structureOutput.database = this.driver.requireDatabase(`${this.constructor.name}.${this.initialiseOutput.name} > requireValue(driver.database$)`).name;
+        this.graphOutput.status = "running";
+        this.graphOutput.query = query;
+        this.graphOutput.database = this.driver.requireDatabase(`${this.constructor.name}.${this.initialiseOutput.name} > requireValue(driver.database$)`).name;
     }
 
     private outputQueryResponse(res: ApiResponse<QueryResponse>) {
@@ -118,7 +118,7 @@ export class QueryToolState {
         this.logOutput.appendBlankLine();
         this.logOutput.appendQueryResult(res);
         this.tableOutput.push(res);
-        // this.structureOutput.push(res);
+        this.graphOutput.push(res);
         this.rawOutput.push(JSON.stringify(res, null, 2));
     }
 
@@ -126,7 +126,7 @@ export class QueryToolState {
         this.logOutput.appendBlankLine();
         this.logOutput.appendLines(`${RESULT}${SUCCESS}`);
         this.tableOutput.status = "answerOutputDisabled";
-        // this.structureOutput.status = "answerOutputDisabled";
+        this.graphOutput.status = "answerOutputDisabled";
         this.rawOutput.push(SUCCESS_RAW);
     }
 }
@@ -292,7 +292,7 @@ export class LogOutputState {
 
 type TableOutputStatus = "ok" | "running" | "answerlessQueryType" | "answerOutputDisabled" | "noColumns" | "noAnswers" | "error";
 
-type TableRow = { [column: string]: any };
+type TableRow = { [column: string]: string };
 
 export class TableOutputState {
 
@@ -352,7 +352,7 @@ export class TableOutputState {
                         this.status = "ok";
                         this.appendColumns(...keys);
                         setTimeout(() => {
-                            this.appendRows(...answers);
+                            this.appendRows(...answers.map(answer => Object.fromEntries(Object.entries(answer).map(([k, v]) => [k, JSON.stringify(v)]))));
                         });
                     } else this.status = "noColumns";
                 } else this.status = "noAnswers";
@@ -375,7 +375,7 @@ export class TableOutputState {
         this.displayedColumns.push(...columns);
     }
 
-    private appendRows(...rows: { [column: string]: any }[]) {
+    private appendRows(...rows: { [column: string]: string }[]) {
         this._data$.value.push(...rows);
         this._data$.next(this._data$.value);
     }
@@ -411,11 +411,11 @@ export class TableOutputState {
     }
 }
 
-type StructureOutputStatus = "ok" | "running" | "answerlessQueryType" | "answerOutputDisabled" | "noAnswers" | "error";
+type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noAnswers" | "error";
 
-export class StructureOutputState {
+export class GraphOutputState {
 
-    status: StructureOutputStatus = "ok";
+    status: GraphOutputStatus = "ok";
     canvasEl!: HTMLElement;
     visualiser: GraphVisualiser | null = null;
     query?: string;
@@ -427,7 +427,7 @@ export class StructureOutputState {
     push(res: ApiResponse<QueryResponse>) {
         if (!this.canvasEl) throw `Missing canvas element`;
 
-        const graph = new MultiGraph();
+        const graph = newVisualGraph();
         const sigma = createSigmaRenderer(this.canvasEl, defaultSigmaSettings as any, graph);
         let layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
         // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
@@ -440,14 +440,14 @@ export class StructureOutputState {
 
         switch (res.ok.answerType) {
             case "ok": {
-                this.status = "answerlessQueryType";
+                this.status = "graphlessQueryType";
                 break;
             }
             case "conceptRows": {
                 this.visualiser.handleQueryResponse(res, this.database!);
                 let highlightedQuery = "";
-                if (res.ok.queryStructure) {
-                    highlightedQuery = this.visualiser.colorQuery(this.query!, res.ok.queryStructure);
+                if (res.ok.query) {
+                    highlightedQuery = this.visualiser.colorQuery(this.query!, res.ok.query);
                 }
                 this.visualiser.colorEdgesByConstraintIndex(false);
                 this.status = "ok";
@@ -470,7 +470,7 @@ export class StructureOutputState {
                 break;
             }
             case "conceptDocuments": {
-                // TODO: documents
+                this.status = "graphlessQueryType";
                 break;
             }
             default:
@@ -478,8 +478,8 @@ export class StructureOutputState {
         }
     }
 
-    clear() {
-        this.visualiser?.clear();
+    destroy() {
+        this.visualiser?.destroy();
     }
 }
 

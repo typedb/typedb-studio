@@ -6,7 +6,7 @@
 
 import { CodeEditor } from "@acrodata/code-editor";
 import { AsyncPipe, DatePipe } from "@angular/common";
-import { AfterViewInit, Component, ElementRef, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -18,8 +18,8 @@ import { MatTableModule } from "@angular/material/table";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
-import { first, map } from "rxjs";
-import { TypeQL } from "../../framework/codemirror-lang-typeql";
+import { distinctUntilChanged, filter, first, map, startWith } from "rxjs";
+import { otherExampleLinter, TypeQL } from "../../framework/codemirror-lang-typeql";
 import { DriverAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
@@ -41,11 +41,11 @@ import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component"
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
     ],
 })
-export class QueryToolComponent implements OnInit, AfterViewInit {
+export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
 
     @ViewChild(CodeEditor) codeEditor!: CodeEditor;
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
-    @ViewChildren("structureViewRef") structureViewRef!: QueryList<ElementRef<HTMLElement>>;
+    @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
@@ -68,12 +68,19 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
     ngAfterViewInit() {
         const articleWidth = this.articleRef.nativeElement.clientWidth;
         this.resizables.first.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
-        // this.structureViewRef.changes.pipe(
-        //     map(x => x as QueryList<ElementRef<HTMLElement>>),
-        //     first(queryList => queryList.length > 0)
-        // ).subscribe((queryList) => {
-        //     this.state.structureOutput.canvasEl = queryList.first.nativeElement;
-        // });
+        this.graphViewRef.changes.pipe(
+            map(x => x as QueryList<ElementRef<HTMLElement>>),
+            startWith(this.graphViewRef),
+            filter(queryList => queryList.length > 0),
+            map(x => x.first.nativeElement),
+        ).subscribe((canvasEl) => {
+            this.state.graphOutput.canvasEl = canvasEl;
+        });
+    }
+
+    ngOnDestroy() {
+        // TODO: this prevents WebGL resource leaks, but it would also be nice to restore previous graph state on init
+        this.state.graphOutput.destroy();
     }
 
     runQuery() {
@@ -120,4 +127,5 @@ export class QueryToolComponent implements OnInit, AfterViewInit {
     readonly isTransactionOperation = isTransactionOperation;
     readonly JSON = JSON;
     readonly TypeQL = TypeQL;
+    readonly linter = otherExampleLinter;
 }

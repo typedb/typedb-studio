@@ -12,6 +12,13 @@ export interface SignInResponse {
     token: string;
 }
 
+export type Distribution = `TypeDB Cluster` | `TypeDB CE`;
+
+export interface VersionResponse {
+    distribution: Distribution;
+    version: string;
+}
+
 export interface DatabasesListResponse {
     databases: Database[];
 }
@@ -37,10 +44,10 @@ export type ConceptDocument = Object;
 export type Answer = ConceptRowAnswer | ConceptDocument;
 
 export interface QueryResponseBase {
-    queryType: QueryType;
     answerType: AnswerType;
-    queryStructure: QueryStructure | null;
+    queryType: QueryType;
     comment: string | null;
+    query: QueryStructure | null;
 }
 
 export interface OkQueryResponse extends QueryResponseBase {
@@ -50,7 +57,7 @@ export interface OkQueryResponse extends QueryResponseBase {
 export interface ConceptRowsQueryResponse extends QueryResponseBase {
     answerType: "conceptRows";
     answers: {
-        provenanceBitArray: number[];
+        involvedBlocks: number[];
         data: ConceptRow
     }[];
 }
@@ -73,9 +80,9 @@ export function isApiError(err: any): err is ApiError {
     return typeof err.code === "string" && typeof err.message === "string";
 }
 
-export type ApiResponse<OK_RES = {}> = { ok: OK_RES } | ApiErrorResponse;
+export type ApiResponse<OK_RES = {} | null> = { ok: OK_RES } | ApiErrorResponse;
 
-export function isOkResponse(res: ApiResponse): res is { ok: {} } {
+export function isOkResponse<OK_RES>(res: ApiResponse<OK_RES>): res is { ok: OK_RES } {
     return "ok" in res;
 }
 

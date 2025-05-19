@@ -1,11 +1,11 @@
 import chroma from "chroma-js";
 import { RoleType } from "../typedb-driver/concept";
-import {LogicalVertex, SpecialVertexKind, VertexUnavailable} from "./graph";
+import { vertexMapKey } from "./converter";
+import {DataVertex, VertexUnavailable} from "./graph";
 import {NodeSquareProgram} from "@sigma/node-square";
 import EdgeCurveProgram from "@sigma/edge-curve";
 import {ForceLayoutSettings} from "graphology-layout-force";
 import {Settings as SigmaSettings} from "sigma/settings";
-import {unavailable_key} from "./converter";
 import {StudioConverterStructureParameters, StudioConverterStyleParameters} from "./config";
 
 export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
@@ -17,10 +17,10 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
         relationType: chroma("orange"),
         attributeType: chroma("darkgreen"),
         roleType: chroma("darkorange"),
-        value: chroma("white"),
+        value: chroma("grey"),
         unavailable: chroma("darkgrey"),
-        expression: chroma("black"),
-        functionCall: chroma("black")
+        expression: chroma("white"),
+        functionCall: chroma("white")
     },
     vertex_shapes: {
         entity: "circle",
@@ -41,7 +41,7 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
     edge_highlight_color: chroma("cyan"),
     edge_size: 2,
 
-    vertex_default_label(vertex: LogicalVertex): string {
+    vertex_default_label(vertex: DataVertex): string {
         switch (vertex.kind) {
             case "entityType":
             case "relationType":
@@ -74,7 +74,7 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
         }
     },
 
-    vertex_hover_label(vertex: LogicalVertex): string {
+    vertex_hover_label(vertex: DataVertex): string {
         switch (vertex.kind) {
             case "entityType":
             case "relationType":
@@ -82,7 +82,6 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
             case "attributeType": {
                 return vertex.label;
             }
-
             case "entity":
             case "relation": {
                 return `${vertex.type.label}:${vertex.iid}`;
@@ -94,7 +93,7 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
                 return `${vertex.valueType}:${vertex.value}`;
             }
             case "unavailable": {
-                return unavailable_key(vertex);
+                return vertexMapKey(vertex);
             }
             case "functionCall":
             case "expression": {
@@ -134,12 +133,18 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
     zoomToSizeRatioFunction: (x) => x,
     minCameraRatio: 0.1,
     maxCameraRatio: 10,
+    labelColor: {
+        color: `#958fa8`,
+    },
     renderEdgeLabels: true,
     nodeProgramClasses: {
         square: NodeSquareProgram,
     },
     edgeProgramClasses: {
         curved: EdgeCurveProgram,
+    },
+    cameraPanBoundaries: {
+        tolerance: 1,
     },
 };
 

@@ -149,10 +149,14 @@ export class ConnectionCreatorComponent {
                 });
             },
             error: (err) => {
-                const msg = err?.message || err?.toString() || `Unknown error`;
-                this.snackbar.errorPersistent(`Error: ${msg}\n`
-                    + `Caused: Unable to connect to TypeDB server '${config.name}'.\n`
-                    + `Ensure the connection parameters are correct and the server is running.`);
+                if (typeof err === "object" && "customError" in err) {
+                    this.snackbar.errorPersistent(`${err.customError}`);
+                } else {
+                    const msg = err?.message || err?.toString() || `Unknown error`;
+                    this.snackbar.errorPersistent(`Error: ${msg}\n`
+                        + `Unable to connect to TypeDB server '${config.name}'.\n`
+                        + `Ensure the parameters are correct, the server is running, and its version is at least TypeDB 3.3.0.`);
+                }
                 this.form.enable();
                 this.isSubmitting$.next(false);
             },

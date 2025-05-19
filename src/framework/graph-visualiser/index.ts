@@ -1,24 +1,25 @@
-import Sigma from "sigma";
 import MultiGraph from "graphology";
+import Sigma from "sigma";
 import ForceSupervisor from "graphology-layout-force/worker";
-import { QueryStructure } from "../typedb-driver/query-structure";
+import { Settings as SigmaSettings } from "sigma/settings";
+import {QueryConstraintAny, QueryStructure} from "../typedb-driver/query-structure";
 import { ApiResponse, isApiErrorResponse, QueryResponse } from "../typedb-driver/response";
 import { StudioConverterStructureParameters, StudioConverterStyleParameters } from "./config";
 
 import * as studioDefaultSettings from "./defaults";
-import { constructGraphFromRowsResult } from "./graph";
+import { constructGraphFromRowsResult, VisualGraph } from "./graph";
 import {InteractionHandler} from "./interaction";
 import { convertLogicalGraphWith } from "./visualisation";
 import {LayoutWrapper} from "./layouts";
 import chroma from "chroma-js";
-import { mustDrawEdge, StudioConverter } from "./converter";
+import {shouldCreateEdge, shouldCreateNode, StudioConverter} from "./converter";
 
 export interface StudioState {
     activeQueryDatabase: string | null;
 }
 
 export class GraphVisualiser {
-    graph: MultiGraph;
+    graph: VisualGraph;
     sigma: Sigma;
     layout: LayoutWrapper;
     interactionHandler: InteractionHandler;
@@ -26,7 +27,7 @@ export class GraphVisualiser {
     private styleParameters: StudioConverterStyleParameters = studioDefaultSettings.defaultQueryStyleParameters;
     private structureParameters: StudioConverterStructureParameters = studioDefaultSettings.defaultStructureParameters;
 
-    constructor(graph: MultiGraph, sigma: Sigma, layout: LayoutWrapper) {
+    constructor(graph: VisualGraph, sigma: Sigma, layout: LayoutWrapper) {
         this.graph = graph;
         this.sigma = sigma;
         this.layout = layout;
@@ -47,8 +48,8 @@ export class GraphVisualiser {
     handleQueryResult(res: ApiResponse<QueryResponse>) {
         if (isApiErrorResponse(res)) return;
 
-        if (res.ok.answerType == "conceptRows" && res.ok.queryStructure != null) {
-            let converter = new StudioConverter(this.graph, res.ok.queryStructure, false, this.structureParameters, this.styleParameters);
+        if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
+            let converter = new StudioConverter(this.graph, res.ok.query, false, this.structureParameters, this.styleParameters);
             let logicalGraph = constructGraphFromRowsResult(res.ok); // In memory, not visualised
             this.graph.clear();
             convertLogicalGraphWith(logicalGraph, converter);
@@ -58,8 +59,8 @@ export class GraphVisualiser {
     handleExplorationQueryResult(res: ApiResponse<QueryResponse>) {
         if (isApiErrorResponse(res)) return;
 
-        if (res.ok.answerType == "conceptRows" && res.ok.queryStructure != null) {
-            let converter = new StudioConverter(this.graph, res.ok.queryStructure, true, this.structureParameters, this.styleParameters);
+        if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
+            let converter = new StudioConverter(this.graph, res.ok.query, true, this.structureParameters, this.styleParameters);
             let logicalGraph = constructGraphFromRowsResult(res.ok); // In memory, not visualised
             convertLogicalGraphWith(logicalGraph, converter);
         }
@@ -72,15 +73,17 @@ export class GraphVisualiser {
         }
 
         this.graph.nodes().forEach(node => this.graph.setNodeAttribute(node, "highlighted", false));
-        if (term != "") {
+        if (term !== "") {
             this.graph.nodes().forEach(node => {
-                let attributes = this.graph.getNodeAttributes(node);
+                const attributes = this.graph.getNodeAttributes(node);
                 // check concept.type.label if you want to match types of things.
-                let any_match = -1 != safe_str(attributes["metadata"].concept.iid).indexOf(term)
-                    || -1 != safe_str(attributes["metadata"].concept.label).indexOf(term)
-                    || -1 != safe_str(attributes["metadata"].concept.value).indexOf(term);
-                if (any_match) {
-                    this.graph.setNodeAttribute(node, "highlighted", true);
+                if ("concept" in attributes.metadata.concept) {
+                    const concept = attributes.metadata.concept;
+                    if (("iid" in concept && safe_str(concept.iid).indexOf(term) !== -1)
+                        || ("label" in concept && safe_str(concept.label).indexOf(term) !== -1)
+                        || ("value" in concept && safe_str(concept.value).indexOf(term) !== -1)) {
+                        this.graph.setNodeAttribute(node, "highlighted", true);
+                    }
                 }
             });
         }
@@ -95,19 +98,53 @@ export class GraphVisualiser {
         })
     }
 
-    private getColorForEdge(graph: MultiGraph, edgeKey: string): chroma.Color {
+    private getColorForEdge(graph: VisualGraph, edgeKey: string): chroma.Color {
         let attributes = graph.getEdgeAttributes(edgeKey);
-        let constraintIndex = attributes["metadata"].structureEdgeCoordinates.constraintIndex;
+        let constraintIndex = attributes.metadata.dataEdge.queryCoordinates.constraint;
         return this.getColorForConstraintIndex(constraintIndex);
     }
 
     colorQuery(queryString: string, queryStructure: QueryStructure): string {
-        let spans: Array<Array<number>> = [];
-        queryStructure.branches.forEach(branch => {
-            branch.edges.forEach((edge, constraintIndex) => {
-                if (mustDrawEdge(edge, studioDefaultSettings.defaultStructureParameters)) {
-                    if (edge.span != null) {
-                        spans.push([edge.span.begin, edge.span.end, constraintIndex]);
+        function shouldColourConstraint(constraint: QueryConstraintAny): boolean {
+            switch (constraint.tag) {
+                case "isa": return shouldCreateEdge(queryStructure, constraint, constraint.instance, constraint.type);
+                case "isa!": return shouldCreateEdge(queryStructure, constraint, constraint.instance, constraint.type);
+                case "has":  return shouldCreateEdge(queryStructure, constraint, constraint.owner, constraint.attribute);
+                case "links":
+                    return shouldCreateEdge(queryStructure, constraint, constraint.relation, constraint.player);
+                case "sub":
+                    return shouldCreateEdge(queryStructure, constraint, constraint.subtype, constraint.supertype);
+                case "sub!":
+                    return shouldCreateEdge(queryStructure, constraint, constraint.subtype, constraint.supertype);
+                case "owns":
+                    return shouldCreateEdge(queryStructure, constraint, constraint.owner, constraint.attribute);
+                case "relates":
+                    return shouldCreateEdge(queryStructure, constraint, constraint.relation, constraint.role);
+                case "plays":
+                    return shouldCreateEdge(queryStructure, constraint, constraint.player, constraint.role);
+                case "expression":
+                    return (
+                        constraint.arguments.map(arg => shouldCreateNode(queryStructure, arg)).reduce((a,b) => a || b, false)
+                        || constraint.assigned.map(assigned => shouldCreateNode(queryStructure, assigned)).reduce((a,b) => a || b, false)
+                    );
+                case "functionCall":
+                    return (
+                        constraint.arguments.map(arg => shouldCreateNode(queryStructure, arg)).reduce((a,b) => a || b, false)
+                        || constraint.assigned.map(assigned => shouldCreateNode(queryStructure, assigned)).reduce((a,b) => a || b, false)
+                    );
+                case "comparison": return false;
+                case "is": return false;
+                case "iid": return false;
+                case "kind": return false;
+                case "label": return false;
+            }
+        }
+        let spans: number[][] = [];
+        queryStructure.blocks.forEach(branch => {
+            branch.constraints.forEach((constraint, constraintIndex) => {
+                if (shouldColourConstraint(constraint)) {
+                    if (constraint.textSpan != null) {
+                        spans.push([constraint.textSpan.begin, constraint.textSpan.end, constraintIndex]);
                     }
                 }
             })
@@ -135,7 +172,6 @@ export class GraphVisualiser {
             }
             highlighted += (queryString[i] == "\n") ? "<br/>": queryString[i];
         }
-        console.log(highlighted);
         return highlighted;
     }
 
@@ -146,7 +182,12 @@ export class GraphVisualiser {
         return chroma([r,g,b]);
     }
 
-    clear() {
-        this.sigma = this.sigma.clear();
+    destroy() {
+        this.sigma.kill();
     }
+}
+
+export function createSigmaRenderer(containerEl: HTMLElement, sigma_settings: SigmaSettings, graph: MultiGraph) : Sigma {
+    // Create the sigma
+    return new Sigma(graph, containerEl, sigma_settings);
 }
