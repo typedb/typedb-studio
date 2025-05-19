@@ -45,7 +45,7 @@ export type Answer = ConceptRowAnswer | ConceptDocument;
 
 export interface QueryResponseBase {
     answerType: AnswerType;
-    query_type: QueryType;
+    queryType: QueryType;
     comment: string | null;
     query: QueryStructure | null;
 }
