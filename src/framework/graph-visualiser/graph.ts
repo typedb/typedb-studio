@@ -22,7 +22,7 @@ import {
     QueryConstraintPlays,
     QueryConstraintRelates,
     QueryConstraintSpan,
-    QueryConstraintSub, QueryConstraintSubExact, QueryStructure,
+    QueryConstraintSub, QueryConstraintSubExact, QueryConstraintValue, QueryStructure,
     QueryVertex,
 } from "../typedb-driver/query-structure";
 import {ConceptRow, ConceptRowsQueryResponse} from "../typedb-driver/response";
@@ -51,7 +51,7 @@ export type DataGraph = {
 export type DataConstraintAny = DataConstraintIsa | DataConstraintIsaExact | DataConstraintHas | DataConstraintLinks |
     DataConstraintSub | DataConstraintSubExact | DataConstraintOwns | DataConstraintRelates | DataConstraintPlays |
     DataConstraintExpression | DataConstraintFunction | DataConstraintComparison |
-    DataConstraintIs | DataConstraintIid | DataConstraintLabel | DataConstraintKind;
+    DataConstraintIs | DataConstraintIid | DataConstraintLabel | DataConstraintValue | DataConstraintKind;
 
 export type DataConstraintSpan = QueryConstraintSpan;
 
@@ -211,6 +211,16 @@ export interface DataConstraintLabel {
 
     type: Type | VertexUnavailable,
     label: string,
+}
+
+export interface DataConstraintValue {
+    tag: "value",
+    textSpan: DataConstraintSpan,
+    queryCoordinates: QueryCoordinates,
+    queryConstraint: QueryConstraintValue,
+
+    attributeType: AttributeType | VertexUnavailable,
+    valueType: string,
 }
 
 export interface DataConstraintKind {
@@ -484,6 +494,17 @@ class LogicalGraphBuilder {
 
                     type: this.translate_vertex(structure, constraint.type, answerIndex, data) as (Type | VertexUnavailable),
                     label: constraint.label,
+                }
+            }
+            case "value": {
+                return {
+                    tag: "value",
+                    textSpan: constraint.textSpan,
+                    queryCoordinates: coordinates,
+                    queryConstraint: constraint,
+
+                    attributeType: this.translate_vertex(structure, constraint.attributeType, answerIndex, data) as (AttributeType| VertexUnavailable),
+                    valueType: constraint.valueType,
                 }
             }
             case "kind" : {

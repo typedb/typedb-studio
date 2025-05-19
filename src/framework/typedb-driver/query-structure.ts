@@ -41,7 +41,7 @@ export type QueryVariableInfo = { name: string | null };
 export type QueryConstraintAny = QueryConstraintIsa | QueryConstraintIsaExact | QueryConstraintHas | QueryConstraintLinks |
     QueryConstraintSub | QueryConstraintSubExact | QueryConstraintOwns | QueryConstraintRelates | QueryConstraintPlays |
     QueryConstraintExpression | QueryConstraintFunction | QueryConstraintComparison |
-    QueryConstraintIs | QueryConstraintIid | QueryConstraintKind | QueryConstraintLabel;
+    QueryConstraintIs | QueryConstraintIid | QueryConstraintKind | QueryConstraintValue | QueryConstraintLabel;
 
 export type QueryConstraintSpan = { begin: number, end: number };
 
@@ -171,6 +171,14 @@ export interface QueryConstraintLabel {
 
     type: QueryVertexVariable,
     label: string,
+}
+
+export interface QueryConstraintValue {
+    tag: "value",
+    textSpan: QueryConstraintSpan,
+
+    attributeType: QueryVertexVariable,
+    valueType: string,
 }
 
 export interface QueryConstraintKind {
