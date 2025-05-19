@@ -46,7 +46,7 @@ export class ConnectionWidgetComponent implements OnInit {
     connectionText$ = this.driver.connection$.pipe(map(x => x?.name ?? `No server connected`));
     connectionBeaconStatusClass$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, database]) => {
         if (status === "disconnected") return "error";
-        if (status === "connected") return database == null ? "inactive" : "ok";
+        if (status === "connected") return database == null ? "error" : "ok";
         return "warn";
     }));
     connectionBeaconTooltip$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, database]) => {
