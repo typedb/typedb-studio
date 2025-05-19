@@ -1,7 +1,7 @@
 import chroma from "chroma-js";
 import { RoleType } from "../typedb-driver/concept";
 import { vertexMapKey } from "./converter";
-import {DataVertex, SpecialVertexKind, VertexUnavailable} from "./graph";
+import {DataVertex, VertexUnavailable} from "./graph";
 import {NodeSquareProgram} from "@sigma/node-square";
 import EdgeCurveProgram from "@sigma/edge-curve";
 import {ForceLayoutSettings} from "graphology-layout-force";

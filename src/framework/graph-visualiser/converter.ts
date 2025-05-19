@@ -1,4 +1,5 @@
 import {
+    get_variable_name,
     QueryConstraintAny,
     QueryStructure,
     QueryVertex,
@@ -6,7 +7,6 @@ import {
 import {
     EdgeAttributes,
     EdgeMetadata,
-    DataVertex,
     VertexAttributes,
     VertexMetadata,
     VisualGraph,
@@ -21,12 +21,13 @@ import {
     DataConstraintRelates,
     DataConstraintPlays,
     VertexFunction,
-    VertexExpression, DataConstraintSubExact, DataConstraintIsaExact
+    VertexExpression, DataConstraintSubExact, DataConstraintIsaExact, DataVertex
 } from "./graph";
 import {ILogicalGraphConverter} from "./visualisation";
 import {StudioConverterStructureParameters, StudioConverterStyleParameters} from "./config";
 
 type QueryVertexOrSpecial = QueryVertex | VertexFunction | VertexExpression;
+
 export class StudioConverter implements ILogicalGraphConverter {
 
     constructor(
@@ -84,12 +85,12 @@ export class StudioConverter implements ILogicalGraphConverter {
         return `${from_id}:${to_id}:${edge_type_id}`;
     }
 
-    private shouldCreateNode(vertex: DataVertex, queryVertex: QueryVertexOrSpecial) {
-        return shouldCreateNode(queryVertex);
+    private shouldCreateNode(queryVertex: QueryVertexOrSpecial) {
+        return shouldCreateNode(this.queryStructure, queryVertex);
     }
 
     private shouldCreateEdge(edge: DataConstraintAny, from: QueryVertexOrSpecial, to: QueryVertexOrSpecial) {
-        return shouldCreateEdge(edge.queryConstraint, from, to);
+        return shouldCreateEdge(this.queryStructure, edge.queryConstraint, from, to);
     }
 
     private createVertex(key: string, attributes: VertexAttributes) {
@@ -116,10 +117,10 @@ export class StudioConverter implements ILogicalGraphConverter {
             const attributes = this.edgeAttributes(label, this.edgeMetadata(answerIndex, edge));
             this.createEdge(edgeKey, fromKey, toKey, attributes);
         } else {
-            if (this.shouldCreateNode(from, queryFrom)) {
+            if (this.shouldCreateNode(queryFrom)) {
                 this.put_vertex(answerIndex, from, queryFrom);
             }
-            if (this.shouldCreateNode(to, queryTo)) {
+            if (this.shouldCreateNode(queryTo)) {
                 this.put_vertex(answerIndex, to, queryTo);
             }
         }
@@ -129,7 +130,7 @@ export class StudioConverter implements ILogicalGraphConverter {
     // Vertices
     put_vertex(answerIndex: number, vertex: DataVertex, queryVertex: QueryVertexOrSpecial): string {
         const key = vertexMapKey(vertex);
-        if (this.shouldCreateNode(vertex, queryVertex)) {
+        if (this.shouldCreateNode(queryVertex)) {
             this.createVertex(key, this.vertexAttributes(vertex))
         }
         return key;
@@ -203,6 +204,7 @@ export class StudioConverter implements ILogicalGraphConverter {
     put_expression(answerIndex: number, constraint: DataConstraintExpression): void {
         let expression = constraint;
         let expressionVertex: VertexExpression = {
+            tag: "expression",
             kind: "expression",
             answerIndex: answerIndex,
             repr: constraint.text,
@@ -211,13 +213,15 @@ export class StudioConverter implements ILogicalGraphConverter {
         expression.assigned
             .forEach((assigned, i) => {
                 let queryVertex = constraint.queryConstraint.assigned[i];
-                let label = `assign[${queryVertex.variable}]`;
+                let varNameOrId = get_variable_name(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
+                let label = `assign[${varNameOrId}]`;
                 this.maybeCreateEdge(answerIndex, constraint, label, expressionVertex, assigned, expressionVertex, queryVertex);
             });
         expression.arguments
             .forEach((arg, i) => {
                 let queryVertex = constraint.queryConstraint.arguments[i];
-                let label = `arg[${queryVertex.variable}]`;
+                let varNameOrId = get_variable_name(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
+                let label = `arg[${varNameOrId}]`;
                 this.maybeCreateEdge(answerIndex, constraint, label, arg, expressionVertex, queryVertex, expressionVertex);
             });
     }
@@ -226,6 +230,7 @@ export class StudioConverter implements ILogicalGraphConverter {
         let functionCall = constraint;
         let functionVertexKey = `f_${answerIndex}_${constraint.queryCoordinates.branch}_{${constraint.queryCoordinates.constraint}}`;
         let functionVertex: VertexFunction = {
+            tag: "functionCall",
             kind: "functionCall", answerIndex: answerIndex,
             repr: constraint.name,
             vertex_map_key: functionVertexKey
@@ -233,24 +238,30 @@ export class StudioConverter implements ILogicalGraphConverter {
         functionCall.assigned
             .forEach((assigned, i) => {
                 let queryVertex = constraint.queryConstraint.assigned[i];
-                let label = `assign[${queryVertex.variable}]`;
+                let varNameOrId = get_variable_name(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
+                let label = `assign[${varNameOrId}]`;
                 this.maybeCreateEdge(answerIndex, constraint, label, functionVertex, assigned, functionVertex, queryVertex);
             });
         functionCall.arguments
             .forEach((arg, i) => {
                 let queryVertex = constraint.queryConstraint.arguments[i];
-                let label = `arg[${queryVertex.variable}]`;
+                let varNameOrId = get_variable_name(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
+                let label = `arg[${varNameOrId}]`;
                 this.maybeCreateEdge(answerIndex, constraint, label, arg, functionVertex, queryVertex, functionVertex);
             });
     }
 }
 
-export function shouldCreateNode(vertex: QueryVertexOrSpecial) {
-    return !("tag" in vertex && ["unavailableVariable", "label"].includes(vertex.tag));
+export function shouldCreateNode(structure: QueryStructure, vertex: QueryVertexOrSpecial) {
+    return !(
+        (vertex.tag === "label" ||
+            (vertex.tag == "variable" && !structure.outputs.includes(vertex.id))
+        )
+    );
 }
 
-export function shouldCreateEdge(_edge: QueryConstraintAny, from: QueryVertexOrSpecial, to: QueryVertexOrSpecial) {
-    return shouldCreateNode(from) && shouldCreateNode(to);
+export function shouldCreateEdge(structure: QueryStructure, _edge: QueryConstraintAny, from: QueryVertexOrSpecial, to: QueryVertexOrSpecial) {
+    return shouldCreateNode(structure, from) && shouldCreateNode(structure, to);
 }
 
 export function vertexMapKey(vertex: DataVertex): string {

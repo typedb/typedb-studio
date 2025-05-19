@@ -48,8 +48,8 @@ export class GraphVisualiser {
     handleQueryResult(res: ApiResponse<QueryResponse>) {
         if (isApiErrorResponse(res)) return;
 
-        if (res.ok.answerType == "conceptRows" && res.ok.queryStructure != null) {
-            let converter = new StudioConverter(this.graph, res.ok.queryStructure, false, this.structureParameters, this.styleParameters);
+        if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
+            let converter = new StudioConverter(this.graph, res.ok.query, false, this.structureParameters, this.styleParameters);
             let logicalGraph = constructGraphFromRowsResult(res.ok); // In memory, not visualised
             this.graph.clear();
             convertLogicalGraphWith(logicalGraph, converter);
@@ -59,8 +59,8 @@ export class GraphVisualiser {
     handleExplorationQueryResult(res: ApiResponse<QueryResponse>) {
         if (isApiErrorResponse(res)) return;
 
-        if (res.ok.answerType == "conceptRows" && res.ok.queryStructure != null) {
-            let converter = new StudioConverter(this.graph, res.ok.queryStructure, true, this.structureParameters, this.styleParameters);
+        if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
+            let converter = new StudioConverter(this.graph, res.ok.query, true, this.structureParameters, this.styleParameters);
             let logicalGraph = constructGraphFromRowsResult(res.ok); // In memory, not visualised
             convertLogicalGraphWith(logicalGraph, converter);
         }
@@ -77,11 +77,13 @@ export class GraphVisualiser {
             this.graph.nodes().forEach(node => {
                 const attributes = this.graph.getNodeAttributes(node);
                 // check concept.type.label if you want to match types of things.
-                const concept = attributes.metadata.concept;
-                if (("iid" in concept && safe_str(concept.iid).indexOf(term) !== -1)
-                    || ("label" in concept && safe_str(concept.label).indexOf(term) !== -1)
-                    || ("value" in concept && safe_str(concept.value).indexOf(term) !== -1)) {
-                    this.graph.setNodeAttribute(node, "highlighted", true);
+                if ("concept" in attributes.metadata.concept) {
+                    const concept = attributes.metadata.concept;
+                    if (("iid" in concept && safe_str(concept.iid).indexOf(term) !== -1)
+                        || ("label" in concept && safe_str(concept.label).indexOf(term) !== -1)
+                        || ("value" in concept && safe_str(concept.value).indexOf(term) !== -1)) {
+                        this.graph.setNodeAttribute(node, "highlighted", true);
+                    }
                 }
             });
         }
@@ -105,31 +107,36 @@ export class GraphVisualiser {
     colorQuery(queryString: string, queryStructure: QueryStructure): string {
         function shouldColourConstraint(constraint: QueryConstraintAny): boolean {
             switch (constraint.tag) {
-                case "isa": return shouldCreateEdge(constraint, constraint.instance, constraint.type);
-                case "isa!": return shouldCreateEdge(constraint, constraint.instance, constraint.type);
-                case "has":  return shouldCreateEdge(constraint, constraint.owner, constraint.attribute);
+                case "isa": return shouldCreateEdge(queryStructure, constraint, constraint.instance, constraint.type);
+                case "isa!": return shouldCreateEdge(queryStructure, constraint, constraint.instance, constraint.type);
+                case "has":  return shouldCreateEdge(queryStructure, constraint, constraint.owner, constraint.attribute);
                 case "links":
-                    return shouldCreateEdge(constraint, constraint.relation, constraint.player);
+                    return shouldCreateEdge(queryStructure, constraint, constraint.relation, constraint.player);
                 case "sub":
-                    return shouldCreateEdge(constraint, constraint.subtype, constraint.supertype);
+                    return shouldCreateEdge(queryStructure, constraint, constraint.subtype, constraint.supertype);
                 case "sub!":
-                    return shouldCreateEdge(constraint, constraint.subtype, constraint.supertype);
+                    return shouldCreateEdge(queryStructure, constraint, constraint.subtype, constraint.supertype);
                 case "owns":
-                    return shouldCreateEdge(constraint, constraint.owner, constraint.attribute);
+                    return shouldCreateEdge(queryStructure, constraint, constraint.owner, constraint.attribute);
                 case "relates":
-                    return shouldCreateEdge(constraint, constraint.relation, constraint.role);
+                    return shouldCreateEdge(queryStructure, constraint, constraint.relation, constraint.role);
                 case "plays":
-                    return shouldCreateEdge(constraint, constraint.player, constraint.role);
+                    return shouldCreateEdge(queryStructure, constraint, constraint.player, constraint.role);
                 case "expression":
                     return (
-                        constraint.arguments.map(arg => shouldCreateNode(arg)).reduce((a,b) => a || b, false)
-                        || constraint.assigned.map(assigned => shouldCreateNode(assigned)).reduce((a,b) => a || b, false)
+                        constraint.arguments.map(arg => shouldCreateNode(queryStructure, arg)).reduce((a,b) => a || b, false)
+                        || constraint.assigned.map(assigned => shouldCreateNode(queryStructure, assigned)).reduce((a,b) => a || b, false)
                     );
                 case "functionCall":
                     return (
-                        constraint.arguments.map(arg => shouldCreateNode(arg)).reduce((a,b) => a || b, false)
-                        || constraint.assigned.map(assigned => shouldCreateNode(assigned)).reduce((a,b) => a || b, false)
+                        constraint.arguments.map(arg => shouldCreateNode(queryStructure, arg)).reduce((a,b) => a || b, false)
+                        || constraint.assigned.map(assigned => shouldCreateNode(queryStructure, assigned)).reduce((a,b) => a || b, false)
                     );
+                case "comparison": return false;
+                case "is": return false;
+                case "iid": return false;
+                case "kind": return false;
+                case "label": return false;
             }
         }
         let spans: number[][] = [];

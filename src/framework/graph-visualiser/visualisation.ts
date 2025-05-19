@@ -57,12 +57,12 @@ export interface ILogicalGraphConverter {
 export function convertLogicalGraphWith(dataGraph: DataGraph, converter: ILogicalGraphConverter) {
     dataGraph.answers.forEach((edgeList, answerIndex) => {
         edgeList.forEach(edge => {
-            putConstraint(converter, answerIndex, edge, dataGraph);
+            putConstraint(converter, answerIndex, edge);
         });
     });
 }
 
-function putConstraint(converter: ILogicalGraphConverter, answer_index: number, constraint: DataConstraintAny, logicalGraph: DataGraph) {
+function putConstraint(converter: ILogicalGraphConverter, answer_index: number, constraint: DataConstraintAny) {
   switch (constraint.tag) {
     case "isa":{
       converter.put_isa(answer_index, constraint);
@@ -108,8 +108,10 @@ function putConstraint(converter: ILogicalGraphConverter, answer_index: number, 
       converter.put_function(answer_index, constraint);
       break;
     }
-    default: {
-      throw new Error();
-    }
+    case "comparison": break;
+    case "is": break;
+    case "iid": break;
+    case "label": break;
+    case "kind": break;
   }
 }
