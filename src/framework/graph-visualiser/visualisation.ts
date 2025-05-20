@@ -113,5 +113,6 @@ function putConstraint(converter: ILogicalGraphConverter, answer_index: number, 
     case "iid": break;
     case "label": break;
     case "kind": break;
+    case "value": break;
   }
 }
