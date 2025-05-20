@@ -6,7 +6,7 @@
 
 import { TransactionType } from "./transaction";
 import { DriverParams, remoteOrigin } from "./params";
-import { ApiResponse, DatabasesListResponse, isApiError, QueryResponse, SignInResponse, TransactionOpenResponse } from "./response";
+import { ApiResponse, DatabasesListResponse, isApiError, QueryResponse, SignInResponse, TransactionOpenResponse, VersionResponse } from "./response";
 
 const HTTP_UNAUTHORIZED = 401;
 
@@ -42,6 +42,10 @@ export class TypeDBHttpDriver {
 
     health(): Promise<ApiResponse> {
         return this.apiGet(`/v1/health`);
+    }
+
+    version(): Promise<ApiResponse<VersionResponse>> {
+        return this.apiGet(`/v1/version`);
     }
 
     private async apiGet<RES = Object>(path: string, options?: { headers?: Record<string, string> }): Promise<ApiResponse<RES>> {

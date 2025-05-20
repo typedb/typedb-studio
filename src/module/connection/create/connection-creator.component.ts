@@ -26,10 +26,15 @@ import { AbstractControl, FormBuilder, FormControl, ReactiveFormsModule, Validat
 import { BehaviorSubject, combineLatest, filter, first, map, tap } from "rxjs";
 import { FormActionsComponent, FormComponent, FormInputComponent, FormOption, FormToggleGroupComponent, requiredValidator } from "../../../framework/form";
 
-const connectionUrlValidator: ValidatorFn = (control: AbstractControl) => {
+const connectionUrlValidator: ValidatorFn = (control: AbstractControl<string>) => {
     if (parseConnectionUrlOrNull(control.value)) return null;
     else return { errorText: `Format: typedb://username:password@address` };
 };
+
+const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
+    if (control.value.startsWith(`http://`) || control.value.startsWith(`https://`)) return null;
+    else return { errorText: `Please specify http:// or https://` };
+}
 
 @Component({
     selector: "tp-connection-creator",
@@ -62,7 +67,7 @@ export class ConnectionCreatorComponent {
     });
     // TODO: support multiple addresses
     readonly advancedForm = this.formBuilder.group({
-        address: ["", [requiredValidator]],
+        address: ["", [requiredValidator, addressValidator]],
         username: ["", [requiredValidator]],
         password: ["", [requiredValidator]],
     });
@@ -149,10 +154,14 @@ export class ConnectionCreatorComponent {
                 });
             },
             error: (err) => {
-                const msg = err?.message || err?.toString() || `Unknown error`;
-                this.snackbar.errorPersistent(`Error: ${msg}\n`
-                    + `Caused: Unable to connect to TypeDB server '${config.name}'.\n`
-                    + `Ensure the connection parameters are correct and the server is running.`);
+                if (typeof err === "object" && "customError" in err) {
+                    this.snackbar.errorPersistent(`${err.customError}`);
+                } else {
+                    const msg = err?.message || err?.toString() || `Unknown error`;
+                    this.snackbar.errorPersistent(`Error: ${msg}\n`
+                        + `Unable to connect to TypeDB server '${config.name}'.\n`
+                        + `Ensure the parameters are correct, the server is running, and its version is at least TypeDB 3.3.0.`);
+                }
                 this.form.enable();
                 this.isSubmitting$.next(false);
             },
