@@ -17,8 +17,8 @@
                   <i class="help-tooltip-button fa-light fa-circle-question" richTooltip [richTooltipContent]="addressHelpTooltipContent"></i>
                 </div>
               </div>
-              @if (advancedForm.controls.password.getError("errorText")) {
-                <mat-error>{{ advancedForm.controls.password.getError("errorText") }}</mat-error>
+              @if (advancedForm.controls.address.getError("errorText")) {
+                <mat-error>{{ advancedForm.controls.address.getError("errorText") }}</mat-error>
               }
             </mat-form-field>
           </div>
