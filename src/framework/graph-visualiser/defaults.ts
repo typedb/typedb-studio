@@ -7,6 +7,7 @@ import EdgeCurveProgram from "@sigma/edge-curve";
 import {ForceLayoutSettings} from "graphology-layout-force";
 import {Settings as SigmaSettings} from "sigma/settings";
 import {StudioConverterStructureParameters, StudioConverterStyleParameters} from "./config";
+import { NodeDiamondProgram } from "./node-diamond";
 
 export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
     vertex_colors: {
@@ -23,11 +24,11 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
         functionCall: chroma("white")
     },
     vertex_shapes: {
-        entity: "circle",
-        relation: "square",
+        entity: "square",
+        relation: "diamond",
         attribute: "circle",
-        entityType: "circle",
-        relationType: "square",
+        entityType: "square",
+        relationType: "diamond",
         attributeType: "circle",
         roleType: "circle",
         value: "circle",
@@ -139,12 +140,10 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
     renderEdgeLabels: true,
     nodeProgramClasses: {
         square: NodeSquareProgram,
+        diamond: NodeDiamondProgram,
     },
     edgeProgramClasses: {
         curved: EdgeCurveProgram,
-    },
-    cameraPanBoundaries: {
-        tolerance: 1,
     },
 };
 
