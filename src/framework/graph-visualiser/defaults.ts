@@ -7,27 +7,47 @@ import EdgeCurveProgram from "@sigma/edge-curve";
 import {ForceLayoutSettings} from "graphology-layout-force";
 import {Settings as SigmaSettings} from "sigma/settings";
 import {StudioConverterStructureParameters, StudioConverterStyleParameters} from "./config";
+import { NodeDiamondProgram } from "./node-diamond";
+
+const darkPalette = {
+    black:    "#09022F",
+    blue1:    "#7BA0FF",
+    green:    "#02DAC9",
+    orange:   "#B0740C",
+    yellow:   "#F6C94C",
+    pink:     "#FF87DC",
+    purple1:  "#0E0D17",
+    purple2:  "#14121F",
+    purple3:  "#151322",
+    purple4:  "#1A182A",
+    purple5:  "#232135",
+    purple6:  "#2D2A46",
+    red1:     "#CF4A55",
+    red2:     "#FF8080",
+    white:    "#FFFFFF",
+    white2:   "#D5CCFF"
+};
 
 export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
     vertex_colors: {
-        entity: chroma("pink"),
-        relation: chroma("yellow"),
-        attribute: chroma("green"),
-        entityType: chroma("magenta"),
-        relationType: chroma("orange"),
-        attributeType: chroma("darkgreen"),
-        roleType: chroma("darkorange"),
-        value: chroma("grey"),
-        unavailable: chroma("darkgrey"),
-        expression: chroma("white"),
-        functionCall: chroma("white")
+        entity: darkPalette.pink,
+        relation: darkPalette.yellow,
+        attribute: darkPalette.blue1,
+        entityType: darkPalette.pink,
+        relationType: darkPalette.yellow,
+        attributeType: darkPalette.blue1,
+        roleType: darkPalette.orange,
+        value: "#999",
+        unavailable: "#666",
+        expression: darkPalette.white2,
+        functionCall: darkPalette.white2,
     },
     vertex_shapes: {
-        entity: "circle",
-        relation: "square",
+        entity: "square",
+        relation: "diamond",
         attribute: "circle",
-        entityType: "circle",
-        relationType: "square",
+        entityType: "square",
+        relationType: "diamond",
         attributeType: "circle",
         roleType: "circle",
         value: "circle",
@@ -139,6 +159,7 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
     renderEdgeLabels: true,
     nodeProgramClasses: {
         square: NodeSquareProgram,
+        diamond: NodeDiamondProgram,
     },
     edgeProgramClasses: {
         curved: EdgeCurveProgram,

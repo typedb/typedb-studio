@@ -51,7 +51,7 @@ export class StudioConverter implements ILogicalGraphConverter {
         const shape = this.styleParameters.vertex_shapes[vertex.kind];
         return {
             label: this.styleParameters.vertex_default_label(vertex),
-            color: color.hex(),
+            color: color,
             size: vertex.kind === "roleType" ? 5 : this.styleParameters.vertex_size,
             type: shape,
             x: Math.random(),

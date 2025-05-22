@@ -148,6 +148,9 @@ devDependencies:
   '@types/jasmine':
     specifier: ~5.1.0
     version: 5.1.7
+  graphology-types:
+    specifier: 0.24.8
+    version: 0.24.8
   jasmine-core:
     specifier: ~5.1.0
     version: 5.1.2
@@ -7578,7 +7581,6 @@ packages:
 
   /graphology-types@0.24.8:
     resolution: {integrity: sha512-hDRKYXa8TsoZHjgEaysSRyPdT6uB78Ci8WnjgbStlQysz7xR52PInxNsmnB7IBOM1BhikxkNyCVEFgmPKnpx3Q==}
-    dev: false
 
   /graphology-utils@2.5.2(graphology-types@0.24.8):
     resolution: {integrity: sha512-ckHg8MXrXJkOARk56ZaSCM1g1Wihe2d6iTmz1enGOz4W/l831MBCKSayeFQfowgF8wd+PQ4rlch/56Vs/VZLDQ==}
