@@ -3,7 +3,7 @@ import {DataVertex, DataVertexKind, VertexUnavailable} from "./graph";
 import {Color} from "chroma-js";
 
 export interface StudioConverterStyleParameters {
-    vertex_colors: Record<DataVertexKind, Color>,
+    vertex_colors: Record<DataVertexKind, string>,
     vertex_shapes: Record<DataVertexKind, string>,
     vertex_size: number,
 
