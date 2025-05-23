@@ -100,8 +100,7 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          echo $(cat VERSION)-$CIRCLE_SHA1 > VERSION
-          bazel run //:deploy-linux-<<parameters.target-arch>>-targz --compilation_mode=opt -- snapshot
+          bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- snapshot
 
   deploy-linux-release:
     parameters:
@@ -111,18 +110,17 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          bazel run //:deploy-linux-<<parameters.target-arch>>-deb --compilation_mode=opt -- release
-          bazel run //:deploy-linux-<<parameters.target-arch>>-targz --compilation_mode=opt -- release
+          bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- release
 
-    deploy-apt-snapshot:
-      parameters:
-        target-arch:
-          type: string
-      steps:
-        - run: |
-            export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
-            export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
-            bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- snapshot
+  deploy-apt-snapshot:
+    parameters:
+      target-arch:
+        type: string
+    steps:
+      - run: |
+          export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- snapshot
 
   deploy-apt-release:
     parameters:
@@ -179,21 +177,21 @@ jobs:
       - run: .circleci\windows\prepare.bat
       - run: .circleci\windows\deploy_snapshot.bat
 
-    deploy-apt-arm64-snapshot:
-      executor: linux-arm64
-      steps:
-        - checkout
-        - install-bazel-linux-arm64
-        - deploy-apt-snapshot:
-            target-arch: arm64
+  deploy-apt-arm64-snapshot:
+    executor: linux-arm64
+    steps:
+      - checkout
+      - install-bazel-linux-arm64
+      - deploy-apt-snapshot:
+          target-arch: arm64
 
-    deploy-apt-x86_64-snapshot:
-      executor: linux-x86_64
-      steps:
-        - checkout
-        - install-bazel-linux-x86_64
-        - deploy-apt-snapshot:
-            target-arch: x86_64
+  deploy-apt-x86_64-snapshot:
+    executor: linux-x86_64
+    steps:
+      - checkout
+      - install-bazel-linux-x86_64
+      - deploy-apt-snapshot:
+          target-arch: x86_64
 
   deploy-mac-arm64-release:
     executor: mac-arm64
