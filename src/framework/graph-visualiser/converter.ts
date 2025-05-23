@@ -203,12 +203,13 @@ export class StudioConverter implements ILogicalGraphConverter {
 
     put_expression(answerIndex: number, constraint: DataConstraintExpression): void {
         let expression = constraint;
+        let expressionVertexKey = expressionVertexKeyFromArgsAndAssigned(constraint);
         let expressionVertex: VertexExpression = {
             tag: "expression",
             kind: "expression",
             answerIndex: answerIndex,
             repr: constraint.text,
-            vertex_map_key: `expr_${answerIndex}_${constraint.queryCoordinates.branch}_{${constraint.queryCoordinates.constraint}}`
+            vertex_map_key: expressionVertexKey
         }
         expression.assigned
             .forEach((assigned, i) => {
@@ -228,7 +229,7 @@ export class StudioConverter implements ILogicalGraphConverter {
 
     put_function(answerIndex: number, constraint: DataConstraintFunction): void {
         let functionCall = constraint;
-        let functionVertexKey = `f_${answerIndex}_${constraint.queryCoordinates.branch}_{${constraint.queryCoordinates.constraint}}`;
+        let functionVertexKey = functionVertexKeyFromArgsAndAssigned(constraint);
         let functionVertex: VertexFunction = {
             tag: "functionCall",
             kind: "functionCall", answerIndex: answerIndex,
@@ -286,4 +287,16 @@ export function vertexMapKey(vertex: DataVertex): string {
         default:
             throw `Unexpected vertex type: ${vertex}`;
     }
+}
+
+function functionVertexKeyFromArgsAndAssigned(constraint: DataConstraintFunction): string {
+    let args = constraint.arguments.map(v => vertexMapKey(v)).join(",");
+    let assigned = constraint.assigned.map(v => vertexMapKey(v)).join(",");
+    return `${constraint.name}(${args}) -> ${assigned}`;
+}
+
+function expressionVertexKeyFromArgsAndAssigned(constraint: DataConstraintExpression): string {
+    let args = constraint.arguments.map(v => vertexMapKey(v)).join(",");
+    let assigned = constraint.assigned.map(v => vertexMapKey(v)).join(",");
+    return `${constraint.text}(${args}) -> ${assigned}`;
 }
