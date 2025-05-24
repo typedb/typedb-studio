@@ -100,13 +100,7 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt \
-              --define APPLE_CODE_SIGN=yes \
-              --define APPLE_ID=$APPLE_ID \
-              --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD \
-              --define APPLE_TEAM_ID=$APPLE_TEAM_ID \
-              --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD \
-              --spawn_strategy=local -- snapshot
+          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
 
   deploy-mac-release:
     parameters:
