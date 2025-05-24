@@ -69,6 +69,7 @@ genrule(
     name = "native-artifact-mac-x86_64-dmg",
     outs = ["typedb-studio_3.4.0-ad30523694ad2b07d11ed0a406b3fe3676358705_amd64.dmg"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
+        pnpm build && \
         npx tauri build && \
         cp src-tauri/target/release/bundle/dmg/*.dmg "$(OUTS)"
     """,
@@ -80,6 +81,7 @@ genrule(
     name = "native-artifact-mac-arm64-dmg",
     outs = ["typedb-studio_3.4.0-ad30523694ad2b07d11ed0a406b3fe3676358705_aarch64.dmg"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
+        pnpm build && \
         npx tauri build && \
         cp src-tauri/target/release/bundle/dmg/*.dmg "$(OUTS)"
     """,
@@ -91,6 +93,7 @@ genrule(
     name = "native-artifact-linux-arm64-appimage",
     outs = ["typedb-studio_3.4.0-ad30523694ad2b07d11ed0a406b3fe3676358705_arm64.AppImage"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
+        pnpm build && \
         npx tauri build && \
         cp src-tauri/target/release/bundle/AppImage/*.AppImage "$(OUTS)"
     """,
@@ -102,6 +105,7 @@ genrule(
     name = "native-artifact-linux-x86_64-appimage",
     outs = ["typedb-studio_3.4.0-ad30523694ad2b07d11ed0a406b3fe3676358705_amd64.AppImage"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
+        pnpm build && \
         npx tauri build && \
         cp src-tauri/target/release/bundle/AppImage/*.AppImage "$(OUTS)"
     """,
@@ -113,6 +117,7 @@ genrule(
     name = "native-artifact-windows-x86_64-msi",
     outs = ["typedb-studio_3.4.0-ad30523694ad2b07d11ed0a406b3fe3676358705_amd64.msi"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
+        pnpm build && \
         npx tauri build && \
         cp src-tauri/target/release/bundle/msi/*.msi "$(OUTS)"
     """,
