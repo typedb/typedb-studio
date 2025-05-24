@@ -62,7 +62,26 @@ commands:
 
   install-node-modules:
     steps:
-      - run: pnpm i
+      - restore_cache:
+          name: Restore npm package cache
+          keys:
+            - pnpm-packages-{{ checksum "pnpm-lock.yaml" }}
+      - run:
+          name: Install pnpm package manager
+          command: |
+            npm install --global corepack@latest
+            corepack enable
+            corepack prepare pnpm@8.6.7 --activate
+            pnpm config set store-dir .pnpm-store
+      - run:
+          name: Install npm dependencies
+          command: |
+            pnpm install
+      - save_cache:
+          name: Save npm package cache
+          key: pnpm-packages-{{ checksum "pnpm-lock.yaml" }}
+          paths:
+            - .pnpm-store
 
   deploy-mac-snapshot:
     parameters:
