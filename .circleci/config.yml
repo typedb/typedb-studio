@@ -87,6 +87,14 @@ commands:
           paths:
             - .pnpm-store
 
+  install-rust:
+    steps:
+      - run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+      - run: |
+          rustup install 1.86.0
+          rustup default 1.86.0
+
   deploy-mac-snapshot:
     parameters:
       target-arch:
@@ -168,6 +176,7 @@ jobs:
       - install-bazel-mac:
           bazel-arch: arm64
       - install-node-modules
+      - install-rust
       - deploy-mac-snapshot:
           target-arch: arm64
 
@@ -181,6 +190,7 @@ jobs:
       - install-bazel-mac:
           bazel-arch: amd64
       - install-node-modules
+      - install-rust
       - deploy-mac-snapshot:
           target-arch: x86_64
 
@@ -191,6 +201,7 @@ jobs:
       - fetch-submodules
       - install-bazel-linux-arm64
       - install-node-modules
+      - install-rust
       - deploy-linux-snapshot:
           target-arch: arm64
 
@@ -201,6 +212,7 @@ jobs:
       - fetch-submodules
       - install-bazel-linux-x86_64
       - install-node-modules
+      - install-rust
       - deploy-linux-snapshot:
           target-arch: x86_64
 
@@ -219,6 +231,7 @@ jobs:
       - fetch-submodules
       - install-bazel-linux-arm64
       - install-node-modules
+      - install-rust
       - deploy-apt-snapshot:
           target-arch: arm64
 
@@ -229,6 +242,7 @@ jobs:
       - fetch-submodules
       - install-bazel-linux-x86_64
       - install-node-modules
+      - install-rust
       - deploy-apt-snapshot:
           target-arch: x86_64
 
@@ -240,6 +254,7 @@ jobs:
       - install-bazel-mac:
           bazel-arch: arm64
       - install-node-modules
+      - install-rust
       - deploy-mac-release:
           target-arch: arm64
       - run: |
@@ -259,6 +274,7 @@ jobs:
       - install-bazel-mac:
           bazel-arch: amd64
       - install-node-modules
+      - install-rust
       - deploy-mac-release:
           target-arch: x86_64
       - run: |
@@ -275,6 +291,7 @@ jobs:
       - fetch-submodules
       - install-bazel-linux-arm64
       - install-node-modules
+      - install-rust
       - deploy-linux-release:
           target-arch: arm64
 
@@ -285,6 +302,7 @@ jobs:
       - fetch-submodules
       - install-bazel-linux-x86_64
       - install-node-modules
+      - install-rust
       - deploy-linux-release:
           target-arch: x86_64
 
@@ -303,6 +321,7 @@ jobs:
       - fetch-submodules
       - install-bazel-linux-arm64
       - install-node-modules
+      - install-rust
       - deploy-apt-release:
           target-arch: arm64
 
@@ -313,6 +332,7 @@ jobs:
       - fetch-submodules
       - install-bazel-linux-x86_64
       - install-node-modules
+      - install-rust
       - deploy-apt-release:
           target-arch: x86_64
 
