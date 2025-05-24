@@ -69,7 +69,7 @@ commands:
       - run:
           name: Install pnpm package manager
           command: |
-            npm install --global corepack@latest
+            npm install --global corepack@0.17.0
             corepack enable
             corepack prepare pnpm@8.6.7 --activate
             pnpm config set store-dir .pnpm-store
