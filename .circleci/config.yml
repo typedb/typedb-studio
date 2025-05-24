@@ -90,7 +90,7 @@ commands:
   install-rust:
     steps:
       - run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -- -y --default-toolchain 1.86.0
+          curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain 1.86.0
 
   deploy-mac-snapshot:
     parameters:
