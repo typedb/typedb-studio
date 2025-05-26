@@ -41,6 +41,9 @@ dependencies:
   '@angular/router':
     specifier: 17.0.9
     version: 17.0.9(@angular/common@17.0.9)(@angular/core@17.0.9)(@angular/platform-browser@17.0.9)(rxjs@7.8.2)
+  '@codemirror/autocomplete':
+    specifier: 6.18.6
+    version: 6.18.6
   '@codemirror/lint':
     specifier: 6.8.5
     version: 6.8.5
@@ -53,6 +56,9 @@ dependencies:
   '@intercom/messenger-js-sdk':
     specifier: 0.0.14
     version: 0.0.14
+  '@lezer/common':
+    specifier: ^1.0.0
+    version: 1.2.3
   '@lezer/lr':
     specifier: 1.4.2
     version: 1.4.2
@@ -127,6 +133,9 @@ devDependencies:
   '@codemirror/view':
     specifier: 6.36.5
     version: 6.36.5
+  '@lezer/generator':
+    specifier: ^1.7.3
+    version: 1.7.3
   '@lezer/highlight':
     specifier: 1.2.1
     version: 1.2.1
@@ -8885,6 +8894,7 @@ packages:
 
   /node-addon-api@3.2.1:
     resolution: {integrity: sha512-mmcei9JghVNDYydghQmeDX8KoAm0FAiYyIcUt/N4nhyAipB17pllZQDOJD2fotxABnt4Mdz+dKTO7eftLg4d0A==}
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -8908,6 +8918,7 @@ packages:
   /node-gyp-build@4.8.4:
     resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
     hasBin: true
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -9320,6 +9331,7 @@ packages:
   /pify@4.0.1:
     resolution: {integrity: sha512-uB80kBFb/tfd68bVleG9T5GGsGPjJrLAUpR5PZIrhBnIaRTQRjqdJSsIKkOP6OAIFbj7GOrcudc5pNjZ+geV2g==}
     engines: {node: '>=6'}
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -9535,6 +9547,7 @@ packages:
 
   /prr@1.0.1:
     resolution: {integrity: sha512-yPw4Sng1gWghHQWj0B3ZggWUm4qVbPwPFcRG8KyxiU7J2OHFSoEHKS+EZ3fv5l1t9CyCiop6l/ZYeWbrgoQejw==}
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -9900,6 +9913,7 @@ packages:
 
   /sax@1.4.1:
     resolution: {integrity: sha512-+aWOz7yVScEGoKNd4PA10LZ8sk0A/z5+nXQG5giUO5rprX9jgYsTdov9qCchZiPIZezbZH+jRut8nPodFAX4Jg==}
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -9937,6 +9951,7 @@ packages:
   /semver@5.7.2:
     resolution: {integrity: sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==}
     hasBin: true
+    requiresBuild: true
     dev: true
     optional: true
 
