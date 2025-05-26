@@ -21,7 +21,7 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
 import { distinctUntilChanged, filter, first, map, startWith } from "rxjs";
-import { otherExampleLinter, TypeQL } from "../../framework/codemirror-lang-typeql";
+import { otherExampleLinter, TypeQL, typeqlAutocompleteExtension } from "../../framework/codemirror-lang-typeql";
 import { DriverAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
@@ -133,4 +133,5 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     readonly JSON = JSON;
     readonly TypeQL = TypeQL;
     readonly linter = otherExampleLinter;
+    readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
 }
