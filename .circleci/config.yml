@@ -268,6 +268,8 @@ jobs:
       - install-rust
       - install-deps-yum:
           bazel-arch: arm64
+      - install-deps-apt:
+          bazel-arch: arm64
       - deploy-linux-snapshot:
           target-arch: arm64
 
@@ -280,6 +282,8 @@ jobs:
       - install-node-modules
       - install-rust
       - install-deps-yum:
+          bazel-arch: amd64
+      - install-deps-apt:
           bazel-arch: amd64
       - deploy-linux-snapshot:
           target-arch: x86_64
@@ -294,6 +298,8 @@ jobs:
       - install-rust
       - install-deps-yum:
           bazel-arch: arm64
+      - install-deps-apt:
+          bazel-arch: arm64
       - deploy-apt-snapshot:
           target-arch: arm64
 
@@ -306,6 +312,8 @@ jobs:
       - install-node-modules
       - install-rust
       - install-deps-yum:
+          bazel-arch: amd64
+      - install-deps-apt:
           bazel-arch: amd64
       - deploy-apt-snapshot:
           target-arch: x86_64
@@ -369,6 +377,8 @@ jobs:
       - install-rust
       - install-deps-yum:
           bazel-arch: arm64
+      - install-deps-apt:
+          bazel-arch: arm64
       - deploy-linux-release:
           target-arch: arm64
 
@@ -381,6 +391,8 @@ jobs:
       - install-node-modules
       - install-rust
       - install-deps-yum:
+          bazel-arch: amd64
+      - install-deps-apt:
           bazel-arch: amd64
       - deploy-linux-release:
           target-arch: x86_64
@@ -395,6 +407,8 @@ jobs:
       - install-rust
       - install-deps-yum:
           bazel-arch: arm64
+      - install-deps-apt:
+          bazel-arch: arm64
       - deploy-apt-release:
           target-arch: arm64
 
@@ -407,6 +421,8 @@ jobs:
       - install-node-modules
       - install-rust
       - install-deps-yum:
+          bazel-arch: amd64
+      - install-deps-apt:
           bazel-arch: amd64
       - deploy-apt-release:
           target-arch: x86_64
@@ -443,6 +459,8 @@ jobs:
       - checkout
       - install-bazel-linux-x86_64
       - install-deps-yum:
+          bazel-arch: amd64
+      - install-deps-apt:
           bazel-arch: amd64
       - run: |
           export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN DEPLOY_BREW_USERNAME=$REPO_GITHUB_USERNAME DEPLOY_BREW_EMAIL=$REPO_GITHUB_EMAIL
