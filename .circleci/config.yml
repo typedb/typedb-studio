@@ -113,6 +113,8 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          corepack enable
+          corepack prepare pnpm@8.6.7 --activate
           pnpm build
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
 
@@ -124,6 +126,8 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          corepack enable
+          corepack prepare pnpm@8.6.7 --activate
           pnpm build
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt \
               --define APPLE_CODE_SIGN=yes \
@@ -141,6 +145,8 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          corepack enable
+          corepack prepare pnpm@8.6.7 --activate
           pnpm build
           bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- snapshot
 
@@ -152,6 +158,8 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          corepack enable
+          corepack prepare pnpm@8.6.7 --activate
           pnpm build
           bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- release
 
@@ -163,6 +171,8 @@ commands:
       - run: |
           export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          corepack enable
+          corepack prepare pnpm@8.6.7 --activate
           pnpm build
           bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- snapshot
 
@@ -174,6 +184,8 @@ commands:
       - run: |
           export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          corepack enable
+          corepack prepare pnpm@8.6.7 --activate
           pnpm build
           bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- release
 
