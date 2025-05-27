@@ -86,6 +86,8 @@ commands:
       - run:
           name: Install pnpm package manager and node modules
           command: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm install 18
             nvm use 18
             npm install --global corepack@0.17.0
