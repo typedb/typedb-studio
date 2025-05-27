@@ -8,15 +8,16 @@ orbs:
   macos: circleci/macos@2.4.0
 
 executors:
-  linux-arm64:
-    machine:
-      image: ubuntu-2004:2023.10.1
-      resource_class: arm.medium
+  linux-arm64-amazonlinux-2:
+    docker:
+      - image: amazonlinux:2
+    resource_class: arm.large
     working_directory: ~/typedb-studio
 
-  linux-x86_64:
-    machine:
-      image: ubuntu-2004:2023.10.1
+  linux-x86_64-amazonlinux-2:
+    docker:
+      - image: amazonlinux:2
+    resource_class: large
     working_directory: ~/typedb-studio
 
   mac-arm64:
@@ -239,7 +240,7 @@ jobs:
           target-arch: x86_64
 
   deploy-linux-arm64-snapshot:
-    executor: linux-arm64
+    executor: linux-arm64-amazonlinux-2
     steps:
       - checkout
       - fetch-submodules
@@ -251,7 +252,7 @@ jobs:
           target-arch: arm64
 
   deploy-linux-x86_64-snapshot:
-    executor: linux-x86_64
+    executor: linux-x86_64-amazonlinux-2
     steps:
       - checkout
       - fetch-submodules
@@ -263,7 +264,7 @@ jobs:
           target-arch: x86_64
 
   deploy-apt-arm64-snapshot:
-    executor: linux-arm64
+    executor: linux-arm64-amazonlinux-2
     steps:
       - checkout
       - fetch-submodules
@@ -275,7 +276,7 @@ jobs:
           target-arch: arm64
 
   deploy-apt-x86_64-snapshot:
-    executor: linux-x86_64
+    executor: linux-x86_64-amazonlinux-2
     steps:
       - checkout
       - fetch-submodules
@@ -336,7 +337,7 @@ jobs:
             - ./*
 
   deploy-linux-arm64-release:
-    executor: linux-arm64
+    executor: linux-arm64-amazonlinux-2
     steps:
       - checkout
       - fetch-submodules
@@ -348,7 +349,7 @@ jobs:
           target-arch: arm64
 
   deploy-linux-x86_64-release:
-    executor: linux-x86_64
+    executor: linux-x86_64-amazonlinux-2
     steps:
       - checkout
       - fetch-submodules
@@ -360,7 +361,7 @@ jobs:
           target-arch: x86_64
 
   deploy-apt-arm64-release:
-    executor: linux-arm64
+    executor: linux-arm64-amazonlinux-2
     steps:
       - checkout
       - fetch-submodules
@@ -372,7 +373,7 @@ jobs:
           target-arch: arm64
 
   deploy-apt-x86_64-release:
-    executor: linux-x86_64
+    executor: linux-x86_64-amazonlinux-2
     steps:
       - checkout
       - fetch-submodules
@@ -395,7 +396,7 @@ jobs:
       - run: .circleci\windows\deploy_release.bat
 
   deploy-github:
-    executor: linux-x86_64
+    executor: linux-x86_64-amazonlinux-2
     steps:
       - checkout
       - run:
@@ -408,7 +409,7 @@ jobs:
               -c ${CIRCLE_SHA1} -delete $(cat VERSION)
 
   deploy-brew:
-    executor: linux-x86_64
+    executor: linux-x86_64-amazonlinux-2
     steps:
       - attach_workspace:
           at: ~/dist
