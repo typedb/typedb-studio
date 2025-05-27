@@ -8,15 +8,15 @@ orbs:
   macos: circleci/macos@2.4.0
 
 executors:
-  linux-arm64-amazonlinux-2:
+  linux-arm64-amazonlinux-2023:
     docker:
-      - image: amazonlinux:2
+      - image: amazonlinux:2023
     resource_class: arm.large
     working_directory: ~/typedb-studio
 
-  linux-x86_64-amazonlinux-2:
+  linux-x86_64-amazonlinux-2023:
     docker:
-      - image: amazonlinux:2
+      - image: amazonlinux:2023
     resource_class: large
     working_directory: ~/typedb-studio
 
@@ -100,14 +100,14 @@ commands:
       - run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain 1.86.0
 
-  install-deps-yum:
+  install-deps-dnf:
     parameters:
       bazel-arch:
         type: string
     steps:
       - run: |
           amazon-linux-extras install python3.8 java-openjdk11 docker -y
-          yum install -y git tar gcc gcc-c++ file lsof which procps llvm-devel clang-devel wget sudo
+          dnf install -y git tar gcc gcc-c++ file lsof which procps llvm-devel clang-devel wget sudo
           curl -OL "https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-linux-<<parameters.bazel-arch>>"
           mv "bazelisk-linux-<<parameters.bazel-arch>>" /usr/local/bin/bazel
           chmod a+x /usr/local/bin/bazel
@@ -172,6 +172,8 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           nvm install 18
           nvm use 18
           npm install --global corepack@0.17.0
@@ -189,6 +191,8 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           nvm install 18
           nvm use 18
           npm install --global corepack@0.17.0
@@ -206,6 +210,8 @@ commands:
       - run: |
           export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           nvm install 18
           nvm use 18
           npm install --global corepack@0.17.0
@@ -223,6 +229,8 @@ commands:
       - run: |
           export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           nvm install 18
           nvm use 18
           npm install --global corepack@0.17.0
@@ -260,7 +268,7 @@ jobs:
           target-arch: x86_64
 
   deploy-linux-arm64-snapshot:
-    executor: linux-arm64-amazonlinux-2
+    executor: linux-arm64-amazonlinux-2023
     steps:
       - checkout
       - install-deps-yum:
@@ -273,7 +281,7 @@ jobs:
           target-arch: arm64
 
   deploy-linux-x86_64-snapshot:
-    executor: linux-x86_64-amazonlinux-2
+    executor: linux-x86_64-amazonlinux-2023
     steps:
       - checkout
       - install-deps-yum:
@@ -286,7 +294,7 @@ jobs:
           target-arch: x86_64
 
   deploy-apt-arm64-snapshot:
-    executor: linux-arm64-amazonlinux-2
+    executor: linux-arm64-amazonlinux-2023
     steps:
       - checkout
       - install-deps-yum:
@@ -299,7 +307,7 @@ jobs:
           target-arch: arm64
 
   deploy-apt-x86_64-snapshot:
-    executor: linux-x86_64-amazonlinux-2
+    executor: linux-x86_64-amazonlinux-2023
     steps:
       - checkout
       - install-deps-yum:
@@ -361,7 +369,7 @@ jobs:
             - ./*
 
   deploy-linux-arm64-release:
-    executor: linux-arm64-amazonlinux-2
+    executor: linux-arm64-amazonlinux-2023
     steps:
       - checkout
       - install-deps-yum:
@@ -374,7 +382,7 @@ jobs:
           target-arch: arm64
 
   deploy-linux-x86_64-release:
-    executor: linux-x86_64-amazonlinux-2
+    executor: linux-x86_64-amazonlinux-2023
     steps:
       - checkout
       - install-deps-yum:
@@ -387,7 +395,7 @@ jobs:
           target-arch: x86_64
 
   deploy-apt-arm64-release:
-    executor: linux-arm64-amazonlinux-2
+    executor: linux-arm64-amazonlinux-2023
     steps:
       - checkout
       - install-deps-yum:
@@ -400,7 +408,7 @@ jobs:
           target-arch: arm64
 
   deploy-apt-x86_64-release:
-    executor: linux-x86_64-amazonlinux-2
+    executor: linux-x86_64-amazonlinux-2023
     steps:
       - checkout
       - install-deps-yum:
@@ -424,7 +432,7 @@ jobs:
       - run: .circleci\windows\deploy_release.bat
 
   deploy-github:
-    executor: linux-x86_64-amazonlinux-2
+    executor: linux-x86_64-amazonlinux-2023
     steps:
       - checkout
       - run:
@@ -437,7 +445,7 @@ jobs:
               -c ${CIRCLE_SHA1} -delete $(cat VERSION)
 
   deploy-brew:
-    executor: linux-x86_64-amazonlinux-2
+    executor: linux-x86_64-amazonlinux-2023
     steps:
       - attach_workspace:
           at: ~/dist
