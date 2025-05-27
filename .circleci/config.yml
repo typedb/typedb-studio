@@ -262,14 +262,14 @@ jobs:
     executor: linux-arm64-amazonlinux-2
     steps:
       - checkout
-      - fetch-submodules
-      - install-bazel-linux-arm64
-      - install-node-modules
-      - install-rust
       - install-deps-yum:
           bazel-arch: arm64
       - install-deps-apt:
           bazel-arch: arm64
+      - fetch-submodules
+      - install-bazel-linux-arm64
+      - install-node-modules
+      - install-rust
       - deploy-linux-snapshot:
           target-arch: arm64
 
@@ -277,14 +277,14 @@ jobs:
     executor: linux-x86_64-amazonlinux-2
     steps:
       - checkout
-      - fetch-submodules
-      - install-bazel-linux-x86_64
-      - install-node-modules
-      - install-rust
       - install-deps-yum:
           bazel-arch: amd64
       - install-deps-apt:
           bazel-arch: amd64
+      - fetch-submodules
+      - install-bazel-linux-x86_64
+      - install-node-modules
+      - install-rust
       - deploy-linux-snapshot:
           target-arch: x86_64
 
@@ -292,14 +292,14 @@ jobs:
     executor: linux-arm64-amazonlinux-2
     steps:
       - checkout
-      - fetch-submodules
-      - install-bazel-linux-arm64
-      - install-node-modules
-      - install-rust
       - install-deps-yum:
           bazel-arch: arm64
       - install-deps-apt:
           bazel-arch: arm64
+      - fetch-submodules
+      - install-bazel-linux-arm64
+      - install-node-modules
+      - install-rust
       - deploy-apt-snapshot:
           target-arch: arm64
 
@@ -307,14 +307,14 @@ jobs:
     executor: linux-x86_64-amazonlinux-2
     steps:
       - checkout
-      - fetch-submodules
-      - install-bazel-linux-x86_64
-      - install-node-modules
-      - install-rust
       - install-deps-yum:
           bazel-arch: amd64
       - install-deps-apt:
           bazel-arch: amd64
+      - fetch-submodules
+      - install-bazel-linux-x86_64
+      - install-node-modules
+      - install-rust
       - deploy-apt-snapshot:
           target-arch: x86_64
 
@@ -371,14 +371,14 @@ jobs:
     executor: linux-arm64-amazonlinux-2
     steps:
       - checkout
-      - fetch-submodules
-      - install-bazel-linux-arm64
-      - install-node-modules
-      - install-rust
       - install-deps-yum:
           bazel-arch: arm64
       - install-deps-apt:
           bazel-arch: arm64
+      - fetch-submodules
+      - install-bazel-linux-arm64
+      - install-node-modules
+      - install-rust
       - deploy-linux-release:
           target-arch: arm64
 
@@ -386,14 +386,14 @@ jobs:
     executor: linux-x86_64-amazonlinux-2
     steps:
       - checkout
-      - fetch-submodules
-      - install-bazel-linux-x86_64
-      - install-node-modules
-      - install-rust
       - install-deps-yum:
           bazel-arch: amd64
       - install-deps-apt:
           bazel-arch: amd64
+      - fetch-submodules
+      - install-bazel-linux-x86_64
+      - install-node-modules
+      - install-rust
       - deploy-linux-release:
           target-arch: x86_64
 
@@ -401,14 +401,14 @@ jobs:
     executor: linux-arm64-amazonlinux-2
     steps:
       - checkout
-      - fetch-submodules
-      - install-bazel-linux-arm64
-      - install-node-modules
-      - install-rust
       - install-deps-yum:
           bazel-arch: arm64
       - install-deps-apt:
           bazel-arch: arm64
+      - fetch-submodules
+      - install-bazel-linux-arm64
+      - install-node-modules
+      - install-rust
       - deploy-apt-release:
           target-arch: arm64
 
@@ -416,14 +416,14 @@ jobs:
     executor: linux-x86_64-amazonlinux-2
     steps:
       - checkout
-      - fetch-submodules
-      - install-bazel-linux-x86_64
-      - install-node-modules
-      - install-rust
       - install-deps-yum:
           bazel-arch: amd64
       - install-deps-apt:
           bazel-arch: amd64
+      - fetch-submodules
+      - install-bazel-linux-x86_64
+      - install-node-modules
+      - install-rust
       - deploy-apt-release:
           target-arch: x86_64
 
