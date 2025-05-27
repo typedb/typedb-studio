@@ -85,6 +85,7 @@ commands:
       - run:
           name: Install pnpm package manager and node modules
           command: |
+            set -ex
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm install 18
