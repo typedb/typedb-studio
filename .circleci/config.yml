@@ -83,7 +83,7 @@ commands:
     steps:
       - restore-npm-cache
       - run:
-          name: Install pnpm package manager
+          name: Install pnpm package manager and node modules
           command: |
             nvm install 18
             nvm use 18
@@ -91,9 +91,6 @@ commands:
             corepack enable
             corepack prepare pnpm@8.6.7 --activate
             pnpm config set store-dir .pnpm-store
-      - run:
-          name: Install npm dependencies
-          command: |
             pnpm install
       - save-npm-cache
 
