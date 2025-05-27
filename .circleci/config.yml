@@ -64,12 +64,24 @@ commands:
     steps:
       - run: arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-  install-node-modules:
+  restore-npm-cache:
     steps:
       - restore_cache:
           name: Restore npm package cache
           keys:
             - pnpm-packages-{{ checksum "pnpm-lock.yaml" }}
+
+  save-npm-cache:
+    steps:
+      - save_cache:
+          name: Save npm package cache
+          key: pnpm-packages-{{ checksum "pnpm-lock.yaml" }}
+          paths:
+            - .pnpm-store
+
+  install-node-modules:
+    steps:
+      - restore-npm-cache
       - run:
           name: Install pnpm package manager
           command: |
@@ -83,11 +95,7 @@ commands:
           name: Install npm dependencies
           command: |
             pnpm install
-      - save_cache:
-          name: Save npm package cache
-          key: pnpm-packages-{{ checksum "pnpm-lock.yaml" }}
-          paths:
-            - .pnpm-store
+      - save-npm-cache
 
   install-rust:
     steps:
@@ -253,8 +261,9 @@ jobs:
     steps:
       - checkout
       - fetch-submodules
-      - install-node-modules
+      - restore-npm-cache
       - run: .circleci\windows\prepare.bat
+      - save-npm-cache
       - run: .circleci\windows\deploy_snapshot.bat
 
   deploy-mac-arm64-release:
@@ -349,8 +358,9 @@ jobs:
     steps:
       - checkout
       - fetch-submodules
-      - install-node-modules
+      - restore-npm-cache
       - run: .circleci\windows\prepare.bat
+      - save-npm-cache
       - run: .circleci\windows\deploy_release.bat
 
   deploy-github:
