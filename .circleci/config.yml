@@ -250,6 +250,8 @@ jobs:
     working_directory: ~/typedb-studio
     steps:
       - checkout
+      - fetch-submodules
+      - install-node-modules
       - run: .circleci\windows\prepare.bat
       - run: .circleci\windows\deploy_snapshot.bat
 
@@ -344,6 +346,8 @@ jobs:
     working_directory: ~/typedb-studio
     steps:
       - checkout
+      - fetch-submodules
+      - install-node-modules
       - run: .circleci\windows\prepare.bat
       - run: .circleci\windows\deploy_release.bat
 
