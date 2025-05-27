@@ -271,7 +271,7 @@ jobs:
     executor: linux-arm64-amazonlinux-2023
     steps:
       - checkout
-      - install-deps-yum:
+      - install-deps-dnf:
           bazel-arch: arm64
       - fetch-submodules
       - install-bazel-linux-arm64
@@ -284,7 +284,7 @@ jobs:
     executor: linux-x86_64-amazonlinux-2023
     steps:
       - checkout
-      - install-deps-yum:
+      - install-deps-dnf:
           bazel-arch: amd64
       - fetch-submodules
       - install-bazel-linux-x86_64
@@ -297,7 +297,7 @@ jobs:
     executor: linux-arm64-amazonlinux-2023
     steps:
       - checkout
-      - install-deps-yum:
+      - install-deps-dnf:
           bazel-arch: arm64
       - fetch-submodules
       - install-bazel-linux-arm64
@@ -310,7 +310,7 @@ jobs:
     executor: linux-x86_64-amazonlinux-2023
     steps:
       - checkout
-      - install-deps-yum:
+      - install-deps-dnf:
           bazel-arch: amd64
       - fetch-submodules
       - install-bazel-linux-x86_64
@@ -372,7 +372,7 @@ jobs:
     executor: linux-arm64-amazonlinux-2023
     steps:
       - checkout
-      - install-deps-yum:
+      - install-deps-dnf:
           bazel-arch: arm64
       - fetch-submodules
       - install-bazel-linux-arm64
@@ -385,7 +385,7 @@ jobs:
     executor: linux-x86_64-amazonlinux-2023
     steps:
       - checkout
-      - install-deps-yum:
+      - install-deps-dnf:
           bazel-arch: amd64
       - fetch-submodules
       - install-bazel-linux-x86_64
@@ -398,7 +398,7 @@ jobs:
     executor: linux-arm64-amazonlinux-2023
     steps:
       - checkout
-      - install-deps-yum:
+      - install-deps-dnf:
           bazel-arch: arm64
       - fetch-submodules
       - install-bazel-linux-arm64
@@ -411,7 +411,7 @@ jobs:
     executor: linux-x86_64-amazonlinux-2023
     steps:
       - checkout
-      - install-deps-yum:
+      - install-deps-dnf:
           bazel-arch: amd64
       - fetch-submodules
       - install-bazel-linux-x86_64
@@ -451,7 +451,7 @@ jobs:
           at: ~/dist
       - checkout
       - install-bazel-linux-x86_64
-      - install-deps-yum:
+      - install-deps-dnf:
           bazel-arch: amd64
       - run: |
           export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN DEPLOY_BREW_USERNAME=$REPO_GITHUB_USERNAME DEPLOY_BREW_EMAIL=$REPO_GITHUB_EMAIL
