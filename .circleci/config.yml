@@ -92,6 +92,11 @@ commands:
       - run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain 1.86.0
 
+  install-glib-linux:
+    steps:
+      - run: |
+          sudo apt-get install libgtk-3-dev
+
   deploy-mac-snapshot:
     parameters:
       target-arch:
@@ -199,6 +204,7 @@ jobs:
       - install-bazel-linux-arm64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-linux-snapshot:
           target-arch: arm64
 
@@ -210,16 +216,9 @@ jobs:
       - install-bazel-linux-x86_64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-linux-snapshot:
           target-arch: x86_64
-
-  deploy-windows-x86_64-snapshot:
-    executor: win-x86_64
-    working_directory: ~/typedb-studio
-    steps:
-      - checkout
-      - run: .circleci\windows\prepare.bat
-      - run: .circleci\windows\deploy_snapshot.bat
 
   deploy-apt-arm64-snapshot:
     executor: linux-arm64
@@ -229,6 +228,7 @@ jobs:
       - install-bazel-linux-arm64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-apt-snapshot:
           target-arch: arm64
 
@@ -240,8 +240,17 @@ jobs:
       - install-bazel-linux-x86_64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-apt-snapshot:
           target-arch: x86_64
+
+  deploy-windows-x86_64-snapshot:
+    executor: win-x86_64
+    working_directory: ~/typedb-studio
+    steps:
+      - checkout
+      - run: .circleci\windows\prepare.bat
+      - run: .circleci\windows\deploy_snapshot.bat
 
   deploy-mac-arm64-release:
     executor: mac-arm64
@@ -289,6 +298,7 @@ jobs:
       - install-bazel-linux-arm64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-linux-release:
           target-arch: arm64
 
@@ -300,16 +310,9 @@ jobs:
       - install-bazel-linux-x86_64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-linux-release:
           target-arch: x86_64
-
-  deploy-windows-x86_64-release:
-    executor: win-x86_64
-    working_directory: ~/typedb-studio
-    steps:
-      - checkout
-      - run: .circleci\windows\prepare.bat
-      - run: .circleci\windows\deploy_release.bat
 
   deploy-apt-arm64-release:
     executor: linux-arm64
@@ -319,6 +322,7 @@ jobs:
       - install-bazel-linux-arm64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-apt-release:
           target-arch: arm64
 
@@ -330,8 +334,17 @@ jobs:
       - install-bazel-linux-x86_64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-apt-release:
           target-arch: x86_64
+
+  deploy-windows-x86_64-release:
+    executor: win-x86_64
+    working_directory: ~/typedb-studio
+    steps:
+      - checkout
+      - run: .circleci\windows\prepare.bat
+      - run: .circleci\windows\deploy_release.bat
 
   deploy-github:
     executor: linux-x86_64
