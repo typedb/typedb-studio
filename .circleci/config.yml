@@ -87,9 +87,7 @@ commands:
           command: |
             set -ex
             export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm install 18
-            nvm use 18
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" --install
             npm install --global corepack@0.17.0
             corepack enable
             corepack prepare pnpm@8.6.7 --activate
@@ -172,10 +170,6 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install 18
-          nvm use 18
           npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
@@ -191,10 +185,6 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install 18
-          nvm use 18
           npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
@@ -210,10 +200,6 @@ commands:
       - run: |
           export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install 18
-          nvm use 18
           npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
@@ -229,10 +215,6 @@ commands:
       - run: |
           export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install 18
-          nvm use 18
           npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
