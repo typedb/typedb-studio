@@ -28,7 +28,7 @@ SETX BAZEL_VC "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC
 REM install node modules
 
 echo before npm install
-npm install --global corepack@0.17.0 --verbose
+CALL npm install --global corepack@0.17.0 --verbose
 echo after npm install
 
 where corepack
