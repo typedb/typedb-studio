@@ -31,17 +31,11 @@ echo before npm install
 CALL npm install --global corepack@0.17.0 --verbose
 echo after npm install
 
-where corepack
-corepack --version
-echo PATH=%PATH%
-
-echo Before corepack enable
-corepack enable
-echo After corepack enable
-corepack prepare pnpm@8.6.7 --activate
-pnpm config set store-dir .pnpm-store
-pnpm install
+CALL corepack enable
+CALL corepack prepare pnpm@8.6.7 --activate
+CALL pnpm config set store-dir .pnpm-store
+CALL pnpm install
 
 REM compile MSI installer using tauri
-pnpm build
-npx tauri build
+CALL pnpm build
+CALL npx tauri build
