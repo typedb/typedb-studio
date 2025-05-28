@@ -102,7 +102,8 @@ commands:
   install-glib-linux:
     steps:
       - run: |
-          sleep 1
+          sudo apt update
+          sudo apt install python3.8 python3.8-venv python3.8-dev
 #          sudo apt-get update
 #          sudo apt-get install -y libglib2.0-dev pkg-config
 
