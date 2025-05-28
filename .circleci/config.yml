@@ -105,7 +105,7 @@ commands:
         type: string
     steps:
       - run: |
-          dnf install -y git tar gcc gcc-c++ file lsof which procps llvm-devel clang-devel wget sudo
+          dnf install -y git tar gcc gcc-c++ file lsof which procps llvm-devel clang-devel wget sudo glib2-devel
           curl -OL "https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-linux-<<parameters.bazel-arch>>"
           mv "bazelisk-linux-<<parameters.bazel-arch>>" /usr/local/bin/bazel
           chmod a+x /usr/local/bin/bazel
@@ -176,7 +176,6 @@ commands:
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
-          export PKG_CONFIG_PATH=$(dirname $(find /usr -name glib-2.0.pc | head -n1))
           \. "$HOME/.cargo/env"
           bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- snapshot
 
@@ -194,7 +193,6 @@ commands:
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
-          export PKG_CONFIG_PATH=$(dirname $(find /usr -name glib-2.0.pc | head -n1))
           \. "$HOME/.cargo/env"
           bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- release
 
@@ -212,7 +210,6 @@ commands:
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
-          export PKG_CONFIG_PATH=$(dirname $(find /usr -name glib-2.0.pc | head -n1))
           \. "$HOME/.cargo/env"
           bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- snapshot
 
@@ -230,7 +227,6 @@ commands:
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
-          export PKG_CONFIG_PATH=$(dirname $(find /usr -name glib-2.0.pc | head -n1))
           \. "$HOME/.cargo/env"
           bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- release
 
