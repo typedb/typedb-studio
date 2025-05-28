@@ -28,23 +28,7 @@ SETX BAZEL_VC "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC
 REM install node modules
 
 echo before npm install
-
-REM Clean npm cache first to avoid corrupted cache issues
-npm cache clean --force
-if ERRORLEVEL 1 (
-  echo npm cache clean failed with error %ERRORLEVEL%
-  EXIT /B %ERRORLEVEL%
-)
-
-REM Run npm install with verbose logging and redirect stdout/stderr to a log file
-npm install --global corepack@0.17.0 --verbose > npm-install.log 2>&1
-if ERRORLEVEL 1 (
-  echo npm install failed with error %ERRORLEVEL%
-  echo See npm-install.log for details
-  type npm-install.log
-  EXIT /B %ERRORLEVEL%
-)
-
+npm install --global corepack@0.17.0 --verbose
 echo after npm install
 
 where corepack
