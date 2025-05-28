@@ -27,6 +27,11 @@ SETX BAZEL_VC "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC
 
 REM install node modules
 npm install --global corepack@0.17.0
+
+where corepack
+corepack --version
+echo PATH=%PATH%
+
 corepack enable
 corepack prepare pnpm@8.6.7 --activate
 pnpm config set store-dir .pnpm-store
