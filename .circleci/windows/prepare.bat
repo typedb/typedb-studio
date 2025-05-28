@@ -25,6 +25,13 @@ SETX BAZEL_SH "C:\Program Files\Git\usr\bin\bash.exe"
 SETX BAZEL_PYTHON C:\Python311\python.exe
 SETX BAZEL_VC "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC"
 
+REM install Rust
+curl -L -o rustup-init.exe https://win.rustup.rs/x86_64
+rustup-init.exe -y
+rustup install 1.86.0
+rustup default 1.86.0
+set PATH=%USERPROFILE%\.cargo\bin;%PATH%
+
 REM install node modules
 
 echo before npm install
