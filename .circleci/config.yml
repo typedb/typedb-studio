@@ -120,6 +120,7 @@ commands:
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
+          npx tauri build
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
 
   deploy-mac-release:
@@ -136,6 +137,7 @@ commands:
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
+          npx tauri build
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt \
               --define APPLE_CODE_SIGN=yes \
               --define APPLE_ID=$APPLE_ID \
@@ -168,6 +170,7 @@ commands:
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
           export PATH="/usr/bin:$PATH"
+          npx tauri build
           bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- snapshot
 
   deploy-linux-release:
@@ -194,6 +197,7 @@ commands:
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
           export PATH="/usr/bin:$PATH"
+          npx tauri build
           bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- release
 
   deploy-apt-snapshot:
@@ -220,6 +224,7 @@ commands:
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
           export PATH="/usr/bin:$PATH"
+          npx tauri build
           bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- snapshot
 
   deploy-apt-release:
@@ -246,6 +251,7 @@ commands:
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
           export PATH="/usr/bin:$PATH"
+          npx tauri build
           bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- release
 
 jobs:
