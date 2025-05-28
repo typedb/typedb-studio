@@ -476,19 +476,19 @@ workflows:
       - deploy-linux-arm64-snapshot:
           filters:
             branches:
-              only: [master, development]
+              only: [master, banana]
       - deploy-linux-x86_64-snapshot:
           filters:
             branches:
-              only: [master, development]
+              only: [master, banana]
       - deploy-mac-arm64-snapshot:
           filters:
             branches:
-              only: [master, development]
+              only: [master, banana]
       - deploy-mac-x86_64-snapshot:
           filters:
             branches:
-              only: [master, development]
+              only: [master, banana]
       - deploy-windows-x86_64-snapshot:
           filters:
             branches:
@@ -496,11 +496,11 @@ workflows:
       - deploy-apt-arm64-snapshot:
           filters:
             branches:
-              only: [master, development]
+              only: [master, banana]
       - deploy-apt-x86_64-snapshot:
           filters:
             branches:
-              only: [master, development]
+              only: [master, banana]
   release:
     jobs:
       - deploy-linux-arm64-release:

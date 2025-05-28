@@ -26,10 +26,12 @@ SETX BAZEL_PYTHON C:\Python311\python.exe
 SETX BAZEL_VC "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC"
 
 REM install node modules
-nvm install 18
-nvm use 18
 npm install --global corepack@0.17.0
 corepack enable
 corepack prepare pnpm@8.6.7 --activate
 pnpm config set store-dir .pnpm-store
 pnpm install
+
+REM compile MSI installer using tauri
+pnpm build
+npx tauri build
