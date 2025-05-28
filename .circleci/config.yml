@@ -177,6 +177,7 @@ commands:
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
           export PKG_CONFIG_PATH=$(dirname $(find /usr -name glib-2.0.pc | head -n1))
+          \. "$HOME/.cargo/env"
           bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- snapshot
 
   deploy-linux-release:
@@ -194,6 +195,7 @@ commands:
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
           export PKG_CONFIG_PATH=$(dirname $(find /usr -name glib-2.0.pc | head -n1))
+          \. "$HOME/.cargo/env"
           bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- release
 
   deploy-apt-snapshot:
@@ -211,6 +213,7 @@ commands:
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
           export PKG_CONFIG_PATH=$(dirname $(find /usr -name glib-2.0.pc | head -n1))
+          \. "$HOME/.cargo/env"
           bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- snapshot
 
   deploy-apt-release:
@@ -228,6 +231,7 @@ commands:
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
           export PKG_CONFIG_PATH=$(dirname $(find /usr -name glib-2.0.pc | head -n1))
+          \. "$HOME/.cargo/env"
           bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- release
 
 jobs:
