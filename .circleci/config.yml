@@ -159,6 +159,7 @@ commands:
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
+          sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
           sudo apt install -y python3.8 python3.8-venv python3.8-dev
@@ -181,6 +182,7 @@ commands:
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
+          sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
           sudo apt install -y python3.8 python3.8-venv python3.8-dev
@@ -203,6 +205,7 @@ commands:
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
+          sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
           sudo apt install -y python3.8 python3.8-venv python3.8-dev
@@ -225,6 +228,7 @@ commands:
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
+          sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
           sudo apt install -y python3.8 python3.8-venv python3.8-dev
