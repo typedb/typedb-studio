@@ -72,7 +72,7 @@ genrule(
         npx tauri build && \
         cp src-tauri/target/release/bundle/dmg/*.dmg "$(OUTS)"
     """,
-    tags = ["local"],
+    tags = ["local", "no-sandbox"],
     target_compatible_with = constraint_mac_x86_64,
 )
 
@@ -83,7 +83,7 @@ genrule(
         npx tauri build && \
         cp src-tauri/target/release/bundle/dmg/*.dmg "$(OUTS)"
     """,
-    tags = ["local"],
+    tags = ["local", "no-sandbox"],
     target_compatible_with = constraint_mac_arm64,
 )
 
@@ -94,7 +94,7 @@ genrule(
         npx tauri build && \
         cp src-tauri/target/release/bundle/appimage/*.AppImage "$(OUTS)"
     """,
-    tags = ["local"],
+    tags = ["local", "no-sandbox"],
     target_compatible_with = constraint_linux_arm64,
 )
 
@@ -105,7 +105,7 @@ genrule(
         npx tauri build && \
         cp src-tauri/target/release/bundle/appimage/*.AppImage "$(OUTS)"
     """,
-    tags = ["local"],
+    tags = ["local", "no-sandbox"],
     target_compatible_with = constraint_linux_x86_64,
 )
 
@@ -116,7 +116,7 @@ genrule(
         npx tauri build && \
         cp src-tauri/target/release/bundle/msi/*.msi "$(OUTS)"
     """,
-    tags = ["local"],
+    tags = ["local", "no-sandbox"],
     target_compatible_with = constraint_win_x86_64,
 )
 
