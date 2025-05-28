@@ -10,13 +10,13 @@ orbs:
 executors:
   linux-arm64:
     machine:
-      image: ubuntu-2004:2023.10.1
+      image: ubuntu-2204:2024.11.1
       resource_class: arm.medium
     working_directory: ~/typedb-studio
 
   linux-x86_64:
     machine:
-      image: ubuntu-2004:2023.10.1
+      image: ubuntu-2204:2024.11.1
     working_directory: ~/typedb-studio
 
   mac-arm64:
