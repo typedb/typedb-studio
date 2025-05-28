@@ -119,6 +119,7 @@ commands:
           npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
+          pnpm build
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
 
   deploy-mac-release:
@@ -134,6 +135,7 @@ commands:
           npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
+          pnpm build
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt \
               --define APPLE_CODE_SIGN=yes \
               --define APPLE_ID=$APPLE_ID \
