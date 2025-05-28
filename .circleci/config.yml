@@ -161,7 +161,7 @@ commands:
           sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
-          sudo apt install -y python3.8 python3.8-venv python3.8-dev
+          sudo apt install -y python3.8 python3.8-venv python3.8-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
           export PATH="/usr/bin:$PATH"
@@ -184,7 +184,7 @@ commands:
           sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
-          sudo apt install -y python3.8 python3.8-venv python3.8-dev
+          sudo apt install -y python3.8 python3.8-venv python3.8-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
           export PATH="/usr/bin:$PATH"
@@ -207,7 +207,7 @@ commands:
           sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
-          sudo apt install -y python3.8 python3.8-venv python3.8-dev
+          sudo apt install -y python3.8 python3.8-venv python3.8-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
           export PATH="/usr/bin:$PATH"
@@ -230,7 +230,7 @@ commands:
           sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
-          sudo apt install -y python3.8 python3.8-venv python3.8-dev
+          sudo apt install -y python3.8 python3.8-venv python3.8-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
           export PATH="/usr/bin:$PATH"
