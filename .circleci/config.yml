@@ -102,7 +102,7 @@ commands:
   install-glib-linux:
     steps:
       - run: |
-          sleep 100
+          sleep 1
 #          sudo apt-get update
 #          sudo apt-get install -y libglib2.0-dev pkg-config
 
