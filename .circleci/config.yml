@@ -8,16 +8,15 @@ orbs:
   macos: circleci/macos@2.4.0
 
 executors:
-  linux-arm64-amazonlinux-2023:
-    docker:
-      - image: amazonlinux:2023
-    resource_class: arm.large
+  linux-arm64:
+    machine:
+      image: ubuntu-2004:2023.10.1
+      resource_class: arm.medium
     working_directory: ~/typedb-studio
 
-  linux-x86_64-amazonlinux-2023:
-    docker:
-      - image: amazonlinux:2023
-    resource_class: large
+  linux-x86_64:
+    machine:
+      image: ubuntu-2004:2023.10.1
     working_directory: ~/typedb-studio
 
   mac-arm64:
@@ -82,47 +81,29 @@ commands:
 
   install-node-modules:
     steps:
+      - restore-npm-cache
       - run:
           name: Install pnpm package manager and node modules
           command: |
-            set -ex
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" --install
+            nvm install 18
+            nvm use 18
             npm install --global corepack@0.17.0
             corepack enable
             corepack prepare pnpm@8.6.7 --activate
             pnpm config set store-dir .pnpm-store
             pnpm install
+      - save-npm-cache
 
   install-rust:
     steps:
       - run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain 1.86.0
 
-  install-deps-dnf:
-    parameters:
-      bazel-arch:
-        type: string
+  install-glib-linux:
     steps:
       - run: |
-          dnf install -y git tar gcc gcc-c++ file lsof which procps llvm-devel clang-devel wget sudo glib2-devel
-          curl -OL "https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-linux-<<parameters.bazel-arch>>"
-          mv "bazelisk-linux-<<parameters.bazel-arch>>" /usr/local/bin/bazel
-          chmod a+x /usr/local/bin/bazel
-          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-
-  install-deps-apt:
-    parameters:
-      bazel-arch:
-        type: string
-    steps:
-      - run: |
-          apt update -y
-          DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends tzdata
-          apt install -y curl build-essential git python3 python3-pip default-jre lsof cmake file wget libclang-dev
-          curl -OL "https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-linux-<<parameters.bazel-arch>>"
-          mv "bazelisk-linux-<<parameters.bazel-arch>>" /usr/local/bin/bazel
-          chmod a+x /usr/local/bin/bazel
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev pkg-config
 
   deploy-mac-snapshot:
     parameters:
@@ -170,13 +151,12 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" --install
+          nvm install 18
+          nvm use 18
           npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
-          \. "$HOME/.cargo/env"
           bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- snapshot
 
   deploy-linux-release:
@@ -187,13 +167,12 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" --install
+          nvm install 18
+          nvm use 18
           npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
-          \. "$HOME/.cargo/env"
           bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- release
 
   deploy-apt-snapshot:
@@ -204,13 +183,12 @@ commands:
       - run: |
           export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" --install
+          nvm install 18
+          nvm use 18
           npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
-          \. "$HOME/.cargo/env"
           bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- snapshot
 
   deploy-apt-release:
@@ -221,13 +199,12 @@ commands:
       - run: |
           export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" --install
+          nvm install 18
+          nvm use 18
           npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
-          \. "$HOME/.cargo/env"
           bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- release
 
 jobs:
@@ -258,54 +235,50 @@ jobs:
           target-arch: x86_64
 
   deploy-linux-arm64-snapshot:
-    executor: linux-arm64-amazonlinux-2023
+    executor: linux-arm64
     steps:
       - checkout
-      - install-deps-dnf:
-          bazel-arch: arm64
       - fetch-submodules
       - install-bazel-linux-arm64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-linux-snapshot:
           target-arch: arm64
 
   deploy-linux-x86_64-snapshot:
-    executor: linux-x86_64-amazonlinux-2023
+    executor: linux-x86_64
     steps:
       - checkout
-      - install-deps-dnf:
-          bazel-arch: amd64
       - fetch-submodules
       - install-bazel-linux-x86_64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-linux-snapshot:
           target-arch: x86_64
 
   deploy-apt-arm64-snapshot:
-    executor: linux-arm64-amazonlinux-2023
+    executor: linux-arm64
     steps:
       - checkout
-      - install-deps-dnf:
-          bazel-arch: arm64
       - fetch-submodules
       - install-bazel-linux-arm64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-apt-snapshot:
           target-arch: arm64
 
   deploy-apt-x86_64-snapshot:
-    executor: linux-x86_64-amazonlinux-2023
+    executor: linux-x86_64
     steps:
       - checkout
-      - install-deps-dnf:
-          bazel-arch: amd64
       - fetch-submodules
       - install-bazel-linux-x86_64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-apt-snapshot:
           target-arch: x86_64
 
@@ -359,54 +332,50 @@ jobs:
             - ./*
 
   deploy-linux-arm64-release:
-    executor: linux-arm64-amazonlinux-2023
+    executor: linux-arm64
     steps:
       - checkout
-      - install-deps-dnf:
-          bazel-arch: arm64
       - fetch-submodules
       - install-bazel-linux-arm64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-linux-release:
           target-arch: arm64
 
   deploy-linux-x86_64-release:
-    executor: linux-x86_64-amazonlinux-2023
+    executor: linux-x86_64
     steps:
       - checkout
-      - install-deps-dnf:
-          bazel-arch: amd64
       - fetch-submodules
       - install-bazel-linux-x86_64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-linux-release:
           target-arch: x86_64
 
   deploy-apt-arm64-release:
-    executor: linux-arm64-amazonlinux-2023
+    executor: linux-arm64
     steps:
       - checkout
-      - install-deps-dnf:
-          bazel-arch: arm64
       - fetch-submodules
       - install-bazel-linux-arm64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-apt-release:
           target-arch: arm64
 
   deploy-apt-x86_64-release:
-    executor: linux-x86_64-amazonlinux-2023
+    executor: linux-x86_64
     steps:
       - checkout
-      - install-deps-dnf:
-          bazel-arch: amd64
       - fetch-submodules
       - install-bazel-linux-x86_64
       - install-node-modules
       - install-rust
+      - install-glib-linux
       - deploy-apt-release:
           target-arch: x86_64
 
@@ -422,7 +391,7 @@ jobs:
       - run: .circleci\windows\deploy_release.bat
 
   deploy-github:
-    executor: linux-x86_64-amazonlinux-2023
+    executor: linux-x86_64
     steps:
       - checkout
       - run:
@@ -435,14 +404,12 @@ jobs:
               -c ${CIRCLE_SHA1} -delete $(cat VERSION)
 
   deploy-brew:
-    executor: linux-x86_64-amazonlinux-2023
+    executor: linux-x86_64
     steps:
       - attach_workspace:
           at: ~/dist
       - checkout
       - install-bazel-linux-x86_64
-      - install-deps-dnf:
-          bazel-arch: amd64
       - run: |
           export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN DEPLOY_BREW_USERNAME=$REPO_GITHUB_USERNAME DEPLOY_BREW_EMAIL=$REPO_GITHUB_EMAIL
           sha256sum ~/dist/typedb-studio-mac-arm64.dmg | awk '{print $1}' > checksum-arm64
