@@ -92,7 +92,7 @@ genrule(
     outs = ["typedb-studio_3.4.0-ad30523694ad2b07d11ed0a406b3fe3676358705_arm64.AppImage"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
         npx tauri build && \
-        cp src-tauri/target/release/bundle/AppImage/*.AppImage "$(OUTS)"
+        cp src-tauri/target/release/bundle/appimage/*.AppImage "$(OUTS)"
     """,
     tags = ["local"],
     target_compatible_with = constraint_linux_arm64,
@@ -103,7 +103,7 @@ genrule(
     outs = ["typedb-studio_3.4.0-ad30523694ad2b07d11ed0a406b3fe3676358705_amd64.AppImage"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
         npx tauri build && \
-        cp src-tauri/target/release/bundle/AppImage/*.AppImage "$(OUTS)"
+        cp src-tauri/target/release/bundle/appimage/*.AppImage "$(OUTS)"
     """,
     tags = ["local"],
     target_compatible_with = constraint_linux_x86_64,
