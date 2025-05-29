@@ -33,7 +33,7 @@
     ],
     "windows": {
       "wix": {
-        "format": "exe"
+        "version": "0.0.1"
       }
     }
   }
