@@ -86,7 +86,7 @@ genrule(
 )
 
 genrule(
-    name = "native-artifact-linux-arm64-appimage",
+    name = "native-artifact-linux-arm64-deb",
     outs = ["typedb-studio_3.4.0-e5a9c7d3f1b8426e8d3c4f7a7b9a1e34c1f5d27b_arm64.deb"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
         cp src-tauri/target/release/bundle/deb/*.deb "$(OUTS)"
@@ -96,8 +96,8 @@ genrule(
 )
 
 genrule(
-    name = "native-artifact-linux-x86_64-appimage",
-    outs = ["typedb-studio_3.4.0-e5a9c7d3f1b8426e8d3c4f7a7b9a1e34c1f5d27b_amd64.AppImage"],  # replace with your actual output, e.g., .exe, .AppImage
+    name = "native-artifact-linux-x86_64-deb",
+    outs = ["typedb-studio_3.4.0-e5a9c7d3f1b8426e8d3c4f7a7b9a1e34c1f5d27b_amd64.deb"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
         cp src-tauri/target/release/bundle/deb/*.deb "$(OUTS)"
     """,
@@ -260,10 +260,10 @@ deploy_artifact(
 )
 
 deploy_artifact(
-    name = "deploy-linux-x86_64-appimage",
-    target = ":native-artifact-linux-x86_64-appimage",
+    name = "deploy-linux-x86_64-deb",
+    target = ":native-artifact-linux-x86_64-deb",
     artifact_group = "typedb-studio-linux-x86_64",
-    artifact_name = "typedb-studio-linux-x86_64-{version}.AppImage",
+    artifact_name = "typedb-studio-linux-x86_64-{version}.deb",
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
     version_file = ":VERSION",
@@ -272,10 +272,10 @@ deploy_artifact(
 )
 
 deploy_artifact(
-    name = "deploy-linux-arm64-appimage",
-    target = ":native-artifact-linux-arm64-appimage",
+    name = "deploy-linux-arm64-deb",
+    target = ":native-artifact-linux-arm64-deb",
     artifact_group = "typedb-studio-linux-arm64",
-    artifact_name = "typedb-studio-linux-arm64-{version}.AppImage",
+    artifact_name = "typedb-studio-linux-arm64-{version}.deb",
     snapshot = deployment['artifact']['snapshot']['upload'],
     release = deployment['artifact']['release']['upload'],
     version_file = ":VERSION",
@@ -320,14 +320,14 @@ deploy_brew(
 
 deploy_apt(
     name = "deploy-apt-x86_64",
-    target = ":native-artifact-linux-x86_64-appimage",
+    target = ":native-artifact-linux-x86_64-deb",
     snapshot = deployment['apt']['snapshot']['upload'],
     release = deployment['apt']['release']['upload'],
 )
 
 deploy_apt(
     name = "deploy-apt-arm64",
-    target = ":native-artifact-linux-arm64-appimage",
+    target = ":native-artifact-linux-arm64-deb",
     snapshot = deployment['apt']['snapshot']['upload'],
     release = deployment['apt']['release']['upload'],
 )

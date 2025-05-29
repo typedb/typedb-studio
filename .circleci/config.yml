@@ -99,13 +99,6 @@ commands:
       - run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain 1.86.0
 
-  install-glib-linux:
-    steps:
-      - run: |
-          sleep 1
-#          sudo apt-get update
-#          sudo apt-get install -y libglib2.0-dev pkg-config
-
   deploy-mac-snapshot:
     parameters:
       target-arch:
@@ -138,13 +131,7 @@ commands:
           corepack prepare pnpm@8.6.7 --activate
           pnpm build
           npx tauri build
-          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg --compilation_mode=opt \
-              --define APPLE_CODE_SIGN=yes \
-              --define APPLE_ID=$APPLE_ID \
-              --define APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD \
-              --define APPLE_TEAM_ID=$APPLE_TEAM_ID \
-              --define APPLE_CODE_SIGNING_CERT_PASSWORD=$APPLE_CODE_SIGNING_CERT_PASSWORD \
-              --spawn_strategy=local -- release
+          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- release
 
   deploy-linux-snapshot:
     parameters:
@@ -171,7 +158,7 @@ commands:
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
           export PATH="/usr/bin:$PATH"
           npx tauri build
-          bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- snapshot
+          bazel run //:deploy-linux-<<parameters.target-arch>>-deb --compilation_mode=opt -- snapshot
 
   deploy-linux-release:
     parameters:
@@ -198,7 +185,7 @@ commands:
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
           export PATH="/usr/bin:$PATH"
           npx tauri build
-          bazel run //:deploy-linux-<<parameters.target-arch>>-appimage --compilation_mode=opt -- release
+          bazel run //:deploy-linux-<<parameters.target-arch>>-deb --compilation_mode=opt -- release
 
   deploy-apt-snapshot:
     parameters:
@@ -289,7 +276,6 @@ jobs:
       - install-bazel-linux-arm64
       - install-node-modules
       - install-rust
-      - install-glib-linux
       - deploy-linux-snapshot:
           target-arch: arm64
 
@@ -301,7 +287,6 @@ jobs:
       - install-bazel-linux-x86_64
       - install-node-modules
       - install-rust
-      - install-glib-linux
       - deploy-linux-snapshot:
           target-arch: x86_64
 
@@ -313,7 +298,6 @@ jobs:
       - install-bazel-linux-arm64
       - install-node-modules
       - install-rust
-      - install-glib-linux
       - deploy-apt-snapshot:
           target-arch: arm64
 
@@ -325,7 +309,6 @@ jobs:
       - install-bazel-linux-x86_64
       - install-node-modules
       - install-rust
-      - install-glib-linux
       - deploy-apt-snapshot:
           target-arch: x86_64
 
@@ -386,7 +369,6 @@ jobs:
       - install-bazel-linux-arm64
       - install-node-modules
       - install-rust
-      - install-glib-linux
       - deploy-linux-release:
           target-arch: arm64
 
@@ -398,7 +380,6 @@ jobs:
       - install-bazel-linux-x86_64
       - install-node-modules
       - install-rust
-      - install-glib-linux
       - deploy-linux-release:
           target-arch: x86_64
 
@@ -410,7 +391,6 @@ jobs:
       - install-bazel-linux-arm64
       - install-node-modules
       - install-rust
-      - install-glib-linux
       - deploy-apt-release:
           target-arch: arm64
 
@@ -422,7 +402,6 @@ jobs:
       - install-bazel-linux-x86_64
       - install-node-modules
       - install-rust
-      - install-glib-linux
       - deploy-apt-release:
           target-arch: x86_64
 
@@ -476,31 +455,31 @@ workflows:
       - deploy-linux-arm64-snapshot:
           filters:
             branches:
-              only: [master, development]
+              only: [banana]
       - deploy-linux-x86_64-snapshot:
           filters:
             branches:
-              only: [master, development]
+              only: [banana]
       - deploy-mac-arm64-snapshot:
           filters:
             branches:
-              only: [master, banana]
+              only: [banana]
       - deploy-mac-x86_64-snapshot:
           filters:
             branches:
-              only: [master, banana]
+              only: [banana]
       - deploy-windows-x86_64-snapshot:
           filters:
             branches:
-              only: [master, banana]
+              only: [banana]
       - deploy-apt-arm64-snapshot:
           filters:
             branches:
-              only: [master, banana]
+              only: [banana]
       - deploy-apt-x86_64-snapshot:
           filters:
             branches:
-              only: [master, banana]
+              only: [banana]
   release:
     jobs:
       - deploy-linux-arm64-release:
