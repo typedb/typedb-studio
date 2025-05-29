@@ -334,12 +334,6 @@ jobs:
       - install-rust
       - deploy-mac-release:
           target-arch: arm64
-      - run: |
-          mkdir -p ~/dist && cp bazel-bin/typedb-studio-mac-arm64.dmg ~/dist
-      - persist_to_workspace:
-          root: ~/dist
-          paths:
-            - ./*
 
   deploy-mac-x86_64-release:
     executor: mac-arm64
@@ -354,12 +348,6 @@ jobs:
       - install-rust
       - deploy-mac-release:
           target-arch: x86_64
-      - run: |
-          mkdir -p ~/dist && cp bazel-bin/typedb-studio-mac-x86_64.dmg ~/dist
-      - persist_to_workspace:
-          root: ~/dist
-          paths:
-            - ./*
 
   deploy-linux-arm64-release:
     executor: linux-arm64
