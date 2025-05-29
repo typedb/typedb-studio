@@ -484,15 +484,15 @@ workflows:
       - deploy-mac-arm64-snapshot:
           filters:
             branches:
-              only: [master, banana]
+              only: [master, development]
       - deploy-mac-x86_64-snapshot:
           filters:
             branches:
-              only: [master, banana]
+              only: [master, development]
       - deploy-windows-x86_64-snapshot:
           filters:
             branches:
-              only: [master, development]
+              only: [master, banana]
       - deploy-apt-arm64-snapshot:
           filters:
             branches:
