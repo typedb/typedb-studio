@@ -515,26 +515,26 @@ workflows:
       - deploy-apt-arm64-release:
           filters:
             branches:
-              only: release
+              only: watermelon
           requires:
             - deploy-linux-arm64-release
       - deploy-apt-x86_64-release:
           filters:
             branches:
-              only: release
+              only: watermelon
           requires:
             - deploy-linux-x86_64-release
       - deploy-brew:
           filters:
             branches:
-              only: release
+              only: watermelon
           requires:
             - deploy-mac-arm64-release
             - deploy-mac-x86_64-release
       - release-cleanup:
           filters:
             branches:
-              only: release
+              only: watermelon
           requires:
             - deploy-github
             - deploy-brew
