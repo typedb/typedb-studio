@@ -1,0 +1,16 @@
+# This unpublished material is proprietary to Vaticle.
+# All rights reserved. The methods and
+# techniques described herein are considered trade secrets
+# and/or confidential. Reproduction or distribution, in whole
+# or in part, is forbidden except by express written permission
+# of Vaticle.
+
+try-import ./.bazel-remote-cache.rc
+
+build --define version="0.0.0" --define snapshot-version="0.0.0-snapshot" --define test-suite="**" --incompatible_strict_action_env --javacopt='--release 11' --java_runtime_version=remotejdk_11 --enable_runfiles --action_env=PATH
+build:linux --action_env=PKG_CONFIG_PATH
+
+run --define test-suite="**"  --incompatible_strict_action_env --action_env=PATH --java_runtime_version=remotejdk_11
+run:linux --action_env=PKG_CONFIG_PATH
+
+test  --incompatible_strict_action_env  --test_env=PATH --java_runtime_version=remotejdk_11

@@ -1,0 +1,540 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+version: 2.1
+orbs:
+  win: circleci/windows@5.0
+  macos: circleci/macos@2.4.0
+
+executors:
+  linux-arm64:
+    machine:
+      image: ubuntu-2204:2024.11.1
+      resource_class: arm.medium
+    working_directory: ~/typedb-studio
+
+  linux-x86_64:
+    machine:
+      image: ubuntu-2204:2024.11.1
+    working_directory: ~/typedb-studio
+
+  mac-arm64:
+    macos:
+      xcode: "13.4.1"
+    resource_class: macos.m1.medium.gen1
+    working_directory: ~/typedb-studio
+
+  win-x86_64:
+    resource_class: windows.medium
+    machine:
+      image: windows-server-2022-gui:2024.01.1
+    shell: cmd.exe
+
+
+commands:
+
+  fetch-submodules:
+    steps:
+      - run: git submodule update --init --recursive
+
+  install-bazel-linux-x86_64:
+    steps:
+      - run: curl -OL https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-linux-amd64
+      - run: sudo mv bazelisk-linux-amd64 /usr/local/bin/bazel
+      - run: chmod a+x /usr/local/bin/bazel
+
+  install-bazel-linux-arm64:
+    steps:
+      - run: curl -OL https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-linux-arm64
+      - run: sudo mv bazelisk-linux-arm64 /usr/local/bin/bazel
+      - run: chmod a+x /usr/local/bin/bazel
+
+  install-bazel-mac:
+    parameters:
+      bazel-arch:
+        type: string
+    steps:
+      - run: |
+          curl -OL "https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-darwin-<<parameters.bazel-arch>>"
+          sudo mv "bazelisk-darwin-<<parameters.bazel-arch>>" /usr/local/bin/bazel
+          chmod a+x /usr/local/bin/bazel
+
+  install-brew-rosetta:
+    steps:
+      - run: arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+  restore-npm-cache:
+    steps:
+      - restore_cache:
+          name: Restore npm package cache
+          keys:
+            - pnpm-packages-{{ checksum "pnpm-lock.yaml" }}
+
+  save-npm-cache:
+    steps:
+      - save_cache:
+          name: Save npm package cache
+          key: pnpm-packages-{{ checksum "pnpm-lock.yaml" }}
+          paths:
+            - .pnpm-store
+
+  install-node-modules:
+    steps:
+      - restore-npm-cache
+      - run:
+          name: Install pnpm package manager and node modules
+          command: |
+            nvm install 18
+            nvm use 18
+            npm install --global corepack@0.17.0
+            corepack enable
+            corepack prepare pnpm@8.6.7 --activate
+            pnpm config set store-dir .pnpm-store
+            pnpm install
+      - save-npm-cache
+
+  install-rust:
+    steps:
+      - run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain 1.86.0
+
+  deploy-mac-snapshot:
+    parameters:
+      target-arch:
+        type: string
+    steps:
+      - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          nvm install 18
+          nvm use 18
+          npm install --global corepack@0.17.0
+          corepack enable
+          corepack prepare pnpm@8.6.7 --activate
+          pnpm build
+          npx tauri build
+          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
+
+  deploy-mac-release:
+    parameters:
+      target-arch:
+        type: string
+    steps:
+      - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          nvm install 18
+          nvm use 18
+          npm install --global corepack@0.17.0
+          corepack enable
+          corepack prepare pnpm@8.6.7 --activate
+          pnpm build
+          npx tauri build
+          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- release
+
+  deploy-linux-snapshot:
+    parameters:
+      target-arch:
+        type: string
+    steps:
+      - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          nvm install 18
+          nvm use 18
+          npm install --global corepack@0.17.0
+          corepack enable
+          corepack prepare pnpm@8.6.7 --activate
+          pnpm build
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt install -y software-properties-common lsb-release curl
+          sudo add-apt-repository ppa:deadsnakes/ppa -y
+          sudo apt update
+          echo -e '#!/bin/sh\nexit 101' | sudo tee /usr/sbin/policy-rc.d
+          sudo chmod +x /usr/sbin/policy-rc.d
+          sudo apt install -y python3.8 python3.8-venv python3.8-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+          sudo ln -sf /usr/bin/python3.8 /usr/bin/python
+          sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
+          export PATH="/usr/bin:$PATH"
+          npx tauri build
+          bazel run //:deploy-linux-<<parameters.target-arch>>-deb --compilation_mode=opt -- snapshot
+
+  deploy-linux-release:
+    parameters:
+      target-arch:
+        type: string
+    steps:
+      - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          nvm install 18
+          nvm use 18
+          npm install --global corepack@0.17.0
+          corepack enable
+          corepack prepare pnpm@8.6.7 --activate
+          pnpm build
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt install -y software-properties-common lsb-release curl
+          sudo add-apt-repository ppa:deadsnakes/ppa -y
+          sudo apt update
+          echo -e '#!/bin/sh\nexit 101' | sudo tee /usr/sbin/policy-rc.d
+          sudo chmod +x /usr/sbin/policy-rc.d
+          sudo apt install -y python3.8 python3.8-venv python3.8-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+          sudo ln -sf /usr/bin/python3.8 /usr/bin/python
+          sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
+          export PATH="/usr/bin:$PATH"
+          npx tauri build
+          bazel run //:deploy-linux-<<parameters.target-arch>>-deb --compilation_mode=opt -- release
+
+  deploy-apt-snapshot:
+    parameters:
+      target-arch:
+        type: string
+    steps:
+      - run: |
+          export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          nvm install 18
+          nvm use 18
+          npm install --global corepack@0.17.0
+          corepack enable
+          corepack prepare pnpm@8.6.7 --activate
+          pnpm build
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt install -y software-properties-common lsb-release curl
+          sudo add-apt-repository ppa:deadsnakes/ppa -y
+          sudo apt update
+          echo -e '#!/bin/sh\nexit 101' | sudo tee /usr/sbin/policy-rc.d
+          sudo chmod +x /usr/sbin/policy-rc.d
+          sudo apt install -y python3.8 python3.8-venv python3.8-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+          sudo ln -sf /usr/bin/python3.8 /usr/bin/python
+          sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
+          export PATH="/usr/bin:$PATH"
+          npx tauri build
+          bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- snapshot
+
+  deploy-apt-release:
+    parameters:
+      target-arch:
+        type: string
+    steps:
+      - run: |
+          export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          nvm install 18
+          nvm use 18
+          npm install --global corepack@0.17.0
+          corepack enable
+          corepack prepare pnpm@8.6.7 --activate
+          pnpm build
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt install -y software-properties-common lsb-release curl
+          sudo add-apt-repository ppa:deadsnakes/ppa -y
+          sudo apt update
+          echo -e '#!/bin/sh\nexit 101' | sudo tee /usr/sbin/policy-rc.d
+          sudo chmod +x /usr/sbin/policy-rc.d
+          sudo apt install -y python3.8 python3.8-venv python3.8-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+          sudo ln -sf /usr/bin/python3.8 /usr/bin/python
+          sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
+          export PATH="/usr/bin:$PATH"
+          npx tauri build
+          bazel run //:deploy-apt-<<parameters.target-arch>> --compilation_mode=opt -- release
+
+jobs:
+  deploy-mac-arm64-snapshot:
+    executor: mac-arm64
+    steps:
+      - checkout
+      - fetch-submodules
+      - install-bazel-mac:
+          bazel-arch: arm64
+      - install-node-modules
+      - install-rust
+      - deploy-mac-snapshot:
+          target-arch: arm64
+
+  deploy-mac-x86_64-snapshot:
+    executor: mac-arm64
+    steps:
+      - checkout
+      - fetch-submodules
+      - macos/install-rosetta
+      - install-brew-rosetta
+      - install-bazel-mac:
+          bazel-arch: amd64
+      - install-node-modules
+      - install-rust
+      - deploy-mac-snapshot:
+          target-arch: x86_64
+
+  deploy-linux-arm64-snapshot:
+    executor: linux-arm64
+    steps:
+      - checkout
+      - fetch-submodules
+      - install-bazel-linux-arm64
+      - install-node-modules
+      - install-rust
+      - deploy-linux-snapshot:
+          target-arch: arm64
+
+  deploy-linux-x86_64-snapshot:
+    executor: linux-x86_64
+    steps:
+      - checkout
+      - fetch-submodules
+      - install-bazel-linux-x86_64
+      - install-node-modules
+      - install-rust
+      - deploy-linux-snapshot:
+          target-arch: x86_64
+
+  deploy-apt-arm64-snapshot:
+    executor: linux-arm64
+    steps:
+      - checkout
+      - fetch-submodules
+      - install-bazel-linux-arm64
+      - install-node-modules
+      - install-rust
+      - deploy-apt-snapshot:
+          target-arch: arm64
+
+  deploy-apt-x86_64-snapshot:
+    executor: linux-x86_64
+    steps:
+      - checkout
+      - fetch-submodules
+      - install-bazel-linux-x86_64
+      - install-node-modules
+      - install-rust
+      - deploy-apt-snapshot:
+          target-arch: x86_64
+
+  deploy-windows-x86_64-snapshot:
+    executor: win-x86_64
+    working_directory: ~/typedb-studio
+    steps:
+      - checkout
+      - fetch-submodules
+      - restore-npm-cache
+      - run: .circleci\windows\prepare.bat
+      - save-npm-cache
+      - run: .circleci\windows\deploy_snapshot.bat
+
+  deploy-mac-arm64-release:
+    executor: mac-arm64
+    steps:
+      - checkout
+      - fetch-submodules
+      - install-bazel-mac:
+          bazel-arch: arm64
+      - install-node-modules
+      - install-rust
+      - deploy-mac-release:
+          target-arch: arm64
+      - run: |
+          mkdir -p ~/dist && cp bazel-bin/typedb-studio-mac-arm64.dmg ~/dist
+      - persist_to_workspace:
+          root: ~/dist
+          paths:
+            - ./*
+
+  deploy-mac-x86_64-release:
+    executor: mac-arm64
+    steps:
+      - checkout
+      - fetch-submodules
+      - macos/install-rosetta
+      - install-brew-rosetta
+      - install-bazel-mac:
+          bazel-arch: amd64
+      - install-node-modules
+      - install-rust
+      - deploy-mac-release:
+          target-arch: x86_64
+      - run: |
+          mkdir -p ~/dist && cp bazel-bin/typedb-studio-mac-x86_64.dmg ~/dist
+      - persist_to_workspace:
+          root: ~/dist
+          paths:
+            - ./*
+
+  deploy-linux-arm64-release:
+    executor: linux-arm64
+    steps:
+      - checkout
+      - fetch-submodules
+      - install-bazel-linux-arm64
+      - install-node-modules
+      - install-rust
+      - deploy-linux-release:
+          target-arch: arm64
+
+  deploy-linux-x86_64-release:
+    executor: linux-x86_64
+    steps:
+      - checkout
+      - fetch-submodules
+      - install-bazel-linux-x86_64
+      - install-node-modules
+      - install-rust
+      - deploy-linux-release:
+          target-arch: x86_64
+
+  deploy-apt-arm64-release:
+    executor: linux-arm64
+    steps:
+      - checkout
+      - fetch-submodules
+      - install-bazel-linux-arm64
+      - install-node-modules
+      - install-rust
+      - deploy-apt-release:
+          target-arch: arm64
+
+  deploy-apt-x86_64-release:
+    executor: linux-x86_64
+    steps:
+      - checkout
+      - fetch-submodules
+      - install-bazel-linux-x86_64
+      - install-node-modules
+      - install-rust
+      - deploy-apt-release:
+          target-arch: x86_64
+
+  deploy-windows-x86_64-release:
+    executor: win-x86_64
+    working_directory: ~/typedb-studio
+    steps:
+      - checkout
+      - fetch-submodules
+      - restore-npm-cache
+      - run: .circleci\windows\prepare.bat
+      - save-npm-cache
+      - run: .circleci\windows\deploy_release.bat
+
+  deploy-github:
+    executor: linux-x86_64
+    steps:
+      - checkout
+      - run:
+          name: "Publish Draft Release on GitHub"
+          command: |
+            wget https://github.com/tcnksm/ghr/releases/download/v0.16.2/ghr_v0.16.2_linux_amd64.tar.gz
+            tar -xf ghr_v0.16.2_linux_amd64.tar.gz
+            ghr_v0.16.2_linux_amd64/ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
+              -r ${CIRCLE_PROJECT_REPONAME} -n "TypeDB Studio $(cat VERSION)" -b "$(cat ./RELEASE_NOTES_LATEST.md)" \
+              -c ${CIRCLE_SHA1} -delete $(cat VERSION)
+
+  deploy-brew:
+    executor: linux-x86_64
+    steps:
+      - attach_workspace:
+          at: ~/dist
+      - checkout
+      - install-bazel-linux-x86_64
+      - run: |
+          export DEPLOY_BREW_TOKEN=$REPO_GITHUB_TOKEN DEPLOY_BREW_USERNAME=$REPO_GITHUB_USERNAME DEPLOY_BREW_EMAIL=$REPO_GITHUB_EMAIL
+          sha256sum ~/dist/typedb-studio-mac-arm64.dmg | awk '{print $1}' > checksum-arm64
+          sha256sum ~/dist/typedb-studio-mac-x86_64.dmg | awk '{print $1}' > checksum-x86_64
+          bazel run --define version=$(cat VERSION) //:deploy-brew --//:checksum-mac-arm64=:checksum-arm64 --//:checksum-mac-x86_64=:checksum-x86_64 --compilation_mode=opt -- release
+
+  release-cleanup:
+    machine:
+      image: ubuntu-2004:2023.10.1
+    steps:
+      - checkout
+      - run: git push --delete https://$REPO_GITHUB_TOKEN@github.com/typedb/typedb-studio.git $CIRCLE_BRANCH
+
+workflows:
+  snapshot:
+    jobs:
+      - deploy-linux-arm64-snapshot:
+          filters:
+            branches:
+              only: [banana]
+      - deploy-linux-x86_64-snapshot:
+          filters:
+            branches:
+              only: [banana]
+      - deploy-mac-arm64-snapshot:
+          filters:
+            branches:
+              only: [banana]
+      - deploy-mac-x86_64-snapshot:
+          filters:
+            branches:
+              only: [banana]
+      - deploy-windows-x86_64-snapshot:
+          filters:
+            branches:
+              only: [banana]
+      - deploy-apt-arm64-snapshot:
+          filters:
+            branches:
+              only: [banana]
+      - deploy-apt-x86_64-snapshot:
+          filters:
+            branches:
+              only: [banana]
+  release:
+    jobs:
+      - deploy-linux-arm64-release:
+          filters:
+            branches:
+              only: master
+      - deploy-linux-x86_64-release:
+          filters:
+            branches:
+              only: master
+      - deploy-mac-arm64-release:
+          filters:
+            branches:
+              only: master
+      - deploy-mac-x86_64-release:
+          filters:
+            branches:
+              only: master
+      - deploy-windows-x86_64-release:
+          filters:
+            branches:
+              only: master
+      - deploy-github:
+          filters:
+            branches:
+              only: master
+          requires:
+            - deploy-linux-arm64-release
+            - deploy-linux-x86_64-release
+            - deploy-mac-arm64-release
+            - deploy-mac-x86_64-release
+            - deploy-windows-x86_64-release
+      - deploy-apt-arm64-release:
+          filters:
+            branches:
+              only: watermelon
+          requires:
+            - deploy-linux-arm64-release
+      - deploy-apt-x86_64-release:
+          filters:
+            branches:
+              only: watermelon
+          requires:
+            - deploy-linux-x86_64-release
+      - deploy-brew:
+          filters:
+            branches:
+              only: watermelon
+          requires:
+            - deploy-mac-arm64-release
+            - deploy-mac-x86_64-release
+      - release-cleanup:
+          filters:
+            branches:
+              only: watermelon
+          requires:
+            - deploy-github
+            - deploy-brew
