@@ -485,27 +485,27 @@ workflows:
       - deploy-linux-arm64-release:
           filters:
             branches:
-              only: release
+              only: master
       - deploy-linux-x86_64-release:
           filters:
             branches:
-              only: release
+              only: master
       - deploy-mac-arm64-release:
           filters:
             branches:
-              only: release
+              only: master
       - deploy-mac-x86_64-release:
           filters:
             branches:
-              only: release
+              only: master
       - deploy-windows-x86_64-release:
           filters:
             branches:
-              only: release
+              only: master
       - deploy-github:
           filters:
             branches:
-              only: release
+              only: master
           requires:
             - deploy-linux-arm64-release
             - deploy-linux-x86_64-release

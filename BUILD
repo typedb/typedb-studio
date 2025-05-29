@@ -67,7 +67,7 @@ exports_files(["VERSION"])
 
 genrule(
     name = "native-artifact-mac-x86_64-dmg",
-    outs = ["typedb-studio_3.4.0-e5a9c7d3f1b8426e8d3c4f7a7b9a1e34c1f5d27b_amd64.dmg"],  # replace with your actual output, e.g., .exe, .AppImage
+    outs = ["typedb-studio_3.4.0-rc0_amd64.dmg"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
         cp src-tauri/target/release/bundle/dmg/*.dmg "$(OUTS)"
     """,
@@ -77,7 +77,7 @@ genrule(
 
 genrule(
     name = "native-artifact-mac-arm64-dmg",
-    outs = ["typedb-studio_3.4.0-e5a9c7d3f1b8426e8d3c4f7a7b9a1e34c1f5d27b_aarch64.dmg"],  # replace with your actual output, e.g., .exe, .AppImage
+    outs = ["typedb-studio_3.4.0-rc0_aarch64.dmg"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
         cp src-tauri/target/release/bundle/dmg/*.dmg "$(OUTS)"
     """,
@@ -87,7 +87,7 @@ genrule(
 
 genrule(
     name = "native-artifact-linux-arm64-deb",
-    outs = ["typedb-studio_3.4.0-e5a9c7d3f1b8426e8d3c4f7a7b9a1e34c1f5d27b_arm64.deb"],  # replace with your actual output, e.g., .exe, .AppImage
+    outs = ["typedb-studio_3.4.0-rc0_arm64.deb"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
         cp src-tauri/target/release/bundle/deb/*.deb "$(OUTS)"
     """,
@@ -97,7 +97,7 @@ genrule(
 
 genrule(
     name = "native-artifact-linux-x86_64-deb",
-    outs = ["typedb-studio_3.4.0-e5a9c7d3f1b8426e8d3c4f7a7b9a1e34c1f5d27b_amd64.deb"],  # replace with your actual output, e.g., .exe, .AppImage
+    outs = ["typedb-studio_3.4.0-rc0_amd64.deb"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
         cp src-tauri/target/release/bundle/deb/*.deb "$(OUTS)"
     """,
@@ -107,7 +107,7 @@ genrule(
 
 genrule(
     name = "native-artifact-windows-x86_64-msi",
-    outs = ["typedb-studio_3.4.0-e5a9c7d3f1b8426e8d3c4f7a7b9a1e34c1f5d27b_amd64.msi"],  # replace with your actual output, e.g., .exe, .AppImage
+    outs = ["typedb-studio_3.4.0-rc0_amd64.msi"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
         cp src-tauri/target/release/bundle/msi/*.msi "$(OUTS)"
     """,

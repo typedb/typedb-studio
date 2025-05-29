@@ -1,6 +1,6 @@
 {
   "name": "typedb-studio",
-  "version": "3.4.0-e5a9c7d3f1b8426e8d3c4f7a7b9a1e34c1f5d27b",
+  "version": "3.4.0-rc0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
