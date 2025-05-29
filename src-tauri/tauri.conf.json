@@ -32,8 +32,8 @@
       "icons/icon.ico"
     ],
     "windows": {
-      "installer": {
-        "windows": "exe"
+      "wix": {
+        "format": "exe"
       }
     }
   }
