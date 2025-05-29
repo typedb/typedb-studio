@@ -87,9 +87,9 @@ genrule(
 
 genrule(
     name = "native-artifact-linux-arm64-appimage",
-    outs = ["typedb-studio_3.4.0-e5a9c7d3f1b8426e8d3c4f7a7b9a1e34c1f5d27b_arm64.AppImage"],  # replace with your actual output, e.g., .exe, .AppImage
+    outs = ["typedb-studio_3.4.0-e5a9c7d3f1b8426e8d3c4f7a7b9a1e34c1f5d27b_arm64.deb"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
-        cp src-tauri/target/release/bundle/appimage/*.AppImage "$(OUTS)"
+        cp src-tauri/target/release/bundle/deb/*.deb "$(OUTS)"
     """,
     tags = ["local"],
     target_compatible_with = constraint_linux_arm64,
@@ -99,7 +99,7 @@ genrule(
     name = "native-artifact-linux-x86_64-appimage",
     outs = ["typedb-studio_3.4.0-e5a9c7d3f1b8426e8d3c4f7a7b9a1e34c1f5d27b_amd64.AppImage"],  # replace with your actual output, e.g., .exe, .AppImage
     cmd = """
-        cp src-tauri/target/release/bundle/appimage/*.AppImage "$(OUTS)"
+        cp src-tauri/target/release/bundle/deb/*.deb "$(OUTS)"
     """,
     tags = ["local"],
     target_compatible_with = constraint_linux_x86_64,
