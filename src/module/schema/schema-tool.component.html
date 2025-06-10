@@ -1,0 +1,41 @@
+<ts-page-scaffold pageAvailability="ready">
+  <article #articleRef class="schema-page" style="display: flex; flex-direction: row;">
+    <div class="visualiser-pane card">
+      <div class="card-header">
+        <i class="fa-light fa-circles-overlap-3"></i>
+        <h4>Visualizer</h4>
+        <div class="flex-spacer"></div>
+        <button mat-stroked-button [disabled]="!(state.refreshEnabled$ | async)"
+                [matTooltip]="(state.refreshDisabledReason$ | async) || ''" matTooltipPosition="below" (click)="state.refresh()">
+          <i class="fa-light fa-refresh"></i>
+          <span>Refresh</span>
+        </button>
+      </div>
+      @if ((driver.status$ | async) === "connected") {
+        <div class="answers-outer-container">
+          <div class="answers-container answers-structure-container">
+            <div id="structureView" #graphViewRef></div>
+
+            @switch (state.visualiser.status) {
+              @case ("error") {
+                <p class="status-text">The schema tool encountered an error.</p>
+              }
+              @case ("running") {
+                <p class="status-text">Loading...</p>
+              }
+              @case ("noAnswers") {
+                <p class="status-text">This is an empty database with no schema defined yet. <a routerLink="/query">Go to query tool</a> / <a href="https://typedb.com/docs/manual/schema/" target="_blank">learn about schemas</a></p>
+              }
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="answers-placeholder-container">
+          <button mat-flat-button id="answersPlaceholderConnect" routerLink="/connect">
+            <i class="fa-light fa-bolt"></i><span>Connect TypeDB server</span>
+          </button>
+        </div>
+      }
+    </div>
+  </article>
+</ts-page-scaffold>
