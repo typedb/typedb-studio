@@ -119,25 +119,25 @@
               </div>
             }
             <div class="answers-container answers-structure-container" [class]="state.outputTypeControl.value === 'graph' ? '' : 'invisible'">
-              <div id="structureView" #graphViewRef>
-                @switch (state.graphOutput.status) {
-                  @case ("error") {
-                    <p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p>
-                  }
-                  @case ("running") {
-                    <p class="status-text">Running query. Answers will be displayed here when they are ready.</p>
-                  }
-                  @case ("graphlessQueryType") {
-                    <p class="status-text">Query completed successfully. This query type does not return answers that can be presented as a graph.</p>
-                  }
-                  @case ("answerOutputDisabled") {
-                    <p class="status-text">Query completed successfully. Answer output is currently disabled.</p>
-                  }
-                  @case ("noAnswers") {
-                    <p class="status-text">Query completed successfully. No answers were returned.</p>
-                  }
+              <div id="structureView" #graphViewRef></div>
+
+              @switch (state.graphOutput.status) {
+                @case ("error") {
+                  <p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p>
                 }
-              </div>
+                @case ("running") {
+                  <p class="status-text">Running query. Answers will be displayed here when they are ready.</p>
+                }
+                @case ("graphlessQueryType") {
+                  <p class="status-text">Query completed successfully. This query type does not return answers that can be presented as a graph.</p>
+                }
+                @case ("answerOutputDisabled") {
+                  <p class="status-text">Query completed successfully. Answer output is currently disabled.</p>
+                }
+                @case ("noAnswers") {
+                  <p class="status-text">Query completed successfully. No answers were returned.</p>
+                }
+              }
             </div>
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'raw'">
               <mat-form-field class="code-text-field">

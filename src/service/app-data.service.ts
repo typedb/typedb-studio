@@ -75,7 +75,11 @@ class ViewState {
 
     lastUsedToolRoute(): string {
         const lastUsedTool = this.lastUsedTool();
-        return lastUsedTool === "query" ? `/query` : `/explore`;
+        switch (lastUsedTool) {
+            case "query": return "/query";
+            case "explore": return "/explore";
+            case "schema": return "/schema";
+        }
     }
 }
 

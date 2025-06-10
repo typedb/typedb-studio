@@ -5,7 +5,7 @@
  */
 
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, map, Observable, of, Subject, switchMap, takeUntil, tap } from "rxjs";
+import { BehaviorSubject, catchError, concatAll, concatMap, finalize, from, map, Observable, of, Subject, switchMap, takeUntil, tap } from "rxjs";
 import { fromPromise } from "rxjs/internal/observable/innerFrom";
 import { v4 as uuid } from "uuid";
 import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
@@ -307,6 +307,25 @@ export class DriverState {
             }),
             takeUntil(this._stopSignal$)
         ), lockId);
+    }
+
+    runBackgroundReadQueries(queries: string[]): Observable<ApiResponse<QueryResponse>> {
+        const driver = this.requireDriver(`${this.constructor.name}.${this.query.name} > ${this.requireDriver.name}`);
+        const databaseName = this.requireDatabase(`${this.constructor.name}.${this.openTransaction.name} > ${this.requireDatabase.name}`).name;
+        return fromPromise(driver.openTransaction(databaseName, "read")).pipe(
+            switchMap((res) => {
+                if (isApiErrorResponse(res)) throw res.err;
+                return from(queries).pipe(
+                    concatMap(x => fromPromise(driver.query(res.ok.transactionId, x)).pipe(
+                        map(x => {
+                            if (isApiErrorResponse(x)) throw x;
+                            else return x;
+                        })
+                    )),
+                    finalize(() => fromPromise(driver.closeTransaction(res.ok.transactionId)).subscribe()),
+                );
+            }),
+        );
     }
 
     checkHealth() {

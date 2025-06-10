@@ -13,6 +13,7 @@ import { _404PageComponent } from "../module/404/404-page.component";
 import { ConnectionCreatorComponent } from "../module/connection/create/connection-creator.component";
 import { HomeComponent } from "../module/home/home.component";
 import { QueryToolComponent } from "../module/query/query-tool.component";
+import { SchemaToolComponent } from "../module/schema/schema-tool.component";
 import { AppData } from "../service/app-data.service";
 
 const connectGuard: CanActivateFn = (route) => {
@@ -26,6 +27,7 @@ const connectGuard: CanActivateFn = (route) => {
     switch (appData.viewState.lastUsedTool()) {
         case "query": return of(router.parseUrl(`query`));
         case "explore": return of(router.parseUrl(`explore`));
+        case "schema": return of(router.parseUrl(`schema`));
     }
 }
 
@@ -33,5 +35,6 @@ export const routes: Routes = [
     { path: "", component: HomeComponent, title: "Home", pathMatch: "full" },
     { path: "connect", component: ConnectionCreatorComponent, canActivate: [connectGuard], title: "Connect" },
     { path: "query", component: QueryToolComponent, title: "Query" },
+    { path: "schema", component: SchemaToolComponent, title: "Schema" },
     { path: "**", component: _404PageComponent, title: "404" },
 ];

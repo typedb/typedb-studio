@@ -1,0 +1,163 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "media";
+@use "primary";
+@use "secondary";
+@use "typography";
+@use "shapes";
+
+:host {
+    height: 100%;
+}
+
+.schema-page {
+    height: 100%;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    gap: 4px !important;
+
+    ::ng-deep app-drag-handle span {
+        display: none;
+    }
+}
+
+.tp-bento-container {
+    gap: 16px;
+}
+
+.tool-windows {
+    flex: 0 0 360px;
+}
+
+.visualiser-pane {
+    flex: 1;
+
+    @media (max-width: media.$max-width-mobile) {
+        margin-left: -8px;
+    }
+}
+
+.visualiser-pane {
+    display: flex;
+    flex-direction: column;
+}
+
+.card {
+    @include shapes.standard-border;
+    border-radius: shapes.$border-radius-panel;
+    @include shapes.light-source-gradient(primary.$purple, primary.$deep-purple);
+    transition: background 0.1s linear;
+    padding: 16px;
+}
+
+.card-header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 12px;
+    height: 32px;
+}
+
+mat-form-field {
+    width: 100%;
+}
+
+button {
+    i.fa-play {
+        margin: 0;
+    }
+
+    &:enabled i.fa-play {
+        color: secondary.$deep-green;
+    }
+}
+
+.answers-outer-container {
+    height: 100%;
+    width: 100%;
+    border: 1px solid primary.$light-purple;
+    background: primary.$black-purple;
+    position: relative;
+}
+
+.answers-container {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+}
+
+.answers-text-container {
+    mat-form-field {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    ::ng-deep .mdc-text-field,
+    ::ng-deep .mat-mdc-form-field-flex,
+    ::ng-deep .mat-mdc-form-field-infix {
+        width: 100%;
+        height: 100%;
+        --mdc-outlined-text-field-container-shape: 0;
+    }
+
+    ::ng-deep .mdc-notched-outline {
+        display: none;
+    }
+
+    ::ng-deep .mdc-text-field {
+        --mdc-outlined-text-field-input-text-color: #{secondary.$pink};
+    }
+
+    ::ng-deep .mat-mdc-form-field:not(.form-field-dense) .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix {
+        padding: 4px 2px 4px 6px;
+    }
+
+    .answers-text-box {
+        height: 100% !important;
+        resize: none;
+        @include typography.code;
+    }
+}
+
+.status-text-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+
+.status-text {
+    @include typography.p1;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    text-align: center;
+    z-index: 10; /* Ensure it's above the canvas elements */
+    white-space: normal !important;
+    overflow-wrap: break-word;
+    padding: 10px;
+    margin: 0;
+}
+
+.answers-placeholder-container {
+    height: 100%;
+    overflow: auto;
+    border: 3px dashed primary.$light-purple;
+    border-radius: shapes.$border-radius-panel;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: primary.$black-purple;
+}
+
+#structureView {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
