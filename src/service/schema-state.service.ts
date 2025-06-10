@@ -6,13 +6,12 @@
 
 import { Injectable } from "@angular/core";
 import Graph from "graphology";
-import { BehaviorSubject, combineLatest, distinctUntilChanged, finalize, first, map, ReplaySubject, startWith } from "rxjs";
-import Sigma from "sigma";
+import { BehaviorSubject, combineLatest, distinctUntilChanged, finalize, first, map } from "rxjs";
+import Sigma, { Camera } from "sigma";
 import { createSigmaRenderer, GraphVisualiser } from "../framework/graph-visualiser";
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
 import { newVisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
-import { Database } from "../framework/typedb-driver/database";
 import { ApiResponse, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
 import { DriverState } from "./driver-state.service";
 import { SnackbarService } from "./snackbar.service";
@@ -171,39 +170,20 @@ export class VisualiserState {
         }
     }
 
-    saveState(sigma: Sigma) {
-        // Save the graph data
+    saveState(sigma: Sigma): SigmaState {
         const graph = sigma.getGraph().copy();
-
-        // Save camera position/zoom
-        const cameraState = {
-            x: sigma.getCamera().x,
-            y: sigma.getCamera().y,
-            ratio: sigma.getCamera().ratio,
-            angle: sigma.getCamera().angle
-        };
-
-        // Save any custom settings
+        const camera = sigma.getCamera().copy();
         const settings = sigma.getSettings();
-
-        return new SigmaState(graph, cameraState, settings);
+        return { graph, camera, settings };
     }
 
     restoreState(state: SigmaState, sigma: Sigma) {
         if (state.graph) {
-            // Clear current graph and import saved state
             sigma.getGraph().clear();
             sigma.getGraph().import(state.graph);
         }
-
-        if (state.cameraState) {
-            // Restore camera position
-            sigma.getCamera().setState(state.cameraState);
-        }
-
-        if (state.settings) {
-            sigma.setSettings(state.settings);
-        }
+        if (state.camera) sigma.getCamera().setState(state.camera);
+        if (state.settings) sigma.setSettings(state.settings);
     }
 
     dropSavedState() {
@@ -211,7 +191,8 @@ export class VisualiserState {
     }
 }
 
-export class SigmaState {
-    constructor(public graph: Graph, public cameraState: any, public settings: any) {
-    }
+export interface SigmaState {
+    graph: Graph;
+    camera: Camera;
+    settings: any;
 }
