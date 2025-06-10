@@ -36,7 +36,7 @@ type VisualiserStatus = "ok" | "running" | "noAnswers" | "error";
 export class SchemaState {
 
     readonly visualiser = new VisualiserState();
-    queryResponses$ = new ReplaySubject<ApiResponse<QueryResponse>[]>(1);
+    queryResponses$ = new BehaviorSubject<ApiResponse<QueryResponse>[] | null>(null);
     isRefreshing = false;
     readonly refreshDisabledReason$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, db]) => {
         if (status !== "connected") return NO_SERVER_CONNECTED;
@@ -58,8 +58,12 @@ export class SchemaState {
         if (this.isRefreshing) return;
 
         this.driver.database$.pipe(first()).subscribe(db => {
+            this.visualiser.dropSavedState();
+
             if (db == null) {
+                this.queryResponses$.next(null);
                 this.visualiser.destroy();
+                this.visualiser.database = undefined;
                 return;
             }
 
@@ -120,7 +124,7 @@ export class VisualiserState {
 
     constructor() {
         this.canvasEl$.subscribe(el => {
-            if (el && this.savedState) {
+            if (el && this.savedState && this.database) {
                 const graph = newVisualGraph();
                 const sigma = createSigmaRenderer(el, defaultSigmaSettings as any, graph);
                 const layout = Layouts.createForceAtlasStatic(graph, undefined);
@@ -200,6 +204,10 @@ export class VisualiserState {
         if (state.settings) {
             sigma.setSettings(state.settings);
         }
+    }
+
+    dropSavedState() {
+        this.savedState = undefined;
     }
 }
 
