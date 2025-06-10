@@ -97,7 +97,7 @@ export class SchemaState {
             next: () => {
                 const msg = err?.message || err?.toString() || `Unknown error`;
                 this.snackbar.errorPersistent(`Error: ${msg}\n`
-                    + `Caused: Failed to execute query.`);
+                    + `Caused: Failed to load database schema.`);
             },
             error: () => {
                 this.driver.connection$.pipe(first()).subscribe((connection) => {
