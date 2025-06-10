@@ -49,8 +49,8 @@ export class QueryToolState {
         else if (!this.queryControl.value.length) return QUERY_BLANK; // _query becomes blank after a page navigation for some reason
         else return null;
     }));
-    readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
     readonly runEnabled$ = this.runDisabledReason$.pipe(map(x => x == null));
+    readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
 
     constructor(private driver: DriverState, private snackbar: SnackbarService) {
@@ -427,11 +427,13 @@ export class GraphOutputState {
     push(res: ApiResponse<QueryResponse>) {
         if (!this.canvasEl) throw `Missing canvas element`;
 
-        const graph = newVisualGraph();
-        const sigma = createSigmaRenderer(this.canvasEl, defaultSigmaSettings as any, graph);
-        let layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
-        // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
-        this.visualiser = new GraphVisualiser(graph, sigma, layout);
+        if (!this.visualiser) {
+            const graph = newVisualGraph();
+            const sigma = createSigmaRenderer(this.canvasEl, defaultSigmaSettings as any, graph);
+            const layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
+            // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
+            this.visualiser = new GraphVisualiser(graph, sigma, layout);
+        }
 
         if (isApiErrorResponse(res)) {
             this.status = "error";
@@ -480,6 +482,7 @@ export class GraphOutputState {
 
     destroy() {
         this.visualiser?.destroy();
+        this.visualiser = null;
     }
 }
 
