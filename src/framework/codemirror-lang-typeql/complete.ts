@@ -2,18 +2,18 @@
 import { CompletionContext, Completion, CompletionResult } from "@codemirror/autocomplete";
 import { syntaxTree } from "@codemirror/language"
 import { SyntaxNode, NodeType, Tree } from "@lezer/common"
-import { SUGGESTION_MAP } from "./typeql_suggestions";
 
+type TokenID = number;
 export interface SuggestionMap<STATE> { 
-    [key: number]: SuffixOfPrefixSuggestion<STATE>[]
-};
+    [key: TokenID]: SuffixOfPrefixSuggestion<STATE>[]
+}
 
 
-export type SuffixCandidate = number[]; // A SuffixCandidate 's' "matches" a prefix if prefix[-s.length:] == s 
+export type SuffixCandidate = TokenID[]; // A SuffixCandidate 's' "matches" a prefix if prefix[-s.length:] == s
 export interface SuffixOfPrefixSuggestion<STATE> {
     suffixes: SuffixCandidate[], // If any of the  suffix candidates match, the suggestions will be used.
     suggestions: SuggestionFunction<STATE>[]
-};
+}
 
 export type SuggestionFunction<STATE> = (context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], state: STATE) => Completion[] | null;
 
@@ -81,7 +81,7 @@ export class NodePrefixAutoComplete<STATE extends NodePrefixAutoCompleteState> {
         }
         let suggestionEither = this.suggestionMap[climbedTo.type.id];
         if (suggestionEither != null) {
-            for (var sops of (suggestionEither as SuffixOfPrefixSuggestion<STATE>[])) {
+            for (let sops of (suggestionEither as SuffixOfPrefixSuggestion<STATE>[])) {
                 if (prefixHasAnyOfSuffixes(prefix, sops.suffixes)) {
                     return this.combineSuggestions(context, tree, parseAt, climbedTo, prefix, sops.suggestions);
                 }
@@ -139,7 +139,7 @@ function collectSiblingsOf(node: SyntaxNode): NodeType[] {
     let prev: SyntaxNode | null = node;
     while (null != (prev = prev.prevSibling)) {
         siblings.push(prev.type);
-    };
+    }
     return siblings.reverse();
 }
 
@@ -162,7 +162,7 @@ function prefixHasAnyOfSuffixes(prefix: NodeType[], suffixes: SuffixCandidate[])
     return false;
 }
 
-function prefixHasSuffix(prefix: NodeType[], suffix: number[]): boolean {
+function prefixHasSuffix(prefix: NodeType[], suffix: TokenID[]): boolean {
     if (prefix.length < suffix.length) {
         return false;
     }
