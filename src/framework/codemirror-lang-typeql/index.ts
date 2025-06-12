@@ -9,6 +9,7 @@ import { autocompletion, CompletionContext } from "@codemirror/autocomplete";
 import { NodePrefixAutoComplete } from "./complete"
 import { TypeQLAutocompleteSchema, TypeQLAutocompleteSchemaImpl } from "./typeQLAutocompleteSchema";
 import { SUGGESTION_MAP } from "./typeql_suggestions";
+import {DriverState} from "../../service/driver-state.service";
 
 export const TypeQLLanguage = LRLanguage.define({
   parser: parser.configure({
@@ -101,14 +102,6 @@ export function TypeQL() {
   return new LanguageSupport(TypeQLLanguage, [])
 }
 
-let typeqlAutocomplete = new NodePrefixAutoComplete(SUGGESTION_MAP, new TypeQLAutocompleteSchema());
-function wrappedSuggest(context: CompletionContext) {
-  return typeqlAutocomplete.autocomplete(context);
-}
-export function typeqlAutocompleteExtension() {
-  return autocompletion({ override: [wrappedSuggest] });
-}
-
 // A Linter which flags syntax errors from: https://discuss.codemirror.net/t/showing-syntax-errors/3111/6
 export function otherExampleLinter() {
   return linter((view: EditorView) => {
@@ -127,4 +120,20 @@ export function otherExampleLinter() {
     });
     return diagnostics;
   });
+}
+
+// Autocomplete
+let typeqlAutocomplete = new NodePrefixAutoComplete(SUGGESTION_MAP, new TypeQLAutocompleteSchema());
+function wrappedAutocomplete(context: CompletionContext) {
+  return typeqlAutocomplete.autocomplete(context);
+}
+export function typeqlAutocompleteExtension() {
+  return autocompletion({ override: [wrappedAutocomplete] });
+}
+
+function updateSchemaFromDB(driver: DriverState, database: string) {
+  let updatedSchema = TypeQLAutocompleteSchemaImpl.fromDriver(driver, database);
+  if (updatedSchema) {
+    typeqlAutocomplete.getState().updateFromDB(updatedSchema);
+  }
 }

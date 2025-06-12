@@ -44,6 +44,10 @@ export class NodePrefixAutoComplete<STATE extends NodePrefixAutoCompleteState> {
         this.suggestorState = suggestorState;
     }
 
+    getState(): STATE {
+        return this.suggestorState;
+    }
+
     autocomplete(context: CompletionContext): CompletionResult | null {
         let tree: Tree = syntaxTree(context.state);
         this.suggestorState.mayUpdateFromEditorState(context, tree);
