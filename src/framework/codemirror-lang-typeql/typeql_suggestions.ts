@@ -1,12 +1,9 @@
 import * as tokens from "./generated/typeql.grammar.generated.terms";
 import { CompletionContext, Completion } from "@codemirror/autocomplete";
-import {SyntaxNode, NodeType, Tree, SyntaxNodeRef} from "@lezer/common"
+import {SyntaxNode, NodeType, Tree} from "@lezer/common"
 import { SuggestionMap, SuffixOfPrefixSuggestion, suggest } from "./complete";
 import { TypeQLAutocompleteSchema } from "./typeQLAutocompleteSchema";
 import {climbTill, nodesWithPath} from "./navigation";
-import {ThingConstraint} from "./generated/typeql.grammar.generated.terms";
-
-type TokenID = number;
 
 function findIsaConstraintLabelsForVar(context: CompletionContext, parseAt: SyntaxNode): string[] {
     let parentStatementThing = climbTill(parseAt, tokens.StatementThing)!;
@@ -78,13 +75,13 @@ function suggestThingTypeLabels(context: CompletionContext, tree: Tree, parseAt:
     );
 }
 
-function suggestVariables(context: CompletionContext, tree: Tree, boost=0): Completion[] {
+function suggestVariables(context: CompletionContext, tree: Tree, boost= 0): Completion[] {
     var options: Completion[] = [];
     tree.iterate({
         enter: (other: SyntaxNode) => {
             if (other.type.id == tokens.VAR) {
                 let varName = context.state.sliceDoc(other.from, other.to);
-                options.push(suggest("variable", varName, 0));
+                options.push(suggest("variable", varName, boost));
             }
         }
     });
