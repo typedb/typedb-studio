@@ -35,7 +35,7 @@ import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component"
 import { SchemaTreeNodeComponent } from "./schema-tree-node/schema-tree-node.component";
 import {keymap} from "@codemirror/view";
 import {defaultKeymap} from "@codemirror/commands";
-import {startCompletion} from "@codemirror/autocomplete";
+import {startCompletion, completionKeymap} from "@codemirror/autocomplete";
 
 @Component({
     selector: "ts-query-tool",
@@ -138,5 +138,5 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     readonly TypeQL = TypeQL;
     readonly linter = otherExampleLinter;
     readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
-    // readonly codeEditorKeymap = keymap.of([...defaultKeymap,{key: "Alt-Space", run: startCompletion, preventDefault: true}]);
+    readonly codeEditorKeymap = keymap.of([...defaultKeymap, {key: "Alt-Space", run: startCompletion, preventDefault: true}]);
 }
