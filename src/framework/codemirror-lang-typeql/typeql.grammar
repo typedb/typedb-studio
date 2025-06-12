@@ -1,3 +1,5 @@
+// TypeQL grammar for lezer. run `pnpm run generate-grammar` to generate the parser and propagate these changes to typescript.
+
 // TODO: This is a direct translation of the original pest grammar (which is PEG iirc)
 // It may be better to rewrite as much as possible so that it's better suited to the LR parser.
 @top Query { QuerySchema | QueryPipelinePreambled (END SEMICOLON)? }
