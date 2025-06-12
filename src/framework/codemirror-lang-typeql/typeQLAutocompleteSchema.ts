@@ -1,11 +1,15 @@
 import { SyntaxNode, Tree, TreeCursor } from "@lezer/common";
 import { CompletionContext } from "@codemirror/autocomplete";
 import * as tokens from "./generated/typeql.grammar.generated.terms";
-
+import {TypeDBHttpDriver} from "../typedb-driver";
+import {finalize} from "rxjs";
+import {DriverState} from "../../service/driver-state.service";
+import {ConceptRow, ConceptRowsQueryResponse} from "../typedb-driver/response";
+import {Concept, EntityType, RelationType, Type} from "../typedb-driver/concept";
+type ConceptRowAnswer = { involvedBlocks: number[]; data: ConceptRow };
 type TypeLabel = string;
-type AttributeType = {};
-
-interface ObjectType {
+type AttributeTypeEntry = {};
+interface ObjectTypeEntry {
     owns: TypeLabel[];
     plays: TypeLabel[];
     relates: TypeLabel[];
@@ -40,7 +44,7 @@ export class TypeQLAutocompleteSchema {
         return Object.keys(this.fromDB.objectTypes).concat(Object.keys(this.fromEditor.objectTypes));
     }
 
-    attributeType(type: TypeLabel): AttributeType {
+    attributeType(type: TypeLabel): AttributeTypeEntry {
         if (this.fromDB.attributes[type]) {
             return this.fromDB.attributes[type];
         } else {
@@ -48,7 +52,7 @@ export class TypeQLAutocompleteSchema {
         }
     }
 
-    objectType(type: TypeLabel): ObjectType {
+    objectType(type: TypeLabel): ObjectTypeEntry {
         if (this.fromDB.objectTypes[type]) {
             return this.fromDB.objectTypes[type];
         } else {
@@ -72,16 +76,16 @@ export class TypeQLAutocompleteSchema {
 }
 
 export class TypeQLAutocompleteSchemaImpl {
-    objectTypes: Record<TypeLabel, ObjectType>;
-    attributes: Record<TypeLabel, AttributeType>;
+    objectTypes: Record<TypeLabel, ObjectTypeEntry>;
+    attributes: Record<TypeLabel, AttributeTypeEntry>;
     constructor(
-        objectTypes: Record<TypeLabel, ObjectType>,
-        attributes: Record<TypeLabel, AttributeType>,
+        objectTypes: Record<TypeLabel, ObjectTypeEntry>,
+        attributes: Record<TypeLabel, AttributeTypeEntry>,
     ) {
         this.attributes = attributes;
         this.objectTypes = objectTypes;
     }
-    
+
     static fromTypeQL(text: string, tree: Tree) : TypeQLAutocompleteSchemaImpl {
         let builder = new SchemaBuilder();
         // TODO: Replace iterate with a more targetted traversal that considers only define queries.
@@ -141,25 +145,76 @@ export class TypeQLAutocompleteSchemaImpl {
         });
         return builder.build();
     }
+
+    static fromDriver(driver: DriverState, database: string): TypeQLAutocompleteSchemaImpl | null {
+        function runQuery(driver: DriverState, database: string, query: string): ConceptRowAnswer[] {
+            // todo: Help please alex
+            return [
+                {
+                    involvedBlocks: [0],
+                    data: { // Unioning them all makes it pass
+                        ["owner"]: {kind: "entityType", label: "person"},
+                        ["owned"]: {kind: "attributeType", label: "name", valueType: "string"},
+                        ["relation"]: {kind: "relationType", label: "friendship"},
+                        ["related"]: {kind: "roleType", label: "friend"},
+                        ["player"]: {kind: "entityType", label: "person"},
+                        ["played"]: {kind: "roleType", label: "friend"},
+                    }
+                }
+            ];
+        }
+        let ownsQuery = "match $owner owns $owned;"
+        let relatesQuery = "match $relation relates $related;";
+        let playsQuery = "match $player plays $played";
+
+        let ownsAnswers = runQuery(driver, database, ownsQuery); // TODO:
+        let relatesAnswers = runQuery(driver, database, relatesQuery);
+        let playsAnswers = runQuery(driver, database, playsQuery);
+
+        let builder = new SchemaBuilder();
+        ownsAnswers.forEach((answer) => {
+            let data: ConceptRow = answer.data;
+            let owner = (data["owner"] as Type).label;
+            let owned = (data["owned"] as Type).label;
+            builder.objectType(owner);
+            builder.attributeType(owned);
+            builder.recordOwns(owner, owned);
+        });
+        relatesAnswers.forEach((answer) => {
+            let data: ConceptRow = answer.data;
+            let relation = (data["relation"] as Type).label;
+            let related = (data["related"] as Type).label;
+            builder.objectType(relation);
+            builder.recordRelates(relation, related)
+        });
+        playsAnswers.forEach((answer) => {
+            let data: ConceptRow = answer.data;
+            let player = (data["player"] as Type).label;
+            let played = (data["played"] as Type).label;
+            builder.objectType(player);
+            builder.recordRelates(player, played)
+        })
+        return builder.build();
+    }
 }
 
 class SchemaBuilder {
-    objectTypes: Record<TypeLabel, ObjectType>;
-    attributes: Record<TypeLabel, AttributeType>;
+    objectTypes: Record<TypeLabel, ObjectTypeEntry>;
+    attributes: Record<TypeLabel, AttributeTypeEntry>;
     
     constructor() {
         this.objectTypes = {};
         this.attributes = {};
     }
 
-    attributeType(type: TypeLabel): AttributeType {
+    attributeType(type: TypeLabel): AttributeTypeEntry {
         if (!this.attributes[type]) {
             this.attributes[type] = { owners: [] };
         }
         return this.attributes[type];
     }
     
-    objectType(type: TypeLabel): ObjectType {
+    objectType(type: TypeLabel): ObjectTypeEntry {
         if (!this.objectTypes[type]) {
             this.objectTypes[type] = { owns: [], plays: [], relates: [] };
         }
