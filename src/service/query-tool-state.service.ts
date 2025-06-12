@@ -17,7 +17,10 @@ import { Concept, Value } from "../framework/typedb-driver/concept";
 import { ApiResponse, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
+import { SchemaState, SchemaTree, SchemaTreeType } from "./schema-state.service";
 import { SnackbarService } from "./snackbar.service";
+import { FlatTreeControl } from "@angular/cdk/tree";
+import { MatTreeFlatDataSource, MatTreeFlattener } from "@angular/material/tree";
 
 export type OutputType = "raw" | "log" | "table" | "graph";
 
@@ -34,11 +37,12 @@ export class QueryToolState {
     queryControl = new FormControl("", {nonNullable: true});
     outputTypeControl = new FormControl("log" as OutputType, { nonNullable: true });
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
-    readonly history = new HistoryWindowState(this.driver);
+    readonly schemaWindow = new SchemaWindowState(this.schema);
     readonly logOutput = new LogOutputState();
     readonly tableOutput = new TableOutputState();
     readonly graphOutput = new GraphOutputState();
     readonly rawOutput = new RawOutputState();
+    readonly history = new HistoryWindowState(this.driver);
     answersOutputEnabled = true;
     readonly runDisabledReason$ = combineLatest(
         [this.driver.status$, this.driver.database$, this.driver.autoTransactionEnabled$, this.driver.transaction$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))]
@@ -53,7 +57,7 @@ export class QueryToolState {
     readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
 
-    constructor(private driver: DriverState, private snackbar: SnackbarService) {
+    constructor(private driver: DriverState, private schema: SchemaState, private snackbar: SnackbarService) {
         (window as any)["queryToolState"] = this;
         this.outputDisabled$.subscribe((disabled) => {
             if (disabled) this.outputTypeControl.disable();
@@ -128,6 +132,89 @@ export class QueryToolState {
         this.tableOutput.status = "answerOutputDisabled";
         this.graphOutput.status = "answerOutputDisabled";
         this.rawOutput.push(SUCCESS_RAW);
+    }
+}
+
+interface SchemaTreeNode {
+    label?: string;
+    type?: SchemaTreeType;
+    children: SchemaTreeNode[];
+}
+
+/** Flat node with expandable and level information */
+interface FlatNode {
+    expandable: boolean;
+    name: string;
+    level: number;
+}
+
+export class SchemaWindowState {
+    private _transformer = (node: SchemaTreeNode, level: number) => {
+        return {
+            expandable: !!node.children.length,
+            name: node.label || node.type?.label || ``,
+            level: level,
+        };
+    };
+
+    treeFlattener = new MatTreeFlattener(
+        this._transformer,
+        node => node.level,
+        node => node.expandable,
+        node => node.children,
+    );
+
+    treeControl = this.createTreeControl();
+    entitiesTreeControl = this.createTreeControl();
+    relationsTreeControl = this.createTreeControl();
+    attributesTreeControl = this.createTreeControl();
+    dataSource: MatTreeFlatDataSource<SchemaTreeNode, FlatNode> = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
+    dataSourcesObj: Record<"Entities" | "Relations" | "Attributes", { title: string, treeControl: FlatTreeControl<FlatNode>, dataSource: MatTreeFlatDataSource<SchemaTreeNode, FlatNode> }> = {
+        "Entities": { title: "Entities", treeControl: this.entitiesTreeControl, dataSource: new MatTreeFlatDataSource(this.entitiesTreeControl, this.treeFlattener) },
+        "Relations": { title: "Relations", treeControl: this.relationsTreeControl, dataSource: new MatTreeFlatDataSource(this.relationsTreeControl, this.treeFlattener) },
+        "Attributes": { title: "Attributes", treeControl: this.attributesTreeControl, dataSource: new MatTreeFlatDataSource(this.attributesTreeControl, this.treeFlattener) },
+    };
+    dataSources = Object.values(this.dataSourcesObj);
+
+    private createTreeControl() {
+        return new FlatTreeControl<FlatNode>(
+            node => node.level,
+            node => node.expandable,
+        );
+    }
+
+    constructor(public schemaState: SchemaState) {
+        schemaState.tree.data$.subscribe(data => {
+            this.populateDataSources(data);
+        });
+    }
+
+    hasChild = (_: number, node: FlatNode) => node.expandable;
+
+    private populateDataSources(data: SchemaTree | null) {
+        if (!data) {
+            this.dataSources.forEach(x => x.dataSource.data = []);
+            return;
+        }
+        this.dataSource.data = [{
+            label: "Entities",
+            children: data.entities.map(x => ({
+                type: x,
+                children: [],
+            })),
+        }, {
+            label: "Relations",
+            children: data.relations.map(x => ({
+                type: x,
+                children: [],
+            })),
+        }, {
+            label: "Attributes",
+            children: data.attributes.map(x => ({
+                type: x,
+                children: [],
+            })),
+        }];
     }
 }
 

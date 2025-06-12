@@ -796,4 +796,15 @@ body {
     .mdc-tooltip__surface {
         padding: 6px 10px;
     }
+
+    /* Tree */
+    .mat-tree {
+        --mat-tree-container-background-color: transparent;
+        --mat-tree-node-min-height: 32px;
+        --mat-tree-node-text-size: 13px;
+    }
+
+    mat-tree-node[aria-level="2"] {
+        padding-left: 16px !important; /* overrides inline style from Angular Material */
+    }
 }

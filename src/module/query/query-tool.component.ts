@@ -12,9 +12,11 @@ import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
+import { MatTreeModule } from "@angular/material/tree";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
@@ -36,7 +38,7 @@ import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component"
     styleUrls: ["query-tool.component.scss"],
     standalone: true,
     imports: [
-        RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule,
+        RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatTreeModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
     ],
@@ -50,8 +52,10 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
 
-    constructor(protected state: QueryToolState, public driver: DriverState, private appData: AppData, private snackbar: SnackbarService) {
-    }
+    constructor(
+        protected state: QueryToolState, public driver: DriverState,
+        private appData: AppData, private snackbar: SnackbarService
+    ) {}
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
@@ -68,6 +72,7 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     ngAfterViewInit() {
         const articleWidth = this.articleRef.nativeElement.clientWidth;
         this.resizables.first.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
+        this.resizables.last.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
         this.graphViewRef.changes.pipe(
             map(x => x as QueryList<ElementRef<HTMLElement>>),
             startWith(this.graphViewRef),

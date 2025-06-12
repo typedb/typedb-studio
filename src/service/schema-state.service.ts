@@ -12,7 +12,8 @@ import { createSigmaRenderer, GraphVisualiser } from "../framework/graph-visuali
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
 import { newVisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
-import { ApiResponse, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
+import { AttributeType, EntityType, RelationType, RoleType, Type } from "../framework/typedb-driver/concept";
+import { ApiOkResponse, ApiResponse, ConceptRowsQueryResponse, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
 import { DriverState } from "./driver-state.service";
 import { SnackbarService } from "./snackbar.service";
 
@@ -35,7 +36,8 @@ type VisualiserStatus = "ok" | "running" | "noAnswers" | "error";
 export class SchemaState {
 
     readonly visualiser = new VisualiserState();
-    queryResponses$ = new BehaviorSubject<ApiResponse<QueryResponse>[] | null>(null);
+    readonly tree = new TreeState();
+    queryResponses$ = new BehaviorSubject<ApiOkResponse<ConceptRowsQueryResponse>[] | null>(null);
     isRefreshing = false;
     readonly refreshDisabledReason$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, db]) => {
         if (status !== "connected") return NO_SERVER_CONNECTED;
@@ -50,6 +52,9 @@ export class SchemaState {
             distinctUntilChanged((x, y) => x?.name === y?.name)
         ).subscribe(() => {
             this.refresh();
+        });
+        this.queryResponses$.subscribe(data => {
+            this.tree.push(data);
         });
     }
 
@@ -67,12 +72,15 @@ export class SchemaState {
             }
 
             this.initialiseOutput();
-            const responses: ApiResponse<QueryResponse>[] = [];
+            const responses: ApiOkResponse<ConceptRowsQueryResponse>[] = [];
             this.isRefreshing = true;
             this.driver.runBackgroundReadQueries(schemaQueriesList).pipe(
                 finalize(() => { this.isRefreshing = false; })
             ).subscribe({
-                next: (res) => { responses.push(res); },
+                next: (res) => {
+                    if (res.ok.answerType !== `conceptRows`) throw `Unexpected answerType: '${res.ok.answerType}' (expected 'conceptRows')`;
+                    responses.push(res as ApiOkResponse<ConceptRowsQueryResponse>);
+                },
                 error: (err) => { this.handleQueryError(err); },
                 complete: () => { this.queryResponses$.next(responses); },
             });
@@ -195,4 +203,141 @@ export interface SigmaState {
     graph: Graph;
     camera: Camera;
     settings: any;
+}
+
+interface SchemaTreeEntity extends EntityType {
+    supertype?: SchemaTreeEntity;
+    ownedAttributes: SchemaTreeAttribute[];
+    playableRoles: SchemaTreeRole[];
+}
+
+interface SchemaTreeRelation extends RelationType {
+    supertype?: SchemaTreeRelation;
+    ownedAttributes: SchemaTreeAttribute[];
+    playableRoles: SchemaTreeRole[];
+    roleplayers: SchemaTreeRole[];
+}
+
+interface SchemaTreeAttribute extends AttributeType {
+    supertype?: SchemaTreeAttribute;
+}
+
+export type SchemaTreeType = SchemaTreeEntity | SchemaTreeRelation | SchemaTreeAttribute;
+
+interface SchemaTreeRole extends RoleType {
+    relationLabel: string;
+}
+
+export interface SchemaTree {
+    entities: SchemaTreeEntity[];
+    relations: SchemaTreeRelation[];
+    attributes: SchemaTreeAttribute[];
+}
+
+function entityOf(entityType: EntityType): SchemaTreeEntity {
+    return {
+        kind: entityType.kind,
+        label: entityType.label,
+        supertype: undefined,
+        ownedAttributes: [],
+        playableRoles: [],
+    };
+}
+
+function relationOf(relationType: RelationType): SchemaTreeRelation {
+    return {
+        kind: relationType.kind,
+        label: relationType.label,
+        supertype: undefined,
+        ownedAttributes: [],
+        playableRoles: [],
+        roleplayers: [],
+    };
+}
+
+function attributeOf(attributeType: AttributeType): SchemaTreeAttribute {
+    return {
+        kind: attributeType.kind,
+        label: attributeType.label,
+        supertype: undefined,
+        valueType: attributeType.valueType,
+    };
+}
+
+function typeOf(type: Type): SchemaTreeType {
+    switch (type.kind) {
+        case "entityType": return entityOf(type);
+        case "relationType": return relationOf(type);
+        case "attributeType": return attributeOf(type);
+        default: throw `Unexpected type: ${JSON.stringify(type)}`;
+    }
+}
+
+export class TreeState {
+    readonly data$ = new BehaviorSubject<SchemaTree | null>(null);
+
+    push(data: ApiOkResponse<ConceptRowsQueryResponse>[] | null) {
+        if (!data) {
+            this.data$.next(null);
+            return;
+        }
+
+        const treeBuilder = new TreeBuilder(data);
+        const tree = treeBuilder.build();
+        this.data$.next(tree);
+    }
+}
+
+class TreeBuilder {
+    readonly typeHierarchy: ConceptRowsQueryResponse;
+    readonly ownedAttributes: ConceptRowsQueryResponse;
+    readonly roleplayers: ConceptRowsQueryResponse;
+    readonly playableRoles: ConceptRowsQueryResponse;
+    readonly entityTypes = {} as Record<string, SchemaTreeEntity>;
+    readonly relationTypes = {} as Record<string, SchemaTreeRelation>;
+    readonly attributeTypes = {} as Record<string, SchemaTreeAttribute>;
+
+    constructor(data: ApiOkResponse<ConceptRowsQueryResponse>[]) {
+        const [typeHierarchy, ownedAttributes, roleplayers, playableRoles] = data.map(x => x.ok);
+        this.typeHierarchy = typeHierarchy;
+        this.ownedAttributes = ownedAttributes;
+        this.roleplayers = roleplayers;
+        this.playableRoles = playableRoles;
+    }
+
+    build(): SchemaTree {
+        this.processTypeHierarchy();
+        return {
+            entities: Object.values(this.entityTypes),
+            relations: Object.values(this.relationTypes),
+            attributes: Object.values(this.attributeTypes),
+        };
+    }
+
+    processTypeHierarchy() {
+        for (const answer of this.typeHierarchy.answers) {
+            const [type, supertype] = [answer.data["t"], answer.data["supertype"]];
+            if (!type || !supertype) throw `Unexpected type hierarchy answer: ${JSON.stringify(answer.data)}`;
+            let treeType: SchemaTreeType;
+            switch (type.kind) {
+                case "entityType":
+                    this.entityTypes[type.label] = treeType = entityOf(type);
+                    break;
+                case "relationType":
+                    this.relationTypes[type.label] = treeType = relationOf(type);
+                    break;
+                case "attributeType":
+                    this.attributeTypes[type.label] = treeType = attributeOf(type);
+                    break;
+                case "roleType":
+                    return;
+                default:
+                    throw `Unexpected type hierarchy answer: ${JSON.stringify(answer.data)}`;
+            }
+            if (supertype.kind !== type.kind) throw `Unexpected type hierarchy answer: ${JSON.stringify(answer.data)}`;
+            if (type.label !== supertype.label) {
+                treeType.supertype = typeOf(supertype);
+            }
+        }
+    }
 }
