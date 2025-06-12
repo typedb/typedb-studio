@@ -1,13 +1,54 @@
 import * as tokens from "./generated/typeql.grammar.generated.terms";
 import { CompletionContext, Completion } from "@codemirror/autocomplete";
-import { SyntaxNode, NodeType, Tree } from "@lezer/common"
+import {SyntaxNode, NodeType, Tree, SyntaxNodeRef} from "@lezer/common"
 import { SuggestionMap, SuffixOfPrefixSuggestion, suggest } from "./complete";
 import { TypeQLAutocompleteSchema } from "./typeQLAutocompleteSchema";
+import {climbTill, nodesWithPath} from "./navigation";
+import {ThingConstraint} from "./generated/typeql.grammar.generated.terms";
+
+type TokenID = number;
+
+function findIsaConstraintLabelsForVar(context: CompletionContext, parseAt: SyntaxNode): string[] {
+    let parentStatementThing = climbTill(parseAt, tokens.StatementThing)!;
+    let varNode = parentStatementThing.getChild(tokens.VAR)!;
+    let varName = context.state.sliceDoc(varNode.from, varNode.to);
+    let pipelineNode = climbTill(parentStatementThing, tokens.Pipeline)!;
+    // TODO: Maybe consider disjunctions?
+    let statements = nodesWithPath(pipelineNode, [tokens.QueryStage, tokens.ClauseMatch, tokens.Patterns, tokens.Pattern, tokens.Statement, tokens.StatementThing]);
+    let relevantStatementThings = statements
+        .filter(n => {
+            let otherVarNode = n.getChild(tokens.VAR)!;
+            return context.state.sliceDoc(otherVarNode.from, otherVarNode.to) == varName;
+        });
+    let possibleLabels = relevantStatementThings
+        .flatMap(n => nodesWithPath(n, [tokens.ThingConstraintList, tokens.ThingConstraint, tokens.IsaConstraint, tokens.TypeRef]))
+        .map(n => context.state.sliceDoc(n.from, n.to));
+    // console.log(parentStatementThing, varNode, varName, pipelineNode, statements, relevantStatementThings, possibleLabels);
+    return possibleLabels;
+}
+
+function suggestAttributeTypeForHas(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
+    let possibleLabels = findIsaConstraintLabelsForVar(context, parseAt);
+    if (possibleLabels.length > 0) {
+        return possibleLabels.flatMap(owner => schema.getOwns(owner))
+            .map((label) => suggest("AttributeType", label))
+    } else {
+        return suggestAttributeTypeLabels(context, tree, parseAt, climbedTo, prefix, schema);
+    }
+}
+
+function suggestRoleTypeForLinks(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
+    let possibleLabels = findIsaConstraintLabelsForVar(context, parseAt);
+    if (possibleLabels.length > 0) {
+        return possibleLabels.flatMap(owner => schema.getRelates(owner))
+            .map((label) => suggest("RoleType", label.split(":")[1]))
+    } else {
+        return suggestRoleTypeLabelsUnscoped(context, tree, parseAt, climbedTo, prefix, schema);
+    }
+}
 
 function suggestAttributeTypeLabels(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
-    var options: Completion[] = [];
-    schema.attributeTypes().forEach((label) => {options.push(suggest("AttributeType", label));})
-    return options;
+    return schema.attributeTypes().map((label) => { return suggest("AttributeType", label); });
 }
 
 function suggestObjectTypeLabels(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
@@ -101,7 +142,7 @@ const SUFFIX_VAR_OR_COMMA = [[tokens.COMMA], [tokens.VAR]];
 // Will pick the first matching suffix. If you want to handle things manually, use an empty suffix.
 const SUGGESTION_GROUP_FOR_THING_STATEMENTS: SuffixOfPrefixSuggestion<TypeQLAutocompleteSchema>[]  = [
         { suffixes: SUFFIX_VAR_OR_COMMA, suggestions: [suggestThingConstraintKeywords] },
-        { suffixes: [[tokens.HAS]], suggestions: [suggestAttributeTypeLabels, suggestVariablesAtMinus10] },
+        { suffixes: [[tokens.HAS]], suggestions: [suggestAttributeTypeForHas, suggestVariablesAtMinus10] },
         { suffixes: [[tokens.ISA]], suggestions: [suggestThingTypeLabels, suggestVariablesAtMinus10] },
         { suffixes: [[tokens.HAS, tokens.TypeRef], [tokens.ISA, tokens.TypeRef]], suggestions: [suggestVariablesAtMinus10] },
 ];
@@ -109,10 +150,13 @@ const SUGGESTION_GROUP_FOR_THING_STATEMENTS: SuffixOfPrefixSuggestion<TypeQLAuto
 export const SUGGESTION_MAP: SuggestionMap<TypeQLAutocompleteSchema> = {
     [tokens.LABEL]: [{ suffixes: [[]], suggestions: [suggestThingTypeLabels] }],
     [tokens.VAR]: [{ suffixes: [[]], suggestions: [suggestVariablesAt10] }],
-        
+    [tokens.Relation]: [
+        {suffixes: [[tokens.PARENOPEN], [tokens.COMMA]], suggestions: [suggestRoleTypeForLinks, suggestVariablesAtMinus10]},
+        {suffixes: [[tokens.COLON]], suggestions: [suggestVariablesAt10]},
+    ],
     [tokens.Statement]: [
         { suffixes: SUFFIX_VAR_OR_COMMA, suggestions: [suggestThingConstraintKeywords, suggestTypeConstraintKeywords] },
-        { suffixes: [[tokens.HAS]], suggestions: [suggestAttributeTypeLabels, suggestVariablesAtMinus10] },
+        { suffixes: [[tokens.HAS]], suggestions: [suggestAttributeTypeForHas, suggestVariablesAtMinus10] },
         { suffixes: [[tokens.ISA]], suggestions: [suggestThingTypeLabels, suggestVariablesAtMinus10] },
         { suffixes: [[tokens.HAS, tokens.TypeRef], [tokens.ISA, tokens.TypeRef]], suggestions: [suggestVariablesAtMinus10] },
         { suffixes: [[tokens.SEMICOLON, tokens.TypeRef]], suggestions: [suggestTypeConstraintKeywords] },
@@ -123,12 +167,12 @@ export const SUGGESTION_MAP: SuggestionMap<TypeQLAutocompleteSchema> = {
     ],
     [tokens.ClauseMatch]: [
         { suffixes: [[tokens.MATCH, tokens.TypeRef]], suggestions: [suggestTypeConstraintKeywords] },
-        { suffixes: [[tokens.MATCH]], suggestions: [suggestVariablesAt10, suggestThingTypeLabels] },
+        { suffixes: [[tokens.MATCH]], suggestions: [suggestNestedPatterns, suggestVariablesAt10, suggestThingTypeLabels ] },
     ],
     [tokens.ClauseInsert]: SUGGESTION_GROUP_FOR_THING_STATEMENTS,
     [tokens.Query]: [
         { suffixes: [[tokens.QuerySchema]], suggestions: [suggestThingTypeLabels, suggestKinds] },
-        { suffixes: [[tokens.QueryPipelinePreambled]], suggestions: [suggestPipelineStages, suggestNestedPatterns, suggestVariablesAt10] },
+        { suffixes: [[tokens.QueryPipelinePreambled]], suggestions: [suggestNestedPatterns, suggestVariablesAt10, suggestPipelineStages, ] },
     ],
     
     // Now some for define statements
