@@ -48,7 +48,7 @@ export class GraphVisualiser {
     handleQueryResult(res: ApiResponse<QueryResponse>) {
         if (isApiErrorResponse(res)) return;
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
-            (window as any)._lastQueryAnswers = res.ok.answers;
+            (window as any)._lastQueryAnswers = res.ok.answers; // TODO: Remove once schema based autocomplete is stable.
             let converter = new StudioConverter(this.graph, res.ok.query, false, this.structureParameters, this.styleParameters);
             let logicalGraph = constructGraphFromRowsResult(res.ok); // In memory, not visualised
             convertLogicalGraphWith(logicalGraph, converter);
