@@ -76,6 +76,7 @@ export class NodePrefixAutoComplete<STATE extends NodePrefixAutoCompleteState> {
     
     climbTillWeRecogniseSomething(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode | null, prefix: NodeType[]): Completion[] | null {
         if (climbedTo == null) {
+            // Uncomment this if you don't see suggestions
             // this.logInterestingStuff(context, tree, parseAt, climbedTo, prefix);
             return null;
         }
