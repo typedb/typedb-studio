@@ -1,15 +1,16 @@
 
 import { parser } from "./generated/typeql.grammar.generated"
-import { LRLanguage, LanguageSupport, indentNodeProp, foldNodeProp, foldInside, delimitedIndent, syntaxTree } from "@codemirror/language"
+import { LRLanguage, LanguageSupport, indentNodeProp, foldNodeProp, foldInside, syntaxTree } from "@codemirror/language"
 import { styleTags, tags as t } from "@lezer/highlight"
 import { Diagnostic } from "@codemirror/lint";
 import { EditorView } from "@codemirror/view";
 import { linter } from '@codemirror/lint'
 import { autocompletion, CompletionContext } from "@codemirror/autocomplete";
 import { NodePrefixAutoComplete } from "./complete"
-import { TypeQLAutocompleteSchema, TypeQLAutocompleteSchemaImpl } from "./typeQLAutocompleteSchema";
+import {SchemaBuilder, TypeQLAutocompleteSchema} from "./typeQLAutocompleteSchema";
 import { SUGGESTION_MAP } from "./typeql_suggestions";
-import {DriverState} from "../../service/driver-state.service";
+import {ConceptRow, ConceptRowAnswer} from "../typedb-driver/response";
+import {Type} from "../typedb-driver/concept";
 
 export const TypeQLLanguage = LRLanguage.define({
   parser: parser.configure({
@@ -130,10 +131,38 @@ function wrappedAutocomplete(context: CompletionContext) {
 export function typeqlAutocompleteExtension() {
   return autocompletion({ override: [wrappedAutocomplete] });
 }
+// Manually run (in a single query is fine) and collect the following results using _lastQueryAnswers
+// match $owner owns $owned;
+// match $relation relates $related;
+// match $player plays $played;
+// and then call _updateSchemaFromDB(_lastQueryAnswers, _lastQueryAnswers, _lastQueryAnswers);
 
-function updateSchemaFromDB(driver: DriverState, database: string) {
-  let updatedSchema = TypeQLAutocompleteSchemaImpl.fromDriver(driver, database);
-  if (updatedSchema) {
-    typeqlAutocomplete.getState().updateFromDB(updatedSchema);
-  }
+function updateSchemaFromDB(ownsAnswers: ConceptRowAnswer[], relatesAnswers: ConceptRowAnswer[], playsAnswers: ConceptRowAnswer[]) {
+    let builder = new SchemaBuilder();
+    ownsAnswers.forEach((answer) => {
+      let data: ConceptRow = answer.data;
+      let owner = (data["owner"] as Type).label;
+      let owned = (data["owned"] as Type).label;
+      builder.objectType(owner);
+      builder.attributeType(owned);
+      builder.recordOwns(owner, owned);
+    });
+    relatesAnswers.forEach((answer) => {
+      let data: ConceptRow = answer.data;
+      let relation = (data["relation"] as Type).label;
+      let related = (data["related"] as Type).label;
+      builder.objectType(relation);
+      builder.recordRelates(relation, related)
+    });
+    playsAnswers.forEach((answer) => {
+      let data: ConceptRow = answer.data;
+      let player = (data["player"] as Type).label;
+      let played = (data["played"] as Type).label;
+      builder.objectType(player);
+      builder.recordRelates(player, played)
+    })
+    typeqlAutocomplete.getState().updateFromDB(builder.build());
 }
+
+(window as any)._updateSchemaFromDB = updateSchemaFromDB;
+(window as any)._typeqlAutoComplete = typeqlAutocomplete;
