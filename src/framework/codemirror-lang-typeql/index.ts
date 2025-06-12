@@ -101,11 +101,12 @@ export function TypeQL() {
   return new LanguageSupport(TypeQLLanguage, [])
 }
 
-
+let typeqlAutocomplete = new NodePrefixAutoComplete(SUGGESTION_MAP, new TypeQLAutocompleteSchema());
+function wrappedSuggest(context: CompletionContext) {
+  return typeqlAutocomplete.autocomplete(context);
+}
 export function typeqlAutocompleteExtension() {
-  let typeqlAutocomplete = new NodePrefixAutoComplete(SUGGESTION_MAP, new TypeQLAutocompleteSchema());
-  let autocomplete_fn = (context: CompletionContext) => typeqlAutocomplete.autocomplete(context);
-  return autocompletion({ activateOnTypingDelay: 100, override: [autocomplete_fn] });
+  return autocompletion({ override: [wrappedSuggest] });
 }
 
 // A Linter which flags syntax errors from: https://discuss.codemirror.net/t/showing-syntax-errors/3111/6
