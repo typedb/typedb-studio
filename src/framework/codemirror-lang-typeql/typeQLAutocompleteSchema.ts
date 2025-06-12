@@ -15,21 +15,21 @@ function extractText(text: string, from: number, to: number): string {
     return text.slice(from, to);
 }
 
-export class Schema {
-    fromDB: SchemaImpl;
-    fromEditor: SchemaImpl;
+export class TypeQLAutocompleteSchema {
+    fromDB: TypeQLAutocompleteSchemaImpl;
+    fromEditor: TypeQLAutocompleteSchemaImpl;
 
     constructor() {
-        this.fromDB = new SchemaImpl({}, {});
-        this.fromEditor = new SchemaImpl({}, {});
+        this.fromDB = new TypeQLAutocompleteSchemaImpl({}, {});
+        this.fromEditor = new TypeQLAutocompleteSchemaImpl({}, {});
     }
 
-    updateFromDB(schema: SchemaImpl): void {
+    updateFromDB(schema: TypeQLAutocompleteSchemaImpl): void {
         this.fromDB = schema;
     }
     
     mayUpdateFromEditorState(context: CompletionContext, tree: Tree): void {
-        this.fromEditor = SchemaImpl.fromTypeQL(context.state.sliceDoc(), tree);
+        this.fromEditor = TypeQLAutocompleteSchemaImpl.fromTypeQL(context.state.sliceDoc(), tree);
     }
 
     attributeTypes(): TypeLabel[] {
@@ -71,7 +71,7 @@ export class Schema {
     }
 }
 
-export class SchemaImpl {
+export class TypeQLAutocompleteSchemaImpl {
     objectTypes: Record<TypeLabel, ObjectType>;
     attributes: Record<TypeLabel, AttributeType>;
     constructor(
@@ -82,7 +82,7 @@ export class SchemaImpl {
         this.objectTypes = objectTypes;
     }
     
-    static fromTypeQL(text: string, tree: Tree) : SchemaImpl {
+    static fromTypeQL(text: string, tree: Tree) : TypeQLAutocompleteSchemaImpl {
         let builder = new SchemaBuilder();
         // TODO: Replace iterate with a more targetted traversal that considers only define queries.
         // Extract all type declarations from the tree
@@ -185,7 +185,7 @@ class SchemaBuilder {
         }
     }
 
-    build(): SchemaImpl {
-        return new SchemaImpl(this.objectTypes, this.attributes);
+    build(): TypeQLAutocompleteSchemaImpl {
+        return new TypeQLAutocompleteSchemaImpl(this.objectTypes, this.attributes);
     }
 }
