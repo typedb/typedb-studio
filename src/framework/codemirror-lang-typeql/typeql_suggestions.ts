@@ -44,29 +44,24 @@ function suggestRoleTypeForLinks(context: CompletionContext, tree: Tree, parseAt
     }
 }
 
-function suggestAttributeTypeLabels(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
+function suggestAttributeTypeLabels(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     return schema.attributeTypes().map((label) => { return suggest("AttributeType", label); });
 }
 
-function suggestObjectTypeLabels(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
-    var options: Completion[] = [];
-    schema.objectTypes().forEach((label) => {options.push(suggest("ObjectType", label));})
-    return options;
+function suggestObjectTypeLabels(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
+    return schema.objectTypes().map((label) => suggest("ObjectType", label));
 }
 
-function suggestRoleTypeLabelsScoped(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
-    var options: Completion[] = [];
-    schema.objectTypes()
+function suggestRoleTypeLabelsScoped(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
+    return schema.objectTypes()
         .flatMap((label) => schema.objectType(label).relates)
-        .forEach((label) => { options.push(suggest("RoleType", label));});
-    return options;
+        .map((label) => suggest("RoleType", label));
 }
 
-function suggestRoleTypeLabelsUnscoped(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
-    var options: Completion[] = [];
-    schema.objectTypes()
+function suggestRoleTypeLabelsUnscoped(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
+    return schema.objectTypes()
         .flatMap((label) => schema.objectType(label).relates)
-        .forEach((label) => { options.push(suggest("RoleType", label.split(":")[1]));});    return options;
+        .map((label) => suggest("RoleType", label.split(":")[1]));
 }
 
 function suggestThingTypeLabels(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
@@ -117,19 +112,19 @@ function suggestTypeConstraintKeywords(): Completion[] {
     });
 }
 
-function suggestDefinedKeywords(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
+function suggestDefinedKeywords(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], _schema: TypeQLAutocompleteSchema): Completion[] {
     return ["define", "redefine", "undefine"].map((keyword) => suggest("keyword", keyword, 1));
 }
 
-function suggestPipelineStages(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
+function suggestPipelineStages(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], _schema: TypeQLAutocompleteSchema): Completion[] {
     return ["match", "insert", "delete", "update", "put", "select", "reduce", "sort", "limit", "offset", "end"].map((keyword) => suggest("keyword", keyword, 1))
 }
 
-function suggestKinds(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
+function suggestKinds(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], _schema: TypeQLAutocompleteSchema): Completion[] {
     return ["entity", "attribute", "relation"].map((keyword) => suggest("kind", keyword, 2));
 }
 
-function suggestNestedPatterns(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
+function suggestNestedPatterns(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], _schema: TypeQLAutocompleteSchema): Completion[] {
     return ["not {};", "{} or {};", "try {};"].map((keyword) => suggest("method", keyword, 2));
 }
 
@@ -169,13 +164,14 @@ export const SUGGESTION_MAP: SuggestionMap<TypeQLAutocompleteSchema> = {
     [tokens.ClauseInsert]: SUGGESTION_GROUP_FOR_THING_STATEMENTS,
     [tokens.Query]: [
         { suffixes: [[tokens.QuerySchema]], suggestions: [suggestThingTypeLabels, suggestKinds] },
-        { suffixes: [[tokens.QueryPipelinePreambled]], suggestions: [suggestNestedPatterns, suggestVariablesAt10, suggestPipelineStages, ] },
+        { suffixes: [[tokens.QueryPipelinePreambled]], suggestions: [suggestNestedPatterns, suggestVariablesAt10, suggestPipelineStages ] },
     ],
     
     // Now some for define statements
     [tokens.QuerySchema]: [
         { suffixes: [[tokens.DEFINE]], suggestions: [ suggestThingTypeLabels, suggestKinds] },
-        { suffixes: [[tokens.DEFINE, tokens.LABEL]], suggestions: [ suggestTypeConstraintKeywords] }
+        { suffixes: [[tokens.DEFINE, tokens.LABEL]], suggestions: [ suggestTypeConstraintKeywords] },
+        { suffixes: [[tokens.SEMICOLON, tokens.LABEL]], suggestions: [ suggestTypeConstraintKeywords] },
     ],
     [tokens.Definable]: [
         { suffixes: [[tokens.COMMA], [tokens.KIND, tokens.LABEL]], suggestions: [ suggestTypeConstraintKeywords ] },
