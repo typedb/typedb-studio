@@ -2,27 +2,21 @@ import * as tokens from "./generated/typeql.grammar.generated.terms";
 import { CompletionContext, Completion } from "@codemirror/autocomplete";
 import { SyntaxNode, NodeType, Tree } from "@lezer/common"
 import { SuggestionMap, SuffixOfPrefixSuggestion, suggest } from "./complete";
-import { Schema } from "./schema";
+import { TypeQLAutocompleteSchema } from "./typeQLAutocompleteSchema";
 
-// The actual suggestions
-// TODO: See if we can make this declarative based on token sequences expected as prefixes of a given node.
-function suggestAttributeTypeLabels(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: Schema): Completion[] {
-    // TODO: We could do better by climbing up the tree using `atNode.parentNode` to predict based on position as well.
-    // We could also refine the suggestions by creating datastructures based on the declarations in the schema, rather than blindly suggesting every label.
+function suggestAttributeTypeLabels(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     var options: Completion[] = [];
     schema.attributeTypes().forEach((label) => {options.push(suggest("AttributeType", label));})
     return options;
 }
 
-function suggestObjectTypeLabels(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: Schema): Completion[] {
-    // TODO: We could do better by climbing up the tree using `atNode.parentNode` to predict based on position as well.
-    // We could also refine the suggestions by creating datastructures based on the declarations in the schema, rather than blindly suggesting every label.
+function suggestObjectTypeLabels(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     var options: Completion[] = [];
     schema.objectTypes().forEach((label) => {options.push(suggest("ObjectType", label));})
     return options;
 }
 
-function suggestRoleTypeLabelsScoped(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: Schema): Completion[] {
+function suggestRoleTypeLabelsScoped(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     var options: Completion[] = [];
     schema.objectTypes()
         .flatMap((label) => schema.objectType(label).relates)
@@ -30,39 +24,18 @@ function suggestRoleTypeLabelsScoped(context: CompletionContext, tree: Tree, par
     return options;
 }
 
-function suggestRoleTypeLabelsUnscoped(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: Schema): Completion[] {
+function suggestRoleTypeLabelsUnscoped(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     var options: Completion[] = [];
     schema.objectTypes()
         .flatMap((label) => schema.objectType(label).relates)
         .forEach((label) => { options.push(suggest("RoleType", label.split(":")[1]));});    return options;
 }
 
-
-// The actual suggestions
-// TODO: See if we can make this declarative based on token sequences expected as prefixes of a given node.
-function suggestThingTypeLabels(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: Schema): Completion[] {
+function suggestThingTypeLabels(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     return suggestAttributeTypeLabels(context, tree, parseAt, climbedTo, prefix, schema).concat(
         suggestObjectTypeLabels(context, tree, parseAt, climbedTo, prefix, schema)
     );
 }
-
-
-// // TODO: See if we can make this declarative based on token sequences expected as prefixes of a given node.
-// function suggestLabels(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: Schema): Completion[] {
-//     // TODO: We could do better by climbing up the tree using `atNode.parentNode` to predict based on position as well.
-//     // We could also refine the suggestions by creating datastructures based on the declarations in the schema, rather than blindly suggesting every label.
-//     var options: Completion[] = [];
-//     tree.iterate({
-//         enter: (other: SyntaxNode) => {
-//             if (other.type.id == tokens.LABEL) {
-//                 let label = context.state.sliceDoc(other.from, other.to);
-//                 options.push(suggest("type", label));
-//             }
-//         }
-//     });
-//     return options;
-
-// }
 
 function suggestVariables(context: CompletionContext, tree: Tree, boost=0): Completion[] {
     var options: Completion[] = [];
@@ -85,7 +58,6 @@ function suggestVariablesAtMinus10(context: CompletionContext, tree: Tree): Comp
     return suggestVariables(context, tree, -10);
 }
 
-
 function suggestThingConstraintKeywords(): Completion[] {
     return ["isa", "has", "links"].map((constraintName) => {
         return {
@@ -107,37 +79,34 @@ function suggestTypeConstraintKeywords(): Completion[] {
     });
 }
 
-function suggestDefinedKeywords(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: Schema): Completion[] {
+function suggestDefinedKeywords(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     return ["define", "redefine", "undefine"].map((keyword) => suggest("keyword", keyword, 1));
 }
 
-function suggestPipelineStages(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: Schema): Completion[] {
+function suggestPipelineStages(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     return ["match", "insert", "delete", "update", "put", "select", "reduce", "sort", "limit", "offset", "end"].map((keyword) => suggest("keyword", keyword, 1))
 }
 
-function suggestKinds(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: Schema): Completion[] {
+function suggestKinds(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     return ["entity", "attribute", "relation"].map((keyword) => suggest("kind", keyword, 2));
 }
 
-function suggestNestedPatterns(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: Schema): Completion[] {
+function suggestNestedPatterns(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     return ["not {};", "{} or {};", "try {};"].map((keyword) => suggest("method", keyword, 2));
 }
-
-// Hopefully you only have to touch this.
 
 const SUFFIX_VAR_OR_COMMA = [[tokens.COMMA], [tokens.VAR]];
 
 
-// Will pick the first matching suffix. If you want to handle things manually, use an empty suffix, duh.
-
-const SUGGESTION_GROUP_FOR_THING_STATEMENTS: SuffixOfPrefixSuggestion<Schema>[]  = [
+// Will pick the first matching suffix. If you want to handle things manually, use an empty suffix.
+const SUGGESTION_GROUP_FOR_THING_STATEMENTS: SuffixOfPrefixSuggestion<TypeQLAutocompleteSchema>[]  = [
         { suffixes: SUFFIX_VAR_OR_COMMA, suggestions: [suggestThingConstraintKeywords] },
         { suffixes: [[tokens.HAS]], suggestions: [suggestAttributeTypeLabels, suggestVariablesAtMinus10] },
         { suffixes: [[tokens.ISA]], suggestions: [suggestThingTypeLabels, suggestVariablesAtMinus10] },
         { suffixes: [[tokens.HAS, tokens.TypeRef], [tokens.ISA, tokens.TypeRef]], suggestions: [suggestVariablesAtMinus10] },
 ];
 
-export const SUGGESTION_MAP: SuggestionMap<Schema> = {
+export const SUGGESTION_MAP: SuggestionMap<TypeQLAutocompleteSchema> = {
     [tokens.LABEL]: [{ suffixes: [[]], suggestions: [suggestThingTypeLabels] }],
     [tokens.VAR]: [{ suffixes: [[]], suggestions: [suggestVariablesAt10] }],
         

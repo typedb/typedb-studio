@@ -7,7 +7,7 @@ import { EditorView } from "@codemirror/view";
 import { linter } from '@codemirror/lint'
 import { autocompletion, CompletionContext } from "@codemirror/autocomplete";
 import { NodePrefixAutoComplete } from "./complete"
-import { Schema, SchemaImpl } from "./schema";
+import { TypeQLAutocompleteSchema, TypeQLAutocompleteSchemaImpl } from "./typeQLAutocompleteSchema";
 import { SUGGESTION_MAP } from "./typeql_suggestions";
 
 export const TypeQLLanguage = LRLanguage.define({
@@ -103,7 +103,7 @@ export function TypeQL() {
 
 
 export function typeqlAutocompleteExtension() {
-  let typeqlAutocomplete = new NodePrefixAutoComplete(SUGGESTION_MAP, new Schema());
+  let typeqlAutocomplete = new NodePrefixAutoComplete(SUGGESTION_MAP, new TypeQLAutocompleteSchema());
   let autocomplete_fn = (context: CompletionContext) => typeqlAutocomplete.autocomplete(context);
   return autocompletion({ activateOnTypingDelay: 100, override: [autocomplete_fn] });
 }
@@ -126,8 +126,4 @@ export function otherExampleLinter() {
     });
     return diagnostics;
   });
-}
-
-export function typeqlSchemaFromText(text: string): SchemaImpl {
-  return SchemaImpl.fromTypeQL(text, parser.parse(text));
 }
