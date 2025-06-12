@@ -131,11 +131,21 @@ function wrappedAutocomplete(context: CompletionContext) {
 export function typeqlAutocompleteExtension() {
   return autocompletion({ override: [wrappedAutocomplete] });
 }
-// Manually run (in a single query is fine) and collect the following results using _lastQueryAnswers
-// match $owner owns $owned;
-// match $relation relates $related;
-// match $player plays $played;
+// Manually run and collect the following results using _lastQueryAnswers
+// match $default-owner owns $default-owned; limit 1;
+// match $default-relation relates $default-related; limit 1;
+// match $default-player plays $default-played; limit 1;
+// match
+// { $owner owns $owned; $relation is $default-relation; $related is $default-related; $player is $default-player; $played is $default-played; } or
+// { $owner is $default-owner; $owned is $default-owned; $relation relates $related; $player is $default-player; $played is $default-played; } or
+// { $owner is $default-owner; $owned is $default-owned; $relation is $default-relation; $related is $default-related; $player plays $played; };
 // and then call _updateSchemaFromDB(_lastQueryAnswers, _lastQueryAnswers, _lastQueryAnswers);
+
+// Or finer queries:
+// # match $owner owns $owned;
+// # match $relation relates $related;
+// # match $player plays $played;
+// And you have to set each argument separately
 
 function updateSchemaFromDB(ownsAnswers: ConceptRowAnswer[], relatesAnswers: ConceptRowAnswer[], playsAnswers: ConceptRowAnswer[]) {
     let builder = new SchemaBuilder();
