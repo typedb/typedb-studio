@@ -11,7 +11,8 @@
 @use "tp";
 @use "typography";
 
-@include mat.core();
+@include mat.elevation-classes();
+@include mat.app-background();
 $purple-palette: (
     50: secondary.$purple,
     100: secondary.$purple,
