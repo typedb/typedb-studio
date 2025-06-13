@@ -122,44 +122,44 @@ $typedb-theme: mat.m2-define-dark-theme((
 /* Mostly copied from typedb-web */
 body {
     /* Button */
-    .mdc-button {
-        --mdc-text-button-label-text-size: 14px;
-        --mdc-text-button-label-text-tracking: #{typography.$letter-spacing};
-        --mdc-text-button-label-text-weight: #{typography.$regular};
-        --mdc-text-button-container-height: 32px;
-        --mdc-text-button-container-shape: #{shapes.$border-radius-panel};
-        --mdc-text-button-label-text-color: #{primary.$grey};
-        --mdc-text-button-disabled-label-text-color: rgba(255, 255, 255, 0.25);
+    @include mat.button-overrides((
+        text-label-text-size: 14px,
+        text-label-text-tracking: typography.$letter-spacing,
+        text-label-text-weight: typography.$regular,
+        text-label-text-color: primary.$grey,
+        text-container-height: 32px,
+        text-container-shape: shapes.$border-radius-panel,
+        text-disabled-label-text-color: rgba(255, 255, 255, 0.25),
 
-        --mdc-filled-button-label-text-size: 14px;
-        --mdc-filled-button-label-text-tracking: #{typography.$letter-spacing};
-        --mdc-filled-button-label-text-weight: #{typography.$regular};
-        --mdc-filled-button-label-text-color: #{primary.$grey};
-        --mdc-filled-button-disabled-container-color: rgba(255, 255, 255, 0.12);
-        --mdc-filled-button-disabled-label-text-color: rgba(255, 255, 255, 0.25);
-        --mdc-filled-button-container-shape: #{shapes.$border-radius-panel};
-        --mat-filled-button-state-layer-color: #fff;
-        --mat-filled-button-ripple-color: rgba(255, 255, 255, 0.1);
-        --mat-filled-button-hover-state-layer-opacity: 0.08;
-        --mat-filled-button-focus-state-layer-opacity: 0.24;
-        --mat-filled-button-pressed-state-layer-opacity: 0.24;
+        filled-label-text-size: 14px,
+        filled-label-text-tracking: typography.$letter-spacing,
+        filled-label-text-weight: typography.$regular,
+        filled-label-text-color: primary.$grey,
+        filled-disabled-container-color: rgba(255, 255, 255, 0.12),
+        filled-disabled-label-text-color: rgba(255, 255, 255, 0.25),
+        filled-container-shape: shapes.$border-radius-panel,
+        filled-state-layer-color: #fff,
+        filled-ripple-color: rgba(255, 255, 255, 0.1),
+        filled-hover-state-layer-opacity: 0.08,
+        filled-focus-state-layer-opacity: 0.24,
+        filled-pressed-state-layer-opacity: 0.24,
 
-        --mdc-outlined-button-label-text-size: 14px;
-        --mdc-outlined-button-label-text-tracking: #{typography.$letter-spacing};
-        --mdc-outlined-button-label-text-weight: #{typography.$regular};
-        --mdc-outlined-button-disabled-outline-color: #{rgba(255, 255, 255, 0.12)};
-        --mdc-outlined-button-disabled-label-text-color: rgba(255, 255, 255, 0.25);
-        --mdc-outlined-button-label-text-color: #{primary.$grey};
-        --mdc-outlined-button-outline-color: #{primary.$light-purple};
-        --mdc-outlined-button-container-shape: #{shapes.$border-radius-panel};
+        outlined-label-text-size: 14px,
+        outlined-label-text-tracking: #{typography.$letter-spacing},
+        outlined-label-text-weight: #{typography.$regular},
+        outlined-disabled-outline-color: #{rgba(255, 255, 255, 0.12)},
+        outlined-disabled-label-text-color: rgba(255, 255, 255, 0.25),
+        outlined-label-text-color: #{primary.$grey},
+        outlined-outline-color: #{primary.$light-purple},
+        outlined-container-shape: #{shapes.$border-radius-panel},
+    ));
 
-        &[disabled] {
-            pointer-events: all;
-            --mat-text-button-state-layer-color: transparent;
-            --mat-filled-button-state-layer-color: transparent;
-            --mat-outlined-button-state-layer-color: transparent;
-            --mat-outlined-button-ripple-color: transparent;
-        }
+    --mat-button-outlined-disabled-state-layer-color: transparent;
+
+    .mdc-button[disabled] {
+        pointer-events: all;
+        --mat-text-button-state-layer-color: transparent;
+        --mat-filled-button-state-layer-color: transparent;
     }
 
     .mat-mdc-unelevated-button {
@@ -172,18 +172,18 @@ body {
     }
 
     /* Button toggle */
-    .mat-button-toggle-group, .mat-button-toggle {
-        font-size: 14px;
-        --mat-standard-button-toggle-height: 30px;
-        --mat-standard-button-toggle-divider-color: #{primary.$light-purple};
-        --mat-standard-button-toggle-background-color: #{primary.$deep-purple};
-        --mat-standard-button-toggle-selected-state-background-color: #{secondary.$purple};
-        --mat-standard-button-toggle-selected-state-text-color: #{primary.$green};
-        --mat-standard-button-toggle-disabled-selected-state-text-color: #{rgba(primary.$grey, 0.63)};
-        --mat-standard-button-toggle-disabled-state-background-color: #{secondary.$dark-grey};
-        --mat-standard-button-toggle-disabled-selected-state-background-color: #{secondary.$deep-grey};
-        --mat-standard-button-toggle-shape: #{shapes.$border-radius};
-    }
+    @include mat.button-toggle-overrides((
+        height: 30px,
+        label-text-size: 14px,
+        divider-color: primary.$light-purple,
+        background-color: primary.$deep-purple,
+        selected-state-background-color: secondary.$purple,
+        selected-state-text-color: primary.$green,
+        disabled-selected-state-text-color: rgba(primary.$grey, 0.63),
+        disabled-state-background-color: secondary.$dark-grey,
+        disabled-selected-state-background-color: secondary.$deep-grey,
+        shape: shapes.$border-radius,
+    ));
 
     .mat-button-toggle:hover button:not([disabled]) {
         color: primary.$green;
@@ -299,12 +299,17 @@ body {
     }
 
     /* Form field */
+    @include mat.form-field-overrides((
+        container-text-size: 14px,
+        container-text-tracking: var(--body-letter-spacing),
+        outlined-label-text-size: 14px,
+        outlined-label-text-tracking: var(--body-letter-spacing),
+        outlined-outline-color: primary.$light-purple,
+        outlined-hover-outline-color: secondary.$grey,
+        subscript-text-tracking: var(--body-letter-spacing),
+    ));
+
     .mat-mdc-form-field {
-        --mat-form-field-container-text-tracking: var(--body-letter-spacing);
-        --mdc-outlined-text-field-label-text-size: 15px;
-        --mdc-outlined-text-field-label-text-tracking: var(--body-letter-spacing);
-        --mat-form-field-subscript-text-tracking: var(--body-letter-spacing);
-        font-size: 15px;
         --mat-select-trigger-text-size: 15px;
 
         &:not(.form-field-dense) {
@@ -626,7 +631,6 @@ body {
     }
 
     /* Slide toggle */
-
     .mat-mdc-slide-toggle {
         .mdc-switch:enabled, .mdc-switch:enabled:focus, .mdc-switch:enabled:hover:not(:focus) {
             .mdc-switch__track::after {

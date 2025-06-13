@@ -28,9 +28,6 @@ export type ResourceAvailability = "ready" | "loading" | "failed";
         trigger("sidebarLeftMargin", [
             state("open", style({ "margin-left": "289px" })),
             state("collapsed", style({ "margin-left": "101px" })),
-            transition("open <=> collapsed", animate("250ms ease")),
-            transition("void => collapsed", [style({ "margin-left": "101px" })]),
-            transition("void => open", [style({ "margin-left": "289px" })])
         ])
     ]
 })
@@ -59,9 +56,5 @@ export class PageScaffoldComponent implements AfterViewInit {
 
     get actionBarClass() {
         return this.condensed ? `action-bar condensed` : `action-bar`;
-    }
-
-    onActionBarResize(e: any) {
-        console.log(e);
     }
 }
