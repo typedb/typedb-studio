@@ -11,17 +11,17 @@
   "private": true,
   "dependencies": {
     "@acrodata/code-editor": "0.5.1",
-    "@angular/animations": "19.2.14",
+    "@angular/animations": "20.0.3",
     "@angular/cdk": "19.2.18",
-    "@angular/common": "19.2.14",
-    "@angular/compiler": "19.2.14",
-    "@angular/core": "19.2.14",
-    "@angular/fire": "19.2.0",
-    "@angular/forms": "19.2.14",
+    "@angular/common": "20.0.3",
+    "@angular/compiler": "20.0.3",
+    "@angular/core": "20.0.3",
+    "@angular/fire": "20.0.1",
+    "@angular/forms": "20.0.3",
     "@angular/material": "19.2.18",
-    "@angular/platform-browser": "19.2.14",
-    "@angular/platform-browser-dynamic": "19.2.14",
-    "@angular/router": "19.2.14",
+    "@angular/platform-browser": "20.0.3",
+    "@angular/platform-browser-dynamic": "20.0.3",
+    "@angular/router": "20.0.3",
     "@codemirror/lint": "6.8.5",
     "@customerio/cdp-analytics-browser": "0.2.0",
     "@hhangular/resizable": "1.18.1",
@@ -46,9 +46,9 @@
     "@tauri-apps/plugin-opener": "^2"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "19.2.15",
-    "@angular/cli": "19.2.15",
-    "@angular/compiler-cli": "19.2.14",
+    "@angular-devkit/build-angular": "20.0.2",
+    "@angular/cli": "20.0.2",
+    "@angular/compiler-cli": "20.0.3",
     "@codemirror/language": "6.11.0",
     "@codemirror/state": "6.5.2",
     "@codemirror/view": "6.36.5",
@@ -66,21 +66,15 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "netlify-plugin-discord": "0.0.2",
-    "typescript": "5.5.4",
+    "typescript": "5.8.3",
     "unplugin-lezer": "1.0.1",
     "@tauri-apps/cli": "^2"
   },
   "browserslist": [
-    "> 0.5%",
-    "last 2 versions",
-    "not dead",
-    "not IE 11",
-    "not kaios 2.5",
-    "not op_mini all",
-    "Firefox ESR"
+    "defaults and fully supports es6-module"
   ],
   "engines": {
-    "node": ">=20.11.1 <21.0"
+    "node": ">=22.16.0 <23"
   },
   "packageManager": "pnpm@10.12.1+sha256.889bac470ec93ccc3764488a19d6ba8f9c648ad5e50a9a6e4be3768a5de387a3"
 }
