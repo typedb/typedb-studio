@@ -100,13 +100,13 @@ $red-palette: (
         900: white,
     )
 );
-$typedb-primary: mat.define-palette($green-palette, 700, 300, 900);
-$typedb-accent: mat.define-palette($purple-palette, 300, 100, 500);
-$typedb-warn: mat.define-palette($red-palette, 700);
-$typedb-typography: mat.define-typography-config(
+$typedb-primary: mat.m2-define-palette($green-palette, 700, 300, 900);
+$typedb-accent: mat.m2-define-palette($purple-palette, 300, 100, 500);
+$typedb-warn: mat.m2-define-palette($red-palette, 700);
+$typedb-typography: mat.m2-define-typography-config(
     $font-family: typography.$default-font-family,
 );
-$typedb-theme: mat.define-dark-theme((
+$typedb-theme: mat.m2-define-dark-theme((
     color: (
         primary: $typedb-primary,
         accent: $typedb-accent,
@@ -307,7 +307,7 @@ body {
         --mat-select-trigger-text-size: 15px;
 
         &:not(.form-field-dense) {
-            @include mat.private-form-field-density(-3);
+            @include mat.form-field-density(-3);
 
             &.mat-mdc-form-field-type-mat-select .mat-mdc-text-field-wrapper {
                 height: 44px;
@@ -315,7 +315,7 @@ body {
         }
 
         &.form-field-dense {
-            @include mat.private-form-field-density(-5);
+            @include mat.form-field-density(-5);
         }
 
         .mat-mdc-form-field-text-prefix {
