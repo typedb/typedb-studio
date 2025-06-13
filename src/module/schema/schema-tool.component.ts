@@ -31,12 +31,11 @@ import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component"
     selector: "ts-schema-tool",
     templateUrl: "schema-tool.component.html",
     styleUrls: ["schema-tool.component.scss"],
-    standalone: true,
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule,
-        MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
-        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
-    ],
+        MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule,
+        MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule,
+    ]
 })
 export class SchemaToolComponent implements OnInit, AfterViewInit, OnDestroy {
 

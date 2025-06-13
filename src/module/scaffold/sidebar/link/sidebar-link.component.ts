@@ -13,8 +13,7 @@ import { map } from "rxjs";
     selector: "ts-sidebar-link",
     templateUrl: "./sidebar-link.component.html",
     styleUrls: ["./sidebar-link.component.scss"],
-    standalone: true,
-    imports: [RouterLink, NgClass, AsyncPipe, NgTemplateOutlet],
+    imports: [RouterLink, NgClass, AsyncPipe, NgTemplateOutlet]
 })
 export class SidebarLinkComponent {
     @Input() link?: string;

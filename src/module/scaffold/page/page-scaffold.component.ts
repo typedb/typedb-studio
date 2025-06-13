@@ -21,7 +21,6 @@ export type ResourceAvailability = "ready" | "loading" | "failed";
     selector: "ts-page-scaffold",
     templateUrl: "./page-scaffold.component.html",
     styleUrls: ["./page-scaffold.component.scss"],
-    standalone: true,
     imports: [
         SidebarComponent, RightSidebarComponent, SpinnerComponent, NgClass, MatSidenavModule, ButtonComponent, ConnectionWidgetComponent,
     ],
@@ -33,7 +32,7 @@ export type ResourceAvailability = "ready" | "loading" | "failed";
             transition("void => collapsed", [style({ "margin-left": "101px" })]),
             transition("void => open", [style({ "margin-left": "289px" })])
         ])
-    ],
+    ]
 })
 export class PageScaffoldComponent implements AfterViewInit {
     @ViewChild("actionBar") actionBar!: ElementRef;
