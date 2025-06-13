@@ -1,0 +1,778 @@
+// TypeQL grammar for lezer. run `pnpm run generate-grammar` to generate the parser and propagate these changes to typescript.
+
+// TODO: This is a direct translation of the original pest grammar (which is PEG iirc)
+// It may be better to rewrite as much as possible so that it's better suited to the LR parser.
+@top Query { QuerySchema | QueryPipelinePreambled (END SEMICOLON)? }
+@skip { whitespace | linecomment }
+
+// Schema
+QuerySchema {
+  QueryDefine |
+  QueryUndefine |
+  QueryRedefine
+}
+
+QueryDefine {
+  DEFINE Definables
+}
+
+QueryUndefine {
+  UNDEFINE Undefinables
+}
+
+QueryRedefine {
+  REDEFINE Redefinables
+}
+
+Definables {
+  (Definable SEMICOLON)+
+}
+
+Definable {
+  DefinitionType |
+  DefinitionFunction |
+  DefinitionStruct
+}
+
+Undefinables {
+  (Undefinable SEMICOLON)+
+}
+
+Undefinable {
+  UndefineFrom |
+  // UndefineFunction |
+  UndefineStruct |
+  KIND LABEL
+}
+
+Redefinables {
+  (Redefinable SEMICOLON)+
+}
+
+Redefinable {
+  RedefinableType | DefinitionFunction
+}
+
+RedefinableType {
+  KIND? LABEL ((Annotations | TypeCapability) (COMMA TypeCapability)* COMMA?)?
+}
+
+DefinitionType {
+  KIND? LABEL COMMA? ((Annotations | TypeCapability) (COMMA TypeCapability)* COMMA?)?
+}
+
+TypeCapability {
+  TypeCapabilityBase Annotations?
+}
+
+TypeCapabilityBase {
+  SubDeclaration |
+  ValueTypeDeclaration |
+  // AliasDeclaration |
+  OwnsDeclaration |
+  PlaysDeclaration |
+  RelatesDeclaration
+}
+
+SubDeclaration {
+  SUB LABEL
+}
+
+ValueTypeDeclaration {
+  VALUEKEYWORD ValueType
+}
+
+// AliasDeclaration {
+//   ALIAS LABEL
+// }
+
+OwnsDeclaration {
+  OWNS LABEL |
+  OWNS LabelList
+}
+
+PlaysDeclaration {
+  PLAYS LABEL // | PLAYS LabelScoped
+}
+
+RelatesDeclaration {
+  RELATES LABEL (AS LABEL)? |
+  RELATES LabelList (AS LabelList)?
+}
+
+
+DefinitionStruct {
+  STRUCT IDENTIFIER COLON DefinitionStructFields
+}
+
+DefinitionStructFields {
+  DefinitionStructField (COMMA DefinitionStructField)* COMMA?
+}
+
+DefinitionStructField {
+  IDENTIFIER VALUEKEYWORD StructFieldValueType
+}
+
+StructFieldValueType {
+  ValueTypeOptional | ValueType
+}
+
+ValueTypeOptional {
+  ValueType QUESTIONMARK
+}
+
+
+UndefineFrom {
+  UndefineAnnotationFromCapability |
+  UndefineAnnotationFromType |
+  UndefineCapability |
+  UndefineSpecialise
+}
+
+UndefineAnnotationFromCapability {
+  AnnotationCategory FROM LABEL TypeCapabilityBase
+}
+
+UndefineAnnotationFromType {
+  AnnotationCategory FROM LABEL
+}
+
+UndefineCapability {
+  TypeCapabilityBase FROM LABEL
+}
+
+UndefineSpecialise {
+  AS LABEL FROM LABEL RelatesDeclaration
+}
+
+// UndefineFunction {
+//   FUN IDENTIFIER
+// }
+
+UndefineStruct {
+  STRUCT IDENTIFIER
+}
+
+LabelList { LABEL SQBRACKETOPEN SQBRACKETCLOSE }
+NamedTypeAny { NamedTypeList | NamedType }
+NamedTypeList { NamedType SQBRACKETOPEN SQBRACKETCLOSE }
+NamedType { LABEL | ValueType }
+
+// Annotations
+AnnotationCategory { 
+  ANNOTATION_ABSTRACT
+  | ANNOTATION_CARD
+  | ANNOTATION_CASCADE
+  | ANNOTATION_DISTINCT
+  | ANNOTATION_INDEPENDENT
+  | ANNOTATION_KEY
+  | ANNOTATION_RANGE
+  | ANNOTATION_REGEX
+  | ANNOTATION_SUBKEY
+  | ANNOTATION_UNIQUE
+  | ANNOTATION_VALUES
+}
+
+
+Annotations {
+  Annotation+
+}
+
+Annotation {
+  ANNOTATION_ABSTRACT |
+  ANNOTATION_CASCADE |
+  ANNOTATION_DISTINCT |
+  ANNOTATION_INDEPENDENT |
+  ANNOTATION_KEY |
+  ANNOTATION_UNIQUE |
+  ANNOTATION_CARD PARENOPEN Cardinality PARENCLOSE |
+  ANNOTATION_RANGE PARENOPEN Range PARENCLOSE |
+  ANNOTATION_REGEX PARENOPEN STRINGLITERAL PARENCLOSE |
+  ANNOTATION_SUBKEY PARENOPEN IDENTIFIER PARENCLOSE |
+  ANNOTATION_VALUES PARENOPEN ValueLiteral (COMMA ValueLiteral)* COMMA? PARENCLOSE
+}
+
+Cardinality {
+  INTEGERLITERAL DOUBLE_DOT INTEGERLITERAL? |
+  INTEGERLITERAL
+}
+
+Range {
+  RangeBound DOUBLE_DOT RangeBound |
+  RangeBound DOUBLE_DOT |
+  DOUBLE_DOT RangeBound
+}
+
+RangeBound {
+  ValueLiteral
+}
+
+
+// Pipelines
+QueryPipelinePreambled {
+  Pipeline
+//  Preamble* Pipeline
+}
+
+//Pipeline {
+//  QueryStage+ QueryStageTerminal?
+//}
+
+
+//Preamble {
+//  WITH DefinitionFunction
+//}
+
+Pipeline {
+  QueryStage+ 
+}
+QueryStage {
+  ClauseMatch |
+  ClauseInsert |
+  ClausePut |
+  ClauseUpdate |
+  ClauseDelete |
+  OperatorStream
+}
+
+//QueryStageTerminal {
+//  ClauseFetch SEMICOLON
+//}
+
+
+// 
+// Stages
+ClauseMatch {
+  MATCH Patterns
+}
+
+
+ClauseInsert {
+  INSERT (StatementThing SEMICOLON)+
+//  INSERT (StatementThing SEMICOLON | StatementAssignment SEMICOLON)+
+}
+
+ClausePut {
+ PUT (StatementThing SEMICOLON)+
+}
+
+ClauseUpdate {
+ UPDATE (StatementThing SEMICOLON)+
+}
+
+ClauseDelete {
+ DELETE (StatementDeletable SEMICOLON)+
+}
+
+OperatorStream {
+ OperatorSelect |
+ OperatorSort |
+ OperatorDistinct |
+ OperatorOffset |
+ OperatorLimit |
+ OperatorRequire |
+ OperatorReduce
+}
+
+OperatorSelect {
+ SELECT Vars SEMICOLON
+}
+
+OperatorSort {
+ SORT VAROrder (COMMA VAROrder)* SEMICOLON
+}
+
+OperatorOffset {
+ OFFSET INTEGERLITERAL SEMICOLON
+}
+
+OperatorLimit {
+ LIMIT INTEGERLITERAL SEMICOLON
+}
+
+OperatorRequire {
+ REQUIRE Vars SEMICOLON
+}
+
+OperatorDistinct {
+ DISTINCT SEMICOLON
+}
+
+OperatorReduce {
+ REDUCE ReduceAssign (COMMA ReduceAssign)* (GROUPBY Vars)? SEMICOLON
+}
+
+// Stage arguments
+Vars {
+  VAR (COMMA VAR)* COMMA?
+}
+
+VAROrder {
+ VAR ORDER?
+}
+
+ReduceAssign {
+ (VAR ASSIGN Reducer)
+}
+
+Reducer {
+ COUNT (PARENOPEN VAR PARENCLOSE)? |
+ MAX PARENOPEN VAR PARENCLOSE |
+ MIN PARENOPEN VAR PARENCLOSE |
+ MEAN PARENOPEN VAR PARENCLOSE |
+ MEDIAN PARENOPEN VAR PARENCLOSE |
+ STD PARENOPEN VAR PARENCLOSE |
+ SUM PARENOPEN VAR PARENCLOSE |
+ LIST PARENOPEN VAR PARENCLOSE
+}
+  
+// Patterns
+Patterns {
+  (Pattern SEMICOLON)+
+}
+
+Pattern {
+  Statement |
+  PatternDisjunction |
+  PatternConjunction |
+  PatternNegation |
+  PatternTry
+}
+
+PatternConjunction {
+  CURLYOPEN Patterns CURLYCLOSE
+}
+
+PatternDisjunction {
+  CURLYOPEN Patterns CURLYCLOSE (OR CURLYOPEN Patterns CURLYCLOSE)+
+}
+
+PatternNegation {
+  NOT CURLYOPEN Patterns CURLYCLOSE
+}
+
+PatternTry {
+ TRY CURLYOPEN Patterns CURLYCLOSE
+}
+
+StatementDeletable {
+  HAS? VAR OF VAR |
+  LINKS? Relation OF VAR |
+  VAR
+}
+
+StatementType {
+  KIND? TypeRef (TypeConstraint (COMMA TypeConstraint)* COMMA?)?
+}
+
+TypeConstraint {
+  TypeConstraintBase Annotations?
+}
+
+TypeConstraintBase {
+  SubConstraint |
+  ValueTypeConstraint |
+  LabelConstraint |
+  OwnsConstraint |
+  RelatesConstraint |
+  PlaysConstraint
+}
+
+SubConstraint {
+  SUB TypeRef
+}
+
+ValueTypeConstraint {
+  VALUEKEYWORD ValueType
+}
+
+LabelConstraint {
+  LABELKEYWORD LABEL // (LabelScoped | LABEL)
+}
+
+
+OwnsConstraint {
+  OWNS TypeRef |
+   OWNS TypeRefList
+}
+
+RelatesConstraint {
+  RELATES TypeRef (AS TypeRef)? |
+  RELATES TypeRefList (AS TypeRefList)?
+}
+
+PlaysConstraint {
+  PLAYS TypeRef
+}
+
+Statement {
+  StatementAssignment |
+  // StatementSingle |
+  StatementType |
+  StatementThing
+}
+
+
+StatementThing {
+  VAR COMMA? ThingConstraintList
+  // ThingRelationAnonymous (COMMA? ThingConstraintList)?
+}
+
+// ThingRelationAnonymous {
+//   TypeRef? Relation
+// }
+
+ThingConstraintList {
+  ThingConstraint (COMMA ThingConstraint)* COMMA?
+}
+
+ThingConstraint {
+  IsaConstraint |
+  IidConstraint |
+  HasConstraint |
+  LinksConstraint
+}
+
+IsaConstraint {
+  ISA TypeRef  (Expression | Comparison)? // | ExpressionStruct // | ValueLiteral is subsumed by Expression // | Relation is ambiguous with paranthesis expressions
+}
+
+IidConstraint {
+  IID IID_VALUE
+}
+
+HasConstraint {
+  HAS TypeRef VAR |
+  HAS TypeRef ValueLiteral |
+  HAS VAR
+}
+
+LinksConstraint {
+  LINKS Relation
+}
+
+Relation {
+  PARENOPEN RolePlayer (COMMA RolePlayer)* COMMA? PARENCLOSE
+}
+
+RolePlayer {
+  TypeRefList COLON VAR |
+  TypeRef COLON VAR |
+  VAR
+}
+
+TypeRefList {
+  TypeRef SQBRACKETOPEN SQBRACKETCLOSE
+}
+
+TypeRef {
+  // LabelScoped |
+  LABEL |
+  VAR
+}
+
+// LabelScoped {
+//   LABEL COLON LABEL
+// }
+
+
+ValueLiteral {
+  BOOLEANLITERAL |
+  STRINGLITERAL |
+  INTEGERLITERAL |
+  DOUBLELITERAL
+  // TODO
+}
+
+ValueType {
+  BOOLEAN |
+  INTEGER |
+  DOUBLE |
+  DECIMAL |
+  DATETIMETZ |
+  DATETIME |
+  DATE |
+  DURATION |
+  STRING
+}
+
+Comparison {
+  ComparisonOperator Expression
+}
+
+ComparisonOperator {
+  EQUAL | NOT_EQUAL | GREATER | GREATER_EQUAL | LESS | LESS_EQUAL | LIKE | CONTAINS
+}
+
+// Function
+IDENTIFIER { LABEL } // hack
+
+DefinitionFunction {
+  FUN FunctionSignature COLON FunctionBlock
+}
+
+FunctionSignature {
+  IDENTIFIER PARENOPEN FunctionArguments? PARENCLOSE ARROW FunctionOutput
+}
+
+
+FunctionArguments {
+  FunctionArgument (COMMA FunctionArgument)* COMMA?
+}
+
+FunctionArgument {
+  VAR COLON NamedTypeAny
+}
+
+FunctionOutput {
+  FunctionOutputStream |
+  FunctionOutputSingle
+}
+
+FunctionOutputStream {
+  CURLYOPEN NamedTypeAny (COMMA NamedTypeAny)* COMMA? CURLYCLOSE
+}
+
+FunctionOutputSingle {
+  NamedTypeAny (COMMA NamedTypeAny)* COMMA?
+}
+
+FunctionBlock {
+  QueryStage+ ReturnStatement
+}
+
+ReturnStatement {
+  RETURN  (ReturnStream | ReturnSingle | ReturnReduce)
+}
+
+ReturnStream {
+  CURLYOPEN Vars CURLYCLOSE
+}
+
+ReturnSingle {
+  ReturnSingleSelector Vars
+}
+
+ReturnSingleSelector {
+  FIRST | LAST
+}
+
+ReturnReduce {
+  Reducer (COMMA Reducer)* COMMA?
+}
+
+// Assignment
+StatementAssignment {
+  LET AssignmentLeft (ASSIGN | IN) Expression
+}
+
+AssignmentLeft {
+  VarsAssignment // | StructDestructor
+}
+
+VarsAssignment {
+  VarAssignment (COMMA VarAssignment)* COMMA?
+}
+
+VarAssignment {
+  VAR QUESTIONMARK?
+}
+
+// StructDestructor {
+//   CURLYOPEN StructKey COLON StructDestructorValue CURLYCLOSE
+// }
+
+// // StructDestructorValue {
+// //   VAR | StructDestructor
+// // }
+
+//  Expression
+Expression {
+  ExpressionValue (ExpressionOperator ExpressionValue)*
+}
+
+ExpressionValue {
+  // ExpressionListIndex |
+  ExpressionParenthesis |
+  FunctionCall |
+  ValueLiteral |
+  VAR
+}
+
+FunctionCall {
+  FunctionName PARENOPEN FunctionCallArguments? PARENCLOSE
+}
+
+FunctionName {
+  IDENTIFIER
+}
+
+FunctionCallArguments {
+  Expression (COMMA Expression)* COMMA?
+}
+ExpressionOperator {
+  POWER | TIMES | DIVIDE | MODULO | PLUS | MINUS
+}
+
+ExpressionParenthesis {
+  PARENOPEN Expression PARENCLOSE
+}
+
+// ExpressionListIndex {
+//   VAR SQBRACKETOPEN Expression SQBRACKETCLOSE
+// }
+
+
+@tokens {
+  VAR { DOLLAR $[a-zA-Z_\-0-9]+ }
+  // IDENTIFIER { $[a-zA-Z_\-0-9]+ } // Consider splitting this into Label and LabelScoped
+  LABEL { $[a-zA-Z] $[a-zA-Z_\-0-9]+ (':' $[a-zA-Z_\-0-9]+)?  } // Consider splitting this into Label and LabelScoped
+  DOLLAR { "$" }
+
+  DISTINCT { "distinct" }
+  //
+  DEFINE { "define" }
+  UNDEFINE { "undefine" }
+  REDEFINE { "redefine" } 
+
+  ANNOTATION_ABSTRACT { "@abstract" }
+  ANNOTATION_CASCADE { "@cascade" }
+  ANNOTATION_DISTINCT { "@distinct" }
+  ANNOTATION_INDEPENDENT { "@independent" }
+  ANNOTATION_KEY { "@key" }
+  ANNOTATION_UNIQUE { "@unique" }
+  ANNOTATION_CARD { "@card" }
+  ANNOTATION_RANGE { "@range" }
+  ANNOTATION_REGEX { "@regex" }
+  ANNOTATION_SUBKEY { "@subkey" }
+  ANNOTATION_VALUES { "@values" }
+  
+
+  // WITH { "with" }
+  MATCH { "match" }
+  INSERT { "insert" }
+  PUT { "put" }
+  UPDATE { "update" }
+  DELETE { "delete" }
+  SELECT { "select" }
+  SORT { "sort" }
+  OFFSET { "offset" }
+  LIMIT { "limit" }
+  REQUIRE { "require" }
+  // DISTINCT is already covered
+  REDUCE { "reduce" }
+  GROUPBY { "groupby" }
+  
+  END { "end" }
+
+  COUNT { "count" }
+  MAX { "max" }
+  MIN { "min" }
+  MEAN { "mean" }
+  MEDIAN { "median" }
+  STD { "std" }
+  SUM { "sum" }
+  LIST { "list" }
+  ORDER { ASCENDINGORDER | DESCENDINGORDER }
+  ASCENDINGORDER { "asc" }
+  DESCENDINGORDER { "desc" }
+
+  
+  // Patterns
+  OR { "or" }
+  NOT { "not" }
+  TRY { "try" }
+  
+  // Statements
+  HAS { "has" }
+  ISA { "isa" }
+  LINKS { "links" }
+  IID { "iid" }
+
+  SUB { "sub" }
+  VALUEKEYWORD { "value" }
+  LABELKEYWORD { "label" }
+  OWNS { "owns" }
+  RELATES { "relates" }
+  PLAYS { "plays" }
+
+  KIND { "entity" | "relation" | "attribute" }
+
+  OF { "of" }
+  AS { "as" }
+  FROM { "from" }
+
+  // ValueTypes 
+  BOOLEAN { "boolean" }
+  INTEGER { "integer" }
+  DOUBLE { "double" }
+  DECIMAL { "decimal" }
+  DATETIMETZ { "datetime-tz" }
+  DATETIME { "datetime" }
+  DATE { "date" }
+  DURATION { "duration" }
+  STRING { "string" }
+
+  // Functions & structs
+  FUN { "fun" }
+  ARROW { "->" }
+  STRUCT { "struct" }
+  RETURN { "return" }
+
+  FIRST { "first" }
+  LAST { "last" }
+
+  // Punctuation
+  SEMICOLON { ";" }
+  COMMA { "," }
+  COLON { ":" }
+  PARENOPEN { "(" }
+  PARENCLOSE { ")" }
+  CURLYOPEN { "{" }
+  CURLYCLOSE { "}" }
+  SQBRACKETOPEN { "[" }
+  SQBRACKETCLOSE { "]" }
+  DOUBLE_DOT { ".." }
+  QUESTIONMARK { "?" }
+  
+  // Expression operators
+  LET { "let" }
+  ASSIGN { "=" }
+  IN { "in" }
+  POWER { "^" }
+  TIMES { "*" }
+  DIVIDE { "/" }
+  MODULO { "%" }
+  PLUS { "+" }
+  MINUS { "-" }
+
+  // Comparison operators
+  EQUAL { "==" }
+  NOT_EQUAL { "!=" }
+  GREATER { ">" }
+  GREATER_EQUAL { ">=" }
+  LESS { "<" }
+  LESS_EQUAL { "<=" }
+  LIKE { "like" }
+  CONTAINS { "contains" }
+
+  //@precedence { ASCENDINGORDER, DESCENDINGORDER }
+  @precedence { 
+    END, KIND, STRUCT, LET, FUN, RETURN,
+    BOOLEAN, INTEGER, STRING, DURATION, DOUBLE, DECIMAL, DATETIME, DATETIMETZ, DATE, 
+    BOOLEANLITERAL, LIKE, CONTAINS,
+    NOT, TRY, DELETE, DISTINCT, MATCH, INSERT, PUT, UPDATE, SELECT, SORT, OFFSET, LIMIT, REQUIRE, REDUCE, 
+    LABEL } // This causes some weird parses sometimes.
+
+  // Literals
+  IID_VALUE { "0x" $[0-9a-fA-F]+ }
+
+  BOOLEANLITERAL { "false" | "true" }
+  STRINGLITERAL { '"' (!["\\] | "\\" _)* '"' }
+  INTEGERLITERAL { "-"? $[0-9]+ }
+  DOUBLELITERAL { "-"? $[0-9]+('.' $[0-9]+)?  }
+  @precedence { DOUBLELITERAL, INTEGERLITERAL }
+  
+  linecomment { "#" ![\n]* }
+  whitespace { $[ \t\n\r]+ }
+}
