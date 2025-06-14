@@ -2,12 +2,12 @@ import MultiGraph from "graphology";
 import Sigma from "sigma";
 import ForceSupervisor from "graphology-layout-force/worker";
 import { Settings as SigmaSettings } from "sigma/settings";
-import {QueryConstraintAny, QueryStructure} from "../typedb-driver/query-structure";
+import {QueryConstraintAny, QueryConstraintSpan, QueryStructure} from "../typedb-driver/query-structure";
 import { ApiResponse, isApiErrorResponse, QueryResponse } from "../typedb-driver/response";
 import { StudioConverterStructureParameters, StudioConverterStyleParameters } from "./config";
 
 import * as studioDefaultSettings from "./defaults";
-import { constructGraphFromRowsResult, VisualGraph } from "./graph";
+import {constructGraphFromRowsResult, QueryCoordinates, VisualGraph} from "./graph";
 import {InteractionHandler} from "./interaction";
 import { convertLogicalGraphWith } from "./visualisation";
 import {LayoutWrapper} from "./layouts";
@@ -100,7 +100,8 @@ export class GraphVisualiser {
     private getColorForEdge(graph: VisualGraph, edgeKey: string): chroma.Color {
         let attributes = graph.getEdgeAttributes(edgeKey);
         let constraintIndex = attributes.metadata.dataEdge.queryCoordinates.constraint;
-        return this.getColorForConstraintIndex(constraintIndex);
+        let branchIndex = attributes.metadata.dataEdge.queryCoordinates.branch;
+        return this.getColorForConstraintIndex(branchIndex, constraintIndex);
     }
 
     colorQuery(queryString: string, queryStructure: QueryStructure): string {
@@ -139,33 +140,36 @@ export class GraphVisualiser {
                 case "value": return false;
             }
         }
-        let spans: number[][] = [];
-        queryStructure.blocks.forEach(branch => {
+        let spans: { span: QueryConstraintSpan, coordinates: QueryCoordinates}[] = [];
+        queryStructure.blocks.forEach((branch, branchIndex) => {
             branch.constraints.forEach((constraint, constraintIndex) => {
                 if (shouldColourConstraint(constraint)) {
                     if (constraint.textSpan != null) {
-                        spans.push([constraint.textSpan.begin, constraint.textSpan.end, constraintIndex]);
+                        spans.push({span: constraint.textSpan, coordinates: { branch: constraintIndex, constraint: constraintIndex}});
                     }
                 }
             })
-        })
-        spans = spans.sort((a,b) => {
-            return (a[0] != b[0]) ?
-                a[0] - b[0]:
-                b[1] - a[1]; // open ascending, end descending
         });
+        // spans = spans.sort((a,b) => {
+        //     return (a[0] != b[0]) ?
+        //         a[0] - b[0]:
+        //         b[1] - a[1]; // open ascending, end descending
+        // });
         // Add one to end-offset so we're AFTER the last character
-        let starts_ends_separate = spans.flatMap(span => [[span[0], span[2]], [span[1] + 1, -1]]);
-        starts_ends_separate.sort((a,b) => a[0] - b[0]);
+        let starts_ends_separate = spans.flatMap(span => [
+            { offset: span.span.begin, coordinatesIfStartElseNull: span.coordinates },
+            { offset: span.span.end, coordinatesIfStartElseNull: null }
+    ]);
+        starts_ends_separate.sort((a,b) => a.offset - b.offset);
         let se_index = 0;
         let highlighted = "";
         for(let i= 0; i<queryString.length; i++) {
-            while (se_index < starts_ends_separate.length && starts_ends_separate[se_index][0] == i) {
-                let constraintIndexOrEnd = starts_ends_separate[se_index][1];
-                if (constraintIndexOrEnd == -1) {
+            while (se_index < starts_ends_separate.length && starts_ends_separate[se_index].offset == i) {
+                let coordinatesOrNullIfEnd = starts_ends_separate[se_index].coordinatesIfStartElseNull;
+                if (coordinatesOrNullIfEnd == null) {
                     highlighted += "</span>"
                 } else {
-                    let color = this.getColorForConstraintIndex(constraintIndexOrEnd)
+                    let color = this.getColorForConstraintIndex(coordinatesOrNullIfEnd.branch, coordinatesOrNullIfEnd.constraint)
                     highlighted += "<span style=\"color: " + color.hex() + "\">";
                 }
                 se_index += 1;
@@ -175,10 +179,11 @@ export class GraphVisualiser {
         return highlighted;
     }
 
-    private getColorForConstraintIndex(constraintIndex: number): chroma.Color {
-        let r = ((constraintIndex+1) * 153 % 256);
-        let g = ((constraintIndex+1) * 173 % 256);
-        let b = ((constraintIndex+1) * 199 % 256);
+    private getColorForConstraintIndex(branchIndex: number, constraintIndex: number): chroma.Color {
+        let branchIndexOffset = (branchIndex + 1) * 101 % 256;
+        let r = (branchIndexOffset + (constraintIndex+1) * 153) % 256;
+        let g = (branchIndexOffset + (constraintIndex+1) * 173) % 256;
+        let b = (branchIndexOffset + (constraintIndex+1) * 199) % 256;
         return chroma([r,g,b]);
     }
 
