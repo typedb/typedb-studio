@@ -145,7 +145,7 @@ export class GraphVisualiser {
             branch.constraints.forEach((constraint, constraintIndex) => {
                 if (shouldColourConstraint(constraint)) {
                     if (constraint.textSpan != null) {
-                        spans.push({span: constraint.textSpan, coordinates: { branch: constraintIndex, constraint: constraintIndex}});
+                        spans.push({span: constraint.textSpan, coordinates: { branch: branchIndex, constraint: constraintIndex}});
                     }
                 }
             })
@@ -180,10 +180,12 @@ export class GraphVisualiser {
     }
 
     private getColorForConstraintIndex(branchIndex: number, constraintIndex: number): chroma.Color {
-        let branchIndexOffset = (branchIndex + 1) * 101 % 256;
-        let r = (branchIndexOffset + (constraintIndex+1) * 153) % 256;
-        let g = (branchIndexOffset + (constraintIndex+1) * 173) % 256;
-        let b = (branchIndexOffset + (constraintIndex+1) * 199) % 256;
+        const OFFSET1 = 153;
+        const OFFSET2 = 173;
+        const OFFSET3 = 199;
+        let r = ((branchIndex + 1) * OFFSET3 + (constraintIndex+1) * OFFSET1) % 256;
+        let g = ((branchIndex + 1) * OFFSET2 + (constraintIndex+1) * OFFSET2) % 256;
+        let b = ((branchIndex + 1) * OFFSET1 + (constraintIndex+1) * OFFSET3) % 256;
         return chroma([r,g,b]);
     }
 
