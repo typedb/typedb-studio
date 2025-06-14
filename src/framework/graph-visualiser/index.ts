@@ -76,7 +76,7 @@ export class GraphVisualiser {
             this.graph.nodes().forEach(node => {
                 const attributes = this.graph.getNodeAttributes(node);
                 // check concept.type.label if you want to match types of things.
-                if ("concept" in attributes.metadata.concept) {
+                if ("concept" in attributes.metadata) {
                     const concept = attributes.metadata.concept;
                     if (("iid" in concept && safe_str(concept.iid).indexOf(term) !== -1)
                         || ("label" in concept && safe_str(concept.label).indexOf(term) !== -1)
