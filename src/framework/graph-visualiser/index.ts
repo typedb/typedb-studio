@@ -150,15 +150,10 @@ export class GraphVisualiser {
                 }
             })
         });
-        // spans = spans.sort((a,b) => {
-        //     return (a[0] != b[0]) ?
-        //         a[0] - b[0]:
-        //         b[1] - a[1]; // open ascending, end descending
-        // });
         // Add one to end-offset so we're AFTER the last character
         let starts_ends_separate = spans.flatMap(span => [
             { offset: span.span.begin, coordinatesIfStartElseNull: span.coordinates },
-            { offset: span.span.end, coordinatesIfStartElseNull: null }
+            { offset: span.span.end + 1, coordinatesIfStartElseNull: null }
     ]);
         starts_ends_separate.sort((a,b) => a.offset - b.offset);
         let se_index = 0;
