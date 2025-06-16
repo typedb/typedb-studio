@@ -4,8 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { CodeEditor } from "@acrodata/code-editor";
-import { AsyncPipe, DatePipe } from "@angular/common";
+import { AsyncPipe } from "@angular/common";
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
@@ -14,13 +13,10 @@ import { MatDividerModule } from "@angular/material/divider";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSortModule } from "@angular/material/sort";
-import { MatTableModule } from "@angular/material/table";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
-import { combineLatest, filter, map, Observable, startWith } from "rxjs";
-import { SpinnerComponent } from "../../framework/spinner/spinner.component";
-import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
+import { filter, map, Observable, startWith } from "rxjs";
 import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
 import { SchemaState } from "../../service/schema-state.service";
@@ -34,7 +30,7 @@ import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component"
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule,
-        MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule,
+        MatSortModule, MatTooltipModule, MatButtonModule,
     ]
 })
 export class SchemaToolComponent implements OnInit, AfterViewInit, OnDestroy {

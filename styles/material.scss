@@ -248,18 +248,19 @@ body {
     }
 
     /* Dialog */
-    .mdc-dialog {
-        --mdc-dialog-container-color: #{primary.$purple};
-        --mdc-dialog-subhead-color: #{primary.$white};
-        --mdc-dialog-supporting-text-color: #{primary.$white};
-        --mdc-dialog-supporting-text-size: 15px;
-        --mdc-dialog-supporting-text-tracking: var(--body-letter-spacing);
-        --mdc-dialog-supporting-text-weight: #{typography.$regular};
+    @include mat.dialog-overrides((
+        container-color: primary.$purple,
+        subhead-color: primary.$white,
+        supporting-text-color: primary.$white,
+        supporting-text-size: 14px,
+        supporting-text-tracking: var(--body-letter-spacing),
+        supporting-text-weight: typography.$regular,
+    ));
 
+    .mdc-dialog {
         .mdc-dialog__surface {
             padding: 24px;
             border-radius: shapes.$border-radius-panel;
-            background-color: var(--mdc-dialog-container-color);
         }
 
         .mdc-dialog__title {
@@ -302,12 +303,31 @@ body {
     @include mat.form-field-overrides((
         container-text-size: 14px,
         container-text-tracking: var(--body-letter-spacing),
+        subscript-text-tracking: var(--body-letter-spacing),
+
+        outlined-container-shape: shapes.$border-radius,
         outlined-label-text-size: 14px,
         outlined-label-text-tracking: var(--body-letter-spacing),
+        outlined-label-text-weight: typography.$regular,
+        outlined-label-text-color: rgba(secondary.$light-grey, 0.8),
         outlined-outline-color: primary.$light-purple,
         outlined-hover-outline-color: secondary.$grey,
-        subscript-text-tracking: var(--body-letter-spacing),
+        outlined-focus-outline-color: secondary.$grey,
+        outlined-input-text-color: primary.$white,
+        outlined-input-text-placeholder-color: secondary.$grey,
     ));
+
+    .code-text-field .mdc-text-field {
+        --mat-form-field-container-text-font: #{typography.$code-font-family !important};
+        --mat-form-field-container-text-line-height: 22px !important;
+        --mat-form-field-container-text-size: 14px !important;
+        --mat-form-field-container-text-tracking: #{typography.$letter-spacing !important};
+        --mat-form-field-container-text-weight: #{typography.$regular !important};
+    }
+
+    .mat-mdc-form-field-input-control {
+        -webkit-font-smoothing: auto !important; // overrides hacky Angular Material style
+    }
 
     .mat-mdc-form-field {
         --mat-select-trigger-text-size: 15px;
@@ -481,37 +501,15 @@ body {
         }
     }
 
-    /* Input */
-    .mdc-text-field {
-        --mdc-outlined-text-field-input-text-color: #{primary.$white};
-        --mdc-outlined-text-field-outline-color: #{primary.$light-purple};
-        --mdc-outlined-text-field-hover-outline-color: #{secondary.$grey};
-        --mdc-outlined-text-field-focus-outline-color: #{secondary.$grey};
-        --mdc-outlined-text-field-label-text-weight: #{typography.$regular};
-        --mdc-outlined-text-field-input-text-placeholder-color: #{secondary.$grey};
-        --mdc-outlined-text-field-container-shape: #{shapes.$border-radius};
-        --mdc-outlined-text-field-label-text-color: #{rgba(secondary.$light-grey, 0.8)};
-    }
-
-    .code-text-field .mdc-text-field {
-        --mat-form-field-container-text-font: #{typography.$code-font-family !important};
-        --mat-form-field-container-text-line-height: 22px !important;
-        --mat-form-field-container-text-size: 14px !important;
-        --mat-form-field-container-text-tracking: #{typography.$letter-spacing !important};
-        --mat-form-field-container-text-weight: #{typography.$regular !important};
-    }
-
-    .mat-mdc-form-field-input-control {
-        -webkit-font-smoothing: auto !important; // overrides hacky Angular Material style
-    }
-
     /* Menu */
-    .mat-mdc-menu-panel {
-        --mat-menu-container-color: #{primary.$deep-purple};
-        --mat-menu-item-label-text-font: #{typography.$default-font-family};
-        --mat-menu-item-label-text-size: 13px;
-        --mat-menu-item-label-text-tracking: var(--body-letter-spacing);
+    @include mat.menu-overrides((
+        container-color: primary.$deep-purple,
+        item-label-text-font: typography.$default-font-family,
+        item-label-text-size: 13px,
+        item-label-text-tracking: var(--body-letter-spacing),
+    ));
 
+    .mat-mdc-menu-panel {
         border-radius: shapes.$border-radius-panel;
     }
 
@@ -533,22 +531,36 @@ body {
     }
 
     /* Paginator */
-    mat-paginator {
-        --mat-paginator-container-background-color: transparent;
-        --mat-paginator-container-text-color: #{tp.$white70};
-        --mat-paginator-container-text-font: #{typography.$default-font-family};
-        --mat-paginator-container-text-size: 14px;
-        --mat-paginator-container-text-tracking: var(--body-letter-spacing);
-    }
+    @include mat.paginator-overrides((
+        container-background-color: transparent,
+        container-text-color: tp.$white70,
+        container-text-font: typography.$default-font-family,
+        container-text-size: 14px,
+        container-text-tracking: var(--body-letter-spacing),
+    ));
 
     /* Progress spinner */
-    .mat-mdc-progress-spinner {
-        --mdc-circular-progress-active-indicator-color: #{primary.$grey};
-    }
+    @include mat.progress-spinner-overrides((
+        active-indicator-color: primary.$grey,
+    ));
 
     /* Select */
+    @include mat.select-overrides((
+        trigger-text-tracking: var(--body-letter-spacing),
+        panel-background-color: secondary.$purple,
+    ));
+
+    @include mat.option-overrides((
+        label-text-size: 14px,
+        label-text-weight: typography.$regular,
+        label-text-tracking: var(--body-letter-spacing),
+    ));
+
+    @include mat.optgroup-overrides((
+        label-text-tracking: var(--body-letter-spacing),
+    ));
+
     .mat-mdc-select {
-        --mat-select-trigger-text-tracking: var(--body-letter-spacing);
         -webkit-font-smoothing: auto;
     }
 
@@ -557,9 +569,6 @@ body {
     }
 
     div.mat-mdc-select-panel {
-        --mat-select-panel-background-color: #{secondary.$purple};
-        --mat-option-label-text-size: 15px;
-        --mat-option-label-text-weight: #{typography.$regular};
         border: shapes.$border;
         border-radius: shapes.$border-radius-panel;
 
@@ -589,7 +598,6 @@ body {
     }
 
     .mat-mdc-option {
-        --mat-option-label-text-tracking: var(--body-letter-spacing);
         //padding-left: 32px; // makes padding consistent whether or not the option is part of an optgroup
 
         .mdc-list-item__primary-text {
@@ -604,17 +612,15 @@ body {
         }
     }
 
-    .mat-mdc-optgroup {
-        --mat-optgroup-label-text-tracking: var(--body-letter-spacing);
-    }
-
     /* Sidenav */
-    .mat-sidenav-container {
-        --mat-sidenav-container-background-color: transparent;
-        --mat-sidenav-container-divider-color: transparent;
-        --mat-sidenav-content-background-color: #{primary.$black-purple};
-        --mat-sidenav-scrim-color: #{rgba(#000, 0.4)};
+    @include mat.sidenav-overrides((
+        container-background-color: transparent,
+        container-divider-color: transparent,
+        content-background-color: #{primary.$black-purple},
+        scrim-color: rgba(#000, 0.4),
+    ));
 
+    .mat-sidenav-container {
         height: 100%;
     }
 
@@ -625,10 +631,10 @@ body {
     }
 
     /* Slider */
-    .mat-mdc-slider {
-        --mdc-slider-handle-width: 8px;
-        --mdc-slider-handle-shape: 2px;
-    }
+    @include mat.slider-overrides((
+        handle-width: 8px,
+        handle-shape: 2px,
+    ));
 
     /* Slide toggle */
     .mat-mdc-slide-toggle {
@@ -640,10 +646,12 @@ body {
     }
 
     /* Snack bar */
-    .mat-mdc-snack-bar-container {
-        --mdc-snackbar-supporting-text-size: 14px;
-        --mdc-snackbar-supporting-text-line-height: 22px;
+    @include mat.snack-bar-overrides((
+        supporting-text-size: 14px,
+        supporting-text-line-height: 20px,
+    ));
 
+    .mat-mdc-snack-bar-container {
         .mdc-snackbar__surface {
             padding: 0;
             background: transparent;
@@ -659,14 +667,14 @@ body {
     }
 
     /* Stepper */
-    mat-stepper {
-        --mat-stepper-container-color: transparent;
-        --mat-stepper-header-selected-state-label-text-color: #{secondary.$light-grey};
-        --mat-stepper-header-label-text-size: 14px;
-        --mat-stepper-header-selected-state-label-text-size: 14px;
-        --mat-stepper-header-focus-state-layer-color: transparent;
-        --mat-stepper-header-hover-state-layer-color: transparent;
-    }
+    @include mat.stepper-overrides((
+        container-color: transparent,
+        header-selected-state-label-text-color: #{secondary.$light-grey},
+        header-label-text-size: 14px,
+        header-selected-state-label-text-size: 14px,
+        header-focus-state-layer-color: transparent,
+        header-hover-state-layer-color: transparent,
+    ));
 
     .mat-horizontal-stepper-header {
         border-radius: shapes.$border-radius;
@@ -694,15 +702,17 @@ body {
     }
 
     /* Table */
-    .mat-mdc-table {
-        --mat-table-background-color: transparent;
-        --mat-table-header-container-height: 32px;
-        --mat-table-header-headline-color: #{primary.$white};
-        --mat-table-header-headline-size: 15px;
-        --mat-table-header-headline-weight: #{typography.$semi-bold};
-        --mat-table-row-item-container-height: 40px;
-        --mat-table-row-item-outline-width: 0;
+    @include mat.table-overrides((
+        background-color: transparent,
+        header-container-height: 32px,
+        header-headline-color: primary.$white,
+        header-headline-size: 14px,
+        header-headline-weight: typography.$semi-bold,
+        row-item-container-height: 40px,
+        row-item-outline-width: 0,
+    ));
 
+    .mat-mdc-table {
         thead {
             background: secondary.$purple;
         }
@@ -782,23 +792,21 @@ body {
     }
 
     /* Toolbar */
-    .mat-toolbar {
-        --mat-toolbar-container-background-color: #{primary.$deep-purple};
+    @include mat.toolbar-overrides((
+        container-background-color: primary.$deep-purple,
+    ));
 
+    .mat-toolbar {
         flex-shrink: 0;
         border-bottom: shapes.$border;
     }
 
     /* Tooltip */
-    .mdc-tooltip {
-        --mdc-plain-tooltip-supporting-text-size: 14px;
-        --mdc-plain-tooltip-supporting-line-height: 22px;
-        --mdc-plain-tooltip-supporting-text-tracking: var(--body-letter-spacing);
-        --mdc-plain-tooltip-container-color: #{secondary.$mid-deep-grey};
-        --mdc-plain-tooltip-container-shape: #{shapes.$border-radius};
-    }
-
-    .mdc-tooltip__surface {
-        padding: 6px 10px;
-    }
+    @include mat.tooltip-overrides((
+        supporting-text-size: 14px,
+        supporting-text-line-height: 20px,
+        supporting-text-tracking: var(--body-letter-spacing),
+        container-color: secondary.$mid-deep-grey,
+        container-shape: shapes.$border-radius,
+    ));
 }
