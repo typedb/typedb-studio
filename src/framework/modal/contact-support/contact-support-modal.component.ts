@@ -19,8 +19,7 @@ export interface ContactSupportDialogData {
     selector: "tp-contact-support-modal",
     templateUrl: "./contact-support-modal.component.html",
     styleUrls: ["./contact-support-modal.component.scss"],
-    standalone: true,
-    imports: [ModalComponent, AsyncPipe, FormsModule, ReactiveFormsModule, ButtonComponent],
+    imports: [ModalComponent, FormsModule, ReactiveFormsModule, ButtonComponent]
 })
 export class ContactSupportModalComponent {
     readonly emailAddress = "support@typedb.com";

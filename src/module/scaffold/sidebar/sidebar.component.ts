@@ -23,11 +23,7 @@ import { AppInfoDialogComponent } from "../../about/app-info-dialog.component";
     selector: "ts-sidebar",
     templateUrl: "./sidebar.component.html",
     styleUrls: ["./sidebar.component.scss"],
-    standalone: true,
-    imports: [
-        SidebarLinkComponent, ModalComponent, AsyncPipe, MatSelectModule, MatDividerModule,
-        MatMenuModule, RouterLink, NgClass, MatTooltipModule, ConnectionWidgetComponent
-    ],
+    imports: [SidebarLinkComponent, MatSelectModule, MatDividerModule, MatMenuModule, MatTooltipModule]
 })
 export class SidebarComponent {
     @ViewChild(MatSelect) orgSelector!: MatSelect;

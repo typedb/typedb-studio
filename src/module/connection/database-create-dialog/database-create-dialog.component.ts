@@ -22,11 +22,10 @@ import { SnackbarService } from "../../../service/snackbar.service";
     selector: "ts-database-create-dialog",
     templateUrl: "./database-create-dialog.component.html",
     styleUrls: ["./database-create-dialog.component.scss"],
-    standalone: true,
     imports: [
-        ModalComponent, AsyncPipe, FormsModule, ReactiveFormsModule, ButtonComponent, MatFormFieldModule,
+        ModalComponent, AsyncPipe, FormsModule, ReactiveFormsModule, MatFormFieldModule,
         MatInputModule, FormComponent, FormInputComponent, FormActionsComponent
-    ],
+    ]
 })
 export class DatabaseCreateDialogComponent {
 

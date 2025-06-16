@@ -34,12 +34,11 @@ import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component"
     selector: "ts-query-tool",
     templateUrl: "query-tool.component.html",
     styleUrls: ["query-tool.component.scss"],
-    standalone: true,
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
-    ],
+    ]
 })
 export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
 

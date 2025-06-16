@@ -20,17 +20,12 @@ import { SnackbarService } from "../../service/snackbar.service";
     selector: "ts-app-info-dialog",
     templateUrl: "./app-info-dialog.component.html",
     styleUrls: ["./app-info-dialog.component.scss"],
-    standalone: true,
-    imports: [
-        ModalComponent, AsyncPipe, FormsModule, ReactiveFormsModule, ButtonComponent, MatFormFieldModule,
-        MatInputModule, FormComponent, FormInputComponent, FormActionsComponent, ModalCloseButtonComponent
-    ],
+    imports: [FormsModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, FormActionsComponent]
 })
 export class AppInfoDialogComponent {
 
     constructor(
         private dialogRef: MatDialogRef<AppInfoDialogComponent>,
-        private snackbar: SnackbarService
     ) {
     }
 

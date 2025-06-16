@@ -32,11 +32,10 @@ const statusStyleMap: { [K in DriverStatus]: string } = {
     selector: "ts-connection-widget",
     templateUrl: "./connection-widget.component.html",
     styleUrls: ["./connection-widget.component.scss"],
-    standalone: true,
     imports: [
         MatTooltipModule, AsyncPipe, TransactionWidgetComponent, MatMenuModule, MatDividerModule,
         RouterLink, NgClass, MatCheckboxModule
-    ],
+    ]
 })
 export class ConnectionWidgetComponent implements OnInit {
 

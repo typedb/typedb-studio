@@ -3,9 +3,9 @@
 
 .tooltip-container {
     border-radius: shapes.$border-radius;
-    padding: 6px 12px;
+    padding: 4px 8px;
     font-size: 14px;
-    line-height: 22px;
+    line-height: 20px;
     background: secondary.$mid-deep-grey;
 
     ::ng-deep > div {

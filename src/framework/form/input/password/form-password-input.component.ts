@@ -14,8 +14,7 @@ import { MatInputModule } from "@angular/material/input";
     selector: "tp-form-password-input",
     templateUrl: "./form-password-input.component.html",
     styleUrls: ["./form-password-input.component.scss"],
-    standalone: true,
-    imports: [MatFormFieldModule, MatInputModule, FormsModule, ReactiveFormsModule, MatButtonModule],
+    imports: [MatFormFieldModule, MatInputModule, FormsModule, ReactiveFormsModule, MatButtonModule]
 })
 export class FormPasswordInputComponent<FORM extends { [K in keyof FORM & string]: AbstractControl; } & { [key: string]: AbstractControl }> implements OnInit, AfterViewInit {
     @Input() label = "";

@@ -4,6 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+@use "sass:color";
 @use "shapes";
 @use "primary";
 @use "secondary";
@@ -11,7 +12,7 @@
 @mixin host-color-style($class, $base-color) {
     &.#{$class} {
         border-color: $base-color;
-        background: mix($base-color, primary.$black-purple, 15%);
+        background: color.mix($base-color, primary.$black-purple, 15%);
         box-shadow: inset 0 0 0 1px $base-color;
 
         .sb-text i {
