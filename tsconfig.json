@@ -27,5 +27,6 @@
     "strictInputAccessModifiers": true,
     "strictTemplates": true,
     "strictStandalone": true,
+    "typeCheckHostBindings": true,
   }
 }
