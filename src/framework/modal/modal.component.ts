@@ -15,8 +15,7 @@ export type DialogResult = "ok" | "cancelled" | { error: string };
     selector: "tp-modal",
     templateUrl: "modal.component.html",
     styleUrls: ["./modal.component.scss"],
-    standalone: true,
-    imports: [MatDialogTitle, ModalCloseButtonComponent, MatDialogContent, MatProgressBarModule],
+    imports: [MatDialogTitle, ModalCloseButtonComponent, MatDialogContent, MatProgressBarModule]
 })
 export class ModalComponent {
     @Input() isBusy?: boolean | null;

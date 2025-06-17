@@ -12,7 +12,6 @@ import { MatDialogClose } from "@angular/material/dialog";
     selector: "tp-modal-close-button",
     templateUrl: "modal-close-button.component.html",
     styleUrls: ["./modal-close-button.component.scss"],
-    standalone: true,
-    imports: [MatButtonModule, MatDialogClose],
+    imports: [MatButtonModule, MatDialogClose]
 })
 export class ModalCloseButtonComponent {}

@@ -154,6 +154,7 @@ button {
     justify-content: center;
     align-items: center;
     background: primary.$black-purple;
+    --mat-button-filled-container-height: 40px;
 }
 
 #structureView {

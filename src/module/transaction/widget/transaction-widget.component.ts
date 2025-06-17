@@ -22,8 +22,7 @@ import { SnackbarService } from "../../../service/snackbar.service";
     selector: "ts-transaction-widget",
     templateUrl: "./transaction-widget.component.html",
     styleUrls: ["./transaction-widget.component.scss"],
-    standalone: true,
-    imports: [MatTooltipModule, AsyncPipe, MatSelectModule, ReactiveFormsModule, MatIconModule, MatButtonModule],
+    imports: [MatTooltipModule, AsyncPipe, MatSelectModule, ReactiveFormsModule, MatIconModule, MatButtonModule]
 })
 export class TransactionWidgetComponent {
 

@@ -73,8 +73,11 @@ mat-select {
 mat-select-trigger {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     transition: color 100ms;
+
+    &.transaction-type-select {
+        width: 96px;
+    }
 
     i {
         transition: color 100ms;

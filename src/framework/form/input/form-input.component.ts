@@ -13,8 +13,7 @@ import { MatInputModule } from "@angular/material/input";
     selector: "tp-form-input",
     templateUrl: "./form-input.component.html",
     styleUrls: ["./form-input.component.scss"],
-    standalone: true,
-    imports: [MatFormFieldModule, MatInputModule, FormsModule, ReactiveFormsModule],
+    imports: [MatFormFieldModule, MatInputModule, FormsModule, ReactiveFormsModule]
 })
 export class FormInputComponent<FORM extends { [K in keyof FORM & string]: AbstractControl; } & { [key: string]: AbstractControl }> implements OnInit, AfterViewInit {
     @Input() label = "";

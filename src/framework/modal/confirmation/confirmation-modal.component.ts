@@ -21,8 +21,7 @@ export type ConfirmationModalData =
     selector: "tp-confirmation-modal",
     templateUrl: "./confirmation-modal.component.html",
     styleUrls: ["./confirmation-modal.component.scss"],
-    standalone: true,
-    imports: [FormsModule, ButtonComponent, ModalComponent, FormActionsComponent, AsyncPipe],
+    imports: [FormsModule, ModalComponent, FormActionsComponent, AsyncPipe]
 })
 export class ConfirmationModalComponent {
     @Output() confirmed = new EventEmitter<void>();

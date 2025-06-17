@@ -14,7 +14,6 @@ import { MatMenuModule } from "@angular/material/menu";
         </div>
       </mat-menu>
     `,
-    standalone: true,
     imports: [
         MatMenuModule
     ]

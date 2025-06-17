@@ -20,8 +20,7 @@ export type ButtonStyle =
     selector: "tp-button",
     templateUrl: "./button.component.html",
     styleUrls: ["./button.component.scss"],
-    standalone: true,
-    imports: [NgStyle, NgClass, SpinnerComponent],
+    imports: [NgStyle]
 })
 export class ButtonComponent {
     @Input() buttonStyle: ButtonStyle = "secondary";

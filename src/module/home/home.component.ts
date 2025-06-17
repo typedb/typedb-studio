@@ -16,8 +16,7 @@ import { PageScaffoldComponent, ResourceAvailability } from "../scaffold/page/pa
     selector: "ts-home",
     templateUrl: "home.component.html",
     styleUrls: ["home.component.scss"],
-    standalone: true,
-    imports: [ButtonComponent, RouterLink, AsyncPipe, PageScaffoldComponent],
+    imports: [ButtonComponent, RouterLink, AsyncPipe, PageScaffoldComponent]
 })
 export class HomeComponent implements OnInit {
     availability$ = new BehaviorSubject<ResourceAvailability>("ready");

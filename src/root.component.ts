@@ -19,8 +19,7 @@ import { SnackbarService } from "./service/snackbar.service";
     selector: "ts-root", // eslint-disable-line @angular-eslint/component-selector
     templateUrl: "./root.component.html",
     styleUrls: ["root.component.scss"],
-    standalone: true,
-    imports: [RouterOutlet, SpinnerComponent, AsyncPipe],
+    imports: [RouterOutlet, SpinnerComponent, AsyncPipe]
 })
 export class RootComponent implements OnInit, AfterViewInit {
     routeIsLoading$ = this.router.events.pipe(
