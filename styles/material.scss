@@ -823,13 +823,18 @@ body {
     }
 
     /* Tree */
-    .mat-tree {
-        --mat-tree-container-background-color: transparent;
-        --mat-tree-node-min-height: 32px;
-        --mat-tree-node-text-size: 13px;
-    }
+    @include mat.tree-overrides((
+        container-background-color: transparent,
+        node-min-height: 30px,
+        node-text-size: 14px,
+        node-text-weight: typography.$regular,
+    ));
 
     mat-tree-node[aria-level="2"] {
         padding-left: 16px !important; /* overrides inline style from Angular Material */
+    }
+
+    mat-tree-node[aria-level="3"] {
+        padding-left: 32px !important; /* overrides inline style from Angular Material */
     }
 }

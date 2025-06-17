@@ -31,6 +31,7 @@ import { DriverState } from "../../service/driver-state.service";
 import { QueryToolState } from "../../service/query-tool-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
+import { SchemaTreeNodeComponent } from "./schema-tree-node/schema-tree-node.component";
 
 @Component({
     selector: "ts-query-tool",
@@ -39,7 +40,7 @@ import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component"
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatTreeModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
-        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
+        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective, SchemaTreeNodeComponent,
     ]
 })
 export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {

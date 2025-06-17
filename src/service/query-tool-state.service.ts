@@ -17,7 +17,7 @@ import { Concept, Value } from "../framework/typedb-driver/concept";
 import { ApiResponse, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
-import { SchemaState, SchemaTree, SchemaTreeType } from "./schema-state.service";
+import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from "./schema-state.service";
 import { SnackbarService } from "./snackbar.service";
 import { FlatTreeControl } from "@angular/cdk/tree";
 import { MatTreeFlatDataSource, MatTreeFlattener } from "@angular/material/tree";
@@ -135,84 +135,114 @@ export class QueryToolState {
     }
 }
 
-interface SchemaTreeNode {
-    label?: string;
-    type?: SchemaTreeType;
-    children: SchemaTreeNode[];
+export type SchemaTreeNodeKind = "root" | "concept" | "link";
+
+export interface SchemaTreeNodeBase {
+    nodeKind: SchemaTreeNodeKind;
+    children?: SchemaTreeNode[];
 }
 
-/** Flat node with expandable and level information */
-interface FlatNode {
-    expandable: boolean;
-    name: string;
-    level: number;
+export interface SchemaTreeRootNode extends SchemaTreeNodeBase {
+    nodeKind: "root";
+    label: string;
+    children: SchemaTreeConceptNode[];
 }
+
+export interface SchemaTreeConceptNode extends SchemaTreeNodeBase {
+    nodeKind: "concept";
+    concept: SchemaConcept;
+    children: SchemaTreeLinkNode[];
+}
+
+export type SchemaTreeLinkKind = "sub" | "owns" | "plays" | "relates";
+
+export interface SchemaTreeLinkNodeBase extends SchemaTreeNodeBase {
+    nodeKind: "link";
+    linkKind: SchemaTreeLinkKind;
+}
+
+export interface SchemaTreeSubLinkNode extends SchemaTreeLinkNodeBase {
+    linkKind: "sub";
+    supertype: SchemaConcept;
+}
+
+export interface SchemaTreeOwnsLinkNode extends SchemaTreeLinkNodeBase {
+    linkKind: "owns";
+    ownedAttribute: SchemaAttribute;
+}
+
+export interface SchemaTreePlaysLinkNode extends SchemaTreeLinkNodeBase {
+    linkKind: "plays";
+    role: SchemaRole;
+}
+
+export interface SchemaTreeRelatesLinkNode extends SchemaTreeLinkNodeBase {
+    linkKind: "relates";
+    role: SchemaRole;
+}
+
+export type SchemaTreeLinkNode = SchemaTreeSubLinkNode | SchemaTreeOwnsLinkNode | SchemaTreePlaysLinkNode | SchemaTreeRelatesLinkNode;
+
+export type SchemaTreeNode = SchemaTreeRootNode | SchemaTreeConceptNode | SchemaTreeLinkNode;
 
 export class SchemaWindowState {
-    private _transformer = (node: SchemaTreeNode, level: number) => {
-        return {
-            expandable: !!node.children.length,
-            name: node.label || node.type?.label || ``,
-            level: level,
-        };
-    };
-
-    treeFlattener = new MatTreeFlattener(
-        this._transformer,
-        node => node.level,
-        node => node.expandable,
-        node => node.children,
-    );
-
-    treeControl = this.createTreeControl();
-    entitiesTreeControl = this.createTreeControl();
-    relationsTreeControl = this.createTreeControl();
-    attributesTreeControl = this.createTreeControl();
-    dataSource: MatTreeFlatDataSource<SchemaTreeNode, FlatNode> = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
-    dataSourcesObj: Record<"Entities" | "Relations" | "Attributes", { title: string, treeControl: FlatTreeControl<FlatNode>, dataSource: MatTreeFlatDataSource<SchemaTreeNode, FlatNode> }> = {
-        "Entities": { title: "Entities", treeControl: this.entitiesTreeControl, dataSource: new MatTreeFlatDataSource(this.entitiesTreeControl, this.treeFlattener) },
-        "Relations": { title: "Relations", treeControl: this.relationsTreeControl, dataSource: new MatTreeFlatDataSource(this.relationsTreeControl, this.treeFlattener) },
-        "Attributes": { title: "Attributes", treeControl: this.attributesTreeControl, dataSource: new MatTreeFlatDataSource(this.attributesTreeControl, this.treeFlattener) },
-    };
-    dataSources = Object.values(this.dataSourcesObj);
-
-    private createTreeControl() {
-        return new FlatTreeControl<FlatNode>(
-            node => node.level,
-            node => node.expandable,
-        );
-    }
+    dataSource: SchemaTreeRootNode[] = [];
+    // dataSourcesObj: Record<"Entities" | "Relations" | "Attributes", { title: string, treeControl: FlatTreeControl<FlatNode>, dataSource: MatTreeFlatDataSource<SchemaTreeNode, FlatNode> }> = {
+    //     "Entities": { title: "Entities", treeControl: this.entitiesTreeControl, dataSource: new MatTreeFlatDataSource(this.entitiesTreeControl, this.treeFlattener) },
+    //     "Relations": { title: "Relations", treeControl: this.relationsTreeControl, dataSource: new MatTreeFlatDataSource(this.relationsTreeControl, this.treeFlattener) },
+    //     "Attributes": { title: "Attributes", treeControl: this.attributesTreeControl, dataSource: new MatTreeFlatDataSource(this.attributesTreeControl, this.treeFlattener) },
+    // };
+    // dataSources = Object.values(this.dataSourcesObj);
 
     constructor(public schemaState: SchemaState) {
-        schemaState.tree.data$.subscribe(data => {
-            this.populateDataSources(data);
+        schemaState.value$.subscribe(schema => {
+            this.populateDataSources(schema);
         });
     }
 
-    hasChild = (_: number, node: FlatNode) => node.expandable;
+    hasChild = (_: number, node: SchemaTreeNode) => !!node.children?.length;
 
-    private populateDataSources(data: SchemaTree | null) {
-        if (!data) {
-            this.dataSources.forEach(x => x.dataSource.data = []);
+    childrenAccessor = (node: SchemaTreeNode) => node.children ?? [];
+
+    private populateDataSources(schema: Schema | null) {
+        if (!schema) {
+            // this.dataSources.forEach(x => x.dataSource.data = []);
             return;
         }
-        this.dataSource.data = [{
+        this.dataSource = [{
+            nodeKind: "root",
             label: "Entities",
-            children: data.entities.map(x => ({
-                type: x,
-                children: [],
+            children: schema.entities.map(x => ({
+                nodeKind: "concept",
+                concept: x,
+                children: ([
+                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
+                    ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y })),
+                    ...x.playableRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y })),
+                ] as SchemaTreeLinkNode[]),
             })),
         }, {
+            nodeKind: "root",
             label: "Relations",
-            children: data.relations.map(x => ({
-                type: x,
-                children: [],
+            children: schema.relations.map(x => ({
+                nodeKind: "concept",
+                concept: x,
+                children: ([
+                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
+                    ...x.roleplayers.map(y => ({ nodeKind: "link", linkKind: "relates", role: y })),
+                    ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y })),
+                    ...x.playableRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y })),
+                ] as SchemaTreeLinkNode[]),
             })),
         }, {
+            nodeKind: "root",
             label: "Attributes",
-            children: data.attributes.map(x => ({
-                type: x,
-                children: [],
+            children: schema.attributes.map(x => ({
+                nodeKind: "concept",
+                concept: x,
+                children: ([
+                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
+                ] as SchemaTreeLinkNode[]),
             })),
         }];
     }
