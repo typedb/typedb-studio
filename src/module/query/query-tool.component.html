@@ -1,11 +1,14 @@
 <ts-page-scaffold pageAvailability="ready">
   <article #articleRef class="query-page" style="display: flex; flex-direction: row;">
     <div resizable [percent]="20" class="schema-pane card">
-      <div class="card-header">
-        <i class="fa-light fa-vector-square"></i>
-        <h4>Schema</h4>
+      <div class="card-header-wrapper">
+        <div class="card-header">
+          <i class="fa-light fa-vector-square"></i>
+          <h4>Schema</h4>
+        </div>
       </div>
       <div class="schema-container">
+        <div class="gutter"></div>
         <mat-tree #tree [dataSource]="state.schemaWindow.dataSource" [childrenAccessor]="state.schemaWindow.childrenAccessor">
           <!-- This is the tree node template for leaf nodes -->
           <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
@@ -23,44 +26,7 @@
             <ts-schema-tree-node [data]="node"/>
           </mat-tree-node>
         </mat-tree>
-        <ol>
-          @for (entry of state.history.entries; track entry) {
-            <li class="history-entry">
-              <aside class="text-muted">
-                <time>{{ entry.startedAtTimestamp | date:'shortTime' }}</time>
-                <span class="bullet">•</span>
-                @if (isTransactionOperation(entry)) {
-                  <p class="transaction-operation-type">{{ transactionOperationString(entry) }}</p>
-                } @else {
-                  <p class="transaction-operation-type">ran query</p>
-                }
-                <span class="flex-spacer"></span>
-                <div class="action-status">
-                  @if (entry.status === "pending") {
-                    <tp-spinner [size]="14"/>
-                  } @else {
-                    <span>{{ actionDurationString(entry) }}</span>
-                    @if (entry.status === "success") {
-                      <i class="fa-light fa-check"></i>
-                    } @else {
-                      <i class="fa-light fa-xmark" richTooltip [richTooltipContent]="historyEntryErrorTooltip(entry)" (click)="copyHistoryEntryErrorTooltip(entry)"></i>
-                    }
-                  }
-                </div>
-              </aside>
-              @if (isQueryRun(entry)) {
-                <mat-form-field>
-                  <textarea class="history-query-text" [value]="queryHistoryPreview(entry.query)" readonly matInput
-                            cdkTextareaAutosize #autosize="cdkTextareaAutosize" cdkAutosizeMinRows="1" cdkAutosizeMaxRows="3">
-                  </textarea>
-                </mat-form-field>
-              }
-              <!--              @if (!$last && isTransactionOperation(entry) && entry.transactionOperation.operationType === "close") {-->
-              <!--                <mat-divider/>-->
-              <!--              }-->
-            </li>
-          }
-        </ol>
+        <div class="gutter"></div>
       </div>
     </div>
     <div class="main-panes" resizable [percent]="60" style="display: flex; flex-direction: column;">
