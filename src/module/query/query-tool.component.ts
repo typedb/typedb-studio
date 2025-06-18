@@ -24,6 +24,7 @@ import { distinctUntilChanged, filter, first, map, startWith } from "rxjs";
 import { otherExampleLinter, TypeQL } from "../../framework/codemirror-lang-typeql";
 import { DriverAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
+import { DetectScrollDirective } from "../../framework/scroll-container/detect-scroll.directive";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
@@ -40,7 +41,7 @@ import { SchemaTreeNodeComponent } from "./schema-tree-node/schema-tree-node.com
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatTreeModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
-        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective, SchemaTreeNodeComponent,
+        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective, SchemaTreeNodeComponent, DetectScrollDirective,
     ]
 })
 export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {

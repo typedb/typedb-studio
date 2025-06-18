@@ -88,6 +88,10 @@
         flex: 0 0 16px;
     }
 
+    &.scrolled {
+        border-top: 1px solid primary.$black-purple;
+    }
+
     mat-tree {
         padding: 0;
         box-sizing: border-box;

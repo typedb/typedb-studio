@@ -7,7 +7,7 @@
           <h4>Schema</h4>
         </div>
       </div>
-      <div class="schema-container">
+      <div class="schema-container" detectScroll>
         <div class="gutter"></div>
         <mat-tree #tree [dataSource]="state.schemaWindow.dataSource" [childrenAccessor]="state.schemaWindow.childrenAccessor">
           <!-- This is the tree node template for leaf nodes -->
