@@ -137,7 +137,7 @@ export function typeqlAutocompleteExtension() {
   return autocompletion({ override: [wrappedAutocomplete] });
 }
 
-function updateSchemaFromDB(schema: Schema) {
+export function updateAutocomleteSchemaFromDB(schema: Schema) {
   typeqlAutocomplete.getState().updateFromDB(schema);
 }
 
