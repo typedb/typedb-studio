@@ -77,7 +77,7 @@ export class SchemaState {
     readonly refreshEnabled$ = this.refreshDisabledReason$.pipe(map(x => x == null));
 
     constructor(private driver: DriverState, private snackbar: SnackbarService) {
-        (window as any)["schemaToolState"] = this;
+        (window as any)["schemaState"] = this;
         this.driver.database$.pipe(
             distinctUntilChanged((x, y) => x?.name === y?.name)
         ).subscribe(() => {
@@ -308,14 +308,14 @@ class SchemaBuilder {
             const [rel, role] = [answer.data["t"], answer.data["related"]];
             if (!rel || !role || rel.kind !== "relationType" || role.kind !== "roleType") throw this.unexpectedRoleplayersAnswer(answer);
             const relNode: SchemaRelation = this.expectRelationType(rel.label);
-            this.propagateRoleplayers(relNode, role);
+            this.propagateRelatedRoles(relNode, role);
         }
     }
 
-    private propagateRoleplayers(relNode: SchemaRelation, role: RoleType) {
+    private propagateRelatedRoles(relNode: SchemaRelation, role: RoleType) {
         relNode.relatedRoles.push(role);
         for (const relSubnode of relNode.subtypes) {
-            this.propagateRoleplayers(relSubnode, role);
+            this.propagateRelatedRoles(relSubnode, role);
         }
     }
 
