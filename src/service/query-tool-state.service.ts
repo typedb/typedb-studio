@@ -212,32 +212,32 @@ export class SchemaWindowState {
         this.dataSource = [{
             nodeKind: "root",
             label: "Entities",
-            children: schema.entities.map(x => ({
+            children: Object.values(schema.entities).sort((a, b) => a.label.localeCompare(b.label)).map(x => ({
                 nodeKind: "concept",
                 concept: x,
                 children: ([
                     ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
                     ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y })),
-                    ...x.playableRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y })),
+                    ...x.playedRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y })),
                 ] as SchemaTreeLinkNode[]),
             })),
         }, {
             nodeKind: "root",
             label: "Relations",
-            children: schema.relations.map(x => ({
+            children: Object.values(schema.relations).sort((a, b) => a.label.localeCompare(b.label)).map(x => ({
                 nodeKind: "concept",
                 concept: x,
                 children: ([
                     ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
-                    ...x.roleplayers.map(y => ({ nodeKind: "link", linkKind: "relates", role: y })),
+                    ...x.relatedRoles.map(y => ({ nodeKind: "link", linkKind: "relates", role: y })),
                     ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y })),
-                    ...x.playableRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y })),
+                    ...x.playedRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y })),
                 ] as SchemaTreeLinkNode[]),
             })),
         }, {
             nodeKind: "root",
             label: "Attributes",
-            children: schema.attributes.map(x => ({
+            children: Object.values(schema.attributes).sort((a, b) => a.label.localeCompare(b.label)).map(x => ({
                 nodeKind: "concept",
                 concept: x,
                 children: ([

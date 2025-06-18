@@ -23,8 +23,8 @@ const NO_DATABASE_SELECTED = `No database selected`;
 const schemaQueries = {
     typeHierarchy: `match { $t sub! $supertype; } or {$t sub $supertype; $t is $supertype; };`,
     ownedAttributes: `match { $t owns $attr; not { $t sub! $sown; $sown owns $attr; }; };`,
-    roleplayers: `match { $t relates $related; not { $t sub! $srel; $srel relates $related; };  };`,
-    playableRoles: `match { $t plays $played; not { $t sub! $splay; $splay plays $played; }; };`,
+    relatedRoles: `match { $t relates $related; not { $t sub! $srel; $srel relates $related; };  };`,
+    playedRoles: `match { $t plays $played; not { $t sub! $splay; $splay plays $played; }; };`,
 } as const satisfies Record<string, string>;
 const schemaQueriesList = Object.values(schemaQueries);
 
@@ -34,15 +34,15 @@ interface SchemaEntity extends EntityType {
     supertype?: SchemaEntity;
     subtypes: SchemaEntity[];
     ownedAttributes: SchemaAttribute[];
-    playableRoles: SchemaRole[];
+    playedRoles: SchemaRole[];
 }
 
 interface SchemaRelation extends RelationType {
     supertype?: SchemaRelation;
     subtypes: SchemaRelation[];
     ownedAttributes: SchemaAttribute[];
-    playableRoles: SchemaRole[];
-    roleplayers: SchemaRole[];
+    playedRoles: SchemaRole[];
+    relatedRoles: SchemaRole[];
 }
 
 export interface SchemaAttribute extends AttributeType {
@@ -55,9 +55,9 @@ export type SchemaConcept = SchemaEntity | SchemaRelation | SchemaAttribute;
 export type SchemaRole = RoleType;
 
 export interface Schema {
-    entities: SchemaEntity[];
-    relations: SchemaRelation[];
-    attributes: SchemaAttribute[];
+    entities: Record<string, SchemaEntity>;
+    relations: Record<string, SchemaRelation>;
+    attributes: Record<string, SchemaAttribute>;
 }
 
 @Injectable({
@@ -169,7 +169,7 @@ function entityOf(entityType: EntityType): SchemaEntity {
         supertype: undefined,
         subtypes: [],
         ownedAttributes: [],
-        playableRoles: [],
+        playedRoles: [],
     };
 }
 
@@ -180,8 +180,8 @@ function relationOf(relationType: RelationType): SchemaRelation {
         supertype: undefined,
         subtypes: [],
         ownedAttributes: [],
-        playableRoles: [],
-        roleplayers: [],
+        playedRoles: [],
+        relatedRoles: [],
     };
 }
 
@@ -198,30 +198,30 @@ function attributeOf(attributeType: AttributeType): SchemaAttribute {
 class SchemaBuilder {
     readonly typeHierarchy: ConceptRowsQueryResponse;
     readonly ownedAttributes: ConceptRowsQueryResponse;
-    readonly roleplayers: ConceptRowsQueryResponse;
-    readonly playableRoles: ConceptRowsQueryResponse;
+    readonly relatedRoles: ConceptRowsQueryResponse;
+    readonly playedRoles: ConceptRowsQueryResponse;
     readonly entityTypes = {} as Record<string, SchemaEntity>;
     readonly relationTypes = {} as Record<string, SchemaRelation>;
     readonly attributeTypes = {} as Record<string, SchemaAttribute>;
 
     constructor(data: ApiOkResponse<ConceptRowsQueryResponse>[]) {
-        const [typeHierarchy, ownedAttributes, roleplayers, playableRoles] = data.map(x => x.ok);
+        const [typeHierarchy, ownedAttributes, relatedRoles, playedRoles] = data.map(x => x.ok);
         this.typeHierarchy = typeHierarchy;
         this.ownedAttributes = ownedAttributes;
-        this.roleplayers = roleplayers;
-        this.playableRoles = playableRoles;
+        this.relatedRoles = relatedRoles;
+        this.playedRoles = playedRoles;
     }
 
     build(): Schema {
         this.populateConcepts();
         this.buildTypeHierarchy();
         this.attachOwnedAttributes();
-        this.attachPlayableRoles();
-        this.attachRoleplayers();
+        this.attachPlayedRoles();
+        this.attachRelatedRoles();
         return {
-            entities: Object.values(this.entityTypes),
-            relations: Object.values(this.relationTypes),
-            attributes: Object.values(this.attributeTypes),
+            entities: this.entityTypes,
+            relations: this.relationTypes,
+            attributes: this.attributeTypes,
         };
     }
 
@@ -303,8 +303,8 @@ class SchemaBuilder {
         }
     }
 
-    private attachRoleplayers() {
-        for (const answer of this.roleplayers.answers) {
+    private attachRelatedRoles() {
+        for (const answer of this.relatedRoles.answers) {
             const [rel, role] = [answer.data["t"], answer.data["related"]];
             if (!rel || !role || rel.kind !== "relationType" || role.kind !== "roleType") throw this.unexpectedRoleplayersAnswer(answer);
             const relNode: SchemaRelation = this.expectRelationType(rel.label);
@@ -313,16 +313,16 @@ class SchemaBuilder {
     }
 
     private propagateRoleplayers(relNode: SchemaRelation, role: RoleType) {
-        relNode.roleplayers.push(role);
+        relNode.relatedRoles.push(role);
         for (const relSubnode of relNode.subtypes) {
             this.propagateRoleplayers(relSubnode, role);
         }
     }
 
-    private attachPlayableRoles() {
-        for (const answer of this.playableRoles.answers) {
+    private attachPlayedRoles() {
+        for (const answer of this.playedRoles.answers) {
             const [obj, role] = [answer.data["t"], answer.data["played"]];
-            if (!obj || !role || role.kind !== "roleType") throw this.unexpectedPlayableRolesAnswer(answer);
+            if (!obj || !role || role.kind !== "roleType") throw this.unexpectedPlayedRolesAnswer(answer);
             let objNode: SchemaEntity | SchemaRelation;
             switch (obj.kind) {
                 case "entityType":
@@ -332,16 +332,16 @@ class SchemaBuilder {
                     objNode = this.expectRelationType(obj.label);
                     break;
                 default:
-                    throw this.unexpectedPlayableRolesAnswer(answer);
+                    throw this.unexpectedPlayedRolesAnswer(answer);
             }
-            this.propagatePlayableRoles(objNode, role);
+            this.propagatePlayedRoles(objNode, role);
         }
     }
 
-    private propagatePlayableRoles(objNode: SchemaEntity | SchemaRelation, role: RoleType) {
-        objNode.playableRoles.push(role);
+    private propagatePlayedRoles(objNode: SchemaEntity | SchemaRelation, role: RoleType) {
+        objNode.playedRoles.push(role);
         for (const objSubnode of objNode.subtypes) {
-            this.propagatePlayableRoles(objSubnode, role);
+            this.propagatePlayedRoles(objSubnode, role);
         }
     }
 
@@ -371,12 +371,12 @@ class SchemaBuilder {
         return `Unexpected owned attributes answer: ${JSON.stringify(answer.data)}`;
     }
 
-    private unexpectedPlayableRolesAnswer(answer: ConceptRowsQueryResponse["answers"][number]) {
-        return `Unexpected playable roles answer: ${JSON.stringify(answer.data)}`;
+    private unexpectedPlayedRolesAnswer(answer: ConceptRowsQueryResponse["answers"][number]) {
+        return `Unexpected played roles answer: ${JSON.stringify(answer.data)}`;
     }
 
     private unexpectedRoleplayersAnswer(answer: ConceptRowsQueryResponse["answers"][number]) {
-        return `Unexpected roleplayers answer: ${JSON.stringify(answer.data)}`;
+        return `Unexpected related roles answer: ${JSON.stringify(answer.data)}`;
     }
 }
 
