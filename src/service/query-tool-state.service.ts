@@ -212,7 +212,7 @@ export class SchemaWindowState {
         this.dataSource = [{
             nodeKind: "root",
             label: "Entities",
-            children: schema.entities.map(x => ({
+            children: Object.values(schema.entities).map(x => ({
                 nodeKind: "concept",
                 concept: x,
                 children: ([
@@ -224,7 +224,7 @@ export class SchemaWindowState {
         }, {
             nodeKind: "root",
             label: "Relations",
-            children: schema.relations.map(x => ({
+            children: Object.values(schema.relations).map(x => ({
                 nodeKind: "concept",
                 concept: x,
                 children: ([
@@ -237,7 +237,7 @@ export class SchemaWindowState {
         }, {
             nodeKind: "root",
             label: "Attributes",
-            children: schema.attributes.map(x => ({
+            children: Object.values(schema.attributes).map(x => ({
                 nodeKind: "concept",
                 concept: x,
                 children: ([

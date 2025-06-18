@@ -30,14 +30,14 @@ const schemaQueriesList = Object.values(schemaQueries);
 
 type VisualiserStatus = "ok" | "running" | "noAnswers" | "error";
 
-interface SchemaEntity extends EntityType {
+export interface SchemaEntity extends EntityType {
     supertype?: SchemaEntity;
     subtypes: SchemaEntity[];
     ownedAttributes: SchemaAttribute[];
     playableRoles: SchemaRole[];
 }
 
-interface SchemaRelation extends RelationType {
+export interface SchemaRelation extends RelationType {
     supertype?: SchemaRelation;
     subtypes: SchemaRelation[];
     ownedAttributes: SchemaAttribute[];
@@ -55,9 +55,9 @@ export type SchemaConcept = SchemaEntity | SchemaRelation | SchemaAttribute;
 export type SchemaRole = RoleType;
 
 export interface Schema {
-    entities: SchemaEntity[];
-    relations: SchemaRelation[];
-    attributes: SchemaAttribute[];
+    entities: Record<string, SchemaEntity>;
+    relations: Record<string, SchemaRelation>;
+    attributes: Record<string, SchemaAttribute>;
 }
 
 @Injectable({
@@ -219,9 +219,9 @@ class SchemaBuilder {
         this.attachPlayableRoles();
         this.attachRoleplayers();
         return {
-            entities: Object.values(this.entityTypes),
-            relations: Object.values(this.relationTypes),
-            attributes: Object.values(this.attributeTypes),
+            entities: this.entityTypes,
+            relations: this.relationTypes,
+            attributes: this.attributeTypes,
         };
     }
 
