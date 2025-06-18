@@ -30,14 +30,14 @@ const schemaQueriesList = Object.values(schemaQueries);
 
 type VisualiserStatus = "ok" | "running" | "noAnswers" | "error";
 
-interface SchemaEntity extends EntityType {
+export interface SchemaEntity extends EntityType {
     supertype?: SchemaEntity;
     subtypes: SchemaEntity[];
     ownedAttributes: SchemaAttribute[];
     playedRoles: SchemaRole[];
 }
 
-interface SchemaRelation extends RelationType {
+export interface SchemaRelation extends RelationType {
     supertype?: SchemaRelation;
     subtypes: SchemaRelation[];
     ownedAttributes: SchemaAttribute[];
