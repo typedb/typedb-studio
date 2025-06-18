@@ -36,6 +36,7 @@ export interface ConceptRow {
 }
 
 export interface ConceptRowAnswer {
+    involvedBlocks: number[];
     data: ConceptRow;
 }
 
@@ -56,10 +57,7 @@ export interface OkQueryResponse extends QueryResponseBase {
 
 export interface ConceptRowsQueryResponse extends QueryResponseBase {
     answerType: "conceptRows";
-    answers: {
-        involvedBlocks: number[];
-        data: ConceptRow
-    }[];
+    answers: ConceptRowAnswer[];
 }
 
 export interface ConceptDocumentsQueryResponse extends QueryResponseBase {
@@ -68,6 +66,8 @@ export interface ConceptDocumentsQueryResponse extends QueryResponseBase {
 }
 
 export type QueryResponse = OkQueryResponse | ConceptRowsQueryResponse | ConceptDocumentsQueryResponse;
+
+export type ApiOkResponse<OK_RES = {}> = { ok: OK_RES };
 
 export type ApiError = { code: string; message: string };
 
@@ -80,9 +80,9 @@ export function isApiError(err: any): err is ApiError {
     return typeof err.code === "string" && typeof err.message === "string";
 }
 
-export type ApiResponse<OK_RES = {} | null> = { ok: OK_RES } | ApiErrorResponse;
+export type ApiResponse<OK_RES = {} | null> = ApiOkResponse<OK_RES> | ApiErrorResponse;
 
-export function isOkResponse<OK_RES>(res: ApiResponse<OK_RES>): res is { ok: OK_RES } {
+export function isOkResponse<OK_RES>(res: ApiResponse<OK_RES>): res is ApiOkResponse<OK_RES> {
     return "ok" in res;
 }
 

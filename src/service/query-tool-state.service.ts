@@ -17,7 +17,10 @@ import { Concept, Value } from "../framework/typedb-driver/concept";
 import { ApiResponse, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
+import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from "./schema-state.service";
 import { SnackbarService } from "./snackbar.service";
+import { FlatTreeControl } from "@angular/cdk/tree";
+import { MatTreeFlatDataSource, MatTreeFlattener } from "@angular/material/tree";
 
 export type OutputType = "raw" | "log" | "table" | "graph";
 
@@ -34,11 +37,12 @@ export class QueryToolState {
     queryControl = new FormControl("", {nonNullable: true});
     outputTypeControl = new FormControl("log" as OutputType, { nonNullable: true });
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
-    readonly history = new HistoryWindowState(this.driver);
+    readonly schemaWindow = new SchemaWindowState(this.schema);
     readonly logOutput = new LogOutputState();
     readonly tableOutput = new TableOutputState();
     readonly graphOutput = new GraphOutputState();
     readonly rawOutput = new RawOutputState();
+    readonly history = new HistoryWindowState(this.driver);
     answersOutputEnabled = true;
     readonly runDisabledReason$ = combineLatest(
         [this.driver.status$, this.driver.database$, this.driver.autoTransactionEnabled$, this.driver.transaction$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))]
@@ -53,7 +57,7 @@ export class QueryToolState {
     readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
 
-    constructor(private driver: DriverState, private snackbar: SnackbarService) {
+    constructor(private driver: DriverState, private schema: SchemaState, private snackbar: SnackbarService) {
         (window as any)["queryToolState"] = this;
         this.outputDisabled$.subscribe((disabled) => {
             if (disabled) this.outputTypeControl.disable();
@@ -128,6 +132,119 @@ export class QueryToolState {
         this.tableOutput.status = "answerOutputDisabled";
         this.graphOutput.status = "answerOutputDisabled";
         this.rawOutput.push(SUCCESS_RAW);
+    }
+}
+
+export type SchemaTreeNodeKind = "root" | "concept" | "link";
+
+export interface SchemaTreeNodeBase {
+    nodeKind: SchemaTreeNodeKind;
+    children?: SchemaTreeNode[];
+}
+
+export interface SchemaTreeRootNode extends SchemaTreeNodeBase {
+    nodeKind: "root";
+    label: string;
+    children: SchemaTreeConceptNode[];
+}
+
+export interface SchemaTreeConceptNode extends SchemaTreeNodeBase {
+    nodeKind: "concept";
+    concept: SchemaConcept;
+    children: SchemaTreeLinkNode[];
+}
+
+export type SchemaTreeLinkKind = "sub" | "owns" | "plays" | "relates";
+
+export interface SchemaTreeLinkNodeBase extends SchemaTreeNodeBase {
+    nodeKind: "link";
+    linkKind: SchemaTreeLinkKind;
+}
+
+export interface SchemaTreeSubLinkNode extends SchemaTreeLinkNodeBase {
+    linkKind: "sub";
+    supertype: SchemaConcept;
+}
+
+export interface SchemaTreeOwnsLinkNode extends SchemaTreeLinkNodeBase {
+    linkKind: "owns";
+    ownedAttribute: SchemaAttribute;
+}
+
+export interface SchemaTreePlaysLinkNode extends SchemaTreeLinkNodeBase {
+    linkKind: "plays";
+    role: SchemaRole;
+}
+
+export interface SchemaTreeRelatesLinkNode extends SchemaTreeLinkNodeBase {
+    linkKind: "relates";
+    role: SchemaRole;
+}
+
+export type SchemaTreeLinkNode = SchemaTreeSubLinkNode | SchemaTreeOwnsLinkNode | SchemaTreePlaysLinkNode | SchemaTreeRelatesLinkNode;
+
+export type SchemaTreeNode = SchemaTreeRootNode | SchemaTreeConceptNode | SchemaTreeLinkNode;
+
+export class SchemaWindowState {
+    dataSource: SchemaTreeRootNode[] = [];
+    // dataSourcesObj: Record<"Entities" | "Relations" | "Attributes", { title: string, treeControl: FlatTreeControl<FlatNode>, dataSource: MatTreeFlatDataSource<SchemaTreeNode, FlatNode> }> = {
+    //     "Entities": { title: "Entities", treeControl: this.entitiesTreeControl, dataSource: new MatTreeFlatDataSource(this.entitiesTreeControl, this.treeFlattener) },
+    //     "Relations": { title: "Relations", treeControl: this.relationsTreeControl, dataSource: new MatTreeFlatDataSource(this.relationsTreeControl, this.treeFlattener) },
+    //     "Attributes": { title: "Attributes", treeControl: this.attributesTreeControl, dataSource: new MatTreeFlatDataSource(this.attributesTreeControl, this.treeFlattener) },
+    // };
+    // dataSources = Object.values(this.dataSourcesObj);
+
+    constructor(public schemaState: SchemaState) {
+        schemaState.value$.subscribe(schema => {
+            this.populateDataSources(schema);
+        });
+    }
+
+    hasChild = (_: number, node: SchemaTreeNode) => !!node.children?.length;
+
+    childrenAccessor = (node: SchemaTreeNode) => node.children ?? [];
+
+    private populateDataSources(schema: Schema | null) {
+        if (!schema) {
+            // this.dataSources.forEach(x => x.dataSource.data = []);
+            return;
+        }
+        this.dataSource = [{
+            nodeKind: "root",
+            label: "Entities",
+            children: Object.values(schema.entities).map(x => ({
+                nodeKind: "concept",
+                concept: x,
+                children: ([
+                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
+                    ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y })),
+                    ...x.playableRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y })),
+                ] as SchemaTreeLinkNode[]),
+            })),
+        }, {
+            nodeKind: "root",
+            label: "Relations",
+            children: Object.values(schema.relations).map(x => ({
+                nodeKind: "concept",
+                concept: x,
+                children: ([
+                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
+                    ...x.roleplayers.map(y => ({ nodeKind: "link", linkKind: "relates", role: y })),
+                    ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y })),
+                    ...x.playableRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y })),
+                ] as SchemaTreeLinkNode[]),
+            })),
+        }, {
+            nodeKind: "root",
+            label: "Attributes",
+            children: Object.values(schema.attributes).map(x => ({
+                nodeKind: "concept",
+                concept: x,
+                children: ([
+                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
+                ] as SchemaTreeLinkNode[]),
+            })),
+        }];
     }
 }
 
