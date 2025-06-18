@@ -75,11 +75,11 @@ export class TypeQLAutocompleteSchema {
 
     getPlays(label: TypeLabel): SchemaRole[] {
         const objectType = this.objectType(label);
-        return objectType ? objectType.playableRoles : [];
+        return objectType ? objectType.playedRoles : [];
     }
     getRelates(label: TypeLabel): SchemaRole[] {
         const objectType = this.objectType(label);
-        return objectType ? objectType.playableRoles : [];
+        return objectType ? objectType.playedRoles : [];
     }
 }
 
@@ -92,7 +92,7 @@ export class SchemaBuilder {
     entityType(label: TypeLabel): SchemaEntity {
         if (!this.schema.entities[label]) {
             this.schema.entities[label] = {
-                kind: "entityType", label,  ownedAttributes: [], playableRoles: [],
+                kind: "entityType", label,  ownedAttributes: [], playedRoles: [],
                 subtypes: [],
             };
         }
@@ -102,7 +102,7 @@ export class SchemaBuilder {
     relationType(label: TypeLabel): SchemaRelation {
         if (!this.schema.relations[label]) {
             this.schema.relations[label] = {
-                kind: "relationType", label,  ownedAttributes: [], playableRoles: [], roleplayers: [],
+                kind: "relationType", label,  ownedAttributes: [], playedRoles: [], relatedRoles: [],
                 subtypes: [],
             };
         }
@@ -133,16 +133,16 @@ export class SchemaBuilder {
     recordPlays(type: TypeLabel, playedType: TypeLabel): void {
         const objectType = this.getObjectType(type)!;
         let roleType: SchemaRole = { kind: "roleType", label: playedType };
-        if (!objectType.playableRoles.includes(roleType)) {
-            objectType.playableRoles.push(roleType);
+        if (!objectType.playedRoles.includes(roleType)) {
+            objectType.playedRoles.push(roleType);
         }
     }
 
     recordRelates(type: TypeLabel, relatedType: TypeLabel): void {
         const objectType = this.relationType(type);
         let roleType: SchemaRole = { kind: "roleType", label: relatedType };
-        if (!objectType.roleplayers.includes(roleType)) {
-            objectType.roleplayers.push(roleType);
+        if (!objectType.relatedRoles.includes(roleType)) {
+            objectType.relatedRoles.push(roleType);
         }
     }
 

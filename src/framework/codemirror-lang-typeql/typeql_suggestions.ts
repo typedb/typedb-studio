@@ -54,13 +54,13 @@ function suggestObjectTypeLabels(_context: CompletionContext, _tree: Tree, _pars
 
 function suggestRoleTypesUnscopedForPlaysDeclaration(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     return schema.objectTypes()
-        .flatMap((objectType) => objectType.playableRoles)
+        .flatMap((objectType) => objectType.playedRoles)
         .map((role) => suggest("RoleType", role.label));
 }
 
 function suggestRelatedRoleTypeLabelsUnscoped(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     return schema.relationTypes()
-        .flatMap((relation) => relation.roleplayers)
+        .flatMap((relation) => relation.relatedRoles)
         .map((role) => suggest("RoleType", role.label.split(":")[1]));
 }
 
