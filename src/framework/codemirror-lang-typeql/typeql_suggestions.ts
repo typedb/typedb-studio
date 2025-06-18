@@ -28,7 +28,7 @@ function suggestAttributeTypeForHas(context: CompletionContext, tree: Tree, pars
     let possibleLabels = findIsaConstraintLabelsForVar(context, parseAt);
     if (possibleLabels.length > 0) {
         return possibleLabels.flatMap(owner => schema.getOwns(owner))
-            .map((label) => suggest("AttributeType", label))
+            .map((attributeType) => suggest("AttributeType", attributeType.label))
     } else {
         return suggestAttributeTypeLabels(context, tree, parseAt, climbedTo, prefix, schema);
     }
@@ -37,31 +37,31 @@ function suggestAttributeTypeForHas(context: CompletionContext, tree: Tree, pars
 function suggestRoleTypeForLinks(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     let possibleLabels = findIsaConstraintLabelsForVar(context, parseAt);
     if (possibleLabels.length > 0) {
-        return possibleLabels.flatMap(owner => schema.getRelates(owner))
-            .map((label) => suggest("RoleType", label.split(":")[1]))
+        return possibleLabels.flatMap(relationType => schema.getRelates(relationType))
+            .map((roleType) => suggest("RoleType", roleType.label.split(":")[1]))
     } else {
-        return suggestRoleTypeLabelsUnscoped(context, tree, parseAt, climbedTo, prefix, schema);
+        return suggestRelatedRoleTypeLabelsUnscoped(context, tree, parseAt, climbedTo, prefix, schema);
     }
 }
 
 function suggestAttributeTypeLabels(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
-    return schema.attributeTypes().map((label) => { return suggest("AttributeType", label); });
+    return schema.attributeTypes().map((attributeType) => { return suggest("AttributeType", attributeType.label); });
 }
 
 function suggestObjectTypeLabels(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
-    return schema.objectTypes().map((label) => suggest("ObjectType", label));
+    return schema.objectTypes().map((objectType) => suggest("ObjectType", objectType.label));
 }
 
-function suggestRoleTypeLabelsScoped(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
+function suggestRoleTypesUnscopedForPlaysDeclaration(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
     return schema.objectTypes()
-        .flatMap((label) => schema.objectType(label).relates)
-        .map((label) => suggest("RoleType", label));
+        .flatMap((objectType) => objectType.playableRoles)
+        .map((role) => suggest("RoleType", role.label));
 }
 
-function suggestRoleTypeLabelsUnscoped(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
-    return schema.objectTypes()
-        .flatMap((label) => schema.objectType(label).relates)
-        .map((label) => suggest("RoleType", label.split(":")[1]));
+function suggestRelatedRoleTypeLabelsUnscoped(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
+    return schema.relationTypes()
+        .flatMap((relation) => relation.roleplayers)
+        .map((role) => suggest("RoleType", role.label.split(":")[1]));
 }
 
 function suggestThingTypeLabels(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
@@ -154,8 +154,8 @@ export const SUGGESTION_MAP: SuggestionMap<TypeQLAutocompleteSchema> = {
         { suffixes: [[tokens.SEMICOLON, tokens.TypeRef]], suggestions: [suggestTypeConstraintKeywords] },
         { suffixes: [[tokens.OWNS]], suggestions: [suggestAttributeTypeLabels, suggestVariablesAtMinus10] },
         { suffixes: [[tokens.SUB]], suggestions: [suggestThingTypeLabels, suggestVariablesAtMinus10] },
-        { suffixes: [[tokens.RELATES]], suggestions: [suggestRoleTypeLabelsUnscoped] },
-        { suffixes: [[tokens.PLAYS]], suggestions: [suggestRoleTypeLabelsScoped] },
+        { suffixes: [[tokens.RELATES]], suggestions: [suggestRelatedRoleTypeLabelsUnscoped] },
+        { suffixes: [[tokens.PLAYS]], suggestions: [suggestRoleTypesUnscopedForPlaysDeclaration] },
     ],
     [tokens.ClauseMatch]: [
         { suffixes: [[tokens.MATCH, tokens.TypeRef]], suggestions: [suggestTypeConstraintKeywords] },
@@ -177,8 +177,8 @@ export const SUGGESTION_MAP: SuggestionMap<TypeQLAutocompleteSchema> = {
         { suffixes: [[tokens.COMMA], [tokens.KIND, tokens.LABEL]], suggestions: [ suggestTypeConstraintKeywords ] },
         { suffixes: [[tokens.OWNS]], suggestions: [suggestAttributeTypeLabels] },
         { suffixes: [[tokens.SUB]], suggestions: [suggestThingTypeLabels] },
-        { suffixes: [ [tokens.PLAYS] ], suggestions: [ suggestRoleTypeLabelsScoped ] },
-        { suffixes: [ [tokens.RELATES] ], suggestions: [ suggestRoleTypeLabelsUnscoped ] },
+        { suffixes: [ [tokens.PLAYS] ], suggestions: [ suggestRoleTypesUnscopedForPlaysDeclaration ] },
+        { suffixes: [ [tokens.RELATES] ], suggestions: [ suggestRelatedRoleTypeLabelsUnscoped ] },
     ],
     // TODO: ...
 };
