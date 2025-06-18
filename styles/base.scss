@@ -509,7 +509,7 @@ button i + span, button span + i {
 .action-bar {
     flex: 0 0 49px;
     display: flex;
-    margin: 16px 0 0 0;
+    padding: 19px 0;
     position: sticky;
     top: 0;
     background-color: primary.$black-purple;

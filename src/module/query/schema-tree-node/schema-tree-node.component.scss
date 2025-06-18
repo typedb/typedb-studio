@@ -10,8 +10,23 @@
 @use "typography";
 @use "shapes";
 
-.schema-page {
-    height: calc(100% - 86px);
+:host {
+    height: 100%;
+}
+
+.query-page-rough {
+    height: 100%;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.query-page {
+    height: 100%;
+    margin-top: 16px;
+    margin-bottom: 16px;
     gap: 4px !important;
 
     ::ng-deep app-drag-handle span {
@@ -27,17 +42,22 @@
     flex: 0 0 360px;
 }
 
-.visualiser-pane {
+.main-panes {
     flex: 1;
+    gap: 4px !important;
 
     @media (max-width: media.$max-width-mobile) {
         margin-left: -8px;
     }
 }
 
-.visualiser-pane {
+.history-pane, .query-pane, .run-pane {
     display: flex;
     flex-direction: column;
+}
+
+.run-pane mat-form-field {
+    height: 100%;
 }
 
 .card {
@@ -67,6 +87,26 @@ button {
 
     &:enabled i.fa-play {
         color: secondary.$deep-green;
+    }
+}
+
+.query-text-box {
+    resize: none;
+    font-family: "Monaco" !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 22px !important;
+    letter-spacing: 0.02em !important;
+}
+
+.code-editor-container {
+    height: 100%;
+    overflow: auto;
+    border: 1px solid primary.$light-purple;
+    background: primary.$black-purple;
+
+    code-editor {
+        height: 100%;
     }
 }
 
@@ -155,4 +195,69 @@ button {
     width: 100%;
     height: 100%;
     display: flex;
+}
+
+.history-pane {
+    @media (max-width: media.$max-width-mobile) {
+        display: none;
+    }
+
+    .history-container {
+        height: 100%;
+        width: 100%;
+        overflow: auto;
+    }
+
+    ol li {
+        list-style: none;
+        margin-top: 8px;
+
+        aside {
+            display: flex;
+            align-items: center;
+
+            .bullet {
+                margin: 0 4px;
+            }
+
+            tp-spinner {
+                width: unset;
+            }
+
+            .action-status {
+                margin-left: 8px;
+            }
+
+            .action-status i {
+                margin-left: 6px;
+                font-size: 12px;
+
+                &.fa-xmark {
+                    color: #{primary.$red};
+                    cursor: pointer;
+                }
+            }
+        }
+
+        .mat-divider {
+            margin-top: 8px;
+        }
+    }
+
+    mat-form-field {
+        margin-top: 4px;
+
+        ::ng-deep .mdc-notched-outline {
+
+        }
+
+        textarea {
+            resize: none;
+            @include typography.code;
+        }
+    }
+
+    .transaction-operation-type {
+        min-width: 140px;
+    }
 }
