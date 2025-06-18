@@ -206,7 +206,7 @@ export class SchemaWindowState {
 
     private populateDataSources(schema: Schema | null) {
         if (!schema) {
-            // this.dataSources.forEach(x => x.dataSource.data = []);
+            this.dataSource.length = 0;
             return;
         }
         this.dataSource = [{
