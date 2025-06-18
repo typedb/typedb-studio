@@ -155,7 +155,6 @@ export class SchemaBuilder {
 
 function buildSchemafromTypeQL(text: string, tree: Tree) : Schema {
     let builder = new SchemaBuilder();
-    // TODO: Replace iterate with a more targetted traversal that considers only define queries.
     // Extract all type declarations from the tree
     let root = tree.topNode;
     let definitionTypes = nodesWithPath(root, [tokens.QuerySchema, tokens.QueryDefine, tokens.Definables, tokens.Definable, tokens.DefinitionType])

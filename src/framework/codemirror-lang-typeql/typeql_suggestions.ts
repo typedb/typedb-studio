@@ -71,7 +71,7 @@ function suggestThingTypeLabels(context: CompletionContext, tree: Tree, parseAt:
 }
 
 function suggestVariables(context: CompletionContext, tree: Tree, boost= 0): Completion[] {
-    var options: Completion[] = [];
+    let options: Completion[] = [];
     tree.iterate({
         enter: (other: SyntaxNode) => {
             if (other.type.id == tokens.VAR) {
@@ -180,5 +180,5 @@ export const SUGGESTION_MAP: SuggestionMap<TypeQLAutocompleteSchema> = {
         { suffixes: [ [tokens.PLAYS] ], suggestions: [ suggestRoleTypesUnscopedForPlaysDeclaration ] },
         { suffixes: [ [tokens.RELATES] ], suggestions: [ suggestRelatedRoleTypeLabelsUnscoped ] },
     ],
-    // TODO: ...
+    // TODO: Add any cases krishnan didn't think of.
 };

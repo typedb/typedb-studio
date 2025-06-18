@@ -9,8 +9,6 @@ import { autocompletion, CompletionContext } from "@codemirror/autocomplete";
 import { NodePrefixAutoComplete } from "./complete"
 import {TypeQLAutocompleteSchema} from "./typeQLAutocompleteSchema";
 import { SUGGESTION_MAP } from "./typeql_suggestions";
-import {ConceptRow, ConceptRowAnswer} from "../typedb-driver/response";
-import {Type} from "../typedb-driver/concept";
 import {Schema} from "../../service/schema-state.service";
 
 export const TypeQLLanguage = LRLanguage.define({
