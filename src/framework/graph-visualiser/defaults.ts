@@ -164,6 +164,9 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
     edgeProgramClasses: {
         curved: EdgeCurveProgram,
     },
+    cameraPanBoundaries: {
+        tolerance: 1,
+    },
 };
 
 export const defaultForceSupervisorSettings: ForceLayoutSettings = {
