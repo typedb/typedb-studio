@@ -8,16 +8,16 @@
   @case ("link") {
     @switch (data.linkKind) {
       @case ("sub") {
-        <em class="text-muted">sub {{ data.supertype.label }}</em>
+        <p>sub {{ data.supertype.label }}</p>
       }
       @case ("owns") {
-        <em class="text-muted">owns {{ data.ownedAttribute.label }}, value {{ data.ownedAttribute.valueType }}</em>
+        <p>owns {{ data.ownedAttribute.label }}, value {{ data.ownedAttribute.valueType }}</p>
       }
       @case ("relates") {
-        <em class="text-muted">relates {{ data.role.label }}</em>
+        <p>relates {{ data.role.label }}</p>
       }
       @case ("plays") {
-        <em class="text-muted">plays {{ data.role.label }}</em>
+        <p>plays {{ data.role.label }}</p>
       }
     }
   }

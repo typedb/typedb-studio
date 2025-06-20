@@ -104,6 +104,32 @@
             width: 1em;
             height: 1em;
         }
+
+        mat-tree-node[aria-level="3"] {
+            margin-left: 32px;
+            padding-left: 8px !important; /* overrides inline style from Angular Material */
+            padding-right: 8px;
+            align-items: stretch;
+            border-bottom: 1px solid primary.$light-purple;
+            border-left: 1px solid primary.$light-purple;
+            border-right: 1px solid primary.$light-purple;
+
+            button {
+                display: none;
+            }
+
+            &:nth-child(odd) {
+                background: primary.$black-purple;
+            }
+
+            &:nth-child(even) {
+                background: primary.$purple;
+            }
+        }
+
+        mat-tree-node[aria-level="2"] + mat-tree-node[aria-level="3"] {
+            border-top: 1px solid primary.$light-purple;
+        }
     }
 }
 
