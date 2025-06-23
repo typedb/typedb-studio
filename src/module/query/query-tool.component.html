@@ -42,7 +42,7 @@
         </div>
         <div class="code-editor-container">
           @if (!codeEditorHidden) {
-            <code-editor [extensions]="[codeEditorTheme, TypeQL()]" [formControl]="state.queryControl"/>
+            <code-editor [extensions]="[codeEditorTheme, TypeQL(), typeqlAutocompleteExtension(), codeEditorKeymap]" [formControl]="state.queryControl"/>
           }
         </div>
       </div>

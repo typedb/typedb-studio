@@ -36,6 +36,7 @@ export interface ConceptRow {
 }
 
 export interface ConceptRowAnswer {
+    involvedBlocks: number[];
     data: ConceptRow;
 }
 
@@ -56,10 +57,7 @@ export interface OkQueryResponse extends QueryResponseBase {
 
 export interface ConceptRowsQueryResponse extends QueryResponseBase {
     answerType: "conceptRows";
-    answers: {
-        involvedBlocks: number[];
-        data: ConceptRow
-    }[];
+    answers: ConceptRowAnswer[];
 }
 
 export interface ConceptDocumentsQueryResponse extends QueryResponseBase {

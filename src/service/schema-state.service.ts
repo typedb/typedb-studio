@@ -16,6 +16,7 @@ import { AttributeType, EntityType, RelationType, RoleType, Type } from "../fram
 import { ApiOkResponse, ApiResponse, ConceptRowsQueryResponse, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
 import { DriverState } from "./driver-state.service";
 import { SnackbarService } from "./snackbar.service";
+import {updateAutocomleteSchemaFromDB} from "../framework/codemirror-lang-typeql";
 
 const NO_SERVER_CONNECTED = `No server connected`;
 const NO_DATABASE_SELECTED = `No database selected`;
@@ -30,14 +31,14 @@ const schemaQueriesList = Object.values(schemaQueries);
 
 type VisualiserStatus = "ok" | "running" | "noAnswers" | "error";
 
-interface SchemaEntity extends EntityType {
+export interface SchemaEntity extends EntityType {
     supertype?: SchemaEntity;
     subtypes: SchemaEntity[];
     ownedAttributes: SchemaAttribute[];
     playedRoles: SchemaRole[];
 }
 
-interface SchemaRelation extends RelationType {
+export interface SchemaRelation extends RelationType {
     supertype?: SchemaRelation;
     subtypes: SchemaRelation[];
     ownedAttributes: SchemaAttribute[];
@@ -86,6 +87,11 @@ export class SchemaState {
         this.queryResponses$.subscribe(data => {
             this.push(data);
         });
+        this.value$.subscribe(schema => {
+            if (schema != null) {
+                updateAutocomleteSchemaFromDB(schema)
+            }
+        })
     }
 
     refresh() {

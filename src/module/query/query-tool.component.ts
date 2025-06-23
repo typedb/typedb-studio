@@ -21,7 +21,7 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
 import { distinctUntilChanged, filter, first, map, startWith } from "rxjs";
-import { otherExampleLinter, TypeQL } from "../../framework/codemirror-lang-typeql";
+import { otherExampleLinter, TypeQL, typeqlAutocompleteExtension } from "../../framework/codemirror-lang-typeql";
 import { DriverAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
 import { DetectScrollDirective } from "../../framework/scroll-container/detect-scroll.directive";
@@ -33,6 +33,9 @@ import { QueryToolState } from "../../service/query-tool-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaTreeNodeComponent } from "./schema-tree-node/schema-tree-node.component";
+import {keymap} from "@codemirror/view";
+import {defaultKeymap} from "@codemirror/commands";
+import {startCompletion, completionKeymap} from "@codemirror/autocomplete";
 
 @Component({
     selector: "ts-query-tool",
@@ -134,4 +137,6 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     readonly JSON = JSON;
     readonly TypeQL = TypeQL;
     readonly linter = otherExampleLinter;
+    readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
+    readonly codeEditorKeymap = keymap.of([...defaultKeymap, {key: "Alt-Space", run: startCompletion, preventDefault: true}]);
 }
