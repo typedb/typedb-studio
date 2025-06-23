@@ -29,6 +29,7 @@ const NO_DATABASE_SELECTED = `No database selected`;
 const NO_OPEN_TRANSACTION = `No open transaction`;
 const QUERY_BLANK = `Query text is blank`;
 
+const QUERY_HIGHLIGHT_DIV_ID = null; // "query-highlight-div"; // Add to body: <div id="query-highlight-div"></div>
 @Injectable({
     providedIn: "root",
 })
@@ -559,8 +560,11 @@ export class GraphOutputState {
             case "conceptRows": {
                 this.visualiser.handleQueryResponse(res, this.database!);
                 let highlightedQuery = "";
-                if (res.ok.query) {
-                    highlightedQuery = this.visualiser.colorQuery(this.query!, res.ok.query);
+                if (QUERY_HIGHLIGHT_DIV_ID != null) {
+                    if (res.ok.query) {
+                        highlightedQuery = this.visualiser.colorQuery(this.query!, res.ok.query);
+                        document.getElementById("query-highlight-div")!.innerHTML = highlightedQuery;
+                    }
                 }
                 this.visualiser.colorEdgesByConstraintIndex(false);
                 this.status = "ok";
