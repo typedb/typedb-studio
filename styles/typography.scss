@@ -82,7 +82,7 @@ $medium: 500;
 $regular: 400;
 $italic: 400;
 $light: 300;
-$extra-light: 200;
+$thin: 200;
 
 $letter-spacing: 0.02em;
 
@@ -114,7 +114,7 @@ $letter-spacing: 0.02em;
 }
 
 @mixin light-banner {
-    @include font-style(150px, $extra-light, 150px, $letter-spacing);
+    @include font-style(150px, $thin, 150px, $letter-spacing);
 }
 
 @mixin subtitle {
