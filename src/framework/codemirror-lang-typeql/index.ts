@@ -139,48 +139,5 @@ export function updateAutocomleteSchemaFromDB(schema: Schema) {
   typeqlAutocomplete.getState().updateFromDB(schema);
 }
 
-// Manually run and collect the following results using _lastQueryAnswers
-// match $default-owner owns $default-owned; limit 1;
-// match $default-relation relates $default-related; limit 1;
-// match $default-player plays $default-played; limit 1;
-// match
-// { $owner owns $owned; $relation is $default-relation; $related is $default-related; $player is $default-player; $played is $default-played; } or
-// { $owner is $default-owner; $owned is $default-owned; $relation relates $related; $player is $default-player; $played is $default-played; } or
-// { $owner is $default-owner; $owned is $default-owned; $relation is $default-relation; $related is $default-related; $player plays $played; };
-// and then call _updateSchemaFromDB(_lastQueryAnswers, _lastQueryAnswers, _lastQueryAnswers);
-//
-// // Or finer queries:
-// // # match $owner owns $owned;
-// // # match $relation relates $related;
-// // # match $player plays $played;
-// // And you have to set each argument separately
-//
-// function updateSchemaFromDB(ownsAnswers: ConceptRowAnswer[], relatesAnswers: ConceptRowAnswer[], playsAnswers: ConceptRowAnswer[]) {
-//     let builder = new SchemaBuilder();
-//     ownsAnswers.forEach((answer) => {
-//       let data: ConceptRow = answer.data;
-//       let owner = (data["owner"] as Type).label;
-//       let owned = (data["owned"] as Type).label;
-//       builder.objectType(owner);
-//       builder.attributeType(owned);
-//       builder.recordOwns(owner, owned);
-//     });
-//     relatesAnswers.forEach((answer) => {
-//       let data: ConceptRow = answer.data;
-//       let relation = (data["relation"] as Type).label;
-//       let related = (data["related"] as Type).label;
-//       builder.objectType(relation);
-//       builder.recordRelates(relation, related)
-//     });
-//     playsAnswers.forEach((answer) => {
-//       let data: ConceptRow = answer.data;
-//       let player = (data["player"] as Type).label;
-//       let played = (data["played"] as Type).label;
-//       builder.objectType(player);
-//       builder.recordRelates(player, played)
-//     })
-//     typeqlAutocomplete.getState().updateFromDB(builder.build());
-// }
-
 // (window as any)._updateSchemaFromDB = updateSchemaFromDB;
 (window as any)._typeqlAutoComplete = typeqlAutocomplete;
