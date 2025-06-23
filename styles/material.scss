@@ -809,4 +809,32 @@ body {
         container-color: secondary.$mid-deep-grey,
         container-shape: shapes.$border-radius,
     ));
+
+    .mdc-tooltip {
+        --mdc-plain-tooltip-supporting-text-size: 14px;
+        --mdc-plain-tooltip-supporting-line-height: 22px;
+        --mdc-plain-tooltip-supporting-text-tracking: var(--body-letter-spacing);
+        --mdc-plain-tooltip-container-color: #{secondary.$mid-deep-grey};
+        --mdc-plain-tooltip-container-shape: #{shapes.$border-radius};
+    }
+
+    .mdc-tooltip__surface {
+        padding: 6px 10px;
+    }
+
+    /* Tree */
+    @include mat.tree-overrides((
+        container-background-color: transparent,
+        node-min-height: 30px,
+        node-text-size: 14px,
+        node-text-weight: typography.$regular,
+    ));
+
+    mat-tree-node[aria-level="2"] {
+        padding-left: 16px !important; /* overrides inline style from Angular Material */
+    }
+
+    mat-tree-node[mattreenodetoggle] {
+        cursor: pointer;
+    }
 }
