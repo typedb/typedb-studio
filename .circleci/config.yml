@@ -77,7 +77,7 @@ commands:
           name: Save npm package cache
           key: pnpm-packages-{{ .Environment.CIRCLE_OS_NAME }}-{{ checksum "pnpm-lock.yaml" }}
           paths:
-            - .pnpm-store
+            - ~/.pnpm-store
 
   install-node-modules:
     steps:
@@ -90,7 +90,7 @@ commands:
             npm install --global corepack@0.17.0
             corepack enable
             corepack prepare pnpm@10.12.1 --activate
-            pnpm config set store-dir .pnpm-store
+            pnpm config set store-dir ~/.pnpm-store
             pnpm install
       - save-npm-cache
 
