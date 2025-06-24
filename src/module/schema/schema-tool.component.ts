@@ -66,10 +66,6 @@ export class SchemaToolComponent implements OnInit, AfterViewInit, OnDestroy {
         });
         this.state.queryResponses$.pipe(filter(x => !!x), map(x => x!)).subscribe((queryResponses) => {
             queryResponses.forEach(x => this.state.visualiser.push(x));
-            if (this.state.visualiser.status === "running") {
-                if (!this.state.visualiser.visualiser?.graph.nodes().length) this.state.visualiser.status = "noAnswers";
-                else this.state.visualiser.status = "ok";
-            }
         });
     }
 
