@@ -34,9 +34,9 @@ rustup default 1.86.0
 
 REM install node modules
 
-echo before npm install
+CALL nvm install 22.16.0
+CALL nvm use 22.16.0
 CALL npm install --global corepack@0.17.0 --verbose
-echo after npm install
 
 CALL corepack enable
 CALL corepack prepare pnpm@10.12.1 --activate
