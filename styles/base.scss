@@ -26,8 +26,8 @@ html {
     margin: 0;
     padding: 0;
     background: primary.$black-purple;
-    font-size: 15px;
-    line-height: 23px;
+    font-size: 14px;
+    line-height: 22px;
 
     --mat-form-field-subscript-text-size: 14px;
     letter-spacing: var(--body-letter-spacing);
@@ -39,7 +39,7 @@ body {
     font-family: typography.$default-font-family;
     overflow-x: hidden;
 
-    --font-size-code: 15px;
+    --font-size-code: 14px;
     --line-height-code: 22px;
 }
 
@@ -492,7 +492,7 @@ button i + span, button span + i {
         &::after {
             font-weight: var(--font-weight-medium);
             text-transform: uppercase;
-            font-size: 13px;
+            font-size: 12px;
             letter-spacing: .5px;
         }
     }

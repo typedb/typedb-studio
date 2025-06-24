@@ -111,7 +111,7 @@ export const basicDarkTheme = EditorView.theme(
             }
         },
         '.cm-tooltip.cm-completionInfo': {
-            fontSize: "13px",
+            fontSize: "12px",
         },
     },
     { dark: true }

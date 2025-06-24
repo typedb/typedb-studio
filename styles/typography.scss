@@ -131,7 +131,7 @@ $letter-spacing: 0.02em;
 }
 
 @mixin p1 {
-    @include font-style(15px, $regular, 23px, $letter-spacing);
+    @include font-style(14px, $regular, 22px, $letter-spacing);
 }
 
 @mixin p2 {
@@ -139,7 +139,7 @@ $letter-spacing: 0.02em;
 }
 
 @mixin p3 {
-    @include font-style(13px, $regular, 20px, $letter-spacing);
+    @include font-style(14px, $regular, 22px, $letter-spacing);
 }
 
 @mixin aside {
