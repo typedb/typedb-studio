@@ -69,13 +69,13 @@ commands:
       - restore_cache:
           name: Restore npm package cache
           keys:
-            - pnpm-packages-{{ checksum "pnpm-lock.yaml" }}
+            - pnpm-packages-{{ .Environment.CIRCLE_OS_NAME }}-{{ checksum "pnpm-lock.yaml" }}
 
   save-npm-cache:
     steps:
       - save_cache:
           name: Save npm package cache
-          key: pnpm-packages-{{ checksum "pnpm-lock.yaml" }}
+          key: pnpm-packages-{{ .Environment.CIRCLE_OS_NAME }}-{{ checksum "pnpm-lock.yaml" }}
           paths:
             - .pnpm-store
 
