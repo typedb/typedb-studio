@@ -161,7 +161,7 @@ $letter-spacing: 0.02em;
 
 @mixin code {
     font-family: Monaco, monospace;
-    @include font-style(14px, $regular, 21px, $letter-spacing);
+    @include font-style(14px, $regular, 22px, $letter-spacing);
 }
 
 /* TODO: delete */
