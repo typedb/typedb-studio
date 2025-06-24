@@ -25,8 +25,8 @@
     "active": true,
     "targets": ["msi", "dmg", "deb"],
     "icon": [
-      "icons/app-icon@2x.png",
-      "icons/app-icon.png",
+      "icons/icon_76x76.png",
+      "icons/icon_152x152.png",
       "icons/favicon.ico"
     ],
     "windows": {

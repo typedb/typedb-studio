@@ -69,30 +69,27 @@ commands:
       - restore_cache:
           name: Restore npm package cache
           keys:
-            - pnpm-packages-{{ checksum "pnpm-lock.yaml" }}
+            - pnpm-packages-{{ .Environment.CIRCLE_OS_NAME }}-{{ checksum "pnpm-lock.yaml" }}
 
   save-npm-cache:
     steps:
       - save_cache:
           name: Save npm package cache
-          key: pnpm-packages-{{ checksum "pnpm-lock.yaml" }}
+          key: pnpm-packages-{{ .Environment.CIRCLE_OS_NAME }}-{{ checksum "pnpm-lock.yaml" }}
           paths:
-            - .pnpm-store
+            - ~/.pnpm-store
 
   install-node-modules:
     steps:
-      - restore-npm-cache
       - run:
           name: Install pnpm package manager and node modules
           command: |
-            nvm install 18
-            nvm use 18
+            nvm install 22
+            nvm use 22
             npm install --global corepack@0.17.0
             corepack enable
-            corepack prepare pnpm@8.6.7 --activate
-            pnpm config set store-dir .pnpm-store
+            corepack prepare pnpm@10.12.1 --activate
             pnpm install
-      - save-npm-cache
 
   install-rust:
     steps:
@@ -107,11 +104,11 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          nvm install 18
-          nvm use 18
+          nvm install 22
+          nvm use 22
           npm install --global corepack@0.17.0
           corepack enable
-          corepack prepare pnpm@8.6.7 --activate
+          corepack prepare pnpm@10.12.1 --activate
           pnpm build
           npx tauri build
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
@@ -124,11 +121,11 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          nvm install 18
-          nvm use 18
+          nvm install 22
+          nvm use 22
           npm install --global corepack@0.17.0
           corepack enable
-          corepack prepare pnpm@8.6.7 --activate
+          corepack prepare pnpm@10.12.1 --activate
           pnpm build
           npx tauri build
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- release
@@ -141,11 +138,11 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          nvm install 18
-          nvm use 18
+          nvm install 22
+          nvm use 22
           npm install --global corepack@0.17.0
           corepack enable
-          corepack prepare pnpm@8.6.7 --activate
+          corepack prepare pnpm@10.12.1 --activate
           pnpm build
           export DEBIAN_FRONTEND=noninteractive
           sudo apt install -y software-properties-common lsb-release curl
@@ -168,11 +165,11 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          nvm install 18
-          nvm use 18
+          nvm install 22
+          nvm use 22
           npm install --global corepack@0.17.0
           corepack enable
-          corepack prepare pnpm@8.6.7 --activate
+          corepack prepare pnpm@10.12.1 --activate
           pnpm build
           export DEBIAN_FRONTEND=noninteractive
           sudo apt install -y software-properties-common lsb-release curl
@@ -195,11 +192,11 @@ commands:
       - run: |
           export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          nvm install 18
-          nvm use 18
+          nvm install 22
+          nvm use 22
           npm install --global corepack@0.17.0
           corepack enable
-          corepack prepare pnpm@8.6.7 --activate
+          corepack prepare pnpm@10.12.1 --activate
           pnpm build
           export DEBIAN_FRONTEND=noninteractive
           sudo apt install -y software-properties-common lsb-release curl
@@ -222,11 +219,11 @@ commands:
       - run: |
           export DEPLOY_APT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          nvm install 18
-          nvm use 18
+          nvm install 22
+          nvm use 22
           npm install --global corepack@0.17.0
           corepack enable
-          corepack prepare pnpm@8.6.7 --activate
+          corepack prepare pnpm@10.12.1 --activate
           pnpm build
           export DEBIAN_FRONTEND=noninteractive
           sudo apt install -y software-properties-common lsb-release curl
