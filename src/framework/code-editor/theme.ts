@@ -42,7 +42,7 @@ export const basicDarkTheme = EditorView.theme(
 
         '.cm-scroller': {
             fontSize: '14px',
-            lineHeight: '21px',
+            lineHeight: '22px',
             fontFamily: '"Monaco", monospace',
         },
 
