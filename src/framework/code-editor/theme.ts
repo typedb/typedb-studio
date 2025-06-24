@@ -42,7 +42,7 @@ export const basicDarkTheme = EditorView.theme(
 
         '.cm-scroller': {
             fontSize: '14px',
-            lineHeight: '21px',
+            lineHeight: '22px',
             fontFamily: '"Monaco", monospace',
         },
 
@@ -111,7 +111,7 @@ export const basicDarkTheme = EditorView.theme(
             }
         },
         '.cm-tooltip.cm-completionInfo': {
-            fontSize: "13px",
+            fontSize: "12px",
         },
     },
     { dark: true }

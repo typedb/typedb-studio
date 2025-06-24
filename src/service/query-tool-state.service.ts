@@ -7,7 +7,7 @@
 import { Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import MultiGraph from "graphology";
-import { BehaviorSubject, combineLatest, first, map, Observable, ReplaySubject, startWith } from "rxjs";
+import { BehaviorSubject, combineLatest, first, map, Observable, ReplaySubject, shareReplay, startWith } from "rxjs";
 import { DriverAction } from "../concept/action";
 import { createSigmaRenderer, GraphVisualiser } from "../framework/graph-visualiser";
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
@@ -53,7 +53,7 @@ export class QueryToolState {
         else if (!autoTransactionEnabled && !tx) return NO_OPEN_TRANSACTION;
         else if (!this.queryControl.value.length) return QUERY_BLANK; // _query becomes blank after a page navigation for some reason
         else return null;
-    }));
+    }), shareReplay(1));
     readonly runEnabled$ = this.runDisabledReason$.pipe(map(x => x == null));
     readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));

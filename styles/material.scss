@@ -130,6 +130,7 @@ body {
         text-container-height: 32px,
         text-container-shape: shapes.$border-radius-panel,
         text-disabled-label-text-color: rgba(255, 255, 255, 0.25),
+        text-disabled-state-layer-color: transparent,
 
         filled-label-text-size: 14px,
         filled-label-text-tracking: typography.$letter-spacing,
@@ -137,7 +138,9 @@ body {
         filled-label-text-color: primary.$grey,
         filled-disabled-container-color: rgba(255, 255, 255, 0.12),
         filled-disabled-label-text-color: rgba(255, 255, 255, 0.25),
+        filled-disabled-state-layer-color: transparent,
         filled-container-shape: shapes.$border-radius-panel,
+        filled-container-height: 40px,
         filled-state-layer-color: #fff,
         filled-ripple-color: rgba(255, 255, 255, 0.1),
         filled-hover-state-layer-opacity: 0.08,
@@ -149,21 +152,17 @@ body {
         outlined-label-text-weight: #{typography.$regular},
         outlined-disabled-outline-color: #{rgba(255, 255, 255, 0.12)},
         outlined-disabled-label-text-color: rgba(255, 255, 255, 0.25),
+        outlined-disabled-state-layer-color: transparent,
         outlined-label-text-color: #{primary.$grey},
         outlined-outline-color: #{primary.$light-purple},
         outlined-container-shape: #{shapes.$border-radius-panel},
     ));
 
-    --mat-button-outlined-disabled-state-layer-color: transparent;
-
     .mdc-button[disabled] {
         pointer-events: all;
-        --mat-text-button-state-layer-color: transparent;
-        --mat-filled-button-state-layer-color: transparent;
     }
 
     .mat-mdc-unelevated-button {
-        --mdc-filled-button-container-height: 40px;
         @include shapes.standard-border;
     }
 
@@ -292,7 +291,7 @@ body {
     mat-expansion-panel {
         --mat-expansion-header-text-size: 16px;
         --mat-expansion-header-expanded-state-height: 44px;
-        --mat-expansion-container-text-size: 15px;
+        --mat-expansion-container-text-size: 14px;
     }
 
     .mat-expansion-panel-body {
@@ -330,7 +329,7 @@ body {
     }
 
     .mat-mdc-form-field {
-        --mat-select-trigger-text-size: 15px;
+        --mat-select-trigger-text-size: 14px;
 
         &:not(.form-field-dense) {
             @include mat.form-field-density(-3);
@@ -505,7 +504,7 @@ body {
     @include mat.menu-overrides((
         container-color: primary.$deep-purple,
         item-label-text-font: typography.$default-font-family,
-        item-label-text-size: 13px,
+        item-label-text-size: 14px,
         item-label-text-tracking: var(--body-letter-spacing),
     ));
 

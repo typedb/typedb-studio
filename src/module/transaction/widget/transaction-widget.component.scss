@@ -128,8 +128,6 @@ mat-select-trigger {
 
 ::ng-deep body div.mat-mdc-select-panel.transaction-select-panel {
     --mat-select-panel-background-color: #{primary.$deep-purple};
-    --mat-option-label-text-line-height: 20px;
-    --mat-option-label-text-size: 13px;
     border-top-left-radius: shapes.$border-radius-panel !important; // overrides Angular Material style
     border-top-right-radius: shapes.$border-radius-panel !important;
     margin-top: 8px;

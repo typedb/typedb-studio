@@ -118,7 +118,13 @@ export class SchemaState {
                     responses.push(res as ApiOkResponse<ConceptRowsQueryResponse>);
                 },
                 error: (err) => { this.handleQueryError(err); },
-                complete: () => { this.queryResponses$.next(responses); },
+                complete: () => {
+                    this.queryResponses$.next(responses);
+                    if (this.visualiser.status === "running") {
+                        if (responses[0].ok.answers.length) this.visualiser.status = "ok";
+                        else this.visualiser.status = "noAnswers";
+                    }
+                },
             });
         });
     }
@@ -388,15 +394,25 @@ class SchemaBuilder {
 
 export class VisualiserState {
 
-    status: VisualiserStatus = "ok";
+    private _status: VisualiserStatus = "ok";
     canvasEl$ = new BehaviorSubject<HTMLElement | null>(null);
     visualiser: GraphVisualiser | null = null;
     database?: string;
     savedState?: SigmaState;
 
+    get status() {
+        return this._status;
+    }
+
+    set status(value: VisualiserStatus) {
+        console.info(value);
+        this._status = value;
+    }
+
     constructor() {
         this.canvasEl$.subscribe(el => {
             if (el && this.savedState && this.database) {
+                this._status = "ok";
                 const graph = newVisualGraph();
                 const sigma = createSigmaRenderer(el, defaultSigmaSettings as any, graph);
                 const layout = Layouts.createForceAtlasStatic(graph, undefined);
