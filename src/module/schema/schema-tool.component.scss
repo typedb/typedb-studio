@@ -10,14 +10,8 @@
 @use "typography";
 @use "shapes";
 
-:host {
-    height: 100%;
-}
-
 .schema-page {
-    height: 100%;
-    margin-top: 16px;
-    margin-bottom: 16px;
+    height: calc(100% - 86px);
     gap: 4px !important;
 
     ::ng-deep app-drag-handle span {
@@ -154,6 +148,7 @@ button {
     justify-content: center;
     align-items: center;
     background: primary.$black-purple;
+    --mat-button-filled-container-height: 40px;
 }
 
 #structureView {

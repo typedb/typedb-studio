@@ -13,7 +13,6 @@ import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component"
     selector: "tp-404-page",
     templateUrl: "404-page.component.html",
     styleUrls: ["404-page.component.scss"],
-    standalone: true,
-    imports: [ButtonComponent, RouterLink, PageScaffoldComponent],
+    imports: [ButtonComponent, RouterLink, PageScaffoldComponent]
 })
 export class _404PageComponent {}

@@ -10,23 +10,8 @@
 @use "typography";
 @use "shapes";
 
-:host {
-    height: 100%;
-}
-
-.query-page-rough {
-    height: 100%;
-    margin-top: 16px;
-    margin-bottom: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
 .query-page {
-    height: 100%;
-    margin-top: 16px;
-    margin-bottom: 16px;
+    height: calc(100% - 86px);
     gap: 4px !important;
 
     ::ng-deep app-drag-handle span {
@@ -66,6 +51,18 @@
     @include shapes.light-source-gradient(primary.$purple, primary.$deep-purple);
     transition: background 0.1s linear;
     padding: 16px;
+
+    &:has(.card-header-wrapper) {
+        padding: 0;
+    }
+}
+
+.card-header-wrapper {
+    padding: 16px;
+
+    .card-header {
+        margin-bottom: 0;
+    }
 }
 
 .card-header {
@@ -74,6 +71,67 @@
     align-items: center;
     margin-bottom: 12px;
     height: 32px;
+}
+
+.schema-pane {
+    display: flex;
+    flex-direction: column;
+}
+
+.schema-container {
+    display: flex;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    overscroll-behavior: contain;
+
+    .gutter {
+        flex: 0 0 16px;
+    }
+
+    &.scrolled {
+        border-top: 1px solid primary.$black-purple;
+    }
+
+    mat-tree {
+        padding: 0;
+        box-sizing: border-box;
+        height: 100%;
+        margin: 0;
+
+        .mat-mdc-icon-button {
+            margin: 0;
+            padding: 0;
+            width: 1em;
+            height: 1em;
+        }
+
+        mat-tree-node[aria-level="3"] {
+            margin-left: 32px;
+            padding-left: 8px !important; /* overrides inline style from Angular Material */
+            padding-right: 8px;
+            align-items: stretch;
+            border-bottom: 1px solid primary.$light-purple;
+            border-left: 1px solid primary.$light-purple;
+            border-right: 1px solid primary.$light-purple;
+            font-weight: typography.$thin;
+
+            button {
+                display: none;
+            }
+
+            &:nth-child(odd) {
+                background: primary.$black-purple;
+            }
+
+            &:nth-child(even) {
+                background: primary.$purple;
+            }
+        }
+
+        mat-tree-node[aria-level="2"] + mat-tree-node[aria-level="3"] {
+            border-top: 1px solid primary.$light-purple;
+        }
+    }
 }
 
 mat-form-field {
@@ -188,6 +246,7 @@ button {
     justify-content: center;
     align-items: center;
     background: primary.$black-purple;
+    --mat-button-filled-container-height: 40px;
 }
 
 #structureView {

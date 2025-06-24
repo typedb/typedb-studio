@@ -23,8 +23,7 @@ export type StrongConfirmationModalData = ConfirmationModalData & { strongConfir
     selector: "tp-strong-confirmation-modal",
     templateUrl: "./strong-confirmation-modal.component.html",
     styleUrls: ["./strong-confirmation-modal.component.scss"],
-    standalone: true,
-    imports: [FormsModule, ButtonComponent, ModalComponent, FormActionsComponent, AsyncPipe, FormActionsComponent, MatFormFieldModule, MatInputModule],
+    imports: [FormsModule, ModalComponent, FormActionsComponent, AsyncPipe, FormActionsComponent, MatFormFieldModule, MatInputModule]
 })
 export class StrongConfirmationModalComponent {
     @Output() confirmed = new EventEmitter<void>();

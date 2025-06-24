@@ -12,7 +12,6 @@ import { SpinnerComponent } from "../../spinner/spinner.component";
     selector: "tp-form-actions",
     templateUrl: "form-actions.component.html",
     styleUrls: ["form-actions.component.scss"],
-    standalone: true,
     imports: [ButtonComponent, SpinnerComponent]
 })
 export class FormActionsComponent {

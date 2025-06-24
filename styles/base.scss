@@ -4,6 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+@use "sass:color";
+
 @use "media";
 @use "primary";
 @use "secondary";
@@ -13,11 +15,11 @@
 
 @use "topbar";
 
-@import "codemirror";
-@import "material";
-@import "prism";
-@import "scrollbars";
-@import "vars";
+@forward "codemirror";
+@forward "material";
+@forward "prism";
+@forward "scrollbars";
+@forward "vars";
 
 html {
     height: 100%;
@@ -263,9 +265,11 @@ button {
 }
 
 @mixin button-primary {
-    border-color: transparent;
-    background: var(--color-green);
-    color: var(--color-purple);
+    & {
+        border-color: transparent;
+        background: var(--color-green);
+        color: var(--color-purple);
+    }
 
     &:not(.td-button-disabled) {
         &:hover,
@@ -274,7 +278,7 @@ button {
         }
 
         &:active {
-            background-color: mix(primary.$green, primary.$purple);
+            background-color: color.mix(primary.$green, primary.$purple);
         }
     }
 }
@@ -505,7 +509,7 @@ button i + span, button span + i {
 .action-bar {
     flex: 0 0 49px;
     display: flex;
-    margin: 16px 0 0 0;
+    padding: 19px 0;
     position: sticky;
     top: 0;
     background-color: primary.$black-purple;

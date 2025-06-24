@@ -14,8 +14,7 @@ import { FormOption } from "../select/form-select.component";
     selector: "tp-form-toggle-group",
     templateUrl: "./form-toggle-group.component.html",
     styleUrls: ["./form-toggle-group.component.scss"],
-    standalone: true,
-    imports: [MatFormFieldModule, MatButtonToggleModule, FormsModule, ReactiveFormsModule],
+    imports: [MatFormFieldModule, MatButtonToggleModule, FormsModule, ReactiveFormsModule]
 })
 export class FormToggleGroupComponent<VALUE, FORM extends { [K in keyof FORM & string]: AbstractControl; } & { [key: string]: AbstractControl }> implements OnInit {
     @Input() form?: FormGroup<FORM>;

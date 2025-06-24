@@ -1,0 +1,24 @@
+@switch (data.nodeKind) {
+  @case ("root") {
+    {{ data.label }}
+  }
+  @case ("concept") {
+    {{ data.concept.label }}@if (data.concept.kind === "attributeType") {<em class="text-muted">, value {{ data.concept.valueType }}</em>}
+  }
+  @case ("link") {
+    @switch (data.linkKind) {
+      @case ("sub") {
+        <p>sub {{ data.supertype.label }}</p>
+      }
+      @case ("owns") {
+        <p>owns {{ data.ownedAttribute.label }}, value {{ data.ownedAttribute.valueType }}</p>
+      }
+      @case ("relates") {
+        <p>relates {{ data.role.label }}</p>
+      }
+      @case ("plays") {
+        <p>plays {{ data.role.label }}</p>
+      }
+    }
+  }
+}

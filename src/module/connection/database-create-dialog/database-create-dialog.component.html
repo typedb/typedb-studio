@@ -6,7 +6,7 @@
       [cancellable]="true" submitText="Create database" [isSubmitting]="isSubmitting$ | async"
       buttonIdPrefix="createDatabaseModal" (cancel)="close()"
     />
-    @if (errorLines) {
+    @if (errorLines.length) {
       <mat-error>@for (line of errorLines; track line) {<p>{{ line }}</p>}</mat-error>
     }
   </tp-form>

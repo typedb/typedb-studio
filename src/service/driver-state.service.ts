@@ -13,7 +13,7 @@ import { ConnectionConfig, databasesSortedByName, DEFAULT_DATABASE_NAME } from "
 import { Transaction } from "../concept/transaction";
 import { TypeDBHttpDriver } from "../framework/typedb-driver";
 import { Database } from "../framework/typedb-driver/database";
-import { ApiResponse, isApiErrorResponse, isOkResponse, QueryResponse, VersionResponse } from "../framework/typedb-driver/response";
+import { ApiOkResponse, ApiResponse, isApiErrorResponse, isOkResponse, QueryResponse, VersionResponse } from "../framework/typedb-driver/response";
 import { requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { AppData } from "./app-data.service";
@@ -309,7 +309,7 @@ export class DriverState {
         ), lockId);
     }
 
-    runBackgroundReadQueries(queries: string[]): Observable<ApiResponse<QueryResponse>> {
+    runBackgroundReadQueries(queries: string[]): Observable<ApiOkResponse<QueryResponse>> {
         const driver = this.requireDriver(`${this.constructor.name}.${this.query.name} > ${this.requireDriver.name}`);
         const databaseName = this.requireDatabase(`${this.constructor.name}.${this.openTransaction.name} > ${this.requireDatabase.name}`).name;
         return fromPromise(driver.openTransaction(databaseName, "read")).pipe(

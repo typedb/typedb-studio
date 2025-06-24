@@ -40,12 +40,11 @@ const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
     selector: "tp-connection-creator",
     templateUrl: "./connection-creator.component.html",
     styleUrls: ["./connection-creator.component.scss"],
-    standalone: true,
     imports: [
         PageScaffoldComponent, AsyncPipe, MatFormFieldModule, MatSelectModule, MatTooltipModule,
         ReactiveFormsModule, FormInputComponent, FormComponent, FormActionsComponent,
         FormToggleGroupComponent, MatButtonModule, MatInputModule, RichTooltipDirective, MatCheckboxModule,
-    ],
+    ]
 })
 export class ConnectionCreatorComponent {
 

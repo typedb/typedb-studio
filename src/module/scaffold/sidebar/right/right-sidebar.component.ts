@@ -16,11 +16,7 @@ import { MatButtonModule } from "@angular/material/button";
     selector: "tp-right-sidebar",
     templateUrl: "./right-sidebar.component.html",
     styleUrls: ["./right-sidebar.component.scss"],
-    standalone: true,
-    imports: [
-        ModalComponent, AsyncPipe, MatSelectModule,
-        MatDividerModule, MatButtonModule, ButtonComponent
-    ],
+    imports: [MatSelectModule, MatDividerModule, MatButtonModule, ButtonComponent]
 })
 export class RightSidebarComponent {
     constructor() {}
