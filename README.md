@@ -45,7 +45,7 @@ TypeDB Studio is a Web application powered by [Angular](https://angular.dev), wi
 
 There is a wide variety of Web toolchains; the process below is one way to compile TypeDB Studio from source.
 
-### Install build tools
+### Install toolchains and dependencies
 
 1. Install [nvm](https://github.com/nvm-sh/nvm) on MacOS or Linux, [nvm-windows](https://github.com/coreybutler/nvm-windows) on Windows.
 2. `nvm install 22.16.0`
@@ -53,39 +53,28 @@ There is a wide variety of Web toolchains; the process below is one way to compi
 4. `npm install --global corepack@0.17.0`
 5. `corepack enable`
 6. `corepack prepare pnpm@10.12.1 --activate`
-   
-### Install dependencies
+7. `pnpm i -g @angular/cli`
+8. `pnpm i`
 
-```sh
-pnpm i
-```
-
-### Install Angular CLI globally
-
-```sh
-pnpm install -g @angular/cli
-```
-
-### Launch Angular server for local development
+### Launch local development server (Angular)
 
 ```sh
 ng serve --open
 ```
 
-### (Optional) Launch Tauri server for local development of desktop app
+### Other build commands
 
+Launch Tauri server for local development of desktop app:
 ```sh
 npx tauri dev
 ```
 
-### Build web app distribution
-
+Build web app distribution:
 ```sh
 pnpm build
 ```
 
-### Build desktop app distribution
-
+Build desktop app distribution:
 ```sh
 npx tauri build
 ```
