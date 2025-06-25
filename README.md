@@ -55,6 +55,7 @@ There is a wide variety of Web toolchains; the process below is one way to compi
 6. `corepack prepare pnpm@10.12.1 --activate`
 7. `pnpm i -g @angular/cli`
 8. `pnpm i`
+9. (Optional) Install [Rust](https://www.rust-lang.org/tools/install). Only required if you want to compile as a desktop application.
 
 ### Launch local development server (Angular)
 
