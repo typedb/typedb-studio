@@ -1,5 +1,5 @@
 [build]
-command = "ldd --version && pnpm run build"
+command = "pnpm run build"
 publish = "dist/typedb-studio/browser"
 
 [build.environment]
