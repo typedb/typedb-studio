@@ -5,7 +5,8 @@
  */
 
 import { AsyncPipe } from "@angular/common";
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -40,7 +41,9 @@ export class SchemaToolComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     private canvasEl$!: Observable<HTMLElement>;
 
-    constructor(protected state: SchemaState, public driver: DriverState, private appData: AppData, private snackbar: SnackbarService) {
+    constructor(
+        protected state: SchemaState, public driver: DriverState, private appData: AppData,
+        private snackbar: SnackbarService, private destroyRef: DestroyRef) {
     }
 
     ngOnInit() {
@@ -64,7 +67,11 @@ export class SchemaToolComponent implements OnInit, AfterViewInit, OnDestroy {
                 this.state.visualiser.visualiser.sigma.scheduleRender();
             }
         });
-        this.state.queryResponses$.pipe(filter(x => !!x), map(x => x!)).subscribe((queryResponses) => {
+        this.state.queryResponses$.pipe(
+            takeUntilDestroyed(this.destroyRef),
+            filter(x => !!x),
+            map(x => x!)
+        ).subscribe((queryResponses) => {
             queryResponses.forEach(x => this.state.visualiser.push(x));
         });
     }

@@ -134,20 +134,15 @@ article {
 }
 
 .tp-bento-container {
-    align-items: center;
     gap: 28px;
 }
 
-.tp-bento-container.row {
-    > * {
-        flex: 1;
-    }
-}
-
-.tp-bento-box > div {
+.tp-additional-resources-container {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     gap: 12px;
+    width: 100%;
 }
 
 .tp-icon-card {

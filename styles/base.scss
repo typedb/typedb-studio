@@ -15,7 +15,6 @@
 
 @use "topbar";
 
-@forward "codemirror";
 @forward "material";
 @forward "prism";
 @forward "scrollbars";
@@ -84,8 +83,48 @@ article {
     flex-direction: column;
     gap: 12px;
 
-    &.hoverable:hover {
+    $subtle-opacity: 0.45;
+    &.subtle {
+        @include shapes.light-source-gradient(
+                rgba(primary.$purple, $subtle-opacity),
+                rgba(primary.$deep-purple, $subtle-opacity),
+        );
+        border-color: rgba(primary.$light-purple, $subtle-opacity);
+    }
+
+    &.hoverable:hover:not(:disabled) {
         @include shapes.light-source-gradient(rgba(primary.$light-purple, 0.6), primary.$purple);
+
+        &.subtle {
+            @include shapes.light-source-gradient(
+                    rgba(rgba(primary.$light-purple, 0.6), $subtle-opacity),
+                    rgba(primary.$purple, $subtle-opacity)
+            );
+        }
+    }
+
+    &.with-bottom-bar {
+        padding-bottom: 0;
+    }
+
+    .tp-bento-bottom-bar {
+        width: calc(100% + 2 * shapes.$card-padding);
+        text-align: right;
+        border-top: shapes.$border;
+        border-color: inherit;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        padding-right: shapes.$card-padding;
+        position: relative;
+        right: calc(-1 * shapes.$card-padding);
+        margin-top: 12px;
+        align-self: flex-end;
+        transition: background 100ms;
+    }
+
+    a.tp-bento-bottom-bar:hover {
+        color: primary.$green;
+        background: primary.$purple;
     }
 }
 
@@ -115,8 +154,8 @@ h5 {
 }
 
 .text-p1 {
-    font-size: var(--font-size-p1);
-    line-height: var(--line-height-p1);
+    font-size: 18px;
+    line-height: 26px;
 }
 
 .text-p2 {
@@ -318,7 +357,7 @@ form, .form {
     color: secondary.$light-grey;
     font-size: 14px;
     text-align: start;
-    margin: 12px 0;
+    margin: 11px 0;
 }
 
 input, select, textarea {
@@ -334,6 +373,18 @@ th {
 
 .flex-spacer {
     flex-grow: 1;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.flex-2 {
+    flex: 2;
+}
+
+.flex-3 {
+    flex: 3;
 }
 
 .invisible {
@@ -552,15 +603,11 @@ tp-form .form-row, .form .form-row {
 tp-form-actions, .tp-form-actions {
     display: flex;
     flex-flow: row wrap;
-    justify-content: space-between;
+    justify-content: flex-end;
     width: 100%;
     column-gap: 14px;
     row-gap: 8px;
     margin-top: 20px;
-
-    //tp-button {
-    //    flex: 1;
-    //}
 }
 
 .tp-password-input-suffix {
@@ -592,6 +639,16 @@ tp-form-input.capitalized-field {
     text-transform: capitalize;
 }
 
+.modal-content-wrapper {
+    @include typography.p3;
+    color: primary.$grey;
+    width: 100%;
+
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .help-tooltip-button {
     width: 44px;
     height: 44px;
@@ -603,11 +660,17 @@ tp-form-input.capitalized-field {
     cursor: pointer;
 }
 
+.info-block {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 button.dangerous {
     color: primary.$red;
 }
 
-.ts-sidebar-org-selection-panel.mat-mdc-select-panel {
+.tp-sidebar-team-selection-panel.mat-mdc-select-panel {
     background: rgba(primary.$light-purple, 0.3);
     backdrop-filter: blur(10px);
 }
@@ -619,4 +682,48 @@ tp-gcp-marketplace-integration, tp-aws-marketplace-integration, tp-azure-marketp
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+.tp-liveness-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    tp-status-indicator {
+        font-size: 8px;
+        width: 8px;
+        height: 8px;
+
+        &.ok {
+            animation: beacon 2s ease-in-out 0s infinite;
+
+            @keyframes beacon {
+                0% { opacity: 1 }
+                10% { opacity: 1 }
+                50% { opacity: 0 }
+                90% { opacity: 1 }
+                100% { opacity: 1 }
+            }
+        }
+    }
+
+    p {
+        color: primary.$grey;
+
+        &.ok {
+            color: primary.$green;
+        }
+
+        &.loading {
+            color: primary.$grey;
+        }
+
+        &.error {
+            color: primary.$red;
+        }
+
+        &.inactive {
+            color: secondary.$light-grey;
+        }
+    }
 }
