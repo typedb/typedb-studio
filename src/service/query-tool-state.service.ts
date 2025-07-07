@@ -58,7 +58,7 @@ export class QueryToolState {
     readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
 
-    constructor(private driver: DriverState, private schema: SchemaState, private snackbar: SnackbarService) {
+    constructor(private driver: DriverState, public schema: SchemaState, private snackbar: SnackbarService) {
         (window as any)["queryToolState"] = this;
         this.outputDisabled$.subscribe((disabled) => {
             if (disabled) this.outputTypeControl.disable();
