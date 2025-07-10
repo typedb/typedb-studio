@@ -14,7 +14,14 @@ import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
 import { newVisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
 import { Concept, Value } from "../framework/typedb-driver/concept";
-import { ApiResponse, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
+import {
+    ApiResponse,
+    ConceptDocument,
+    ConceptRow,
+    ConceptRowAnswer,
+    isApiErrorResponse,
+    QueryResponse
+} from "../framework/typedb-driver/response";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
 import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from "./schema-state.service";
@@ -346,7 +353,7 @@ export class LogOutputState {
                 if (res.ok.answers.length) {
                     const varNames = Object.keys(res.ok.answers[0]);
                     if (varNames.length) {
-                        res.ok.answers.forEach(((x, idx) => this.appendConceptRow(x.data, idx === 0)));
+                        this.appendConceptRows(res.ok.answers);
                     } else this.appendLines(`No columns to show.`);
                 }
 
@@ -377,11 +384,17 @@ export class LogOutputState {
         }
     }
 
-    private appendConceptRow(row: ConceptRow, isFirst: boolean) {
-        const columnNames = Object.keys(row);
-        const variableColumnWidth = columnNames.length > 0 ? Math.max(...columnNames.map(s => s.length)) : 0;
-        if (isFirst) this.appendLines(this.lineDashSeparator(variableColumnWidth));
-        this.appendLines(this.conceptRowDisplayString(row, variableColumnWidth));
+    private appendConceptRows(rowAnswers: ConceptRowAnswer[]) {
+        let lines: string[] = [];
+        rowAnswers.forEach(((rowAnswer, idx) => {
+            let row = rowAnswer.data;
+            let isFirst = (idx === 0);
+            const columnNames = Object.keys(row);
+            const variableColumnWidth = columnNames.length > 0 ? Math.max(...columnNames.map(s => s.length)) : 0;
+            if (isFirst) lines.push(this.lineDashSeparator(variableColumnWidth));
+            lines.push(this.conceptRowDisplayString(row, variableColumnWidth));
+        }));
+        this.appendLines(...lines);
     }
 
     private conceptRowDisplayString(row: ConceptRow, variableColumnWidth: number) {
