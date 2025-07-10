@@ -358,7 +358,7 @@ export class LogOutputState {
                         const variableColumnWidth = columnNames.length > 0 ? Math.max(...columnNames.map(s => s.length)) : 0;
                         res.ok.answers.forEach((rowAnswer, idx) => {
                             if (idx == 0) lines.push(this.lineDashSeparator(variableColumnWidth));
-                            lines.push(this.formatConceptRow(rowAnswer.data, variableColumnWidth))
+                            lines.push(this.conceptRowDisplayString(rowAnswer.data, variableColumnWidth))
                         })
                     } else lines.push(`No columns to show.`);
                 }
@@ -370,7 +370,7 @@ export class LogOutputState {
                 lines.push(`Finished ${res.ok.queryType} query compilation and validation...`);
                 if (res.ok.queryType === "write") lines.push(`Finished writes. Printing documents...`);
                 else lines.push(`Printing documents...`);
-                res.ok.answers.forEach(x => lines.push(this.formatConceptDocument(x)));
+                res.ok.answers.forEach(x => lines.push(this.conceptDocumentDisplayString(x)));
                 lines.push(`Finished. Total documents: ${res.ok.answers.length}`);
                 break;
             }
@@ -381,16 +381,12 @@ export class LogOutputState {
         this.appendBlankLine();
     }
 
-    private formatConceptDocument(document: ConceptDocument): string {
+    private conceptDocumentDisplayString(document: ConceptDocument): string {
         try {
             return JSON.stringify(document, null, 2);
         } catch (err) {
             return `Error trying to print JSON: ${err}`;
         }
-    }
-
-    private formatConceptRow(row: ConceptRow, variableColumnWidth: number): string {
-        return this.conceptRowDisplayString(row, variableColumnWidth);
     }
 
     private conceptRowDisplayString(row: ConceptRow, variableColumnWidth: number) {
