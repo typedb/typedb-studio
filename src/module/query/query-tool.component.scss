@@ -216,6 +216,71 @@ button {
     }
 }
 
+.answers-table-container {
+    .table-pagination-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 16px;
+        border-bottom: 1px solid primary.$light-purple;
+        background: primary.$purple;
+        font-size: 14px;
+
+        .pagination-info {
+            color: secondary.$white;
+            font-weight: typography.$regular;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+
+            .page-indicator {
+                color: secondary.$white;
+                margin: 0 12px;
+                font-weight: typography.$medium;
+            }
+
+            button {
+                min-width: 64px;
+                height: 32px;
+                font-size: 12px;
+            }
+        }
+
+        .page-size-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            label {
+                color: secondary.$white;
+                font-size: 12px;
+            }
+
+            select {
+                background: primary.$black-purple;
+                color: secondary.$white;
+                border: 1px solid primary.$light-purple;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 12px;
+
+                option {
+                    background: primary.$black-purple;
+                    color: secondary.$white;
+                }
+            }
+        }
+    }
+
+    table {
+        overflow: auto;
+        max-height: calc(100% - 50px); // Account for pagination controls
+    }
+}
+
 .status-text-container {
     width: 100%;
     height: 100%;

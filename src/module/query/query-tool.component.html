@@ -57,7 +57,7 @@
           <i class="fa-light fa-arrow-progress"></i>
           <h4>Output</h4>
           <div>
-            <mat-button-toggle-group [formControl]="state.outputTypeControl" [matTooltip]="(state.outputDisabledReason$ | async) || ''" matTooltipPosition="below">
+            <mat-button-toggle-group [formControl]="state.outputTypeControl" [matTooltip]="(state.outputDisabledReason$ | async) || ''" matTooltipPosition="below" (valueChange)="state.onOutputTypeChange($event)">
               @for (outputType of state.outputTypes; track outputType) {
                 <mat-button-toggle [value]="outputType">{{ outputType }}</mat-button-toggle>
               }
@@ -75,6 +75,27 @@
               <div class="answers-container answers-table-container">
                 @switch (state.tableOutput.status) {
                   @case ("ok") {
+                    <div class="table-pagination-controls">
+                      <div class="pagination-info">
+                        Showing {{ (state.tableOutput.currentPage * state.tableOutput.pageSize) + 1 }} - {{ Math.min((state.tableOutput.currentPage + 1) * state.tableOutput.pageSize, state.tableOutput.totalRows) }} of {{ state.tableOutput.totalRows }} rows
+                      </div>
+                      <div class="pagination-buttons">
+                        <button mat-stroked-button [disabled]="state.tableOutput.currentPage === 0" (click)="state.tableOutput.setPage(0)">First</button>
+                        <button mat-stroked-button [disabled]="state.tableOutput.currentPage === 0" (click)="state.tableOutput.setPage(state.tableOutput.currentPage - 1)">Previous</button>
+                        <span class="page-indicator">Page {{ state.tableOutput.currentPage + 1 }} of {{ state.tableOutput.totalPages }}</span>
+                        <button mat-stroked-button [disabled]="state.tableOutput.currentPage >= state.tableOutput.totalPages - 1" (click)="state.tableOutput.setPage(state.tableOutput.currentPage + 1)">Next</button>
+                        <button mat-stroked-button [disabled]="state.tableOutput.currentPage >= state.tableOutput.totalPages - 1" (click)="state.tableOutput.setPage(state.tableOutput.totalPages - 1)">Last</button>
+                      </div>
+                      <div class="page-size-controls">
+                        <label>Rows per page:</label>
+                        <select [value]="state.tableOutput.pageSize" (change)="state.tableOutput.setPageSize(+$event.target.value)">
+                          <option value="50">50</option>
+                          <option value="100">100</option>
+                          <option value="250">250</option>
+                          <option value="500">500</option>
+                        </select>
+                      </div>
+                    </div>
                     <table mat-table [dataSource]="state.tableOutput.data$" matSort (matSortChange)="state.tableOutput.handleMatSortChange($event)">
                       @for (column of state.tableOutput.columns; track column) {
                         <ng-container [matColumnDef]="column">

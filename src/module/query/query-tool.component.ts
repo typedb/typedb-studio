@@ -135,6 +135,7 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     readonly isQueryRun = isQueryRun;
     readonly isTransactionOperation = isTransactionOperation;
     readonly JSON = JSON;
+    readonly Math = Math;
     readonly TypeQL = TypeQL;
     readonly linter = otherExampleLinter;
     readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;

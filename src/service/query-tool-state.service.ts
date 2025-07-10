@@ -124,7 +124,7 @@ export class QueryToolState {
         this.logOutput.appendQueryResult(res);
         this.tableOutput.push(res);
         this.graphOutput.push(res);
-        this.rawOutput.push(JSON.stringify(res, null, 2));
+        this.rawOutput.pushResponse(res);
     }
 
     private outputQueryResponseNoAnswers() {
@@ -133,6 +133,14 @@ export class QueryToolState {
         this.tableOutput.status = "answerOutputDisabled";
         this.graphOutput.status = "answerOutputDisabled";
         this.rawOutput.push(SUCCESS_RAW);
+    }
+
+    onOutputTypeChange(outputType: OutputType) {
+        this.outputTypeControl.patchValue(outputType);
+        // Trigger raw JSON generation if switching to raw view
+        if (outputType === 'raw') {
+            this.rawOutput.generateRawOutput();
+        }
     }
 }
 
@@ -346,7 +354,8 @@ export class LogOutputState {
                 if (res.ok.answers.length) {
                     const varNames = Object.keys(res.ok.answers[0]);
                     if (varNames.length) {
-                        res.ok.answers.forEach(((x, idx) => this.appendConceptRow(x.data, idx === 0)));
+                        // Batch process all rows instead of individual DOM updates
+                        this.appendConceptRowsBatch(res.ok.answers.map(x => x.data));
                     } else this.appendLines(`No columns to show.`);
                 }
 
@@ -366,6 +375,24 @@ export class LogOutputState {
         }
 
         this.appendBlankLine();
+    }
+
+    private appendConceptRowsBatch(rows: ConceptRow[]) {
+        if (rows.length === 0) return;
+        
+        const columnNames = Object.keys(rows[0]);
+        const variableColumnWidth = columnNames.length > 0 ? Math.max(...columnNames.map(s => s.length)) : 0;
+        
+        // Pre-build all row strings
+        const allRowStrings: string[] = [];
+        allRowStrings.push(this.lineDashSeparator(variableColumnWidth));
+        
+        for (const row of rows) {
+            allRowStrings.push(this.conceptRowDisplayString(row, variableColumnWidth));
+        }
+        
+        // Single DOM update with all rows
+        this.appendLines(...allRowStrings);
     }
 
     private appendConceptDocument(document: ConceptDocument) {
@@ -409,9 +436,14 @@ type TableRow = { [column: string]: string };
 export class TableOutputState {
 
     status: TableOutputStatus = "ok";
+    private _allData: TableRow[] = [];
     private _data$ = new BehaviorSubject<TableRow[]>([]);
     private _columns: string[] = [];
     private _displayedColumns: string[] = [];
+    
+    // Pagination state
+    private _pageSize = 100;
+    private _currentPage = 0;
 
     constructor() {}
 
@@ -425,6 +457,41 @@ export class TableOutputState {
 
     get displayedColumns(): string[] {
         return this._displayedColumns;
+    }
+
+    get pageSize(): number {
+        return this._pageSize;
+    }
+
+    get currentPage(): number {
+        return this._currentPage;
+    }
+
+    get totalRows(): number {
+        return this._allData.length;
+    }
+
+    get totalPages(): number {
+        return Math.ceil(this._allData.length / this._pageSize);
+    }
+
+    setPage(page: number) {
+        if (page < 0 || page >= this.totalPages) return;
+        this._currentPage = page;
+        this.updateDisplayedData();
+    }
+
+    setPageSize(pageSize: number) {
+        this._pageSize = pageSize;
+        this._currentPage = 0;
+        this.updateDisplayedData();
+    }
+
+    private updateDisplayedData() {
+        const startIndex = this._currentPage * this._pageSize;
+        const endIndex = Math.min(startIndex + this._pageSize, this._allData.length);
+        const pageData = this._allData.slice(startIndex, endIndex);
+        this._data$.next(pageData);
     }
 
     handleMatSortChange(e: any) {
@@ -479,7 +546,8 @@ export class TableOutputState {
         const tableRows: TableRow[] = rows.map(x => Object.fromEntries(Object.entries(x).map(
             ([varName, concept]) => [varName, this.conceptDisplayString(concept)]
         )));
-        this.appendRows(...tableRows);
+        this._allData.push(...tableRows); // Add all data to the full dataset
+        this.updateDisplayedData(); // Update displayed data based on current page
     }
 
     private appendColumns(...columns: string[]) {
@@ -488,8 +556,8 @@ export class TableOutputState {
     }
 
     private appendRows(...rows: { [column: string]: string }[]) {
-        this._data$.value.push(...rows);
-        this._data$.next(this._data$.value);
+        this._allData.push(...rows); // Add all data to the full dataset
+        this.updateDisplayedData(); // Update displayed data based on current page
     }
 
     private conceptDisplayString(concept: Concept | undefined): string {
@@ -519,7 +587,9 @@ export class TableOutputState {
         this.clearStatus();
         this.columns.length = 0;
         this.displayedColumns.length = 0;
-        this._data$.next([]);
+        this._allData.length = 0; // Clear full dataset
+        this._data$.next([]); // Clear displayed data
+        this._currentPage = 0; // Reset page
     }
 }
 
@@ -604,14 +674,44 @@ export class GraphOutputState {
 export class RawOutputState {
 
     control = new FormControl("", {nonNullable: true});
+    private _rawResponse: ApiResponse<QueryResponse> | null = null;
+    private _isLargeResponse = false;
 
     constructor() {}
 
     push(value: string) {
         this.control.patchValue(value);
+        this._rawResponse = null;
+        this._isLargeResponse = false;
+    }
+
+    pushResponse(response: ApiResponse<QueryResponse>) {
+        this._rawResponse = response;
+        // Check if response is large (>1000 rows)
+        this._isLargeResponse = !isApiErrorResponse(response) && 
+            response.ok.answerType === "conceptRows" && 
+            response.ok.answers.length > 1000;
+
+        if (this._isLargeResponse) {
+            // Show placeholder for large responses
+            this.control.patchValue("Large response detected. JSON will be generated when Raw view is selected.");
+        } else {
+            // Small responses can be stringified immediately
+            this.control.patchValue(JSON.stringify(response, null, 2));
+        }
+    }
+
+    generateRawOutput() {
+        if (this._rawResponse && this._isLargeResponse) {
+            // Generate the JSON only when requested
+            this.control.patchValue(JSON.stringify(this._rawResponse, null, 2));
+            this._isLargeResponse = false; // Mark as generated
+        }
     }
 
     clear() {
         this.control.patchValue(``);
+        this._rawResponse = null;
+        this._isLargeResponse = false;
     }
 }
