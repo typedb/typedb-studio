@@ -53,12 +53,12 @@ There is a wide variety of Web toolchains; the process below is one way to compi
 First, install [nvm](https://github.com/nvm-sh/nvm) on MacOS or Linux, [nvm-windows](https://github.com/coreybutler/nvm-windows) on Windows. Then:
 
 ```sh
-nvm install 22.16.0`
-nvm use 22.16.0`
-npm install --global corepack@0.17.0`
-corepack enable`
-corepack prepare pnpm@10.12.1 --activate`
-pnpm i -g @angular/cli`
+nvm install 22.16.0
+nvm use 22.16.0
+npm install --global corepack@0.17.0
+corepack enable
+corepack prepare pnpm@10.12.1 --activate
+pnpm i -g @angular/cli
 pnpm i
 ```
 
