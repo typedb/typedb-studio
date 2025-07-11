@@ -333,68 +333,60 @@ export class LogOutputState {
     }
 
     appendQueryResult(res: ApiResponse<QueryResponse>) {
+        let lines: string[] = [];
         if (isApiErrorResponse(res)) {
-            this.appendLines(`${RESULT}${ERROR}`, ``, res.err.message);
+            lines.push(`${RESULT}${ERROR}`, ``, res.err.message);
             return;
         }
 
-        this.appendLines(`${RESULT}${SUCCESS}`, ``);
+        lines.push(`${RESULT}${SUCCESS}`, ``);
 
         switch (res.ok.answerType) {
             case "ok": {
-                this.appendLines(`Finished ${res.ok.queryType} query.`);
+                lines.push(`Finished ${res.ok.queryType} query.`);
                 break;
             }
             case "conceptRows": {
-                this.appendLines(`Finished ${res.ok.queryType} query compilation and validation...`);
-                if (res.ok.queryType === "write") this.appendLines(`Finished writes. Printing rows...`);
-                else this.appendLines(`Printing rows...`);
+                lines.push(`Finished ${res.ok.queryType} query compilation and validation...`);
+                if (res.ok.queryType === "write") lines.push(`Finished writes. Printing rows...`);
+                else lines.push(`Printing rows...`);
 
                 if (res.ok.answers.length) {
                     const varNames = Object.keys(res.ok.answers[0]);
                     if (varNames.length) {
-                        this.appendConceptRows(res.ok.answers);
-                    } else this.appendLines(`No columns to show.`);
+                        const columnNames = Object.keys(res.ok.answers[0].data);
+                        const variableColumnWidth = columnNames.length > 0 ? Math.max(...columnNames.map(s => s.length)) : 0;
+                        res.ok.answers.forEach((rowAnswer, idx) => {
+                            if (idx == 0) lines.push(this.lineDashSeparator(variableColumnWidth));
+                            lines.push(this.conceptRowDisplayString(rowAnswer.data, variableColumnWidth))
+                        })
+                    } else lines.push(`No columns to show.`);
                 }
 
-                this.appendLines(`Finished. Total rows: ${res.ok.answers.length}`);
+                lines.push(`Finished. Total rows: ${res.ok.answers.length}`);
                 break;
             }
             case "conceptDocuments": {
-                this.appendLines(`Finished ${res.ok.queryType} query compilation and validation...`);
-                if (res.ok.queryType === "write") this.appendLines(`Finished writes. Printing documents...`);
-                else this.appendLines(`Printing documents...`);
-                res.ok.answers.forEach(x => this.appendConceptDocument(x));
-                this.appendLines(`Finished. Total documents: ${res.ok.answers.length}`);
+                lines.push(`Finished ${res.ok.queryType} query compilation and validation...`);
+                if (res.ok.queryType === "write") lines.push(`Finished writes. Printing documents...`);
+                else lines.push(`Printing documents...`);
+                res.ok.answers.forEach(x => lines.push(this.conceptDocumentDisplayString(x)));
+                lines.push(`Finished. Total documents: ${res.ok.answers.length}`);
                 break;
             }
             default:
                 throw INTERNAL_ERROR;
         }
-
+        this.appendLines(...lines);
         this.appendBlankLine();
     }
 
-    private appendConceptDocument(document: ConceptDocument) {
+    private conceptDocumentDisplayString(document: ConceptDocument): string {
         try {
-            const pretty = JSON.stringify(document, null, 2);
-            this.appendLines(pretty);
+            return JSON.stringify(document, null, 2);
         } catch (err) {
-            this.appendLines(`Error trying to print JSON: ${err}`);
+            return `Error trying to print JSON: ${err}`;
         }
-    }
-
-    private appendConceptRows(rowAnswers: ConceptRowAnswer[]) {
-        let lines: string[] = [];
-        rowAnswers.forEach(((rowAnswer, idx) => {
-            let row = rowAnswer.data;
-            let isFirst = (idx === 0);
-            const columnNames = Object.keys(row);
-            const variableColumnWidth = columnNames.length > 0 ? Math.max(...columnNames.map(s => s.length)) : 0;
-            if (isFirst) lines.push(this.lineDashSeparator(variableColumnWidth));
-            lines.push(this.conceptRowDisplayString(row, variableColumnWidth));
-        }));
-        this.appendLines(...lines);
     }
 
     private conceptRowDisplayString(row: ConceptRow, variableColumnWidth: number) {
