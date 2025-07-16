@@ -14,7 +14,14 @@ import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
 import { newVisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
 import { Concept, Value } from "../framework/typedb-driver/concept";
-import { ApiResponse, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
+import {
+    ApiResponse,
+    ConceptDocument,
+    ConceptRow,
+    ConceptRowAnswer,
+    isApiErrorResponse,
+    QueryResponse
+} from "../framework/typedb-driver/response";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
 import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from "./schema-state.service";
@@ -326,62 +333,60 @@ export class LogOutputState {
     }
 
     appendQueryResult(res: ApiResponse<QueryResponse>) {
+        let lines: string[] = [];
         if (isApiErrorResponse(res)) {
-            this.appendLines(`${RESULT}${ERROR}`, ``, res.err.message);
+            lines.push(`${RESULT}${ERROR}`, ``, res.err.message);
             return;
         }
 
-        this.appendLines(`${RESULT}${SUCCESS}`, ``);
+        lines.push(`${RESULT}${SUCCESS}`, ``);
 
         switch (res.ok.answerType) {
             case "ok": {
-                this.appendLines(`Finished ${res.ok.queryType} query.`);
+                lines.push(`Finished ${res.ok.queryType} query.`);
                 break;
             }
             case "conceptRows": {
-                this.appendLines(`Finished ${res.ok.queryType} query compilation and validation...`);
-                if (res.ok.queryType === "write") this.appendLines(`Finished writes. Printing rows...`);
-                else this.appendLines(`Printing rows...`);
+                lines.push(`Finished ${res.ok.queryType} query compilation and validation...`);
+                if (res.ok.queryType === "write") lines.push(`Finished writes. Printing rows...`);
+                else lines.push(`Printing rows...`);
 
                 if (res.ok.answers.length) {
                     const varNames = Object.keys(res.ok.answers[0]);
                     if (varNames.length) {
-                        res.ok.answers.forEach(((x, idx) => this.appendConceptRow(x.data, idx === 0)));
-                    } else this.appendLines(`No columns to show.`);
+                        const columnNames = Object.keys(res.ok.answers[0].data);
+                        const variableColumnWidth = columnNames.length > 0 ? Math.max(...columnNames.map(s => s.length)) : 0;
+                        res.ok.answers.forEach((rowAnswer, idx) => {
+                            if (idx == 0) lines.push(this.lineDashSeparator(variableColumnWidth));
+                            lines.push(this.conceptRowDisplayString(rowAnswer.data, variableColumnWidth))
+                        })
+                    } else lines.push(`No columns to show.`);
                 }
 
-                this.appendLines(`Finished. Total rows: ${res.ok.answers.length}`);
+                lines.push(`Finished. Total rows: ${res.ok.answers.length}`);
                 break;
             }
             case "conceptDocuments": {
-                this.appendLines(`Finished ${res.ok.queryType} query compilation and validation...`);
-                if (res.ok.queryType === "write") this.appendLines(`Finished writes. Printing documents...`);
-                else this.appendLines(`Printing documents...`);
-                res.ok.answers.forEach(x => this.appendConceptDocument(x));
-                this.appendLines(`Finished. Total documents: ${res.ok.answers.length}`);
+                lines.push(`Finished ${res.ok.queryType} query compilation and validation...`);
+                if (res.ok.queryType === "write") lines.push(`Finished writes. Printing documents...`);
+                else lines.push(`Printing documents...`);
+                res.ok.answers.forEach(x => lines.push(this.conceptDocumentDisplayString(x)));
+                lines.push(`Finished. Total documents: ${res.ok.answers.length}`);
                 break;
             }
             default:
                 throw INTERNAL_ERROR;
         }
-
+        this.appendLines(...lines);
         this.appendBlankLine();
     }
 
-    private appendConceptDocument(document: ConceptDocument) {
+    private conceptDocumentDisplayString(document: ConceptDocument): string {
         try {
-            const pretty = JSON.stringify(document, null, 2);
-            this.appendLines(pretty);
+            return JSON.stringify(document, null, 2);
         } catch (err) {
-            this.appendLines(`Error trying to print JSON: ${err}`);
+            return `Error trying to print JSON: ${err}`;
         }
-    }
-
-    private appendConceptRow(row: ConceptRow, isFirst: boolean) {
-        const columnNames = Object.keys(row);
-        const variableColumnWidth = columnNames.length > 0 ? Math.max(...columnNames.map(s => s.length)) : 0;
-        if (isFirst) this.appendLines(this.lineDashSeparator(variableColumnWidth));
-        this.appendLines(this.conceptRowDisplayString(row, variableColumnWidth));
     }
 
     private conceptRowDisplayString(row: ConceptRow, variableColumnWidth: number) {

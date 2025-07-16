@@ -675,6 +675,10 @@ button.dangerous {
     backdrop-filter: blur(10px);
 }
 
+.tp-sidenav-container.collapsed ts-sidebar-link i.fa-arrow-up-right-from-square {
+    transform: translate(-20px,-10px) scale(0.5);
+}
+
 tp-setup, tp-setup-marketplace, tp-setup-project,
 tp-gcp-marketplace-integration, tp-aws-marketplace-integration, tp-azure-marketplace-integration {
     height: 100%;

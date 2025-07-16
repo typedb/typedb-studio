@@ -84,38 +84,8 @@ button {
     overflow: auto;
 }
 
-.answers-text-container {
-    mat-form-field {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    ::ng-deep .mdc-text-field,
-    ::ng-deep .mat-mdc-form-field-flex,
-    ::ng-deep .mat-mdc-form-field-infix {
-        width: 100%;
-        height: 100%;
-        --mdc-outlined-text-field-container-shape: 0;
-    }
-
-    ::ng-deep .mdc-notched-outline {
-        display: none;
-    }
-
-    ::ng-deep .mdc-text-field {
-        --mdc-outlined-text-field-input-text-color: #{secondary.$pink};
-    }
-
-    ::ng-deep .mat-mdc-form-field:not(.form-field-dense) .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix {
-        padding: 4px 2px 4px 6px;
-    }
-
-    .answers-text-box {
-        height: 100% !important;
-        resize: none;
-        @include typography.code;
-    }
+.answers-structure-container {
+    overflow: hidden;
 }
 
 .status-text-container {

@@ -50,15 +50,19 @@ There is a wide variety of Web toolchains; the process below is one way to compi
 
 ### Install toolchains and dependencies
 
-1. Install [nvm](https://github.com/nvm-sh/nvm) on MacOS or Linux, [nvm-windows](https://github.com/coreybutler/nvm-windows) on Windows.
-2. `nvm install 22.16.0`
-3. `nvm use 22.16.0`
-4. `npm install --global corepack@0.17.0`
-5. `corepack enable`
-6. `corepack prepare pnpm@10.12.1 --activate`
-7. `pnpm i -g @angular/cli`
-8. `pnpm i`
-9. (Optional) Install [Rust](https://www.rust-lang.org/tools/install). Only required if you want to compile as a desktop application.
+First, install [nvm](https://github.com/nvm-sh/nvm) on MacOS or Linux, [nvm-windows](https://github.com/coreybutler/nvm-windows) on Windows. Then:
+
+```sh
+nvm install 22.16.0
+nvm use 22.16.0
+npm install --global corepack@0.17.0
+corepack enable
+corepack prepare pnpm@10.12.1 --activate
+pnpm i -g @angular/cli
+pnpm i
+```
+
+(Optional) Install [Rust](https://www.rust-lang.org/tools/install). Only required if you want to compile as a desktop application.
 
 ### Launch local development server (Angular)
 

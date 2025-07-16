@@ -180,6 +180,11 @@ button {
     position: absolute;
     inset: 0;
     overflow: auto;
+    scrollbar-gutter: stable;
+}
+
+.answers-structure-container {
+    overflow: hidden;
 }
 
 .answers-text-container {
