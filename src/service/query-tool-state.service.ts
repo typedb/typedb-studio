@@ -333,12 +333,12 @@ export class LogOutputState {
     }
 
     appendQueryResult(res: ApiResponse<QueryResponse>) {
-        let lines: string[] = [];
         if (isApiErrorResponse(res)) {
             this.appendLines(`${RESULT}${ERROR}`, ``, res.err.message);
             return;
         }
 
+        let lines: string[] = [];
         lines.push(`${RESULT}${SUCCESS}`, ``);
 
         switch (res.ok.answerType) {
