@@ -335,7 +335,7 @@ export class LogOutputState {
     appendQueryResult(res: ApiResponse<QueryResponse>) {
         let lines: string[] = [];
         if (isApiErrorResponse(res)) {
-            lines.push(`${RESULT}${ERROR}`, ``, res.err.message);
+            this.appendLines(`${RESULT}${ERROR}`, ``, res.err.message);
             return;
         }
 
