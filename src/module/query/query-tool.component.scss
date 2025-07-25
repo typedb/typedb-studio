@@ -199,6 +199,7 @@ button {
     ::ng-deep .mat-mdc-form-field-infix {
         width: 100%;
         height: 100%;
+        padding: 0;
         --mdc-outlined-text-field-container-shape: 0;
     }
 
@@ -208,10 +209,11 @@ button {
 
     ::ng-deep .mdc-text-field {
         --mdc-outlined-text-field-input-text-color: #{secondary.$pink};
-    }
+        padding: 0;
 
-    ::ng-deep .mat-mdc-form-field:not(.form-field-dense) .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix {
-        padding: 4px 2px 4px 6px;
+        textarea {
+            padding: 8px 14px;
+        }
     }
 
     .answers-text-box {
