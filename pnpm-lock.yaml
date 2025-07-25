@@ -68,6 +68,9 @@ importers:
       '@lezer/lr':
         specifier: 1.4.2
         version: 1.4.2
+      '@samuel-butcher-typedb/typedb-http-driver':
+        specifier: link:../typedb-driver/http-ts
+        version: link:../typedb-driver/http-ts
       '@sigma/edge-curve':
         specifier: 3.1.0
         version: 3.1.0(sigma@3.0.1(graphology-types@0.24.8))

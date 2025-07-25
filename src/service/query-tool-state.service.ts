@@ -13,21 +13,15 @@ import { createSigmaRenderer, GraphVisualiser } from "../framework/graph-visuali
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
 import { newVisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
-import { Concept, Value } from "../framework/typedb-driver/concept";
-import {
-    ApiResponse,
-    ConceptDocument,
-    ConceptRow,
-    ConceptRowAnswer,
-    isApiErrorResponse,
-    QueryResponse
-} from "../framework/typedb-driver/response";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
 import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from "./schema-state.service";
 import { SnackbarService } from "./snackbar.service";
 import { FlatTreeControl } from "@angular/cdk/tree";
 import { MatTreeFlatDataSource, MatTreeFlattener } from "@angular/material/tree";
+import {
+    ApiResponse, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse
+} from "@samuel-butcher-typedb/typedb-http-driver";
 
 export type OutputType = "raw" | "log" | "table" | "graph";
 

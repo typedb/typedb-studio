@@ -1,4 +1,4 @@
-import { EdgeKind, RoleType } from "../typedb-driver/concept";
+import { EdgeKind, RoleType } from "@samuel-butcher-typedb/typedb-http-driver";
 import {DataVertex, DataVertexKind, VertexUnavailable} from "./graph";
 import {Color} from "chroma-js";
 

@@ -4,8 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Database } from "../framework/typedb-driver/database";
-import { DriverParams, DriverParamsBasic, DriverParamsTranslated, isBasicParams, TranslatedAddress } from "../framework/typedb-driver/params";
+import {
+    Database, DriverParams, DriverParamsBasic, DriverParamsTranslated, isBasicParams, TranslatedAddress
+} from "@samuel-butcher-typedb/typedb-http-driver";
 
 export class ConnectionConfig {
 

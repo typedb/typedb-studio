@@ -10,11 +10,11 @@ import { AbstractControl, AsyncValidatorFn, FormBuilder, FormsModule, ReactiveFo
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
+import { isApiErrorResponse } from "@samuel-butcher-typedb/typedb-http-driver";
 import { combineLatest, first, map, Subject } from "rxjs";
 import { ButtonComponent } from "../../../framework/button/button.component";
 import { FormActionsComponent, FormComponent, FormInputComponent, patternValidator, requiredValidator } from "../../../framework/form";
 import { ModalComponent } from "../../../framework/modal";
-import { isApiErrorResponse } from "../../../framework/typedb-driver/response";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 

@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { ApiResponse, QueryResponse } from "../framework/typedb-driver/response";
+import { ApiResponse, QueryResponse } from "@samuel-butcher-typedb/typedb-http-driver";
 import { TransactionOperation } from "./transaction";
 
 interface DriverActionBase {

@@ -1,16 +1,7 @@
-import { QueryVertex } from "../typedb-driver/query-structure";
+import { QueryVertex } from "@samuel-butcher-typedb/typedb-http-driver";
 import {
-  DataGraph,
-  DataVertex,
-  DataConstraintAny,
-  DataConstraintLinks,
-  DataConstraintHas,
-  DataConstraintIsa,
-  DataConstraintOwns,
-  DataConstraintRelates,
-  DataConstraintPlays,
-  DataConstraintSub,
-  DataConstraintFunction,
+  DataGraph, DataVertex, DataConstraintAny, DataConstraintLinks, DataConstraintHas, DataConstraintIsa,
+  DataConstraintOwns, DataConstraintRelates, DataConstraintPlays, DataConstraintSub, DataConstraintFunction,
   DataConstraintExpression, DataConstraintIsaExact, DataConstraintSubExact
 } from "./graph";
 

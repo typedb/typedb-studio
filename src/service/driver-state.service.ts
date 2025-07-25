@@ -5,19 +5,19 @@
  */
 
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, concatAll, concatMap, finalize, from, map, Observable, of, Subject, switchMap, takeUntil, tap } from "rxjs";
+import { BehaviorSubject, catchError, concatMap, finalize, from, map, Observable, of, Subject, switchMap, takeUntil, tap } from "rxjs";
 import { fromPromise } from "rxjs/internal/observable/innerFrom";
 import { v4 as uuid } from "uuid";
 import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
 import { ConnectionConfig, databasesSortedByName, DEFAULT_DATABASE_NAME } from "../concept/connection";
 import { Transaction } from "../concept/transaction";
-import { TypeDBHttpDriver } from "../framework/typedb-driver";
-import { Database } from "../framework/typedb-driver/database";
-import { ApiOkResponse, ApiResponse, isApiErrorResponse, isOkResponse, QueryResponse, VersionResponse } from "../framework/typedb-driver/response";
 import { requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { AppData } from "./app-data.service";
-import { TransactionType } from "../framework/typedb-driver/transaction";
+import {
+    ApiOkResponse, ApiResponse, Database, isApiErrorResponse, isOkResponse, QueryResponse, TransactionType,
+    TypeDBHttpDriver, VersionResponse
+} from "@samuel-butcher-typedb/typedb-http-driver";
 
 export type DriverStatus = "disconnected" | "connecting" | "connected" | "reconnecting";
 
@@ -170,7 +170,7 @@ export class DriverState {
 
     refreshDatabaseList() {
         const driver = this.requireDriver(`${this.constructor.name}.${this.refreshDatabaseList.name} > ${this.requireDriver.name}`);
-        return fromPromise(driver.listDatabases()).pipe(
+        return fromPromise(driver.getDatabases()).pipe(
             tap(res => {
                 if (isOkResponse(res)) this._databaseList$.next(databasesSortedByName(res.ok.databases));
             }),

@@ -1,31 +1,11 @@
 import {
-    Attribute, AttributeType,
-    Concept,
-    Entity, EntityType,
-    InstantiableType, Relation, RelationType,
-    RoleType,
-    ThingKind,
-    Type,
-    TypeKind, Value,
-    ValueKind
-} from "../typedb-driver/concept";
-import {
-    get_variable_name,
-    QueryConstraintAny, QueryConstraintComparison,
-    QueryConstraintExpression,
-    QueryConstraintFunction,
-    QueryConstraintHas, QueryConstraintIid, QueryConstraintIs,
-    QueryConstraintIsa,
-    QueryConstraintIsaExact, QueryConstraintKind, QueryConstraintLabel,
-    QueryConstraintLinks,
-    QueryConstraintOwns,
-    QueryConstraintPlays,
-    QueryConstraintRelates,
-    QueryConstraintSpan,
-    QueryConstraintSub, QueryConstraintSubExact, QueryConstraintValue, QueryStructure,
-    QueryVertex,
-} from "../typedb-driver/query-structure";
-import {ConceptRow, ConceptRowsQueryResponse} from "../typedb-driver/response";
+    Attribute, AttributeType, Concept, ConceptRow, ConceptRowsQueryResponse, Entity, EntityType, getVariableName,
+    InstantiableType, QueryConstraintAny, QueryConstraintComparison, QueryConstraintExpression, QueryConstraintFunction,
+    QueryConstraintHas, QueryConstraintIid, QueryConstraintIs, QueryConstraintIsa, QueryConstraintIsaExact, QueryConstraintKind,
+    QueryConstraintLabel, QueryConstraintLinks, QueryConstraintOwns, QueryConstraintPlays, QueryConstraintRelates,
+    QueryConstraintSpan, QueryConstraintSub, QueryConstraintSubExact, QueryConstraintValue, QueryStructure, QueryVertex,
+    Relation, RelationType, RoleType, ThingKind, Type, TypeKind, Value, ValueKind
+} from "@samuel-butcher-typedb/typedb-http-driver";
 import {MultiGraph} from "graphology";
 
 ///////////////////////
@@ -301,7 +281,7 @@ class LogicalGraphBuilder {
     translate_vertex(structure: QueryStructure, structure_vertex: QueryVertex, answerIndex: number, data: ConceptRow): DataVertex {
         switch (structure_vertex.tag) {
             case "variable": {
-                let name = get_variable_name(structure, structure_vertex);
+                let name = getVariableName(structure, structure_vertex);
                 if (name != null && data[name] != null ) {
                     return data[name]!;
                 } else {

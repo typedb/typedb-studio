@@ -5,6 +5,10 @@
  */
 
 import { Injectable } from "@angular/core";
+import {
+    ApiOkResponse, ApiResponse, AttributeType, ConceptRowsQueryResponse, EntityType,
+    isApiErrorResponse, QueryResponse, RelationType, RoleType, Type
+} from "@samuel-butcher-typedb/typedb-http-driver";
 import Graph from "graphology";
 import { BehaviorSubject, combineLatest, distinctUntilChanged, finalize, first, map } from "rxjs";
 import Sigma, { Camera } from "sigma";
@@ -12,8 +16,6 @@ import { createSigmaRenderer, GraphVisualiser } from "../framework/graph-visuali
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
 import { newVisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
-import { AttributeType, EntityType, RelationType, RoleType, Type } from "../framework/typedb-driver/concept";
-import { ApiOkResponse, ApiResponse, ConceptRowsQueryResponse, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
 import { DriverState } from "./driver-state.service";
 import { SnackbarService } from "./snackbar.service";
 import {updateAutocomleteSchemaFromDB} from "../framework/codemirror-lang-typeql";
