@@ -18,8 +18,8 @@ import { combineLatest, distinctUntilChanged, first, map } from "rxjs";
 import { HoverMenuComponent } from "../../../framework/menu/hover-menu.component";
 import { DriverState, DriverStatus } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
-import { TransactionWidgetComponent } from "../../transaction/widget/transaction-widget.component";
 import { DatabaseCreateDialogComponent } from "../database-create-dialog/database-create-dialog.component";
+import { TransactionControlComponent } from "../transaction/transaction-control.component";
 
 const statusStyleMap: { [K in DriverStatus]: string } = {
     disconnected: "error",
@@ -33,8 +33,8 @@ const statusStyleMap: { [K in DriverStatus]: string } = {
     templateUrl: "./connection-widget.component.html",
     styleUrls: ["./connection-widget.component.scss"],
     imports: [
-        MatTooltipModule, AsyncPipe, TransactionWidgetComponent, MatMenuModule, MatDividerModule,
-        RouterLink, NgClass, MatCheckboxModule
+        MatTooltipModule, AsyncPipe, MatMenuModule, MatDividerModule,
+        RouterLink, NgClass, MatCheckboxModule, TransactionControlComponent
     ]
 })
 export class ConnectionWidgetComponent implements OnInit {
@@ -52,7 +52,7 @@ export class ConnectionWidgetComponent implements OnInit {
         if (status === "connected") return database == null ? "" : "Connected";
         return `${status[0].toUpperCase()}${status.substring(1)}`;
     }));
-    private transactionWidgetVisible = false;
+    private transactionControlVisible = false;
     connectionText = ``;
     connectionAreaHovered = false;
     connectionMenuHovered = false;
@@ -60,11 +60,11 @@ export class ConnectionWidgetComponent implements OnInit {
     databaseVisible$ = this.driver.status$.pipe(map((status) => ["connected", "reconnecting"].includes(status)));
     databaseText$ = this.driver.database$.pipe(map(db => db?.name ?? `No database selected`));
 
-    transactionWidgetVisible$ = this.driver.database$.pipe(map(db => !!db), distinctUntilChanged());
+    transactionControlVisible$ = this.driver.database$.pipe(map(db => !!db), distinctUntilChanged());
     transactionText$ = this.driver.transaction$.pipe(map(tx => tx?.type ?? `No active transaction`));
     transactionWidgetTooltip$ = this.driver.transactionHasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
 
-    rootNgClass$ = combineLatest([this.driver.status$, this.transactionWidgetVisible$]).pipe(map(([status, txWidgetVisible]) => ({
+    rootNgClass$ = combineLatest([this.driver.status$, this.transactionControlVisible$]).pipe(map(([status, txWidgetVisible]) => ({
         "root": true,
         "has-transaction-widget": txWidgetVisible,
         "hoverable": status !== "disconnected"
@@ -79,13 +79,13 @@ export class ConnectionWidgetComponent implements OnInit {
         this.connectionText$.subscribe((text) =>{
             this.connectionText = text;
         });
-        this.transactionWidgetVisible$.subscribe((visible) => {
-            this.transactionWidgetVisible = visible;
+        this.transactionControlVisible$.subscribe((visible) => {
+            this.transactionControlVisible = visible;
         });
     }
 
     get connectionTooltip() {
-        return this.condensed && this.transactionWidgetVisible ? this.connectionText : ``;
+        return this.condensed && this.transactionControlVisible ? this.connectionText : ``;
     }
 
     onClick() {

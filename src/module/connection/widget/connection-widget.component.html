@@ -15,9 +15,9 @@
     <i class="ts-beacon fa-solid fa-circle" [class]="connectionBeaconStatusClass$ | async" [matTooltip]="(connectionBeaconTooltip$ | async) || ''" matTooltipPosition="below"></i>
   </div>
 
-  @if (transactionWidgetVisible$ | async) {
+  @if (transactionControlVisible$ | async) {
     <div class="divider-vertical"></div>
-    <ts-transaction-widget/>
+    <ts-transaction-control/>
   }
 </div>
 
