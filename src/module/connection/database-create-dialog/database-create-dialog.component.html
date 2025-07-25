@@ -1,7 +1,7 @@
 <tp-modal dialogTitle="Create database" [isBusy]="isSubmitting$ | async">
   <p class="description">A database is an isolated data store comprising its own schema and dataset.</p>
   <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
-    <tp-form-input type="text" [form]="form" field="name" label="Database name" />
+    <tp-form-input type="text" [form]="form" field="name" label="Database name" [focusInitial]="true" />
     <tp-form-actions
       [cancellable]="true" submitText="Create database" [isSubmitting]="isSubmitting$ | async"
       buttonIdPrefix="createDatabaseModal" (cancel)="close()"

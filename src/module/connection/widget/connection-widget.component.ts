@@ -19,6 +19,7 @@ import { HoverMenuComponent } from "../../../framework/menu/hover-menu.component
 import { DriverState, DriverStatus } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { DatabaseCreateDialogComponent } from "../database-create-dialog/database-create-dialog.component";
+import { DatabaseDeleteDialogComponent } from "../database-delete-dialog/database-delete-dialog.component";
 import { TransactionControlComponent } from "../transaction/transaction-control.component";
 
 const statusStyleMap: { [K in DriverStatus]: string } = {
@@ -40,7 +41,7 @@ const statusStyleMap: { [K in DriverStatus]: string } = {
 export class ConnectionWidgetComponent implements OnInit {
 
     @Input({ required: true }) condensed!: boolean;
-    @ViewChild(MatMenuTrigger) connectionMenuTrigger!: MatMenuTrigger;
+    @ViewChild("databaseMenuTrigger") databaseMenuTrigger!: MatMenuTrigger;
 
     connectionText$ = this.driver.connection$.pipe(map(x => x?.name ?? `No server connected`));
     connectionBeaconStatusClass$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, database]) => {
@@ -103,8 +104,15 @@ export class ConnectionWidgetComponent implements OnInit {
     }
 
     selectDatabase(database: Database) {
+        if (this.driver.database$.value?.name === database.name) return;
         this.driver.selectDatabase(database);
         this.snackbar.info(`Now using database '${database.name}'`);
+    }
+
+    onDeleteDatabaseClick(database: Database, e: Event) {
+        e.stopPropagation();
+        this.databaseMenuTrigger.closeMenu();
+        this.dialog.open(DatabaseDeleteDialogComponent, { data: { db: database } });
     }
 
     openCreateDatabaseDialog() {

@@ -287,6 +287,12 @@ body {
         background: rgba(0, 0, 0, 0.5);
     }
 
+    /* Divider */
+
+    @include mat.divider-overrides((
+        color: primary.$light-purple,
+    ));
+
     /* Expansion */
     mat-expansion-panel {
         --mat-expansion-header-text-size: 16px;
@@ -802,23 +808,15 @@ body {
 
     /* Tooltip */
     @include mat.tooltip-overrides((
-        supporting-text-size: 14px,
-        supporting-text-line-height: 20px,
+        supporting-text-size: 12px,
+        supporting-text-line-height: 18px,
         supporting-text-tracking: var(--body-letter-spacing),
         container-color: secondary.$mid-deep-grey,
         container-shape: shapes.$border-radius,
     ));
 
-    .mdc-tooltip {
-        --mdc-plain-tooltip-supporting-text-size: 14px;
-        --mdc-plain-tooltip-supporting-line-height: 22px;
-        --mdc-plain-tooltip-supporting-text-tracking: var(--body-letter-spacing);
-        --mdc-plain-tooltip-container-color: #{secondary.$mid-deep-grey};
-        --mdc-plain-tooltip-container-shape: #{shapes.$border-radius};
-    }
-
     .mdc-tooltip__surface {
-        padding: 6px 10px;
+        padding: 4px 8px;
     }
 
     /* Tree */

@@ -1,0 +1,21 @@
+<tp-modal dialogTitle="Delete database" [isBusy]="isSubmitting$ | async">
+  <p class="description">Are you sure want to delete database '{{ data.db.name }}'?</p>
+  <div class="content-wrapper">
+    <p><i class="fa-solid fa-triangle-exclamation"></i> <span class="admonition-header">Important</span></p>
+    <p>All data in this database will be permanently deleted and cannot be recovered.</p>
+  </div>
+  <mat-divider></mat-divider>
+  <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
+    <div>Type '{{ strongConfirmationString }}' to confirm:</div>
+    <tp-form-input type="text" [form]="form" field="confirmationText" [placeholder]="strongConfirmationString" />
+
+    <tp-form-actions
+      submitText="Delete database" submitButtonStyle="primary-outline red stroke"
+      [submitDisabled]="!canSubmit" buttonIdPrefix="strongConfirmationModal"
+      [isSubmitting]="isSubmitting$ | async" [cancellable]="true" (cancel)="close()"
+    />
+    @if (errorLines.length) {
+      <mat-error>@for (line of errorLines; track line) {<p>{{ line }}</p>}</mat-error>
+    }
+  </tp-form>
+</tp-modal>

@@ -145,7 +145,7 @@ export class SchemaState {
     private initialiseOutput() {
         this.visualiser.destroy();
         this.visualiser.status = "running";
-        this.visualiser.database = this.driver.requireDatabase(`${this.constructor.name}.${this.initialiseOutput.name} > requireValue(driver.database$)`).name;
+        this.visualiser.database = this.driver.requireDatabase().name;
     }
 
     private handleQueryError(err: any) {

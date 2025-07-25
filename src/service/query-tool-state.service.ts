@@ -112,7 +112,7 @@ export class QueryToolState {
         this.tableOutput.status = "running";
         this.graphOutput.status = "running";
         this.graphOutput.query = query;
-        this.graphOutput.database = this.driver.requireDatabase(`${this.constructor.name}.${this.initialiseOutput.name} > requireValue(driver.database$)`).name;
+        this.graphOutput.database = this.driver.requireDatabase().name;
     }
 
     private outputQueryResponse(res: ApiResponse<QueryResponse>) {

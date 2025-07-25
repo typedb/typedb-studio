@@ -5,12 +5,14 @@
  */
 
 import { AsyncPipe } from "@angular/common";
-import { Component, Inject } from "@angular/core";
+import { Component, inject, Inject } from "@angular/core";
 import { AbstractControl, AsyncValidatorFn, FormBuilder, FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { MatCheckbox } from "@angular/material/checkbox";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
+import { MatDivider } from "@angular/material/divider";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
-import { isApiErrorResponse } from "@samuel-butcher-typedb/typedb-http-driver";
+import { Database, isApiErrorResponse } from "@samuel-butcher-typedb/typedb-http-driver";
 import { combineLatest, first, map, Subject } from "rxjs";
 import { ButtonComponent } from "../../../framework/button/button.component";
 import { FormActionsComponent, FormComponent, FormInputComponent, patternValidator, requiredValidator } from "../../../framework/form";
@@ -19,41 +21,46 @@ import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 
 @Component({
-    selector: "ts-database-create-dialog",
-    templateUrl: "./database-create-dialog.component.html",
-    styleUrls: ["./database-create-dialog.component.scss"],
+    selector: "ts-database-delete-dialog",
+    templateUrl: "./database-delete-dialog.component.html",
+    styleUrls: ["./database-delete-dialog.component.scss"],
     imports: [
         ModalComponent, AsyncPipe, FormsModule, ReactiveFormsModule, MatFormFieldModule,
-        MatInputModule, FormComponent, FormInputComponent, FormActionsComponent,
+        MatInputModule, FormComponent, FormInputComponent, FormActionsComponent, MatCheckbox, MatDivider,
     ]
 })
-export class DatabaseCreateDialogComponent {
-
-    private uniqueValidator: AsyncValidatorFn = (control: AbstractControl<string>) => {
-        return this.driver.databaseList$.pipe(
-            first(),
-            map((databases) => databases?.some(x => x.name === control.value) ?? false),
-            map((hasConflict) => hasConflict ? { errorText: `A database named '${control.value}' already exists` } : null)
-        );
-    }
+export class DatabaseDeleteDialogComponent {
 
     readonly isSubmitting$ = new Subject<boolean>();
+    readonly data = inject<{ db: Database }>(MAT_DIALOG_DATA);
     readonly form = this.formBuilder.nonNullable.group({
-        name: ["", [patternValidator(/^[\w-_]+$/, `Spaces and special characters are not allowed (except - and _)`), requiredValidator], [this.uniqueValidator]],
+        confirmationText: [""],
     });
     errorLines: string[] = [];
 
     constructor(
-        private dialogRef: MatDialogRef<DatabaseCreateDialogComponent>,
+        private dialogRef: MatDialogRef<DatabaseDeleteDialogComponent>,
         private formBuilder: FormBuilder, private snackbar: SnackbarService, private driver: DriverState,
     ) {
     }
 
+    get strongConfirmationString(): string {
+        return this.data.db.name;
+    }
+
+    get canSubmit() {
+        return this.form.value.confirmationText === this.strongConfirmationString;
+    }
+
     submit() {
-        this.driver.createAndSelectDatabase(this.form.value.name!).subscribe({
+        if (this.form.value.confirmationText !== this.strongConfirmationString) {
+            return;
+        }
+
+        this.driver.deleteDatabase(this.data.db).subscribe({
             next: () => {
                 this.close();
-                this.snackbar.success(`Created and connected to database '${this.form.value.name}'`);
+                this.snackbar.info(`Deleted database '${this.data.db.name}'`);
             },
             error: (err) => {
                 this.isSubmitting$.next(false);

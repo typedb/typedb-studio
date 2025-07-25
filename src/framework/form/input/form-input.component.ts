@@ -22,6 +22,7 @@ export class FormInputComponent<FORM extends { [K in keyof FORM & string]: Abstr
     @Input() hint = "";
     @Input() autocomplete?: string;
     @Input() placeholder?: string;
+    @Input() focusInitial = false;
     @ViewChild("input") inputEl!: ElementRef<HTMLInputElement>;
 
     formControl!: FormControl;
@@ -39,5 +40,10 @@ export class FormInputComponent<FORM extends { [K in keyof FORM & string]: Abstr
             .forEach(attr => {
                 if (attr.nodeValue != null) this.inputEl.nativeElement.setAttribute(attr.nodeName, attr.nodeValue);
             });
+        if (this.focusInitial) {
+            setTimeout(() => {
+                this.inputEl.nativeElement.focus();
+            });
+        }
     }
 }

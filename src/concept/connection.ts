@@ -28,10 +28,10 @@ export class ConnectionConfig {
         return `${params.username}@${host}`;
     }
 
-    withDatabase(database: Database): ConnectionConfig {
+    withDatabase(database: Database | null): ConnectionConfig {
         return new ConnectionConfig({
             name: this.name,
-            params: Object.assign<{}, ConnectionParams, Partial<ConnectionParams>>({}, this.params, { database: database.name }),
+            params: Object.assign<{}, ConnectionParams, Partial<ConnectionParams>>({}, this.params, { database: database?.name }),
             preferences: this.preferences,
         });
     }

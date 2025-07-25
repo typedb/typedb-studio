@@ -123,7 +123,24 @@ i.ts-beacon {
         margin-right: 3px;
     }
 
+    button {
+        i.fa-trash-can-xmark {
+            opacity: 0;
+            transition: opacity 100ms;
+        }
+
+        &:hover {
+            i.fa-trash-can-xmark {
+                opacity: 1;
+            }
+        }
+    }
+
     button.selected {
         color: primary.$green;
+
+        i.fa-trash-can-xmark {
+            color: primary.$grey;
+        }
     }
 }
