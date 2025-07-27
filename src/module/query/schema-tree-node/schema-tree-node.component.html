@@ -1,6 +1,6 @@
 @switch (data.nodeKind) {
   @case ("root") {
-    {{ data.label }}
+    <div class="root-node">{{ data.label }}</div>
   }
   @case ("concept") {
     {{ data.concept.label }}@if (data.concept.kind === "attributeType") {<em class="text-muted">, value {{ data.concept.valueType }}</em>}

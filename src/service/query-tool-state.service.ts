@@ -17,7 +17,6 @@ import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
 import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from "./schema-state.service";
 import { SnackbarService } from "./snackbar.service";
-import { FlatTreeControl } from "@angular/cdk/tree";
 import { MatTreeFlatDataSource, MatTreeFlattener } from "@angular/material/tree";
 import {
     ApiResponse, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse
@@ -147,7 +146,7 @@ export interface SchemaTreeNodeBase {
 
 export interface SchemaTreeRootNode extends SchemaTreeNodeBase {
     nodeKind: "root";
-    label: string;
+    label: "Entities" | "Relations" | "Attributes";
     children: SchemaTreeConceptNode[];
 }
 
@@ -191,7 +190,7 @@ export type SchemaTreeNode = SchemaTreeRootNode | SchemaTreeConceptNode | Schema
 export type SchemaTreeChildNode = SchemaTreeConceptNode | SchemaTreeLinkNode;
 
 export class SchemaWindowState {
-    dataSource: SchemaTreeRootNode[] = [];
+    dataSource$ = new BehaviorSubject<SchemaTreeRootNode[]>([]);
     viewMode$ = new BehaviorSubject<"flat" | "hierarchical">("hierarchical");
     linksVisibility$ = new BehaviorSubject<Record<SchemaTreeLinkKind, boolean>>({
         "sub": true,
@@ -199,6 +198,11 @@ export class SchemaWindowState {
         "plays": true,
         "relates": true,
     });
+    rootNodesCollapsed: Record<SchemaTreeRootNode["label"], boolean> = {
+        "Entities": false,
+        "Relations": false,
+        "Attributes": false,
+    };
 
     constructor(public schemaState: SchemaState) {
         schemaState.value$.subscribe(() => {
@@ -218,47 +222,16 @@ export class SchemaWindowState {
         return (node.children || []).filter(child => child.visible === true);
     };
 
-    trackByFn = (_index: number, node: SchemaTreeNode) => {
-        let id = node.nodeKind;
-        switch (node.nodeKind) {
-            case "root":
-                id += `-${node.label}`;
-                break;
-            case "concept":
-                id += `-${node.concept.label}`;
-                break;
-            case "link":
-                switch (node.linkKind) {
-                    case "sub":
-                        id += `-${node.supertype.label}`;
-                        break;
-                    case "owns":
-                        id += `-${node.ownedAttribute.label}`;
-                        break;
-                    case "plays":
-                        id += `-${node.role.label}`;
-                        break;
-                    case "relates":
-                        id += `-${node.role.label}`;
-                        break;
-                }
-                break;
-            default:
-                throw `Unknown node kind: ${JSON.stringify(node)}`;
-        }
-        return id;
-    }
-
     private buildView() {
         const schema = this.schemaState.value$.value;
         const linksVisibility = this.linksVisibility$.value;
 
         if (!schema) {
-            this.dataSource.length = 0;
+            this.dataSource$.next([]);
             return;
         }
 
-        this.dataSource = [{
+        const data: SchemaTreeRootNode[] = [{
             nodeKind: "root",
             label: "Entities",
             visible: true,
@@ -302,11 +275,11 @@ export class SchemaWindowState {
         }];
 
         if (this.viewMode$.value === "hierarchical") {
-            const nodeMap = Object.fromEntries(this.dataSource.flatMap(rootNode => rootNode.children.map(conceptNode => ([
+            const nodeMap = Object.fromEntries(data.flatMap(rootNode => rootNode.children.map(conceptNode => ([
                 conceptNode.concept.label, conceptNode
             ]))));
 
-            this.dataSource.forEach(rootNode => {
+            data.forEach(rootNode => {
                 rootNode.children.forEach(conceptNode => {
                     const subNode = conceptNode.children.find(node => node.nodeKind === "link" && node.linkKind === "sub");
                     if (subNode) {
@@ -317,21 +290,23 @@ export class SchemaWindowState {
                 });
             });
 
-            this.dataSource.flatMap(rootNode => rootNode.children).forEach(conceptNode => {
+            data.flatMap(rootNode => rootNode.children).forEach(conceptNode => {
                 conceptNode.children = conceptNode.children.filter(child => child.nodeKind !== "link" || child.linkKind !== "sub");
             });
 
-            this.dataSource.forEach(x => x.children = x.children.filter(conceptNode => !conceptNode.concept.supertype));
+            data.forEach(x => x.children = x.children.filter(conceptNode => !conceptNode.concept.supertype));
         }
+
+        this.dataSource$.next(data);
     }
 
     private updateViewVisibility() {
-        this.dataSource.forEach(x => x.children.forEach(conceptNode => {
+        this.dataSource$.value.forEach(x => x.children.forEach(conceptNode => {
             conceptNode.children.filter(child => child.nodeKind === "link").forEach(linkNode => {
                 linkNode.visible = this.linksVisibility$.value[linkNode.linkKind];
             });
         }));
-        this.dataSource = [...this.dataSource];
+        this.dataSource$.next([...this.dataSource$.value]);
     }
 
     useFlatView() {

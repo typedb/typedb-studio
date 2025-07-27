@@ -19,7 +19,10 @@
       </div>
       <div class="schema-container" detectScroll>
         <div class="gutter"></div>
-        <mat-tree #tree [dataSource]="state.schemaWindow.dataSource" [childrenAccessor]="state.schemaWindow.childrenAccessor" [class]="state.schemaWindow.viewMode$.value">
+        <mat-tree
+          #tree [dataSource]="state.schemaWindow.dataSource$" [childrenAccessor]="state.schemaWindow.childrenAccessor"
+          [class]="state.schemaWindow.viewMode$.value"
+        >
           <!-- This is the tree node template for leaf nodes -->
           <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="16" [class]="treeNodeClass(node)">
             <!-- use a disabled button to provide padding for tree leaf -->
@@ -27,8 +30,11 @@
             <ts-schema-tree-node [data]="node"/>
           </mat-tree-node>
           <!-- This is the tree node template for expandable nodes -->
-          <mat-tree-node *matTreeNodeDef="let node;when: state.schemaWindow.hasChild" matTreeNodePadding [matTreeNodePaddingIndent]="16" matTreeNodeToggle [cdkTreeNodeTypeaheadLabel]="node.name">
-            <button matIconButton matTreeNodeToggle aria-label="Toggle node">
+          <mat-tree-node
+            *matTreeNodeDef="let node;when: state.schemaWindow.hasChild" matTreeNodePadding [matTreeNodePaddingIndent]="16"
+            (click)="toggleNode(node)" [cdkTreeNodeTypeaheadLabel]="node.name" [class]="treeNodeClass(node)"
+          >
+            <button matIconButton aria-label="Toggle node">
               <mat-icon class="mat-icon-rtl-mirror">
                 {{tree.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
               </mat-icon>

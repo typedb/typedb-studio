@@ -135,7 +135,27 @@
             }
         }
 
-        mat-tree-node.link.owns button::before {
+        mat-tree-node.root:not(.entities) {
+            --mat-tree-node-min-height: 46px;
+            padding-top: 16px;
+        }
+
+        mat-tree-node.root button mat-icon {
+            display: none;
+        }
+
+        mat-tree-node.root.entities button::before {
+            content: "";
+            font-family: "Font Awesome 6 Pro";
+            font-weight: 900;
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            font-size: 8px;
+            color: primary.$entity-pink;
+        }
+
+        mat-tree-node.link.owns button::before, mat-tree-node.root.attributes button::before {
             content: "";
             font-family: "Font Awesome 6 Pro";
             font-weight: 900;
@@ -146,7 +166,7 @@
             color: primary.$attribute-blue;
         }
 
-        mat-tree-node.link.plays button::before {
+        mat-tree-node.link.plays button::before, mat-tree-node.root.relations button::before {
             content: "";
             font-family: "Font Awesome 6 Pro";
             font-weight: 900;

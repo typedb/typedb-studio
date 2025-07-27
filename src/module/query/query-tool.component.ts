@@ -16,7 +16,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
-import { MatTreeModule } from "@angular/material/tree";
+import { MatTree, MatTreeModule } from "@angular/material/tree";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
@@ -55,6 +55,7 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
     @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
+    @ViewChild("tree") tree!: MatTree<any>;
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
     refreshSchemaTooltip$ = this.state.schema.refreshDisabledReason$.pipe(map(x => x ? `` : `Refresh`));
@@ -62,7 +63,17 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     constructor(
         protected state: QueryToolState, public driver: DriverState,
         private appData: AppData, private snackbar: SnackbarService
-    ) {}
+    ) {
+        this.state.schemaWindow.dataSource$.subscribe((dataSource) => {
+            dataSource.forEach( node => {
+                if (this.state.schemaWindow.rootNodesCollapsed[node.label]) {
+                    this.tree.collapse(node);
+                } else {
+                    this.tree.expand(node);
+                }
+            });
+        });
+    }
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
@@ -118,7 +129,26 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     treeNodeClass(node: SchemaTreeNode): string {
-        return `${node.nodeKind} ${node.nodeKind === "link" ? `${node.linkKind} ${node.linkKind === "sub" ? node.supertype.kind : ""}` : ""}`;
+        switch (node.nodeKind) {
+            case "root":
+                return `root ${node.label.toLowerCase()}`;
+            case "concept":
+                return "concept";
+            case "link":
+                return `link ${node.linkKind} ${node.linkKind === "sub" ? node.supertype.kind : ""}`;
+        }
+    }
+
+    toggleNode(node: SchemaTreeNode) {
+        if (this.tree.isExpanded(node)) {
+            this.tree.collapse(node);
+        } else {
+            this.tree.expand(node);
+        }
+
+        if (node.nodeKind === "root") {
+            this.state.schemaWindow.rootNodesCollapsed[node.label] = !this.tree.isExpanded(node);
+        }
     }
 
     historyEntryErrorTooltip(entry: DriverAction) {
