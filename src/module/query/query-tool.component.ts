@@ -29,7 +29,7 @@ import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
-import { QueryToolState } from "../../service/query-tool-state.service";
+import { QueryToolState, SchemaTreeNode } from "../../service/query-tool-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaTreeNodeComponent } from "./schema-tree-node/schema-tree-node.component";
@@ -115,6 +115,10 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
             case "commit": return "committed transaction";
             case "close": return "closed transaction";
         }
+    }
+
+    treeNodeClass(node: SchemaTreeNode): string {
+        return `${node.nodeKind} ${node.nodeKind === "link" ? `${node.linkKind} ${node.linkKind === "sub" ? node.supertype.kind : ""}` : ""}`;
     }
 
     historyEntryErrorTooltip(entry: DriverAction) {

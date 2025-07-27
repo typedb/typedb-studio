@@ -192,7 +192,7 @@ export type SchemaTreeChildNode = SchemaTreeConceptNode | SchemaTreeLinkNode;
 
 export class SchemaWindowState {
     dataSource: SchemaTreeRootNode[] = [];
-    viewMode: "flat" | "hierarchical" = "flat";
+    viewMode$ = new BehaviorSubject<"flat" | "hierarchical">("hierarchical");
     linksVisibility$ = new BehaviorSubject<Record<SchemaTreeLinkKind, boolean>>({
         "sub": true,
         "owns": true,
@@ -202,6 +202,9 @@ export class SchemaWindowState {
 
     constructor(public schemaState: SchemaState) {
         schemaState.value$.subscribe(() => {
+            this.buildView();
+        });
+        this.viewMode$.subscribe(() => {
             this.buildView();
         });
         this.linksVisibility$.subscribe(() => {
@@ -298,7 +301,7 @@ export class SchemaWindowState {
             })),
         }];
 
-        if (this.viewMode === "hierarchical") {
+        if (this.viewMode$.value === "hierarchical") {
             const nodeMap = Object.fromEntries(this.dataSource.flatMap(rootNode => rootNode.children.map(conceptNode => ([
                 conceptNode.concept.label, conceptNode
             ]))));
@@ -332,12 +335,11 @@ export class SchemaWindowState {
     }
 
     useFlatView() {
-        this.viewMode = "flat";
+        this.viewMode$.next("flat");
     }
 
     useHierarchicalView() {
-        this.viewMode = "hierarchical";
-        this.buildView();
+        this.viewMode$.next("hierarchical");
     }
 
     toggleLinksVisibility(linkKind: SchemaTreeLinkKind) {

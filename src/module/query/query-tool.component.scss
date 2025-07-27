@@ -111,30 +111,90 @@
             height: 1em;
         }
 
-        mat-tree-node.link {
-            margin-left: 32px;
-            padding-right: 8px;
-            align-items: stretch;
-            border-bottom: 1px solid primary.$light-purple;
-            border-left: 1px solid primary.$light-purple;
-            border-right: 1px solid primary.$light-purple;
-            font-weight: typography.$light;
-
-            button {
-                display: none;
+        mat-tree-node.link.sub {
+            button::before {
+                content: "";
+                font-family: "Font Awesome 6 Pro";
+                font-weight: 900;
+                position: absolute;
+                width: 8px;
+                height: 8px;
+                font-size: 8px;
             }
 
-            &:nth-child(odd) {
-                background: primary.$black-purple;
+            &.entityType button::before {
+                color: primary.$entity-pink;
             }
 
-            &:nth-child(even) {
-                background: primary.$purple;
+            &.attributeType button::before {
+                color: primary.$attribute-blue;
+            }
+
+            &.relationType button::before {
+                color: primary.$relation-yellow;
             }
         }
 
-        mat-tree-node:not(.link) + mat-tree-node.link {
-            border-top: 1px solid primary.$light-purple;
+        mat-tree-node.link.owns button::before {
+            content: "";
+            font-family: "Font Awesome 6 Pro";
+            font-weight: 900;
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            font-size: 8px;
+            color: primary.$attribute-blue;
+        }
+
+        mat-tree-node.link.plays button::before {
+            content: "";
+            font-family: "Font Awesome 6 Pro";
+            font-weight: 900;
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            font-size: 8px;
+            color: primary.$relation-yellow;
+        }
+
+        mat-tree-node.link.relates button::before {
+            content: "";
+            font-family: "Font Awesome 6 Pro";
+            font-weight: 900;
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            font-size: 12px;
+            color: primary.$role-orange;
+        }
+
+        &.flat {
+            mat-tree-node.link {
+                margin-left: 16px;
+                padding-left: 16px !important; /* overrides Angular Material's default padding */
+                padding-right: 8px;
+                align-items: stretch;
+                border-bottom: 1px solid primary.$light-purple;
+                border-left: 1px solid primary.$light-purple;
+                border-right: 1px solid primary.$light-purple;
+                font-weight: typography.$light;
+
+                button {
+                    margin-right: 2px;
+                }
+
+                &:nth-child(odd) {
+                    background: primary.$black-purple;
+                }
+
+                &:nth-child(even) {
+                    background: primary.$purple;
+                }
+            }
+
+            mat-tree-node:not(.link) + mat-tree-node.link {
+                border-top: 1px solid primary.$light-purple;
+            }
         }
     }
 }

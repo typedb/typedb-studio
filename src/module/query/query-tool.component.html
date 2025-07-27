@@ -19,9 +19,9 @@
       </div>
       <div class="schema-container" detectScroll>
         <div class="gutter"></div>
-        <mat-tree #tree [dataSource]="state.schemaWindow.dataSource" [childrenAccessor]="state.schemaWindow.childrenAccessor">
+        <mat-tree #tree [dataSource]="state.schemaWindow.dataSource" [childrenAccessor]="state.schemaWindow.childrenAccessor" [class]="state.schemaWindow.viewMode$.value">
           <!-- This is the tree node template for leaf nodes -->
-          <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="16" [class]="node.nodeKind">
+          <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="16" [class]="treeNodeClass(node)">
             <!-- use a disabled button to provide padding for tree leaf -->
             <button matIconButton disabled></button>
             <ts-schema-tree-node [data]="node"/>
@@ -196,11 +196,11 @@
 <mat-menu #schemaActionsMenu="matMenu">
   <span class="menu-content">
     <button mat-menu-item (click)="state.schemaWindow.useFlatView()">
-      <i class="fa-light fa-check" [class.invisible]="state.schemaWindow.viewMode !== 'flat'"></i>
+      <i class="fa-light fa-check" [class.invisible]="state.schemaWindow.viewMode$.value !== 'flat'"></i>
       <span>Flat view</span>
     </button>
     <button mat-menu-item (click)="state.schemaWindow.useHierarchicalView()">
-      <i class="fa-light fa-check" [class.invisible]="state.schemaWindow.viewMode !== 'hierarchical'"></i>
+      <i class="fa-light fa-check" [class.invisible]="state.schemaWindow.viewMode$.value !== 'hierarchical'"></i>
       <span>Hierarchical view</span>
     </button>
     <mat-divider></mat-divider>
