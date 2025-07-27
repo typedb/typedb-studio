@@ -6,7 +6,7 @@
 
 import { Injectable } from "@angular/core";
 import { ConnectionConfig, ConnectionJson } from "../concept/connection";
-import { SidebarState, sidebarStates, Tool, tools } from "../concept/view-state";
+import { SchemaToolWindowState, SidebarState, sidebarStates, Tool, tools } from "../concept/view-state";
 import { StorageService, StorageWriteResult } from "./storage.service";
 
 function isObjectWithFields<FIELD extends string>(obj: unknown, fields: FIELD[]): obj is { [K in typeof fields[number]]: unknown } {
@@ -18,19 +18,31 @@ const VIEW_STATE = "viewState";
 interface ViewStateData {
     sidebarState: SidebarState;
     lastUsedTool: Tool;
-}
-
-function parseViewStateDataOrNull(obj: Object): ViewStateData | null {
-    if (!isObjectWithFields(obj, ["sidebarState", "lastUsedTool"])) return null;
-    if (!sidebarStates.includes(obj.sidebarState as SidebarState)) return null;
-    if (!tools.includes(obj.lastUsedTool as Tool)) return null;
-    return obj as ViewStateData;
+    schemaToolWindowState: SchemaToolWindowState;
 }
 
 const INITIAL_VIEW_STATE_DATA: ViewStateData = {
     sidebarState: "collapsed",
     lastUsedTool: "query",
+    schemaToolWindowState: {
+        linksVisibility: {
+            sub: true,
+            owns: true,
+            plays: true,
+            relates: true,
+        },
+        viewMode: "hierarchical",
+        rootNodesCollapsed: {
+            entities: false,
+            relations: false,
+            attributes: false,
+        },
+    },
 };
+
+function parseViewStateData(obj: Object | null): ViewStateData {
+    return Object.assign({}, INITIAL_VIEW_STATE_DATA, obj) as ViewStateData;
+}
 
 class ViewState {
 
@@ -40,9 +52,9 @@ class ViewState {
         }
     }
 
-    private readStorage(): ViewStateData | null {
-        if (!this.storage.isAccessible) return null;
-        return this.storage.read<ViewStateData>(VIEW_STATE, parseViewStateDataOrNull);
+    private readStorage(): ViewStateData {
+        if (!this.storage.isAccessible) return INITIAL_VIEW_STATE_DATA;
+        return this.storage.read<ViewStateData>(VIEW_STATE, parseViewStateData);
     }
 
     private writeStorage(prefs: ViewStateData): StorageWriteResult {
@@ -56,19 +68,17 @@ class ViewState {
 
     setSidebarState(value: SidebarState) {
         const viewState = this.readStorage();
-        if (!viewState) return;
         viewState.sidebarState = value;
         this.writeStorage(viewState);
     }
 
     lastUsedTool(): Tool {
         const viewState = this.readStorage();
-        return viewState?.lastUsedTool || INITIAL_VIEW_STATE_DATA.lastUsedTool;
+        return viewState.lastUsedTool || INITIAL_VIEW_STATE_DATA.lastUsedTool;
     }
 
     setLastUsedTool(value: Tool) {
         const viewState = this.readStorage();
-        if (!viewState) return;
         viewState.lastUsedTool = value;
         this.writeStorage(viewState);
     }
@@ -80,6 +90,17 @@ class ViewState {
             case "explore": return "/explore";
             case "schema": return "/schema";
         }
+    }
+
+    schemaToolWindowState(): SchemaToolWindowState {
+        const viewState = this.readStorage();
+        return viewState.schemaToolWindowState || INITIAL_VIEW_STATE_DATA.schemaToolWindowState;
+    }
+
+    setSchemaToolWindowState(value: SchemaToolWindowState) {
+        const viewState = this.readStorage();
+        viewState.schemaToolWindowState = value;
+        this.writeStorage(viewState);
     }
 }
 
@@ -129,25 +150,16 @@ const PREFERENCES = "preferences";
 interface PreferencesData {
     connections: {
         showAdvancedConfigByDefault: boolean;
-        savePasswordsByDefault: boolean;
     };
 }
 
-function parsePreferencesDataOrNull(obj: Object): PreferencesData | null {
-    return isObjectWithFields(obj, ["connections"]) && isObjectWithFields(obj.connections, ["showAdvancedConfigByDefault", "savePasswordsByDefault"]) ? obj as PreferencesData : null;
+function parsePreferencesData(obj: Object | null): PreferencesData {
+    return Object.assign({}, INITIAL_PREFERENCES, obj) as PreferencesData;
 }
 
 const INITIAL_PREFERENCES: PreferencesData = {
     connections: {
         showAdvancedConfigByDefault: true,
-        savePasswordsByDefault: true,
-    }
-};
-
-const FALLBACK_PREFERENCES: PreferencesData = {
-    connections: {
-        showAdvancedConfigByDefault: true,
-        savePasswordsByDefault: false,
     }
 };
 
@@ -159,8 +171,8 @@ class Preferences {
         }
     }
 
-    private readStorage(): PreferencesData | null {
-        return this.storage.read(PREFERENCES, parsePreferencesDataOrNull);
+    private readStorage(): PreferencesData {
+        return this.storage.read(PREFERENCES, parsePreferencesData);
     }
 
     private writeStorage(prefs: PreferencesData): StorageWriteResult {
@@ -170,20 +182,11 @@ class Preferences {
     readonly connection = {
         showAdvancedConfigByDefault: () => {
             const prefs = this.readStorage();
-            return prefs?.connections.showAdvancedConfigByDefault || FALLBACK_PREFERENCES.connections.showAdvancedConfigByDefault;
+            return prefs?.connections.showAdvancedConfigByDefault || INITIAL_PREFERENCES.connections.showAdvancedConfigByDefault;
         },
         setShowAdvancedConfigByDefault: (value: boolean) => {
             const prefs = this.readStorage()!;
             prefs.connections.showAdvancedConfigByDefault = value;
-            return this.writeStorage(prefs);
-        },
-        savePasswordsByDefault: () => {
-            const prefs = this.readStorage();
-            return prefs?.connections.savePasswordsByDefault || FALLBACK_PREFERENCES.connections.savePasswordsByDefault;
-        },
-        setSavePasswordsByDefault: (value: boolean) => {
-            const prefs = this.readStorage()!;
-            prefs.connections.savePasswordsByDefault = value;
             return this.writeStorage(prefs);
         },
     };

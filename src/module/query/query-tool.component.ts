@@ -29,7 +29,7 @@ import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
-import { QueryToolState, SchemaTreeNode } from "../../service/query-tool-state.service";
+import { QueryToolState } from "../../service/query-tool-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaTreeNodeComponent } from "./schema-tree-node/schema-tree-node.component";
@@ -37,6 +37,7 @@ import {keymap} from "@codemirror/view";
 import {defaultKeymap} from "@codemirror/commands";
 import {startCompletion, completionKeymap} from "@codemirror/autocomplete";
 import { MatMenuModule } from "@angular/material/menu";
+import { SchemaToolWindowState, SchemaTreeNode } from "../../service/schema-tool-window-state.service";
 
 @Component({
     selector: "ts-query-tool",
@@ -61,12 +62,12 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     refreshSchemaTooltip$ = this.state.schema.refreshDisabledReason$.pipe(map(x => x ? `` : `Refresh`));
 
     constructor(
-        protected state: QueryToolState, public driver: DriverState,
+        public state: QueryToolState, public schemaWindow: SchemaToolWindowState, public driver: DriverState,
         private appData: AppData, private snackbar: SnackbarService
     ) {
-        this.state.schemaWindow.dataSource$.subscribe((dataSource) => {
+        this.schemaWindow.dataSource$.subscribe((dataSource) => {
             dataSource.forEach( node => {
-                if (this.state.schemaWindow.rootNodesCollapsed[node.label]) {
+                if (this.schemaWindow.rootNodesCollapsed[node.label]) {
                     this.tree.collapse(node);
                 } else {
                     this.tree.expand(node);
@@ -147,7 +148,10 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         if (node.nodeKind === "root") {
-            this.state.schemaWindow.rootNodesCollapsed[node.label] = !this.tree.isExpanded(node);
+            this.schemaWindow.rootNodesCollapsed[node.label] = !this.tree.isExpanded(node);
+            const schemaToolWindowState = this.appData.viewState.schemaToolWindowState();
+            schemaToolWindowState.rootNodesCollapsed = this.schemaWindow.rootNodesCollapsed;
+            this.appData.viewState.setSchemaToolWindowState(schemaToolWindowState);
         }
     }
 

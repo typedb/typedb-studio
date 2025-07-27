@@ -407,7 +407,6 @@ export class VisualiserState {
     }
 
     set status(value: VisualiserStatus) {
-        console.info(value);
         this._status = value;
     }
 

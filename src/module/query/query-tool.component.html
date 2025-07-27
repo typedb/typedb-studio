@@ -20,8 +20,8 @@
       <div class="schema-container" detectScroll>
         <div class="gutter"></div>
         <mat-tree
-          #tree [dataSource]="state.schemaWindow.dataSource$" [childrenAccessor]="state.schemaWindow.childrenAccessor"
-          [class]="state.schemaWindow.viewMode$.value"
+          #tree [dataSource]="schemaWindow.dataSource$" [childrenAccessor]="schemaWindow.childrenAccessor"
+          [class]="schemaWindow.viewMode$.value"
         >
           <!-- This is the tree node template for leaf nodes -->
           <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="16" [class]="treeNodeClass(node)">
@@ -31,7 +31,7 @@
           </mat-tree-node>
           <!-- This is the tree node template for expandable nodes -->
           <mat-tree-node
-            *matTreeNodeDef="let node;when: state.schemaWindow.hasChild" matTreeNodePadding [matTreeNodePaddingIndent]="16"
+            *matTreeNodeDef="let node;when: schemaWindow.hasChild" matTreeNodePadding [matTreeNodePaddingIndent]="16"
             (click)="toggleNode(node)" [cdkTreeNodeTypeaheadLabel]="node.name" [class]="treeNodeClass(node)"
           >
             <button matIconButton aria-label="Toggle node">
@@ -201,29 +201,29 @@
 
 <mat-menu #schemaActionsMenu="matMenu">
   <span class="menu-content">
-    <button mat-menu-item (click)="state.schemaWindow.useFlatView()">
-      <i class="fa-light fa-check" [class.invisible]="state.schemaWindow.viewMode$.value !== 'flat'"></i>
+    <button mat-menu-item (click)="schemaWindow.useFlatView()">
+      <i class="fa-light fa-check" [class.invisible]="schemaWindow.viewMode$.value !== 'flat'"></i>
       <span>Flat view</span>
     </button>
-    <button mat-menu-item (click)="state.schemaWindow.useHierarchicalView()">
-      <i class="fa-light fa-check" [class.invisible]="state.schemaWindow.viewMode$.value !== 'hierarchical'"></i>
+    <button mat-menu-item (click)="schemaWindow.useHierarchicalView()">
+      <i class="fa-light fa-check" [class.invisible]="schemaWindow.viewMode$.value !== 'hierarchical'"></i>
       <span>Hierarchical view</span>
     </button>
     <mat-divider></mat-divider>
-    <button mat-menu-item (click)="state.schemaWindow.toggleLinksVisibility('sub')">
-      <i class="fa-light fa-check" [class.invisible]="!state.schemaWindow.linksVisibility$.value.sub"></i>
+    <button mat-menu-item (click)="schemaWindow.toggleLinksVisibility('sub')">
+      <i class="fa-light fa-check" [class.invisible]="!schemaWindow.linksVisibility$.value.sub"></i>
       <span>Show sub in flat view</span>
     </button>
-    <button mat-menu-item (click)="state.schemaWindow.toggleLinksVisibility('owns')">
-      <i class="fa-light fa-check" [class.invisible]="!state.schemaWindow.linksVisibility$.value.owns"></i>
+    <button mat-menu-item (click)="schemaWindow.toggleLinksVisibility('owns')">
+      <i class="fa-light fa-check" [class.invisible]="!schemaWindow.linksVisibility$.value.owns"></i>
       <span>Show owns</span>
     </button>
-    <button mat-menu-item (click)="state.schemaWindow.toggleLinksVisibility('relates')">
-      <i class="fa-light fa-check" [class.invisible]="!state.schemaWindow.linksVisibility$.value.relates"></i>
+    <button mat-menu-item (click)="schemaWindow.toggleLinksVisibility('relates')">
+      <i class="fa-light fa-check" [class.invisible]="!schemaWindow.linksVisibility$.value.relates"></i>
       <span>Show relates</span>
     </button>
-    <button mat-menu-item (click)="state.schemaWindow.toggleLinksVisibility('plays')">
-      <i class="fa-light fa-check" [class.invisible]="!state.schemaWindow.linksVisibility$.value.plays"></i>
+    <button mat-menu-item (click)="schemaWindow.toggleLinksVisibility('plays')">
+      <i class="fa-light fa-check" [class.invisible]="!schemaWindow.linksVisibility$.value.plays"></i>
       <span>Show plays</span>
     </button>
   </span>

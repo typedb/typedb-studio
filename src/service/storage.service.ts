@@ -36,14 +36,14 @@ export class StorageService {
         }
     }
 
-    read<OBJ = Object>(key: string, deserializeFn: (obj: Object) => OBJ | null): OBJ | null {
+    read<OBJ = Object>(key: string, deserializeFn: (obj: Object | null) => OBJ): OBJ {
         try {
             const raw = localStorage.getItem(`${TYPEDB_STUDIO}.${key}`);
-            return raw == null ? null : deserializeFn(JSON.parse(raw));
+            return deserializeFn(raw != null ? JSON.parse(raw) : null);
         } catch (e) {
             console.warn(e);
             localStorage.removeItem(`${TYPEDB_STUDIO}.${key}`);
-            return null;
+            return deserializeFn(null);
         }
     }
 }
