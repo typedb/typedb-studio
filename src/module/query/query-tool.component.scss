@@ -111,15 +111,14 @@
             height: 1em;
         }
 
-        mat-tree-node[aria-level="3"] {
+        mat-tree-node.link {
             margin-left: 32px;
-            padding-left: 8px !important; /* overrides inline style from Angular Material */
             padding-right: 8px;
             align-items: stretch;
             border-bottom: 1px solid primary.$light-purple;
             border-left: 1px solid primary.$light-purple;
             border-right: 1px solid primary.$light-purple;
-            font-weight: typography.$thin;
+            font-weight: typography.$light;
 
             button {
                 display: none;
@@ -134,7 +133,7 @@
             }
         }
 
-        mat-tree-node[aria-level="2"] + mat-tree-node[aria-level="3"] {
+        mat-tree-node:not(.link) + mat-tree-node.link {
             border-top: 1px solid primary.$light-purple;
         }
     }
@@ -317,10 +316,6 @@ button {
 
     mat-form-field {
         margin-top: 4px;
-
-        ::ng-deep .mdc-notched-outline {
-
-        }
 
         textarea {
             resize: none;

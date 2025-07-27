@@ -249,6 +249,11 @@ code, .text-code {
     font-family: Monaco, monospace;
 }
 
+em {
+    font-weight: typography.$semi-bold;
+    color: secondary.$lighter-grey;
+}
+
 button {
     appearance: none;
     -webkit-appearance: none;

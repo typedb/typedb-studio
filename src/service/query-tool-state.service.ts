@@ -154,7 +154,7 @@ export interface SchemaTreeRootNode extends SchemaTreeNodeBase {
 export interface SchemaTreeConceptNode extends SchemaTreeNodeBase {
     nodeKind: "concept";
     concept: SchemaConcept;
-    children: SchemaTreeLinkNode[];
+    children: SchemaTreeChildNode[];
 }
 
 export type SchemaTreeLinkKind = "sub" | "owns" | "plays" | "relates";
@@ -188,6 +188,8 @@ export type SchemaTreeLinkNode = SchemaTreeSubLinkNode | SchemaTreeOwnsLinkNode 
 
 export type SchemaTreeNode = SchemaTreeRootNode | SchemaTreeConceptNode | SchemaTreeLinkNode;
 
+export type SchemaTreeChildNode = SchemaTreeConceptNode | SchemaTreeLinkNode;
+
 export class SchemaWindowState {
     dataSource: SchemaTreeRootNode[] = [];
     viewMode: "flat" | "hierarchical" = "flat";
@@ -199,10 +201,10 @@ export class SchemaWindowState {
     });
 
     constructor(public schemaState: SchemaState) {
-        schemaState.value$.subscribe((schema) => {
-            this.buildView(schema, this.linksVisibility$.value);
+        schemaState.value$.subscribe(() => {
+            this.buildView();
         });
-        this.linksVisibility$.subscribe((linksVisibility) => {
+        this.linksVisibility$.subscribe(() => {
             this.updateViewVisibility();
         });
     }
@@ -244,11 +246,15 @@ export class SchemaWindowState {
         return id;
     }
 
-    private buildView(schema: Schema | null, linksVisibility: Record<SchemaTreeLinkKind, boolean>) {
+    private buildView() {
+        const schema = this.schemaState.value$.value;
+        const linksVisibility = this.linksVisibility$.value;
+
         if (!schema) {
             this.dataSource.length = 0;
             return;
         }
+
         this.dataSource = [{
             nodeKind: "root",
             label: "Entities",
@@ -261,7 +267,7 @@ export class SchemaWindowState {
                     ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype, visible: linksVisibility.sub }] : []),
                     ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y, visible: linksVisibility.owns })),
                     ...x.playedRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y, visible: linksVisibility.plays })),
-                ] as SchemaTreeLinkNode[]),
+                ] as SchemaTreeChildNode[]),
             })),
         }, {
             nodeKind: "root",
@@ -276,7 +282,7 @@ export class SchemaWindowState {
                     ...x.relatedRoles.map(y => ({ nodeKind: "link", linkKind: "relates", role: y, visible: linksVisibility.relates })),
                     ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y, visible: linksVisibility.owns })),
                     ...x.playedRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y, visible: linksVisibility.plays })),
-                ] as SchemaTreeLinkNode[]),
+                ] as SchemaTreeChildNode[]),
             })),
         }, {
             nodeKind: "root",
@@ -288,14 +294,37 @@ export class SchemaWindowState {
                 visible: true,
                 children: ([
                     ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype, visible: linksVisibility.sub }] : []),
-                ] as SchemaTreeLinkNode[]),
+                ] as SchemaTreeChildNode[]),
             })),
         }];
+
+        if (this.viewMode === "hierarchical") {
+            const nodeMap = Object.fromEntries(this.dataSource.flatMap(rootNode => rootNode.children.map(conceptNode => ([
+                conceptNode.concept.label, conceptNode
+            ]))));
+
+            this.dataSource.forEach(rootNode => {
+                rootNode.children.forEach(conceptNode => {
+                    const subNode = conceptNode.children.find(node => node.nodeKind === "link" && node.linkKind === "sub");
+                    if (subNode) {
+                        const superNode = nodeMap[subNode.supertype.label];
+                        if (!superNode) throw new Error(`Missing supertype node for ${subNode.supertype.label} (nodeMap is: ${JSON.stringify(nodeMap)})`);
+                        superNode.children.unshift(conceptNode);
+                    }
+                });
+            });
+
+            this.dataSource.flatMap(rootNode => rootNode.children).forEach(conceptNode => {
+                conceptNode.children = conceptNode.children.filter(child => child.nodeKind !== "link" || child.linkKind !== "sub");
+            });
+
+            this.dataSource.forEach(x => x.children = x.children.filter(conceptNode => !conceptNode.concept.supertype));
+        }
     }
 
     private updateViewVisibility() {
         this.dataSource.forEach(x => x.children.forEach(conceptNode => {
-            conceptNode.children.forEach(linkNode => {
+            conceptNode.children.filter(child => child.nodeKind === "link").forEach(linkNode => {
                 linkNode.visible = this.linksVisibility$.value[linkNode.linkKind];
             });
         }));
@@ -308,6 +337,7 @@ export class SchemaWindowState {
 
     useHierarchicalView() {
         this.viewMode = "hierarchical";
+        this.buildView();
     }
 
     toggleLinksVisibility(linkKind: SchemaTreeLinkKind) {
