@@ -142,6 +142,7 @@ export type SchemaTreeNodeKind = "root" | "concept" | "link";
 export interface SchemaTreeNodeBase {
     nodeKind: SchemaTreeNodeKind;
     children?: SchemaTreeNode[];
+    visible: boolean;
 }
 
 export interface SchemaTreeRootNode extends SchemaTreeNodeBase {
@@ -189,18 +190,61 @@ export type SchemaTreeNode = SchemaTreeRootNode | SchemaTreeConceptNode | Schema
 
 export class SchemaWindowState {
     dataSource: SchemaTreeRootNode[] = [];
+    viewMode: "flat" | "hierarchical" = "flat";
+    linksVisibility$ = new BehaviorSubject<Record<SchemaTreeLinkKind, boolean>>({
+        "sub": true,
+        "owns": true,
+        "plays": true,
+        "relates": true,
+    });
 
     constructor(public schemaState: SchemaState) {
-        schemaState.value$.subscribe(schema => {
-            this.populateDataSources(schema);
+        schemaState.value$.subscribe((schema) => {
+            this.buildView(schema, this.linksVisibility$.value);
+        });
+        this.linksVisibility$.subscribe((linksVisibility) => {
+            this.updateViewVisibility();
         });
     }
 
     hasChild = (_: number, node: SchemaTreeNode) => !!node.children?.length;
 
-    childrenAccessor = (node: SchemaTreeNode) => node.children ?? [];
+    childrenAccessor = (node: SchemaTreeNode): SchemaTreeNode[] => {
+        return (node.children || []).filter(child => child.visible === true);
+    };
 
-    private populateDataSources(schema: Schema | null) {
+    trackByFn = (_index: number, node: SchemaTreeNode) => {
+        let id = node.nodeKind;
+        switch (node.nodeKind) {
+            case "root":
+                id += `-${node.label}`;
+                break;
+            case "concept":
+                id += `-${node.concept.label}`;
+                break;
+            case "link":
+                switch (node.linkKind) {
+                    case "sub":
+                        id += `-${node.supertype.label}`;
+                        break;
+                    case "owns":
+                        id += `-${node.ownedAttribute.label}`;
+                        break;
+                    case "plays":
+                        id += `-${node.role.label}`;
+                        break;
+                    case "relates":
+                        id += `-${node.role.label}`;
+                        break;
+                }
+                break;
+            default:
+                throw `Unknown node kind: ${JSON.stringify(node)}`;
+        }
+        return id;
+    }
+
+    private buildView(schema: Schema | null, linksVisibility: Record<SchemaTreeLinkKind, boolean>) {
         if (!schema) {
             this.dataSource.length = 0;
             return;
@@ -208,39 +252,69 @@ export class SchemaWindowState {
         this.dataSource = [{
             nodeKind: "root",
             label: "Entities",
+            visible: true,
             children: Object.values(schema.entities).sort((a, b) => a.label.localeCompare(b.label)).map(x => ({
                 nodeKind: "concept",
                 concept: x,
+                visible: true,
                 children: ([
-                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
-                    ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y })),
-                    ...x.playedRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y })),
+                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype, visible: linksVisibility.sub }] : []),
+                    ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y, visible: linksVisibility.owns })),
+                    ...x.playedRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y, visible: linksVisibility.plays })),
                 ] as SchemaTreeLinkNode[]),
             })),
         }, {
             nodeKind: "root",
             label: "Relations",
+            visible: true,
             children: Object.values(schema.relations).sort((a, b) => a.label.localeCompare(b.label)).map(x => ({
                 nodeKind: "concept",
                 concept: x,
+                visible: true,
                 children: ([
-                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
-                    ...x.relatedRoles.map(y => ({ nodeKind: "link", linkKind: "relates", role: y })),
-                    ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y })),
-                    ...x.playedRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y })),
+                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype, visible: linksVisibility.sub }] : []),
+                    ...x.relatedRoles.map(y => ({ nodeKind: "link", linkKind: "relates", role: y, visible: linksVisibility.relates })),
+                    ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y, visible: linksVisibility.owns })),
+                    ...x.playedRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y, visible: linksVisibility.plays })),
                 ] as SchemaTreeLinkNode[]),
             })),
         }, {
             nodeKind: "root",
             label: "Attributes",
+            visible: true,
             children: Object.values(schema.attributes).sort((a, b) => a.label.localeCompare(b.label)).map(x => ({
                 nodeKind: "concept",
                 concept: x,
+                visible: true,
                 children: ([
-                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
+                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype, visible: linksVisibility.sub }] : []),
                 ] as SchemaTreeLinkNode[]),
             })),
         }];
+    }
+
+    private updateViewVisibility() {
+        this.dataSource.forEach(x => x.children.forEach(conceptNode => {
+            conceptNode.children.forEach(linkNode => {
+                linkNode.visible = this.linksVisibility$.value[linkNode.linkKind];
+            });
+        }));
+        this.dataSource = [...this.dataSource];
+    }
+
+    useFlatView() {
+        this.viewMode = "flat";
+    }
+
+    useHierarchicalView() {
+        this.viewMode = "hierarchical";
+    }
+
+    toggleLinksVisibility(linkKind: SchemaTreeLinkKind) {
+        this.linksVisibility$.next({
+            ...this.linksVisibility$.value,
+            [linkKind]: !this.linksVisibility$.value[linkKind]
+        });
     }
 }
 

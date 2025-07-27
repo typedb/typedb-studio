@@ -36,6 +36,7 @@ import { SchemaTreeNodeComponent } from "./schema-tree-node/schema-tree-node.com
 import {keymap} from "@codemirror/view";
 import {defaultKeymap} from "@codemirror/commands";
 import {startCompletion, completionKeymap} from "@codemirror/autocomplete";
+import { MatMenuModule } from "@angular/material/menu";
 
 @Component({
     selector: "ts-query-tool",
@@ -44,7 +45,8 @@ import {startCompletion, completionKeymap} from "@codemirror/autocomplete";
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatTreeModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
-        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective, SchemaTreeNodeComponent, DetectScrollDirective,
+        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
+        SchemaTreeNodeComponent, DetectScrollDirective, MatMenuModule
     ]
 })
 export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -55,6 +57,7 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
+    refreshSchemaTooltip$ = this.state.schema.refreshDisabledReason$.pipe(map(x => x ? `` : `Refresh`));
 
     constructor(
         protected state: QueryToolState, public driver: DriverState,

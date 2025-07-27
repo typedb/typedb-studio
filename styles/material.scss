@@ -399,63 +399,20 @@ body {
     }
 
     /* Icon button */
-    .mdc-icon-button {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .mat-mdc-icon-button,
     .mat-mdc-icon-button.mat-mdc-button-base {
-        padding: 0.25em;
-        margin: -0.25em;
-        width: 1.5em;
-        height: 1.5em;
-
-        .mat-icon {
-            display: block;
-            font-size: inherit;
+        --mat-icon-button-container-shape: #{shapes.$border-radius};
+        width: 32px;
+        height: 32px;
+        min-width: 0;
+        padding: 0;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+  
+        i {
+            margin: 0;
         }
-
-        svg {
-            width: 100%;
-            height: auto;
-        }
-    }
-
-    .mat-mdc-form-field-icon-suffix button.mat-mdc-icon-button {
-        margin-right: 0.25em;
-        color: secondary.$light-grey;
-    }
-
-    .mat-icon,
-    .mat-mdc-icon-button {
-        font-size: 24px;
-
-        &.tp-icon-small {
-            font-size: 20px;
-        }
-
-        &.tp-icon-xs {
-            font-size: 16px;
-        }
-
-        &.tp-icon-large {
-            font-size: 32px;
-        }
-
-        &.tp-icon-xl {
-            font-size: 40px;
-        }
-    }
-
-    .mat-mdc-icon-button .mat-mdc-button-persistent-ripple {
-        display: none;
-    }
-
-    .mat-mdc-icon-button .mat-mdc-button-touch-target {
-        width: 40px;
-        height: 40px;
     }
 
     .mdc-fab.mat-accent {

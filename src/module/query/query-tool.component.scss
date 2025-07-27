@@ -71,6 +71,11 @@
     align-items: center;
     margin-bottom: 12px;
     height: 32px;
+
+    .card-header-actions {
+        display: flex;
+        gap: 4px;
+    }
 }
 
 .schema-pane {
@@ -325,5 +330,49 @@ button {
 
     .transaction-operation-type {
         min-width: 140px;
+    }
+}
+
+.menu-content {
+    aside {
+        margin: 6px 16px;
+        @include typography.aside;
+        color: secondary.$light-grey;
+    }
+
+    mat-divider {
+        margin: 4px 8px;
+    }
+
+    i {
+        width: 14px;
+        height: 14px;
+        font-size: 14px;
+    }
+
+    i.fa-swap-arrows {
+        margin-left: -3px;
+        margin-right: 3px;
+    }
+
+    button {
+        i.fa-trash-can-xmark {
+            opacity: 0;
+            transition: opacity 100ms;
+        }
+
+        &:hover {
+            i.fa-trash-can-xmark {
+                opacity: 1;
+            }
+        }
+    }
+
+    button.selected {
+        color: primary.$green;
+
+        i.fa-trash-can-xmark {
+            color: primary.$grey;
+        }
     }
 }
