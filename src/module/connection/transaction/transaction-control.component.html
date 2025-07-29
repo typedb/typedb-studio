@@ -1,17 +1,17 @@
-<mat-select [formControl]="form.controls.type" panelClass="transaction-select-panel" [matTooltip]="(transactionWidgetTooltip$ | async) || ''" matTooltipPosition="below">
+<mat-select [formControl]="driver.transactionControls.controls.type" panelClass="transaction-select-panel" [matTooltip]="(transactionWidgetTooltip$ | async) || ''" matTooltipPosition="below">
 <!--  <mat-label>Transaction type</mat-label>-->
   <mat-select-trigger class="transaction-type-select">
-    <i [class]="transactionIconClass$ | async"></i> {{ form.controls.type.value }}{{ (hasUncommittedChanges$ | async) ? "*" : "" }} <i class="fa-light fa-chevron-down"></i>
+    <i [class]="transactionIconClass$ | async"></i> {{ driver.transactionControls.controls.type.value }}{{ (hasUncommittedChanges$ | async) ? "*" : "" }} <i class="fa-light fa-chevron-down"></i>
   </mat-select-trigger>
   @for (transactionType of transactionTypes; track transactionType) {
     <mat-option [value]="transactionType">{{ transactionType }}</mat-option>
   }
 </mat-select>
 
-<mat-select [formControl]="form.controls.operationMode" panelClass="transaction-select-panel">
+<mat-select [formControl]="driver.transactionControls.controls.operationMode" panelClass="transaction-select-panel">
 <!--  <mat-label>Transaction management</mat-label>-->
   <mat-select-trigger>
-    <i class="fa-light fa-wrench"></i> {{ form.controls.operationMode.value }} <i class="fa-light fa-chevron-down"></i>
+    <i class="fa-light fa-wrench"></i> {{ driver.transactionControls.controls.operationMode.value }} <i class="fa-light fa-chevron-down"></i>
   </mat-select-trigger>
   @for (readMode of operationModes; track readMode) {
     <mat-option [value]="readMode">{{ readMode }}</mat-option>

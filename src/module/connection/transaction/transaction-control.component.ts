@@ -11,12 +11,12 @@ import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { TransactionType } from "@samuel-butcher-typedb/typedb-http-driver";
-import { combineLatest, distinctUntilChanged, filter, map, startWith, switchMap } from "rxjs";
-import { OperationMode } from "../../../concept/transaction";
+import { combineLatest, map } from "rxjs";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
+import { TransactionType } from "@samuel-butcher-typedb/typedb-http-driver";
+import { OperationMode } from "../../../concept/transaction";
 
 @Component({
     selector: "ts-transaction-control",
@@ -26,25 +26,8 @@ import { SnackbarService } from "../../../service/snackbar.service";
 })
 export class TransactionControlComponent {
 
-    form = this.formBuilder.nonNullable.group({
-        type: ["read" as TransactionType, []],
-        operationMode: ["auto" as OperationMode, []],
-    });
     transactionTypes: TransactionType[] = ["read", "write", "schema"];
     operationModes: OperationMode[] = ["auto", "manual"];
-    private typeControlValueChanges$ = this.form.valueChanges.pipe(
-        filter((changes) => !!changes.type),
-        map((changes) => changes.type!),
-        startWith(this.form.value.type!),
-        distinctUntilChanged(),
-    );
-    private operationModeControlValueChanges = this.form.valueChanges.pipe(
-        filter(changes => !!changes.operationMode),
-        map(changes => changes.operationMode!),
-        startWith(this.form.value.operationMode!),
-        distinctUntilChanged(),
-    );
-
     hasUncommittedChanges$ = this.driver.transactionHasUncommittedChanges$;
     commitButtonDisabled$ = this.hasUncommittedChanges$.pipe(map(x => !x));
     transactionWidgetTooltip$ = this.hasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
@@ -54,24 +37,24 @@ export class TransactionControlComponent {
     openButtonIconClass$ = this.driver.transaction$.pipe(map(tx => tx ? "fa-regular fa-arrow-rotate-right" : "fa-regular fa-play"));
     transactionConfigDisabled$ = this.driver.database$.pipe(map(db => !db));
     openButtonDisabled$ = combineLatest([this.driver.database$, this.driver.transaction$]).pipe(map(([db, tx]) => !db || !!tx));
-    openButtonVisible$ = this.operationModeControlValueChanges.pipe(map((mode) => mode !== "auto"));
-    commitButtonVisible$ = combineLatest([this.typeControlValueChanges$, this.operationModeControlValueChanges]).pipe(
+    openButtonVisible$ = this.driver.transactionOperationModeControlValueChanges$.pipe(map((mode) => mode !== "auto"));
+    commitButtonVisible$ = combineLatest([this.driver.transactionTypeControlValueChanges$, this.driver.transactionOperationModeControlValueChanges$]).pipe(
         map(([type, mode]) => type !== "read" && mode === "manual")
     );
     closeButtonVisible$ = this.openButtonVisible$;
 
-    constructor(private driver: DriverState, private formBuilder: FormBuilder, private snackbar: SnackbarService) {
+    constructor(public driver: DriverState, private formBuilder: FormBuilder, private snackbar: SnackbarService) {
         this.transactionConfigDisabled$.subscribe((disabled) => {
-            if (disabled) this.form.disable();
-            else this.form.enable();
+            if (disabled) this.driver.transactionControls.disable();
+            else this.driver.transactionControls.enable();
         });
-        this.typeControlValueChanges$.subscribe((type) => {
+        this.driver.transactionTypeControlValueChanges$.subscribe((type) => {
             // TODO: confirm before closing with uncommitted changes
             this.driver.closeTransaction().subscribe(() => {
                 this.driver.selectTransactionType(type);
             });
         });
-        this.operationModeControlValueChanges.subscribe((operationMode) => {
+        this.driver.transactionOperationModeControlValueChanges$.subscribe((operationMode) => {
             // TODO: confirm before closing with uncommitted changes
             this.driver.closeTransaction().subscribe();
             this.driver.autoTransactionEnabled$.next(operationMode === "auto");
@@ -79,8 +62,8 @@ export class TransactionControlComponent {
     }
 
     open() {
-        if (!this.form.value.type) throw INTERNAL_ERROR;
-        this.driver.openTransaction(this.form.value.type).subscribe();
+        if (!this.driver.transactionControls.value.type) throw INTERNAL_ERROR;
+        this.driver.openTransaction(this.driver.transactionControls.value.type).subscribe();
     }
 
     commit() {

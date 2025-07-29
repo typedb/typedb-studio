@@ -5,12 +5,12 @@
  */
 
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, concatMap, finalize, from, map, Observable, of, Subject, switchMap, takeUntil, tap } from "rxjs";
+import { BehaviorSubject, catchError, concatMap, distinctUntilChanged, filter, finalize, from, map, Observable, of, startWith, Subject, switchMap, takeUntil, tap } from "rxjs";
 import { fromPromise } from "rxjs/internal/observable/innerFrom";
 import { v4 as uuid } from "uuid";
 import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
 import { ConnectionConfig, databasesSortedByName, DEFAULT_DATABASE_NAME } from "../concept/connection";
-import { Transaction } from "../concept/transaction";
+import { OperationMode, Transaction } from "../concept/transaction";
 import { requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { AppData } from "./app-data.service";
@@ -18,6 +18,7 @@ import {
     ApiOkResponse, ApiResponse, Database, isApiErrorResponse, isOkResponse, QueryResponse, TransactionType,
     TypeDBHttpDriver, VersionResponse
 } from "@samuel-butcher-typedb/typedb-http-driver";
+import { FormBuilder } from "@angular/forms";
 
 export type DriverStatus = "disconnected" | "connecting" | "connected" | "reconnecting";
 
@@ -50,11 +51,27 @@ export class DriverState {
 
     private driver?: TypeDBHttpDriver;
 
+    transactionControls = this.formBuilder.nonNullable.group({
+        type: ["read" as TransactionType, []],
+        operationMode: ["auto" as OperationMode, []],
+    });
     private _transactionType$ = new BehaviorSubject<TransactionType>("read");
     autoTransactionEnabled$ = new BehaviorSubject(true);
     transactionHasUncommittedChanges$ = this.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
+    transactionTypeControlValueChanges$ = this.transactionControls.valueChanges.pipe(
+        filter((changes) => !!changes.type),
+        map((changes) => changes.type!),
+        startWith(this.transactionControls.value.type!),
+        distinctUntilChanged(),
+    );
+    transactionOperationModeControlValueChanges$ = this.transactionControls.valueChanges.pipe(
+        filter(changes => !!changes.operationMode),
+        map(changes => changes.operationMode!),
+        startWith(this.transactionControls.value.operationMode!),
+        distinctUntilChanged(),
+    );
 
-    constructor(private appData: AppData) {
+    constructor(private appData: AppData, private formBuilder: FormBuilder) {
         (window as any)["driverState"] = this;
     }
 
