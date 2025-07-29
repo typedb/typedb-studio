@@ -265,11 +265,11 @@ button {
     position: absolute;
     inset: 0;
     overflow: auto;
-    scrollbar-gutter: stable;
 }
 
 .answers-structure-container {
     overflow: hidden;
+    scrollbar-gutter: stable;
 }
 
 .answers-text-container {
