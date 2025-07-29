@@ -12,6 +12,7 @@ import { createSigmaRenderer, GraphVisualiser } from "../framework/graph-visuali
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
 import { newVisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
+import { detectOS } from "../framework/util/os";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
 import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from "./schema-state.service";
@@ -26,8 +27,10 @@ const NO_SERVER_CONNECTED = `No server connected`;
 const NO_DATABASE_SELECTED = `No database selected`;
 const NO_OPEN_TRANSACTION = `No open transaction`;
 const QUERY_BLANK = `Query text is blank`;
+const QUERY_HIGHLIGHT_DIV_ID = null;
 
-const QUERY_HIGHLIGHT_DIV_ID = null; // "query-highlight-div"; // Add to body: <div id="query-highlight-div"></div>
+const RUN_KEY_BINDING = detectOS() === "mac" ? "⌘+Enter" : "Ctrl+Enter";
+
 @Injectable({
     providedIn: "root",
 })
@@ -51,6 +54,7 @@ export class QueryToolState {
         else if (!this.queryControl.value.length) return QUERY_BLANK; // _query becomes blank after a page navigation for some reason
         else return null;
     }), shareReplay(1));
+    readonly runTooltip$ = this.runDisabledReason$.pipe(map(x => x ? x : `Run query (${RUN_KEY_BINDING})`));
     readonly runEnabled$ = this.runDisabledReason$.pipe(map(x => x == null));
     readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
@@ -427,17 +431,17 @@ export class GraphOutputState {
     push(res: ApiResponse<QueryResponse>) {
         if (!this.canvasEl) throw `Missing canvas element`;
 
+        if (isApiErrorResponse(res)) {
+            this.status = "error";
+            return;
+        }
+
         if (!this.visualiser) {
             const graph = newVisualGraph();
             const sigma = createSigmaRenderer(this.canvasEl, defaultSigmaSettings as any, graph);
             const layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
             // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
             this.visualiser = new GraphVisualiser(graph, sigma, layout);
-        }
-
-        if (isApiErrorResponse(res)) {
-            this.status = "error";
-            return;
         }
 
         switch (res.ok.answerType) {

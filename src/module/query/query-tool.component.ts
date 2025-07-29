@@ -19,6 +19,7 @@ import { MatTableModule } from "@angular/material/table";
 import { MatTree, MatTreeModule } from "@angular/material/tree";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
+import { Prec } from "@codemirror/state";
 import { ResizableDirective } from "@hhangular/resizable";
 import { distinctUntilChanged, filter, first, map, startWith } from "rxjs";
 import { otherExampleLinter, TypeQL, typeqlAutocompleteExtension } from "../../framework/codemirror-lang-typeql";
@@ -33,7 +34,7 @@ import { QueryToolState } from "../../service/query-tool-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaTreeNodeComponent } from "./schema-tree-node/schema-tree-node.component";
-import {keymap} from "@codemirror/view";
+import { KeyBinding, keymap } from "@codemirror/view";
 import {defaultKeymap} from "@codemirror/commands";
 import {startCompletion, completionKeymap} from "@codemirror/autocomplete";
 import { MatMenuModule } from "@angular/material/menu";
@@ -60,6 +61,16 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
     refreshSchemaTooltip$ = this.state.schema.refreshDisabledReason$.pipe(map(x => x ? `` : `Refresh`));
+    editorKeymap = Prec.highest(keymap.of([
+        { key: "Alt-Space", run: startCompletion, preventDefault: true },
+        {
+            key: "Mod-Enter",
+            run: () => {
+                this.runQuery();
+                return true;
+            },
+        },
+    ]));
 
     constructor(
         public state: QueryToolState, public schemaWindow: SchemaToolWindowState, public driver: DriverState,
@@ -179,5 +190,4 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     readonly TypeQL = TypeQL;
     readonly linter = otherExampleLinter;
     readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
-    readonly codeEditorKeymap = keymap.of([...defaultKeymap, {key: "Alt-Space", run: startCompletion, preventDefault: true}]);
 }
