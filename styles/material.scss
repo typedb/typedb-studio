@@ -401,8 +401,7 @@ body {
     /* Icon button */
     .mat-mdc-icon-button.mat-mdc-button-base {
         --mat-icon-button-container-shape: #{shapes.$border-radius};
-        width: 32px;
-        height: 32px;
+        --mat-icon-button-state-layer-size: 32px;
         min-width: 0;
         padding: 0;
         line-height: 1;
@@ -413,6 +412,11 @@ body {
         i {
             margin: 0;
         }
+    }
+
+    .mdc-text-field .mat-mdc-icon-button.mat-mdc-button-base {
+        --mat-icon-button-container-shape: 0;
+        --mat-icon-button-state-layer-size: 44px;
     }
 
     .mdc-fab.mat-accent {
