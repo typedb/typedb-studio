@@ -39,6 +39,7 @@ import {defaultKeymap} from "@codemirror/commands";
 import {startCompletion, completionKeymap} from "@codemirror/autocomplete";
 import { MatMenuModule } from "@angular/material/menu";
 import { SchemaToolWindowState, SchemaTreeNode } from "../../service/schema-tool-window-state.service";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
     selector: "ts-query-tool",
@@ -76,15 +77,6 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
         public state: QueryToolState, public schemaWindow: SchemaToolWindowState, public driver: DriverState,
         private appData: AppData, private snackbar: SnackbarService
     ) {
-        this.schemaWindow.dataSource$.subscribe((dataSource) => {
-            dataSource.forEach( node => {
-                if (this.schemaWindow.rootNodesCollapsed[node.label]) {
-                    this.tree.collapse(node);
-                } else {
-                    this.tree.expand(node);
-                }
-            });
-        });
     }
 
     ngOnInit() {
@@ -110,6 +102,15 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
             map(x => x.first.nativeElement),
         ).subscribe((canvasEl) => {
             this.state.graphOutput.canvasEl = canvasEl;
+        });
+        this.schemaWindow.dataSource$.subscribe((dataSource) => {
+            dataSource.forEach( node => {
+                if (this.schemaWindow.rootNodesCollapsed[node.label]) {
+                    this.tree.collapse(node);
+                } else {
+                    this.tree.expand(node);
+                }
+            });
         });
     }
 
