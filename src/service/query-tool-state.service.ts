@@ -239,7 +239,7 @@ export class LogOutputState {
                 else lines.push(`Printing rows...`);
 
                 if (res.ok.answers.length) {
-                    const varNames = Object.keys(res.ok.answers[0]);
+                    const varNames = Object.keys(res.ok.answers[0]).sort();
                     if (varNames.length) {
                         const columnNames = Object.keys(res.ok.answers[0].data);
                         const variableColumnWidth = columnNames.length > 0 ? Math.max(...columnNames.map(s => s.length)) : 0;
@@ -277,7 +277,7 @@ export class LogOutputState {
     }
 
     private conceptRowDisplayString(row: ConceptRow, variableColumnWidth: number) {
-        const columnNames = Object.keys(row);
+        const columnNames = Object.keys(row).sort();
         const contents = columnNames.map((columnName) =>
             `\$${columnName}${" ".repeat(variableColumnWidth - columnName.length + 1)}| ${conceptDisplayString(row[columnName])}`
         );
