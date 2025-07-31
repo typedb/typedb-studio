@@ -1,0 +1,24 @@
+@let users = (users$ | async);
+<ts-page-scaffold pageAvailability="ready">
+  <mat-divider/>
+  @if (users != null) {
+    <article>
+      <div class="card-header">
+        <h1>Users</h1>
+
+        <button matButton="outlined" (click)="openCreateUserDialog()">
+          <i class="fa-light fa-plus"></i>
+          <span>Create user</span>
+        </button>
+      </div>
+
+      <p>Users represent principals with access to TypeDB databases. <a href="https://typedb.com/docs/manual/users/" target="_blank" class="external-link"><span>Learn more</span> <i class="fa-light fa-arrow-up-right-from-square"></i></a></p>
+
+      <div class="table-container">
+        <ts-users-table [table]="users!"/>
+      </div>
+    </article>
+  } @else {
+    <tp-spinner/>
+  }
+</ts-page-scaffold>

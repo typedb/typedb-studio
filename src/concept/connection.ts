@@ -24,8 +24,7 @@ export class ConnectionConfig {
 
     static autoName(params: ConnectionParams) {
         const address = isBasicParams(params) ? params.addresses[0] : params.translatedAddresses[0].external;
-        const host = address.split("/").at(-1);
-        return `${params.username}@${host}`;
+        return `${address.split("/").at(-1)}`;
     }
 
     withDatabase(database: Database | null): ConnectionConfig {

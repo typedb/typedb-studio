@@ -5,7 +5,7 @@
  */
 
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, concatMap, distinctUntilChanged, filter, finalize, from, map, Observable, of, startWith, Subject, switchMap, takeUntil, tap } from "rxjs";
+import { BehaviorSubject, catchError, concatMap, distinctUntilChanged, filter, finalize, from, map, Observable, of, shareReplay, startWith, Subject, switchMap, takeUntil, tap } from "rxjs";
 import { fromPromise } from "rxjs/internal/observable/innerFrom";
 import { v4 as uuid } from "uuid";
 import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
@@ -16,7 +16,7 @@ import { INTERNAL_ERROR } from "../framework/util/strings";
 import { AppData } from "./app-data.service";
 import {
     ApiOkResponse, ApiResponse, Database, isApiErrorResponse, isOkResponse, QueryResponse, TransactionType,
-    TypeDBHttpDriver, VersionResponse
+    TypeDBHttpDriver, User, VersionResponse
 } from "@samuel-butcher-typedb/typedb-http-driver";
 import { FormBuilder } from "@angular/forms";
 
@@ -40,11 +40,12 @@ interface ServerVersion {
 export class DriverState {
 
     private _status$ = new BehaviorSubject<DriverStatus>("disconnected");
-    private _connection$ = new BehaviorSubject<ConnectionConfig | null>(null);
+    connection$ = new BehaviorSubject<ConnectionConfig | null>(null);
     database$ = new BehaviorSubject<Database | null>(null);
     private _transaction$ = new BehaviorSubject<Transaction | null>(null);
 
     private _databaseList$ = new BehaviorSubject<Database[] | null>(null);
+    userList$ = new BehaviorSubject<User[] | null>(null);
     private _actionLog$ = new Subject<DriverAction>();
     private _writeLock$ = new BehaviorSubject<Semaphore | null>(null);
     private _stopSignal$ = new Subject<void>();
@@ -55,20 +56,21 @@ export class DriverState {
         type: ["read" as TransactionType, []],
         operationMode: ["auto" as OperationMode, []],
     });
-    private _transactionType$ = new BehaviorSubject<TransactionType>("read");
     autoTransactionEnabled$ = new BehaviorSubject(true);
     transactionHasUncommittedChanges$ = this.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
-    transactionTypeControlValueChanges$ = this.transactionControls.valueChanges.pipe(
+    transactionTypeChanges$ = this.transactionControls.valueChanges.pipe(
         filter((changes) => !!changes.type),
         map((changes) => changes.type!),
         startWith(this.transactionControls.value.type!),
         distinctUntilChanged(),
+        shareReplay(1),
     );
-    transactionOperationModeControlValueChanges$ = this.transactionControls.valueChanges.pipe(
+    transactionOperationModeChanges$ = this.transactionControls.valueChanges.pipe(
         filter(changes => !!changes.operationMode),
         map(changes => changes.operationMode!),
         startWith(this.transactionControls.value.operationMode!),
         distinctUntilChanged(),
+        shareReplay(1),
     );
 
     constructor(private appData: AppData, private formBuilder: FormBuilder) {
@@ -77,10 +79,6 @@ export class DriverState {
 
     get status$(): Observable<DriverStatus> {
         return this._status$;
-    }
-
-    get connection$(): Observable<ConnectionConfig | null> {
-        return this._connection$;
     }
 
     get databaseList$(): Observable<Database[] | null> {
@@ -95,12 +93,8 @@ export class DriverState {
         return this._actionLog$;
     }
 
-    get transactionType$(): Observable<TransactionType> {
-        return this._transactionType$;
-    }
-
     private requireConnection() {
-        return requireValue(this._connection$);
+        return requireValue(this.connection$);
     }
 
     requireDatabase() {
@@ -126,7 +120,7 @@ export class DriverState {
             const maybeTryDisconnect$ = this._status$.value === "connected" ? this.tryDisconnect(lockId) : of({});
             return maybeTryDisconnect$.pipe(
                 tap(() => {
-                    this._connection$.next(config);
+                    this.connection$.next(config);
                     this._status$.next("connecting");
                     this.driver = new TypeDBHttpDriver(config.params);
                 }),
@@ -157,9 +151,10 @@ export class DriverState {
                 tap(() => {
                     this._status$.next("connected");
                     this.appData.connections.push(config);
+                    this.refreshUserList().subscribe();
                 }),
                 catchError((err) => {
-                    this._connection$.next(null); // TODO: revisit - is an 'errored' connection config still valid?
+                    this.connection$.next(null); // TODO: revisit - is an 'errored' connection config still valid?
                     this._status$.next("disconnected");
                     throw err;
                 }),
@@ -173,7 +168,7 @@ export class DriverState {
         this.appData.connections.clearStartupConnection();
         const maybeCloseTransaction$ = this._transaction$.value ? this.closeTransaction(lockId) : of({});
         return maybeCloseTransaction$.pipe(tap(() => this.tryUseWriteLock(() => {
-            this._connection$.next(null);
+            this.connection$.next(null);
             this.database$.next(null);
             this._status$.next("disconnected");
         }, lockId)));
@@ -189,6 +184,16 @@ export class DriverState {
         );
     }
 
+    refreshUserList() {
+        const driver = this.requireDriver();
+        return fromPromise(driver.getUsers()).pipe(
+            tap(res => {
+                if (isOkResponse(res)) this.userList$.next(res.ok.users);
+            }),
+            takeUntil(this._stopSignal$)
+        );
+    }
+
     selectDatabase(database: Database | null, lockId = uuid()) {
         if (this.database$.value?.name === database?.name) return;
 
@@ -196,7 +201,7 @@ export class DriverState {
             this.database$.next(null);
             const currentConnection = this.requireConnection();
             const connection = currentConnection.withDatabase(null);
-            this._connection$.next(connection);
+            this.connection$.next(connection);
             this.appData.connections.push(connection);
             return;
         }
@@ -207,7 +212,7 @@ export class DriverState {
             this.database$.next(savedDatabase);
             const currentConnection = this.requireConnection();
             const connection = currentConnection.withDatabase(savedDatabase);
-            this._connection$.next(connection);
+            this.connection$.next(connection);
             this.appData.connections.push(connection);
         }, lockId);
     }
@@ -296,18 +301,11 @@ export class DriverState {
         ), lockId);
     }
 
-    selectTransactionType(transactionType: TransactionType) {
-        // TODO: fail if has uncommitted changes
-        return this.tryUseWriteLock(() => {
-            this._transactionType$.next(transactionType);
-        });
-    }
-
     // TODO: convoluted logic
     query(query: string): Observable<ApiResponse<QueryResponse>> {
         const lockId = uuid();
         const maybeOpenTransaction$ = this.autoTransactionEnabled$.value
-            ? this.openTransaction(this._transactionType$.value, lockId)
+            ? this.openTransaction(this.transactionControls.value.type!, lockId)
             : of({ ok: { transactionId: this.requireTransaction().id } });
         let queryRunAction: QueryRunAction;
         const driver = this.requireDriver();
@@ -330,7 +328,7 @@ export class DriverState {
             }),
             tap((res) => {
                 if (this.autoTransactionEnabled$.value) {
-                    if (this._transactionType$.value !== "read" && isOkResponse(res)) this.commitTransaction(lockId).subscribe();
+                    if (this.transactionControls.value.type !== "read" && isOkResponse(res)) this.commitTransaction(lockId).subscribe();
                     else this.closeTransaction(lockId).subscribe();
                 }
             }),
@@ -360,6 +358,16 @@ export class DriverState {
                 );
             }),
         );
+    }
+
+    createUser(username: string, password: string) {
+        const driver = this.requireDriver();
+        return fromPromise(driver.createUser(username, password));
+    }
+
+    updateUser(username: string, password: string) {
+        const driver = this.requireDriver();
+        return fromPromise(driver.updateUser(username, password));
     }
 
     checkHealth() {

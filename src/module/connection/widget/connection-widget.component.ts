@@ -4,7 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { CdkMenuItemCheckbox } from "@angular/cdk/menu";
 import { AsyncPipe, NgClass } from "@angular/common";
 import { Component, Input, OnInit, ViewChild } from "@angular/core";
 import { MatCheckboxModule } from "@angular/material/checkbox";
@@ -14,20 +13,12 @@ import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { Router, RouterLink } from "@angular/router";
 import { Database } from "@samuel-butcher-typedb/typedb-http-driver";
-import { combineLatest, distinctUntilChanged, first, map } from "rxjs";
-import { HoverMenuComponent } from "../../../framework/menu/hover-menu.component";
-import { DriverState, DriverStatus } from "../../../service/driver-state.service";
+import { combineLatest, distinctUntilChanged, map } from "rxjs";
+import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { DatabaseCreateDialogComponent } from "../database-create-dialog/database-create-dialog.component";
 import { DatabaseDeleteDialogComponent } from "../database-delete-dialog/database-delete-dialog.component";
 import { TransactionControlComponent } from "../transaction/transaction-control.component";
-
-const statusStyleMap: { [K in DriverStatus]: string } = {
-    disconnected: "error",
-    connecting: "warn",
-    connected: "ok",
-    reconnecting: "warn",
-};
 
 @Component({
     selector: "ts-connection-widget",
@@ -41,18 +32,16 @@ const statusStyleMap: { [K in DriverStatus]: string } = {
 export class ConnectionWidgetComponent implements OnInit {
 
     @Input({ required: true }) condensed!: boolean;
+    @ViewChild("connectionMenuTrigger") connectionMenuTrigger!: MatMenuTrigger;
     @ViewChild("databaseMenuTrigger") databaseMenuTrigger!: MatMenuTrigger;
 
-    connectionText$ = this.driver.connection$.pipe(map(x => x?.name ?? `No server connected`));
-    connectionBeaconStatusClass$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, database]) => {
+    connectionText$ = this.driver.connection$.pipe(map(x => x == null ? `No server connected` : `${x.params.username}@${x.name}`));
+    connectionBeaconStatusClass$ = this.driver.status$.pipe(map((status) => {
         if (status === "disconnected") return "error";
-        if (status === "connected") return database == null ? "error" : "ok";
+        else if (status === "connected") return "ok";
         return "warn";
     }));
-    connectionBeaconTooltip$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, database]) => {
-        if (status === "connected") return database == null ? "" : "Connected";
-        return `${status[0].toUpperCase()}${status.substring(1)}`;
-    }));
+    connectionBeaconTooltip$ = this.driver.status$.pipe(map((status) => `${status[0].toUpperCase()}${status.substring(1)}`));
     private transactionControlVisible = false;
     connectionText = ``;
     connectionAreaHovered = false;
@@ -64,6 +53,7 @@ export class ConnectionWidgetComponent implements OnInit {
     transactionControlVisible$ = this.driver.database$.pipe(map(db => !!db), distinctUntilChanged());
     transactionText$ = this.driver.transaction$.pipe(map(tx => tx?.type ?? `No active transaction`));
     transactionWidgetTooltip$ = this.driver.transactionHasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
+    disconnectButtonTooltip$ = this.driver.status$.pipe(map(status => status === "disconnected" ? "No active connection" : ""));
 
     rootNgClass$ = combineLatest([this.driver.status$, this.transactionControlVisible$]).pipe(map(([status, txWidgetVisible]) => ({
         "root": true,
@@ -87,14 +77,6 @@ export class ConnectionWidgetComponent implements OnInit {
 
     get connectionTooltip() {
         return this.condensed && this.transactionControlVisible ? this.connectionText : ``;
-    }
-
-    onClick() {
-        this.driver.connection$.pipe(first()).subscribe((connection) => {
-            if (!connection) {
-                this.router.navigate(["/connect"]);
-            }
-        });
     }
 
     disconnect() {

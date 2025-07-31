@@ -45,12 +45,13 @@ export class QueryToolState {
     readonly rawOutput = new RawOutputState();
     readonly history = new HistoryWindowState(this.driver);
     answersOutputEnabled = true;
-    readonly runDisabledReason$ = combineLatest(
-        [this.driver.status$, this.driver.database$, this.driver.autoTransactionEnabled$, this.driver.transaction$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))]
-    ).pipe(map(([status, db, autoTransactionEnabled, tx, _query]) => {
+    readonly runDisabledReason$ = combineLatest([
+        this.driver.status$, this.driver.database$, this.driver.transactionOperationModeChanges$,
+        this.driver.transaction$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))
+    ]).pipe(map(([status, db, txMode, tx, _query]) => {
         if (status !== "connected") return NO_SERVER_CONNECTED;
         else if (db == null) return NO_DATABASE_SELECTED;
-        else if (!autoTransactionEnabled && !tx) return NO_OPEN_TRANSACTION;
+        else if (txMode === "manual" && !tx) return NO_OPEN_TRANSACTION;
         else if (!this.queryControl.value.length) return QUERY_BLANK; // _query becomes blank after a page navigation for some reason
         else return null;
     }), shareReplay(1));

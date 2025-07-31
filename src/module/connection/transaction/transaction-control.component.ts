@@ -37,8 +37,8 @@ export class TransactionControlComponent {
     openButtonIconClass$ = this.driver.transaction$.pipe(map(tx => tx ? "fa-regular fa-arrow-rotate-right" : "fa-regular fa-play"));
     transactionConfigDisabled$ = this.driver.database$.pipe(map(db => !db));
     openButtonDisabled$ = combineLatest([this.driver.database$, this.driver.transaction$]).pipe(map(([db, tx]) => !db || !!tx));
-    openButtonVisible$ = this.driver.transactionOperationModeControlValueChanges$.pipe(map((mode) => mode !== "auto"));
-    commitButtonVisible$ = combineLatest([this.driver.transactionTypeControlValueChanges$, this.driver.transactionOperationModeControlValueChanges$]).pipe(
+    openButtonVisible$ = this.driver.transactionOperationModeChanges$.pipe(map((mode) => mode !== "auto"));
+    commitButtonVisible$ = combineLatest([this.driver.transactionTypeChanges$, this.driver.transactionOperationModeChanges$]).pipe(
         map(([type, mode]) => type !== "read" && mode === "manual")
     );
     closeButtonVisible$ = this.openButtonVisible$;
@@ -48,13 +48,11 @@ export class TransactionControlComponent {
             if (disabled) this.driver.transactionControls.disable();
             else this.driver.transactionControls.enable();
         });
-        this.driver.transactionTypeControlValueChanges$.subscribe((type) => {
+        this.driver.transactionTypeChanges$.subscribe((type) => {
             // TODO: confirm before closing with uncommitted changes
-            this.driver.closeTransaction().subscribe(() => {
-                this.driver.selectTransactionType(type);
-            });
+            this.driver.closeTransaction().subscribe();
         });
-        this.driver.transactionOperationModeControlValueChanges$.subscribe((operationMode) => {
+        this.driver.transactionOperationModeChanges$.subscribe((operationMode) => {
             // TODO: confirm before closing with uncommitted changes
             this.driver.closeTransaction().subscribe();
             this.driver.autoTransactionEnabled$.next(operationMode === "auto");

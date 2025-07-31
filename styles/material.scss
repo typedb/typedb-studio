@@ -591,7 +591,7 @@ body {
     }
 
     .mat-sidenav-content {
-        margin-right: 16px;
+        padding-right: 16px;
         display: flex;
         flex-direction: column;
     }
@@ -670,34 +670,30 @@ body {
     /* Table */
     @include mat.table-overrides((
         background-color: transparent,
-        header-container-height: 32px,
+        header-container-height: 40px,
         header-headline-color: primary.$white,
         header-headline-size: 14px,
         header-headline-weight: typography.$semi-bold,
         row-item-container-height: 40px,
-        row-item-outline-width: 0,
+        row-item-outline-color: rgba(primary.$light-purple, 0.6),
     ));
 
     .mat-mdc-table {
-        thead {
-            background: secondary.$purple;
-        }
+        tr.table-row-clickable {
+            cursor: pointer;
 
-        tbody tr:nth-child(odd) {
-            background: primary.$deep-purple;
-        }
+            &:hover {
+                th, td {
+                    background-color: rgba(primary.$light-purple, 0.6);
 
-        tbody tr:nth-child(even) {
-            background: primary.$purple;
-        }
+                    &:first-child {
+                        border-radius: 4px 0 0 4px;
+                    }
 
-        tr th, tr td {
-            &:first-child {
-                //border-radius: shapes.$border-radius 0 0 shapes.$border-radius;
-            }
-
-            &:last-child {
-                //border-radius: 0 shapes.$border-radius shapes.$border-radius 0;
+                    &:last-child {
+                        border-radius: 0 4px 4px 0;
+                    }
+                }
             }
         }
     }
@@ -710,8 +706,8 @@ body {
         padding: 0 14px 0 14px;
     }
 
-    .mdc-data-table__row:last-child .mat-mdc-cell {
-        //border-bottom: shapes.$border;
+    .mat-mdc-cell {
+        --mat-table-row-item-label-text-tracking: var(--body-letter-spacing);
     }
 
     .mat-column-select {
