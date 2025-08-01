@@ -15,7 +15,7 @@ import { Layouts } from "../framework/graph-visualiser/layouts";
 import { detectOS } from "../framework/util/os";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
-import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from "./schema-state.service";
+import { SchemaState } from "./schema-state.service";
 import { SnackbarService } from "./snackbar.service";
 import {
     ApiResponse, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse

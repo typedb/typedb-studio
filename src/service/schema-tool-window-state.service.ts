@@ -79,7 +79,9 @@ export class SchemaToolWindowState {
             this.buildView();
         });
         this.linksVisibility$.subscribe(() => {
-            this.updateViewVisibility();
+            for (const conceptNode of this.dataSource$.value.flatMap(x => x.children)) {
+                this.updateViewVisibility(conceptNode);
+            }
         });
     }
 
@@ -167,12 +169,17 @@ export class SchemaToolWindowState {
         this.dataSource$.next(data);
     }
 
-    private updateViewVisibility() {
-        this.dataSource$.value.forEach(x => x.children.forEach(conceptNode => {
-            conceptNode.children.filter(child => child.nodeKind === "link").forEach(linkNode => {
-                linkNode.visible = this.linksVisibility$.value[linkNode.linkKind];
-            });
-        }));
+    private updateViewVisibility(conceptNode: SchemaTreeConceptNode) {
+        for (const childNode of conceptNode.children) {
+            switch (childNode.nodeKind) {
+                case "link":
+                    childNode.visible = this.linksVisibility$.value[childNode.linkKind];
+                    break;
+                case "concept":
+                    this.updateViewVisibility(childNode);
+                    break;
+            }
+        }
         this.dataSource$.next([...this.dataSource$.value]);
     }
 
