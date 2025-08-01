@@ -55,7 +55,7 @@
         <i class="fa-light fa-check" [class.invisible]="!selected"></i>
         <span>{{ database.name }}</span>
         <span class="flex-spacer"></span>
-        <i class="fa-light fa-trash-can-xmark" matTooltip="Delete database" matTooltipPosition="above" (click)="onDeleteDatabaseClick(database, $event);"></i>
+        <i class="fa-light fa-trash-can" matTooltip="Delete database" matTooltipPosition="above" (click)="onDeleteDatabaseClick(database, $event);"></i>
       </button>
     }
     <mat-divider/>

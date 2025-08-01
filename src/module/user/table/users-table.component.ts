@@ -7,7 +7,6 @@
  * of Vaticle.
  */
 
-import { AsyncPipe } from "@angular/common";
 import { Component, Input } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 import { MatTableModule } from "@angular/material/table";
@@ -17,14 +16,13 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatMenuModule } from "@angular/material/menu";
 import { MatButtonModule } from "@angular/material/button";
 import { UserChangePasswordDialogComponent } from "../change-password-dialog/user-change-password-dialog.component";
+import { UserDeleteDialogComponent } from "../delete-dialog/user-delete-dialog.component";
 
 @Component({
     selector: "ts-users-table",
     templateUrl: "./users-table.component.html",
     styleUrls: ["./users-table.component.scss"],
-    imports: [
-        MatTableModule, MatSortModule, MatTooltipModule, MatMenuModule, MatButtonModule, AsyncPipe,
-    ]
+    imports: [MatTableModule, MatSortModule, MatTooltipModule, MatMenuModule, MatButtonModule]
 })
 export class UsersTableComponent {
     @Input({ required: true}) table!: User[];
@@ -43,6 +41,8 @@ export class UsersTableComponent {
     }
 
     openDeleteUserDialog(user: User) {
-        throw new Error("Deleting users is bad and you should not do it");
+        this.dialog.open(UserDeleteDialogComponent, {
+            data: { username: user.username },
+        });
     }
 }

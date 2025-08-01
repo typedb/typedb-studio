@@ -431,13 +431,13 @@ button {
     }
 
     button {
-        i.fa-trash-can-xmark {
+        i.fa-trash-can {
             opacity: 0;
             transition: opacity 100ms;
         }
 
         &:hover {
-            i.fa-trash-can-xmark {
+            i.fa-trash-can {
                 opacity: 1;
             }
         }
@@ -446,7 +446,7 @@ button {
     button.selected {
         color: primary.$green;
 
-        i.fa-trash-can-xmark {
+        i.fa-trash-can {
             color: primary.$grey;
         }
     }

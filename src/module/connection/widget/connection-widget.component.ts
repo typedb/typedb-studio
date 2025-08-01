@@ -16,8 +16,8 @@ import { Database } from "@samuel-butcher-typedb/typedb-http-driver";
 import { combineLatest, distinctUntilChanged, map } from "rxjs";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
-import { DatabaseCreateDialogComponent } from "../database-create-dialog/database-create-dialog.component";
-import { DatabaseDeleteDialogComponent } from "../database-delete-dialog/database-delete-dialog.component";
+import { DatabaseCreateDialogComponent } from "../../database/create-dialog/database-create-dialog.component";
+import { DatabaseDeleteDialogComponent } from "../../database/delete-dialog/database-delete-dialog.component";
 import { TransactionControlComponent } from "../transaction/transaction-control.component";
 
 @Component({

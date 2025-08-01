@@ -5,17 +5,15 @@
  */
 
 import { AsyncPipe } from "@angular/common";
-import { Component, inject, Inject } from "@angular/core";
-import { AbstractControl, AsyncValidatorFn, FormBuilder, FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { MatCheckbox } from "@angular/material/checkbox";
+import { Component, inject } from "@angular/core";
+import { FormBuilder, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { MatDivider } from "@angular/material/divider";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { Database, isApiErrorResponse } from "@samuel-butcher-typedb/typedb-http-driver";
-import { combineLatest, first, map, Subject } from "rxjs";
-import { ButtonComponent } from "../../../framework/button/button.component";
-import { FormActionsComponent, FormComponent, FormInputComponent, patternValidator, requiredValidator } from "../../../framework/form";
+import { Subject } from "rxjs";
+import { FormActionsComponent, FormComponent, FormInputComponent } from "../../../framework/form";
 import { ModalComponent } from "../../../framework/modal";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
@@ -26,7 +24,7 @@ import { SnackbarService } from "../../../service/snackbar.service";
     styleUrls: ["./database-delete-dialog.component.scss"],
     imports: [
         ModalComponent, AsyncPipe, FormsModule, ReactiveFormsModule, MatFormFieldModule,
-        MatInputModule, FormComponent, FormInputComponent, FormActionsComponent, MatCheckbox, MatDivider,
+        MatInputModule, FormComponent, FormInputComponent, FormActionsComponent, MatDivider,
     ]
 })
 export class DatabaseDeleteDialogComponent {

@@ -372,6 +372,11 @@ export class DriverState {
         return fromPromise(driver.updateUser(username, password));
     }
 
+    deleteUser(username: string) {
+        const driver = this.requireDriver();
+        return fromPromise(driver.deleteUser(username));
+    }
+
     checkHealth() {
         const driver = this.requireDriver();
         return fromPromise(driver.health());

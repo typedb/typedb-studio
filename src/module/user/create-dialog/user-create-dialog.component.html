@@ -3,10 +3,6 @@
   <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
     <tp-form-input [form]="form" field="username" label="Username" />
     <tp-form-password-input [form]="form" field="password" label="Password" />
-    <div class="content-wrapper">
-      <p><i class="fa-solid fa-triangle-exclamation"></i> <span class="admonition-header">Important</span></p>
-      <p>Be sure to save the password in a safe place - it will not be shown again.</p>
-    </div>
     <tp-form-actions
       [cancellable]="true" submitText="Create user" [isSubmitting]="isSubmitting$ | async"
       buttonIdPrefix="createDatabaseModal" (cancel)="close()"

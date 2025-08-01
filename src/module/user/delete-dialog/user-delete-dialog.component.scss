@@ -1,0 +1,47 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "colors";
+@use "shapes";
+@use "typography";
+
+.description {
+    margin-bottom: 24px;
+}
+
+tp-button {
+    display: block;
+    margin-top: 24px;
+}
+
+.content-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 16px;
+    border-radius: shapes.$border-radius;
+    background: colors.$translucent-yellow;
+
+    i.fa-triangle-exclamation {
+        color: colors.$secondary-yellow;
+    }
+}
+
+mat-divider {
+    margin: 24px 0;
+}
+
+.admonition-header {
+    font-weight: typography.$bold;
+    margin-left: 8px;
+}
+
+.field-multi-checkbox-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
