@@ -18,7 +18,7 @@ import { DriverState } from "./driver-state.service";
 import { SchemaState } from "./schema-state.service";
 import { SnackbarService } from "./snackbar.service";
 import {
-    ApiResponse, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse
+    ApiResponse, Attribute, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse, Value
 } from "typedb-driver-http";
 
 export type OutputType = "raw" | "log" | "table" | "graph";
@@ -176,9 +176,18 @@ function conceptDisplayString(concept: Concept | undefined): string {
         case "relation":
             return `${concept.type ? formatIsa(concept.type.label) : ""}, ${formatIid(concept.iid)}`;
         case "attribute":
-            return `${concept.type ? formatIsa(concept.type.label) : ""} ${concept.value}`;
+            return `${concept.type ? formatIsa(concept.type.label) : ""} ${formatValue(concept)}`;
         case "value":
-            return `${concept.value}`;
+            return formatValue(concept);
+    }
+}
+
+function formatValue(value: Attribute | Value): string {
+    switch (value.valueType) {
+        case "string":
+            return `"${value.value}"`;
+        default:
+            return `${value.value}`;
     }
 }
 
