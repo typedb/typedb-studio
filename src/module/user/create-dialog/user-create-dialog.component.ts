@@ -5,9 +5,9 @@
  */
 
 import { AsyncPipe } from "@angular/common";
-import { Component, inject } from "@angular/core";
+import { Component } from "@angular/core";
 import { FormBuilder, FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
+import { MatDialogRef } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { isApiErrorResponse } from "@samuel-butcher-typedb/typedb-http-driver";
@@ -48,7 +48,7 @@ export class UserCreateDialogComponent {
                 this.snackbar.errorPersistent(`No server connected - could not create user`);
             }
         });
-        this.driver.updateUser(this.form.value.username!, this.form.value.password!).pipe(
+        this.driver.createUser(this.form.value.username!, this.form.value.password!).pipe(
             switchMap(() => this.driver.refreshUserList())
         ).subscribe({
             next: () => {

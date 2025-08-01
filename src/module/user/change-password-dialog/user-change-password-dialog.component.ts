@@ -63,7 +63,11 @@ export class UserChangePasswordDialogComponent {
         ).subscribe({
             next: () => {
                 this.close();
-                this.snackbar.info(`Password changed for user '${this.data.username}'. You can now reconnect with the new credentials.`);
+                if (this.isEditingCurrentlyLoggedInUser) {
+                    this.snackbar.info(`Password changed for user '${this.data.username}'. You can now reconnect with the new credentials.`);
+                } else {
+                    this.snackbar.success(`Password changed for user '${this.data.username}'.`);
+                }
             },
             error: (err) => {
                 this.isSubmitting$.next(false);
