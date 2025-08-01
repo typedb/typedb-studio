@@ -53,7 +53,6 @@ export class ConnectionWidgetComponent implements OnInit {
     transactionControlVisible$ = this.driver.database$.pipe(map(db => !!db), distinctUntilChanged());
     transactionText$ = this.driver.transaction$.pipe(map(tx => tx?.type ?? `No active transaction`));
     transactionWidgetTooltip$ = this.driver.transactionHasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
-    disconnectButtonTooltip$ = this.driver.status$.pipe(map(status => status === "disconnected" ? "No active connection" : ""));
 
     rootNgClass$ = combineLatest([this.driver.status$, this.transactionControlVisible$]).pipe(map(([status, txWidgetVisible]) => ({
         "root": true,
@@ -77,13 +76,6 @@ export class ConnectionWidgetComponent implements OnInit {
 
     get connectionTooltip() {
         return this.condensed && this.transactionControlVisible ? this.connectionText : ``;
-    }
-
-    disconnect() {
-        this.driver.tryDisconnect().subscribe(() => {
-            this.snackbar.info(`Disconnected`);
-            this.router.navigate(["/"]);
-        });
     }
 
     signOut() {

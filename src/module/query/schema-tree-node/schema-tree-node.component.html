@@ -9,16 +9,16 @@
     <div class="link-node">
       @switch (data.linkKind) {
         @case ("sub") {
-          sub <em>{{ data.supertype.label }}</em>
+          <em>sub</em> {{ data.supertype.label }}
         }
         @case ("owns") {
-          owns <em>{{ data.ownedAttribute.label }}, value {{ data.ownedAttribute.valueType }}</em>
+          <em>owns</em> {{ data.ownedAttribute.label }}<em>, value {{ data.ownedAttribute.valueType }}</em>
         }
         @case ("relates") {
-          relates <em>{{ data.role.label }}</em>
+          <em>relates</em> {{ data.role.label }}
         }
         @case ("plays") {
-          plays <em>{{ data.role.label }}</em>
+          <em>plays</em> {{ data.role.label }}
         }
       }
     </div>
