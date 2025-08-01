@@ -82,12 +82,14 @@ export class ConnectionWidgetComponent implements OnInit {
     disconnect() {
         this.driver.tryDisconnect().subscribe(() => {
             this.snackbar.info(`Disconnected`);
+            this.router.navigate(["/"]);
         });
     }
 
     signOut() {
         this.driver.tryDisconnect().subscribe(() => {
             this.snackbar.info(`Signed out`);
+            this.router.navigate(["/connect"]);
         });
     }
 
