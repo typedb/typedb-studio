@@ -170,6 +170,8 @@ export class DriverState {
         return maybeCloseTransaction$.pipe(tap(() => this.tryUseWriteLock(() => {
             this.connection$.next(null);
             this.database$.next(null);
+            this._databaseList$.next(null);
+            this.userList$.next(null);
             this._status$.next("disconnected");
         }, lockId)));
     }

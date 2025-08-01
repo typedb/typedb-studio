@@ -16,6 +16,7 @@ import { MatInputModule } from "@angular/material/input";
 import { MatSortModule } from "@angular/material/sort";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
+import { of, switchMap } from "rxjs";
 import { isApiErrorResponse } from "../../../../typedb-driver/http-ts/src";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { DriverState } from "../../service/driver-state.service";
@@ -39,9 +40,20 @@ export class UsersPageComponent {
     errorLines: string[] | null = null;
 
     constructor(private driver: DriverState, private dialog: MatDialog) {
-        this.driver.refreshUserList().subscribe({
+        this.driver.connection$.pipe(
+            switchMap((connection) => {
+                if (connection) return this.driver.refreshUserList();
+                else return of(null);
+            })
+        ).subscribe({
             next: (res) => {
-                this.errorLines = isApiErrorResponse(res) ? res.err.message.split(`\n`) : null;
+                if (res == null) {
+                    this.errorLines = [`This page requires a connection to a TypeDB server.`, `Please connect to TypeDB and try again.`];
+                } else if (isApiErrorResponse(res)) {
+                    this.errorLines = res.err.message.split(`\n`);
+                } else {
+                    this.errorLines = null;
+                }
             },
             error: (err) => {
                 this.errorLines = err?.message?.split(`\n`) ?? err?.toString()?.split(`\n`);
