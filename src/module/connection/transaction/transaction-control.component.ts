@@ -15,7 +15,7 @@ import { combineLatest, map } from "rxjs";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
-import { TransactionType } from "@samuel-butcher-typedb/typedb-http-driver";
+import { TransactionType } from "typedb-driver-http";
 import { OperationMode } from "../../../concept/transaction";
 
 @Component({

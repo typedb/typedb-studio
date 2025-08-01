@@ -8,7 +8,7 @@ import { Injectable } from "@angular/core";
 import {
     ApiOkResponse, ApiResponse, AttributeType, ConceptRowsQueryResponse, EntityType,
     isApiErrorResponse, QueryResponse, RelationType, RoleType, Type
-} from "@samuel-butcher-typedb/typedb-http-driver";
+} from "typedb-driver-http";
 import Graph from "graphology";
 import { BehaviorSubject, combineLatest, distinctUntilChanged, finalize, first, map } from "rxjs";
 import Sigma, { Camera } from "sigma";

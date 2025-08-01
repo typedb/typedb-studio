@@ -11,7 +11,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { MatDivider } from "@angular/material/divider";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
-import { isApiErrorResponse } from "@samuel-butcher-typedb/typedb-http-driver";
+import { isApiErrorResponse } from "typedb-driver-http";
 import { Subject, switchMap } from "rxjs";
 import { FormActionsComponent, FormComponent, FormInputComponent } from "../../../framework/form";
 import { ModalComponent } from "../../../framework/modal";

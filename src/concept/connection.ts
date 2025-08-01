@@ -6,7 +6,7 @@
 
 import {
     Database, DriverParams, DriverParamsBasic, DriverParamsTranslated, isBasicParams, TranslatedAddress
-} from "@samuel-butcher-typedb/typedb-http-driver";
+} from "typedb-driver-http";
 
 export class ConnectionConfig {
 

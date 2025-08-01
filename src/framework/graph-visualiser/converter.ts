@@ -1,4 +1,4 @@
-import { getVariableName, QueryConstraintAny, QueryStructure, QueryVertex } from "@samuel-butcher-typedb/typedb-http-driver";
+import { getVariableName, QueryConstraintAny, QueryStructure, QueryVertex } from "typedb-driver-http";
 import {
     EdgeAttributes,
     EdgeMetadata,

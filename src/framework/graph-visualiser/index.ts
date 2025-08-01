@@ -1,4 +1,4 @@
-import { ApiResponse, isApiErrorResponse, QueryConstraintAny, QueryConstraintSpan, QueryResponse, QueryStructure } from "@samuel-butcher-typedb/typedb-http-driver";
+import { ApiResponse, isApiErrorResponse, QueryConstraintAny, QueryConstraintSpan, QueryResponse, QueryStructure } from "typedb-driver-http";
 import MultiGraph from "graphology";
 import Sigma from "sigma";
 import ForceSupervisor from "graphology-layout-force/worker";

@@ -11,7 +11,7 @@ import { Component, Input } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 import { MatTableModule } from "@angular/material/table";
 import { MatSortModule } from "@angular/material/sort";
-import { User } from "@samuel-butcher-typedb/typedb-http-driver";
+import { User } from "typedb-driver-http";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatMenuModule } from "@angular/material/menu";
 import { MatButtonModule } from "@angular/material/button";

@@ -17,7 +17,7 @@ import { AppData } from "./app-data.service";
 import {
     ApiOkResponse, ApiResponse, Database, isApiErrorResponse, isOkResponse, QueryResponse, TransactionType,
     TypeDBHttpDriver, User, VersionResponse
-} from "@samuel-butcher-typedb/typedb-http-driver";
+} from "typedb-driver-http";
 import { FormBuilder } from "@angular/forms";
 
 export type DriverStatus = "disconnected" | "connecting" | "connected" | "reconnecting";

@@ -10,7 +10,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatDialogRef } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
-import { Database } from "@samuel-butcher-typedb/typedb-http-driver";
+import { Database } from "typedb-driver-http";
 import { map, Observable, Subject } from "rxjs";
 import { FormActionsComponent, FormComponent, FormOption, FormSelectComponent, requiredValidator } from "../../../framework/form";
 import { ModalComponent } from "../../../framework/modal";

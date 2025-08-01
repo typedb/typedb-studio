@@ -1,4 +1,4 @@
-import { RoleType } from "@samuel-butcher-typedb/typedb-http-driver";
+import { RoleType } from "typedb-driver-http";
 import chroma from "chroma-js";
 import { vertexMapKey } from "./converter";
 import {DataVertex, VertexUnavailable} from "./graph";

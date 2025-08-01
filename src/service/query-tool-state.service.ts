@@ -19,7 +19,7 @@ import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from 
 import { SnackbarService } from "./snackbar.service";
 import {
     ApiResponse, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse
-} from "@samuel-butcher-typedb/typedb-http-driver";
+} from "typedb-driver-http";
 
 export type OutputType = "raw" | "log" | "table" | "graph";
 

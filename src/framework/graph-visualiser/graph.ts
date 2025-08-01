@@ -5,7 +5,7 @@ import {
     QueryConstraintLabel, QueryConstraintLinks, QueryConstraintOwns, QueryConstraintPlays, QueryConstraintRelates,
     QueryConstraintSpan, QueryConstraintSub, QueryConstraintSubExact, QueryConstraintValue, QueryStructure, QueryVertex,
     Relation, RelationType, RoleType, ThingKind, Type, TypeKind, Value, ValueKind
-} from "@samuel-butcher-typedb/typedb-http-driver";
+} from "typedb-driver-http";
 import {MultiGraph} from "graphology";
 
 ///////////////////////
