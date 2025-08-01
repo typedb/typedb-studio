@@ -4,6 +4,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+@use "@angular/material" as mat;
+
+table {
+    @include mat.table-overrides((
+        row-item-outline-color: transparent,
+    ));
+}
+
 .mat-column-actions-loud {
     width: 200px;
 }
