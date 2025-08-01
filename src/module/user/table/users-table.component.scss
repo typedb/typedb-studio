@@ -1,0 +1,23 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "@angular/material" as mat;
+
+table {
+    @include mat.table-overrides((
+        row-item-outline-color: transparent,
+    ));
+}
+
+.mat-column-actions-loud {
+    width: 200px;
+}
+
+.actions {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+}

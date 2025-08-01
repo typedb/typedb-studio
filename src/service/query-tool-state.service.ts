@@ -6,28 +6,20 @@
 
 import { Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import MultiGraph from "graphology";
-import { BehaviorSubject, combineLatest, first, map, Observable, ReplaySubject, shareReplay, startWith } from "rxjs";
+import { BehaviorSubject, combineLatest, first, map, Observable, shareReplay, startWith } from "rxjs";
 import { DriverAction } from "../concept/action";
 import { createSigmaRenderer, GraphVisualiser } from "../framework/graph-visualiser";
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
 import { newVisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
-import { Concept, Value } from "../framework/typedb-driver/concept";
-import {
-    ApiResponse,
-    ConceptDocument,
-    ConceptRow,
-    ConceptRowAnswer,
-    isApiErrorResponse,
-    QueryResponse
-} from "../framework/typedb-driver/response";
+import { detectOS } from "../framework/util/os";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
-import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from "./schema-state.service";
+import { SchemaState } from "./schema-state.service";
 import { SnackbarService } from "./snackbar.service";
-import { FlatTreeControl } from "@angular/cdk/tree";
-import { MatTreeFlatDataSource, MatTreeFlattener } from "@angular/material/tree";
+import {
+    ApiResponse, Attribute, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse, Value
+} from "typedb-driver-http";
 
 export type OutputType = "raw" | "log" | "table" | "graph";
 
@@ -35,8 +27,10 @@ const NO_SERVER_CONNECTED = `No server connected`;
 const NO_DATABASE_SELECTED = `No database selected`;
 const NO_OPEN_TRANSACTION = `No open transaction`;
 const QUERY_BLANK = `Query text is blank`;
+const QUERY_HIGHLIGHT_DIV_ID = null;
 
-const QUERY_HIGHLIGHT_DIV_ID = null; // "query-highlight-div"; // Add to body: <div id="query-highlight-div"></div>
+const RUN_KEY_BINDING = detectOS() === "mac" ? "⌘+Enter" : "Ctrl+Enter";
+
 @Injectable({
     providedIn: "root",
 })
@@ -45,22 +39,23 @@ export class QueryToolState {
     queryControl = new FormControl("", {nonNullable: true});
     outputTypeControl = new FormControl("log" as OutputType, { nonNullable: true });
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
-    readonly schemaWindow = new SchemaWindowState(this.schema);
     readonly logOutput = new LogOutputState();
     readonly tableOutput = new TableOutputState();
     readonly graphOutput = new GraphOutputState();
     readonly rawOutput = new RawOutputState();
     readonly history = new HistoryWindowState(this.driver);
     answersOutputEnabled = true;
-    readonly runDisabledReason$ = combineLatest(
-        [this.driver.status$, this.driver.database$, this.driver.autoTransactionEnabled$, this.driver.transaction$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))]
-    ).pipe(map(([status, db, autoTransactionEnabled, tx, _query]) => {
+    readonly runDisabledReason$ = combineLatest([
+        this.driver.status$, this.driver.database$, this.driver.transactionOperationModeChanges$,
+        this.driver.transaction$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))
+    ]).pipe(map(([status, db, txMode, tx, _query]) => {
         if (status !== "connected") return NO_SERVER_CONNECTED;
         else if (db == null) return NO_DATABASE_SELECTED;
-        else if (!autoTransactionEnabled && !tx) return NO_OPEN_TRANSACTION;
+        else if (txMode === "manual" && !tx) return NO_OPEN_TRANSACTION;
         else if (!this.queryControl.value.length) return QUERY_BLANK; // _query becomes blank after a page navigation for some reason
         else return null;
     }), shareReplay(1));
+    readonly runTooltip$ = this.runDisabledReason$.pipe(map(x => x ? x : `Run query (${RUN_KEY_BINDING})`));
     readonly runEnabled$ = this.runDisabledReason$.pipe(map(x => x == null));
     readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
@@ -118,7 +113,7 @@ export class QueryToolState {
         this.tableOutput.status = "running";
         this.graphOutput.status = "running";
         this.graphOutput.query = query;
-        this.graphOutput.database = this.driver.requireDatabase(`${this.constructor.name}.${this.initialiseOutput.name} > requireValue(driver.database$)`).name;
+        this.graphOutput.database = this.driver.requireDatabase().name;
     }
 
     private outputQueryResponse(res: ApiResponse<QueryResponse>) {
@@ -140,113 +135,6 @@ export class QueryToolState {
         this.tableOutput.status = "answerOutputDisabled";
         this.graphOutput.status = "answerOutputDisabled";
         this.rawOutput.push(SUCCESS_RAW);
-    }
-}
-
-export type SchemaTreeNodeKind = "root" | "concept" | "link";
-
-export interface SchemaTreeNodeBase {
-    nodeKind: SchemaTreeNodeKind;
-    children?: SchemaTreeNode[];
-}
-
-export interface SchemaTreeRootNode extends SchemaTreeNodeBase {
-    nodeKind: "root";
-    label: string;
-    children: SchemaTreeConceptNode[];
-}
-
-export interface SchemaTreeConceptNode extends SchemaTreeNodeBase {
-    nodeKind: "concept";
-    concept: SchemaConcept;
-    children: SchemaTreeLinkNode[];
-}
-
-export type SchemaTreeLinkKind = "sub" | "owns" | "plays" | "relates";
-
-export interface SchemaTreeLinkNodeBase extends SchemaTreeNodeBase {
-    nodeKind: "link";
-    linkKind: SchemaTreeLinkKind;
-}
-
-export interface SchemaTreeSubLinkNode extends SchemaTreeLinkNodeBase {
-    linkKind: "sub";
-    supertype: SchemaConcept;
-}
-
-export interface SchemaTreeOwnsLinkNode extends SchemaTreeLinkNodeBase {
-    linkKind: "owns";
-    ownedAttribute: SchemaAttribute;
-}
-
-export interface SchemaTreePlaysLinkNode extends SchemaTreeLinkNodeBase {
-    linkKind: "plays";
-    role: SchemaRole;
-}
-
-export interface SchemaTreeRelatesLinkNode extends SchemaTreeLinkNodeBase {
-    linkKind: "relates";
-    role: SchemaRole;
-}
-
-export type SchemaTreeLinkNode = SchemaTreeSubLinkNode | SchemaTreeOwnsLinkNode | SchemaTreePlaysLinkNode | SchemaTreeRelatesLinkNode;
-
-export type SchemaTreeNode = SchemaTreeRootNode | SchemaTreeConceptNode | SchemaTreeLinkNode;
-
-export class SchemaWindowState {
-    dataSource: SchemaTreeRootNode[] = [];
-
-    constructor(public schemaState: SchemaState) {
-        schemaState.value$.subscribe(schema => {
-            this.populateDataSources(schema);
-        });
-    }
-
-    hasChild = (_: number, node: SchemaTreeNode) => !!node.children?.length;
-
-    childrenAccessor = (node: SchemaTreeNode) => node.children ?? [];
-
-    private populateDataSources(schema: Schema | null) {
-        if (!schema) {
-            this.dataSource.length = 0;
-            return;
-        }
-        this.dataSource = [{
-            nodeKind: "root",
-            label: "Entities",
-            children: Object.values(schema.entities).sort((a, b) => a.label.localeCompare(b.label)).map(x => ({
-                nodeKind: "concept",
-                concept: x,
-                children: ([
-                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
-                    ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y })),
-                    ...x.playedRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y })),
-                ] as SchemaTreeLinkNode[]),
-            })),
-        }, {
-            nodeKind: "root",
-            label: "Relations",
-            children: Object.values(schema.relations).sort((a, b) => a.label.localeCompare(b.label)).map(x => ({
-                nodeKind: "concept",
-                concept: x,
-                children: ([
-                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
-                    ...x.relatedRoles.map(y => ({ nodeKind: "link", linkKind: "relates", role: y })),
-                    ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y })),
-                    ...x.playedRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y })),
-                ] as SchemaTreeLinkNode[]),
-            })),
-        }, {
-            nodeKind: "root",
-            label: "Attributes",
-            children: Object.values(schema.attributes).sort((a, b) => a.label.localeCompare(b.label)).map(x => ({
-                nodeKind: "concept",
-                concept: x,
-                children: ([
-                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype }] : []),
-                ] as SchemaTreeLinkNode[]),
-            })),
-        }];
     }
 }
 
@@ -288,9 +176,18 @@ function conceptDisplayString(concept: Concept | undefined): string {
         case "relation":
             return `${concept.type ? formatIsa(concept.type.label) : ""}, ${formatIid(concept.iid)}`;
         case "attribute":
-            return `${concept.type ? formatIsa(concept.type.label) : ""} ${concept.value}`;
+            return `${concept.type ? formatIsa(concept.type.label) : ""} ${formatValue(concept)}`;
         case "value":
-            return `${concept.value}`;
+            return formatValue(concept);
+    }
+}
+
+function formatValue(value: Attribute | Value): string {
+    switch (value.valueType) {
+        case "string":
+            return `"${value.value}"`;
+        default:
+            return `${value.value}`;
     }
 }
 
@@ -352,7 +249,7 @@ export class LogOutputState {
                 else lines.push(`Printing rows...`);
 
                 if (res.ok.answers.length) {
-                    const varNames = Object.keys(res.ok.answers[0]);
+                    const varNames = Object.keys(res.ok.answers[0]).sort();
                     if (varNames.length) {
                         const columnNames = Object.keys(res.ok.answers[0].data);
                         const variableColumnWidth = columnNames.length > 0 ? Math.max(...columnNames.map(s => s.length)) : 0;
@@ -390,7 +287,7 @@ export class LogOutputState {
     }
 
     private conceptRowDisplayString(row: ConceptRow, variableColumnWidth: number) {
-        const columnNames = Object.keys(row);
+        const columnNames = Object.keys(row).sort();
         const contents = columnNames.map((columnName) =>
             `\$${columnName}${" ".repeat(variableColumnWidth - columnName.length + 1)}| ${conceptDisplayString(row[columnName])}`
         );
@@ -544,17 +441,17 @@ export class GraphOutputState {
     push(res: ApiResponse<QueryResponse>) {
         if (!this.canvasEl) throw `Missing canvas element`;
 
+        if (isApiErrorResponse(res)) {
+            this.status = "error";
+            return;
+        }
+
         if (!this.visualiser) {
             const graph = newVisualGraph();
             const sigma = createSigmaRenderer(this.canvasEl, defaultSigmaSettings as any, graph);
             const layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
             // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
             this.visualiser = new GraphVisualiser(graph, sigma, layout);
-        }
-
-        if (isApiErrorResponse(res)) {
-            this.status = "error";
-            return;
         }
 
         switch (res.ok.answerType) {

@@ -1,0 +1,11 @@
+<tp-modal dialogTitle="Delete user" [isBusy]="isSubmitting$ | async">
+  <p class="description">Are you sure you want to delete user '{{ data.username }}'?</p>
+  <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
+    <tp-form-actions submitText="Delete user" submitButtonStyle="primary-outline red stroke"
+      buttonIdPrefix="strongConfirmationModal" [isSubmitting]="isSubmitting$ | async" [cancellable]="true" (cancel)="close()"
+    />
+    @if (errorLines.length) {
+      <mat-error>@for (line of errorLines; track line) {<p>{{ line }}</p>}</mat-error>
+    }
+  </tp-form>
+</tp-modal>

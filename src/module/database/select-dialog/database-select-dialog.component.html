@@ -1,0 +1,15 @@
+<tp-modal dialogTitle="Select database" [isBusy]="isSubmitting$ | async">
+  <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
+    @let databases = databases$ | async;
+    @if (databases) {
+      <tp-form-select [options]="databases" [form]="form" field="database" label="Database" />
+      <tp-form-actions
+        [cancellable]="true" submitText="Confirm" [isSubmitting]="isSubmitting$ | async"
+        buttonIdPrefix="createDatabaseModal" (cancel)="close()"
+      />
+    }
+    @if (errorLines.length) {
+      <mat-error>@for (line of errorLines; track line) {<p>{{ line }}</p>}</mat-error>
+    }
+  </tp-form>
+</tp-modal>

@@ -10,11 +10,11 @@ import { AbstractControl, AsyncValidatorFn, FormBuilder, FormsModule, ReactiveFo
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
+import { isApiErrorResponse } from "typedb-driver-http";
 import { combineLatest, first, map, Subject } from "rxjs";
 import { ButtonComponent } from "../../../framework/button/button.component";
 import { FormActionsComponent, FormComponent, FormInputComponent, patternValidator, requiredValidator } from "../../../framework/form";
 import { ModalComponent } from "../../../framework/modal";
-import { isApiErrorResponse } from "../../../framework/typedb-driver/response";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 
@@ -24,7 +24,7 @@ import { SnackbarService } from "../../../service/snackbar.service";
     styleUrls: ["./database-create-dialog.component.scss"],
     imports: [
         ModalComponent, AsyncPipe, FormsModule, ReactiveFormsModule, MatFormFieldModule,
-        MatInputModule, FormComponent, FormInputComponent, FormActionsComponent
+        MatInputModule, FormComponent, FormInputComponent, FormActionsComponent,
     ]
 })
 export class DatabaseCreateDialogComponent {
@@ -53,7 +53,7 @@ export class DatabaseCreateDialogComponent {
         this.driver.createAndSelectDatabase(this.form.value.name!).subscribe({
             next: () => {
                 this.close();
-                this.snackbar.success(`Database '${this.form.value.name}' created successfully`);
+                this.snackbar.success(`Created and connected to database '${this.form.value.name}'`);
             },
             error: (err) => {
                 this.isSubmitting$.next(false);

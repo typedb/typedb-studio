@@ -4,8 +4,20 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+import { SchemaTreeLinkNode } from "../service/schema-tool-window-state.service";
+
 export const sidebarStates = ["expanded", "collapsed"] as const;
 export type SidebarState = typeof sidebarStates[number];
 
 export const tools = ["query", "explore", "schema"] as const;
 export type Tool = typeof tools[number];
+
+export interface SchemaToolWindowState {
+    linksVisibility: Record<SchemaTreeLinkNode["linkKind"], boolean>;
+    viewMode: "flat" | "hierarchical";
+    rootNodesCollapsed: {
+        entities: boolean;
+        relations: boolean;
+        attributes: boolean;
+    };
+}

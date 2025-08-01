@@ -1,116 +1,122 @@
-import { EditorView } from '@codemirror/view'
-import { Extension } from '@codemirror/state'
-import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
-import { tags as t } from '@lezer/highlight'
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
 
-const base00 = '#0e0d17',
-    base01 = '#232135',
-    base02 = '#2d2a46',
-    base03 = '#383649',
-    base04 = '#4e4b63',
-    base05 = '#63607c',
-    base06 = '#958fa8',
-    base07 = '#d7d4e5',
-    base08 = '#A54543',
-    base09 = '#fc6d24',
-    constraint = '#c099f3',
-    base0B = '#8abeb7',
-    string_ = '#ffe4a7',
-    variable = '#55eae2',
-    keyword = '#ff7abd',
-    base0F = '#6987AF'
+import { EditorView } from "@codemirror/view"
+import { Extension } from "@codemirror/state"
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language"
+import { tags as t } from "@lezer/highlight"
+
+const base00 = "#0e0d17",
+    base01 = "#232135",
+    base02 = "#2d2a46",
+    base03 = "#383649",
+    base04 = "#4e4b63",
+    base05 = "#63607c",
+    base06 = "#958fa8",
+    base07 = "#d7d4e5",
+    base08 = "#A54543",
+    base09 = "#fc6d24",
+    constraint = "#c099f3",
+    base0B = "#8abeb7",
+    string_ = "#ffe4a7",
+    variable = "#55eae2",
+    keyword = "#ff7abd",
+    base0F = "#6987AF"
 
 const invalid = base09,
     darkBackground = base00,
-    highlightBackground = base02 + '90',
+    highlightBackground = base02 + "90",
     background = base00,
-    tooltipBackground = base03 + 'A0',
+    tooltipBackground = base03 + "A0",
     selection = base06,
     cursor = base07
 
 /// The editor theme styles for Basic Dark.
 export const basicDarkTheme = EditorView.theme(
     {
-        '&': {
+        "&": {
             color: base07,
             backgroundColor: background
         },
 
-        '.cm-content': {
+        ".cm-content": {
             caretColor: cursor
         },
 
-        '.cm-scroller': {
-            fontSize: '14px',
-            lineHeight: '22px',
-            fontFamily: '"Monaco", monospace',
+        ".cm-scroller": {
+            fontSize: "14px",
+            lineHeight: "22px",
+            fontFamily: "'Monaco', monospace",
         },
 
-        '.cm-cursor, .cm-dropCursor': { borderLeftColor: cursor },
-        '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection':
+        ".cm-cursor, .cm-dropCursor": { borderLeftColor: cursor },
+        "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
             { backgroundColor: selection },
 
-        '.cm-panels': { backgroundColor: darkBackground, color: base03 },
-        '.cm-panels.cm-panels-top': { borderBottom: '2px solid black' },
-        '.cm-panels.cm-panels-bottom': { borderTop: '2px solid black' },
+        ".cm-panels": { backgroundColor: darkBackground, color: base03 },
+        ".cm-panels.cm-panels-top": { borderBottom: "2px solid black" },
+        ".cm-panels.cm-panels-bottom": { borderTop: "2px solid black" },
 
-        '.cm-searchMatch': {
+        ".cm-searchMatch": {
             backgroundColor: base02,
             outline: `1px solid ${base03}`,
             color: base07
         },
-        '.cm-searchMatch.cm-searchMatch-selected': {
+        ".cm-searchMatch.cm-searchMatch-selected": {
             backgroundColor: base05,
             color: base07
         },
 
-        '.cm-activeLine': { backgroundColor: highlightBackground },
-        '.cm-selectionMatch': { backgroundColor: highlightBackground },
+        ".cm-activeLine": { backgroundColor: highlightBackground },
+        ".cm-selectionMatch": { backgroundColor: highlightBackground },
 
-        '&.cm-focused .cm-matchingBracket, &.cm-focused .cm-nonmatchingBracket': {
+        "&.cm-focused .cm-matchingBracket, &.cm-focused .cm-nonmatchingBracket": {
             outline: `1px solid ${base03}`
         },
 
-        '&.cm-focused .cm-matchingBracket': {
+        "&.cm-focused .cm-matchingBracket": {
             backgroundColor: base02,
             color: base07
         },
 
-        '.cm-gutters': {
+        ".cm-gutters": {
             borderRight: `1px solid #ffffff10`,
             color: base06,
             backgroundColor: darkBackground
         },
 
-        '.cm-activeLineGutter': {
+        ".cm-activeLineGutter": {
             backgroundColor: highlightBackground
         },
 
-        '.cm-foldPlaceholder': {
-            backgroundColor: 'transparent',
-            border: 'none',
+        ".cm-foldPlaceholder": {
+            backgroundColor: "transparent",
+            border: "none",
             color: base02
         },
 
-        '.cm-tooltip': {
-            border: 'none',
+        ".cm-tooltip": {
+            border: "none",
             backgroundColor: tooltipBackground,
         },
-        '.cm-tooltip .cm-tooltip-arrow:before': {
-            borderTopColor: 'transparent',
-            borderBottomColor: 'transparent'
+        ".cm-tooltip .cm-tooltip-arrow:before": {
+            borderTopColor: "transparent",
+            borderBottomColor: "transparent"
         },
-        '.cm-tooltip .cm-tooltip-arrow:after': {
+        ".cm-tooltip .cm-tooltip-arrow:after": {
             borderTopColor: tooltipBackground,
             borderBottomColor: tooltipBackground
         },
-        '.cm-tooltip-autocomplete': {
-            '& > ul > li[aria-selected]': {
+        ".cm-tooltip-autocomplete": {
+            "& > ul > li[aria-selected]": {
                 backgroundColor: tooltipBackground,
                 color: base07
             }
         },
-        '.cm-tooltip.cm-completionInfo': {
+        ".cm-tooltip.cm-completionInfo": {
             fontSize: "12px",
         },
     },
@@ -177,28 +183,28 @@ export const basicDarkHighlightStyle = HighlightStyle.define([
     {
         tag: t.link,
         color: base0F,
-        textDecoration: 'underline',
-        textUnderlinePosition: 'under'
+        textDecoration: "underline",
+        textUnderlinePosition: "under"
     },
     {
         tag: [t.url, t.escape, t.special(t.string)],
         color: base0B
     },
     { tag: [t.meta], color: base08 },
-    { tag: [t.comment], color: base06, fontStyle: 'italic' },
+    { tag: [t.comment], color: base06, fontStyle: "italic" },
     {
         tag: t.monospace,
         color: base01,
     },
-    { tag: t.strong, fontWeight: 'bold', color: constraint },
-    { tag: t.emphasis, fontStyle: 'italic', color: variable },
-    { tag: t.strikethrough, textDecoration: 'line-through' },
+    { tag: t.strong, fontWeight: "bold", color: constraint },
+    { tag: t.emphasis, fontStyle: "italic", color: variable },
+    { tag: t.strikethrough, textDecoration: "line-through" },
     { tag: t.heading, color: keyword },
-    // { tag: t.special(t.heading1), fontWeight: 'bold', color: base01 },
-    // { tag: t.heading1, fontWeight: 'bold', color: base01 },
+    // { tag: t.special(t.heading1), fontWeight: "bold", color: base01 },
+    // { tag: t.heading1, fontWeight: "bold", color: base01 },
     // {
     //     tag: [t.heading2, t.heading3, t.heading4],
-    //     fontWeight: 'bold',
+    //     fontWeight: "bold",
     //     color: base01
     // },
     // {

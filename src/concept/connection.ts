@@ -4,8 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Database } from "../framework/typedb-driver/database";
-import { DriverParams, DriverParamsBasic, DriverParamsTranslated, isBasicParams, TranslatedAddress } from "../framework/typedb-driver/params";
+import {
+    Database, DriverParams, DriverParamsBasic, DriverParamsTranslated, isBasicParams, TranslatedAddress
+} from "typedb-driver-http";
 
 export class ConnectionConfig {
 
@@ -23,14 +24,13 @@ export class ConnectionConfig {
 
     static autoName(params: ConnectionParams) {
         const address = isBasicParams(params) ? params.addresses[0] : params.translatedAddresses[0].external;
-        const host = address.split("/").at(-1);
-        return `${params.username}@${host}`;
+        return `${address.split("/").at(-1)}`;
     }
 
-    withDatabase(database: Database): ConnectionConfig {
+    withDatabase(database: Database | null): ConnectionConfig {
         return new ConnectionConfig({
             name: this.name,
-            params: Object.assign<{}, ConnectionParams, Partial<ConnectionParams>>({}, this.params, { database: database.name }),
+            params: Object.assign<{}, ConnectionParams, Partial<ConnectionParams>>({}, this.params, { database: database?.name }),
             preferences: this.preferences,
         });
     }

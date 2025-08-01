@@ -52,26 +52,6 @@ svg.tp-logo {
     100% { transform: scaleY(1); }
 }
 
-.selector-button {
-    width: 100%;
-    margin-top: -8px;
-    margin-bottom: -8px;
-    font-weight: typography.$semi-bold;
-    color: primary.$white;
-
-    i {
-        width: auto;
-        min-width: auto;
-        font-size: 18px;
-        position: absolute;
-        margin-left: -16px;
-    }
-
-    span {
-        margin-left: 12px;
-    }
-}
-
 i {
     font-size: 20px;
     height: 20px;
@@ -83,6 +63,11 @@ i {
         height: 48px;
         display: flex;
         align-items: center;
+    }
+
+    &.fa-user-shield {
+        font-size: 18px;
+        height: 18px;
     }
 }
 

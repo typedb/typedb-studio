@@ -12,21 +12,13 @@
 :host {
     display: flex;
     align-items: center;
-    position: absolute;
-    inset: auto 0;
 }
 
 .root {
-    margin: 0 auto;
-    border-radius: shapes.$border-radius-panel;
-    @include shapes.standard-border;
-    @include shapes.light-source-gradient(rgba(primary.$light-purple, 0.9), primary.$purple, 80px, 16px);
     transition: background 0.1s linear, width 500ms ease-in;
-    padding: 3px 8px;
     display: flex;
-    align-items: center;
-    z-index: 40;
-    cursor: pointer;
+    flex-flow: row wrap;
+    row-gap: 8px;
 
     button {
         padding: 5px 8px;
@@ -94,6 +86,7 @@ i.ts-beacon {
     font-size: 14px;
     margin-left: 8px;
     margin-right: 4px;
+    color: secondary.$light-grey;
 }
 
 .divider-vertical {
@@ -123,7 +116,29 @@ i.ts-beacon {
         margin-right: 3px;
     }
 
+    i.fa-user-shield {
+        font-size: 12px;
+        height: 12px;
+    }
+
+    button {
+        i.fa-trash-can {
+            opacity: 0;
+            transition: opacity 100ms;
+        }
+
+        &:hover {
+            i.fa-trash-can {
+                opacity: 1;
+            }
+        }
+    }
+
     button.selected {
         color: primary.$green;
+
+        i.fa-trash-can {
+            color: primary.$grey;
+        }
     }
 }

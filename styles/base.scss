@@ -249,6 +249,11 @@ code, .text-code {
     font-family: Monaco, monospace;
 }
 
+em {
+    font-weight: typography.$semi-bold;
+    color: secondary.$lighter-grey;
+}
+
 button {
     appearance: none;
     -webkit-appearance: none;
@@ -563,9 +568,7 @@ button i + span, button span + i {
     padding: 19px 0;
     position: sticky;
     top: 0;
-    background-color: primary.$black-purple;
     z-index: 10;
-    align-items: center;
 
     > a,
     tp-button {
@@ -582,12 +585,6 @@ button i + span, button span + i {
         width: 0;
         height: 24px;
         border-right: shapes.$border;
-    }
-
-    &.condensed {
-        ts-connection-widget .has-transaction-widget .connection-text {
-            display: none;
-        }
     }
 }
 
