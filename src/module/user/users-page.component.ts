@@ -16,6 +16,7 @@ import { MatInputModule } from "@angular/material/input";
 import { MatSortModule } from "@angular/material/sort";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
+import { isApiErrorResponse } from "../../../../typedb-driver/http-ts/src";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { DriverState } from "../../service/driver-state.service";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
@@ -35,8 +36,17 @@ import { UsersTableComponent } from "./table/users-table.component";
 export class UsersPageComponent {
 
     users$ = this.driver.userList$;
+    errorLines: string[] | null = null;
 
     constructor(private driver: DriverState, private dialog: MatDialog) {
+        this.driver.refreshUserList().subscribe({
+            next: (res) => {
+                this.errorLines = isApiErrorResponse(res) ? res.err.message.split(`\n`) : null;
+            },
+            error: (err) => {
+                this.errorLines = err?.message?.split(`\n`) ?? err?.toString()?.split(`\n`);
+            },
+        });
     }
 
     openCreateUserDialog() {

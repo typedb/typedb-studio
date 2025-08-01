@@ -85,6 +85,12 @@ export class ConnectionWidgetComponent implements OnInit {
         });
     }
 
+    signOut() {
+        this.driver.tryDisconnect().subscribe(() => {
+            this.snackbar.info(`Signed out`);
+        });
+    }
+
     selectDatabase(database: Database) {
         if (this.driver.database$.value?.name === database.name) return;
         this.driver.selectDatabase(database);

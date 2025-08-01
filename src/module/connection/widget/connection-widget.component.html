@@ -40,6 +40,7 @@
       <aside>User: {{ connection.params.username }}</aside>
       <mat-divider/>
       <button mat-menu-item routerLink="/users" (click)="connectionMenuTrigger.closeMenu()"><i class="fa-light fa-user-shield"></i><span>Manage users</span></button>
+      <button mat-menu-item (click)="signOut(); connectionMenuTrigger.closeMenu()"><i class="fa-light fa-sign-out"></i><span>Sign out</span></button>
     }
   </span>
 </mat-menu>

@@ -18,7 +18,12 @@
         <ts-users-table [table]="users!"/>
       </div>
     </article>
-  } @else {
+  } @else if (errorLines == null) {
     <tp-spinner/>
+  } @else {
+    <div class="error-container">
+      <p><i class="fa-solid fa-circle-exclamation"></i> <span class="admonition-header">Error</span></p>
+      @for (error of errorLines; track error) {<p>{{ error }}</p>}
+    </div>
   }
 </ts-page-scaffold>
