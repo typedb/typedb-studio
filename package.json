@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "generate-grammar": "lezer-generator --typeScript src/framework/codemirror-lang-typeql/typeql.grammar -o src/framework/codemirror-lang-typeql/generated/typeql.grammar.generated",
-    "start": "ng serve",
+    "start": "pnpm i && ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "tauri": "tauri"

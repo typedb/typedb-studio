@@ -115,7 +115,7 @@ importers:
         version: 0.0.1
       typedb-web-common:
         specifier: file:typedb-web/common
-        version: file:typedb-web/common(prismjs@1.29.0)
+        version: file:typedb-web/common
       uuid:
         specifier: 11.1.0
         version: 11.1.0
@@ -2767,9 +2767,6 @@ packages:
   '@types/node@24.0.1':
     resolution: {integrity: sha512-MX4Zioh39chHlDJbKmEgydJDS3tspMP/lnQC67G3SWsTnb9NeYVWOjkxpOSy4oMfPs4StcWHwBrvUb4ybfnuaw==}
 
-  '@types/prismjs@1.26.2':
-    resolution: {integrity: sha512-/r7Cp7iUIk7gts26mHXD66geUC+2Fo26TZYjQK6Nr4LDfi6lmdRmMqM0oPwfiMhUwoBAOFe8GstKi2pf6hZvwA==}
-
   '@types/prop-types@15.7.15':
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
 
@@ -5196,13 +5193,6 @@ packages:
 
   typedb-web-common@file:typedb-web/common:
     resolution: {directory: typedb-web/common, type: directory}
-    peerDependencies:
-      prismjs: 1.29.x
-
-  typescript@5.1.6:
-    resolution: {integrity: sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==}
-    engines: {node: '>=14.17'}
-    hasBin: true
 
   typescript@5.8.3:
     resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
@@ -8472,8 +8462,6 @@ snapshots:
     dependencies:
       undici-types: 7.8.0
 
-  '@types/prismjs@1.26.2': {}
-
   '@types/prop-types@15.7.15': {}
 
   '@types/qs@6.14.0': {}
@@ -11141,13 +11129,9 @@ snapshots:
 
   typedb-driver-http@0.0.1: {}
 
-  typedb-web-common@file:typedb-web/common(prismjs@1.29.0):
+  typedb-web-common@file:typedb-web/common:
     dependencies:
-      '@types/prismjs': 1.26.2
       prismjs: 1.29.0
-      typescript: 5.1.6
-
-  typescript@5.1.6: {}
 
   typescript@5.8.3: {}
 
