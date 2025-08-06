@@ -114,8 +114,8 @@ importers:
         specifier: 0.0.1
         version: 0.0.1
       typedb-web-common:
-        specifier: file:typedb-web/common
-        version: file:typedb-web/common
+        specifier: workspace:*
+        version: link:typedb-web/common
       uuid:
         specifier: 11.1.0
         version: 11.1.0
@@ -195,6 +195,22 @@ importers:
       unplugin-lezer:
         specifier: 1.0.1
         version: 1.0.1(esbuild@0.25.5)(rollup@4.40.2)(vite@6.3.5(@types/node@24.0.1)(jiti@1.21.7)(less@4.3.0)(sass@1.88.0)(terser@5.39.1))(webpack@5.99.8(esbuild@0.25.5))
+
+  typedb-web/common:
+    dependencies:
+      prismjs:
+        specifier: 1.29.x
+        version: 1.29.0
+    devDependencies:
+      '@sanity/types':
+        specifier: 3.97.1
+        version: 3.97.1(@types/react@18.3.23)
+      '@types/prismjs':
+        specifier: 1.26.2
+        version: 1.26.2
+      typescript:
+        specifier: 5.5.4
+        version: 5.5.4
 
 packages:
 
@@ -2033,6 +2049,10 @@ packages:
     resolution: {integrity: sha512-BQRCMeDlBxwnMbFtB61HUxFf9aSb4HNVrpfrC7IFVqFf4cwcc3o5H8/nlrL9U3cDFedbe4W0AXt1mQzwbY/ljw==}
     engines: {node: '>=14.18'}
 
+  '@sanity/client@7.8.2':
+    resolution: {integrity: sha512-Me3/eh71VFdbSHghuea80rcDQZir/NgtwANKug/mPbbwwENYASJSEHpAy2VZwn4FyHHIR9d2pNRIyXMzGab+dQ==}
+    engines: {node: '>=20'}
+
   '@sanity/eventsource@5.0.2':
     resolution: {integrity: sha512-/B9PMkUvAlUrpRq0y+NzXgRv5lYCLxZNsBJD2WXVnqZYOfByL9oQBV7KiTaARuObp5hcQYuPfOAVjgXe3hrixA==}
 
@@ -2042,8 +2062,16 @@ packages:
     peerDependencies:
       react: ^18.3 || >=19.0.0-rc
 
+  '@sanity/media-library-types@1.0.0':
+    resolution: {integrity: sha512-RwBou7SybMbHkSeCn+3L/hbaFP77at3BesP67o8D8RrFiOgHX/h4ibw4yEauC1s09U9BE1MPq9K7ji+0XU57GA==}
+
   '@sanity/types@3.14.4':
     resolution: {integrity: sha512-0fC3EgPjxRn8ugwRKXZWvjhcHKU1na59GjbS2ME5U2wCqRBNwCYs5fT8SQh19EGHi/NoiTs/mlfcL19B4XF25Q==}
+
+  '@sanity/types@3.97.1':
+    resolution: {integrity: sha512-ibOauea3H1DYZKqpL56HM92u+upd1bn+KKH+AxZGdypGWaYlUPDyU8moByO+A3rJTEaD554jRdqDCfqySYCFkg==}
+    peerDependencies:
+      '@types/react': 18 || 19
 
   '@schematics/angular@20.0.2':
     resolution: {integrity: sha512-TyF+/hV+8flAa/Vu8xOQF241Syg9rdbZD1dARdm6edbLo8nwxmHdRsIulRektb7oD5CpTnxpvrcNJjX77nhv6A==}
@@ -2766,6 +2794,9 @@ packages:
 
   '@types/node@24.0.1':
     resolution: {integrity: sha512-MX4Zioh39chHlDJbKmEgydJDS3tspMP/lnQC67G3SWsTnb9NeYVWOjkxpOSy4oMfPs4StcWHwBrvUb4ybfnuaw==}
+
+  '@types/prismjs@1.26.2':
+    resolution: {integrity: sha512-/r7Cp7iUIk7gts26mHXD66geUC+2Fo26TZYjQK6Nr4LDfi6lmdRmMqM0oPwfiMhUwoBAOFe8GstKi2pf6hZvwA==}
 
   '@types/prop-types@15.7.15':
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
@@ -5191,8 +5222,10 @@ packages:
     resolution: {integrity: sha512-9rs1hC3Rvysw7pX8/DL3/fD5zwjgsZ8xLXFhVNKBCg02qMPUt82sz11mmJ1oMq2ximJt3/t2N+WpSLBQJKIRlg==}
     engines: {node: '>=22.16 <23'}
 
-  typedb-web-common@file:typedb-web/common:
-    resolution: {directory: typedb-web/common, type: directory}
+  typescript@5.5.4:
+    resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
+    engines: {node: '>=14.17'}
+    hasBin: true
 
   typescript@5.8.3:
     resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
@@ -7603,6 +7636,15 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
+  '@sanity/client@7.8.2':
+    dependencies:
+      '@sanity/eventsource': 5.0.2
+      get-it: 8.6.9
+      nanoid: 3.3.11
+      rxjs: 7.8.2
+    transitivePeerDependencies:
+      - debug
+
   '@sanity/eventsource@5.0.2':
     dependencies:
       '@types/event-source-polyfill': 1.0.5
@@ -7614,9 +7656,19 @@ snapshots:
     dependencies:
       react: 19.1.0
 
+  '@sanity/media-library-types@1.0.0': {}
+
   '@sanity/types@3.14.4':
     dependencies:
       '@sanity/client': 6.29.1
+      '@types/react': 18.3.23
+    transitivePeerDependencies:
+      - debug
+
+  '@sanity/types@3.97.1(@types/react@18.3.23)':
+    dependencies:
+      '@sanity/client': 7.8.2
+      '@sanity/media-library-types': 1.0.0
       '@types/react': 18.3.23
     transitivePeerDependencies:
       - debug
@@ -8461,6 +8513,8 @@ snapshots:
   '@types/node@24.0.1':
     dependencies:
       undici-types: 7.8.0
+
+  '@types/prismjs@1.26.2': {}
 
   '@types/prop-types@15.7.15': {}
 
@@ -11129,9 +11183,7 @@ snapshots:
 
   typedb-driver-http@0.0.1: {}
 
-  typedb-web-common@file:typedb-web/common:
-    dependencies:
-      prismjs: 1.29.0
+  typescript@5.5.4: {}
 
   typescript@5.8.3: {}
 

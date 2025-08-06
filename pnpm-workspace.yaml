@@ -1,2 +1,2 @@
-onlyBuiltDependencies:
-  - typedb-web-common
+packages:
+  - typedb-web/common
