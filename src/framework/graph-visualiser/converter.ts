@@ -1,9 +1,4 @@
-import {
-    get_variable_name,
-    QueryConstraintAny,
-    QueryStructure,
-    QueryVertex,
-} from "../typedb-driver/query-structure";
+import { getVariableName, QueryConstraintAny, QueryStructure, QueryVertex } from "typedb-driver-http";
 import {
     EdgeAttributes,
     EdgeMetadata,
@@ -214,14 +209,14 @@ export class StudioConverter implements ILogicalGraphConverter {
         expression.assigned
             .forEach((assigned, i) => {
                 let queryVertex = constraint.queryConstraint.assigned[i];
-                let varNameOrId = get_variable_name(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
+                let varNameOrId = getVariableName(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
                 let label = `assign[${varNameOrId}]`;
                 this.maybeCreateEdge(answerIndex, constraint, label, expressionVertex, assigned, expressionVertex, queryVertex);
             });
         expression.arguments
             .forEach((arg, i) => {
                 let queryVertex = constraint.queryConstraint.arguments[i];
-                let varNameOrId = get_variable_name(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
+                let varNameOrId = getVariableName(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
                 let label = `arg[${varNameOrId}]`;
                 this.maybeCreateEdge(answerIndex, constraint, label, arg, expressionVertex, queryVertex, expressionVertex);
             });
@@ -239,14 +234,14 @@ export class StudioConverter implements ILogicalGraphConverter {
         functionCall.assigned
             .forEach((assigned, i) => {
                 let queryVertex = constraint.queryConstraint.assigned[i];
-                let varNameOrId = get_variable_name(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
+                let varNameOrId = getVariableName(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
                 let label = `assign[${varNameOrId}]`;
                 this.maybeCreateEdge(answerIndex, constraint, label, functionVertex, assigned, functionVertex, queryVertex);
             });
         functionCall.arguments
             .forEach((arg, i) => {
                 let queryVertex = constraint.queryConstraint.arguments[i];
-                let varNameOrId = get_variable_name(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
+                let varNameOrId = getVariableName(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
                 let label = `arg[${varNameOrId}]`;
                 this.maybeCreateEdge(answerIndex, constraint, label, arg, functionVertex, queryVertex, functionVertex);
             });

@@ -5,19 +5,20 @@
  */
 
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, concatAll, concatMap, finalize, from, map, Observable, of, Subject, switchMap, takeUntil, tap } from "rxjs";
+import { BehaviorSubject, catchError, concatMap, distinctUntilChanged, filter, finalize, from, map, Observable, of, shareReplay, startWith, Subject, switchMap, takeUntil, tap } from "rxjs";
 import { fromPromise } from "rxjs/internal/observable/innerFrom";
 import { v4 as uuid } from "uuid";
 import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
 import { ConnectionConfig, databasesSortedByName, DEFAULT_DATABASE_NAME } from "../concept/connection";
-import { Transaction } from "../concept/transaction";
-import { TypeDBHttpDriver } from "../framework/typedb-driver";
-import { Database } from "../framework/typedb-driver/database";
-import { ApiOkResponse, ApiResponse, isApiErrorResponse, isOkResponse, QueryResponse, VersionResponse } from "../framework/typedb-driver/response";
+import { OperationMode, Transaction } from "../concept/transaction";
 import { requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { AppData } from "./app-data.service";
-import { TransactionType } from "../framework/typedb-driver/transaction";
+import {
+    ApiOkResponse, ApiResponse, Database, isApiErrorResponse, isOkResponse, QueryResponse, TransactionType,
+    TypeDBHttpDriver, User, VersionResponse
+} from "typedb-driver-http";
+import { FormBuilder } from "@angular/forms";
 
 export type DriverStatus = "disconnected" | "connecting" | "connected" | "reconnecting";
 
@@ -39,35 +40,45 @@ interface ServerVersion {
 export class DriverState {
 
     private _status$ = new BehaviorSubject<DriverStatus>("disconnected");
-    private _connection$ = new BehaviorSubject<ConnectionConfig | null>(null);
-    private _database$ = new BehaviorSubject<Database | null>(null);
+    connection$ = new BehaviorSubject<ConnectionConfig | null>(null);
+    database$ = new BehaviorSubject<Database | null>(null);
     private _transaction$ = new BehaviorSubject<Transaction | null>(null);
 
     private _databaseList$ = new BehaviorSubject<Database[] | null>(null);
+    userList$ = new BehaviorSubject<User[] | null>(null);
     private _actionLog$ = new Subject<DriverAction>();
     private _writeLock$ = new BehaviorSubject<Semaphore | null>(null);
     private _stopSignal$ = new Subject<void>();
 
     private driver?: TypeDBHttpDriver;
 
-    private _transactionType$ = new BehaviorSubject<TransactionType>("read");
+    transactionControls = this.formBuilder.nonNullable.group({
+        type: ["read" as TransactionType, []],
+        operationMode: ["auto" as OperationMode, []],
+    });
     autoTransactionEnabled$ = new BehaviorSubject(true);
     transactionHasUncommittedChanges$ = this.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
+    transactionTypeChanges$ = this.transactionControls.valueChanges.pipe(
+        filter((changes) => !!changes.type),
+        map((changes) => changes.type!),
+        startWith(this.transactionControls.value.type!),
+        distinctUntilChanged(),
+        shareReplay(1),
+    );
+    transactionOperationModeChanges$ = this.transactionControls.valueChanges.pipe(
+        filter(changes => !!changes.operationMode),
+        map(changes => changes.operationMode!),
+        startWith(this.transactionControls.value.operationMode!),
+        distinctUntilChanged(),
+        shareReplay(1),
+    );
 
-    constructor(private appData: AppData) {
+    constructor(private appData: AppData, private formBuilder: FormBuilder) {
         (window as any)["driverState"] = this;
     }
 
     get status$(): Observable<DriverStatus> {
         return this._status$;
-    }
-
-    get connection$(): Observable<ConnectionConfig | null> {
-        return this._connection$;
-    }
-
-    get database$(): Observable<Database | null> {
-        return this._database$;
     }
 
     get databaseList$(): Observable<Database[] | null> {
@@ -82,29 +93,25 @@ export class DriverState {
         return this._actionLog$;
     }
 
-    get transactionType$(): Observable<TransactionType> {
-        return this._transactionType$;
+    private requireConnection() {
+        return requireValue(this.connection$);
     }
 
-    private requireConnection(stack: string) {
-        return requireValue(this._connection$, stack);
+    requireDatabase() {
+        return requireValue(this.database$);
     }
 
-    requireDatabase(stack: string) {
-        return requireValue(this._database$, stack);
+    private requireDatabaseList() {
+        return requireValue(this._databaseList$);
     }
 
-    private requireDatabaseList(stack: string) {
-        return requireValue(this._databaseList$, stack);
+    private requireTransaction() {
+        return requireValue(this._transaction$);
     }
 
-    private requireTransaction(stack: string) {
-        return requireValue(this._transaction$, stack);
-    }
-
-    private requireDriver(stack: string) {
+    private requireDriver() {
         if (this.driver) return this.driver;
-        else throw `${INTERNAL_ERROR}: ${stack}`;
+        else throw INTERNAL_ERROR;
     }
 
     tryConnect(config: ConnectionConfig): Observable<ConnectionConfig> {
@@ -113,7 +120,7 @@ export class DriverState {
             const maybeTryDisconnect$ = this._status$.value === "connected" ? this.tryDisconnect(lockId) : of({});
             return maybeTryDisconnect$.pipe(
                 tap(() => {
-                    this._connection$.next(config);
+                    this.connection$.next(config);
                     this._status$.next("connecting");
                     this.driver = new TypeDBHttpDriver(config.params);
                 }),
@@ -131,24 +138,23 @@ export class DriverState {
                 switchMap((res) => {
                     if (isOkResponse(res)) {
                         if (!res.ok.databases.length) return this.setupDefaultDatabase(lockId).pipe(map(() =>
-                            config.withDatabase(this.requireDatabase(`${this.constructor.name}.${this.tryConnect.name} > ${this.requireDatabase.name}`))
+                            config.withDatabase(this.requireDatabase())
                         ));
                         if (res.ok.databases.length === 1) this.selectDatabase(res.ok.databases[0], lockId);
-                        else if (config.params.database
-                            && this.requireDatabaseList(`${this.constructor.name}.${this.tryConnect.name} > ${this.requireDatabaseList.name}`)
-                                .some(x => x.name === config.params.database)) {
+                        else if (config.params.database && this.requireDatabaseList().some(x => x.name === config.params.database)) {
                             this.selectDatabase({ name: config.params.database }, lockId);
                         }
-                        const database = this._database$.value;
+                        const database = this.database$.value;
                         return of(database ? config.withDatabase(database) : config);
                     } else throw res;
                 }),
                 tap(() => {
                     this._status$.next("connected");
                     this.appData.connections.push(config);
+                    this.refreshUserList().subscribe();
                 }),
                 catchError((err) => {
-                    this._connection$.next(null); // TODO: revisit - is an 'errored' connection config still valid?
+                    this.connection$.next(null); // TODO: revisit - is an 'errored' connection config still valid?
                     this._status$.next("disconnected");
                     throw err;
                 }),
@@ -162,15 +168,17 @@ export class DriverState {
         this.appData.connections.clearStartupConnection();
         const maybeCloseTransaction$ = this._transaction$.value ? this.closeTransaction(lockId) : of({});
         return maybeCloseTransaction$.pipe(tap(() => this.tryUseWriteLock(() => {
-            this._connection$.next(null);
-            this._database$.next(null);
+            this.connection$.next(null);
+            this.database$.next(null);
+            this._databaseList$.next(null);
+            this.userList$.next(null);
             this._status$.next("disconnected");
         }, lockId)));
     }
 
     refreshDatabaseList() {
-        const driver = this.requireDriver(`${this.constructor.name}.${this.refreshDatabaseList.name} > ${this.requireDriver.name}`);
-        return fromPromise(driver.listDatabases()).pipe(
+        const driver = this.requireDriver();
+        return fromPromise(driver.getDatabases()).pipe(
             tap(res => {
                 if (isOkResponse(res)) this._databaseList$.next(databasesSortedByName(res.ok.databases));
             }),
@@ -178,25 +186,45 @@ export class DriverState {
         );
     }
 
-    selectDatabase(database: Database, lockId = uuid()) {
-        if (this._database$.value?.name === database.name) return;
+    refreshUserList() {
+        const driver = this.requireDriver();
+        return fromPromise(driver.getUsers()).pipe(
+            tap(res => {
+                if (isOkResponse(res)) this.userList$.next(res.ok.users);
+            }),
+            takeUntil(this._stopSignal$)
+        );
+    }
+
+    selectDatabase(database: Database | null, lockId = uuid()) {
+        if (this.database$.value?.name === database?.name) return;
+
+        if (database == null) {
+            this.database$.next(null);
+            const currentConnection = this.requireConnection();
+            const connection = currentConnection.withDatabase(null);
+            this.connection$.next(connection);
+            this.appData.connections.push(connection);
+            return;
+        }
+
         const savedDatabase = this._databaseList$.value?.find(x => x.name === database.name);
         if (!savedDatabase) throw INTERNAL_ERROR;
         else this.tryUseWriteLock(() => {
-            this._database$.next(savedDatabase);
-            const currentConnection = this.requireConnection(`${this.constructor.name}.${this.selectDatabase.name} > ${this.requireConnection.name}`);
+            this.database$.next(savedDatabase);
+            const currentConnection = this.requireConnection();
             const connection = currentConnection.withDatabase(savedDatabase);
-            this._connection$.next(connection);
+            this.connection$.next(connection);
             this.appData.connections.push(connection);
         }, lockId);
     }
 
     createAndSelectDatabase(name: string, lockId = uuid()) {
-        const driver = this.requireDriver(`${this.constructor.name}.${this.createAndSelectDatabase.name} > ${this.requireDriver.name}`);
+        const driver = this.requireDriver();
         return this.tryUseWriteLock(() => fromPromise(driver.createDatabase(name)).pipe(
             tap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;
-                const databaseList = this.requireDatabaseList(`${this.constructor.name}.${this.createAndSelectDatabase.name} > ${this.requireDatabaseList.name}`);
+                const databaseList = this.requireDatabaseList();
                 this._databaseList$.next(databasesSortedByName([...databaseList, { name }]));
                 this.selectDatabase({ name }, lockId);
             }),
@@ -204,11 +232,24 @@ export class DriverState {
         ), lockId);
     }
 
+    deleteDatabase(database: Database, lockId = uuid()) {
+        const driver = this.requireDriver();
+        return this.tryUseWriteLock(() => fromPromise(driver.deleteDatabase(database.name)).pipe(
+            tap((res) => {
+                if (isApiErrorResponse(res)) throw res.err;
+                const databaseList = this.requireDatabaseList();
+                this.selectDatabase(null, lockId);
+                this._databaseList$.next(databaseList.filter(x => x.name !== database.name));
+            }),
+            takeUntil(this._stopSignal$)
+        ), lockId);
+    }
+
     openTransaction(type: TransactionType, lockId = uuid()) {
-        const databaseName = this.requireDatabase(`${this.constructor.name}.${this.openTransaction.name} > ${this.requireDatabase.name}`).name;
+        const databaseName = this.requireDatabase().name;
         const action = transactionOperationActionOf("open");
         this._actionLog$.next(action);
-        const driver = this.requireDriver(`${this.constructor.name}.${this.openTransaction.name} > ${this.requireDriver.name}`);
+        const driver = this.requireDriver();
         return this.tryUseWriteLock(() => fromPromise(driver.openTransaction(databaseName, type)).pipe(
             tap((res) => {
                 this.updateActionResult(action, res);
@@ -224,10 +265,10 @@ export class DriverState {
     }
 
     commitTransaction(lockId = uuid()) {
-        const transactionId = this.requireTransaction(`${this.constructor.name}.${this.commitTransaction.name} > ${this.requireTransaction.name}`).id;
+        const transactionId = this.requireTransaction().id;
         const action = transactionOperationActionOf("commit");
         this._actionLog$.next(action);
-        const driver = this.requireDriver(`${this.constructor.name}.${this.commitTransaction.name} > ${this.requireDriver.name}`);
+        const driver = this.requireDriver();
         return this.tryUseWriteLock(() => fromPromise(driver.commitTransaction(transactionId)).pipe(
             tap((res) => {
                 this.updateActionResult(action, res);
@@ -247,7 +288,7 @@ export class DriverState {
         if (transactionId == null) return of({});
         const action = transactionOperationActionOf("close");
         this._actionLog$.next(action);
-        const driver = this.requireDriver(`${this.constructor.name}.${this.closeTransaction.name} > ${this.requireDriver.name}`);
+        const driver = this.requireDriver();
         return this.tryUseWriteLock(() => fromPromise(driver.closeTransaction(transactionId)).pipe(
             tap((res) => {
                 this.updateActionResult(action, res);
@@ -262,24 +303,17 @@ export class DriverState {
         ), lockId);
     }
 
-    selectTransactionType(transactionType: TransactionType) {
-        // TODO: fail if has uncommitted changes
-        return this.tryUseWriteLock(() => {
-            this._transactionType$.next(transactionType);
-        });
-    }
-
     // TODO: convoluted logic
     query(query: string): Observable<ApiResponse<QueryResponse>> {
         const lockId = uuid();
         const maybeOpenTransaction$ = this.autoTransactionEnabled$.value
-            ? this.openTransaction(this._transactionType$.value, lockId)
-            : of({ ok: { transactionId: this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`).id } });
+            ? this.openTransaction(this.transactionControls.value.type!, lockId)
+            : of({ ok: { transactionId: this.requireTransaction().id } });
         let queryRunAction: QueryRunAction;
-        const driver = this.requireDriver(`${this.constructor.name}.${this.query.name} > ${this.requireDriver.name}`);
+        const driver = this.requireDriver();
         return this.tryUseWriteLock(() => maybeOpenTransaction$.pipe(
             tap(() => {
-                const transaction = this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`);
+                const transaction = this.requireTransaction();
                 queryRunAction = queryRunActionOf(query);
                 transaction.queryRuns.push(queryRunAction);
                 this._actionLog$.next(queryRunAction);
@@ -291,12 +325,12 @@ export class DriverState {
             tap((res) => this.updateActionResult(queryRunAction, res)),
             // TODO: maybe extract TransactionStateService
             tap(() => {
-                const transaction = this.requireTransaction(`${this.constructor.name}.${this.query.name} > ${this.requireTransaction.name}`);
+                const transaction = this.requireTransaction();
                 if (!this.autoTransactionEnabled$.value) this._transaction$.next(transaction);
             }),
             tap((res) => {
                 if (this.autoTransactionEnabled$.value) {
-                    if (this._transactionType$.value !== "read" && isOkResponse(res)) this.commitTransaction(lockId).subscribe();
+                    if (this.transactionControls.value.type !== "read" && isOkResponse(res)) this.commitTransaction(lockId).subscribe();
                     else this.closeTransaction(lockId).subscribe();
                 }
             }),
@@ -310,8 +344,8 @@ export class DriverState {
     }
 
     runBackgroundReadQueries(queries: string[]): Observable<ApiOkResponse<QueryResponse>> {
-        const driver = this.requireDriver(`${this.constructor.name}.${this.query.name} > ${this.requireDriver.name}`);
-        const databaseName = this.requireDatabase(`${this.constructor.name}.${this.openTransaction.name} > ${this.requireDatabase.name}`).name;
+        const driver = this.requireDriver();
+        const databaseName = this.requireDatabase().name;
         return fromPromise(driver.openTransaction(databaseName, "read")).pipe(
             switchMap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;
@@ -328,13 +362,28 @@ export class DriverState {
         );
     }
 
+    createUser(username: string, password: string) {
+        const driver = this.requireDriver();
+        return fromPromise(driver.createUser(username, password));
+    }
+
+    updateUser(username: string, password: string) {
+        const driver = this.requireDriver();
+        return fromPromise(driver.updateUser(username, password));
+    }
+
+    deleteUser(username: string) {
+        const driver = this.requireDriver();
+        return fromPromise(driver.deleteUser(username));
+    }
+
     checkHealth() {
-        const driver = this.requireDriver(`${this.constructor.name}.${this.checkHealth.name} > ${this.requireDriver.name}`);
+        const driver = this.requireDriver();
         return fromPromise(driver.health());
     }
 
     checkServerVersion() {
-        const driver = this.requireDriver(`${this.constructor.name}.${this.checkServerVersion.name} > ${this.requireDriver.name}`);
+        const driver = this.requireDriver();
         return fromPromise(driver.version());
     }
 

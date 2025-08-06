@@ -16,7 +16,7 @@ import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
 import { MatTreeModule } from "@angular/material/tree";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { SchemaTreeNode } from "../../../service/query-tool-state.service";
+import { SchemaTreeNode } from "../../../service/schema-tool-window-state.service";
 
 @Component({
     selector: "ts-schema-tree-node",

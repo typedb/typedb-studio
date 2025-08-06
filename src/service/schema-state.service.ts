@@ -5,6 +5,10 @@
  */
 
 import { Injectable } from "@angular/core";
+import {
+    ApiOkResponse, ApiResponse, AttributeType, ConceptRowsQueryResponse, EntityType,
+    isApiErrorResponse, QueryResponse, RelationType, RoleType, Type
+} from "typedb-driver-http";
 import Graph from "graphology";
 import { BehaviorSubject, combineLatest, distinctUntilChanged, finalize, first, map } from "rxjs";
 import Sigma, { Camera } from "sigma";
@@ -12,8 +16,6 @@ import { createSigmaRenderer, GraphVisualiser } from "../framework/graph-visuali
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
 import { newVisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
-import { AttributeType, EntityType, RelationType, RoleType, Type } from "../framework/typedb-driver/concept";
-import { ApiOkResponse, ApiResponse, ConceptRowsQueryResponse, isApiErrorResponse, QueryResponse } from "../framework/typedb-driver/response";
 import { DriverState } from "./driver-state.service";
 import { SnackbarService } from "./snackbar.service";
 import {updateAutocomleteSchemaFromDB} from "../framework/codemirror-lang-typeql";
@@ -143,7 +145,7 @@ export class SchemaState {
     private initialiseOutput() {
         this.visualiser.destroy();
         this.visualiser.status = "running";
-        this.visualiser.database = this.driver.requireDatabase(`${this.constructor.name}.${this.initialiseOutput.name} > requireValue(driver.database$)`).name;
+        this.visualiser.database = this.driver.requireDatabase().name;
     }
 
     private handleQueryError(err: any) {
@@ -405,7 +407,6 @@ export class VisualiserState {
     }
 
     set status(value: VisualiserStatus) {
-        console.info(value);
         this._status = value;
     }
 

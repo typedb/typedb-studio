@@ -9,9 +9,7 @@
 @use "secondary";
 
 .tp-sidenav-container {
-    @include shapes.standard-border;
-    border-radius: shapes.$border-radius-panel;
-
+    border: shapes.$border;
     height: 100%;
     padding: 16px;
 
@@ -19,6 +17,7 @@
 
     &.left {
         width: 256px;
+        border-radius: shapes.$border-radius-panel;
 
         &.collapsed {
             width: 68px;
@@ -27,7 +26,6 @@
 
     &.right {
         width: 320px;
-        margin-left: 16px;
     }
 }
 
@@ -50,8 +48,7 @@ mat-sidenav {
     }
 
     &.right {
-        padding-left: 0;
-        padding-right: 16px;
+        padding: 0;
 
         .tp-sidenav-container {
             @include shapes.light-source-gradient(rgba(primary.$green, 0.08), primary.$purple, $left: 70%, $top: 80%);

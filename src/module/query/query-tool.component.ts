@@ -10,17 +10,19 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, Vie
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
+import { MatDialog } from "@angular/material/dialog";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
-import { MatTreeModule } from "@angular/material/tree";
+import { MatTree, MatTreeModule } from "@angular/material/tree";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
+import { Prec } from "@codemirror/state";
 import { ResizableDirective } from "@hhangular/resizable";
-import { distinctUntilChanged, filter, first, map, startWith } from "rxjs";
+import { filter, map, startWith } from "rxjs";
 import { otherExampleLinter, TypeQL, typeqlAutocompleteExtension } from "../../framework/codemirror-lang-typeql";
 import { DriverAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
@@ -31,11 +33,13 @@ import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
 import { QueryToolState } from "../../service/query-tool-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
+import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaTreeNodeComponent } from "./schema-tree-node/schema-tree-node.component";
-import {keymap} from "@codemirror/view";
-import {defaultKeymap} from "@codemirror/commands";
-import {startCompletion, completionKeymap} from "@codemirror/autocomplete";
+import { keymap } from "@codemirror/view";
+import {startCompletion} from "@codemirror/autocomplete";
+import { MatMenuModule } from "@angular/material/menu";
+import { SchemaToolWindowState, SchemaTreeNode } from "../../service/schema-tool-window-state.service";
 
 @Component({
     selector: "ts-query-tool",
@@ -44,7 +48,8 @@ import {startCompletion, completionKeymap} from "@codemirror/autocomplete";
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatTreeModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
-        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective, SchemaTreeNodeComponent, DetectScrollDirective,
+        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
+        SchemaTreeNodeComponent, DetectScrollDirective, MatMenuModule
     ]
 })
 export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -53,13 +58,26 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
     @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
+    @ViewChild("tree") tree!: MatTree<any>;
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
+    refreshSchemaTooltip$ = this.state.schema.refreshDisabledReason$.pipe(map(x => x ? `` : `Refresh`));
+    editorKeymap = Prec.highest(keymap.of([
+        { key: "Alt-Space", run: startCompletion, preventDefault: true },
+        {
+            key: "Mod-Enter",
+            run: () => {
+                this.runQuery();
+                return true;
+            },
+        },
+    ]));
 
     constructor(
-        protected state: QueryToolState, public driver: DriverState,
-        private appData: AppData, private snackbar: SnackbarService
-    ) {}
+        public state: QueryToolState, public schemaWindow: SchemaToolWindowState, public driver: DriverState,
+        private appData: AppData, private snackbar: SnackbarService, private dialog: MatDialog,
+    ) {
+    }
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
@@ -85,11 +103,23 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
         ).subscribe((canvasEl) => {
             this.state.graphOutput.canvasEl = canvasEl;
         });
+        this.schemaWindow.dataSource$.subscribe((dataSource) => {
+            dataSource.forEach( node => {
+                if (this.schemaWindow.rootNodesCollapsed[node.label]) {
+                    this.tree.collapse(node);
+                } else {
+                    this.tree.expand(node);
+                }
+            });
+        });
     }
 
     ngOnDestroy() {
-        // TODO: this prevents WebGL resource leaks, but it would also be nice to restore previous graph state on init
         this.state.graphOutput.destroy();
+    }
+
+    openSelectDatabaseDialog() {
+        this.dialog.open(DatabaseSelectDialogComponent);
     }
 
     runQuery() {
@@ -111,6 +141,32 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
             case "open": return "opened transaction";
             case "commit": return "committed transaction";
             case "close": return "closed transaction";
+        }
+    }
+
+    treeNodeClass(node: SchemaTreeNode): string {
+        switch (node.nodeKind) {
+            case "root":
+                return `root ${node.label.toLowerCase()}`;
+            case "concept":
+                return "concept";
+            case "link":
+                return `link ${node.linkKind} ${node.linkKind === "sub" ? node.supertype.kind : ""}`;
+        }
+    }
+
+    toggleNode(node: SchemaTreeNode) {
+        if (this.tree.isExpanded(node)) {
+            this.tree.collapse(node);
+        } else {
+            this.tree.expand(node);
+        }
+
+        if (node.nodeKind === "root") {
+            this.schemaWindow.rootNodesCollapsed[node.label] = !this.tree.isExpanded(node);
+            const schemaToolWindowState = this.appData.viewState.schemaToolWindowState();
+            schemaToolWindowState.rootNodesCollapsed = this.schemaWindow.rootNodesCollapsed;
+            this.appData.viewState.setSchemaToolWindowState(schemaToolWindowState);
         }
     }
 
@@ -138,5 +194,4 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     readonly TypeQL = TypeQL;
     readonly linter = otherExampleLinter;
     readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
-    readonly codeEditorKeymap = keymap.of([...defaultKeymap, {key: "Alt-Space", run: startCompletion, preventDefault: true}]);
 }

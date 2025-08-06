@@ -4,7 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { CdkMenuItemCheckbox } from "@angular/cdk/menu";
 import { AsyncPipe, NgClass } from "@angular/common";
 import { Component, Input, OnInit, ViewChild } from "@angular/core";
 import { MatCheckboxModule } from "@angular/material/checkbox";
@@ -13,46 +12,37 @@ import { MatDividerModule } from "@angular/material/divider";
 import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { Router, RouterLink } from "@angular/router";
-import { combineLatest, distinctUntilChanged, first, map } from "rxjs";
-import { HoverMenuComponent } from "../../../framework/menu/hover-menu.component";
-import { Database } from "../../../framework/typedb-driver/database";
-import { DriverState, DriverStatus } from "../../../service/driver-state.service";
+import { Database } from "typedb-driver-http";
+import { combineLatest, distinctUntilChanged, map } from "rxjs";
+import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
-import { TransactionWidgetComponent } from "../../transaction/widget/transaction-widget.component";
-import { DatabaseCreateDialogComponent } from "../database-create-dialog/database-create-dialog.component";
-
-const statusStyleMap: { [K in DriverStatus]: string } = {
-    disconnected: "error",
-    connecting: "warn",
-    connected: "ok",
-    reconnecting: "warn",
-};
+import { DatabaseCreateDialogComponent } from "../../database/create-dialog/database-create-dialog.component";
+import { DatabaseDeleteDialogComponent } from "../../database/delete-dialog/database-delete-dialog.component";
+import { TransactionControlComponent } from "../transaction/transaction-control.component";
 
 @Component({
     selector: "ts-connection-widget",
     templateUrl: "./connection-widget.component.html",
     styleUrls: ["./connection-widget.component.scss"],
     imports: [
-        MatTooltipModule, AsyncPipe, TransactionWidgetComponent, MatMenuModule, MatDividerModule,
-        RouterLink, NgClass, MatCheckboxModule
+        MatTooltipModule, AsyncPipe, MatMenuModule, MatDividerModule,
+        RouterLink, NgClass, MatCheckboxModule, TransactionControlComponent
     ]
 })
 export class ConnectionWidgetComponent implements OnInit {
 
     @Input({ required: true }) condensed!: boolean;
-    @ViewChild(MatMenuTrigger) connectionMenuTrigger!: MatMenuTrigger;
+    @ViewChild("connectionMenuTrigger") connectionMenuTrigger!: MatMenuTrigger;
+    @ViewChild("databaseMenuTrigger") databaseMenuTrigger!: MatMenuTrigger;
 
-    connectionText$ = this.driver.connection$.pipe(map(x => x?.name ?? `No server connected`));
-    connectionBeaconStatusClass$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, database]) => {
+    connectionText$ = this.driver.connection$.pipe(map(x => x == null ? `No server connected` : `${x.params.username}@${x.name}`));
+    connectionBeaconStatusClass$ = this.driver.status$.pipe(map((status) => {
         if (status === "disconnected") return "error";
-        if (status === "connected") return database == null ? "error" : "ok";
+        else if (status === "connected") return "ok";
         return "warn";
     }));
-    connectionBeaconTooltip$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, database]) => {
-        if (status === "connected") return database == null ? "" : "Connected";
-        return `${status[0].toUpperCase()}${status.substring(1)}`;
-    }));
-    private transactionWidgetVisible = false;
+    connectionBeaconTooltip$ = this.driver.status$.pipe(map((status) => `${status[0].toUpperCase()}${status.substring(1)}`));
+    private transactionControlVisible = false;
     connectionText = ``;
     connectionAreaHovered = false;
     connectionMenuHovered = false;
@@ -60,11 +50,11 @@ export class ConnectionWidgetComponent implements OnInit {
     databaseVisible$ = this.driver.status$.pipe(map((status) => ["connected", "reconnecting"].includes(status)));
     databaseText$ = this.driver.database$.pipe(map(db => db?.name ?? `No database selected`));
 
-    transactionWidgetVisible$ = this.driver.database$.pipe(map(db => !!db), distinctUntilChanged());
+    transactionControlVisible$ = this.driver.database$.pipe(map(db => !!db), distinctUntilChanged());
     transactionText$ = this.driver.transaction$.pipe(map(tx => tx?.type ?? `No active transaction`));
     transactionWidgetTooltip$ = this.driver.transactionHasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
 
-    rootNgClass$ = combineLatest([this.driver.status$, this.transactionWidgetVisible$]).pipe(map(([status, txWidgetVisible]) => ({
+    rootNgClass$ = combineLatest([this.driver.status$, this.transactionControlVisible$]).pipe(map(([status, txWidgetVisible]) => ({
         "root": true,
         "has-transaction-widget": txWidgetVisible,
         "hoverable": status !== "disconnected"
@@ -79,32 +69,32 @@ export class ConnectionWidgetComponent implements OnInit {
         this.connectionText$.subscribe((text) =>{
             this.connectionText = text;
         });
-        this.transactionWidgetVisible$.subscribe((visible) => {
-            this.transactionWidgetVisible = visible;
+        this.transactionControlVisible$.subscribe((visible) => {
+            this.transactionControlVisible = visible;
         });
     }
 
     get connectionTooltip() {
-        return this.condensed && this.transactionWidgetVisible ? this.connectionText : ``;
+        return this.condensed && this.transactionControlVisible ? this.connectionText : ``;
     }
 
-    onClick() {
-        this.driver.connection$.pipe(first()).subscribe((connection) => {
-            if (!connection) {
-                this.router.navigate(["/connect"]);
-            }
-        });
-    }
-
-    disconnect() {
+    signOut() {
         this.driver.tryDisconnect().subscribe(() => {
-            this.snackbar.info(`Disconnected`);
+            this.snackbar.info(`Signed out`);
+            this.router.navigate(["/connect"]);
         });
     }
 
     selectDatabase(database: Database) {
+        if (this.driver.database$.value?.name === database.name) return;
         this.driver.selectDatabase(database);
         this.snackbar.info(`Now using database '${database.name}'`);
+    }
+
+    onDeleteDatabaseClick(database: Database, e: Event) {
+        e.stopPropagation();
+        this.databaseMenuTrigger.closeMenu();
+        this.dialog.open(DatabaseDeleteDialogComponent, { data: { db: database } });
     }
 
     openCreateDatabaseDialog() {

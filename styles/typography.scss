@@ -94,7 +94,7 @@ $letter-spacing: 0.02em;
 }
 
 @mixin h1 {
-    @include font-style(22px, $semi-bold, normal, $letter-spacing);
+    @include font-style(24px, $medium, normal, $letter-spacing);
 }
 
 @mixin h2 {

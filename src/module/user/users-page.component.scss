@@ -1,0 +1,86 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "colors";
+@use "media";
+@use "typography";
+@use "shapes";
+
+article {
+    padding: 16px;
+}
+
+mat-divider {
+    margin: 0 0 16px;
+}
+
+h1 {
+}
+
+.table-container {
+    max-width: 600px;
+    min-height: 320px;
+    margin-top: 32px;
+}
+
+.visualiser-pane {
+    flex: 1;
+
+    @media (max-width: media.$max-width-mobile) {
+        margin-left: -8px;
+    }
+}
+
+.visualiser-pane {
+    display: flex;
+    flex-direction: column;
+}
+
+.card {
+    @include shapes.standard-border;
+    border-radius: shapes.$border-radius-panel;
+    @include shapes.light-source-gradient(colors.$purple, colors.$deep-purple);
+    transition: background 0.1s linear;
+    padding: 16px;
+}
+
+.card-header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 24px;
+    height: 32px;
+}
+
+a.external-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    i.fa-arrow-up-right-from-square {
+        font-size: 10px;
+        height: 10px;
+    }
+}
+
+.error-container {
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 16px;
+    border-radius: shapes.$border-radius;
+    background: colors.$translucent-red;
+
+    i.fa-circle-exclamation {
+        color: colors.$red;
+    }
+
+    .admonition-header {
+        font-weight: typography.$bold;
+        margin-left: 8px;
+    }
+}

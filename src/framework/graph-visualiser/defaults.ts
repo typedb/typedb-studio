@@ -1,5 +1,5 @@
+import { RoleType } from "typedb-driver-http";
 import chroma from "chroma-js";
-import { RoleType } from "../typedb-driver/concept";
 import { vertexMapKey } from "./converter";
 import {DataVertex, VertexUnavailable} from "./graph";
 import {NodeSquareProgram} from "@sigma/node-square";

@@ -287,6 +287,12 @@ body {
         background: rgba(0, 0, 0, 0.5);
     }
 
+    /* Divider */
+
+    @include mat.divider-overrides((
+        color: primary.$light-purple,
+    ));
+
     /* Expansion */
     mat-expansion-panel {
         --mat-expansion-header-text-size: 16px;
@@ -393,63 +399,24 @@ body {
     }
 
     /* Icon button */
-    .mdc-icon-button {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .mat-mdc-icon-button,
     .mat-mdc-icon-button.mat-mdc-button-base {
-        padding: 0.25em;
-        margin: -0.25em;
-        width: 1.5em;
-        height: 1.5em;
-
-        .mat-icon {
-            display: block;
-            font-size: inherit;
-        }
-
-        svg {
-            width: 100%;
-            height: auto;
+        --mat-icon-button-container-shape: #{shapes.$border-radius};
+        --mat-icon-button-state-layer-size: 32px;
+        min-width: 0;
+        padding: 0;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+  
+        i {
+            margin: 0;
         }
     }
 
-    .mat-mdc-form-field-icon-suffix button.mat-mdc-icon-button {
-        margin-right: 0.25em;
-        color: secondary.$light-grey;
-    }
-
-    .mat-icon,
-    .mat-mdc-icon-button {
-        font-size: 24px;
-
-        &.tp-icon-small {
-            font-size: 20px;
-        }
-
-        &.tp-icon-xs {
-            font-size: 16px;
-        }
-
-        &.tp-icon-large {
-            font-size: 32px;
-        }
-
-        &.tp-icon-xl {
-            font-size: 40px;
-        }
-    }
-
-    .mat-mdc-icon-button .mat-mdc-button-persistent-ripple {
-        display: none;
-    }
-
-    .mat-mdc-icon-button .mat-mdc-button-touch-target {
-        width: 40px;
-        height: 40px;
+    .mdc-text-field .mat-mdc-icon-button.mat-mdc-button-base {
+        --mat-icon-button-container-shape: 0;
+        --mat-icon-button-state-layer-size: 44px;
     }
 
     .mdc-fab.mat-accent {
@@ -624,7 +591,7 @@ body {
     }
 
     .mat-sidenav-content {
-        margin-right: 16px;
+        padding-right: 16px;
         display: flex;
         flex-direction: column;
     }
@@ -703,34 +670,30 @@ body {
     /* Table */
     @include mat.table-overrides((
         background-color: transparent,
-        header-container-height: 32px,
+        header-container-height: 40px,
         header-headline-color: primary.$white,
         header-headline-size: 14px,
         header-headline-weight: typography.$semi-bold,
         row-item-container-height: 40px,
-        row-item-outline-width: 0,
+        row-item-outline-color: rgba(primary.$light-purple, 0.6),
     ));
 
     .mat-mdc-table {
-        thead {
-            background: secondary.$purple;
-        }
+        tr.table-row-clickable {
+            cursor: pointer;
 
-        tbody tr:nth-child(odd) {
-            background: primary.$deep-purple;
-        }
+            &:hover {
+                th, td {
+                    background-color: rgba(primary.$light-purple, 0.6);
 
-        tbody tr:nth-child(even) {
-            background: primary.$purple;
-        }
+                    &:first-child {
+                        border-radius: 4px 0 0 4px;
+                    }
 
-        tr th, tr td {
-            &:first-child {
-                //border-radius: shapes.$border-radius 0 0 shapes.$border-radius;
-            }
-
-            &:last-child {
-                //border-radius: 0 shapes.$border-radius shapes.$border-radius 0;
+                    &:last-child {
+                        border-radius: 0 4px 4px 0;
+                    }
+                }
             }
         }
     }
@@ -743,8 +706,8 @@ body {
         padding: 0 14px 0 14px;
     }
 
-    .mdc-data-table__row:last-child .mat-mdc-cell {
-        //border-bottom: shapes.$border;
+    .mat-mdc-cell {
+        --mat-table-row-item-label-text-tracking: var(--body-letter-spacing);
     }
 
     .mat-column-select {
@@ -802,23 +765,15 @@ body {
 
     /* Tooltip */
     @include mat.tooltip-overrides((
-        supporting-text-size: 14px,
-        supporting-text-line-height: 20px,
+        supporting-text-size: 12px,
+        supporting-text-line-height: 18px,
         supporting-text-tracking: var(--body-letter-spacing),
         container-color: secondary.$mid-deep-grey,
         container-shape: shapes.$border-radius,
     ));
 
-    .mdc-tooltip {
-        --mdc-plain-tooltip-supporting-text-size: 14px;
-        --mdc-plain-tooltip-supporting-line-height: 22px;
-        --mdc-plain-tooltip-supporting-text-tracking: var(--body-letter-spacing);
-        --mdc-plain-tooltip-container-color: #{secondary.$mid-deep-grey};
-        --mdc-plain-tooltip-container-shape: #{shapes.$border-radius};
-    }
-
     .mdc-tooltip__surface {
-        padding: 6px 10px;
+        padding: 4px 8px;
     }
 
     /* Tree */

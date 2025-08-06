@@ -76,7 +76,13 @@ mat-select-trigger {
     transition: color 100ms;
 
     &.transaction-type-select {
+        position: relative;
         width: 96px;
+
+        i.fa-chevron-down {
+            position: absolute;
+            right: 0;
+        }
     }
 
     i {

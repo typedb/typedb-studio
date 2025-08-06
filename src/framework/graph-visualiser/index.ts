@@ -1,9 +1,8 @@
+import { ApiResponse, isApiErrorResponse, QueryConstraintAny, QueryConstraintSpan, QueryResponse, QueryStructure } from "typedb-driver-http";
 import MultiGraph from "graphology";
 import Sigma from "sigma";
 import ForceSupervisor from "graphology-layout-force/worker";
 import { Settings as SigmaSettings } from "sigma/settings";
-import {QueryConstraintAny, QueryConstraintSpan, QueryStructure} from "../typedb-driver/query-structure";
-import { ApiResponse, isApiErrorResponse, QueryResponse } from "../typedb-driver/response";
 import { StudioConverterStructureParameters, StudioConverterStyleParameters } from "./config";
 
 import * as studioDefaultSettings from "./defaults";
