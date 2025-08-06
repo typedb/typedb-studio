@@ -440,23 +440,23 @@ workflows:
       - deploy-linux-arm64-snapshot:
           filters:
             branches:
-              only: [development]
+              only: [banana]
       - deploy-linux-x86_64-snapshot:
           filters:
             branches:
-              only: [development]
+              only: [banana]
       - deploy-mac-arm64-snapshot:
           filters:
             branches:
-              only: [development]
+              only: [banana]
       - deploy-mac-x86_64-snapshot:
           filters:
             branches:
-              only: [development]
+              only: [banana]
       - deploy-windows-x86_64-snapshot:
           filters:
             branches:
-              only: [development]
+              only: [banana]
       - deploy-apt-arm64-snapshot:
           filters:
             branches:
