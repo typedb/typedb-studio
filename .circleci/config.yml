@@ -79,10 +79,10 @@ commands:
           paths:
             - ~/.pnpm-store
 
-  install-node-modules:
+  install-deps-npm:
     steps:
       - run:
-          name: Install pnpm package manager and node modules
+          name: Install pnpm package manager, then use it to install npm dependencies
           command: |
             nvm install 22
             nvm use 22
@@ -246,7 +246,7 @@ jobs:
       - fetch-submodules
       - install-bazel-mac:
           bazel-arch: arm64
-      - install-node-modules
+      - install-deps-npm
       - install-rust
       - deploy-mac-snapshot:
           target-arch: arm64
@@ -260,7 +260,7 @@ jobs:
       - install-brew-rosetta
       - install-bazel-mac:
           bazel-arch: amd64
-      - install-node-modules
+      - install-deps-npm
       - install-rust
       - deploy-mac-snapshot:
           target-arch: x86_64
@@ -271,7 +271,7 @@ jobs:
       - checkout
       - fetch-submodules
       - install-bazel-linux-arm64
-      - install-node-modules
+      - install-deps-npm
       - install-rust
       - deploy-linux-snapshot:
           target-arch: arm64
@@ -282,7 +282,7 @@ jobs:
       - checkout
       - fetch-submodules
       - install-bazel-linux-x86_64
-      - install-node-modules
+      - install-deps-npm
       - install-rust
       - deploy-linux-snapshot:
           target-arch: x86_64
@@ -293,7 +293,7 @@ jobs:
       - checkout
       - fetch-submodules
       - install-bazel-linux-arm64
-      - install-node-modules
+      - install-deps-npm
       - install-rust
       - deploy-apt-snapshot:
           target-arch: arm64
@@ -304,7 +304,7 @@ jobs:
       - checkout
       - fetch-submodules
       - install-bazel-linux-x86_64
-      - install-node-modules
+      - install-deps-npm
       - install-rust
       - deploy-apt-snapshot:
           target-arch: x86_64
@@ -327,7 +327,7 @@ jobs:
       - fetch-submodules
       - install-bazel-mac:
           bazel-arch: arm64
-      - install-node-modules
+      - install-deps-npm
       - install-rust
       - deploy-mac-release:
           target-arch: arm64
@@ -341,7 +341,7 @@ jobs:
       - install-brew-rosetta
       - install-bazel-mac:
           bazel-arch: amd64
-      - install-node-modules
+      - install-deps-npm
       - install-rust
       - deploy-mac-release:
           target-arch: x86_64
@@ -352,7 +352,7 @@ jobs:
       - checkout
       - fetch-submodules
       - install-bazel-linux-arm64
-      - install-node-modules
+      - install-deps-npm
       - install-rust
       - deploy-linux-release:
           target-arch: arm64
@@ -363,7 +363,7 @@ jobs:
       - checkout
       - fetch-submodules
       - install-bazel-linux-x86_64
-      - install-node-modules
+      - install-deps-npm
       - install-rust
       - deploy-linux-release:
           target-arch: x86_64
@@ -374,7 +374,7 @@ jobs:
       - checkout
       - fetch-submodules
       - install-bazel-linux-arm64
-      - install-node-modules
+      - install-deps-npm
       - install-rust
       - deploy-apt-release:
           target-arch: arm64
@@ -385,7 +385,7 @@ jobs:
       - checkout
       - fetch-submodules
       - install-bazel-linux-x86_64
-      - install-node-modules
+      - install-deps-npm
       - install-rust
       - deploy-apt-release:
           target-arch: x86_64

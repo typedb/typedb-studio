@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "generate-grammar": "lezer-generator --typeScript src/framework/codemirror-lang-typeql/typeql.grammar -o src/framework/codemirror-lang-typeql/generated/typeql.grammar.generated",
-    "start": "pnpm i && ng serve",
+    "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "tauri": "tauri"
@@ -44,7 +44,7 @@
     "sigma": "3.0.1",
     "tslib": "^2.3.0",
     "typedb-driver-http": "0.0.1",
-    "typedb-web-common": "file:typedb-web/common",
+    "typedb-web-common": "workspace:*",
     "uuid": "11.1.0",
     "zone.js": "~0.15.1",
     "@tauri-apps/api": "^2",
