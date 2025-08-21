@@ -22,7 +22,6 @@
 
     button {
         padding: 5px 8px;
-        border-radius: shapes.$border-radius-panel;
         display: flex;
         align-items: center;
         color: primary.$grey;
@@ -98,7 +97,6 @@ i.ts-beacon {
     aside {
         margin: 6px 16px;
         @include typography.aside;
-        color: secondary.$light-grey;
     }
 
     mat-divider {

@@ -6,7 +6,9 @@
 
 @use "sass:color";
 
+@use "colors";
 @use "media";
+@use "mixins";
 @use "primary";
 @use "secondary";
 @use "shapes";
@@ -16,6 +18,7 @@
 @use "topbar";
 
 @forward "material";
+@forward "material-overrides";
 @forward "prism";
 @forward "scrollbars";
 @forward "vars";
@@ -24,7 +27,7 @@ html {
     height: 100%;
     margin: 0;
     padding: 0;
-    background: primary.$black-purple;
+    background: colors.$black;
     font-size: 14px;
     line-height: 22px;
 
@@ -74,8 +77,8 @@ article {
 
 .tp-bento-box {
     @include shapes.standard-border;
-    border-radius: shapes.$border-radius-panel;
-    @include shapes.light-source-gradient(primary.$purple, primary.$deep-purple);
+    border-radius: shapes.$border-radius;
+    @include colors.light-source-gradient(primary.$purple, primary.$deep-purple);
     transition: background 0.1s linear;
     padding: shapes.$card-padding;
 
@@ -85,7 +88,7 @@ article {
 
     $subtle-opacity: 0.45;
     &.subtle {
-        @include shapes.light-source-gradient(
+        @include colors.light-source-gradient(
                 rgba(primary.$purple, $subtle-opacity),
                 rgba(primary.$deep-purple, $subtle-opacity),
         );
@@ -93,10 +96,10 @@ article {
     }
 
     &.hoverable:hover:not(:disabled) {
-        @include shapes.light-source-gradient(rgba(primary.$light-purple, 0.6), primary.$purple);
+        @include colors.light-source-gradient(rgba(primary.$light-purple, 0.6), primary.$purple);
 
         &.subtle {
-            @include shapes.light-source-gradient(
+            @include colors.light-source-gradient(
                     rgba(rgba(primary.$light-purple, 0.6), $subtle-opacity),
                     rgba(primary.$purple, $subtle-opacity)
             );
@@ -434,8 +437,8 @@ button i + span, button span + i {
 }
 
 .card {
-    @include shapes.card-appearance;
-    @include shapes.card-padding;
+    @include mixins.card-appearance;
+    @include mixins.card-padding;
 
     &.hoverable:hover:not(:disabled) {
         border-color: primary.$green;

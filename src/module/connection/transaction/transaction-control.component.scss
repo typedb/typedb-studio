@@ -18,7 +18,7 @@
 
 mat-select {
     width: fit-content;
-    border-radius: shapes.$border-radius-panel;
+    border-radius: shapes.$border-radius-small;
     padding: 0 8px;
     display: flex;
     align-items: center;
@@ -133,9 +133,8 @@ mat-select-trigger {
 }
 
 ::ng-deep body div.mat-mdc-select-panel.transaction-select-panel {
-    --mat-select-panel-background-color: #{primary.$deep-purple};
-    border-top-left-radius: shapes.$border-radius-panel !important; // overrides Angular Material style
-    border-top-right-radius: shapes.$border-radius-panel !important;
+    border-top-left-radius: shapes.$border-radius-small !important; // overrides Angular Material style
+    border-top-right-radius: shapes.$border-radius-small !important;
     margin-top: 8px;
     margin-left: -8px;
 

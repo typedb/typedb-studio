@@ -4,6 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+@use "colors";
 @use "media";
 @use "primary";
 @use "secondary";
@@ -42,8 +43,8 @@
 
 .card {
     @include shapes.standard-border;
-    border-radius: shapes.$border-radius-panel;
-    @include shapes.light-source-gradient(primary.$purple, primary.$deep-purple);
+    border-radius: shapes.$border-radius;
+    @include colors.light-source-gradient(primary.$purple, primary.$deep-purple);
     transition: background 0.1s linear;
     padding: 16px;
 }
@@ -113,7 +114,7 @@ button {
     height: 100%;
     overflow: auto;
     border: 3px dashed primary.$light-purple;
-    border-radius: shapes.$border-radius-panel;
+    border-radius: shapes.$border-radius;
     display: flex;
     justify-content: center;
     align-items: center;

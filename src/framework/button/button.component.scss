@@ -59,7 +59,7 @@
     color: primary.$grey;
     font-weight: var(--font-weight-regular);
     padding: 6px 8px;
-    border-radius: shapes.$border-radius-panel;
+    border-radius: shapes.$border-radius-small;
     display: flex;
     align-items: center;
     @include typography.p3;
@@ -89,8 +89,9 @@ button {
     display: flex;
     align-items: center;
     box-sizing: border-box;
-    @include shapes.standard-border;
+    border: shapes.$border;
     border-color: transparent;
+    border-radius: shapes.$border-radius-small;
     background-color: transparent;
     padding: 0 12px;
     &.stroke {

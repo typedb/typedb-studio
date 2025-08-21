@@ -1,0 +1,10 @@
+@use "@angular/material" as mat;
+@use "shapes";
+
+body {
+    @include mat.button-overrides((
+        text-container-shape: shapes.$border-radius-small,
+        filled-container-shape: shapes.$border-radius-small,
+        outlined-container-shape: shapes.$border-radius-small,
+    ));
+}
