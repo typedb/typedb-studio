@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "primary";
+@use "colors";
 @use "shapes";
 @use "typography";
 
@@ -167,7 +167,7 @@ article {
 
     &:hover {
         i, h3 {
-            color: primary.$green;
+            color: colors.$green;
         }
     }
 
@@ -207,7 +207,7 @@ article {
     }
 
     a:hover {
-        color: primary.$green;
+        color: colors.$green;
     }
 }
 

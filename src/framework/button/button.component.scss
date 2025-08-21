@@ -5,9 +5,7 @@
  */
 
 @use "shapes";
-@use "primary";
-@use "secondary";
-@use "tp";
+@use "colors";
 @use "typography";
 
 :host {
@@ -20,22 +18,22 @@
     font-weight: var(--font-weight-medium);
 
     &.white {
-        color: primary.$white;
+        color: colors.$white;
     }
     &.green {
-        color: primary.$green;
+        color: colors.$green;
     }
     &.red {
-        color: primary.$red;
+        color: colors.$red;
     }
     &.white:hover:enabled {
-        background-color: tp.$white15;
+        background-color: rgba(colors.$white, 0.15);
     }
     &.red:hover:enabled {
-        background-color: tp.$red;
+        background-color: colors.$translucent-red;
     }
     &.green:hover:enabled {
-        background-color: tp.$green;
+        background-color: rgba(colors.$green, 0.15);
     }
     &.white:active,
     &.red:active,
@@ -52,11 +50,11 @@
 }
 
 .secondary.stroke {
-    color: primary.$grey;
+    color: colors.$grey;
 }
 
 .secondary:not(.stroke) {
-    color: primary.$grey;
+    color: colors.$grey;
     font-weight: var(--font-weight-regular);
     padding: 6px 8px;
     border-radius: shapes.$border-radius-small;
@@ -66,18 +64,18 @@
 
     &:enabled {
         &:hover {
-            background: secondary.$purple;
+            background: colors.$secondary-purple;
         }
         &:active, &.active {
-            background: primary.$light-purple;
+            background: colors.$light-purple;
         }
     }
 
     &:disabled {
-        color: secondary.$deep-grey;
+        color: colors.$secondary-deep-grey;
 
         ::ng-deep i {
-            color: secondary.$mid-deep-grey;
+            color: colors.$secondary-mid-deep-grey;
         }
     }
 }
@@ -99,9 +97,9 @@ button {
     }
 
     &.grey-stroke {
-        border-color: secondary.$mid-deep-grey;
+        border-color: colors.$secondary-mid-deep-grey;
         &:hover:not(:disabled) {
-            border-color: secondary.$light-grey;
+            border-color: colors.$secondary-light-grey;
         }
     }
 }

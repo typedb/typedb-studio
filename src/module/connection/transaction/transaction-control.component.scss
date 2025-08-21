@@ -5,9 +5,9 @@
  */
 
 @use "shapes";
-@use "primary";
-@use "secondary";
-@use "tp";
+@use "colors";
+
+
 @use "typography";
 
 :host {
@@ -22,7 +22,7 @@ mat-select {
     padding: 0 8px;
     display: flex;
     align-items: center;
-    color: primary.$grey;
+    color: colors.$grey;
     font-size: 14px;
     line-height: 32px;
 
@@ -32,7 +32,7 @@ mat-select {
 
     &:not(.mat-mdc-select-disabled) {
         &:hover, &:active, &[aria-expanded='true'] {
-            background: secondary.$purple;
+            background: colors.$secondary-purple;
         }
     }
 
@@ -51,21 +51,21 @@ mat-select {
         margin-left: 8px;
 
         &.ok {
-            color: primary.$green;
+            color: colors.$green;
             //animation: shimmer 3s ease-in-out 0s infinite;
         }
 
         &.warn {
-            color: secondary.$yellow;
+            color: colors.$secondary-yellow;
             animation: beacon 1.5s ease-in-out 0s infinite;
         }
 
         &.error {
-            color: primary.$red;
+            color: colors.$red;
         }
 
         &.inactive {
-            color: secondary.$light-grey;
+            color: colors.$secondary-light-grey;
         }
     }
 }
@@ -96,7 +96,7 @@ mat-select-trigger {
         margin-right: 10px;
 
         &.active {
-            color: primary.$green;
+            color: colors.$green;
             animation: beacon 3s ease-in-out 0s infinite;
         }
     }
@@ -109,26 +109,26 @@ mat-select-trigger {
     }
 
     &:hover {
-        color: primary.$green;
+        color: colors.$green;
     }
 }
 
 .mdc-fab.mat-accent {
     &.open-btn:enabled {
-        color: secondary.$deep-green;
+        color: colors.$secondary-deep-green;
 
         &.active {
-            color: primary.$black-purple;
-            background: secondary.$deep-green;
+            color: colors.$black-purple;
+            background: colors.$secondary-deep-green;
         }
     }
 
     &.commit-btn:enabled {
-        color: secondary.$deep-green;
+        color: colors.$secondary-deep-green;
     }
 
     &.close-btn:enabled {
-        background: primary.$red;
+        background: colors.$red;
     }
 }
 

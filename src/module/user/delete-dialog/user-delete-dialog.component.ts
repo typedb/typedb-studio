@@ -24,7 +24,7 @@ import { SnackbarService } from "../../../service/snackbar.service";
     styleUrls: ["./user-delete-dialog.component.scss"],
     imports: [
         ModalComponent, AsyncPipe, FormsModule, ReactiveFormsModule, MatFormFieldModule,
-        MatInputModule, FormComponent, FormInputComponent, FormActionsComponent, MatDivider,
+        MatInputModule, FormComponent, FormActionsComponent
     ]
 })
 export class UserDeleteDialogComponent {

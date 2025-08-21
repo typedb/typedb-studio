@@ -5,9 +5,9 @@
  */
 
 @use "shapes";
-@use "primary";
-@use "secondary";
-@use "tp";
+@use "colors";
+
+
 @use "typography";
 
 :host {
@@ -16,7 +16,7 @@
 
 a {
     height: 47px;
-    color: primary.$white;
+    color: colors.$white;
     width: 100%;
     display: flex;
     align-items: center;
@@ -25,7 +25,7 @@ a {
 }
 
 a:hover, a.selected {
-    color: primary.$green;
+    color: colors.$green;
 }
 
 .linkspan {
@@ -48,7 +48,7 @@ a.selected .linkspan {
         left: -16px;
         height: 16px;
         width: 4px;
-        background-color: primary.$green;
+        background-color: colors.$green;
         border-top-right-radius: 2px;
         border-bottom-right-radius: 2px;
     }

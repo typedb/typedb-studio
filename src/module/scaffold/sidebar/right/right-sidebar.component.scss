@@ -5,8 +5,8 @@
  */
 
 @use "@angular/material" as mat;
-@use "primary";
-@use "secondary";
+@use "colors";
+
 @use "shapes";
 @use "typography";
 
@@ -49,7 +49,7 @@ hr {
         }
 
         &:hover {
-            color: primary.$green;
+            color: colors.$green;
 
             i {
                 visibility: visible;
@@ -64,7 +64,7 @@ hr {
         gap: 4px;
 
         .sidebar-link-description {
-            color: secondary.$grey;
+            color: colors.$secondary-grey;
             @include typography.info-text();
         }
     }

@@ -5,8 +5,8 @@
  */
 
 @use "shapes";
-@use "primary";
-@use "secondary";
+@use "colors";
+
 @use "typography";
 
 :host {
@@ -15,7 +15,7 @@
 
 @mixin chip($content, $text-color) {
     padding: 0 5px 2px 5px;
-    background: secondary.$deep-grey;
+    background: colors.$secondary-deep-grey;
     color: $text-color;
     border-radius: shapes.$border-radius-small;
     content: $content;
@@ -26,16 +26,16 @@
 }
 
 @mixin coming-soon-chip {
-    @include chip("coming soon", primary.$white);
+    @include chip("coming soon", colors.$white);
 }
 
 @mixin active-chip {
-    @include chip("active", primary.$green);
+    @include chip("active", colors.$green);
 }
 
 .integration-card {
     @include shapes.standard-border;
-    background-color: primary.$deep-purple;
+    background-color: colors.$deep-purple;
     padding: 16px;
     min-width: 340px;
     max-width: 400px;
@@ -49,7 +49,7 @@
     }
 
     &:hover:not(.disabled) {
-        border-color: primary.$green;
+        border-color: colors.$green;
     }
 
     &.disabled {
@@ -90,7 +90,7 @@
 
     .integration-link {
         text-decoration: underline;
-        color: primary.$green;
+        color: colors.$green;
         text-align: left;
     }
 }

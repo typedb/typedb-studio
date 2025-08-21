@@ -5,8 +5,8 @@
  */
 
 @use "shapes";
-@use "primary";
-@use "secondary";
+@use "colors";
+
 @use "typography";
 @use "@angular/material" as mat;
 
@@ -24,7 +24,7 @@ $height: 32px;
 }
 
 label {
-    color: primary.$white;
+    color: colors.$white;
     opacity: 60%;
     @include typography.p3;
 }
@@ -40,7 +40,7 @@ label {
     height: $height;
     display: flex;
     align-items: center;
-    background-color: secondary.$purple;
+    background-color: colors.$secondary-purple;
     @include shapes.standard-border;
     i {
         font-size: 12px;
@@ -56,7 +56,7 @@ label {
 
 .paginator-separator {
     width: 0;
-    border-right: 1px solid primary.$purple;
+    border-right: 1px solid colors.$purple;
     height: 75%;
     margin-left: 1px;
     margin-right: 1px;

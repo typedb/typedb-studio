@@ -4,8 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "primary";
-@use "secondary";
+@use "colors";
+
 @use "shapes";
 
 :host {
@@ -13,18 +13,18 @@
 }
 
 button i {
-    color: secondary.$grey;
+    color: colors.$secondary-grey;
     transition: color 100ms ease;
     width: 24px;
     height: 24px;
     font-size: 24px;
 
     &:hover, &:active, &:focus {
-        color: primary.$white;
+        color: colors.$white;
     }
 
     &:active, &:focus {
-        background: primary.$light-purple;
+        background: colors.$light-purple;
     }
 }
 

@@ -6,8 +6,6 @@
 
 @use "colors";
 @use "media";
-@use "primary";
-@use "secondary";
 @use "typography";
 @use "shapes";
 
@@ -44,7 +42,7 @@
 .card {
     @include shapes.standard-border;
     border-radius: shapes.$border-radius;
-    @include colors.light-source-gradient(primary.$purple, primary.$deep-purple);
+    @include colors.light-source-gradient(colors.$purple, colors.$deep-purple);
     transition: background 0.1s linear;
     padding: 16px;
 }
@@ -67,15 +65,15 @@ button {
     }
 
     &:enabled i.fa-play {
-        color: secondary.$deep-green;
+        color: colors.$secondary-deep-green;
     }
 }
 
 .answers-outer-container {
     height: 100%;
     width: 100%;
-    border: 1px solid primary.$light-purple;
-    background: primary.$black-purple;
+    border: 1px solid colors.$light-purple;
+    background: colors.$black-purple;
     position: relative;
 }
 
@@ -113,12 +111,12 @@ button {
 .answers-placeholder-container {
     height: 100%;
     overflow: auto;
-    border: 3px dashed primary.$light-purple;
+    border: 3px dashed colors.$light-purple;
     border-radius: shapes.$border-radius;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: primary.$black-purple;
+    background: colors.$black-purple;
     --mat-button-filled-container-height: 40px;
 }
 

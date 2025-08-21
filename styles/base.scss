@@ -9,12 +9,8 @@
 @use "colors";
 @use "media";
 @use "mixins";
-@use "primary";
-@use "secondary";
 @use "shapes";
-@use "tp";
 @use "typography";
-
 @use "topbar";
 
 @forward "material";
@@ -78,7 +74,7 @@ article {
 .tp-bento-box {
     @include shapes.standard-border;
     border-radius: shapes.$border-radius;
-    @include colors.light-source-gradient(primary.$purple, primary.$deep-purple);
+    @include colors.light-source-gradient(colors.$purple, colors.$deep-purple);
     transition: background 0.1s linear;
     padding: shapes.$card-padding;
 
@@ -89,19 +85,19 @@ article {
     $subtle-opacity: 0.45;
     &.subtle {
         @include colors.light-source-gradient(
-                rgba(primary.$purple, $subtle-opacity),
-                rgba(primary.$deep-purple, $subtle-opacity),
+                rgba(colors.$purple, $subtle-opacity),
+                rgba(colors.$deep-purple, $subtle-opacity),
         );
-        border-color: rgba(primary.$light-purple, $subtle-opacity);
+        border-color: rgba(colors.$light-purple, $subtle-opacity);
     }
 
     &.hoverable:hover:not(:disabled) {
-        @include colors.light-source-gradient(rgba(primary.$light-purple, 0.6), primary.$purple);
+        @include colors.light-source-gradient(rgba(colors.$light-purple, 0.6), colors.$purple);
 
         &.subtle {
             @include colors.light-source-gradient(
-                    rgba(rgba(primary.$light-purple, 0.6), $subtle-opacity),
-                    rgba(primary.$purple, $subtle-opacity)
+                    rgba(rgba(colors.$light-purple, 0.6), $subtle-opacity),
+                    rgba(colors.$purple, $subtle-opacity)
             );
         }
     }
@@ -126,8 +122,8 @@ article {
     }
 
     a.tp-bento-bottom-bar:hover {
-        color: primary.$green;
-        background: primary.$purple;
+        color: colors.$green;
+        background: colors.$purple;
     }
 }
 
@@ -197,11 +193,11 @@ strong {
 }
 
 .text-muted {
-    color: secondary.$light-grey;
+    color: colors.$secondary-light-grey;
 }
 
 a {
-    color: primary.$white;
+    color: colors.$white;
     text-decoration: none;
     &.disabled {
         pointer-events: none;
@@ -211,7 +207,7 @@ a {
 
 @mixin text-link {
     text-decoration: underline;
-    color: primary.$green;
+    color: colors.$green;
     cursor: pointer;
 }
 
@@ -220,22 +216,22 @@ p a, aside a, th a, td a {
 }
 
 a.link-quiet {
-    color: primary.$grey;
+    color: colors.$grey;
     font-size: 14px;
     text-decoration: none;
 
     &:hover, &:focus {
-        color: primary.$green;
+        color: colors.$green;
         text-decoration: none;
     }
 }
 
 a.tos-privacy-link {
-    color: primary.$white;
+    color: colors.$white;
     text-decoration: underline;
 
     &:hover, &:focus {
-        color: primary.$green;
+        color: colors.$green;
     }
 }
 
@@ -254,7 +250,7 @@ code, .text-code {
 
 em {
     font-weight: typography.$semi-bold;
-    color: secondary.$lighter-grey;
+    color: colors.$secondary-extra-light-grey;
 }
 
 button {
@@ -271,7 +267,7 @@ button {
 
     &:disabled {
         cursor: not-allowed;
-        color: secondary.$mid-deep-grey;
+        color: colors.$secondary-mid-deep-grey;
     }
 }
 
@@ -321,11 +317,11 @@ button {
     &:not(.td-button-disabled) {
         &:hover,
         &.container-hover {
-            box-shadow: 0 3px 26px 0 rgba(primary.$green, 0.4);
+            box-shadow: 0 3px 26px 0 rgba(colors.$green, 0.4);
         }
 
         &:active {
-            background-color: color.mix(primary.$green, primary.$purple);
+            background-color: color.mix(colors.$green, colors.$purple);
         }
     }
 }
@@ -362,7 +358,7 @@ form, .form {
 }
 
 .form-input-row-description {
-    color: secondary.$light-grey;
+    color: colors.$secondary-light-grey;
     font-size: 14px;
     text-align: start;
     margin: 11px 0;
@@ -370,7 +366,7 @@ form, .form {
 
 input, select, textarea {
     &::placeholder {
-        color: rgba(secondary.$light-grey, 0.8);
+        color: rgba(colors.$secondary-light-grey, 0.8);
         font-weight: typography.$regular;
     }
 }
@@ -408,23 +404,23 @@ i {
     justify-content: center;
 
     &.ok {
-        color: primary.$green;
+        color: colors.$green;
     }
 
     &.info {
-        color: secondary.$blue;
+        color: colors.$secondary-blue;
     }
 
     &.warn {
-        color: secondary.$yellow;
+        color: colors.$secondary-yellow;
     }
 
     &.error {
-        color: primary.$red;
+        color: colors.$red;
     }
 
     &.inactive {
-        color: secondary.$light-grey;
+        color: colors.$secondary-light-grey;
     }
 }
 
@@ -433,7 +429,7 @@ button i + span, button span + i {
 }
 
 .tp-green {
-    color: primary.$green;
+    color: colors.$green;
 }
 
 .card {
@@ -441,10 +437,10 @@ button i + span, button span + i {
     @include mixins.card-padding;
 
     &.hoverable:hover:not(:disabled) {
-        border-color: primary.$green;
+        border-color: colors.$green;
 
         .link-tertiary {
-            color: primary.$green;
+            color: colors.$green;
             text-decoration: underline;
         }
     }
@@ -452,14 +448,14 @@ button i + span, button span + i {
 
 // copied over from typedb-docs-web
 .admonitionblock {
-    --important-color: #{secondary.$yellow};
-    --important-background: #{rgba(secondary.$yellow, 0.12)};
-    --note-color: #{secondary.$blue};
-    --note-background: #{rgba(secondary.$blue, 0.12)};
-    --tip-color: #{primary.$green};
-    --tip-background: #{rgba(primary.$green, 0.12)};
-    --warning-color: #{primary.$red};
-    --warning-background: #{rgba(primary.$red, 0.12)};
+    --important-color: #{colors.$secondary-yellow};
+    --important-background: #{rgba(colors.$secondary-yellow, 0.12)};
+    --note-color: #{colors.$secondary-blue};
+    --note-background: #{rgba(colors.$secondary-blue, 0.12)};
+    --tip-color: #{colors.$green};
+    --tip-background: #{rgba(colors.$green, 0.12)};
+    --warning-color: #{colors.$red};
+    --warning-background: #{rgba(colors.$red, 0.12)};
 
     position: relative;
     margin: 1.5rem 0 0;
@@ -562,7 +558,7 @@ button i + span, button span + i {
 }
 
 .admonitionblock.attention i {
-    color: secondary.$yellow;
+    color: colors.$secondary-yellow;
 }
 
 .action-bar {
@@ -618,7 +614,7 @@ tp-form-actions, .tp-form-actions {
 
 .terms-privacy-additional-info {
     @include typography.p3;
-    color: secondary.$light-grey;
+    color: colors.$secondary-light-grey;
 }
 
 tp-properties-table + tp-properties-table {
@@ -641,7 +637,7 @@ tp-form-input.capitalized-field {
 
 .modal-content-wrapper {
     @include typography.p3;
-    color: primary.$grey;
+    color: colors.$grey;
     width: 100%;
 
     display: flex;
@@ -656,7 +652,7 @@ tp-form-input.capitalized-field {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: secondary.$pink;
+    color: colors.$secondary-pink;
     cursor: pointer;
 }
 
@@ -667,11 +663,11 @@ tp-form-input.capitalized-field {
 }
 
 button.dangerous {
-    color: primary.$red;
+    color: colors.$red;
 }
 
 .tp-sidebar-team-selection-panel.mat-mdc-select-panel {
-    background: rgba(primary.$light-purple, 0.3);
+    background: rgba(colors.$light-purple, 0.3);
     backdrop-filter: blur(10px);
 }
 
@@ -712,22 +708,22 @@ tp-gcp-marketplace-integration, tp-aws-marketplace-integration, tp-azure-marketp
     }
 
     p {
-        color: primary.$grey;
+        color: colors.$grey;
 
         &.ok {
-            color: primary.$green;
+            color: colors.$green;
         }
 
         &.loading {
-            color: primary.$grey;
+            color: colors.$grey;
         }
 
         &.error {
-            color: primary.$red;
+            color: colors.$red;
         }
 
         &.inactive {
-            color: secondary.$light-grey;
+            color: colors.$secondary-light-grey;
         }
     }
 }

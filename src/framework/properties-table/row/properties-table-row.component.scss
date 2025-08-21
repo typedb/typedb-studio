@@ -5,9 +5,9 @@
  */
 
 @use "shapes";
-@use "primary";
-@use "secondary";
-@use "tp";
+@use "colors";
+
+
 @use "typography";
 
 :host {
@@ -16,11 +16,11 @@
     width: 100%;
 
     &:nth-child(even) {
-        background-color: primary.$purple;
+        background-color: colors.$purple;
     }
 
     &:nth-child(odd) {
-        background-color: primary.$deep-purple;
+        background-color: colors.$deep-purple;
     }
 }
 
@@ -34,11 +34,11 @@
     flex: 1 1 0;
 
     &.key {
-        color: secondary.$light-grey;
+        color: colors.$secondary-light-grey;
     }
 
     &.value {
-        color: primary.$white;
+        color: colors.$white;
         border-left: shapes.$border;
     }
 }

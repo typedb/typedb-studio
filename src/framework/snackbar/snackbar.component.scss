@@ -6,13 +6,13 @@
 
 @use "sass:color";
 @use "shapes";
-@use "primary";
-@use "secondary";
+@use "colors";
+
 
 @mixin host-color-style($class, $base-color) {
     &.#{$class} {
         border-color: $base-color;
-        background: color.mix($base-color, primary.$black-purple, 15%);
+        background: color.mix($base-color, colors.$black-purple, 15%);
         box-shadow: inset 0 0 0 1px $base-color;
 
         .sb-text i {
@@ -30,10 +30,10 @@
     align-items: center;
     gap: 16px;
 
-    @include host-color-style(ok, primary.$green);
-    @include host-color-style(info, secondary.$blue);
-    @include host-color-style(warn, secondary.$yellow);
-    @include host-color-style(error, primary.$red);
+    @include host-color-style(ok, colors.$green);
+    @include host-color-style(info, colors.$secondary-blue);
+    @include host-color-style(warn, colors.$secondary-yellow);
+    @include host-color-style(error, colors.$red);
 
     p + p {
         margin-top: 0.5em;
@@ -50,7 +50,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    color: primary.$white;
+    color: colors.$white;
 
     i {
         flex-shrink: 0;
@@ -58,5 +58,5 @@
 }
 
 .sb-button i {
-    color: rgba(primary.$white, 0.8);
+    color: rgba(colors.$white, 0.8);
 }
