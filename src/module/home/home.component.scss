@@ -192,7 +192,7 @@ article {
 .tp-additional-resources {
     display: grid;
     grid-template: repeat(2, 1fr) / repeat(3, 1fr);
-    gap: 12px;
+    gap: 12px 24px;
 
     a {
         display: flex;
