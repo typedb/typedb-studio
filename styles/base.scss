@@ -580,7 +580,9 @@ button i + span, button span + i {
     > tp-button + tp-button::before,
     > tp-button + a::before,
     > a + tp-button::before,
-    > a + a::before, {
+    > a + a::before,
+    > div + tp-button::before,
+    > div + a::before {
         content: "";
         width: 0;
         height: 24px;
