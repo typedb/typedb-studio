@@ -23,6 +23,7 @@ export class ConnectionConfig {
     }
 
     static autoName(params: ConnectionParams) {
+        if (params.name?.length) return params.name;
         const address = isBasicParams(params) ? params.addresses[0] : params.translatedAddresses[0].external;
         return `${address.split("/").at(-1)}`;
     }
@@ -55,9 +56,9 @@ export interface ConnectionPreferences {
     isStartupConnection: boolean;
 }
 
-export type ConnectionParamsBasic = DriverParamsBasic & { database?: string };
+export type ConnectionParamsBasic = DriverParamsBasic & { database?: string; name?: string };
 
-export type ConnectionParamsTranslated = DriverParamsTranslated & { database?: string };
+export type ConnectionParamsTranslated = DriverParamsTranslated & { database?: string; name?: string };
 
 export type ConnectionParams = ConnectionParamsBasic | ConnectionParamsTranslated;
 
@@ -98,15 +99,18 @@ function parseConnectionHostAndPathOrNull(rawValue: string): ConnectionParams | 
     const addresses = addressesRaw.split(`,`);
     if (!addresses.length) return null;
 
-    const database = path?.length ? path : undefined;
+    const [pathname, query] = path?.length ? path.split(`?`, 2) : [undefined, undefined];
+    const database = pathname?.length ? pathname : undefined;
+    const searchParams = query?.length ? new URLSearchParams(query) : undefined;
+    const name = searchParams?.get(`name`) ?? undefined;
 
     if (addresses[0].includes(`;`)) {
         const translatedAddressesRaw = addresses.map(x => x.split(`;`, 2));
         if (translatedAddressesRaw.some(x => !x[1])) return null;
         const translatedAddresses: TranslatedAddress[] = translatedAddressesRaw.map(([a, b]) => ({ external: a, internal: b }));
-        return { username, password, translatedAddresses, database };
+        return { username, password, translatedAddresses, database, name };
     } else {
-        return { username, password, addresses, database };
+        return { username, password, addresses, database, name };
     }
 }
 

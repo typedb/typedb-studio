@@ -1,12 +1,12 @@
-@use "secondary";
+@use "colors";
 @use "shapes";
 
 .tooltip-container {
-    border-radius: shapes.$border-radius;
+    border-radius: shapes.$border-radius-small;
     padding: 4px 8px;
     font-size: 14px;
     line-height: 20px;
-    background: secondary.$mid-deep-grey;
+    background: colors.$secondary-mid-deep-grey;
 
     ::ng-deep > div {
         max-width: 360px;

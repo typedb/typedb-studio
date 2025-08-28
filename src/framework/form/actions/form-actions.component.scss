@@ -1,4 +1,4 @@
-@use "primary";
+@use "colors";
 
 :host tp-button {
     position: relative;
@@ -13,10 +13,10 @@
     }
 
     &.green ::ng-deep tp-spinner .mat-mdc-progress-spinner {
-        --mdc-circular-progress-active-indicator-color: #{primary.$green};
+        --mdc-circular-progress-active-indicator-color: #{colors.$green};
     }
 
     &.red ::ng-deep tp-spinner .mat-mdc-progress-spinner {
-        --mdc-circular-progress-active-indicator-color: #{primary.$red};
+        --mdc-circular-progress-active-indicator-color: #{colors.$red};
     }
 }

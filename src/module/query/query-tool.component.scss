@@ -4,9 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+@use "colors";
 @use "media";
-@use "primary";
-@use "secondary";
 @use "typography";
 @use "shapes";
 
@@ -47,8 +46,8 @@
 
 .card {
     @include shapes.standard-border;
-    border-radius: shapes.$border-radius-panel;
-    @include shapes.light-source-gradient(primary.$purple, primary.$deep-purple);
+    border-radius: shapes.$border-radius;
+    @include colors.light-source-gradient(colors.$purple, colors.$deep-purple);
     transition: background 0.1s linear;
     padding: 16px;
 
@@ -95,7 +94,7 @@
     }
 
     &.scrolled {
-        border-top: 1px solid primary.$black-purple;
+        border-top: 1px solid colors.$black-purple;
     }
 
     mat-tree {
@@ -123,15 +122,15 @@
             }
 
             &.entityType button::before {
-                color: primary.$entity-pink;
+                color: colors.$entity-pink;
             }
 
             &.attributeType button::before {
-                color: primary.$attribute-blue;
+                color: colors.$attribute-blue;
             }
 
             &.relationType button::before {
-                color: primary.$relation-yellow;
+                color: colors.$relation-yellow;
             }
         }
 
@@ -152,7 +151,7 @@
             width: 8px;
             height: 8px;
             font-size: 8px;
-            color: primary.$entity-pink;
+            color: colors.$entity-pink;
         }
 
         mat-tree-node.link.owns button::before, mat-tree-node.root.attributes button::before {
@@ -163,7 +162,7 @@
             width: 8px;
             height: 8px;
             font-size: 8px;
-            color: primary.$attribute-blue;
+            color: colors.$attribute-blue;
         }
 
         mat-tree-node.link.plays button::before, mat-tree-node.root.relations button::before {
@@ -174,7 +173,7 @@
             width: 8px;
             height: 8px;
             font-size: 8px;
-            color: primary.$relation-yellow;
+            color: colors.$relation-yellow;
         }
 
         mat-tree-node.link.relates button::before {
@@ -185,7 +184,7 @@
             width: 12px;
             height: 12px;
             font-size: 12px;
-            color: primary.$role-orange;
+            color: colors.$role-orange;
         }
 
         &.flat {
@@ -194,9 +193,9 @@
                 padding-left: 16px !important; /* overrides Angular Material's default padding */
                 padding-right: 8px;
                 align-items: stretch;
-                border-bottom: 1px solid primary.$light-purple;
-                border-left: 1px solid primary.$light-purple;
-                border-right: 1px solid primary.$light-purple;
+                border-bottom: 1px solid colors.$light-purple;
+                border-left: 1px solid colors.$light-purple;
+                border-right: 1px solid colors.$light-purple;
                 font-weight: typography.$light;
 
                 button {
@@ -204,16 +203,16 @@
                 }
 
                 &:nth-child(odd) {
-                    background: primary.$black-purple;
+                    background: colors.$black-purple;
                 }
 
                 &:nth-child(even) {
-                    background: primary.$purple;
+                    background: colors.$purple;
                 }
             }
 
             mat-tree-node:not(.link) + mat-tree-node.link {
-                border-top: 1px solid primary.$light-purple;
+                border-top: 1px solid colors.$light-purple;
             }
         }
     }
@@ -229,7 +228,7 @@ button {
     }
 
     &:enabled i.fa-play {
-        color: secondary.$deep-green;
+        color: colors.$secondary-deep-green;
     }
 }
 
@@ -245,8 +244,8 @@ button {
 .code-editor-container {
     height: 100%;
     overflow: auto;
-    border: 1px solid primary.$light-purple;
-    background: primary.$black-purple;
+    border: 1px solid colors.$light-purple;
+    background: colors.$black-purple;
 
     code-editor {
         height: 100%;
@@ -256,8 +255,8 @@ button {
 .answers-outer-container {
     height: 100%;
     width: 100%;
-    border: 1px solid primary.$light-purple;
-    background: primary.$black-purple;
+    border: 1px solid colors.$light-purple;
+    background: colors.$black-purple;
     position: relative;
 }
 
@@ -293,7 +292,7 @@ button {
     }
 
     ::ng-deep .mdc-text-field {
-        --mdc-outlined-text-field-input-text-color: #{secondary.$pink};
+        --mdc-outlined-text-field-input-text-color: #{colors.$secondary-pink};
         padding: 0;
 
         textarea {
@@ -332,12 +331,12 @@ button {
 .answers-placeholder-container {
     height: 100%;
     overflow: auto;
-    border: 3px dashed primary.$light-purple;
-    border-radius: shapes.$border-radius-panel;
+    border: 3px dashed colors.$light-purple;
+    border-radius: shapes.$border-radius;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: primary.$black-purple;
+    background: colors.$black-purple;
     --mat-button-filled-container-height: 40px;
 }
 
@@ -383,7 +382,7 @@ button {
                 font-size: 12px;
 
                 &.fa-xmark {
-                    color: #{primary.$red};
+                    color: #{colors.$red};
                     cursor: pointer;
                 }
             }
@@ -412,7 +411,6 @@ button {
     aside {
         margin: 6px 16px;
         @include typography.aside;
-        color: secondary.$light-grey;
     }
 
     mat-divider {
@@ -444,10 +442,10 @@ button {
     }
 
     button.selected {
-        color: primary.$green;
+        color: colors.$green;
 
         i.fa-trash-can {
-            color: primary.$grey;
+            color: colors.$grey;
         }
     }
 }

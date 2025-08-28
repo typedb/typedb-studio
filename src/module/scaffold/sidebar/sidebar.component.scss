@@ -5,8 +5,8 @@
  */
 
 @use "@angular/material" as mat;
-@use "primary";
-@use "secondary";
+@use "colors";
+
 @use "shapes";
 @use "typography";
 
@@ -25,7 +25,7 @@
 
         mat-divider {
             width: 100%;
-            --mat-divider-color: #{secondary.$deep-grey};
+            --mat-divider-color: #{colors.$secondary-deep-grey};
             margin: 8px 0;
         }
     }
@@ -81,10 +81,10 @@ i {
     padding-top: 8px;
 
     &:hover {
-        color: primary.$green;
+        color: colors.$green;
 
         tp-user-avatar {
-            outline: 1px solid primary.$green;
+            outline: 1px solid colors.$green;
         }
     }
 

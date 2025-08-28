@@ -5,8 +5,8 @@
  */
 
 @use "shapes";
-@use "primary";
-@use "secondary";
+@use "colors";
+
 @use "typography";
 
 :host {
@@ -27,10 +27,10 @@ tp-filter-group {
     display: flex;
     align-items: center;
     box-sizing: border-box;
-    color: primary.$white;
+    color: colors.$white;
     padding: 7px 11px;
     height: 40px;
-    background-color: secondary.$purple;
+    background-color: colors.$secondary-purple;
     width: min-content;
     transition: border-color 30ms ease;
 
@@ -41,7 +41,7 @@ tp-filter-group {
 
 .arrow-icon {
     display: flex;
-    color: primary.$grey;
+    color: colors.$grey;
     padding-left: 6px;
     margin-right: -6px;
 }

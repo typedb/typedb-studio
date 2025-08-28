@@ -4,8 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "primary";
-@use "secondary";
+@use "colors";
+
 @use "shapes";
 @use "typography";
 @use "@angular/material" as mat;
@@ -58,11 +58,11 @@ tp-form,
     justify-content: flex-start;
     align-items: center;
     gap: 8px;
-    color: primary.$grey;
+    color: colors.$grey;
     cursor: pointer;
 
     &:hover {
-        color: primary.$white;
+        color: colors.$white;
     }
 }
 

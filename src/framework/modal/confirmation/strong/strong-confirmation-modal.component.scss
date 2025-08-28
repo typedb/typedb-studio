@@ -4,12 +4,12 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "primary";
+@use "colors";
 @use "typography";
 
 .content-wrapper {
     @include typography.p3;
-    color: primary.$grey;
+    color: colors.$grey;
     padding-bottom: 24px;
     width: 100%;
 }

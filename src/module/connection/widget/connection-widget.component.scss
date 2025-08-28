@@ -5,8 +5,8 @@
  */
 
 @use "shapes";
-@use "primary";
-@use "secondary";
+@use "colors";
+
 @use "typography";
 
 :host {
@@ -22,10 +22,9 @@
 
     button {
         padding: 5px 8px;
-        border-radius: shapes.$border-radius-panel;
         display: flex;
         align-items: center;
-        color: primary.$grey;
+        color: colors.$grey;
         @include typography.p2;
 
         i.fa-database {
@@ -38,7 +37,7 @@
     }
 
     button:hover {
-        color: primary.$green;
+        color: colors.$green;
     }
 
     .connection-area {
@@ -54,21 +53,21 @@ i.ts-beacon {
     margin-right: 8px;
 
     &.ok {
-        color: primary.$green;
+        color: colors.$green;
         //animation: shimmer 3s ease-in-out 0s infinite;
     }
 
     &.warn {
-        color: secondary.$yellow;
+        color: colors.$secondary-yellow;
         animation: beacon 1.5s ease-in-out 0s infinite;
     }
 
     &.error {
-        color: primary.$red;
+        color: colors.$red;
     }
 
     &.inactive {
-        color: secondary.$light-grey;
+        color: colors.$secondary-light-grey;
     }
 }
 
@@ -86,7 +85,7 @@ i.ts-beacon {
     font-size: 14px;
     margin-left: 8px;
     margin-right: 4px;
-    color: secondary.$light-grey;
+    color: colors.$secondary-light-grey;
 }
 
 .divider-vertical {
@@ -98,7 +97,6 @@ i.ts-beacon {
     aside {
         margin: 6px 16px;
         @include typography.aside;
-        color: secondary.$light-grey;
     }
 
     mat-divider {
@@ -135,10 +133,10 @@ i.ts-beacon {
     }
 
     button.selected {
-        color: primary.$green;
+        color: colors.$green;
 
         i.fa-trash-can {
-            color: primary.$grey;
+            color: colors.$grey;
         }
     }
 }
