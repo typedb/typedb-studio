@@ -9,7 +9,7 @@ import { Extension } from "@codemirror/state"
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language"
 import { tags as t } from "@lezer/highlight"
 
-const base00 = "#0e0d17",
+const base00 = "#0e0e0e",
     base01 = "#232135",
     base02 = "#2d2a46",
     base03 = "#383649",
