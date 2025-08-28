@@ -94,7 +94,7 @@
     }
 
     &.scrolled {
-        border-top: 1px solid colors.$black-purple;
+        border-top: 1px solid colors.$black;
     }
 
     mat-tree {
@@ -203,7 +203,7 @@
                 }
 
                 &:nth-child(odd) {
-                    background: colors.$black-purple;
+                    background: colors.$black;
                 }
 
                 &:nth-child(even) {
@@ -245,7 +245,7 @@ button {
     height: 100%;
     overflow: auto;
     border: 1px solid colors.$light-purple;
-    background: colors.$black-purple;
+    background: colors.$black;
 
     code-editor {
         height: 100%;
@@ -256,7 +256,7 @@ button {
     height: 100%;
     width: 100%;
     border: 1px solid colors.$light-purple;
-    background: colors.$black-purple;
+    background: colors.$black;
     position: relative;
 }
 
@@ -336,7 +336,7 @@ button {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: colors.$black-purple;
+    background: colors.$black;
     --mat-button-filled-container-height: 40px;
 }
 
