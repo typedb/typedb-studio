@@ -83,7 +83,12 @@ export class QueryToolState {
             error: (err) => {
                 this.driver.checkHealth().subscribe({
                     next: () => {
-                        const msg = err?.message || err?.toString() || `Unknown error`;
+                        let msg = ``;
+                        if (isApiErrorResponse(err)) {
+                            msg = err.err.message;
+                        } else {
+                            msg = err?.message ?? err?.toString() ?? `Unknown error`;
+                        }
                         this.snackbar.errorPersistent(`Error: ${msg}\n`
                             + `Caused: Failed to execute query.`);
                     },

@@ -12,7 +12,7 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { DriverParams, isBasicParams } from "typedb-driver-http";
+import { DriverParams, isApiErrorResponse, isBasicParams } from "typedb-driver-http";
 import { CONNECTION_URL_PLACEHOLDER, ConnectionConfig, connectionUrl, parseConnectionUrlOrNull } from "../../../concept/connection";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
@@ -156,10 +156,14 @@ export class ConnectionCreatorComponent {
                 if (typeof err === "object" && "customError" in err) {
                     this.snackbar.errorPersistent(`${err.customError}`);
                 } else {
-                    const msg = err?.message || err?.toString() || `Unknown error`;
-                    this.snackbar.errorPersistent(`Error: ${msg}\n`
-                        + `Unable to connect to TypeDB server '${config.name}'.\n`
-                        + `Ensure the parameters are correct, the server is running, and its version is at least TypeDB 3.3.0.`);
+                    if (isApiErrorResponse(err)) {
+                        this.snackbar.errorPersistent(`Error: ${err.err.message}`);
+                    } else {
+                        const msg = err?.message ?? err?.toString() ?? `Unknown error`;
+                        this.snackbar.errorPersistent(`Error: ${msg}\n`
+                            + `Unable to connect to TypeDB server '${config.name}'.\n`
+                            + `Ensure the parameters are correct, the server is running, and its version is at least TypeDB 3.3.0.`);
+                    }
                 }
                 this.form.enable();
                 this.isSubmitting$.next(false);

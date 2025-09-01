@@ -55,7 +55,13 @@ export class UsersPageComponent {
                 }
             },
             error: (err) => {
-                this.errorLines = err?.message?.split(`\n`) ?? err?.toString()?.split(`\n`);
+                let msg = ``;
+                if (isApiErrorResponse(err)) {
+                    msg = err.err.message;
+                } else {
+                    msg = err?.message ?? err?.toString() ?? `Unknown error`;
+                }
+                this.errorLines = msg.split(`\n`);
             },
         });
     }
