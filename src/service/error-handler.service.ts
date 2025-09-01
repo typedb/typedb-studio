@@ -1,5 +1,6 @@
 import { ErrorHandler, forwardRef, Inject, Injectable, Injector, NgZone } from '@angular/core';
 import { SnackbarService } from './snackbar.service';
+import { isApiErrorResponse } from 'typedb-driver-http';
 
 @Injectable()
 export class StudioErrorHandler implements ErrorHandler {
@@ -11,7 +12,12 @@ export class StudioErrorHandler implements ErrorHandler {
     handleError(err: any): void {
         console.error(err);
 
-        const msg = err?.message || err?.toString() || `Unknown error`;
+        let msg = ``;
+        if (isApiErrorResponse(err)) {
+            msg = err.err.message;
+        } else {
+            msg = err?.message ?? err?.toString() ?? `Unknown error`;
+        }
         // See: https://github.com/angular/components/issues/13181#issuecomment-423471381
         this.ngZone.run(() => {
             this.snackbar.errorPersistent(`Error: ${msg}`);
