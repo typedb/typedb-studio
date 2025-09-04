@@ -37,7 +37,8 @@ import { DatabaseSelectDialogComponent } from "../database/select-dialog/databas
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaTreeNodeComponent } from "./schema-tree-node/schema-tree-node.component";
 import { keymap } from "@codemirror/view";
-import {startCompletion} from "@codemirror/autocomplete";
+import { startCompletion } from "@codemirror/autocomplete";
+import { indentWithTab } from "@codemirror/commands";
 import { MatMenuModule } from "@angular/material/menu";
 import { SchemaToolWindowState, SchemaTreeNode } from "../../service/schema-tool-window-state.service";
 
@@ -71,6 +72,7 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
                 return true;
             },
         },
+        indentWithTab,
     ]));
 
     constructor(
