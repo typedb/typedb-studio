@@ -16,7 +16,7 @@ import { DriverParams, isApiErrorResponse, isBasicParams } from "typedb-driver-h
 import { CONNECTION_URL_PLACEHOLDER, ConnectionConfig, connectionUrl, parseConnectionUrlOrNull } from "../../../concept/connection";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
-import { ADDRESS, USERNAME } from "../../../framework/util/url-params";
+import { ADDRESS, NAME, USERNAME } from "../../../framework/util/url-params";
 import { AppData } from "../../../service/app-data.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
@@ -81,6 +81,8 @@ export class ConnectionCreatorComponent {
         this.updateNameAndAdvancedConfigOnUrlChanges();
         this.updateNameAndUrlOnAdvancedConfigChanges();
         route.queryParamMap.pipe(first()).subscribe((params) => {
+            if (params.get(NAME)) this.form.patchValue({ name: params.get(NAME) ?? `` });
+
             this.advancedForm.patchValue({
                 address: params.get(ADDRESS) ?? ``,
                 username: params.get(USERNAME) ?? ``,
