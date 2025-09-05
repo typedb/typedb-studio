@@ -6,3 +6,4 @@
 
 export const USERNAME = "username";
 export const ADDRESS = "address";
+export const NAME = "name";
