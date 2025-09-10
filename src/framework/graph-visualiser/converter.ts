@@ -16,7 +16,8 @@ import {
     DataConstraintRelates,
     DataConstraintPlays,
     VertexFunction,
-    VertexExpression, DataConstraintSubExact, DataConstraintIsaExact, DataVertex
+    VertexExpression, DataConstraintSubExact, DataConstraintIsaExact, DataVertex,
+    DataConstraintKind
 } from "./graph";
 import {ILogicalGraphConverter} from "./visualisation";
 import {StudioConverterStructureParameters, StudioConverterStyleParameters} from "./config";
@@ -245,6 +246,10 @@ export class StudioConverter implements ILogicalGraphConverter {
                 let label = `arg[${varNameOrId}]`;
                 this.maybeCreateEdge(answerIndex, constraint, label, arg, functionVertex, queryVertex, functionVertex);
             });
+    }
+
+    put_kind(answer_index: number, constraint: DataConstraintKind): void {
+        this.put_vertex(answer_index, constraint.type, constraint.queryConstraint.type);
     }
 }
 

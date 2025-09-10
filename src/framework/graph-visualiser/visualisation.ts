@@ -2,7 +2,8 @@ import { QueryVertex } from "typedb-driver-http";
 import {
   DataGraph, DataVertex, DataConstraintAny, DataConstraintLinks, DataConstraintHas, DataConstraintIsa,
   DataConstraintOwns, DataConstraintRelates, DataConstraintPlays, DataConstraintSub, DataConstraintFunction,
-  DataConstraintExpression, DataConstraintIsaExact, DataConstraintSubExact
+  DataConstraintExpression, DataConstraintIsaExact, DataConstraintSubExact,
+  DataConstraintKind
 } from "./graph";
 
 /////////////////////////////////
@@ -43,6 +44,8 @@ export interface ILogicalGraphConverter {
   put_expression(answer_index: number, constraint: DataConstraintExpression): void;
 
   put_function(answer_index: number, constraint: DataConstraintFunction): void;
+
+  put_kind(answer_index: number, constraint: DataConstraintKind): void;
 }
 
 export function convertLogicalGraphWith(dataGraph: DataGraph, converter: ILogicalGraphConverter) {
@@ -99,11 +102,14 @@ function putConstraint(converter: ILogicalGraphConverter, answer_index: number, 
       converter.put_function(answer_index, constraint);
       break;
     }
+    case "kind": {
+      converter.put_kind(answer_index, constraint);
+      break;
+    }
     case "comparison": break;
     case "is": break;
     case "iid": break;
     case "label": break;
-    case "kind": break;
     case "value": break;
   }
 }

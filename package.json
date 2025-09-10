@@ -1,6 +1,6 @@
 {
   "name": "typedb-studio",
-  "version": "3.5.6",
+  "version": "3.5.7",
   "scripts": {
     "ng": "ng",
     "generate-grammar": "lezer-generator --typeScript src/framework/codemirror-lang-typeql/typeql.grammar -o src/framework/codemirror-lang-typeql/generated/typeql.grammar.generated",

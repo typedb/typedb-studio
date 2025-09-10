@@ -55,9 +55,6 @@ export class RootComponent implements OnInit, AfterViewInit {
                     this.initialised = true;
                 },
                 error: (err) => {
-                    this.snackbar.infoPersistent(
-                        `Failed to reconnect to '${initialConnectionConfig.name}'.\n`
-                        + `Please reconnect manually via the 'Connect TypeDB server' page.`);
                     console.warn(err);
                     this.appData.connections.clearStartupConnection();
                     this.initialised = true;
