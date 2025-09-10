@@ -78,8 +78,6 @@ export class ConnectionCreatorComponent {
         private router: Router, route: ActivatedRoute,
     ) {
         (window as any).connectionCreator = this;
-        this.updateNameAndAdvancedConfigOnUrlChanges();
-        this.updateNameAndUrlOnAdvancedConfigChanges();
         route.queryParamMap.pipe(first()).subscribe((params) => {
             if (params.get(NAME)) this.form.patchValue({ name: params.get(NAME) ?? `` });
 
@@ -87,6 +85,9 @@ export class ConnectionCreatorComponent {
                 address: params.get(ADDRESS) ?? ``,
                 username: params.get(USERNAME) ?? ``,
             });
+
+            this.updateNameAndAdvancedConfigOnUrlChanges();
+            this.updateNameAndUrlOnAdvancedConfigChanges();
         });
     }
 
