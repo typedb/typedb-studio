@@ -78,6 +78,10 @@ export class ConnectionCreatorComponent {
         private router: Router, route: ActivatedRoute,
     ) {
         (window as any).connectionCreator = this;
+
+        this.updateAdvancedConfigOnUrlChanges();
+        this.updateUrlOnAdvancedConfigChanges();
+
         route.queryParamMap.pipe(first()).subscribe((params) => {
             if (params.get(NAME)) this.form.patchValue({ name: params.get(NAME) ?? `` });
 
@@ -85,20 +89,16 @@ export class ConnectionCreatorComponent {
                 address: params.get(ADDRESS) ?? ``,
                 username: params.get(USERNAME) ?? ``,
             });
-
-            this.updateNameAndAdvancedConfigOnUrlChanges();
-            this.updateNameAndUrlOnAdvancedConfigChanges();
         });
     }
 
-    private updateNameAndAdvancedConfigOnUrlChanges() {
+    private updateAdvancedConfigOnUrlChanges() {
         combineLatest([this.form.controls.url.valueChanges]).pipe(
             filter(([url]) => !this.form.controls.name.dirty && !!url),
             map(([url]) => parseConnectionUrlOrNull(url!)),
             filter(params => !!params),
             map(params => params!)
         ).subscribe((params) => {
-            if (!this.form.controls.name.dirty) this.form.patchValue({ name: ConnectionConfig.autoName(params) });
             this.advancedForm.patchValue({
                 address: isBasicParams(params) ? params.addresses[0] : params.translatedAddresses[0].external,
                 username: params.username,
@@ -107,7 +107,7 @@ export class ConnectionCreatorComponent {
         });
     }
 
-    private updateNameAndUrlOnAdvancedConfigChanges() {
+    private updateUrlOnAdvancedConfigChanges() {
         this.advancedForm.valueChanges.pipe(
             map((value) => {
                 const params: DriverParams = {
@@ -119,7 +119,6 @@ export class ConnectionCreatorComponent {
             }),
             tap((params) => {
                 if (!params.addresses[0]?.length || !params.username) return;
-                if (!this.form.controls.name.dirty) this.form.patchValue({ name: ConnectionConfig.autoName(params) });
             }),
             map((params) => connectionUrl(params)),
         ).subscribe(url => {
