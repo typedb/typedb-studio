@@ -72,12 +72,12 @@ export class SchemaState {
     queryResponses$ = new BehaviorSubject<ApiOkResponse<ConceptRowsQueryResponse>[] | null>(null);
     readonly value$ = new BehaviorSubject<Schema | null>(null);
     isRefreshing = false;
-    readonly refreshDisabledReason$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, db]) => {
+    readonly interactionDisabledReason$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, db]) => {
         if (status !== "connected") return NO_SERVER_CONNECTED;
         else if (db == null) return NO_DATABASE_SELECTED;
         else return null;
     }));
-    readonly refreshEnabled$ = this.refreshDisabledReason$.pipe(map(x => x == null));
+    readonly interactable$ = this.interactionDisabledReason$.pipe(map(x => x == null));
 
     constructor(private driver: DriverState, private snackbar: SnackbarService) {
         (window as any)["schemaState"] = this;

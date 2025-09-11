@@ -21,20 +21,20 @@ import { filter, map, Observable, startWith } from "rxjs";
 import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
 import { SchemaState } from "../../service/schema-state.service";
-import { SnackbarService } from "../../service/snackbar.service";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
+import { SchemaToolWindowComponent } from "./tool-window/schema-tool-window.component";
 
 @Component({
-    selector: "ts-schema-tool",
-    templateUrl: "schema-tool.component.html",
-    styleUrls: ["schema-tool.component.scss"],
+    selector: "ts-schema-page",
+    templateUrl: "schema-page.component.html",
+    styleUrls: ["schema-page.component.scss"],
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule,
-        MatSortModule, MatTooltipModule, MatButtonModule,
+        MatSortModule, MatTooltipModule, MatButtonModule, ResizableDirective, SchemaToolWindowComponent,
     ]
 })
-export class SchemaToolComponent implements OnInit, AfterViewInit, OnDestroy {
+export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
     @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
@@ -43,7 +43,7 @@ export class SchemaToolComponent implements OnInit, AfterViewInit, OnDestroy {
 
     constructor(
         protected state: SchemaState, public driver: DriverState, private appData: AppData,
-        private snackbar: SnackbarService, private destroyRef: DestroyRef) {
+        private destroyRef: DestroyRef) {
     }
 
     ngOnInit() {
@@ -55,6 +55,7 @@ export class SchemaToolComponent implements OnInit, AfterViewInit, OnDestroy {
             const articleWidth = this.articleRef.nativeElement.clientWidth;
             this.resizables.first.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
         }
+
         this.canvasEl$ = this.graphViewRef.changes.pipe(
             map(x => x as QueryList<ElementRef<HTMLElement>>),
             startWith(this.graphViewRef),
