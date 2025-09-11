@@ -206,4 +206,16 @@ export class SchemaToolWindowState {
         state.linksVisibility = this.linksVisibility$.value;
         this.appData.viewState.setSchemaToolWindowState(state);
     }
+
+    collapseAll() {
+        const state = this.appData.viewState.schemaToolWindowState();
+
+        this.dataSource$.value.forEach(node => {
+            this.rootNodesCollapsed[node.label] = true;
+            state.rootNodesCollapsed[node.label] = true;
+        });
+        this.dataSource$.next(this.dataSource$.value);
+        
+        this.appData.viewState.setSchemaToolWindowState(state);
+    }
 }
