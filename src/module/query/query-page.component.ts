@@ -17,7 +17,6 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
-import { MatTree, MatTreeModule } from "@angular/material/tree";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { Prec } from "@codemirror/state";
@@ -26,7 +25,6 @@ import { filter, map, startWith } from "rxjs";
 import { otherExampleLinter, TypeQL, typeqlAutocompleteExtension } from "../../framework/codemirror-lang-typeql";
 import { DriverAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
-import { DetectScrollDirective } from "../../framework/scroll-container/detect-scroll.directive";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
@@ -35,34 +33,31 @@ import { QueryToolState } from "../../service/query-tool-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
-import { SchemaTreeNodeComponent } from "./schema-tree-node/schema-tree-node.component";
 import { keymap } from "@codemirror/view";
 import { startCompletion } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
 import { MatMenuModule } from "@angular/material/menu";
-import { SchemaToolWindowState, SchemaTreeNode } from "../../service/schema-tool-window-state.service";
+import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
 
 @Component({
-    selector: "ts-query-tool",
-    templateUrl: "query-tool.component.html",
-    styleUrls: ["query-tool.component.scss"],
+    selector: "ts-query-page",
+    templateUrl: "query-page.component.html",
+    styleUrls: ["query-page.component.scss"],
     imports: [
-        RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatTreeModule, MatIconModule,
+        RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
-        SchemaTreeNodeComponent, DetectScrollDirective, MatMenuModule
+        MatMenuModule, SchemaToolWindowComponent,
     ]
 })
-export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
+export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     @ViewChild(CodeEditor) codeEditor!: CodeEditor;
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
     @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
-    @ViewChild("tree") tree!: MatTree<any>;
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
-    refreshSchemaTooltip$ = this.state.schema.refreshDisabledReason$.pipe(map(x => x ? `` : `Refresh`));
     editorKeymap = Prec.highest(keymap.of([
         { key: "Alt-Space", run: startCompletion, preventDefault: true },
         {
@@ -76,7 +71,7 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
     ]));
 
     constructor(
-        public state: QueryToolState, public schemaWindow: SchemaToolWindowState, public driver: DriverState,
+        public state: QueryToolState, public driver: DriverState,
         private appData: AppData, private snackbar: SnackbarService, private dialog: MatDialog,
     ) {
     }
@@ -97,6 +92,7 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
         const articleWidth = this.articleRef.nativeElement.clientWidth;
         this.resizables.first.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
         this.resizables.last.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
+
         this.graphViewRef.changes.pipe(
             map(x => x as QueryList<ElementRef<HTMLElement>>),
             startWith(this.graphViewRef),
@@ -104,15 +100,6 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
             map(x => x.first.nativeElement),
         ).subscribe((canvasEl) => {
             this.state.graphOutput.canvasEl = canvasEl;
-        });
-        this.schemaWindow.dataSource$.subscribe((dataSource) => {
-            dataSource.forEach( node => {
-                if (this.schemaWindow.rootNodesCollapsed[node.label]) {
-                    this.tree.collapse(node);
-                } else {
-                    this.tree.expand(node);
-                }
-            });
         });
     }
 
@@ -143,32 +130,6 @@ export class QueryToolComponent implements OnInit, AfterViewInit, OnDestroy {
             case "open": return "opened transaction";
             case "commit": return "committed transaction";
             case "close": return "closed transaction";
-        }
-    }
-
-    treeNodeClass(node: SchemaTreeNode): string {
-        switch (node.nodeKind) {
-            case "root":
-                return `root ${node.label.toLowerCase()}`;
-            case "concept":
-                return "concept";
-            case "link":
-                return `link ${node.linkKind} ${node.linkKind === "sub" ? node.supertype.kind : ""}`;
-        }
-    }
-
-    toggleNode(node: SchemaTreeNode) {
-        if (this.tree.isExpanded(node)) {
-            this.tree.collapse(node);
-        } else {
-            this.tree.expand(node);
-        }
-
-        if (node.nodeKind === "root") {
-            this.schemaWindow.rootNodesCollapsed[node.label] = !this.tree.isExpanded(node);
-            const schemaToolWindowState = this.appData.viewState.schemaToolWindowState();
-            schemaToolWindowState.rootNodesCollapsed = this.schemaWindow.rootNodesCollapsed;
-            this.appData.viewState.setSchemaToolWindowState(schemaToolWindowState);
         }
     }
 

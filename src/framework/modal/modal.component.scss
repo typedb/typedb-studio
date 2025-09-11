@@ -14,10 +14,6 @@
     right: 0;
 }
 
-.mdc-dialog__content {
-    overflow: visible;
-}
-
 h1 {
     @include typography.font-style(22px, typography.$semi-bold, normal, 0);
 }

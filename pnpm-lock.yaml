@@ -165,6 +165,9 @@ importers:
       '@types/jasmine':
         specifier: ~5.1.0
         version: 5.1.8
+      '@types/prismjs':
+        specifier: 1.26.5
+        version: 1.26.5
       graphology-types:
         specifier: 0.24.8
         version: 0.24.8
@@ -2819,6 +2822,9 @@ packages:
 
   '@types/prismjs@1.26.2':
     resolution: {integrity: sha512-/r7Cp7iUIk7gts26mHXD66geUC+2Fo26TZYjQK6Nr4LDfi6lmdRmMqM0oPwfiMhUwoBAOFe8GstKi2pf6hZvwA==}
+
+  '@types/prismjs@1.26.5':
+    resolution: {integrity: sha512-AUZTa7hQ2KY5L7AmtSiqxlhWxb4ina0yd8hNbl4TWuqnv/pFP0nDMb3YrfSBf4hJVGLh2YEIBfKaBW/9UEl6IQ==}
 
   '@types/prop-types@15.7.15':
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
@@ -8537,6 +8543,8 @@ snapshots:
       undici-types: 7.8.0
 
   '@types/prismjs@1.26.2': {}
+
+  '@types/prismjs@1.26.5': {}
 
   '@types/prop-types@15.7.15': {}
 

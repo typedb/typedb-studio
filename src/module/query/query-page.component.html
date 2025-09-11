@@ -1,49 +1,6 @@
 <ts-page-scaffold pageAvailability="ready">
   <article #articleRef class="query-page" style="display: flex; flex-direction: row;">
-    <div resizable [percent]="20" class="schema-pane card">
-      <div class="card-header-wrapper">
-        <div class="card-header">
-          <i class="fa-light fa-vector-square"></i>
-          <h4>Schema</h4>
-          <div class="flex-spacer"></div>
-          <div class="card-header-actions">
-            <button matIconButton [disabled]="!(state.schema.refreshEnabled$ | async)"
-                    [matTooltip]="(refreshSchemaTooltip$ | async) || ''" matTooltipPosition="below" matTooltipShowDelay="500" (click)="state.schema.refresh()">
-              <i class="fa-light fa-refresh"></i>
-            </button>
-            <button matIconButton [matMenuTriggerFor]="schemaActionsMenu" matTooltip="More actions" matTooltipPosition="below" matTooltipShowDelay="500">
-              <i class="fa-light fa-ellipsis"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="schema-container" detectScroll>
-        <div class="gutter"></div>
-        <mat-tree
-          #tree [dataSource]="schemaWindow.dataSource$" [childrenAccessor]="schemaWindow.childrenAccessor"
-          [class]="schemaWindow.viewMode$.value"
-        >
-          <!-- This is the tree node template for leaf nodes -->
-          <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="16" [class]="treeNodeClass(node)">
-            <!-- use a disabled button to provide padding for tree leaf -->
-            <button matIconButton disabled></button>
-            <ts-schema-tree-node [data]="node"/>
-          </mat-tree-node>
-          <!-- This is the tree node template for expandable nodes -->
-          <mat-tree-node *matTreeNodeDef="let node;when: schemaWindow.hasChild" matTreeNodePadding
-                         [matTreeNodePaddingIndent]="16" (click)="toggleNode(node)"
-                         [cdkTreeNodeTypeaheadLabel]="node.name" [class]="treeNodeClass(node)">
-            <button matIconButton aria-label="Toggle node">
-              <mat-icon class="mat-icon-rtl-mirror">
-                {{tree.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
-              </mat-icon>
-            </button>
-            <ts-schema-tree-node [data]="node"/>
-          </mat-tree-node>
-        </mat-tree>
-        <div class="gutter"></div>
-      </div>
-    </div>
+    <ts-schema-tool-window resizable [percent]="20"/>
     <div class="main-panes" resizable [percent]="60" style="display: flex; flex-direction: column;">
       <div resizable [percent]="40" class="query-pane card">
         <div class="card-header">
@@ -205,33 +162,3 @@
     </div>
   </article>
 </ts-page-scaffold>
-
-<mat-menu #schemaActionsMenu="matMenu">
-  <span class="menu-content">
-    <button mat-menu-item (click)="schemaWindow.useFlatView()">
-      <i class="fa-light fa-check" [class.invisible]="schemaWindow.viewMode$.value !== 'flat'"></i>
-      <span>Flat view</span>
-    </button>
-    <button mat-menu-item (click)="schemaWindow.useHierarchicalView()">
-      <i class="fa-light fa-check" [class.invisible]="schemaWindow.viewMode$.value !== 'hierarchical'"></i>
-      <span>Hierarchical view</span>
-    </button>
-    <mat-divider></mat-divider>
-    <button mat-menu-item (click)="schemaWindow.toggleLinksVisibility('sub')">
-      <i class="fa-light fa-check" [class.invisible]="!schemaWindow.linksVisibility$.value.sub"></i>
-      <span>Show sub in flat view</span>
-    </button>
-    <button mat-menu-item (click)="schemaWindow.toggleLinksVisibility('owns')">
-      <i class="fa-light fa-check" [class.invisible]="!schemaWindow.linksVisibility$.value.owns"></i>
-      <span>Show owns</span>
-    </button>
-    <button mat-menu-item (click)="schemaWindow.toggleLinksVisibility('relates')">
-      <i class="fa-light fa-check" [class.invisible]="!schemaWindow.linksVisibility$.value.relates"></i>
-      <span>Show relates</span>
-    </button>
-    <button mat-menu-item (click)="schemaWindow.toggleLinksVisibility('plays')">
-      <i class="fa-light fa-check" [class.invisible]="!schemaWindow.linksVisibility$.value.plays"></i>
-      <span>Show plays</span>
-    </button>
-  </span>
-</mat-menu>
