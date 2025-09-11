@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { AfterViewChecked, AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Input, NgZone, ViewChild } from "@angular/core";
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Input, NgZone, OnChanges, ViewChild } from "@angular/core";
 
 import Prism from "prismjs";
 import { initCustomScrollbars } from "typedb-web-common/lib";
@@ -19,10 +19,11 @@ const DEFAULT_MIN_LINES = { desktop: 33, mobile: 13 };
     standalone: true,
     imports: [],
 })
-export class CodeSnippetComponent implements AfterViewInit, AfterViewChecked {
+export class CodeSnippetComponent implements AfterViewInit, OnChanges {
     @Input({ required: true }) snippet!: { language?: string, code: string };
     @ViewChild("scrollbarX") scrollbarX!: ElementRef<HTMLElement>;
     @ViewChild("scrollbarY") scrollbarY!: ElementRef<HTMLElement>;
+    @ViewChild("rootElement") rootElement!: ElementRef<HTMLElement>;
 
     get lineNumbers() {
         return [...Array(Math.max(
@@ -34,10 +35,16 @@ export class CodeSnippetComponent implements AfterViewInit, AfterViewChecked {
     constructor(private ngZone: NgZone, private elementRef: ElementRef) { }
 
     ngAfterViewInit() {
-        this.ngZone.runOutsideAngular(() => initCustomScrollbars(this.elementRef.nativeElement));
+        this.maybeInitScrollbarsAndHighlighting();
     }
 
-    ngAfterViewChecked() {
-        Prism.highlightAll();
+    ngOnChanges() {
+        this.maybeInitScrollbarsAndHighlighting();
+    }
+
+    maybeInitScrollbarsAndHighlighting() {
+        if (this.snippet) {
+            Prism.highlightAllUnder(this.elementRef.nativeElement);
+        }
     }
 }

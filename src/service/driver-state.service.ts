@@ -303,7 +303,6 @@ export class DriverState {
         ), lockId);
     }
 
-    // TODO: convoluted logic
     query(query: string): Observable<ApiResponse<QueryResponse>> {
         const lockId = uuid();
         const maybeOpenTransaction$ = this.autoTransactionEnabled$.value
@@ -375,6 +374,11 @@ export class DriverState {
     deleteUser(username: string) {
         const driver = this.requireDriver();
         return fromPromise(driver.deleteUser(username));
+    }
+
+    getDatabaseSchemaText(): Observable<ApiResponse<string>> {
+        const driver = this.requireDriver();
+        return fromPromise(driver.getDatabaseSchema(this.requireDatabase().name));
     }
 
     checkHealth() {

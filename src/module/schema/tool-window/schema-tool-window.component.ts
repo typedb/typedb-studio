@@ -24,6 +24,8 @@ import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { AppData } from "../../../service/app-data.service";
 import { SchemaTreeNodeComponent } from "../tree-node/schema-tree-node.component";
+import { MatDialog } from "@angular/material/dialog";
+import { SchemaTextDialogComponent } from "../text-dialog/schema-text-dialog.component";
 
 @Component({
     selector: "ts-schema-tool-window",
@@ -45,7 +47,7 @@ export class SchemaToolWindowComponent implements AfterViewInit {
 
     constructor(
         public state: SchemaToolWindowState, public driver: DriverState, private snackbar: SnackbarService,
-        private appData: AppData,
+        private appData: AppData, private dialog: MatDialog,
     ) {
     }
 
@@ -88,6 +90,6 @@ export class SchemaToolWindowComponent implements AfterViewInit {
     }
 
     openSchemaTextDialog() {
-
+        this.dialog.open(SchemaTextDialogComponent, { width: "80vw", height: "80vh" });
     }
 }

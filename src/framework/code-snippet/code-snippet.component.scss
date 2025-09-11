@@ -11,12 +11,6 @@
     display: block;
     height: 100%;
     overflow: auto;
-    scrollbar-width: none;
-
-    &::-webkit-scrollbar {
-        width: 0;
-        height: 0;
-    }
 }
 
 .cs-root {
@@ -24,6 +18,7 @@
     width: 100%;
     display: flex;
     gap: 4px;
+    padding: 4px;
 }
 
 .cs-line-numbers {
