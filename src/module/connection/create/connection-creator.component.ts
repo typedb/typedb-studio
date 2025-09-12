@@ -59,7 +59,7 @@ export class ConnectionCreatorComponent {
     passwordRevealed = false;
 
     readonly form = this.formBuilder.group({
-        name: ["", [requiredValidator]],
+        name: ["", []],
         advancedConfigActive: [this.appData.preferences.connection.showAdvancedConfigByDefault(), [requiredValidator]],
         url: ["", [requiredValidator, connectionUrlValidator]],
         saveConnectionDetails: [false, [requiredValidator]],
