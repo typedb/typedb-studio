@@ -7,4 +7,8 @@ body {
         filled-container-shape: shapes.$border-radius-small,
         outlined-container-shape: shapes.$border-radius-small,
     ));
+
+    .mat-mdc-dialog-surface {
+        overflow: hidden;
+    }
 }

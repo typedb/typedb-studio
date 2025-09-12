@@ -71,8 +71,8 @@ export class SchemaToolWindowState {
     linksVisibility$ = new BehaviorSubject<Record<SchemaTreeLinkKind, boolean>>(this.appData.viewState.schemaToolWindowState().linksVisibility);
     rootNodesCollapsed: Record<SchemaTreeRootNode["label"], boolean> = this.appData.viewState.schemaToolWindowState().rootNodesCollapsed;
 
-    constructor(public schemaState: SchemaState, private appData: AppData) {
-        schemaState.value$.subscribe(() => {
+    constructor(public schema: SchemaState, private appData: AppData) {
+        schema.value$.subscribe(() => {
             this.buildView();
         });
         this.viewMode$.subscribe(() => {
@@ -92,7 +92,7 @@ export class SchemaToolWindowState {
     };
 
     private buildView() {
-        const schema = this.schemaState.value$.value;
+        const schema = this.schema.value$.value;
         const linksVisibility = this.linksVisibility$.value;
 
         if (!schema) {
@@ -204,6 +204,18 @@ export class SchemaToolWindowState {
         });
         const state = this.appData.viewState.schemaToolWindowState();
         state.linksVisibility = this.linksVisibility$.value;
+        this.appData.viewState.setSchemaToolWindowState(state);
+    }
+
+    collapseAll() {
+        const state = this.appData.viewState.schemaToolWindowState();
+
+        this.dataSource$.value.forEach(node => {
+            this.rootNodesCollapsed[node.label] = true;
+            state.rootNodesCollapsed[node.label] = true;
+        });
+        this.dataSource$.next(this.dataSource$.value);
+        
         this.appData.viewState.setSchemaToolWindowState(state);
     }
 }

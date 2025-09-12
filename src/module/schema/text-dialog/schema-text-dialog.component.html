@@ -1,0 +1,6 @@
+@let schemaTextSnippet = schemaTextSnippet$ | async;
+<tp-modal [dialogTitle]="title" [isBusy]="!schemaTextSnippet">
+  @if (schemaTextSnippet) {
+    <tp-code-snippet [snippet]="schemaTextSnippet" language="typeql" class="schema-text-box"/>
+  }
+</tp-modal>

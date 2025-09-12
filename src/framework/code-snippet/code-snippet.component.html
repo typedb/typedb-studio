@@ -1,14 +1,22 @@
-<div class="cs-root text-code">
-  @if (snippet.language && snippet.language !== 'typedb-console') {
-    <div class="cs-line-numbers">
-      <ol>
-        @for (lineNumber of lineNumbers; track lineNumber) {
-          <li>{{ lineNumber }}</li>
-        }
-      </ol>
+<div class="cs-root text-code" #rootElement (mouseenter)="showOverlay.set(true)" (mouseleave)="showOverlay.set(false)">
+  <!-- Copy overlay - outside the scrollable area -->
+  <div class="copy-overlay" [class.visible]="showOverlay()" matTooltip="Copy" matTooltipPosition="below" (click)="copyCode()">
+    <i class="fas" [class.fa-copy]="!copied()" [class.fa-check]="copied()"></i>
+  </div>
+
+  <!-- Scrollable container for both line numbers and code -->
+  <div class="cs-scrollable-content">
+    @if (snippet.language && snippet.language !== 'typedb-console') {
+      <div class="cs-line-numbers">
+        <ol>
+          @for (lineNumber of lineNumbers; track lineNumber) {
+            <li>{{ lineNumber }}</li>
+          }
+        </ol>
+      </div>
+    }
+    <div class="cs-code-area">
+      <pre><code [class]="snippet.language ? 'language-' + snippet.language : undefined" [innerHTML]="snippet.code"></code></pre>
     </div>
-  }
-  <div class="cs-code-area">
-    <pre><code [class]="snippet.language ? 'language-' + snippet.language : undefined" [innerHTML]="snippet.code"></code></pre>
   </div>
 </div>

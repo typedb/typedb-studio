@@ -5,17 +5,17 @@
  */
 
 import { inject } from "@angular/core";
-import { ActivatedRouteSnapshot, CanActivateFn, Router, Routes, UrlTree } from "@angular/router";
-import { Observable, of } from "rxjs";
+import { CanActivateFn, Router, Routes } from "@angular/router";
+import { of } from "rxjs";
 import { ADDRESS, USERNAME } from "../framework/util/url-params";
 
 import { _404PageComponent } from "../module/404/404-page.component";
 import { ConnectionCreatorComponent } from "../module/connection/create/connection-creator.component";
 import { HomeComponent } from "../module/home/home.component";
-import { QueryToolComponent } from "../module/query/query-tool.component";
-import { SchemaToolComponent } from "../module/schema/schema-tool.component";
+import { QueryPageComponent } from "../module/query/query-page.component";
 import { UsersPageComponent } from "../module/user/users-page.component";
 import { AppData } from "../service/app-data.service";
+import { SchemaPageComponent } from "../module/schema/schema-page.component";
 
 const connectGuard: CanActivateFn = (route) => {
     const [address, username] = [route.queryParamMap.get(ADDRESS), route.queryParamMap.get(USERNAME)];
@@ -35,8 +35,8 @@ const connectGuard: CanActivateFn = (route) => {
 export const routes: Routes = [
     { path: "", component: HomeComponent, title: "Home", pathMatch: "full" },
     { path: "connect", component: ConnectionCreatorComponent, canActivate: [connectGuard], title: "Connect" },
-    { path: "query", component: QueryToolComponent, title: "Query" },
-    { path: "schema", component: SchemaToolComponent, title: "Schema" },
+    { path: "query", component: QueryPageComponent, title: "Query" },
+    { path: "schema", component: SchemaPageComponent, title: "Schema" },
     { path: "users", component: UsersPageComponent, title: "Users" },
     { path: "**", component: _404PageComponent, title: "404" },
 ];
