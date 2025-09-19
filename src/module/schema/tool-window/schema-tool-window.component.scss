@@ -32,19 +32,6 @@
     }
 }
 
-.card-header {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    margin-bottom: 12px;
-    height: 32px;
-
-    .card-header-actions {
-        display: flex;
-        gap: 4px;
-    }
-}
-
 .schema-container {
     flex: 1;
     display: flex;

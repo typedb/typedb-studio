@@ -1,11 +1,11 @@
 <ts-page-scaffold pageAvailability="ready">
   <article #articleRef class="query-page" style="display: flex; flex-direction: row;">
     <ts-schema-tool-window resizable [percent]="20"/>
-    <div class="main-panes" resizable [percent]="60" style="display: flex; flex-direction: column;">
+    <div class="main-panes" resizable [percent]="60">
       <div resizable [percent]="40" class="query-pane card">
         <div class="card-header">
           <i class="fa-light fa-code"></i>
-          <h4>Query</h4>
+          <h3>Query</h3>
           <button mat-stroked-button [disabled]="!(state.runEnabled$ | async)"
                   [matTooltip]="(state.runTooltip$ | async) || ''" matTooltipPosition="below"
                   [matTooltipShowDelay]="(state.runDisabledReason$ | async) ? 0 : 500" (click)="runQuery()">
@@ -23,7 +23,7 @@
       <div resizable [percent]="60" class="run-pane card">
         <div class="card-header">
           <i class="fa-light fa-arrow-progress"></i>
-          <h4>Output</h4>
+          <h3>Output</h3>
           <div>
             <mat-button-toggle-group [formControl]="state.outputTypeControl" [matTooltip]="(state.outputDisabledReason$ | async) || ''" matTooltipPosition="below">
               @for (outputType of state.outputTypes; track outputType) {
@@ -117,47 +117,50 @@
         }
       </div>
     </div>
-    <div resizable [percent]="20" class="history-pane card">
-      <div class="card-header">
-        <i class="fa-light fa-notebook"></i>
-        <h4>History</h4>
-      </div>
-      <div class="history-container">
-        <ol>
-          @for (entry of state.history.entries; track entry) {
-            <li class="history-entry">
-              <aside class="text-muted">
-                <time>{{ entry.startedAtTimestamp | date:'shortTime' }}</time>
-                <span class="bullet">•</span>
-                @if (isTransactionOperation(entry)) {
-                  <p class="transaction-operation-type">{{ transactionOperationString(entry) }}</p>
-                } @else {
-                  <p class="transaction-operation-type">ran query</p>
-                }
-                <span class="flex-spacer"></span>
-                <div class="action-status">
-                  @if (entry.status === "pending") {
-                    <tp-spinner [size]="14"/>
+    <div resizable [percent]="20" class="right-panes">
+      <ts-ai-assist-tool-window resizable [percent]="50" class="ai-assistant-pane card"/>
+      <div resizable [percent]="50" class="history-pane card">
+        <div class="card-header">
+          <i class="fa-light fa-notebook"></i>
+          <h3>History</h3>
+        </div>
+        <div class="history-container">
+          <ol>
+            @for (entry of state.history.entries; track entry) {
+              <li class="history-entry">
+                <aside class="text-muted">
+                  <time>{{ entry.startedAtTimestamp | date:'shortTime' }}</time>
+                  <span class="bullet">•</span>
+                  @if (isTransactionOperation(entry)) {
+                    <p class="transaction-operation-type">{{ transactionOperationString(entry) }}</p>
                   } @else {
-                    <span>{{ actionDurationString(entry) }}</span>
-                    @if (entry.status === "success") {
-                      <i class="fa-light fa-check"></i>
-                    } @else {
-                      <i class="fa-light fa-xmark" richTooltip [richTooltipContent]="historyEntryErrorTooltip(entry)" (click)="copyHistoryEntryErrorTooltip(entry)"></i>
-                    }
+                    <p class="transaction-operation-type">ran query</p>
                   }
-                </div>
-              </aside>
-              @if (isQueryRun(entry)) {
-                <mat-form-field>
-                  <textarea class="history-query-text" [value]="queryHistoryPreview(entry.query)" readonly matInput
-                            cdkTextareaAutosize #autosize="cdkTextareaAutosize" cdkAutosizeMinRows="1" cdkAutosizeMaxRows="3">
-                  </textarea>
-                </mat-form-field>
-              }
-            </li>
-          }
-        </ol>
+                  <span class="flex-spacer"></span>
+                  <div class="action-status">
+                    @if (entry.status === "pending") {
+                      <tp-spinner [size]="14"/>
+                    } @else {
+                      <span>{{ actionDurationString(entry) }}</span>
+                      @if (entry.status === "success") {
+                        <i class="fa-light fa-check"></i>
+                      } @else {
+                        <i class="fa-light fa-xmark" richTooltip [richTooltipContent]="historyEntryErrorTooltip(entry)" (click)="copyHistoryEntryErrorTooltip(entry)"></i>
+                      }
+                    }
+                  </div>
+                </aside>
+                @if (isQueryRun(entry)) {
+                  <mat-form-field>
+                    <textarea class="history-query-text" [value]="queryHistoryPreview(entry.query)" readonly matInput
+                              cdkTextareaAutosize #autosize="cdkTextareaAutosize" cdkAutosizeMinRows="1" cdkAutosizeMaxRows="3">
+                    </textarea>
+                  </mat-form-field>
+                }
+              </li>
+            }
+          </ol>
+        </div>
       </div>
     </div>
   </article>

@@ -4,9 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { AfterViewInit, Component, OnInit } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { SpinnerComponent } from "./framework/spinner/spinner.component";
-import { INTERNAL_ERROR } from "./framework/util/strings";
 import { AnalyticsService } from "./service/analytics.service";
 import { GuardsCheckEnd, GuardsCheckStart, NavigationCancel, Router, RouterOutlet, Event as RouterEvent, NavigationEnd } from "@angular/router";
 import { EMPTY, filter, of, switchMap } from "rxjs";
@@ -21,7 +20,7 @@ import { SnackbarService } from "./service/snackbar.service";
     styleUrls: ["root.component.scss"],
     imports: [RouterOutlet, SpinnerComponent, AsyncPipe]
 })
-export class RootComponent implements OnInit, AfterViewInit {
+export class RootComponent implements OnInit {
     routeIsLoading$ = this.router.events.pipe(
         switchMap((event) => {
             if (event instanceof GuardsCheckStart) {
@@ -35,7 +34,7 @@ export class RootComponent implements OnInit, AfterViewInit {
     );
     initialised = false;
 
-    constructor(private analytics: AnalyticsService, private router: Router, private appData: AppData, private driver: DriverState, private snackbar: SnackbarService) {
+    constructor(analytics: AnalyticsService, private router: Router, private appData: AppData, private driver: DriverState, private snackbar: SnackbarService) {
         this.informAnalyticsOnPageView(router, analytics);
     }
 
@@ -63,9 +62,5 @@ export class RootComponent implements OnInit, AfterViewInit {
         } else {
             this.initialised = true;
         }
-    }
-
-    ngAfterViewInit() {
-        this.analytics.google.loadScriptTag();
     }
 }

@@ -153,9 +153,14 @@ h5 {
     @include typography.h5;
 }
 
+.text-h3 {
+    font-size: var(--font-size-h3);
+    line-height: var(--line-height-h3);
+}
+
 .text-p1 {
-    font-size: 18px;
-    line-height: 26px;
+    font-size: var(--font-size-p1);
+    line-height: var(--line-height-p1);
 }
 
 .text-p2 {
@@ -444,6 +449,20 @@ button i + span, button span + i {
             color: colors.$green;
             text-decoration: underline;
         }
+    }
+}
+
+.card-header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 12px;
+    height: 32px;
+    min-height: 32px;
+
+    .card-header-actions {
+        display: flex;
+        gap: 4px;
     }
 }
 

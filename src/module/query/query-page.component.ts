@@ -31,6 +31,7 @@ import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
 import { QueryToolState } from "../../service/query-tool-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
+import { AIAssistToolWindowComponent } from "../agentic/ai-assist-tool-window.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { keymap } from "@codemirror/view";
@@ -47,7 +48,7 @@ import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-win
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
-        MatMenuModule, SchemaToolWindowComponent,
+        MatMenuModule, SchemaToolWindowComponent, AIAssistToolWindowComponent,
     ]
 })
 export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -89,10 +90,6 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     ngAfterViewInit() {
-        const articleWidth = this.articleRef.nativeElement.clientWidth;
-        this.resizables.first.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
-        this.resizables.last.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
-
         this.graphViewRef.changes.pipe(
             map(x => x as QueryList<ElementRef<HTMLElement>>),
             startWith(this.graphViewRef),

@@ -4,6 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-export const environment = {
+import { Environment } from "./typings";
+
+export const environment: Environment = {
     env: "production",
+    cloudUrl: "https://cloud.typedb.com",
 };
