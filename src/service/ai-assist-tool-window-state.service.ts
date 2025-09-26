@@ -6,10 +6,10 @@
 
 import { Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { BehaviorSubject, finalize, switchMap } from "rxjs";
+import { BehaviorSubject, catchError, finalize, switchMap } from "rxjs";
 import { isOkResponse } from "typedb-driver-http";
 import { INTERNAL_ERROR } from "../framework/util/strings";
-import { CloudService } from "./cloud.service";
+import { ChatMessage, CloudService } from "./cloud.service";
 import { DriverState } from "./driver-state.service";
 
 /**
@@ -38,8 +38,16 @@ export class AIAssistToolWindowState {
     submitPrompt(): void {
         const prompt = this.promptControl.value;
         if (!prompt?.length) return;
-        if (this.isProcessing$.value) throw INTERNAL_ERROR;
+        if (this.isProcessing$.value) throw new Error(INTERNAL_ERROR);
         this.isProcessing$.next(true);
+
+        const conversation = [
+            ...this.messages$.value.map((msg) => ({
+                role: msg.sender === "user" ? "user" : "assistant",
+                content: msg.content,
+            })),
+            { role: "user", content: prompt },
+        ] as ChatMessage[];
 
         const userMsg: Message = {
             content: prompt,
@@ -56,29 +64,40 @@ export class AIAssistToolWindowState {
         this.messages$.next(...[this.messages$.value]);
         this.promptControl.patchValue("");
 
-        this.driver.getDatabaseSchemaText().pipe(
-            switchMap((res) => {
-                if (isOkResponse(res)) return this.cloud.vibeQuery(res.ok, prompt);
-                else throw res;
-            }),
-            finalize(() => {
-                this.isProcessing$.next(false);
-            }),
-        ).subscribe({
-            next: (res) => {
-                const aiMsg = this.messages$.value[this.messages$.value.length - 1];
-                if (aiMsg.sender !== "ai") throw INTERNAL_ERROR;
-                aiMsg.content = res.response;
-                aiMsg.isProcessing = false;
-                aiMsg.timestamp = new Date();
-                this.messages$.next(...[this.messages$.value]);
-            },
-            error: (err) => {
-                aiMsg.error = err?.err?.message ?? err?.message ?? err?.toString() ?? INTERNAL_ERROR;
-                aiMsg.isProcessing = false;
-                aiMsg.timestamp = new Date();
-                this.messages$.next(...[this.messages$.value]);
-            },
-        });
+        try {
+            this.driver.getDatabaseSchemaText().pipe(
+                switchMap((res) => {
+                    if (isOkResponse(res)) return this.cloud.vibeQuery(res.ok, conversation);
+                    else throw res;
+                }),
+            ).subscribe({
+                next: (res) => {
+                    const aiMsg = this.messages$.value[this.messages$.value.length - 1];
+                    if (aiMsg.sender !== "ai") throw new Error(INTERNAL_ERROR);
+                    aiMsg.content = res.response;
+                    aiMsg.isProcessing = false;
+                    aiMsg.timestamp = new Date();
+                    this.messages$.next(...[this.messages$.value]);
+                },
+                error: (err) => {
+                    console.error(err);
+                    aiMsg.error = err?.err?.message ?? err?.message ?? err?.toString() ?? INTERNAL_ERROR;
+                    aiMsg.isProcessing = false;
+                    aiMsg.timestamp = new Date();
+                    this.messages$.next(...[this.messages$.value]);
+                    this.isProcessing$.next(false);
+                },
+                complete: () => {
+                    this.isProcessing$.next(false);
+                },
+            });
+        } catch (err: any) {
+            console.error(err);
+            aiMsg.error = err?.err?.message ?? err?.message ?? err?.toString() ?? INTERNAL_ERROR;
+            aiMsg.isProcessing = false;
+            aiMsg.timestamp = new Date();
+            this.messages$.next(...[this.messages$.value]);
+            this.isProcessing$.next(false);
+        }
     }
 }

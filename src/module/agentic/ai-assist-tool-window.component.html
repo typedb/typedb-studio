@@ -7,13 +7,15 @@
     @for (msg of state.messages$ | async; track msg) {
       <div class="message" [class.user]="msg.sender === 'user'" [class.ai]="msg.sender === 'ai'">
         <div class="message-content">
-          <div class="message-text" [class.processing]="msg.isProcessing">{{ msg.content }}@if (msg.error) {<div class="error-message"><i class="fa-solid fa-triangle-exclamation"></i>{{ msg.error }}</div>}
-            @if (msg.isProcessing) {
-              <div class="typing-indicator">
-                <span></span><span></span><span></span>
-              </div>
-            }
-          </div>
+          @if (msg.isProcessing) {
+            <div class="typing-indicator">
+              <tp-spinner [size]="20"/>
+            </div>
+          } @else if (msg.sender === 'user' || msg.error || msg.content.startsWith('ERROR')) {
+          <div class="message-text">{{ msg.content }}@if (msg.error) {<div class="error-message"><i class="fa-solid fa-triangle-exclamation"></i>{{ msg.error }}</div>}</div>
+          } @else {
+            <tp-code-snippet [snippet]="{ language: 'typeql', code: msg.content }"/>
+          }
         </div>
       </div>
     }
@@ -46,13 +48,9 @@
                   matIconButton
                   matTooltip="Send"
                   matTooltipShowDelay="500"
-                  [disabled]="!state.promptControl.value || (state.isProcessing$ | async)"
+                  [disabled]="!state.promptControl.value || !(driver.database$ | async) || (state.isProcessing$ | async)"
                   [class.processing]="state.isProcessing$ | async">
-            @if (state.isProcessing$ | async) {
-              <mat-spinner diameter="20"/>
-            } @else {
               <i class="fa-light fa-paper-plane-top"></i>
-            }
           </button>
         </mat-form-field>
       </div>

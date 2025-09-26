@@ -1,8 +1,5 @@
-<div class="cs-root text-code" #rootElement (mouseenter)="showOverlay.set(true)" (mouseleave)="showOverlay.set(false)">
+<div class="cs-root text-code" #rootElement>
   <!-- Copy overlay - outside the scrollable area -->
-  <div class="copy-overlay" [class.visible]="showOverlay()" matTooltip="Copy" matTooltipPosition="below" (click)="copyCode()">
-    <i class="fas" [class.fa-copy]="!copied()" [class.fa-check]="copied()"></i>
-  </div>
 
   <!-- Scrollable container for both line numbers and code -->
   <div class="cs-scrollable-content">
@@ -17,6 +14,10 @@
     }
     <div class="cs-code-area">
       <pre><code [class]="snippet.language ? 'language-' + snippet.language : undefined" [innerHTML]="snippet.code"></code></pre>
+    </div>
+
+    <div class="copy-overlay visible" (click)="copyCode()">
+      <i [class]="copied() ? 'fal fa-check' : 'fal fa-copy'"></i>
     </div>
   </div>
 </div>

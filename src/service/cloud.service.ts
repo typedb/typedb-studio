@@ -5,8 +5,16 @@
  */
 
 import { Injectable } from "@angular/core";
+import { Observable } from "rxjs";
 import { environment } from "../environments/environment";
 import { HttpClient } from "@angular/common/http";
+
+export interface ChatMessage {
+    role: ChatRole;
+    content: string;
+}
+
+export type ChatRole = "user" | "assistant" | "system";
 
 export interface VibeQueryResponse {
     response: string;
@@ -18,7 +26,7 @@ export interface VibeQueryResponse {
 export class CloudService {
     constructor(private http: HttpClient) {}
 
-    vibeQuery(schema: string, prompt: string) {
-        return this.http.post<VibeQueryResponse>(`${environment.cloudUrl}/agentic/vibe-query`, { schema, prompt });
+    vibeQuery(schema: string, conversation: ChatMessage[]): Observable<VibeQueryResponse> {
+        return this.http.post<VibeQueryResponse>(`${environment.cloudUrl}/agentic/vibe-query`, { schema, conversation });
     }
 }

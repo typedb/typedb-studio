@@ -99,6 +99,7 @@ button {
 .code-editor-container {
     height: 100%;
     overflow: auto;
+    scrollbar-width: thin;
     border: 1px solid colors.$light-purple;
     background: colors.$black;
 
@@ -119,6 +120,7 @@ button {
     position: absolute;
     inset: 0;
     overflow: auto;
+    scrollbar-width: thin;
 }
 
 .answers-structure-container {
@@ -158,6 +160,7 @@ button {
     .answers-text-box {
         height: 100% !important;
         resize: none;
+        scrollbar-width: thin;
         @include typography.code;
     }
 }
@@ -210,6 +213,7 @@ button {
         height: 100%;
         width: 100%;
         overflow: auto;
+        scrollbar-width: thin;
     }
 
     ol li {

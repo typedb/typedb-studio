@@ -277,7 +277,7 @@ export class LogOutputState {
                 break;
             }
             default:
-                throw INTERNAL_ERROR;
+                throw new Error(INTERNAL_ERROR);
         }
         this.appendLines(...lines);
         this.appendBlankLine();
@@ -378,7 +378,7 @@ export class TableOutputState {
                 break;
             }
             default:
-                throw INTERNAL_ERROR;
+                throw new Error(INTERNAL_ERROR);
         }
     }
 
@@ -498,7 +498,7 @@ export class GraphOutputState {
                 break;
             }
             default:
-                throw INTERNAL_ERROR;
+                throw new Error(INTERNAL_ERROR);
         }
     }
 

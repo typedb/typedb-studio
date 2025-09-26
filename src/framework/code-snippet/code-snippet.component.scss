@@ -11,14 +11,14 @@
 :host {
     display: block;
     height: 100%;
-    /* Remove overflow: auto */
+    border: shapes.$border;
 }
 
 .cs-root {
     min-height: 100%;
     width: 100%;
-    position: relative;
     height: 100%;
+    background: var(--body-background);
 }
 
 .cs-scrollable-content {
@@ -27,12 +27,15 @@
     padding: 4px;
     height: 100%;
     overflow: auto; /* Move overflow here */
+    position: relative;
+    scrollbar-width: thin;
 }
 
 .cs-line-numbers {
     flex-shrink: 0;
     padding: 0 7px;
     color: #66637f;
+    user-select: none;
 }
 
 .cs-code-area {
@@ -47,7 +50,7 @@
 .copy-overlay {
     position: absolute;
     top: 12px;
-    right: 24px;
+    right: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -82,7 +85,7 @@
 }
 
 .copy-overlay:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.1);
     border-color: colors.$secondary-mid-deep-grey;
     color: rgba(255, 255, 255, 1);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);

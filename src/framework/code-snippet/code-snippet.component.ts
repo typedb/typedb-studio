@@ -8,9 +8,7 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Input, N
 
 import Prism from "prismjs";
 import { initCustomScrollbars } from "typedb-web-common/lib";
-import { MatTooltipModule } from "@angular/material/tooltip";
-
-const DEFAULT_MIN_LINES = { desktop: 33, mobile: 13 };
+import { MatTooltip, MatTooltipModule } from "@angular/material/tooltip";
 
 @Component({
     selector: "tp-code-snippet",
@@ -26,17 +24,16 @@ export class CodeSnippetComponent implements AfterViewInit, OnChanges {
     @ViewChild("scrollbarY") scrollbarY!: ElementRef<HTMLElement>;
     @ViewChild("rootElement") rootElement!: ElementRef<HTMLElement>;
 
-    showOverlay = signal(false);
     copied = signal(false);
 
     get lineNumbers() {
-        return [...Array(Math.max(
-            (this.snippet.code.match(/\n/g) || []).length + 2,
-            DEFAULT_MIN_LINES.desktop,
-        )).keys()].map((n) => n + 1)
+        return [...Array(
+            (this.snippet.code.match(/\n/g) || []).length + 1,
+        ).keys()].map((n) => n + 1)
     }
 
-    constructor(private ngZone: NgZone, private elementRef: ElementRef) { }
+    constructor(private ngZone: NgZone, private elementRef: ElementRef) {
+    }
 
     ngAfterViewInit() {
         this.maybeInitScrollbarsAndHighlighting();
@@ -57,10 +54,10 @@ export class CodeSnippetComponent implements AfterViewInit, OnChanges {
             await navigator.clipboard.writeText(this.snippet.code);
             this.copied.set(true);
             
-            // Reset copied state after 2 seconds
+            // Reset copied state after 3 seconds
             setTimeout(() => {
                 this.copied.set(false);
-            }, 2000);
+            }, 3000);
         } catch (err) {
             console.error('Failed to copy code:', err);
         }

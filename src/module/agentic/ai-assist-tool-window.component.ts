@@ -21,7 +21,10 @@ import { MatTreeModule } from "@angular/material/tree";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatMenuModule } from "@angular/material/menu";
 import { TextFieldModule } from '@angular/cdk/text-field';
+import { CodeSnippetComponent } from "../../framework/code-snippet/code-snippet.component";
+import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { AIAssistToolWindowState } from "../../service/ai-assist-tool-window-state.service";
+import { DriverState } from "../../service/driver-state.service";
 
 @Component({
     selector: "ts-ai-assist-tool-window",
@@ -31,17 +34,19 @@ import { AIAssistToolWindowState } from "../../service/ai-assist-tool-window-sta
     imports: [
         CommonModule, AsyncPipe, DatePipe, FormsModule, ReactiveFormsModule, MatFormFieldModule,
         MatInputModule, MatButtonModule, MatIconModule, MatTooltipModule, MatProgressSpinnerModule,
-        TextFieldModule
+        TextFieldModule, SpinnerComponent, CodeSnippetComponent
     ]
 })
-export class AIAssistToolWindowComponent implements AfterViewChecked {
+export class AIAssistToolWindowComponent {
 
     @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
 
-    constructor(public state: AIAssistToolWindowState) {}
-
-    ngAfterViewChecked() {
-        this.scrollToBottom();
+    constructor(public state: AIAssistToolWindowState, public driver: DriverState) {
+        this.state.messages$.subscribe(() => {
+            setTimeout(() => {
+                this.scrollToBottom();
+            });
+        });
     }
 
     onInputKeyDownEnter(event: KeyboardEvent) {
@@ -51,7 +56,7 @@ export class AIAssistToolWindowComponent implements AfterViewChecked {
 
     onSubmit(event: Event) {
         event.preventDefault();
-        if (this.state.promptControl.value && !this.state.isProcessing$.value) {
+        if (this.state.promptControl.value && !this.state.isProcessing$.value && this.driver.database$.value) {
             this.state.submitPrompt();
         }
     }

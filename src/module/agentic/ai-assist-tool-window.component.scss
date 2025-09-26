@@ -10,6 +10,8 @@
 @use "typography";
 @use "shapes";
 
+$card-header-height: 44px;
+
 :host {
     @include shapes.standard-border;
     border-radius: shapes.$border-radius;
@@ -26,29 +28,30 @@
 }
 
 .chat-container {
+    height: calc(100% - #{$card-header-height});
     display: flex;
     flex-direction: column;
-    height: 100%;
+    gap: 16px;
     margin: 0 auto;
     width: 100%;
+
+    pre.error {
+        font-family: var(--font-family-default);
+    }
+
+    tp-code-snippet, tp-code-snippet ::ng-deep .cs-root {
+        border-radius: shapes.$border-radius-small;
+    }
 }
 
 .messages {
     flex: 1;
-    overflow-y: auto;
+    overflow: auto;
     display: flex;
     flex-direction: column;
     gap: 16px;
     scroll-behavior: smooth;
-
-    &::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background-color: var(--bg4);
-        border-radius: 3px;
-    }
+    scrollbar-width: thin;
 }
 
 .message {
@@ -71,6 +74,8 @@
 
   &.ai {
     .message-content {
+
+        width: 100%;
       color: var(--fg1);
     }
   }
@@ -168,6 +173,15 @@
             --mat-icon-button-state-layer-size: 32px;
             margin-right: 12px;
         }
+
+        textarea {
+            scrollbar-width: none;
+        }
+    }
+
+    .submit-spinner-container {
+        width: 16px;
+        height: 16px;
     }
 }
 
