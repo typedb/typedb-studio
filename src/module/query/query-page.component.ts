@@ -31,7 +31,7 @@ import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
 import { QueryToolState } from "../../service/query-tool-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
-import { AIAssistToolWindowComponent } from "../agentic/ai-assist-tool-window.component";
+import { AIAssistToolWindowComponent } from "../ai/ai-assist-tool-window.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { keymap } from "@codemirror/view";

@@ -6,7 +6,7 @@
 
 import { Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { BehaviorSubject, catchError, finalize, switchMap } from "rxjs";
+import { BehaviorSubject, switchMap } from "rxjs";
 import { isOkResponse } from "typedb-driver-http";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { ChatMessage, CloudService } from "./cloud.service";
@@ -16,11 +16,66 @@ import { DriverState } from "./driver-state.service";
  * Represents a message in the AI assistant conversation
  */
 interface Message {
-    content: string;
+    content: MessageChunk[];
     sender: 'user' | 'ai';
     timestamp: Date;
     isProcessing?: boolean;
     error?: string;
+}
+
+interface MessageChunk {
+    type: 'text' | 'code';
+    content: string;
+    language?: string;
+}
+
+class StreamingMarkdownParser {
+    private buffer = '';
+    private insideCode = false;
+    private currentLang = '';
+
+    parseChunk(chunk: string): MessageChunk[] {
+        this.buffer += chunk;
+        const segments: MessageChunk[] = [];
+
+        while (true) {
+            if (!this.insideCode) {
+                const codeStart = this.buffer.indexOf('```');
+                if (codeStart === -1) break;
+
+                if (codeStart > 0) {
+                    segments.push({ type: 'text', content: this.buffer.slice(0, codeStart) });
+                }
+
+                const endOfLine = this.buffer.indexOf('\n', codeStart);
+                this.currentLang = endOfLine !== -1 ? this.buffer.slice(codeStart + 3, endOfLine).trim() : '';
+                this.buffer = endOfLine !== -1 ? this.buffer.slice(endOfLine + 1) : '';
+                this.insideCode = true;
+            } else {
+                const codeEnd = this.buffer.indexOf('```');
+                if (codeEnd === -1) break;
+
+                segments.push({ type: 'code', language: this.currentLang || 'plaintext', content: this.buffer.slice(0, codeEnd) });
+                this.buffer = this.buffer.slice(codeEnd + 3);
+                this.insideCode = false;
+                this.currentLang = '';
+            }
+        }
+
+        return segments;
+    }
+
+    flush(): MessageChunk[] {
+        if (this.buffer.length === 0) return [];
+        const segs: MessageChunk[] = [];
+        if (this.insideCode) {
+            segs.push({ type: 'code', language: this.currentLang || 'plaintext', content: this.buffer });
+        } else {
+            segs.push({ type: 'text', content: this.buffer });
+        }
+        this.buffer = '';
+        return segs;
+    }
 }
 
 @Injectable({
@@ -50,12 +105,12 @@ export class AIAssistToolWindowState {
         ] as ChatMessage[];
 
         const userMsg: Message = {
-            content: prompt,
+            content: [{ type: "text", content: prompt }],
             sender: "user",
             timestamp: new Date()
         };
         const aiMsg: Message = {
-            content: "",
+            content: [],
             sender: "ai",
             timestamp: new Date(),
             isProcessing: true
@@ -63,6 +118,8 @@ export class AIAssistToolWindowState {
         this.messages$.value.push(userMsg, aiMsg);
         this.messages$.next(...[this.messages$.value]);
         this.promptControl.patchValue("");
+
+        const parser = new StreamingMarkdownParser();
 
         try {
             this.driver.getDatabaseSchemaText().pipe(
@@ -74,7 +131,7 @@ export class AIAssistToolWindowState {
                 next: (res) => {
                     const aiMsg = this.messages$.value[this.messages$.value.length - 1];
                     if (aiMsg.sender !== "ai") throw new Error(INTERNAL_ERROR);
-                    aiMsg.content = res.response;
+                    aiMsg.content = parser.parseChunk(res.response);
                     aiMsg.isProcessing = false;
                     aiMsg.timestamp = new Date();
                     this.messages$.next(...[this.messages$.value]);

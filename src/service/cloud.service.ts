@@ -27,6 +27,6 @@ export class CloudService {
     constructor(private http: HttpClient) {}
 
     vibeQuery(schema: string, conversation: ChatMessage[]): Observable<VibeQueryResponse> {
-        return this.http.post<VibeQueryResponse>(`${environment.cloudUrl}/agentic/vibe-query`, { schema, conversation });
+        return this.http.post<VibeQueryResponse>(`${environment.cloudUrl}/ai/vibe-query`, { schema, conversation });
     }
 }

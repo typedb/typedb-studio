@@ -11,10 +11,19 @@
             <div class="typing-indicator">
               <tp-spinner [size]="20"/>
             </div>
-          } @else if (msg.sender === 'user' || msg.error || msg.content.startsWith('ERROR')) {
-          <div class="message-text">{{ msg.content }}@if (msg.error) {<div class="error-message"><i class="fa-solid fa-triangle-exclamation"></i>{{ msg.error }}</div>}</div>
           } @else {
-            <tp-code-snippet [snippet]="{ language: 'typeql', code: msg.content }"/>
+            <div class="message-text">
+              @for (chunk of msg.content; track chunk) {
+                @if (chunk.type === 'text') {
+                  {{ chunk.content }}
+                } @else if (chunk.type === 'code') {
+                  <tp-code-snippet [snippet]="{ language: chunk.language, code: chunk.content }"/>
+                }
+              }
+              @if (msg.error) {
+                <div class="error-message"><i class="fa-solid fa-triangle-exclamation"></i>{{ msg.error }}</div>
+              }
+            </div>
           }
         </div>
       </div>

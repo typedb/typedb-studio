@@ -110,29 +110,8 @@ $card-header-height: 44px;
 }
 
 .message-text {
-    white-space: pre-wrap;
-
     &.processing {
         opacity: 0.8;
-    }
-
-    .typing-indicator {
-        display: inline-flex;
-        gap: 0.25rem;
-        margin-left: 0.5rem;
-        vertical-align: middle;
-
-        span {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            background-color: var(--fg3);
-            border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
-
-            &:nth-child(1) { animation-delay: -0.32s; }
-            &:nth-child(2) { animation-delay: -0.16s; }
-        }
     }
 }
 
