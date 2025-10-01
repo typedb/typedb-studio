@@ -6,7 +6,7 @@
 
 import { CodeEditor } from "@acrodata/code-editor";
 import { AsyncPipe, DatePipe } from "@angular/common";
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -29,9 +29,9 @@ import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
-import { QueryToolState } from "../../service/query-tool-state.service";
+import { QueryPageState } from "../../service/query-tool-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
-import { AIAssistToolWindowComponent } from "../ai/ai-assist-tool-window.component";
+import { VibeQueryComponent } from "../ai/vibe-query.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { keymap } from "@codemirror/view";
@@ -48,7 +48,7 @@ import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-win
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
-        MatMenuModule, SchemaToolWindowComponent, AIAssistToolWindowComponent,
+        MatMenuModule, SchemaToolWindowComponent, VibeQueryComponent,
     ]
 })
 export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -57,6 +57,13 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
     @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
+
+    state = inject(QueryPageState);
+    driver = inject(DriverState);
+    private appData = inject(AppData);
+    private snackbar = inject(SnackbarService);
+    private dialog = inject(MatDialog);
+
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
     editorKeymap = Prec.highest(keymap.of([
@@ -70,12 +77,6 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         indentWithTab,
     ]));
-
-    constructor(
-        public state: QueryToolState, public driver: DriverState,
-        private appData: AppData, private snackbar: SnackbarService, private dialog: MatDialog,
-    ) {
-    }
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");

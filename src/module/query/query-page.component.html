@@ -2,28 +2,37 @@
   <article #articleRef class="query-page" style="display: flex; flex-direction: row;">
     <ts-schema-tool-window resizable [percent]="20"/>
     <div class="main-panes" resizable [percent]="60">
-      <div resizable [percent]="40" class="query-pane card">
+      <div resizable [percent]="50" class="query-pane card">
         <div class="card-header">
-          <i class="fa-light fa-code"></i>
-          <h3>Query</h3>
-          <button mat-stroked-button [disabled]="!(state.runEnabled$ | async)"
-                  [matTooltip]="(state.runTooltip$ | async) || ''" matTooltipPosition="below"
-                  [matTooltipShowDelay]="(state.runDisabledReason$ | async) ? 0 : 500" (click)="runQuery()">
-            <i class="fa-light fa-play"></i>
-            <span>Run</span>
-          </button>
-        </div>
-        <div class="code-editor-container">
-          @if (!codeEditorHidden) {
-            <code-editor [extensions]="[codeEditorTheme, TypeQL(), typeqlAutocompleteExtension(), editorKeymap]"
-                         [formControl]="state.queryControl"/>
+          <h5>Query</h5>
+          <div>
+            <mat-button-toggle-group [formControl]="state.queryTypeControl">
+              @for (queryType of state.queryTypes; track queryType) {
+                <mat-button-toggle [value]="queryType">{{ queryType }}</mat-button-toggle>
+              }
+            </mat-button-toggle-group>
+          </div>
+          <div class="flex-spacer"></div>
+          @if (state.queryTypeControl.value === 'code') {
+            <button mat-stroked-button [disabled]="!(state.runEnabled$ | async)"
+                    [matTooltip]="(state.runTooltip$ | async) || ''" matTooltipPosition="below"
+                    [matTooltipShowDelay]="(state.runDisabledReason$ | async) ? 0 : 500" (click)="runQuery()">
+              <i class="fa-light fa-play"></i>
+              <span>Run</span>
+            </button>
           }
         </div>
+        <div class="code-editor-container" [hidden]="state.queryTypeControl.value !== 'code'">
+          @if (!codeEditorHidden) {
+            <code-editor [extensions]="[codeEditorTheme, TypeQL(), typeqlAutocompleteExtension(), editorKeymap]"
+                         [formControl]="state.queryEditorControl"/>
+          }
+        </div>
+        <ts-vibe-query class="ai-assistant-pane" [hidden]="state.queryTypeControl.value !== 'chat'"/>
       </div>
-      <div resizable [percent]="60" class="run-pane card">
+      <div resizable [percent]="50" class="results-pane card">
         <div class="card-header">
-          <i class="fa-light fa-arrow-progress"></i>
-          <h3>Output</h3>
+          <h5>Results</h5>
           <div>
             <mat-button-toggle-group [formControl]="state.outputTypeControl" [matTooltip]="(state.outputDisabledReason$ | async) || ''" matTooltipPosition="below">
               @for (outputType of state.outputTypes; track outputType) {
@@ -118,11 +127,9 @@
       </div>
     </div>
     <div resizable [percent]="20" class="right-panes">
-      <ts-ai-assist-tool-window resizable [percent]="50" class="ai-assistant-pane card"/>
-      <div resizable [percent]="50" class="history-pane card">
+      <div class="history-pane card">
         <div class="card-header">
-          <i class="fa-light fa-notebook"></i>
-          <h3>History</h3>
+          <h5>History</h5>
         </div>
         <div class="history-container">
           <ol>

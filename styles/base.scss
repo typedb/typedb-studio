@@ -397,6 +397,10 @@ th {
     flex: 3;
 }
 
+[hidden] {
+    display: none !important;
+}
+
 .invisible {
     visibility: hidden;
     pointer-events: none;
@@ -459,6 +463,10 @@ button i + span, button span + i {
     margin-bottom: 12px;
     height: 32px;
     min-height: 32px;
+
+    h5 {
+        font-weight: var(--font-weight-bold);
+    }
 
     .card-header-actions {
         display: flex;

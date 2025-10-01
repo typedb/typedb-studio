@@ -62,6 +62,7 @@ class StreamingMarkdownParser {
             }
         }
 
+        segments.push({ type: 'text', content: this.buffer });
         return segments;
     }
 
@@ -81,7 +82,7 @@ class StreamingMarkdownParser {
 @Injectable({
     providedIn: "root",
 })
-export class AIAssistToolWindowState {
+export class VibeQueryState {
 
     messages$ = new BehaviorSubject<Message[]>([]);
     isProcessing$ = new BehaviorSubject<boolean>(false);
@@ -99,7 +100,7 @@ export class AIAssistToolWindowState {
         const conversation = [
             ...this.messages$.value.map((msg) => ({
                 role: msg.sender === "user" ? "user" : "assistant",
-                content: msg.content,
+                content: msg.content.map((chunk) => chunk.content).join("\n\n"),
             })),
             { role: "user", content: prompt },
         ] as ChatMessage[];

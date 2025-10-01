@@ -5,7 +5,7 @@
  */
 
 import { AsyncPipe, DatePipe } from "@angular/common";
-import { AfterViewChecked, Component, ElementRef, ViewChild } from "@angular/core";
+import { AfterViewChecked, Component, ElementRef, inject, OnInit, ViewChild } from "@angular/core";
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
@@ -23,25 +23,28 @@ import { MatMenuModule } from "@angular/material/menu";
 import { TextFieldModule } from '@angular/cdk/text-field';
 import { CodeSnippetComponent } from "../../framework/code-snippet/code-snippet.component";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
-import { AIAssistToolWindowState } from "../../service/ai-assist-tool-window-state.service";
 import { DriverState } from "../../service/driver-state.service";
+import { VibeQueryState } from "../../service/vibe-query-state.service";
+import { MarkdownComponent, MarkdownPipe } from "ngx-markdown";
 
 @Component({
-    selector: "ts-ai-assist-tool-window",
-    templateUrl: "ai-assist-tool-window.component.html",
-    styleUrls: ["ai-assist-tool-window.component.scss"],
+    selector: "ts-vibe-query",
+    templateUrl: "vibe-query.component.html",
+    styleUrls: ["vibe-query.component.scss"],
     standalone: true,
     imports: [
-        CommonModule, AsyncPipe, DatePipe, FormsModule, ReactiveFormsModule, MatFormFieldModule,
+        CommonModule, AsyncPipe, FormsModule, ReactiveFormsModule, MatFormFieldModule,
         MatInputModule, MatButtonModule, MatIconModule, MatTooltipModule, MatProgressSpinnerModule,
-        TextFieldModule, SpinnerComponent, CodeSnippetComponent
+        TextFieldModule, SpinnerComponent, CodeSnippetComponent, MarkdownComponent, MarkdownPipe
     ]
 })
-export class AIAssistToolWindowComponent {
+export class VibeQueryComponent implements OnInit {
 
     @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
+    state = inject(VibeQueryState);
+    driver = inject(DriverState);
 
-    constructor(public state: AIAssistToolWindowState, public driver: DriverState) {
+    ngOnInit() {
         this.state.messages$.subscribe(() => {
             setTimeout(() => {
                 this.scrollToBottom();

@@ -13,21 +13,6 @@
 $card-header-height: 44px;
 
 :host {
-    @include shapes.standard-border;
-    border-radius: shapes.$border-radius;
-    @include colors.light-source-gradient(colors.$purple, colors.$deep-purple);
-    transition: background 0.1s linear;
-    padding: 16px;
-
-    display: flex;
-    flex-direction: column;
-
-    &:has(.card-header-wrapper) {
-        padding: 0;
-    }
-}
-
-.chat-container {
     height: calc(100% - #{$card-header-height});
     display: flex;
     flex-direction: column;
@@ -37,6 +22,10 @@ $card-header-height: 44px;
 
     pre.error {
         font-family: var(--font-family-default);
+    }
+
+    tp-code-snippet {
+        margin-bottom: 1rem;
     }
 
     tp-code-snippet, tp-code-snippet ::ng-deep .cs-root {
@@ -52,6 +41,11 @@ $card-header-height: 44px;
     gap: 16px;
     scroll-behavior: smooth;
     scrollbar-width: thin;
+    padding-right: 16px;
+
+    .spacer {
+        height: 16px;
+    }
 }
 
 .message {
@@ -101,15 +95,16 @@ $card-header-height: 44px;
 }
 
 .message-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
     position: relative;
     word-wrap: break-word;
-    line-height: 1.5;
 }
 
 .message-text {
+    markdown {
+        white-space: normal;
+        overflow-wrap: break-word;
+    }
+
     &.processing {
         opacity: 0.8;
     }
@@ -141,6 +136,7 @@ $card-header-height: 44px;
     gap: 0.5rem;
 
     mat-form-field {
+        background: var(--body-background);
         flex: 1;
 
         ::ng-deep .mat-mdc-notch-piece {

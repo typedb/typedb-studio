@@ -21,6 +21,7 @@ import {
     ApiResponse, Attribute, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse, Value
 } from "typedb-driver-http";
 
+export type QueryType = "code" | "chat";
 export type OutputType = "raw" | "log" | "table" | "graph";
 
 const NO_SERVER_CONNECTED = `No server connected`;
@@ -34,9 +35,11 @@ const RUN_KEY_BINDING = detectOS() === "mac" ? "⌘+Enter" : "Ctrl+Enter";
 @Injectable({
     providedIn: "root",
 })
-export class QueryToolState {
+export class QueryPageState {
 
-    queryControl = new FormControl("", {nonNullable: true});
+    queryTypeControl = new FormControl("code" as QueryType, {nonNullable: true});
+    queryTypes: QueryType[] = ["code", "chat"];
+    queryEditorControl = new FormControl("", {nonNullable: true});
     outputTypeControl = new FormControl("log" as OutputType, { nonNullable: true });
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
     readonly logOutput = new LogOutputState();
@@ -47,12 +50,12 @@ export class QueryToolState {
     answersOutputEnabled = true;
     readonly runDisabledReason$ = combineLatest([
         this.driver.status$, this.driver.database$, this.driver.transactionOperationModeChanges$,
-        this.driver.transaction$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))
+        this.driver.transaction$, this.queryEditorControl.valueChanges.pipe(startWith(this.queryEditorControl.value))
     ]).pipe(map(([status, db, txMode, tx, _query]) => {
         if (status !== "connected") return NO_SERVER_CONNECTED;
         else if (db == null) return NO_DATABASE_SELECTED;
         else if (txMode === "manual" && !tx) return NO_OPEN_TRANSACTION;
-        else if (!this.queryControl.value.length) return QUERY_BLANK; // _query becomes blank after a page navigation for some reason
+        else if (!this.queryEditorControl.value.length) return QUERY_BLANK; // _query becomes blank after a page navigation for some reason
         else return null;
     }), shareReplay(1));
     readonly runTooltip$ = this.runDisabledReason$.pipe(map(x => x ? x : `Run query (${RUN_KEY_BINDING})`));
@@ -71,14 +74,11 @@ export class QueryToolState {
     // TODO: LIMIT 1000 by default, configurable
 
     runQuery() {
-        const query = this.queryControl.value;
+        const query = this.queryEditorControl.value;
         this.initialiseOutput(query);
         this.driver.query(query).subscribe({
             next: (res) => {
                 this.outputQueryResponse(res);
-                if (isApiErrorResponse(res)) {
-                    this.snackbar.errorPersistent(res.err.message);
-                }
             },
             error: (err) => {
                 this.driver.checkHealth().subscribe({

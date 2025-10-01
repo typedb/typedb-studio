@@ -39,12 +39,12 @@
     gap: 4px !important;
 }
 
-.history-pane, .query-pane, .run-pane {
+.history-pane, .query-pane, .results-pane {
     display: flex;
     flex-direction: column;
 }
 
-.run-pane mat-form-field {
+.results-pane mat-form-field {
     height: 100%;
 }
 
@@ -205,6 +205,8 @@ button {
 }
 
 .history-pane {
+    flex: 1;
+
     @media (max-width: media.$max-width-mobile) {
         display: none;
     }
