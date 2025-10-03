@@ -147,6 +147,7 @@ $card-header-height: 44px;
     mat-form-field {
         background: var(--body-background);
         flex: 1;
+        z-index: 10;
 
         ::ng-deep .mat-mdc-notch-piece {
             border-radius: 0;
