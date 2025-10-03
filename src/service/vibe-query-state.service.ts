@@ -4,29 +4,33 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Injectable } from "@angular/core";
-import { FormControl } from "@angular/forms";
+import { inject, Injectable } from "@angular/core";
+import { FormBuilder, FormControl } from "@angular/forms";
 import { BehaviorSubject, switchMap } from "rxjs";
 import { isOkResponse } from "typedb-driver-http";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { ChatMessage, CloudService } from "./cloud.service";
 import { DriverState } from "./driver-state.service";
 
-/**
- * Represents a message in the AI assistant conversation
- */
+interface MessagePartText {
+    type: 'text';
+    content: string;
+}
+
+interface MessagePartCode {
+    type: 'code';
+    language: string;
+    formControl: FormControl<string>;
+}
+
+type MessagePart = MessagePartText | MessagePartCode;
+
 interface Message {
-    content: MessageChunk[];
+    content: MessagePart[];
     sender: 'user' | 'ai';
     timestamp: Date;
     isProcessing?: boolean;
     error?: string;
-}
-
-interface MessageChunk {
-    type: 'text' | 'code';
-    content: string;
-    language?: string;
 }
 
 class StreamingMarkdownParser {
@@ -34,9 +38,15 @@ class StreamingMarkdownParser {
     private insideCode = false;
     private currentLang = '';
 
-    parseChunk(chunk: string): MessageChunk[] {
+    constructor(private formBuilder: FormBuilder) {}
+
+    newFormControl(value: string): FormControl<string> {
+        return this.formBuilder.nonNullable.control(value);
+    }
+
+    parseChunk(chunk: string): MessagePart[] {
         this.buffer += chunk;
-        const segments: MessageChunk[] = [];
+        const parts: MessagePart[] = [];
 
         while (true) {
             if (!this.insideCode) {
@@ -44,7 +54,7 @@ class StreamingMarkdownParser {
                 if (codeStart === -1) break;
 
                 if (codeStart > 0) {
-                    segments.push({ type: 'text', content: this.buffer.slice(0, codeStart) });
+                    parts.push({ type: 'text', content: this.buffer.slice(0, codeStart) });
                 }
 
                 const endOfLine = this.buffer.indexOf('\n', codeStart);
@@ -55,22 +65,22 @@ class StreamingMarkdownParser {
                 const codeEnd = this.buffer.indexOf('```');
                 if (codeEnd === -1) break;
 
-                segments.push({ type: 'code', language: this.currentLang || 'plaintext', content: this.buffer.slice(0, codeEnd) });
+                parts.push({ type: 'code', language: this.currentLang || 'typeql', formControl: this.newFormControl(this.buffer.slice(0, codeEnd)) });
                 this.buffer = this.buffer.slice(codeEnd + 3);
                 this.insideCode = false;
                 this.currentLang = '';
             }
         }
 
-        segments.push({ type: 'text', content: this.buffer });
-        return segments;
+        parts.push({ type: 'text', content: this.buffer });
+        return parts;
     }
 
-    flush(): MessageChunk[] {
+    flush(): MessagePart[] {
         if (this.buffer.length === 0) return [];
-        const segs: MessageChunk[] = [];
+        const segs: MessagePart[] = [];
         if (this.insideCode) {
-            segs.push({ type: 'code', language: this.currentLang || 'plaintext', content: this.buffer });
+            segs.push({ type: 'code', language: this.currentLang || 'typeql', formControl: this.newFormControl(this.buffer) });
         } else {
             segs.push({ type: 'text', content: this.buffer });
         }
@@ -84,12 +94,13 @@ class StreamingMarkdownParser {
 })
 export class VibeQueryState {
 
+    private cloud = inject(CloudService);
+    private driver = inject(DriverState);
+    private formBuilder = inject(FormBuilder);
+
     messages$ = new BehaviorSubject<Message[]>([]);
     isProcessing$ = new BehaviorSubject<boolean>(false);
     promptControl = new FormControl("", {nonNullable: true});
-
-    constructor(private cloud: CloudService, private driver: DriverState) {
-    }
 
     submitPrompt(): void {
         const prompt = this.promptControl.value;
@@ -100,7 +111,7 @@ export class VibeQueryState {
         const conversation = [
             ...this.messages$.value.map((msg) => ({
                 role: msg.sender === "user" ? "user" : "assistant",
-                content: msg.content.map((chunk) => chunk.content).join("\n\n"),
+                content: msg.content.map((chunk) => "content" in chunk ? chunk.content : chunk.formControl.value).join("\n\n"),
             })),
             { role: "user", content: prompt },
         ] as ChatMessage[];
@@ -120,7 +131,7 @@ export class VibeQueryState {
         this.messages$.next(...[this.messages$.value]);
         this.promptControl.patchValue("");
 
-        const parser = new StreamingMarkdownParser();
+        const parser = new StreamingMarkdownParser(this.formBuilder);
 
         try {
             this.driver.getDatabaseSchemaText().pipe(

@@ -22,6 +22,7 @@ import { RouterLink } from "@angular/router";
 import { Prec } from "@codemirror/state";
 import { ResizableDirective } from "@hhangular/resizable";
 import { filter, map, startWith } from "rxjs";
+import { CodeEditorComponent } from "../../framework/code-editor/code-editor.component";
 import { otherExampleLinter, TypeQL, typeqlAutocompleteExtension } from "../../framework/codemirror-lang-typeql";
 import { DriverAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
@@ -48,7 +49,7 @@ import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-win
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
-        MatMenuModule, SchemaToolWindowComponent, VibeQueryComponent,
+        MatMenuModule, SchemaToolWindowComponent, VibeQueryComponent, CodeEditorComponent,
     ]
 })
 export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -110,7 +111,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     runQuery() {
-        this.state.runQuery();
+        this.state.runQuery(this.state.queryEditorControl.value);
     }
 
     queryHistoryPreview(query: string) {

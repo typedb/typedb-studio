@@ -21,9 +21,13 @@ import { MatTreeModule } from "@angular/material/tree";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatMenuModule } from "@angular/material/menu";
 import { TextFieldModule } from '@angular/cdk/text-field';
+import { CodeEditorComponent } from "../../framework/code-editor/code-editor.component";
+import { basicDark } from "../../framework/code-editor/theme";
 import { CodeSnippetComponent } from "../../framework/code-snippet/code-snippet.component";
+import { TypeQL, typeqlAutocompleteExtension } from "../../framework/codemirror-lang-typeql";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { DriverState } from "../../service/driver-state.service";
+import { QueryPageState } from "../../service/query-tool-state.service";
 import { VibeQueryState } from "../../service/vibe-query-state.service";
 import { MarkdownComponent, MarkdownPipe } from "ngx-markdown";
 
@@ -35,13 +39,14 @@ import { MarkdownComponent, MarkdownPipe } from "ngx-markdown";
     imports: [
         CommonModule, AsyncPipe, FormsModule, ReactiveFormsModule, MatFormFieldModule,
         MatInputModule, MatButtonModule, MatIconModule, MatTooltipModule, MatProgressSpinnerModule,
-        TextFieldModule, SpinnerComponent, CodeSnippetComponent, MarkdownComponent, MarkdownPipe
+        TextFieldModule, SpinnerComponent, MarkdownComponent, MarkdownPipe, CodeEditorComponent
     ]
 })
 export class VibeQueryComponent implements OnInit {
 
     @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
     state = inject(VibeQueryState);
+    queryPage = inject(QueryPageState);
     driver = inject(DriverState);
 
     ngOnInit() {
@@ -55,6 +60,10 @@ export class VibeQueryComponent implements OnInit {
     onInputKeyDownEnter(event: KeyboardEvent) {
         if (event.shiftKey) return;
         this.onSubmit(event);
+    }
+
+    onRunButtonClick(query: string) {
+        this.queryPage.runQuery(query);
     }
 
     onSubmit(event: Event) {

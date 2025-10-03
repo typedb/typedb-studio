@@ -12,7 +12,7 @@
               @if (chunk.type === 'text') {
                 <markdown>{{ chunk.content }}</markdown>
               } @else if (chunk.type === 'code') {
-                <tp-code-snippet [snippet]="{ language: chunk.language, code: chunk.content }"/>
+                <tp-code-editor [formControlProp]="chunk.formControl" [runOverlayVisible]="true" (runButtonClick)="onRunButtonClick(chunk.formControl.value)"/>
               }
             }
             @if (msg.error) {

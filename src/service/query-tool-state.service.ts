@@ -73,8 +73,7 @@ export class QueryPageState {
 
     // TODO: LIMIT 1000 by default, configurable
 
-    runQuery() {
-        const query = this.queryEditorControl.value;
+    runQuery(query: string) {
         this.initialiseOutput(query);
         this.driver.query(query).subscribe({
             next: (res) => {

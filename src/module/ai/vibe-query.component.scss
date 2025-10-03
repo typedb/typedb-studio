@@ -24,12 +24,21 @@ $card-header-height: 44px;
         font-family: var(--font-family-default);
     }
 
-    tp-code-snippet {
-        margin-bottom: 1rem;
+    ::ng-deep markdown * + p {
+        margin-top: 0.5rem;
     }
 
-    tp-code-snippet, tp-code-snippet ::ng-deep .cs-root {
-        border-radius: shapes.$border-radius-small;
+    ::ng-deep markdown + tp-code-editor {
+        display: block;
+        margin-top: 1rem;
+    }
+
+    tp-code-editor {
+        margin-bottom: 0.5rem;
+
+        ::ng-deep .cm-editor {
+            border-radius: shapes.$border-radius-small;
+        }
     }
 }
 

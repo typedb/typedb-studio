@@ -24,8 +24,7 @@
         </div>
         <div class="code-editor-container" [hidden]="state.queryTypeControl.value !== 'code'">
           @if (!codeEditorHidden) {
-            <code-editor [extensions]="[codeEditorTheme, TypeQL(), typeqlAutocompleteExtension(), editorKeymap]"
-                         [formControl]="state.queryEditorControl"/>
+            <tp-code-editor [formControlProp]="state.queryEditorControl" [keymap]="editorKeymap"/>
           }
         </div>
         <ts-vibe-query class="ai-assistant-pane" [hidden]="state.queryTypeControl.value !== 'chat'"/>

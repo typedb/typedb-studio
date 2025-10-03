@@ -9,6 +9,14 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Input, N
 import Prism from "prismjs";
 import { initCustomScrollbars } from "typedb-web-common/lib";
 import { MatTooltip, MatTooltipModule } from "@angular/material/tooltip";
+import { from, Observable } from "rxjs";
+
+export interface CodeSnippetAction {
+    name: string;
+    icon: string;
+    label?: string | null;
+    action: (code: string) => void | Observable<unknown>;
+}
 
 @Component({
     selector: "tp-code-snippet",
@@ -19,7 +27,16 @@ import { MatTooltip, MatTooltipModule } from "@angular/material/tooltip";
     imports: [MatTooltipModule],
 })
 export class CodeSnippetComponent implements AfterViewInit, OnChanges {
+
+    readonly copyCodeAction: CodeSnippetAction = {
+        name: "copy",
+        icon: "fa-copy",
+        label: null,
+        action: () => from(this.copyCode())
+    }
+
     @Input({ required: true }) snippet!: { language?: string, code: string };
+    @Input() actions: CodeSnippetAction[] = [this.copyCodeAction];
     @ViewChild("scrollbarX") scrollbarX!: ElementRef<HTMLElement>;
     @ViewChild("scrollbarY") scrollbarY!: ElementRef<HTMLElement>;
     @ViewChild("rootElement") rootElement!: ElementRef<HTMLElement>;
