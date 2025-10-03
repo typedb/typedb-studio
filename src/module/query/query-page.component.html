@@ -27,7 +27,9 @@
             <tp-code-editor [formControlProp]="state.queryEditorControl" [keymap]="editorKeymap"/>
           }
         </div>
-        <ts-vibe-query class="ai-assistant-pane" [hidden]="state.queryTypeControl.value !== 'chat'"/>
+        @if (state.queryTypeControl.value === 'chat') {
+          <ts-vibe-query class="ai-assistant-pane"/>
+        }
       </div>
       <div resizable [percent]="50" class="results-pane card">
         <div class="card-header">

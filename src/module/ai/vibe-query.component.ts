@@ -5,7 +5,7 @@
  */
 
 import { AsyncPipe, DatePipe } from "@angular/common";
-import { AfterViewChecked, Component, ElementRef, inject, OnInit, ViewChild } from "@angular/core";
+import { AfterViewChecked, AfterViewInit, Component, ElementRef, inject, OnInit, ViewChild } from "@angular/core";
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
@@ -42,9 +42,10 @@ import { MarkdownComponent, MarkdownPipe } from "ngx-markdown";
         TextFieldModule, SpinnerComponent, MarkdownComponent, MarkdownPipe, CodeEditorComponent
     ]
 })
-export class VibeQueryComponent implements OnInit {
+export class VibeQueryComponent implements OnInit, AfterViewInit {
 
     @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
+    @ViewChild('promptInput') private promptInput!: ElementRef<HTMLTextAreaElement>;
     state = inject(VibeQueryState);
     queryPage = inject(QueryPageState);
     driver = inject(DriverState);
@@ -54,6 +55,12 @@ export class VibeQueryComponent implements OnInit {
             setTimeout(() => {
                 this.scrollToBottom();
             });
+        });
+    }
+
+    ngAfterViewInit() {
+        setTimeout(() => {
+            this.promptInput.nativeElement.focus();
         });
     }
 
