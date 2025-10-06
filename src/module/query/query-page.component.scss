@@ -69,7 +69,7 @@
                 transparent 30%
         );
         opacity: 0.75;
-        animation: mobile-light-source 20s infinite ease-in-out;
+        animation: mobile-light-source 28s infinite ease-in-out;
         z-index: 1;
         pointer-events: none;
         transform: translate(25%, 25%);
@@ -109,6 +109,12 @@
     }
     87.5% {
         transform: translate(10%, -10%);
+    }
+}
+
+.card-header {
+    h5, mat-button-toggle-group, button {
+        z-index: 10;
     }
 }
 

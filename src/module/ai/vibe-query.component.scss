@@ -106,6 +106,7 @@ $card-header-height: 44px;
 .message-content {
     position: relative;
     word-wrap: break-word;
+    z-index: 10;
 }
 
 .message-text {
@@ -149,6 +150,10 @@ $card-header-height: 44px;
         flex: 1;
         z-index: 10;
 
+        //box-shadow: 0 0 6px 3px rgba(colors.$secondary-blue, 0.35);
+        //animation-play-state: running !important;
+        //@include colors.border-gradient(#AC79EE, #03D0BF, var(--body-background));
+
         ::ng-deep .mat-mdc-notch-piece {
             border-radius: 0;
         }
@@ -178,6 +183,7 @@ $card-header-height: 44px;
     align-items: center;
     text-align: center;
     text-wrap: balance;
+    z-index: 10;
 
     i {
         height: 48px;
