@@ -20,6 +20,12 @@
               <i class="fa-light fa-play"></i>
               <span>Run</span>
             </button>
+          } @else if (state.queryTypeControl.value === 'chat') {
+            @let messages = state.vibeQuery.messages$ | async;
+            <button mat-stroked-button [disabled]="!messages?.length" (click)="clearChat()">
+              <i class="fa-light fa-trash-can"></i>
+              <span>Clear chat</span>
+            </button>
           }
         </div>
         <div class="code-editor-container" [hidden]="state.queryTypeControl.value !== 'code'">
@@ -48,6 +54,12 @@
               <mat-form-field class="code-text-field">
                 <textarea class="answers-text-box" [formControl]="state.logOutput.control" readonly matInput></textarea>
               </mat-form-field>
+              <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value?.length" (click)="sendLogToAI()">
+                <i [class]="sentLogToAI() ? 'fal fa-check' : 'fal fa-wand-magic-sparkles'"></i>
+              </div>
+              <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value?.length" (click)="copyLog()">
+                <i [class]="copiedLog() ? 'fal fa-check' : 'fal fa-copy'"></i>
+              </div>
             </div>
             @if (state.outputTypeControl.value === 'table') {
               <div class="answers-container answers-table-container">

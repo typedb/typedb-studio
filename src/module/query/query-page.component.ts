@@ -6,7 +6,7 @@
 
 import { CodeEditor } from "@acrodata/code-editor";
 import { AsyncPipe, DatePipe } from "@angular/common";
-import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, QueryList, signal, ViewChild, ViewChildren } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -78,6 +78,8 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         indentWithTab,
     ]));
+    copiedLog = signal(false);
+    sentLogToAI = signal(false);
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
@@ -156,6 +158,32 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
             case "chat": return "fa-light fa-wand-magic-sparkles";
             default: return "";
         }
+    }
+
+    clearChat() {
+        this.state.clearChat();
+    }
+
+    async copyLog() {
+        try {
+            await navigator.clipboard.writeText(this.state.logOutput.control.value);
+            this.copiedLog.set(true);
+
+            // Reset copied state after 3 seconds
+            setTimeout(() => {
+                this.copiedLog.set(false);
+            }, 3000);
+        } catch (err) {
+            console.error('Failed to copy results log:', err);
+        }
+    }
+
+    sendLogToAI() {
+        this.sentLogToAI.set(true);
+        this.state.vibeQuery.promptControl.patchValue(this.state.logOutput.control.value);
+        setTimeout(() => {
+            this.state.vibeQuery.submitPrompt();
+        });
     }
 
     readonly isQueryRun = isQueryRun;

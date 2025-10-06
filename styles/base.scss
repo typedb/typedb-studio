@@ -663,6 +663,10 @@ tp-gcp-marketplace-integration, tp-aws-marketplace-integration, tp-azure-marketp
     transition: all 100ms;
 }
 
+.copy-overlay + .copy-overlay {
+    right: 52px;
+}
+
 .copy-overlay i {
     font-size: 14px;
     transition: all 100ms;

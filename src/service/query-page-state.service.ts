@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Injectable } from "@angular/core";
+import { inject, Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { BehaviorSubject, combineLatest, first, map, Observable, shareReplay, startWith } from "rxjs";
 import { DriverAction } from "../concept/action";
@@ -20,6 +20,7 @@ import { SnackbarService } from "./snackbar.service";
 import {
     ApiResponse, Attribute, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse, Value
 } from "typedb-driver-http";
+import { VibeQueryState } from "./vibe-query-state.service";
 
 export type QueryType = "code" | "chat";
 export type OutputType = "raw" | "log" | "table" | "graph";
@@ -36,6 +37,11 @@ const RUN_KEY_BINDING = detectOS() === "mac" ? "⌘+Enter" : "Ctrl+Enter";
     providedIn: "root",
 })
 export class QueryPageState {
+
+    private driver = inject(DriverState);
+    vibeQuery = inject(VibeQueryState);
+    schema = inject(SchemaState);
+    private snackbar = inject(SnackbarService);
 
     queryTypeControl = new FormControl("code" as QueryType, {nonNullable: true});
     queryTypes: QueryType[] = ["code", "chat"];
@@ -63,7 +69,7 @@ export class QueryPageState {
     readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
 
-    constructor(private driver: DriverState, public schema: SchemaState, private snackbar: SnackbarService) {
+    constructor() {
         (window as any)["queryToolState"] = this;
         this.outputDisabled$.subscribe((disabled) => {
             if (disabled) this.outputTypeControl.disable();
@@ -105,6 +111,10 @@ export class QueryPageState {
                 });
             },
         });
+    }
+
+    clearChat() {
+        this.vibeQuery.messages$.next([]);
     }
 
     private initialiseOutput(query: string) {

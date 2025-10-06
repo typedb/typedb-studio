@@ -184,11 +184,16 @@ button {
     inset: 0;
     overflow: auto;
     scrollbar-width: thin;
+    .copy-overlay {
+        right: 20px;
+    }
+    .copy-overlay + .copy-overlay {
+        right: 60px;
+    }
 }
 
 .answers-structure-container {
     overflow: hidden;
-    scrollbar-gutter: stable;
 }
 
 .answers-text-container {
