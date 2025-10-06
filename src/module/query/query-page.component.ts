@@ -30,7 +30,7 @@ import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
-import { QueryPageState } from "../../service/query-tool-state.service";
+import { QueryPageState, QueryType } from "../../service/query-page-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
 import { VibeQueryComponent } from "../ai/vibe-query.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
@@ -147,6 +147,14 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
             this.snackbar.success("Error text copied", { duration: 2500 });
         } catch (e) {
             console.warn(e);
+        }
+    }
+
+    queryTypeIconClass(queryType: QueryType): string {
+        switch (queryType) {
+            case "code": return "fa-light fa-code";
+            case "chat": return "fa-light fa-wand-magic-sparkles";
+            default: return "";
         }
     }
 

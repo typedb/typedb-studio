@@ -27,7 +27,7 @@ import { CodeSnippetComponent } from "../../framework/code-snippet/code-snippet.
 import { TypeQL, typeqlAutocompleteExtension } from "../../framework/codemirror-lang-typeql";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { DriverState } from "../../service/driver-state.service";
-import { QueryPageState } from "../../service/query-tool-state.service";
+import { QueryPageState } from "../../service/query-page-state.service";
 import { VibeQueryState } from "../../service/vibe-query-state.service";
 import { MarkdownComponent, MarkdownPipe } from "ngx-markdown";
 

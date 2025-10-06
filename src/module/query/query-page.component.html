@@ -6,9 +6,9 @@
         <div class="card-header">
           <h5>Query</h5>
           <div>
-            <mat-button-toggle-group [formControl]="state.queryTypeControl">
+            <mat-button-toggle-group class="no-checkmark-toggle" [formControl]="state.queryTypeControl">
               @for (queryType of state.queryTypes; track queryType) {
-                <mat-button-toggle [value]="queryType">{{ queryType }}</mat-button-toggle>
+                <mat-button-toggle [value]="queryType"><i [class]="queryTypeIconClass(queryType)"></i> {{ queryType }}</mat-button-toggle>
               }
             </mat-button-toggle-group>
           </div>
