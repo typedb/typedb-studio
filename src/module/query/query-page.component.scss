@@ -9,6 +9,20 @@
 @use "typography";
 @use "shapes";
 
+.beta-badge {
+  background: var(--primary);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin-left: 4px;
+  line-height: 1;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .query-page {
     height: calc(100% - 86px);
     gap: 4px !important;

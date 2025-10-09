@@ -8,7 +8,12 @@
           <div>
             <mat-button-toggle-group class="no-checkmark-toggle" [formControl]="state.queryTypeControl">
               @for (queryType of state.queryTypes; track queryType) {
-                <mat-button-toggle [value]="queryType"><i [class]="queryTypeIconClass(queryType)"></i> {{ queryType }}</mat-button-toggle>
+                <mat-button-toggle [value]="queryType">
+                  <i [class]="queryTypeIconClass(queryType)"></i> {{ queryType }}
+                  @if (queryType === 'chat') {
+                    <span class="beta-badge">BETA</span>
+                  }
+                </mat-button-toggle>
               }
             </mat-button-toggle-group>
           </div>

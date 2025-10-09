@@ -184,6 +184,9 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         setTimeout(() => {
             this.state.vibeQuery.submitPrompt();
         });
+        setTimeout(() => {
+            this.sentLogToAI.set(false);
+        }, 3000);
     }
 
     readonly isQueryRun = isQueryRun;
