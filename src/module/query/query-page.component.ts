@@ -78,8 +78,8 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         indentWithTab,
     ]));
-    copiedLog = signal(false);
-    sentLogToAI = signal(false);
+    copiedLog = false;
+    sentLogToAI = false;
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
@@ -167,11 +167,11 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     async copyLog() {
         try {
             await navigator.clipboard.writeText(this.state.logOutput.control.value);
-            this.copiedLog.set(true);
+            this.copiedLog = true;
 
             // Reset copied state after 3 seconds
             setTimeout(() => {
-                this.copiedLog.set(false);
+                this.copiedLog = false;
             }, 3000);
         } catch (err) {
             console.error('Failed to copy results log:', err);
@@ -179,13 +179,13 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     sendLogToAI() {
-        this.sentLogToAI.set(true);
+        this.sentLogToAI = true;
         this.state.vibeQuery.promptControl.patchValue(this.state.logOutput.control.value);
         setTimeout(() => {
             this.state.vibeQuery.submitPrompt();
         });
         setTimeout(() => {
-            this.sentLogToAI.set(false);
+            this.sentLogToAI = false;
         }, 3000);
     }
 

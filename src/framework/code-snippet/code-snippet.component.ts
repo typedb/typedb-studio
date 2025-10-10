@@ -41,7 +41,7 @@ export class CodeSnippetComponent implements AfterViewInit, OnChanges {
     @ViewChild("scrollbarY") scrollbarY!: ElementRef<HTMLElement>;
     @ViewChild("rootElement") rootElement!: ElementRef<HTMLElement>;
 
-    copied = signal(false);
+    copied = false;
 
     get lineNumbers() {
         return [...Array(
@@ -69,11 +69,11 @@ export class CodeSnippetComponent implements AfterViewInit, OnChanges {
     async copyCode() {
         try {
             await navigator.clipboard.writeText(this.snippet.code);
-            this.copied.set(true);
+            this.copied = true;
             
             // Reset copied state after 3 seconds
             setTimeout(() => {
-                this.copied.set(false);
+                this.copied = false;
             }, 3000);
         } catch (err) {
             console.error('Failed to copy code:', err);

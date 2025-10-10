@@ -5,7 +5,7 @@
  */
 
 import { CodeEditor } from "@acrodata/code-editor";
-import { Component, EventEmitter, Input, Output, signal } from "@angular/core";
+import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { TypeQL, typeqlAutocompleteExtension } from "../codemirror-lang-typeql";
 import { basicDark } from "./theme";
 import { Extension, Prec } from "@codemirror/state";
@@ -34,15 +34,15 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
     protected readonly TypeQL = TypeQL;
     protected readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
 
-    ran = signal(false);
+    ran = false;
 
     async onRunButtonClick() {
-        this.ran.set(true);
+        this.ran = true;
 
         this.runButtonClick.emit();
 
         setTimeout(() => {
-            this.ran.set(false);
+            this.ran = false;
         }, 3000);
     }
 }
