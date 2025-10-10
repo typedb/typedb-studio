@@ -34,7 +34,6 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
     protected readonly TypeQL = TypeQL;
     protected readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
 
-    copied = signal(false);
     ran = signal(false);
 
     async onRunButtonClick() {
@@ -45,19 +44,5 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
         setTimeout(() => {
             this.ran.set(false);
         }, 3000);
-    }
-
-    async copyCode() {
-        try {
-            await navigator.clipboard.writeText(this.formControlProp.value);
-            this.copied.set(true);
-
-            // Reset copied state after 3 seconds
-            setTimeout(() => {
-                this.copied.set(false);
-            }, 3000);
-        } catch (err) {
-            console.error('Failed to copy code:', err);
-        }
     }
 }
