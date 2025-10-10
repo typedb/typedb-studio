@@ -81,10 +81,6 @@ export class VibeQueryComponent implements OnInit, AfterViewInit {
     }
 
     private scrollToBottom(): void {
-        try {
-            this.messagesContainer.nativeElement.scrollTop = this.messagesContainer.nativeElement.scrollHeight;
-        } catch (err) {
-            console.error('Error scrolling to bottom:', err);
-        }
+        this.messagesContainer.nativeElement.scrollTop = this.messagesContainer.nativeElement.scrollHeight;
     }
 }
