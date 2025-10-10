@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Injectable } from "@angular/core";
+import { inject, Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { BehaviorSubject, combineLatest, first, map, Observable, shareReplay, startWith } from "rxjs";
 import { DriverAction } from "../concept/action";
@@ -20,7 +20,9 @@ import { SnackbarService } from "./snackbar.service";
 import {
     ApiResponse, Attribute, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse, Value
 } from "typedb-driver-http";
+import { VibeQueryState } from "./vibe-query-state.service";
 
+export type QueryType = "code" | "chat";
 export type OutputType = "raw" | "log" | "table" | "graph";
 
 const NO_SERVER_CONNECTED = `No server connected`;
@@ -34,9 +36,16 @@ const RUN_KEY_BINDING = detectOS() === "mac" ? "⌘+Enter" : "Ctrl+Enter";
 @Injectable({
     providedIn: "root",
 })
-export class QueryToolState {
+export class QueryPageState {
 
-    queryControl = new FormControl("", {nonNullable: true});
+    private driver = inject(DriverState);
+    vibeQuery = inject(VibeQueryState);
+    schema = inject(SchemaState);
+    private snackbar = inject(SnackbarService);
+
+    queryTypeControl = new FormControl("code" as QueryType, {nonNullable: true});
+    queryTypes: QueryType[] = ["code", "chat"];
+    queryEditorControl = new FormControl("", {nonNullable: true});
     outputTypeControl = new FormControl("log" as OutputType, { nonNullable: true });
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
     readonly logOutput = new LogOutputState();
@@ -47,12 +56,12 @@ export class QueryToolState {
     answersOutputEnabled = true;
     readonly runDisabledReason$ = combineLatest([
         this.driver.status$, this.driver.database$, this.driver.transactionOperationModeChanges$,
-        this.driver.transaction$, this.queryControl.valueChanges.pipe(startWith(this.queryControl.value))
+        this.driver.transaction$, this.queryEditorControl.valueChanges.pipe(startWith(this.queryEditorControl.value))
     ]).pipe(map(([status, db, txMode, tx, _query]) => {
         if (status !== "connected") return NO_SERVER_CONNECTED;
         else if (db == null) return NO_DATABASE_SELECTED;
         else if (txMode === "manual" && !tx) return NO_OPEN_TRANSACTION;
-        else if (!this.queryControl.value.length) return QUERY_BLANK; // _query becomes blank after a page navigation for some reason
+        else if (!this.queryEditorControl.value.length) return QUERY_BLANK; // _query becomes blank after a page navigation for some reason
         else return null;
     }), shareReplay(1));
     readonly runTooltip$ = this.runDisabledReason$.pipe(map(x => x ? x : `Run query (${RUN_KEY_BINDING})`));
@@ -60,7 +69,7 @@ export class QueryToolState {
     readonly outputDisabledReason$ = this.driver.status$.pipe(map(x => x === "connected" ? null : NO_SERVER_CONNECTED));
     readonly outputDisabled$ = this.outputDisabledReason$.pipe(map(x => x != null));
 
-    constructor(private driver: DriverState, public schema: SchemaState, private snackbar: SnackbarService) {
+    constructor() {
         (window as any)["queryToolState"] = this;
         this.outputDisabled$.subscribe((disabled) => {
             if (disabled) this.outputTypeControl.disable();
@@ -70,15 +79,11 @@ export class QueryToolState {
 
     // TODO: LIMIT 1000 by default, configurable
 
-    runQuery() {
-        const query = this.queryControl.value;
+    runQuery(query: string) {
         this.initialiseOutput(query);
         this.driver.query(query).subscribe({
             next: (res) => {
                 this.outputQueryResponse(res);
-                if (isApiErrorResponse(res)) {
-                    this.snackbar.errorPersistent(res.err.message);
-                }
             },
             error: (err) => {
                 this.driver.checkHealth().subscribe({
@@ -106,6 +111,10 @@ export class QueryToolState {
                 });
             },
         });
+    }
+
+    clearChat() {
+        this.vibeQuery.messages$.next([]);
     }
 
     private initialiseOutput(query: string) {
@@ -277,7 +286,7 @@ export class LogOutputState {
                 break;
             }
             default:
-                throw INTERNAL_ERROR;
+                throw new Error(INTERNAL_ERROR);
         }
         this.appendLines(...lines);
         this.appendBlankLine();
@@ -378,7 +387,7 @@ export class TableOutputState {
                 break;
             }
             default:
-                throw INTERNAL_ERROR;
+                throw new Error(INTERNAL_ERROR);
         }
     }
 
@@ -498,7 +507,7 @@ export class GraphOutputState {
                 break;
             }
             default:
-                throw INTERNAL_ERROR;
+                throw new Error(INTERNAL_ERROR);
         }
     }
 

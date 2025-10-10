@@ -1,0 +1,213 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "@angular/material" as mat;
+@use "colors";
+@use "media";
+@use "typography";
+@use "shapes";
+
+$card-header-height: 44px;
+
+:host {
+    height: calc(100% - #{$card-header-height});
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 0 auto;
+    width: 100%;
+
+    pre.error {
+        font-family: var(--font-family-default);
+    }
+
+    ::ng-deep markdown * + p {
+        margin-top: 0.5rem;
+    }
+
+    ::ng-deep markdown + tp-code-editor {
+        display: block;
+        margin-top: 1rem;
+    }
+
+    tp-code-editor {
+        margin-bottom: 0.5rem;
+
+        ::ng-deep .cm-editor {
+            border-radius: shapes.$border-radius-small;
+        }
+    }
+}
+
+.messages {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    padding-right: 16px;
+
+    .spacer {
+        height: 16px;
+    }
+}
+
+.message {
+    width: 100%;
+  display: flex;
+  align-self: flex-start;
+
+  &.user {
+      justify-content: flex-end;
+
+    .message-content {
+      background-color: var(--color-secondary-purple);
+      color: white;
+      border-radius: shapes.$border-radius-small;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        padding: 0.75rem 1rem;
+        max-width: calc(100% - 44px);
+    }
+  }
+
+  &.ai {
+    .message-content {
+
+        width: 100%;
+      color: var(--fg1);
+    }
+  }
+}
+
+.message-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: var(--bg3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0.75rem;
+    flex-shrink: 0;
+    align-self: flex-end;
+    margin-bottom: 0.5rem;
+
+    i {
+      font-size: 1rem;
+      color: var(--fg2);
+    }
+}
+
+.message-content {
+    position: relative;
+    word-wrap: break-word;
+    z-index: 10;
+}
+
+.message-text {
+    markdown {
+        white-space: normal;
+        overflow-wrap: break-word;
+    }
+
+    &.processing {
+        opacity: 0.8;
+    }
+}
+
+.error-message {
+    color: var(--color-grey);
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: shapes.$border-radius-small;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    i {
+        font-size: 1rem;
+        color: var(--color-red);
+    }
+}
+
+.input-container {
+    border-top: 1px solid var(--bg4);
+    background-color: var(--bg1);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    gap: 0.5rem;
+
+    mat-form-field {
+        background: var(--body-background);
+        flex: 1;
+        z-index: 10;
+
+        //box-shadow: 0 0 6px 3px rgba(colors.$secondary-blue, 0.35);
+        //animation-play-state: running !important;
+        //@include colors.border-gradient(#AC79EE, #03D0BF, var(--body-background));
+
+        ::ng-deep .mat-mdc-notch-piece {
+            border-radius: 0;
+        }
+
+        ::ng-deep .mat-mdc-icon-button.mat-mdc-button-base {
+            --mat-icon-button-container-shape: #{shapes.$border-radius-small};
+            --mat-icon-button-state-layer-size: 32px;
+            margin-right: 12px;
+        }
+
+        textarea {
+            scrollbar-width: none;
+        }
+    }
+
+    .submit-spinner-container {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+.welcome-content {
+    width: 100%;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    text-wrap: balance;
+    z-index: 10;
+
+    i {
+        height: 48px;
+        width: 48px;
+        font-size: 48px;
+    }
+
+    h3 {
+        font-size: 24px;
+        line-height: 1.5;
+        margin-top: 1rem;
+    }
+
+    aside {
+        margin-top: 0.5rem;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}

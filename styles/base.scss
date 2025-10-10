@@ -153,9 +153,14 @@ h5 {
     @include typography.h5;
 }
 
+.text-h3 {
+    font-size: var(--font-size-h3);
+    line-height: var(--line-height-h3);
+}
+
 .text-p1 {
-    font-size: 18px;
-    line-height: 26px;
+    font-size: var(--font-size-p1);
+    line-height: var(--line-height-p1);
 }
 
 .text-p2 {
@@ -392,6 +397,10 @@ th {
     flex: 3;
 }
 
+[hidden] {
+    display: none !important;
+}
+
 .invisible {
     visibility: hidden;
     pointer-events: none;
@@ -444,6 +453,24 @@ button i + span, button span + i {
             color: colors.$green;
             text-decoration: underline;
         }
+    }
+}
+
+.card-header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 12px;
+    height: 32px;
+    min-height: 32px;
+
+    h5 {
+        font-weight: var(--font-weight-bold);
+    }
+
+    .card-header-actions {
+        display: flex;
+        gap: 4px;
     }
 }
 
@@ -614,4 +641,52 @@ tp-gcp-marketplace-integration, tp-aws-marketplace-integration, tp-azure-marketp
             color: colors.$secondary-light-grey;
         }
     }
+}
+
+.copy-overlay {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border: shapes.$border;
+    color: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: all 100ms;
+}
+
+.copy-overlay + .copy-overlay {
+    right: 52px;
+}
+
+.copy-overlay i {
+    font-size: 14px;
+    transition: all 100ms;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    line-height: 1; /* Remove any line-height that might offset the icon */
+}
+
+/* Keep your existing hover and visible states */
+.copy-overlay.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.copy-overlay:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: colors.$secondary-mid-deep-grey;
+    color: rgba(255, 255, 255, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }

@@ -54,7 +54,7 @@ export class ConnectionCreatorComponent {
         { value: true, viewValue: `Use address and credentials` },
         { value: false, viewValue: `Use connection URL` },
     ];
-    connectionUrlRevealed = true;
+    connectionUrlRevealed = false;
     connectionUrlPlaceholder = CONNECTION_URL_PLACEHOLDER;
     passwordRevealed = false;
 
@@ -145,13 +145,13 @@ export class ConnectionCreatorComponent {
 
     submit() {
         const config = this.buildConnectionConfigOrNull();
-        if (!config) throw INTERNAL_ERROR;
+        if (!config) throw new Error(INTERNAL_ERROR);
         this.form.disable();
         this.driver.tryConnect(config).subscribe({
             next: () => {
                 this.snackbar.success(`Connected to ${config.name}`);
                 this.router.navigate([this.appData.viewState.lastUsedToolRoute()]).then((navigated) => {
-                    if (!navigated) throw INTERNAL_ERROR;
+                    if (!navigated) throw new Error(INTERNAL_ERROR);
                 });
             },
             error: (err) => {

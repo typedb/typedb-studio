@@ -9,6 +9,6 @@ import { INTERNAL_ERROR } from "./strings";
 
 export function requireValue<T>(behaviorSubject: BehaviorSubject<T | null>): T {
     const value = behaviorSubject.value;
-    if (!value) throw INTERNAL_ERROR;
+    if (!value) throw new Error(INTERNAL_ERROR);
     return value;
 }

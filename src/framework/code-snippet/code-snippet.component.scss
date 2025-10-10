@@ -11,14 +11,14 @@
 :host {
     display: block;
     height: 100%;
-    /* Remove overflow: auto */
+    border: shapes.$border;
 }
 
 .cs-root {
     min-height: 100%;
     width: 100%;
-    position: relative;
     height: 100%;
+    background: var(--body-background);
 }
 
 .cs-scrollable-content {
@@ -27,12 +27,15 @@
     padding: 4px;
     height: 100%;
     overflow: auto; /* Move overflow here */
+    position: relative;
+    scrollbar-width: thin;
 }
 
 .cs-line-numbers {
     flex-shrink: 0;
     padding: 0 7px;
     color: #66637f;
+    user-select: none;
 }
 
 .cs-code-area {
@@ -42,50 +45,6 @@
     code {
         display: block;
     }
-}
-
-.copy-overlay {
-    position: absolute;
-    top: 12px;
-    right: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(8px);
-    border: shapes.$border;
-    color: rgba(255, 255, 255, 0.8);
-    border-radius: 8px;
-    cursor: pointer;
-    opacity: 0;
-    transform: translateY(-4px);
-    transition: all 100ms;
-}
-
-.copy-overlay i {
-    font-size: 14px;
-    transition: all 100ms;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    line-height: 1; /* Remove any line-height that might offset the icon */
-}
-
-/* Keep your existing hover and visible states */
-.copy-overlay.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.copy-overlay:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: colors.$secondary-mid-deep-grey;
-    color: rgba(255, 255, 255, 1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 ol {

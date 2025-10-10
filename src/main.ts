@@ -32,6 +32,7 @@ import "posthog-js/dist/web-vitals";
 import "posthog-js/dist/dead-clicks-autocapture";
 import posthog from "posthog-js/dist/module.no-external";
 import { StudioErrorHandler } from "./service/error-handler.service";
+import { provideMarkdown } from "ngx-markdown";
 
 const rippleGlobalConfig: RippleGlobalOptions = {
     disabled: true,
@@ -64,6 +65,7 @@ if (environment.env !== "local") {
             person_profiles: "always",
             capture_pageview: false,
             capture_pageleave: true,
+            disable_session_recording: true,
         }
     );
 }
@@ -81,6 +83,7 @@ bootstrapApplication(RootComponent, {
         provideHttpClient(),
         provideAnimations(),
         { provide: ErrorHandler, useClass: StudioErrorHandler },
+        provideMarkdown(),
         importProvidersFrom(
             // provideFirebaseApp(() => initializeApp(firebaseOptions)),
             // provideAuth(() => {

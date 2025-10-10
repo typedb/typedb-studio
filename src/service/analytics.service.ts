@@ -9,16 +9,6 @@ import { environment } from "../environments/environment";
 import posthog, { Properties } from "posthog-js/dist/module.no-external";
 import { AnalyticsBrowser, ID as CioID, UserTraits } from "@customerio/cdp-analytics-browser";
 
-const GOOGLE_TAG_ID = "G-SNVZCNLJ9R"; // used by Google Analytics
-const adConversionIds = {
-    signup: "AW-340366363/3eLoCMq7mvUYEJuopqIB",
-    createProfile: "AW-340366363/KNEVCLDkqc8ZEJuopqIB",
-    submitProjectInfo: "AW-340366363/IEawCLPkqc8ZEJuopqIB",
-    joinOrg: "AW-340366363/lQbJCLbkqc8ZEJuopqIB",
-    deployFreeCluster: "AW-340366363/cl4HCO6Qr88ZEJuopqIB",
-    deployPaidCluster: "AW-340366363/LGo1CPGQr88ZEJuopqIB",
-} as const satisfies Record<string, string>;
-
 @Injectable({
     providedIn: "root",
 })
@@ -64,25 +54,6 @@ export class AnalyticsService {
         },
         reset: () => {
             this._cio.reset();
-        },
-    };
-
-    google = {
-        loadScriptTag: () => {
-            if (environment.env !== "production") return;
-            const scriptEl = document.createElement("script");
-            scriptEl.src = `https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID}`;
-            const scriptEl2 = document.createElement("script");
-            scriptEl2.innerHTML = `window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', '${GOOGLE_TAG_ID}');`;
-            document.head.appendChild(scriptEl);
-            document.head.appendChild(scriptEl2);
-        },
-        reportAdConversion: (event: keyof typeof adConversionIds) => {
-            if (environment.env !== "production") return;
-            window.gtag("event", "conversion", { send_to: adConversionIds[event] });
         },
     };
 }

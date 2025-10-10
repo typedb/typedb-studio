@@ -6,7 +6,7 @@
 
 import { CodeEditor } from "@acrodata/code-editor";
 import { AsyncPipe, DatePipe } from "@angular/common";
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, QueryList, signal, ViewChild, ViewChildren } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -22,6 +22,7 @@ import { RouterLink } from "@angular/router";
 import { Prec } from "@codemirror/state";
 import { ResizableDirective } from "@hhangular/resizable";
 import { filter, map, startWith } from "rxjs";
+import { CodeEditorComponent } from "../../framework/code-editor/code-editor.component";
 import { otherExampleLinter, TypeQL, typeqlAutocompleteExtension } from "../../framework/codemirror-lang-typeql";
 import { DriverAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
@@ -29,8 +30,9 @@ import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
-import { QueryToolState } from "../../service/query-tool-state.service";
+import { QueryPageState, QueryType } from "../../service/query-page-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
+import { VibeQueryComponent } from "../ai/vibe-query.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { keymap } from "@codemirror/view";
@@ -47,7 +49,7 @@ import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-win
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, CodeEditor, ResizableDirective,
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
-        MatMenuModule, SchemaToolWindowComponent,
+        MatMenuModule, SchemaToolWindowComponent, VibeQueryComponent, CodeEditorComponent,
     ]
 })
 export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -56,6 +58,13 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
     @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
+
+    state = inject(QueryPageState);
+    driver = inject(DriverState);
+    private appData = inject(AppData);
+    private snackbar = inject(SnackbarService);
+    private dialog = inject(MatDialog);
+
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
     editorKeymap = Prec.highest(keymap.of([
@@ -69,12 +78,8 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         indentWithTab,
     ]));
-
-    constructor(
-        public state: QueryToolState, public driver: DriverState,
-        private appData: AppData, private snackbar: SnackbarService, private dialog: MatDialog,
-    ) {
-    }
+    copiedLog = false;
+    sentLogToAI = false;
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
@@ -89,10 +94,6 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     ngAfterViewInit() {
-        const articleWidth = this.articleRef.nativeElement.clientWidth;
-        this.resizables.first.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
-        this.resizables.last.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
-
         this.graphViewRef.changes.pipe(
             map(x => x as QueryList<ElementRef<HTMLElement>>),
             startWith(this.graphViewRef),
@@ -112,7 +113,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     runQuery() {
-        this.state.runQuery();
+        this.state.runQuery(this.state.queryEditorControl.value);
     }
 
     queryHistoryPreview(query: string) {
@@ -149,6 +150,43 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         } catch (e) {
             console.warn(e);
         }
+    }
+
+    queryTypeIconClass(queryType: QueryType): string {
+        switch (queryType) {
+            case "code": return "fa-light fa-code";
+            case "chat": return "fa-light fa-wand-magic-sparkles";
+            default: return "";
+        }
+    }
+
+    clearChat() {
+        this.state.clearChat();
+    }
+
+    async copyLog() {
+        try {
+            await navigator.clipboard.writeText(this.state.logOutput.control.value);
+            this.copiedLog = true;
+
+            // Reset copied state after 3 seconds
+            setTimeout(() => {
+                this.copiedLog = false;
+            }, 3000);
+        } catch (err) {
+            console.error('Failed to copy results log:', err);
+        }
+    }
+
+    sendLogToAI() {
+        this.sentLogToAI = true;
+        this.state.vibeQuery.promptControl.patchValue(this.state.logOutput.control.value);
+        setTimeout(() => {
+            this.state.vibeQuery.submitPrompt();
+        });
+        setTimeout(() => {
+            this.sentLogToAI = false;
+        }, 3000);
     }
 
     readonly isQueryRun = isQueryRun;

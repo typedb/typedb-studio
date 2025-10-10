@@ -8,6 +8,5 @@
 @use "typography";
 
 .root-node {
-    font-weight: typography.$bold;
-    text-transform: capitalize;
+    font-weight: typography.$regular;
 }
