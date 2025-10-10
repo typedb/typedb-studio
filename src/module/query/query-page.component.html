@@ -59,10 +59,10 @@
               <mat-form-field class="code-text-field">
                 <textarea class="answers-text-box" [formControl]="state.logOutput.control" readonly matInput></textarea>
               </mat-form-field>
-              <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value?.length" (click)="sendLogToAI()">
+              <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value.length" (click)="sendLogToAI()">
                 <i [class]="sentLogToAI ? 'fal fa-check' : 'fal fa-wand-magic-sparkles'"></i>
               </div>
-              <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value?.length" (click)="copyLog()">
+              <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value.length" (click)="copyLog()">
                 <i [class]="copiedLog ? 'fal fa-check' : 'fal fa-copy'"></i>
               </div>
             </div>

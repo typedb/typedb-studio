@@ -16,7 +16,7 @@ export interface ChatMessage {
 
 export type ChatRole = "user" | "assistant" | "system";
 
-export interface VibeQueryResponse {
+export interface AIChatResponse {
     response: string;
 }
 
@@ -26,7 +26,7 @@ export interface VibeQueryResponse {
 export class CloudService {
     constructor(private http: HttpClient) {}
 
-    vibeQuery(schema: string, conversation: ChatMessage[]): Observable<VibeQueryResponse> {
-        return this.http.post<VibeQueryResponse>(`${environment.cloudUrl}/ai/vibe-query`, { schema, conversation });
+    aiChat(schema: string, conversation: ChatMessage[]): Observable<AIChatResponse> {
+        return this.http.post<AIChatResponse>(`${environment.cloudUrl}/ai/chat`, { schema, conversation });
     }
 }

@@ -29,7 +29,7 @@ import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { DriverState } from "../../service/driver-state.service";
 import { QueryPageState } from "../../service/query-page-state.service";
 import { VibeQueryState } from "../../service/vibe-query-state.service";
-import { MarkdownComponent, MarkdownPipe } from "ngx-markdown";
+import { MarkdownComponent } from "ngx-markdown";
 
 @Component({
     selector: "ts-vibe-query",
@@ -39,7 +39,7 @@ import { MarkdownComponent, MarkdownPipe } from "ngx-markdown";
     imports: [
         CommonModule, AsyncPipe, FormsModule, ReactiveFormsModule, MatFormFieldModule,
         MatInputModule, MatButtonModule, MatIconModule, MatTooltipModule, MatProgressSpinnerModule,
-        TextFieldModule, SpinnerComponent, MarkdownComponent, MarkdownPipe, CodeEditorComponent
+        TextFieldModule, SpinnerComponent, MarkdownComponent, CodeEditorComponent
     ]
 })
 export class VibeQueryComponent implements OnInit, AfterViewInit {

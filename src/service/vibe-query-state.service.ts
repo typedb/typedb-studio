@@ -136,7 +136,7 @@ export class VibeQueryState {
         try {
             this.driver.getDatabaseSchemaText().pipe(
                 switchMap((res) => {
-                    if (isOkResponse(res)) return this.cloud.vibeQuery(res.ok, conversation);
+                    if (isOkResponse(res)) return this.cloud.aiChat(res.ok, conversation);
                     else throw res;
                 }),
             ).subscribe({
