@@ -189,6 +189,7 @@ $card-header-height: 44px;
         height: 48px;
         width: 48px;
         font-size: 48px;
+        @include colors.text-gradient(#F96480, #FDD257);
     }
 
     h3 {
