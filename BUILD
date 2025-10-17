@@ -19,7 +19,7 @@ exports_files(["VERSION"])
 
 genrule(
     name = "native-artifact-mac-x86_64-dmg",
-    outs = ["typedb-studio_3.4.0-rc1_amd64.dmg"],
+    outs = ["typedb-studio-amd64.dmg"],
     cmd = """
         cp src-tauri/target/release/bundle/dmg/*.dmg "$(OUTS)"
     """,
@@ -29,7 +29,7 @@ genrule(
 
 genrule(
     name = "native-artifact-mac-arm64-dmg",
-    outs = ["typedb-studio_3.4.0-rc1_aarch64.dmg"],
+    outs = ["typedb-studio-aarch64.dmg"],
     cmd = """
         cp src-tauri/target/release/bundle/dmg/*.dmg "$(OUTS)"
     """,
@@ -39,7 +39,7 @@ genrule(
 
 genrule(
     name = "native-artifact-linux-arm64-deb",
-    outs = ["typedb-studio_3.4.0-rc1_arm64.deb"],
+    outs = ["typedb-studio-arm64.deb"],
     cmd = """
         cp src-tauri/target/release/bundle/deb/*.deb "$(OUTS)"
     """,
@@ -49,7 +49,7 @@ genrule(
 
 genrule(
     name = "native-artifact-linux-x86_64-deb",
-    outs = ["typedb-studio_3.4.0-rc1_amd64.deb"],
+    outs = ["typedb-studio-amd64.deb"],
     cmd = """
         cp src-tauri/target/release/bundle/deb/*.deb "$(OUTS)"
     """,
@@ -59,7 +59,7 @@ genrule(
 
 genrule(
     name = "native-artifact-windows-x86_64-msi",
-    outs = ["typedb-studio_3.4.0-rc1_amd64.msi"],
+    outs = ["typedb-studio-amd64.msi"],
     cmd = """
         cp src-tauri/target/release/bundle/msi/*.msi "$(OUTS)"
     """,
