@@ -12,5 +12,6 @@ SET DEPLOY_ARTIFACT_USERNAME=%REPO_TYPEDB_USERNAME%
 SET DEPLOY_ARTIFACT_PASSWORD=%REPO_TYPEDB_PASSWORD%
 git rev-parse HEAD > version_snapshot.txt
 set /p VER=<version_snapshot.txt
+git rev-parse HEAD > VERSION
 bazel --output_user_root=C:/b run --define version=%VER% //:deploy-windows-x86_64-msi --compilation_mode=opt -- snapshot
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
