@@ -21,7 +21,7 @@ genrule(
     name = "native-artifact-mac-x86_64-dmg",
     outs = ["typedb-studio-amd64.dmg"],
     cmd = """
-        cp src-tauri/target/release/bundle/dmg/*.dmg "$(OUTS)"
+        cp src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg "$(OUTS)"
     """,
     tags = ["local"],
     target_compatible_with = constraint_mac_x86_64,
@@ -31,7 +31,7 @@ genrule(
     name = "native-artifact-mac-arm64-dmg",
     outs = ["typedb-studio-aarch64.dmg"],
     cmd = """
-        cp src-tauri/target/release/bundle/dmg/*.dmg "$(OUTS)"
+        cp src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg "$(OUTS)"
     """,
     tags = ["local"],
     target_compatible_with = constraint_mac_arm64,
