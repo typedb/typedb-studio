@@ -452,11 +452,11 @@ workflows:
       - deploy-linux-arm64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [banana, fix-mac-x86_64-builds]
       - deploy-linux-x86_64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [banana, fix-mac-x86_64-builds]
       - deploy-mac-arm64-snapshot:
           filters:
             branches:
@@ -468,7 +468,7 @@ workflows:
       - deploy-windows-x86_64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [banana, fix-mac-x86_64-builds]
       - deploy-apt-arm64-snapshot:
           filters:
             branches:
