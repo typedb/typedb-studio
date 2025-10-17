@@ -100,7 +100,7 @@ commands:
     parameters:
       target-arch:
         type: string
-      tauri-build-args:
+      target-triple:
         type: string
     steps:
       - run: |
@@ -112,15 +112,15 @@ commands:
           corepack enable
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
-          rustup target add <<parameters.tauri-build-args>> 
-          npx tauri build <<parameters.tauri-build-args>>
+          rustup target add <<parameters.target-triple>> 
+          npx tauri build --target <<parameters.target-triple>>
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
 
   deploy-mac-release:
     parameters:
       target-arch:
         type: string
-      tauri-build-args:
+      target-triple:
         type: string
     steps:
       - run: |
@@ -132,8 +132,8 @@ commands:
           corepack enable
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
-          rustup target add <<parameters.tauri-build-args>>
-          npx tauri build <<parameters.tauri-build-args>>
+          rustup target add <<parameters.target-triple>>
+          npx tauri build --target <<parameters.target-triple>>
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- release
 
   deploy-linux-snapshot:
@@ -256,7 +256,7 @@ jobs:
       - install-rust
       - deploy-mac-snapshot:
           target-arch: arm64
-          tauri-build-args: --target aarch64-apple-darwin
+          target-triple: aarch64-apple-darwin
 
   deploy-mac-x86_64-snapshot:
     executor: mac-arm64
@@ -271,7 +271,7 @@ jobs:
       - install-rust
       - deploy-mac-snapshot:
           target-arch: x86_64
-          tauri-build-args: --target x86_64-apple-darwin
+          target-triple: x86_64-apple-darwin
 
   deploy-linux-arm64-snapshot:
     executor: linux-arm64
@@ -339,7 +339,7 @@ jobs:
       - install-rust
       - deploy-mac-release:
           target-arch: arm64
-          tauri-build-args: --target aarch64-apple-darwin
+          target-triple: aarch64-apple-darwin
 
   deploy-mac-x86_64-release:
     executor: mac-arm64
@@ -354,7 +354,7 @@ jobs:
       - install-rust
       - deploy-mac-release:
           target-arch: x86_64
-          tauri-build-args: --target x86_64-apple-darwin
+          target-triple: x86_64-apple-darwin
 
   deploy-linux-arm64-release:
     executor: linux-arm64
