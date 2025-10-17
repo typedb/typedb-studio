@@ -460,7 +460,7 @@ workflows:
       - deploy-mac-x86_64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [banana, fix-mac-x86_64-builds]
       - deploy-windows-x86_64-snapshot:
           filters:
             branches:
