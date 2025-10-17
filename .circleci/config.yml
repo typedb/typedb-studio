@@ -112,6 +112,7 @@ commands:
           corepack enable
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
+          rustup target add <<parameters.tauri-build-args>> 
           npx tauri build <<parameters.tauri-build-args>>
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
 
@@ -131,6 +132,7 @@ commands:
           corepack enable
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
+          rustup target add <<parameters.tauri-build-args>>
           npx tauri build <<parameters.tauri-build-args>>
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- release
 
