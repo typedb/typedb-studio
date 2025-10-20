@@ -114,6 +114,7 @@ commands:
           pnpm build
           rustup target add <<parameters.target-triple>> 
           npx tauri build --target <<parameters.target-triple>>
+          # --define version doesn't seem to work, so we just write it into the VERSION file.
           git rev-parse HEAD > VERSION
           bazel run --define version=$(git rev-parse HEAD) //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
 
@@ -162,6 +163,7 @@ commands:
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
           export PATH="/usr/bin:$PATH"
           npx tauri build
+          # --define version doesn't seem to work, so we just write it into the VERSION file.
           git rev-parse HEAD > VERSION
           bazel run --define version=$(git rev-parse HEAD) //:deploy-linux-<<parameters.target-arch>>-deb --compilation_mode=opt -- snapshot
 
