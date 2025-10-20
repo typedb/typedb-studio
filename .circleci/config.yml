@@ -100,22 +100,7 @@ commands:
     parameters:
       target-arch:
         type: string
-    steps:
-      - run: |
-          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
-          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          nvm install 22
-          nvm use 22
-          npm install --global corepack@0.17.0
-          corepack enable
-          corepack prepare pnpm@10.12.1 --activate
-          pnpm build
-          npx tauri build
-          bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
-
-  deploy-mac-release:
-    parameters:
-      target-arch:
+      target-triple:
         type: string
     steps:
       - run: |
@@ -127,7 +112,30 @@ commands:
           corepack enable
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
-          npx tauri build
+          rustup target add <<parameters.target-triple>> 
+          npx tauri build --target <<parameters.target-triple>>
+          # --define version doesn't seem to work, so we just write it into the VERSION file.
+          git rev-parse HEAD > VERSION
+          bazel run --define version=$(git rev-parse HEAD) //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
+
+  deploy-mac-release:
+    parameters:
+      target-arch:
+        type: string
+      target-triple:
+        type: string
+    steps:
+      - run: |
+          export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          nvm install 22
+          nvm use 22
+          npm install --global corepack@0.17.0
+          corepack enable
+          corepack prepare pnpm@10.12.1 --activate
+          pnpm build
+          rustup target add <<parameters.target-triple>>
+          npx tauri build --target <<parameters.target-triple>>
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- release
 
   deploy-linux-snapshot:
@@ -155,7 +163,9 @@ commands:
           sudo ln -sf /usr/bin/python3.8 /usr/bin/python3
           export PATH="/usr/bin:$PATH"
           npx tauri build
-          bazel run //:deploy-linux-<<parameters.target-arch>>-deb --compilation_mode=opt -- snapshot
+          # --define version doesn't seem to work, so we just write it into the VERSION file.
+          git rev-parse HEAD > VERSION
+          bazel run --define version=$(git rev-parse HEAD) //:deploy-linux-<<parameters.target-arch>>-deb --compilation_mode=opt -- snapshot
 
   deploy-linux-release:
     parameters:
@@ -250,6 +260,7 @@ jobs:
       - install-rust
       - deploy-mac-snapshot:
           target-arch: arm64
+          target-triple: aarch64-apple-darwin
 
   deploy-mac-x86_64-snapshot:
     executor: mac-arm64
@@ -264,6 +275,7 @@ jobs:
       - install-rust
       - deploy-mac-snapshot:
           target-arch: x86_64
+          target-triple: x86_64-apple-darwin
 
   deploy-linux-arm64-snapshot:
     executor: linux-arm64
@@ -331,6 +343,7 @@ jobs:
       - install-rust
       - deploy-mac-release:
           target-arch: arm64
+          target-triple: aarch64-apple-darwin
 
   deploy-mac-x86_64-release:
     executor: mac-arm64
@@ -345,6 +358,7 @@ jobs:
       - install-rust
       - deploy-mac-release:
           target-arch: x86_64
+          target-triple: x86_64-apple-darwin
 
   deploy-linux-arm64-release:
     executor: linux-arm64
