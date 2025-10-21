@@ -68,6 +68,11 @@
                   "with": "src/environments/environment.dev.ts"
                 }
               ]
+            },
+            "local": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
             }
           },
           "defaultConfiguration": "production"
@@ -83,9 +88,12 @@
             },
             "development": {
               "buildTarget": "typedb-studio:build:development"
+            },
+            "local": {
+              "buildTarget": "typedb-studio:build:local"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "local"
         }
       }
     }
