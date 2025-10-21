@@ -1,11 +1,13 @@
 {
   "name": "typedb-studio",
-  "version": "3.5.9",
+  "version": "3.6.0",
   "scripts": {
     "ng": "ng",
     "generate-grammar": "lezer-generator --typeScript src/framework/codemirror-lang-typeql/typeql.grammar -o src/framework/codemirror-lang-typeql/generated/typeql.grammar.generated",
     "start": "ng serve",
     "build": "ng build",
+    "build:dev": "ng build -c development",
+    "build:prod": "ng build -c production",
     "watch": "ng build --watch --configuration development",
     "tauri": "tauri"
   },
@@ -38,7 +40,8 @@
     "graphology-layout-force": "0.2.4",
     "graphology-layout-forceatlas2": "0.10.1",
     "graphology-layout-noverlap": "0.4.2",
-    "posthog-js": "1.187.2",
+    "ngx-markdown": "20.1.0",
+    "posthog-js": "1.268.8",
     "prismjs": "1.29.0",
     "rxjs": "~7.8.0",
     "sigma": "3.0.1",

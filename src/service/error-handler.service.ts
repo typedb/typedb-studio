@@ -13,7 +13,8 @@ export class StudioErrorHandler implements ErrorHandler {
         console.error(err);
 
         let msg = ``;
-        if (isApiErrorResponse(err)) {
+        // TODO: delete object check once we upgrade typedb-driver-http
+        if (typeof err === "object" && isApiErrorResponse(err)) {
             msg = err.err.message;
         } else {
             msg = err?.message ?? err?.toString() ?? `Unknown error`;

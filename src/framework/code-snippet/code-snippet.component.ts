@@ -8,9 +8,15 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Input, N
 
 import Prism from "prismjs";
 import { initCustomScrollbars } from "typedb-web-common/lib";
-import { MatTooltipModule } from "@angular/material/tooltip";
+import { MatTooltip, MatTooltipModule } from "@angular/material/tooltip";
+import { from, Observable } from "rxjs";
 
-const DEFAULT_MIN_LINES = { desktop: 33, mobile: 13 };
+export interface CodeSnippetAction {
+    name: string;
+    icon: string;
+    label?: string | null;
+    action: (code: string) => void | Observable<unknown>;
+}
 
 @Component({
     selector: "tp-code-snippet",
@@ -21,22 +27,30 @@ const DEFAULT_MIN_LINES = { desktop: 33, mobile: 13 };
     imports: [MatTooltipModule],
 })
 export class CodeSnippetComponent implements AfterViewInit, OnChanges {
+
+    readonly copyCodeAction: CodeSnippetAction = {
+        name: "copy",
+        icon: "fa-copy",
+        label: null,
+        action: () => from(this.copyCode())
+    }
+
     @Input({ required: true }) snippet!: { language?: string, code: string };
+    @Input() actions: CodeSnippetAction[] = [this.copyCodeAction];
     @ViewChild("scrollbarX") scrollbarX!: ElementRef<HTMLElement>;
     @ViewChild("scrollbarY") scrollbarY!: ElementRef<HTMLElement>;
     @ViewChild("rootElement") rootElement!: ElementRef<HTMLElement>;
 
-    showOverlay = signal(false);
-    copied = signal(false);
+    copied = false;
 
     get lineNumbers() {
-        return [...Array(Math.max(
-            (this.snippet.code.match(/\n/g) || []).length + 2,
-            DEFAULT_MIN_LINES.desktop,
-        )).keys()].map((n) => n + 1)
+        return [...Array(
+            (this.snippet.code.match(/\n/g) || []).length + 1,
+        ).keys()].map((n) => n + 1)
     }
 
-    constructor(private ngZone: NgZone, private elementRef: ElementRef) { }
+    constructor(private ngZone: NgZone, private elementRef: ElementRef) {
+    }
 
     ngAfterViewInit() {
         this.maybeInitScrollbarsAndHighlighting();
@@ -55,12 +69,12 @@ export class CodeSnippetComponent implements AfterViewInit, OnChanges {
     async copyCode() {
         try {
             await navigator.clipboard.writeText(this.snippet.code);
-            this.copied.set(true);
+            this.copied = true;
             
-            // Reset copied state after 2 seconds
+            // Reset copied state after 3 seconds
             setTimeout(() => {
-                this.copied.set(false);
-            }, 2000);
+                this.copied = false;
+            }, 3000);
         } catch (err) {
             console.error('Failed to copy code:', err);
         }

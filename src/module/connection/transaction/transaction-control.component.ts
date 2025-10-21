@@ -60,7 +60,7 @@ export class TransactionControlComponent {
     }
 
     open() {
-        if (!this.driver.transactionControls.value.type) throw INTERNAL_ERROR;
+        if (!this.driver.transactionControls.value.type) throw new Error(INTERNAL_ERROR);
         this.driver.openTransaction(this.driver.transactionControls.value.type).subscribe();
     }
 

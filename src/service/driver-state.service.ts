@@ -111,7 +111,7 @@ export class DriverState {
 
     private requireDriver() {
         if (this.driver) return this.driver;
-        else throw INTERNAL_ERROR;
+        else throw new Error(INTERNAL_ERROR);
     }
 
     tryConnect(config: ConnectionConfig): Observable<ConnectionConfig> {
@@ -163,8 +163,8 @@ export class DriverState {
     }
 
     tryDisconnect(lockId = uuid()) {
-        if (this._status$.value === "disconnected") throw INTERNAL_ERROR;
-        if (this._transaction$.value?.hasUncommittedChanges) throw INTERNAL_ERROR;
+        if (this._status$.value === "disconnected") throw new Error(INTERNAL_ERROR);
+        if (this._transaction$.value?.hasUncommittedChanges) throw new Error(INTERNAL_ERROR);
         this.appData.connections.clearStartupConnection();
         const maybeCloseTransaction$ = this._transaction$.value ? this.closeTransaction(lockId) : of({});
         return maybeCloseTransaction$.pipe(tap(() => this.tryUseWriteLock(() => {
@@ -209,7 +209,7 @@ export class DriverState {
         }
 
         const savedDatabase = this._databaseList$.value?.find(x => x.name === database.name);
-        if (!savedDatabase) throw INTERNAL_ERROR;
+        if (!savedDatabase) throw new Error(INTERNAL_ERROR);
         else this.tryUseWriteLock(() => {
             this.database$.next(savedDatabase);
             const currentConnection = this.requireConnection();

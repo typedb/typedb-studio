@@ -3,8 +3,7 @@
     <ts-schema-tool-window resizable [percent]="20"/>
     <div class="visualiser-pane card" resizable [percent]="80">
       <div class="card-header">
-        <i class="fa-light fa-circles-overlap-3"></i>
-        <h4>Schema Visualizer</h4>
+        <h5>Schema Visualizer</h5>
         <div class="flex-spacer"></div>
         <button mat-stroked-button [disabled]="!(state.interactable$ | async)"
                 [matTooltip]="(state.interactionDisabledReason$ | async) || ''" matTooltipPosition="below" (click)="state.refresh()">
@@ -25,7 +24,7 @@
                 <p class="status-text">Loading...</p>
               }
               @case ("noAnswers") {
-                <p class="status-text">This is an empty database with no schema defined yet. <a routerLink="/query">Go to query tool</a> / <a href="https://typedb.com/docs/manual/schema/" target="_blank">learn about schemas</a></p>
+                <p class="status-text">This is an empty database with no schema defined yet. <a routerLink="/query">Go to query tool</a> / <a href="https://typedb.com/docs/home/get-started/schema" target="_blank">learn about schemas</a></p>
               }
             }
           </div>
