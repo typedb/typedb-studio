@@ -82,8 +82,8 @@
                 colors.$light-purple 0%,
                 transparent 30%
         );
-        opacity: 0.75;
-        animation: mobile-light-source 28s infinite ease-in-out;
+        opacity: 0.6;
+        animation: mobile-light-source 60s infinite ease-in-out;
         z-index: 1;
         pointer-events: none;
         transform: translate(25%, 25%);
