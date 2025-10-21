@@ -12,7 +12,7 @@ all within a unified environment.
 
 - [Install TypeDB Studio Desktop](https://typedb.com/docs/home/install-tools#_studio)
 - [Open studio.typedb.com](https://studio.typedb.com)
-- [Read docs](https://typedb.com/docs/manual/tools/studio)
+- [Read docs](https://typedb.com/docs/tools/studio)
 
 ## Quickstart
 
