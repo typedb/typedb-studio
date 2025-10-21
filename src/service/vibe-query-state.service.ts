@@ -150,7 +150,7 @@ export class VibeQueryState {
                 },
                 error: (err) => {
                     console.error(err);
-                    aiMsg.error = err?.err?.message ?? err?.message ?? err?.toString() ?? INTERNAL_ERROR;
+                    aiMsg.error = err?.err?.message ?? err?.error?.message ?? err?.message ?? err?.toString() ?? INTERNAL_ERROR;
                     aiMsg.isProcessing = false;
                     aiMsg.timestamp = new Date();
                     this.messages$.next(...[this.messages$.value]);
@@ -162,7 +162,7 @@ export class VibeQueryState {
             });
         } catch (err: any) {
             console.error(err);
-            aiMsg.error = err?.err?.message ?? err?.message ?? err?.toString() ?? INTERNAL_ERROR;
+            aiMsg.error = err?.err?.message ?? err?.error?.message ?? err?.message ?? err?.toString() ?? INTERNAL_ERROR;
             aiMsg.isProcessing = false;
             aiMsg.timestamp = new Date();
             this.messages$.next(...[this.messages$.value]);
