@@ -1,13 +1,17 @@
 import {
-    Attribute, AttributeType, Concept, ConceptRow, ConceptRowsQueryResponse, Entity, EntityType, getVariableName,
-    InstantiableType, QueryConstraintAny, QueryConstraintComparison, QueryConstraintExpression, QueryConstraintFunction,
+    AnalyzedPipeline, Attribute, AttributeType, Concept, ConceptRow, ConceptRowsQueryResponse,
+    Entity, EntityType, getVariableName, InstantiableType,
+    QueryConstraintAny, QueryConstraintComparison, QueryConstraintExpression, QueryConstraintFunction,
     QueryConstraintHas, QueryConstraintIid, QueryConstraintIs, QueryConstraintIsa, QueryConstraintIsaExact, QueryConstraintKind,
     QueryConstraintLabel, QueryConstraintLinks, QueryConstraintOwns, QueryConstraintPlays, QueryConstraintRelates,
     QueryConstraintSpan, QueryConstraintSub, QueryConstraintSubExact, QueryConstraintValue, QueryStructure, QueryVertex,
-    Relation, RelationType, RoleType, ThingKind, Type, TypeKind, Value, ValueKind
+    Relation, RelationType, RoleType, ThingKind, Type, TypeKind, Value, ValueKind,
+    ConceptRowsQueryResponseForStudio, QueryStuctureForStudio
 } from "typedb-driver-http";
 import {MultiGraph} from "graphology";
 
+type BackwardsCompatiblePipeline = QueryStructureForStudio | AnalyzedPipeline;
+type BackwardsCompatibleConceptRowsResponse = ConceptRowsQueryResponse | ConceptRowsQueryResponseForStudio;
 ///////////////////////
 // TypeDB Data Graph //
 ///////////////////////
@@ -138,7 +142,7 @@ export interface DataConstraintExpression {
 
     text: string,
     arguments: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
-    assigned: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
+    assigned: (Entity | Relation | Attribute | Value | VertexUnavailable),
 }
 
 export interface DataConstraintFunction {
@@ -262,11 +266,12 @@ class LogicalGraphBuilder {
     constructor() {
     }
 
-    build(rows_result: ConceptRowsQueryResponse): DataGraph {
+    build(rows_result: BackwardsCompatibleConceptRowsResponse): DataGraph {
         let answers: DataConstraintAny[][] = [];
+        const blocks = backwardsCompatibility_getBlocks(rows_result.query!);
         rows_result.answers.forEach((row, answerIndex) => {
             let current_answer_edges = row.involvedBlocks.flatMap(branchIndex => {
-                return rows_result.query!.blocks[branchIndex].constraints.map((constraint, constraintIndex) => {
+                return blocks[branchIndex].constraints.map((constraint, constraintIndex) => {
                     return this.toDataConstraint(rows_result.query!, answerIndex, constraint, row.data, {
                         branch: branchIndex,
                         constraint: constraintIndex
@@ -278,7 +283,7 @@ class LogicalGraphBuilder {
         return {answers: answers};
     }
 
-    translate_vertex(structure: QueryStructure, structure_vertex: QueryVertex, answerIndex: number, data: ConceptRow): DataVertex {
+    translate_vertex(structure: BackwardsCompatiblePipeline, structure_vertex: QueryVertex, answerIndex: number, data: ConceptRow): DataVertex {
         switch (structure_vertex.tag) {
             case "variable": {
                 let name = getVariableName(structure, structure_vertex);
@@ -302,10 +307,13 @@ class LogicalGraphBuilder {
             case "value": {
                 return structure_vertex.value;
             }
+            case "namedRole": {
+                return structure_vertex.name;
+            }
         }
     }
 
-    private toDataConstraint(structure: QueryStructure, answerIndex: number, constraint: QueryConstraintAny, data: ConceptRow, coordinates: QueryCoordinates): DataConstraintAny {
+    private toDataConstraint(structure: BackwardsCompatiblePipeline, answerIndex: number, constraint: QueryConstraintAny, data: ConceptRow, coordinates: QueryCoordinates): DataConstraintAny {
         switch (constraint.tag) {
             case "isa": {
                 return {
@@ -408,6 +416,7 @@ class LogicalGraphBuilder {
                 }
             }
             case "expression": {
+                const assigned_vertex = Array.isArray(constraint.assigned) ? constraint.assigned[0] : constraint.assigned;
                 return {
                     tag: "expression",
                     textSpan: constraint.textSpan,
@@ -416,7 +425,7 @@ class LogicalGraphBuilder {
 
                     text: constraint.text,
                     arguments: constraint.arguments.map(vertex => this.translate_vertex(structure, vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
-                    assigned: constraint.assigned.map(vertex => this.translate_vertex(structure, vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
+                    assigned: this.translate_vertex(structure, assigned_vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable),
                 }
             }
             case "functionCall": {
@@ -500,4 +509,8 @@ class LogicalGraphBuilder {
             }
         }
     }
+}
+
+function backwardsCompatibility_getBlocks(pipeline: AnalyzedPipeline | QueryStructure | QueryStructureForStudio): AnalyzedConjunction[] | Analyz {
+    return pipeline.conjunctions != undefined ? pipeline.conjunctions : pipeline.blocks;
 }
