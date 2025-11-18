@@ -16,7 +16,7 @@ import { MatInputModule } from "@angular/material/input";
 import { MatSortModule } from "@angular/material/sort";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { of, switchMap } from "rxjs";
-import { isApiErrorResponse } from "typedb-driver-http";
+import { isApiErrorResponse } from "@typedb/driver-http";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { DriverState } from "../../service/driver-state.service";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";

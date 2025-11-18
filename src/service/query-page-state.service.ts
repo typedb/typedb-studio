@@ -8,7 +8,7 @@ import { inject, Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { BehaviorSubject, combineLatest, first, map, Observable, shareReplay, startWith } from "rxjs";
 import { DriverAction } from "../concept/action";
-import { createSigmaRenderer, GraphVisualiser } from "../framework/graph-visualiser";
+import {createSigmaRenderer, GraphVisualiser} from "../framework/graph-visualiser";
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
 import { newVisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
@@ -19,7 +19,7 @@ import { SchemaState } from "./schema-state.service";
 import { SnackbarService } from "./snackbar.service";
 import {
     ApiResponse, Attribute, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse, Value
-} from "typedb-driver-http";
+} from "@typedb/driver-http";
 import { VibeQueryState } from "./vibe-query-state.service";
 
 export type QueryType = "code" | "chat";

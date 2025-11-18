@@ -7,7 +7,7 @@
 import { inject, Injectable } from "@angular/core";
 import { FormBuilder, FormControl } from "@angular/forms";
 import { BehaviorSubject, switchMap } from "rxjs";
-import { isOkResponse } from "typedb-driver-http";
+import { isOkResponse } from "@typedb/driver-http";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { ChatMessage, CloudService } from "./cloud.service";
 import { DriverState } from "./driver-state.service";

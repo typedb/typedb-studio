@@ -1,4 +1,4 @@
-import { getVariableName, QueryConstraintAny, QueryStructure, QueryVertex } from "typedb-driver-http";
+import { getVariableName, ConstraintVertexAny } from "@typedb/driver-http";
 import {
     EdgeAttributes,
     EdgeMetadata,
@@ -21,13 +21,18 @@ import {
 } from "./graph";
 import {ILogicalGraphConverter} from "./visualisation";
 import {StudioConverterStructureParameters, StudioConverterStyleParameters} from "./config";
+import {
+    AnalyzedPipelineBackwardsCompatible,
+    backwardCompatible_expressionAssigned,
+    ConstraintBackwardsCompatible
+} from "./index";
 
-type QueryVertexOrSpecial = QueryVertex | VertexFunction | VertexExpression;
+type ConstraintVertexOrSpecial = ConstraintVertexAny | VertexFunction | VertexExpression;
 
 export class StudioConverter implements ILogicalGraphConverter {
 
     constructor(
-        public readonly graph: VisualGraph, public readonly queryStructure: QueryStructure,
+        public readonly graph: VisualGraph, public readonly queryStructure: AnalyzedPipelineBackwardsCompatible,
         public readonly isFollowupQuery: boolean, public readonly structureParameters: StudioConverterStructureParameters,
         public readonly styleParameters: StudioConverterStyleParameters
     ) {
@@ -81,11 +86,11 @@ export class StudioConverter implements ILogicalGraphConverter {
         return `${from_id}:${to_id}:${edge_type_id}`;
     }
 
-    private shouldCreateNode(queryVertex: QueryVertexOrSpecial) {
+    private shouldCreateNode(queryVertex: ConstraintVertexOrSpecial) {
         return shouldCreateNode(this.queryStructure, queryVertex);
     }
 
-    private shouldCreateEdge(edge: DataConstraintAny, from: QueryVertexOrSpecial, to: QueryVertexOrSpecial) {
+    private shouldCreateEdge(edge: DataConstraintAny, from: ConstraintVertexOrSpecial, to: ConstraintVertexOrSpecial) {
         return shouldCreateEdge(this.queryStructure, edge.queryConstraint, from, to);
     }
 
@@ -105,7 +110,7 @@ export class StudioConverter implements ILogicalGraphConverter {
         }
     }
 
-    private maybeCreateEdge(answerIndex: number, edge: DataConstraintAny, label: string, from: DataVertex, to: DataVertex, queryFrom: QueryVertexOrSpecial, queryTo: QueryVertexOrSpecial) {
+    private maybeCreateEdge(answerIndex: number, edge: DataConstraintAny, label: string, from: DataVertex, to: DataVertex, queryFrom: ConstraintVertexOrSpecial, queryTo: ConstraintVertexOrSpecial) {
         if (this.shouldCreateEdge(edge, queryFrom, queryTo)) {
             let fromKey = this.put_vertex(answerIndex, from, queryFrom);
             let toKey = this.put_vertex(answerIndex, to, queryTo);
@@ -124,7 +129,7 @@ export class StudioConverter implements ILogicalGraphConverter {
 
     // ILogicalGraphConverter
     // Vertices
-    put_vertex(answerIndex: number, vertex: DataVertex, queryVertex: QueryVertexOrSpecial): string {
+    put_vertex(answerIndex: number, vertex: DataVertex, queryVertex: ConstraintVertexOrSpecial): string {
         const key = vertexMapKey(vertex);
         if (this.shouldCreateNode(queryVertex)) {
             this.createVertex(key, this.vertexAttributes(vertex))
@@ -207,13 +212,11 @@ export class StudioConverter implements ILogicalGraphConverter {
             repr: constraint.text,
             vertex_map_key: expressionVertexKey
         }
-        expression.assigned
-            .forEach((assigned, i) => {
-                let queryVertex = constraint.queryConstraint.assigned[i];
-                let varNameOrId = getVariableName(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
-                let label = `assign[${varNameOrId}]`;
-                this.maybeCreateEdge(answerIndex, constraint, label, expressionVertex, assigned, expressionVertex, queryVertex);
-            });
+
+        let queryVertex = backwardCompatible_expressionAssigned(constraint.queryConstraint);
+        let varNameOrId = getVariableName(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
+        let label = `assign[${varNameOrId}]`;
+        this.maybeCreateEdge(answerIndex, constraint, label, expressionVertex, expression.assigned, expressionVertex, queryVertex);
         expression.arguments
             .forEach((arg, i) => {
                 let queryVertex = constraint.queryConstraint.arguments[i];
@@ -253,7 +256,7 @@ export class StudioConverter implements ILogicalGraphConverter {
     }
 }
 
-export function shouldCreateNode(structure: QueryStructure, vertex: QueryVertexOrSpecial) {
+export function shouldCreateNode(structure: AnalyzedPipelineBackwardsCompatible, vertex: ConstraintVertexOrSpecial) {
     return !(
         (vertex.tag === "label" ||
             (vertex.tag == "variable" && !structure.outputs.includes(vertex.id))
@@ -261,7 +264,7 @@ export function shouldCreateNode(structure: QueryStructure, vertex: QueryVertexO
     );
 }
 
-export function shouldCreateEdge(structure: QueryStructure, _edge: QueryConstraintAny, from: QueryVertexOrSpecial, to: QueryVertexOrSpecial) {
+export function shouldCreateEdge(structure: AnalyzedPipelineBackwardsCompatible, _edge: ConstraintBackwardsCompatible, from: ConstraintVertexOrSpecial, to: ConstraintVertexOrSpecial) {
     return shouldCreateNode(structure, from) && shouldCreateNode(structure, to);
 }
 
@@ -297,6 +300,6 @@ function functionVertexKeyFromArgsAndAssigned(constraint: DataConstraintFunction
 
 function expressionVertexKeyFromArgsAndAssigned(constraint: DataConstraintExpression): string {
     let args = constraint.arguments.map(v => vertexMapKey(v)).join(",");
-    let assigned = constraint.assigned.map(v => vertexMapKey(v)).join(",");
+    let assigned = constraint.assigned;
     return `${constraint.text}(${args}) -> ${assigned}`;
 }

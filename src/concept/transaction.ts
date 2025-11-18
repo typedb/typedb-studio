@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { TransactionType } from "typedb-driver-http";
+import { TransactionType } from "@typedb/driver-http";
 import { QueryRunAction } from "./action";
 
 export class Transaction {

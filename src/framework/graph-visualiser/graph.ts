@@ -1,12 +1,20 @@
 import {
-    Attribute, AttributeType, Concept, ConceptRow, ConceptRowsQueryResponse, Entity, EntityType, getVariableName,
-    InstantiableType, QueryConstraintAny, QueryConstraintComparison, QueryConstraintExpression, QueryConstraintFunction,
-    QueryConstraintHas, QueryConstraintIid, QueryConstraintIs, QueryConstraintIsa, QueryConstraintIsaExact, QueryConstraintKind,
-    QueryConstraintLabel, QueryConstraintLinks, QueryConstraintOwns, QueryConstraintPlays, QueryConstraintRelates,
-    QueryConstraintSpan, QueryConstraintSub, QueryConstraintSubExact, QueryConstraintValue, QueryStructure, QueryVertex,
+    Attribute, AttributeType, Concept, ConceptRow, ConceptRowsQueryResponse, Entity, EntityType, InstantiableType,
+    getVariableName, ConstraintComparison, ConstraintExpression, ConstraintFunction,
+    ConstraintHas, ConstraintIid, ConstraintIs, ConstraintIsa, ConstraintIsaExact, ConstraintKind,
+    ConstraintLabel, ConstraintLinks, ConstraintOwns, ConstraintPlays, ConstraintRelates,
+    ConstraintSpan, ConstraintSub, ConstraintSubExact, ConstraintValue, ConstraintVertexAny,
+    ConstraintExpressionLegacy, ConstraintLinksLegacy,
     Relation, RelationType, RoleType, ThingKind, Type, TypeKind, Value, ValueKind
-} from "typedb-driver-http";
+} from "@typedb/driver-http";
 import {MultiGraph} from "graphology";
+import {
+    ConstraintBackwardsCompatible,
+    ConceptRowsQueryResponseBackwardsCompatible,
+    backwardCompatible_expressionAssigned,
+    backwardCompatible_pipelineBlocks,
+    AnalyzedPipelineBackwardsCompatible
+} from "./index";
 
 ///////////////////////
 // TypeDB Data Graph //
@@ -33,14 +41,14 @@ export type DataConstraintAny = DataConstraintIsa | DataConstraintIsaExact | Dat
     DataConstraintExpression | DataConstraintFunction | DataConstraintComparison |
     DataConstraintIs | DataConstraintIid | DataConstraintLabel | DataConstraintValue | DataConstraintKind;
 
-export type DataConstraintSpan = QueryConstraintSpan;
+export type DataConstraintSpan = ConstraintSpan;
 
 // Instance
 export interface DataConstraintIsa {
     tag: "isa",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintIsa,
+    queryConstraint: ConstraintIsa,
 
     instance: Entity | Relation | Attribute | VertexUnavailable,
     type: InstantiableType | VertexUnavailable,
@@ -50,7 +58,7 @@ export interface DataConstraintIsaExact {
     tag: "isa!",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintIsaExact,
+    queryConstraint: ConstraintIsaExact,
 
     instance: Entity | Relation | Attribute | VertexUnavailable,
     type: InstantiableType | VertexUnavailable,
@@ -60,7 +68,7 @@ export interface DataConstraintHas {
     tag: "has",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintHas,
+    queryConstraint: ConstraintHas,
 
     owner: Entity | Relation | VertexUnavailable,
     attribute: Attribute | VertexUnavailable,
@@ -71,7 +79,7 @@ export interface DataConstraintLinks {
     tag: "links",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintLinks,
+    queryConstraint: ConstraintLinks | ConstraintLinksLegacy,
 
     relation: Relation | VertexUnavailable,
     player: Relation | Entity | VertexUnavailable,
@@ -83,7 +91,7 @@ export interface DataConstraintSub {
     tag: "sub",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintSub,
+    queryConstraint: ConstraintSub,
 
     subtype: Type | VertexUnavailable,
     supertype: Type | VertexUnavailable,
@@ -93,7 +101,7 @@ export interface DataConstraintSubExact {
     tag: "sub!",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintSubExact,
+    queryConstraint: ConstraintSubExact,
 
     subtype: Type | VertexUnavailable,
     supertype: Type | VertexUnavailable,
@@ -103,7 +111,7 @@ export interface DataConstraintOwns {
     tag: "owns",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintOwns,
+    queryConstraint: ConstraintOwns,
 
     owner: EntityType | RelationType | VertexUnavailable,
     attribute: AttributeType | VertexUnavailable,
@@ -113,7 +121,7 @@ export interface DataConstraintRelates {
     tag: "relates",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintRelates,
+    queryConstraint: ConstraintRelates,
 
     relation: RelationType | VertexUnavailable,
     role: RoleType | VertexUnavailable,
@@ -123,7 +131,7 @@ export interface DataConstraintPlays {
     tag: "plays",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintPlays,
+    queryConstraint: ConstraintPlays,
 
     player: EntityType | RelationType | VertexUnavailable,
     role: RoleType | VertexUnavailable,
@@ -134,18 +142,18 @@ export interface DataConstraintExpression {
     tag: "expression",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintExpression,
+    queryConstraint: ConstraintExpression | ConstraintExpressionLegacy,
 
     text: string,
     arguments: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
-    assigned: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
+    assigned: (Entity | Relation | Attribute | Value | VertexUnavailable),
 }
 
 export interface DataConstraintFunction {
     tag: "function",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintFunction,
+    queryConstraint: ConstraintFunction,
 
     name: string,
     arguments: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
@@ -156,7 +164,7 @@ export interface DataConstraintComparison {
     tag: "comparison",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintComparison,
+    queryConstraint: ConstraintComparison,
 
     lhs: Value | Attribute | VertexUnavailable,
     rhs: Value | Attribute | VertexUnavailable,
@@ -167,7 +175,7 @@ export interface DataConstraintIs {
     tag: "is",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintIs,
+    queryConstraint: ConstraintIs,
 
     lhs: Concept | VertexUnavailable,
     rhs: Concept | VertexUnavailable,
@@ -177,7 +185,7 @@ export interface DataConstraintIid {
     tag: "iid",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintIid,
+    queryConstraint: ConstraintIid,
 
     concept: Concept | VertexUnavailable,
     iid: string,
@@ -187,7 +195,7 @@ export interface DataConstraintLabel {
     tag: "label",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintLabel,
+    queryConstraint: ConstraintLabel,
 
     type: Type | VertexUnavailable,
     label: string,
@@ -197,7 +205,7 @@ export interface DataConstraintValue {
     tag: "value",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintValue,
+    queryConstraint: ConstraintValue,
 
     attributeType: AttributeType | VertexUnavailable,
     valueType: string,
@@ -207,7 +215,7 @@ export interface DataConstraintKind {
     tag: "kind",
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
-    queryConstraint: QueryConstraintKind,
+    queryConstraint: ConstraintKind,
 
     kind: string,
     type: Type | VertexUnavailable,
@@ -254,7 +262,7 @@ export const newVisualGraph: () => VisualGraph = () => new MultiGraph<VertexAttr
 ///////////////////////////////////
 // TypeDB server -> logical graph
 ///////////////////////////////////
-export function constructGraphFromRowsResult(rows_result: ConceptRowsQueryResponse): DataGraph {
+export function constructGraphFromRowsResult(rows_result: ConceptRowsQueryResponseBackwardsCompatible): DataGraph {
     return new LogicalGraphBuilder().build(rows_result);
 }
 
@@ -262,23 +270,23 @@ class LogicalGraphBuilder {
     constructor() {
     }
 
-    build(rows_result: ConceptRowsQueryResponse): DataGraph {
+    build(rows_result: ConceptRowsQueryResponseBackwardsCompatible): DataGraph {
         let answers: DataConstraintAny[][] = [];
         rows_result.answers.forEach((row, answerIndex) => {
-            let current_answer_edges = row.involvedBlocks.flatMap(branchIndex => {
-                return rows_result.query!.blocks[branchIndex].constraints.map((constraint, constraintIndex) => {
+            let current_answer_edges = row.involvedBlocks!.flatMap(branchIndex => {
+                return backwardCompatible_pipelineBlocks(rows_result.query!)[branchIndex].constraints.map((constraint, constraintIndex) => {
                     return this.toDataConstraint(rows_result.query!, answerIndex, constraint, row.data, {
                         branch: branchIndex,
                         constraint: constraintIndex
                     });
-                });
+                }).filter(x => x != null);
             });
             answers.push(current_answer_edges);
         });
         return {answers: answers};
     }
 
-    translate_vertex(structure: QueryStructure, structure_vertex: QueryVertex, answerIndex: number, data: ConceptRow): DataVertex {
+    translate_vertex(structure: AnalyzedPipelineBackwardsCompatible, structure_vertex: ConstraintVertexAny, answerIndex: number, data: ConceptRow): DataVertex {
         switch (structure_vertex.tag) {
             case "variable": {
                 let name = getVariableName(structure, structure_vertex);
@@ -302,10 +310,13 @@ class LogicalGraphBuilder {
             case "value": {
                 return structure_vertex.value;
             }
+            case "namedRole": {
+                return { kind: "roleType", label: structure_vertex.name };
+            }
         }
     }
 
-    private toDataConstraint(structure: QueryStructure, answerIndex: number, constraint: QueryConstraintAny, data: ConceptRow, coordinates: QueryCoordinates): DataConstraintAny {
+    private toDataConstraint(structure: AnalyzedPipelineBackwardsCompatible, answerIndex: number, constraint: ConstraintBackwardsCompatible, data: ConceptRow, coordinates: QueryCoordinates): DataConstraintAny | null{
         switch (constraint.tag) {
             case "isa": {
                 return {
@@ -408,6 +419,7 @@ class LogicalGraphBuilder {
                 }
             }
             case "expression": {
+                const queryAssigned = backwardCompatible_expressionAssigned(constraint);
                 return {
                     tag: "expression",
                     textSpan: constraint.textSpan,
@@ -416,7 +428,7 @@ class LogicalGraphBuilder {
 
                     text: constraint.text,
                     arguments: constraint.arguments.map(vertex => this.translate_vertex(structure, vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
-                    assigned: constraint.assigned.map(vertex => this.translate_vertex(structure, vertex, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable)),
+                    assigned: this.translate_vertex(structure, queryAssigned, answerIndex, data) as (Entity | Relation | Attribute | Value | VertexUnavailable),
                 }
             }
             case "functionCall": {
@@ -497,6 +509,11 @@ class LogicalGraphBuilder {
                     type: this.translate_vertex(structure, constraint.type, answerIndex, data) as (Type | VertexUnavailable),
                     kind: constraint.kind,
                 }
+            }
+            case "or":
+            case "not":
+            case "try": {
+                return null;
             }
         }
     }

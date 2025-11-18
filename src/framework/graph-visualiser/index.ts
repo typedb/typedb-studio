@@ -1,7 +1,13 @@
-import { ApiResponse, isApiErrorResponse, QueryConstraintAny, QueryConstraintSpan, QueryResponse, QueryStructure } from "typedb-driver-http";
+import {
+    ApiResponse, ConceptRowsQueryResponse, AnalyzedConjunction, AnalyzedPipeline,
+    isApiErrorResponse,
+    QueryResponse,
+    ConstraintAny, ConstraintExpression, ConstraintSpan, ConstraintVertexVariable,
+    ConstraintExpressionLegacy, ConstraintLinksLegacy,
+    QueryStructureLegacy, QueryConjunctionLegacy, ConceptRowsQueryResponseLegacy
+} from "@typedb/driver-http";
 import MultiGraph from "graphology";
 import Sigma from "sigma";
-import ForceSupervisor from "graphology-layout-force/worker";
 import { Settings as SigmaSettings } from "sigma/settings";
 import { StudioConverterStructureParameters, StudioConverterStyleParameters } from "./config";
 
@@ -59,7 +65,7 @@ export class GraphVisualiser {
 
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
             let converter = new StudioConverter(this.graph, res.ok.query, true, this.structureParameters, this.styleParameters);
-            let logicalGraph = constructGraphFromRowsResult(res.ok); // In memory, not visualised
+            let logicalGraph = constructGraphFromRowsResult(res.ok as ConceptRowsQueryResponse); // In memory, not visualised
             convertLogicalGraphWith(logicalGraph, converter);
         }
     }
@@ -103,8 +109,8 @@ export class GraphVisualiser {
         return this.getColorForConstraintIndex(branchIndex, constraintIndex);
     }
 
-    colorQuery(queryString: string, queryStructure: QueryStructure): string {
-        function shouldColourConstraint(constraint: QueryConstraintAny): boolean {
+    colorQuery(queryString: string, queryStructure: AnalyzedPipelineBackwardsCompatible): string {
+        function shouldColourConstraint(constraint: ConstraintAny | ConstraintExpressionLegacy | ConstraintLinksLegacy): boolean {
             switch (constraint.tag) {
                 case "isa": return shouldCreateEdge(queryStructure, constraint, constraint.instance, constraint.type);
                 case "isa!": return shouldCreateEdge(queryStructure, constraint, constraint.instance, constraint.type);
@@ -122,9 +128,10 @@ export class GraphVisualiser {
                 case "plays":
                     return shouldCreateEdge(queryStructure, constraint, constraint.player, constraint.role);
                 case "expression":
+
                     return (
                         constraint.arguments.map(arg => shouldCreateNode(queryStructure, arg)).reduce((a,b) => a || b, false)
-                        || constraint.assigned.map(assigned => shouldCreateNode(queryStructure, assigned)).reduce((a,b) => a || b, false)
+                        || shouldCreateNode(queryStructure, backwardCompatible_expressionAssigned(constraint))
                     );
                 case "functionCall":
                     return (
@@ -137,14 +144,19 @@ export class GraphVisualiser {
                 case "kind": return false;
                 case "label": return false;
                 case "value": return false;
+                case "or":  return false;
+                case "not": return false;
+                case "try": return false;
             }
         }
-        let spans: { span: QueryConstraintSpan, coordinates: QueryCoordinates}[] = [];
-        queryStructure.blocks.forEach((branch, branchIndex) => {
+        let spans: { span: ConstraintSpan, coordinates: QueryCoordinates}[] = [];
+
+        backwardCompatible_pipelineBlocks(queryStructure).forEach((branch, branchIndex) => {
             branch.constraints.forEach((constraint, constraintIndex) => {
                 if (shouldColourConstraint(constraint)) {
-                    if (constraint.textSpan != null) {
-                        spans.push({span: constraint.textSpan, coordinates: { branch: branchIndex, constraint: constraintIndex}});
+                    let span = "textSpan" in constraint ? constraint["textSpan"] : null;
+                    if (span != null) {
+                        spans.push({span, coordinates: { branch: branchIndex, constraint: constraintIndex}});
                     }
                 }
             })
@@ -192,3 +204,21 @@ export function createSigmaRenderer(containerEl: HTMLElement, sigma_settings: Si
     // Create the sigma
     return new Sigma(graph, containerEl, sigma_settings);
 }
+
+export function backwardCompatible_pipelineBlocks(pipeline : AnalyzedPipelineBackwardsCompatible): AnalyzedConjunction[] | QueryConjunctionLegacy[] {
+    if ("blocks" in pipeline) {
+        return pipeline["blocks"];
+    } else if ("conjunctions" in pipeline) {
+        return pipeline["conjunctions"];
+    } else {
+        throw new Error("Unreachable: pipeline neither had blocks nor conjunctions");
+    }
+}
+
+export function backwardCompatible_expressionAssigned(expr: ConstraintExpression | ConstraintExpressionLegacy): ConstraintVertexVariable {
+    return (Array.isArray(expr.assigned) ? expr.assigned[0] : expr.assigned) as ConstraintVertexVariable;
+}
+
+export type ConstraintBackwardsCompatible = ConstraintAny | ConstraintLinksLegacy | ConstraintExpressionLegacy;
+export type ConceptRowsQueryResponseBackwardsCompatible = ConceptRowsQueryResponse | ConceptRowsQueryResponseLegacy;
+export type AnalyzedPipelineBackwardsCompatible = AnalyzedPipeline | QueryStructureLegacy;
