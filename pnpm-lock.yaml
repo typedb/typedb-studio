@@ -81,8 +81,8 @@ importers:
         specifier: ^2
         version: 2.2.7
       '@typedb/driver-http':
-        specifier: file:/Users/krishnangovindraj/code/typedb-driver/http-ts/dist
-        version: dist@file:../typedb-driver/http-ts/dist
+        specifier: 3.7.0-rc3
+        version: 3.7.0-rc3
       chroma-js:
         specifier: 3.1.2
         version: 3.1.2
@@ -2790,6 +2790,9 @@ packages:
     resolution: {integrity: sha512-UUYHISyhCU3ZgN8yaear3cGATHb3SMuKHsQ/nVbHXcmnBf+LzQ/cQfhNG+rfaSHgqGKNEm2cOCLVLELStUQ1JA==}
     engines: {node: ^18.17.0 || >=20.5.0}
 
+  '@typedb/driver-http@3.7.0-rc3':
+    resolution: {integrity: sha512-Jh+gmO60tp0bmW3sqV7w84kmHOsx4JGikcxiXEvOTpfhGw3ZaWlWyG983m0Bao5Bo5CHEvLclzluSUogwlIWGA==}
+
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
 
@@ -3715,9 +3718,6 @@ packages:
 
   di@0.0.1:
     resolution: {integrity: sha512-uJaamHkagcZtHPqCIHZxnFrXlunQXgBOsZSUOWwFw31QJCAbyTBoHMW75YOTur5ZNx8pIeAKgf6GWIgaqqiLhA==}
-
-  dist@file:../typedb-driver/http-ts/dist:
-    resolution: {directory: ../typedb-driver/http-ts/dist, type: directory}
 
   dlv@1.1.3:
     resolution: {integrity: sha512-+HlytyjlPKnIG8XuRG8WvmBP8xs8P71y+SKKS6ZXWoEgLuePxtDoUEiH7WkdePWrQ5JBpE6aoVqfZfJUQkjXwA==}
@@ -9004,6 +9004,8 @@ snapshots:
       '@tufjs/canonical-json': 2.0.0
       minimatch: 9.0.5
 
+  '@typedb/driver-http@3.7.0-rc3': {}
+
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
@@ -10117,8 +10119,6 @@ snapshots:
   detect-node@2.1.0: {}
 
   di@0.0.1: {}
-
-  dist@file:../typedb-driver/http-ts/dist: {}
 
   dlv@1.1.3: {}
 
