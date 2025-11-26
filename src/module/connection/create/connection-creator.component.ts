@@ -36,6 +36,19 @@ const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
     else return { errorText: `Please specify http:// or https://` };
 }
 
+function isSafari(): boolean {
+    return window.navigator.userAgent.includes("AppleWebKit") && window.navigator.userAgent.includes("Safari");
+} 
+
+const safariCorsValidator: ValidatorFn = (control: AbstractControl<string>) => {
+    if (control.value.startsWith(`http://`) && isSafari()) return {
+        errorText:
+            "Safari blocks HTTP requests from HTTPS sites, which may prevent Studio from connecting to TypeDB CE. " 
+            + "Consider using Mozilla Firefox or a Chromium based browser such as Google Chrome."
+    };
+    else return null;
+}
+
 @Component({
     selector: "tp-connection-creator",
     templateUrl: "./connection-creator.component.html",
@@ -66,7 +79,7 @@ export class ConnectionCreatorComponent {
     });
     // TODO: support multiple addresses
     readonly advancedForm = this.formBuilder.group({
-        address: ["", [requiredValidator, addressValidator]],
+        address: ["", [requiredValidator, addressValidator, safariCorsValidator]],
         username: ["", [requiredValidator]],
         password: ["", [requiredValidator]],
     });
