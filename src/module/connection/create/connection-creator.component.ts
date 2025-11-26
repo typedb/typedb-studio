@@ -32,8 +32,17 @@ const connectionUrlValidator: ValidatorFn = (control: AbstractControl<string>) =
 };
 
 const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
-    if (control.value.startsWith(`http://`) || control.value.startsWith(`https://`)) return null;
-    else return { errorText: `Please specify http:// or https://` };
+    const value = control.value;
+    if (!value.startsWith(`http://`) && !value.startsWith(`https://`)) {
+        return { errorText: `Please specify http:// or https://` };
+    }
+    // Check for port format: http(s)://<address>:<port>
+    // Match http(s):// followed by address content, then :port (digits)
+    const portPattern = /^https?:\/\/.+:\d+/;
+    if (!portPattern.test(value)) {
+        return { errorText: `Format: http(s)://<address>:<port>` };
+    }
+    return null;
 }
 
 function isSafari(): boolean {
