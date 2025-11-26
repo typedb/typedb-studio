@@ -37,7 +37,7 @@ const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
 }
 
 function isSafari(): boolean {
-    return window.navigator.userAgent.includes("AppleWebKit") && window.navigator.userAgent.includes("Safari");
+    return window.navigator.userAgent.includes("Safari");
 } 
 
 const safariCorsValidator: ValidatorFn = (control: AbstractControl<string>) => {
