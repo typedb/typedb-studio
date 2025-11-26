@@ -40,7 +40,7 @@ function isSafari(): boolean {
     return window.navigator.userAgent.includes("Safari");
 } 
 
-const safariCorsValidator: ValidatorFn = (control: AbstractControl<string>) => {
+const safariMixedContentValidator: ValidatorFn = (control: AbstractControl<string>) => {
     if (control.value.startsWith(`http://`) && isSafari()) return {
         errorText:
             "Safari blocks HTTP requests from HTTPS sites, which may prevent Studio from connecting to TypeDB CE. " 
@@ -79,7 +79,7 @@ export class ConnectionCreatorComponent {
     });
     // TODO: support multiple addresses
     readonly advancedForm = this.formBuilder.group({
-        address: ["", [requiredValidator, addressValidator, safariCorsValidator]],
+        address: ["", [requiredValidator, addressValidator, safariMixedContentValidator]],
         username: ["", [requiredValidator]],
         password: ["", [requiredValidator]],
     });
