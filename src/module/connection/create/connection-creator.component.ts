@@ -43,8 +43,8 @@ function isSafari(): boolean {
 const safariMixedContentValidator: ValidatorFn = (control: AbstractControl<string>) => {
     if (control.value.startsWith(`http://`) && isSafari()) return {
         errorText:
-            "Safari blocks HTTP requests from HTTPS sites, which may prevent Studio from connecting to TypeDB CE. " 
-            + "Consider using Mozilla Firefox or a Chromium based browser such as Google Chrome."
+            "Safari blocks HTTP requests from HTTPS sites. " 
+            + "Please use another browser such as Mozilla Firefox or Google Chrome."
     };
     else return null;
 }
