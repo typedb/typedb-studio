@@ -36,6 +36,19 @@ const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
     else return { errorText: `Please specify http:// or https://` };
 }
 
+function isSafari(): boolean {
+    return window.navigator.userAgent.includes("Safari");
+} 
+
+const safariMixedContentValidator: ValidatorFn = (control: AbstractControl<string>) => {
+    if (control.value.startsWith(`http://`) && isSafari()) return {
+        errorText:
+            "Safari blocks HTTP requests from HTTPS sites. " 
+            + "Please use another browser such as Mozilla Firefox or Google Chrome."
+    };
+    else return null;
+}
+
 @Component({
     selector: "tp-connection-creator",
     templateUrl: "./connection-creator.component.html",
@@ -66,7 +79,7 @@ export class ConnectionCreatorComponent {
     });
     // TODO: support multiple addresses
     readonly advancedForm = this.formBuilder.group({
-        address: ["", [requiredValidator, addressValidator]],
+        address: ["", [requiredValidator, addressValidator, safariMixedContentValidator]],
         username: ["", [requiredValidator]],
         password: ["", [requiredValidator]],
     });
