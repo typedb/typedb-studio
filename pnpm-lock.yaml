@@ -81,8 +81,8 @@ importers:
         specifier: ^2
         version: 2.2.7
       '@typedb/driver-http':
-        specifier: 3.7.0-rc3
-        version: 3.7.0-rc3
+        specifier: 3.7.0-rc4
+        version: 3.7.0-rc4
       chroma-js:
         specifier: 3.1.2
         version: 3.1.2
@@ -2790,8 +2790,8 @@ packages:
     resolution: {integrity: sha512-UUYHISyhCU3ZgN8yaear3cGATHb3SMuKHsQ/nVbHXcmnBf+LzQ/cQfhNG+rfaSHgqGKNEm2cOCLVLELStUQ1JA==}
     engines: {node: ^18.17.0 || >=20.5.0}
 
-  '@typedb/driver-http@3.7.0-rc3':
-    resolution: {integrity: sha512-Jh+gmO60tp0bmW3sqV7w84kmHOsx4JGikcxiXEvOTpfhGw3ZaWlWyG983m0Bao5Bo5CHEvLclzluSUogwlIWGA==}
+  '@typedb/driver-http@3.7.0-rc4':
+    resolution: {integrity: sha512-B4tmQebjSxVz0HM/GRGGUKYvZdGcmPA+zoD33QAgfiL+eYbxf0ilhFScZ6J9DX0Hk+B54bp1vprHFZ3b731XyQ==}
 
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
@@ -9004,7 +9004,7 @@ snapshots:
       '@tufjs/canonical-json': 2.0.0
       minimatch: 9.0.5
 
-  '@typedb/driver-http@3.7.0-rc3': {}
+  '@typedb/driver-http@3.7.0-rc4': {}
 
   '@types/body-parser@1.19.6':
     dependencies:
