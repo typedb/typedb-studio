@@ -109,7 +109,7 @@ export class GraphVisualiser {
         return this.getColorForConstraintIndex(branchIndex, constraintIndex);
     }
 
-    colorQuery(queryString: string, queryStructure: AnalyzedPipelineBackwardsCompatible): string {
+    colorQuery(queryString: string, queryStructure: AnalyzedPipelineBackCompat): string {
         function shouldColourConstraint(constraint: ConstraintAny | ConstraintExpressionLegacy | ConstraintLinksLegacy): boolean {
             switch (constraint.tag) {
                 case "isa": return shouldCreateEdge(queryStructure, constraint, constraint.instance, constraint.type);
@@ -131,7 +131,7 @@ export class GraphVisualiser {
 
                     return (
                         constraint.arguments.map(arg => shouldCreateNode(queryStructure, arg)).reduce((a,b) => a || b, false)
-                        || shouldCreateNode(queryStructure, backwardCompatible_expressionAssigned(constraint))
+                        || shouldCreateNode(queryStructure, backCompat_expressionAssigned(constraint))
                     );
                 case "functionCall":
                     return (
@@ -151,7 +151,7 @@ export class GraphVisualiser {
         }
         let spans: { span: ConstraintSpan, coordinates: QueryCoordinates}[] = [];
 
-        backwardCompatible_pipelineBlocks(queryStructure).forEach((branch, branchIndex) => {
+        backCompat_pipelineBlocks(queryStructure).forEach((branch, branchIndex) => {
             branch.constraints.forEach((constraint, constraintIndex) => {
                 if (shouldColourConstraint(constraint)) {
                     let span = "textSpan" in constraint ? constraint["textSpan"] : null;
@@ -205,7 +205,7 @@ export function createSigmaRenderer(containerEl: HTMLElement, sigma_settings: Si
     return new Sigma(graph, containerEl, sigma_settings);
 }
 
-export function backwardCompatible_pipelineBlocks(pipeline : AnalyzedPipelineBackwardsCompatible): AnalyzedConjunction[] | QueryConjunctionLegacy[] {
+export function backCompat_pipelineBlocks(pipeline : AnalyzedPipelineBackCompat): AnalyzedConjunction[] | QueryConjunctionLegacy[] {
     if ("blocks" in pipeline) {
         return pipeline["blocks"];
     } else if ("conjunctions" in pipeline) {
@@ -215,10 +215,10 @@ export function backwardCompatible_pipelineBlocks(pipeline : AnalyzedPipelineBac
     }
 }
 
-export function backwardCompatible_expressionAssigned(expr: ConstraintExpression | ConstraintExpressionLegacy): ConstraintVertexVariable {
+export function backCompat_expressionAssigned(expr: ConstraintExpression | ConstraintExpressionLegacy): ConstraintVertexVariable {
     return (Array.isArray(expr.assigned) ? expr.assigned[0] : expr.assigned) as ConstraintVertexVariable;
 }
 
-export type ConstraintBackwardsCompatible = ConstraintAny | ConstraintLinksLegacy | ConstraintExpressionLegacy;
-export type ConceptRowsQueryResponseBackwardsCompatible = ConceptRowsQueryResponse | ConceptRowsQueryResponseLegacy;
-export type AnalyzedPipelineBackwardsCompatible = AnalyzedPipeline | QueryStructureLegacy;
+export type ConstraintBackCompat = ConstraintAny | ConstraintLinksLegacy | ConstraintExpressionLegacy;
+export type ConceptRowsQueryResponseBackCompat = ConceptRowsQueryResponse | ConceptRowsQueryResponseLegacy;
+export type AnalyzedPipelineBackCompat = AnalyzedPipeline | QueryStructureLegacy;

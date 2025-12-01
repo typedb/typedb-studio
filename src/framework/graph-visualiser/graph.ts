@@ -9,11 +9,11 @@ import {
 } from "@typedb/driver-http";
 import {MultiGraph} from "graphology";
 import {
-    ConstraintBackwardsCompatible,
-    ConceptRowsQueryResponseBackwardsCompatible,
-    backwardCompatible_expressionAssigned,
-    backwardCompatible_pipelineBlocks,
-    AnalyzedPipelineBackwardsCompatible
+    ConstraintBackCompat,
+    ConceptRowsQueryResponseBackCompat,
+    backCompat_expressionAssigned,
+    backCompat_pipelineBlocks,
+    AnalyzedPipelineBackCompat
 } from "./index";
 
 ///////////////////////
@@ -262,7 +262,7 @@ export const newVisualGraph: () => VisualGraph = () => new MultiGraph<VertexAttr
 ///////////////////////////////////
 // TypeDB server -> logical graph
 ///////////////////////////////////
-export function constructGraphFromRowsResult(rows_result: ConceptRowsQueryResponseBackwardsCompatible): DataGraph {
+export function constructGraphFromRowsResult(rows_result: ConceptRowsQueryResponseBackCompat): DataGraph {
     return new LogicalGraphBuilder().build(rows_result);
 }
 
@@ -270,11 +270,11 @@ class LogicalGraphBuilder {
     constructor() {
     }
 
-    build(rows_result: ConceptRowsQueryResponseBackwardsCompatible): DataGraph {
+    build(rows_result: ConceptRowsQueryResponseBackCompat): DataGraph {
         let answers: DataConstraintAny[][] = [];
         rows_result.answers.forEach((row, answerIndex) => {
             let current_answer_edges = row.involvedBlocks!.flatMap(branchIndex => {
-                return backwardCompatible_pipelineBlocks(rows_result.query!)[branchIndex].constraints.map((constraint, constraintIndex) => {
+                return backCompat_pipelineBlocks(rows_result.query!)[branchIndex].constraints.map((constraint, constraintIndex) => {
                     return this.toDataConstraint(rows_result.query!, answerIndex, constraint, row.data, {
                         branch: branchIndex,
                         constraint: constraintIndex
@@ -286,7 +286,7 @@ class LogicalGraphBuilder {
         return {answers: answers};
     }
 
-    translate_vertex(structure: AnalyzedPipelineBackwardsCompatible, structure_vertex: ConstraintVertexAny, answerIndex: number, data: ConceptRow): DataVertex {
+    translate_vertex(structure: AnalyzedPipelineBackCompat, structure_vertex: ConstraintVertexAny, answerIndex: number, data: ConceptRow): DataVertex {
         switch (structure_vertex.tag) {
             case "variable": {
                 let name = getVariableName(structure, structure_vertex);
@@ -316,7 +316,7 @@ class LogicalGraphBuilder {
         }
     }
 
-    private toDataConstraint(structure: AnalyzedPipelineBackwardsCompatible, answerIndex: number, constraint: ConstraintBackwardsCompatible, data: ConceptRow, coordinates: QueryCoordinates): DataConstraintAny | null{
+    private toDataConstraint(structure: AnalyzedPipelineBackCompat, answerIndex: number, constraint: ConstraintBackCompat, data: ConceptRow, coordinates: QueryCoordinates): DataConstraintAny | null{
         switch (constraint.tag) {
             case "isa": {
                 return {
@@ -419,7 +419,7 @@ class LogicalGraphBuilder {
                 }
             }
             case "expression": {
-                const queryAssigned = backwardCompatible_expressionAssigned(constraint);
+                const queryAssigned = backCompat_expressionAssigned(constraint);
                 return {
                     tag: "expression",
                     textSpan: constraint.textSpan,

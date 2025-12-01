@@ -22,9 +22,9 @@ import {
 import {ILogicalGraphConverter} from "./visualisation";
 import {StudioConverterStructureParameters, StudioConverterStyleParameters} from "./config";
 import {
-    AnalyzedPipelineBackwardsCompatible,
-    backwardCompatible_expressionAssigned,
-    ConstraintBackwardsCompatible
+    AnalyzedPipelineBackCompat,
+    backCompat_expressionAssigned,
+    ConstraintBackCompat
 } from "./index";
 
 type ConstraintVertexOrSpecial = ConstraintVertexAny | VertexFunction | VertexExpression;
@@ -32,7 +32,7 @@ type ConstraintVertexOrSpecial = ConstraintVertexAny | VertexFunction | VertexEx
 export class StudioConverter implements ILogicalGraphConverter {
 
     constructor(
-        public readonly graph: VisualGraph, public readonly queryStructure: AnalyzedPipelineBackwardsCompatible,
+        public readonly graph: VisualGraph, public readonly queryStructure: AnalyzedPipelineBackCompat,
         public readonly isFollowupQuery: boolean, public readonly structureParameters: StudioConverterStructureParameters,
         public readonly styleParameters: StudioConverterStyleParameters
     ) {
@@ -213,7 +213,7 @@ export class StudioConverter implements ILogicalGraphConverter {
             vertex_map_key: expressionVertexKey
         }
 
-        let queryVertex = backwardCompatible_expressionAssigned(constraint.queryConstraint);
+        let queryVertex = backCompat_expressionAssigned(constraint.queryConstraint);
         let varNameOrId = getVariableName(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
         let label = `assign[${varNameOrId}]`;
         this.maybeCreateEdge(answerIndex, constraint, label, expressionVertex, expression.assigned, expressionVertex, queryVertex);
@@ -256,7 +256,7 @@ export class StudioConverter implements ILogicalGraphConverter {
     }
 }
 
-export function shouldCreateNode(structure: AnalyzedPipelineBackwardsCompatible, vertex: ConstraintVertexOrSpecial) {
+export function shouldCreateNode(structure: AnalyzedPipelineBackCompat, vertex: ConstraintVertexOrSpecial) {
     return !(
         (vertex.tag === "label" ||
             (vertex.tag == "variable" && !structure.outputs.includes(vertex.id))
@@ -264,7 +264,7 @@ export function shouldCreateNode(structure: AnalyzedPipelineBackwardsCompatible,
     );
 }
 
-export function shouldCreateEdge(structure: AnalyzedPipelineBackwardsCompatible, _edge: ConstraintBackwardsCompatible, from: ConstraintVertexOrSpecial, to: ConstraintVertexOrSpecial) {
+export function shouldCreateEdge(structure: AnalyzedPipelineBackCompat, _edge: ConstraintBackCompat, from: ConstraintVertexOrSpecial, to: ConstraintVertexOrSpecial) {
     return shouldCreateNode(structure, from) && shouldCreateNode(structure, to);
 }
 
