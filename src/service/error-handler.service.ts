@@ -1,6 +1,6 @@
 import { ErrorHandler, forwardRef, Inject, Injectable, Injector, NgZone } from '@angular/core';
 import { SnackbarService } from './snackbar.service';
-import { isApiErrorResponse } from 'typedb-driver-http';
+import { isApiErrorResponse } from '@typedb/driver-http';
 
 @Injectable()
 export class StudioErrorHandler implements ErrorHandler {
@@ -13,7 +13,7 @@ export class StudioErrorHandler implements ErrorHandler {
         console.error(err);
 
         let msg = ``;
-        // TODO: delete object check once we upgrade typedb-driver-http
+        // TODO: delete object check once we upgrade @typedb/driver-http
         if (typeof err === "object" && isApiErrorResponse(err)) {
             msg = err.err.message;
         } else {

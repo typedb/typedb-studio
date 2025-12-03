@@ -10,7 +10,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatDialogRef } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
-import { isApiErrorResponse } from "typedb-driver-http";
+import { isApiErrorResponse } from "@typedb/driver-http";
 import { Subject, switchMap } from "rxjs";
 import { FormActionsComponent, FormComponent, FormInputComponent, FormPasswordInputComponent, requiredValidator } from "../../../framework/form";
 import { ModalComponent } from "../../../framework/modal";
