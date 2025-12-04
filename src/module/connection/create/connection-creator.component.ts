@@ -12,7 +12,7 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { DriverParams, isApiErrorResponse, isBasicParams } from "typedb-driver-http";
+import { DriverParams, isApiErrorResponse, isBasicParams } from "@typedb/driver-http";
 import { CONNECTION_URL_PLACEHOLDER, ConnectionConfig, connectionUrl, parseConnectionUrlOrNull } from "../../../concept/connection";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
@@ -34,6 +34,19 @@ const connectionUrlValidator: ValidatorFn = (control: AbstractControl<string>) =
 const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
     if (control.value.startsWith(`http://`) || control.value.startsWith(`https://`)) return null;
     else return { errorText: `Please specify http:// or https://` };
+}
+
+function isSafari(): boolean {
+    return window.navigator.userAgent.includes("Safari");
+} 
+
+const safariMixedContentValidator: ValidatorFn = (control: AbstractControl<string>) => {
+    if (control.value.startsWith(`http://`) && isSafari()) return {
+        errorText:
+            "Safari blocks HTTP requests from HTTPS sites. " 
+            + "Please use another browser such as Mozilla Firefox or Google Chrome."
+    };
+    else return null;
 }
 
 @Component({
@@ -66,7 +79,7 @@ export class ConnectionCreatorComponent {
     });
     // TODO: support multiple addresses
     readonly advancedForm = this.formBuilder.group({
-        address: ["", [requiredValidator, addressValidator]],
+        address: ["", [requiredValidator, addressValidator, safariMixedContentValidator]],
         username: ["", [requiredValidator]],
         password: ["", [requiredValidator]],
     });

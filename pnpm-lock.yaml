@@ -80,6 +80,9 @@ importers:
       '@tauri-apps/plugin-opener':
         specifier: ^2
         version: 2.2.7
+      '@typedb/driver-http':
+        specifier: 3.7.0
+        version: 3.7.0
       chroma-js:
         specifier: 3.1.2
         version: 3.1.2
@@ -113,9 +116,6 @@ importers:
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
-      typedb-driver-http:
-        specifier: 0.0.1
-        version: 0.0.1
       typedb-web-common:
         specifier: workspace:*
         version: link:typedb-web/common
@@ -2789,6 +2789,9 @@ packages:
   '@tufjs/models@3.0.1':
     resolution: {integrity: sha512-UUYHISyhCU3ZgN8yaear3cGATHb3SMuKHsQ/nVbHXcmnBf+LzQ/cQfhNG+rfaSHgqGKNEm2cOCLVLELStUQ1JA==}
     engines: {node: ^18.17.0 || >=20.5.0}
+
+  '@typedb/driver-http@3.7.0':
+    resolution: {integrity: sha512-vFdyq7K/0MCU1QezoL3cJ6BrowG883d9Hvh6rtdgos4yN4qsQFTtLG0pnkA3H+1IENA5YWVq+YKuMfb9gq+Amg==}
 
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
@@ -5714,10 +5717,6 @@ packages:
 
   typed-assert@1.0.9:
     resolution: {integrity: sha512-KNNZtayBCtmnNmbo5mG47p1XsCyrx6iVqomjcZnec/1Y5GGARaxPs6r49RnSPeUP3YjNYiU9sQHAtY4BBvnZwg==}
-
-  typedb-driver-http@0.0.1:
-    resolution: {integrity: sha512-9rs1hC3Rvysw7pX8/DL3/fD5zwjgsZ8xLXFhVNKBCg02qMPUt82sz11mmJ1oMq2ximJt3/t2N+WpSLBQJKIRlg==}
-    engines: {node: '>=22.16 <23'}
 
   typescript@5.5.4:
     resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
@@ -9004,6 +9003,8 @@ snapshots:
     dependencies:
       '@tufjs/canonical-json': 2.0.0
       minimatch: 9.0.5
+
+  '@typedb/driver-http@3.7.0': {}
 
   '@types/body-parser@1.19.6':
     dependencies:
@@ -12379,8 +12380,6 @@ snapshots:
       mime-types: 2.1.35
 
   typed-assert@1.0.9: {}
-
-  typedb-driver-http@0.0.1: {}
 
   typescript@5.5.4: {}
 

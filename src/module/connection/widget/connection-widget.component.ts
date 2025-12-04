@@ -12,7 +12,7 @@ import { MatDividerModule } from "@angular/material/divider";
 import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { Router, RouterLink } from "@angular/router";
-import { Database } from "typedb-driver-http";
+import { Database } from "@typedb/driver-http";
 import { combineLatest, distinctUntilChanged, map } from "rxjs";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";

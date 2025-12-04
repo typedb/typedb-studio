@@ -12,7 +12,7 @@ import { ModalComponent } from "../../../framework/modal";
 import { DriverState } from "../../../service/driver-state.service";
 import { CodeSnippetComponent } from "../../../framework/code-snippet/code-snippet.component";
 import { filter, map, Observable } from "rxjs";
-import { isOkResponse } from "typedb-driver-http";
+import { isOkResponse } from "@typedb/driver-http";
 
 @Component({
     selector: "ts-schema-text-dialog",

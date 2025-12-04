@@ -1,4 +1,4 @@
-import { QueryVertex } from "typedb-driver-http";
+import { ConstraintVertexAny } from "@typedb/driver-http";
 import {
   DataGraph, DataVertex, DataConstraintAny, DataConstraintLinks, DataConstraintHas, DataConstraintIsa,
   DataConstraintOwns, DataConstraintRelates, DataConstraintPlays, DataConstraintSub, DataConstraintFunction,
@@ -20,7 +20,7 @@ export interface ILogicalGraphConverter {
   // TODO: Functional vertices & edges like expressions, comparisons & function calls
 
   // Vertices
-  put_vertex(answer_index: number, vertex: DataVertex, queryVertex: QueryVertex): void;
+  put_vertex(answer_index: number, vertex: DataVertex, queryVertex: ConstraintVertexAny): void;
 
   // Edges
   put_isa(answer_index: number, constraint: DataConstraintIsa): void;
