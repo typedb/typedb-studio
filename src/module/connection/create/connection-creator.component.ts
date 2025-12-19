@@ -47,7 +47,9 @@ function addressHasPort(address: string): boolean {
 }
 
 function isSafari(): boolean {
-    return window.navigator.userAgent.includes("Safari");
+    const ua = window.navigator.userAgent;
+    // Chrome's user agent contains "Safari", so we must exclude it
+    return ua.includes("Safari") && !ua.includes("Chrome") && !ua.includes("Chromium");
 } 
 
 const safariMixedContentValidator: ValidatorFn = (control: AbstractControl<string>) => {
