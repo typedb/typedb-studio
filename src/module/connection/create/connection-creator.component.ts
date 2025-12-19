@@ -36,13 +36,14 @@ const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
     if (!value.startsWith(`http://`) && !value.startsWith(`https://`)) {
         return { errorText: `Please specify http:// or https://` };
     }
+    return null;
+}
+
+function addressHasPort(address: string): boolean {
     // Check for port format: http(s)://<address>:<port>
     // Match http(s):// followed by address content, then :port (digits)
     const portPattern = /^https?:\/\/.+:\d+/;
-    if (!portPattern.test(value)) {
-        return { errorText: `Format: http(s)://<address>:<port>` };
-    }
-    return null;
+    return portPattern.test(address);
 }
 
 function isSafari(): boolean {
@@ -150,6 +151,12 @@ export class ConnectionCreatorComponent {
 
     get canSubmit() {
         return (this.form.dirty || this.advancedForm.dirty) && this.form.valid;
+    }
+
+    get addressMissingPort(): boolean {
+        const address = this.advancedForm.controls.address.value;
+        if (!address || this.advancedForm.controls.address.invalid) return false;
+        return !addressHasPort(address);
     }
 
     private buildConnectionConfigOrNull(): ConnectionConfig | null {

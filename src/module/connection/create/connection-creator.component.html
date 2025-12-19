@@ -20,6 +20,9 @@
               @if (advancedForm.controls.address.getError("errorText")) {
                 <mat-error>{{ advancedForm.controls.address.getError("errorText") }}</mat-error>
               }
+              @if (addressMissingPort) {
+                <mat-hint class="port-warning">No port specified - will use default (80 for http, 443 for https)</mat-hint>
+              }
             </mat-form-field>
           </div>
           <tp-form-input [form]="advancedForm" field="username" label="Username"/>
