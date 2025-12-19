@@ -32,12 +32,24 @@ const connectionUrlValidator: ValidatorFn = (control: AbstractControl<string>) =
 };
 
 const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
-    if (control.value.startsWith(`http://`) || control.value.startsWith(`https://`)) return null;
-    else return { errorText: `Please specify http:// or https://` };
+    const value = control.value;
+    if (!value.startsWith(`http://`) && !value.startsWith(`https://`)) {
+        return { errorText: `Please specify http:// or https://` };
+    }
+    return null;
+}
+
+function addressHasPort(address: string): boolean {
+    // Check for port format: http(s)://<address>:<port>
+    // Match http(s):// followed by address content, then :port (digits)
+    const portPattern = /^https?:\/\/.+:\d+/;
+    return portPattern.test(address);
 }
 
 function isSafari(): boolean {
-    return window.navigator.userAgent.includes("Safari");
+    const ua = window.navigator.userAgent;
+    // Chrome's user agent contains "Safari", so we must exclude it
+    return ua.includes("Safari") && !ua.includes("Chrome") && !ua.includes("Chromium");
 } 
 
 const safariMixedContentValidator: ValidatorFn = (control: AbstractControl<string>) => {
@@ -141,6 +153,12 @@ export class ConnectionCreatorComponent {
 
     get canSubmit() {
         return (this.form.dirty || this.advancedForm.dirty) && this.form.valid;
+    }
+
+    get addressMissingPort(): boolean {
+        const address = this.advancedForm.controls.address.value;
+        if (!address || this.advancedForm.controls.address.invalid) return false;
+        return !addressHasPort(address);
     }
 
     private buildConnectionConfigOrNull(): ConnectionConfig | null {
