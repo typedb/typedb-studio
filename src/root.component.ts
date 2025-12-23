@@ -34,7 +34,7 @@ export class RootComponent implements OnInit {
     );
     initialised = false;
 
-    constructor(analytics: AnalyticsService, private router: Router, private appData: AppData, private driver: DriverState, private snackbar: SnackbarService) {
+    constructor(private analytics: AnalyticsService, private router: Router, private appData: AppData, private driver: DriverState, private snackbar: SnackbarService) {
         this.informAnalyticsOnPageView(router, analytics);
     }
 
@@ -62,5 +62,9 @@ export class RootComponent implements OnInit {
         } else {
             this.initialised = true;
         }
+    }
+
+    ngAfterViewInit() {
+        this.analytics.google.loadScriptTag();
     }
 }

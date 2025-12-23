@@ -9,6 +9,8 @@ import { environment } from "../environments/environment";
 import posthog, { Properties } from "posthog-js/dist/module.no-external";
 import { AnalyticsBrowser, ID as CioID, UserTraits } from "@customerio/cdp-analytics-browser";
 
+const GOOGLE_TAG_ID = "G-SNVZCNLJ9R"; // used by Google Analytics
+
 @Injectable({
     providedIn: "root",
 })
@@ -54,6 +56,21 @@ export class AnalyticsService {
         },
         reset: () => {
             this._cio.reset();
+        },
+    };
+
+    google = {
+        loadScriptTag: () => {
+            if (environment.env !== "production") return;
+            const scriptEl = document.createElement("script");
+            scriptEl.src = `https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID}`;
+            const scriptEl2 = document.createElement("script");
+            scriptEl2.innerHTML = `window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '${GOOGLE_TAG_ID}');`;
+            document.head.appendChild(scriptEl);
+            document.head.appendChild(scriptEl2);
         },
     };
 }
