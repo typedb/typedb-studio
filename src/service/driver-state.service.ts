@@ -19,6 +19,7 @@ import {
     TypeDBHttpDriver, User, VersionResponse
 } from "@typedb/driver-http";
 import { FormBuilder } from "@angular/forms";
+import { QueryTypeDetector } from "./query-type-detector.service";
 
 export type DriverStatus = "disconnected" | "connecting" | "connected" | "reconnecting";
 
@@ -73,7 +74,7 @@ export class DriverState {
         shareReplay(1),
     );
 
-    constructor(private appData: AppData, private formBuilder: FormBuilder) {
+    constructor(private appData: AppData, private formBuilder: FormBuilder, private queryTypeDetector: QueryTypeDetector) {
         (window as any)["driverState"] = this;
     }
 
@@ -304,13 +305,51 @@ export class DriverState {
     }
 
     query(query: string): Observable<ApiResponse<QueryResponse>> {
-        const lockId = uuid();
-        const maybeOpenTransaction$ = this.autoTransactionEnabled$.value
-            ? this.openTransaction(this.transactionControls.value.type!, lockId)
-            : of({ ok: { transactionId: this.requireTransaction().id } });
+        if (this.autoTransactionEnabled$.value) {
+            return this.autoQuery(query);
+        } else {
+            return this.manualQuery(query);
+        }
+    }
+
+    /**
+     * Execute a query in auto mode with automatic transaction type detection.
+     * Delegates to QueryTypeDetector which handles retry escalation internally.
+     * On success: auto-commits for write/schema, auto-closes for read.
+     */
+    private autoQuery(query: string): Observable<ApiResponse<QueryResponse>> {
+        return this.queryTypeDetector.runWithAutoType(
+            query,
+            (transactionType) => this.executeQueryWithType(query, transactionType)
+        ).pipe(
+            tap(({ type, result }) => {
+                // Auto-commit for write/schema, auto-close for read
+                if (type !== "read" && isOkResponse(result)) {
+                    this.commitTransaction().subscribe();
+                } else {
+                    this.closeTransaction().subscribe();
+                }
+            }),
+            map(({ result }) => result),
+            catchError((err) => {
+                this.closeTransaction().subscribe();
+                throw err;
+            }),
+            takeUntil(this._stopSignal$)
+        );
+    }
+
+    /**
+     * Execute a query with a specific transaction type.
+     * Opens transaction, executes query, closes on error.
+     * Used as the callback for QueryTypeDetector.runWithAutoType().
+     */
+    private executeQueryWithType(query: string, transactionType: TransactionType): Observable<ApiResponse<QueryResponse>> {
         let queryRunAction: QueryRunAction;
         const driver = this.requireDriver();
-        return this.tryUseWriteLock(() => maybeOpenTransaction$.pipe(
+        const lockId = uuid();
+
+        return this.tryUseWriteLock(() => this.openTransaction(transactionType, lockId).pipe(
             tap(() => {
                 const transaction = this.requireTransaction();
                 queryRunAction = queryRunActionOf(query);
@@ -322,20 +361,44 @@ export class DriverState {
                 return fromPromise(driver.query(res.ok.transactionId, query));
             }),
             tap((res) => this.updateActionResult(queryRunAction, res)),
-            // TODO: maybe extract TransactionStateService
-            tap(() => {
-                const transaction = this.requireTransaction();
-                if (!this.autoTransactionEnabled$.value) this._transaction$.next(transaction);
-            }),
             tap((res) => {
-                if (this.autoTransactionEnabled$.value) {
-                    if (this.transactionControls.value.type !== "read" && isOkResponse(res)) this.commitTransaction(lockId).subscribe();
-                    else this.closeTransaction(lockId).subscribe();
-                }
+                // Throw API errors so retry logic can catch them
+                if (isApiErrorResponse(res)) throw res;
             }),
             catchError((err) => {
                 if (queryRunAction) this.updateActionResultUnexpectedError(queryRunAction, err);
-                if (this.autoTransactionEnabled$.value) this.closeTransaction(lockId).subscribe();
+                // Close transaction on error, then rethrow for retry logic
+                this.closeTransaction(lockId).subscribe();
+                throw err;
+            }),
+        ), lockId);
+    }
+
+    /**
+     * Execute a query in manual mode using the existing open transaction.
+     */
+    private manualQuery(query: string): Observable<ApiResponse<QueryResponse>> {
+        let queryRunAction: QueryRunAction;
+        const driver = this.requireDriver();
+        const lockId = uuid();
+
+        return this.tryUseWriteLock(() => of({ ok: { transactionId: this.requireTransaction().id } }).pipe(
+            tap(() => {
+                const transaction = this.requireTransaction();
+                queryRunAction = queryRunActionOf(query);
+                transaction.queryRuns.push(queryRunAction);
+                this._actionLog$.next(queryRunAction);
+            }),
+            switchMap((res) => {
+                return fromPromise(driver.query(res.ok.transactionId, query));
+            }),
+            tap((res) => this.updateActionResult(queryRunAction, res)),
+            tap(() => {
+                const transaction = this.requireTransaction();
+                this._transaction$.next(transaction);
+            }),
+            catchError((err) => {
+                if (queryRunAction) this.updateActionResultUnexpectedError(queryRunAction, err);
                 throw err;
             }),
             takeUntil(this._stopSignal$)

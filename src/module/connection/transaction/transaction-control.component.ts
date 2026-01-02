@@ -29,6 +29,7 @@ export class TransactionControlComponent {
     transactionTypes: TransactionType[] = ["read", "write", "schema"];
     operationModes: OperationMode[] = ["auto", "manual"];
     hasUncommittedChanges$ = this.driver.transactionHasUncommittedChanges$;
+    transactionTypeVisible$ = this.driver.transactionOperationModeChanges$.pipe(map((mode) => mode === "manual"));
     commitButtonDisabled$ = this.hasUncommittedChanges$.pipe(map(x => !x));
     transactionWidgetTooltip$ = this.hasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
     closeButtonDisabled$ = this.driver.transaction$.pipe(map(tx => !tx));
