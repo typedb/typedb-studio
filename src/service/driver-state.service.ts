@@ -5,7 +5,7 @@
  */
 
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, concatMap, distinctUntilChanged, filter, finalize, from, map, Observable, of, shareReplay, startWith, Subject, switchMap, takeUntil, tap } from "rxjs";
+import { BehaviorSubject, catchError, concatMap, distinctUntilChanged, filter, finalize, from, map, Observable, of, shareReplay, startWith, Subject, switchMap, takeUntil, tap, throwError } from "rxjs";
 import { fromPromise } from "rxjs/internal/observable/innerFrom";
 import { v4 as uuid } from "uuid";
 import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
@@ -325,14 +325,20 @@ export class DriverState {
             tap(({ type, result }) => {
                 // Auto-commit for write/schema, auto-close for read
                 if (type !== "read" && isOkResponse(result)) {
-                    this.commitTransaction().subscribe();
+                    this.commitTransaction().subscribe({
+                        error: (err) => console.error('Auto-commit failed:', err)
+                    });
                 } else {
-                    this.closeTransaction().subscribe();
+                    this.closeTransaction().subscribe({
+                        error: (err) => console.error('Auto-close failed:', err)
+                    });
                 }
             }),
             map(({ result }) => result),
             catchError((err) => {
-                this.closeTransaction().subscribe();
+                this.closeTransaction().subscribe({
+                    error: (closeErr) => console.error('Close on error failed:', closeErr)
+                });
                 throw err;
             }),
             takeUntil(this._stopSignal$)
@@ -368,8 +374,11 @@ export class DriverState {
             catchError((err) => {
                 if (queryRunAction) this.updateActionResultUnexpectedError(queryRunAction, err);
                 // Close transaction on error, then rethrow for retry logic
-                this.closeTransaction(lockId).subscribe();
-                throw err;
+                // Must wait for close to complete before rethrowing to avoid race with retry's openTransaction
+                return this.closeTransaction(lockId).pipe(
+                    catchError(() => of({})),  // Ignore close errors
+                    switchMap(() => throwError(() => err))
+                );
             }),
         ), lockId);
     }
