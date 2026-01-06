@@ -62,11 +62,31 @@ export class TransactionControlComponent {
 
     open() {
         if (!this.driver.transactionControls.value.type) throw new Error(INTERNAL_ERROR);
-        this.driver.openTransaction(this.driver.transactionControls.value.type).subscribe();
+        this.driver.openTransaction(this.driver.transactionControls.value.type).subscribe({
+            error: (err) => {
+                let msg = ``;
+                if (typeof err === "object" && "err" in err && err.err?.message) {
+                    msg = err.err.message;
+                } else {
+                    msg = err?.message ?? err?.toString() ?? `Unknown error`;
+                }
+                this.snackbar.errorPersistent(`Error: ${msg}\nCaused: Failed to open transaction.`);
+            }
+        });
     }
 
     commit() {
-        this.driver.commitTransaction().subscribe();
+        this.driver.commitTransaction().subscribe({
+            error: (err) => {
+                let msg = ``;
+                if (typeof err === "object" && "err" in err && err.err?.message) {
+                    msg = err.err.message;
+                } else {
+                    msg = err?.message ?? err?.toString() ?? `Unknown error`;
+                }
+                this.snackbar.errorPersistent(`Error: ${msg}\nCaused: Failed to commit transaction.`);
+            }
+        });
     }
 
     close() {

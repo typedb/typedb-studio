@@ -20,6 +20,7 @@ import {
 } from "@typedb/driver-http";
 import { FormBuilder } from "@angular/forms";
 import { QueryTypeDetector } from "./query-type-detector.service";
+import { SnackbarService } from "./snackbar.service";
 
 export type DriverStatus = "disconnected" | "connecting" | "connected" | "reconnecting";
 
@@ -74,7 +75,7 @@ export class DriverState {
         shareReplay(1),
     );
 
-    constructor(private appData: AppData, private formBuilder: FormBuilder, private queryTypeDetector: QueryTypeDetector) {
+    constructor(private appData: AppData, private formBuilder: FormBuilder, private queryTypeDetector: QueryTypeDetector, private snackbar: SnackbarService) {
         (window as any)["driverState"] = this;
     }
 
@@ -157,7 +158,7 @@ export class DriverState {
                 catchError((err) => {
                     this.connection$.next(null); // TODO: revisit - is an 'errored' connection config still valid?
                     this._status$.next("disconnected");
-                    throw err;
+                    return throwError(() => err);
                 }),
             );
         }, lockId);
@@ -272,7 +273,7 @@ export class DriverState {
             takeUntil(this._stopSignal$),
             catchError((err) => {
                 this.updateActionResultUnexpectedError(action, err);
-                throw err;
+                return throwError(() => err);
             }),
         ), lockId);
     }
@@ -321,7 +322,11 @@ export class DriverState {
                 // Auto-commit for write/schema, auto-close for read
                 if (type !== "read" && isOkResponse(result)) {
                     this.commitTransaction().subscribe({
-                        error: (err) => console.error('Auto-commit failed:', err)
+                        error: (err) => {
+                            console.error('Auto-commit failed:', err);
+                            const msg = this.extractErrorMessage(err);
+                            this.snackbar.errorPersistent(`Error: ${msg}\nCaused: Failed to commit transaction.`);
+                        }
                     });
                 } else {
                     this.closeTransaction().subscribe({
@@ -338,7 +343,7 @@ export class DriverState {
                 this.closeTransaction().subscribe({
                     error: (closeErr) => console.error('Close on error failed:', closeErr)
                 });
-                throw err;
+                return throwError(() => err);
             }),
             takeUntil(this._stopSignal$)
         );
@@ -401,7 +406,7 @@ export class DriverState {
             }),
             catchError((err) => {
                 if (queryRunAction) this.updateActionResultUnexpectedError(queryRunAction, err);
-                throw err;
+                return throwError(() => err);
             }),
             takeUntil(this._stopSignal$)
         ), lockId);
@@ -489,5 +494,13 @@ export class DriverState {
         action.completedAtTimestamp = Date.now();
         action.status = "error";
         action.result = err;
+    }
+
+    private extractErrorMessage(err: any): string {
+        if (isApiErrorResponse(err)) {
+            return err.err.message;
+        } else {
+            return err?.message ?? err?.toString() ?? `Unknown error`;
+        }
     }
 }
