@@ -117,8 +117,8 @@ export class QueryTypeDetector {
      * TSV8: Schema modification queries require schema transactions
      * TSV9: Data modification queries require write transactions
      */
-    private isWrongTransactionTypeError(err: any): boolean {
-        if (isApiErrorResponse(err)) {
+    private isWrongTransactionTypeError(err: unknown): boolean {
+        if (typeof err === "object" && err !== null && isApiErrorResponse(err as any)) {
             const errString = JSON.stringify(err);
             return errString.includes("TSV8") || errString.includes("TSV9");
         }

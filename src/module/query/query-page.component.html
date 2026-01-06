@@ -154,12 +154,12 @@
             @for (entry of state.history.entries; track entry) {
               <li class="history-entry">
                 <aside class="text-muted">
-                  <time>{{ entry.startedAtTimestamp | date:'shortTime' }}</time>
+                  <time>{{ entry.startedAtTimestamp | date:'HH:mm' }}</time>
                   <span class="bullet">•</span>
                   @if (isTransactionOperation(entry)) {
                     <p class="transaction-operation-type">{{ transactionOperationString(entry) }}</p>
                   } @else {
-                    <p class="transaction-operation-type">ran query</p>
+                    <p class="transaction-operation-type">{{ entry.status === "error" ? "query failed" : "ran query" }}</p>
                   }
                   <span class="flex-spacer"></span>
                   <div class="action-status">
