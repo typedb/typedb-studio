@@ -5,9 +5,9 @@
 [![GitHub release](https://img.shields.io/github/release/typedb/typedb-studio.svg)](https://github.com/typedb/typedb-studio/releases/latest)
 [![Discord](https://img.shields.io/discord/665254494820368395?color=7389D8&label=discord&logo=discord&logoColor=ffffff)](https://typedb.com/discord)
 
-TypeDB Studio is a graphical tool for managing and querying [TypeDB](https://typedb.com) databases.
+TypeDB Studio is an interactive visual environment for managing and querying [TypeDB](https://typedb.com) databases.
 
-With Studio, developers can efficiently manage databases, execute queries, and explore query results,
+With Studio, database users can efficiently manage databases, execute queries, and explore query results,
 all within a unified environment.
 
 - [Install TypeDB Studio Desktop](https://typedb.com/docs/home/install-tools#_studio)
