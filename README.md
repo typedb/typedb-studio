@@ -1,16 +1,18 @@
-# TypeDB Studio
+[![TypeDB](https://github.com/typedb/.github/raw/master/profile/banner.png)](https://typedb.com/)
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/5e9c0038-d5ec-48d8-8217-27654feae68c/deploy-status)](https://app.netlify.com/sites/typedb-studio/deploys)
 [![CircleCI](https://circleci.com/gh/typedb/typedb-studio/tree/master.svg?style=shield)](https://circleci.com/gh/typedb/typedb-studio/tree/master)
 [![GitHub release](https://img.shields.io/github/release/typedb/typedb-studio.svg)](https://github.com/typedb/typedb-studio/releases/latest)
 [![Discord](https://img.shields.io/discord/665254494820368395?color=7389D8&label=discord&logo=discord&logoColor=ffffff)](https://typedb.com/discord)
 
+# TypeDB Studio
+
 TypeDB Studio is an interactive visual environment for managing and querying [TypeDB](https://typedb.com) databases.
 
 With Studio, database users can efficiently manage databases, execute queries, and explore query results,
 all within a unified environment.
 
-- [Install TypeDB Studio Desktop](https://typedb.com/docs/home/install-tools#_studio)
+- [Install TypeDB Studio Desktop](https://typedb.com/docs/home/install/studio/)
 - [Open studio.typedb.com](https://studio.typedb.com)
 - [Read docs](https://typedb.com/docs/tools/studio)
 
