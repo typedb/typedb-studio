@@ -11,9 +11,10 @@ import { MatDialog } from "@angular/material/dialog";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { Router, RouterLink } from "@angular/router";
+import { RouterLink } from "@angular/router";
 import { Database } from "@typedb/driver-http";
 import { combineLatest, distinctUntilChanged, map } from "rxjs";
+import { ConfirmationModalComponent, ConfirmationModalData } from "../../../framework/modal/confirmation/confirmation-modal.component";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { DatabaseCreateDialogComponent } from "../../database/create-dialog/database-create-dialog.component";
@@ -61,7 +62,7 @@ export class ConnectionWidgetComponent implements OnInit {
     })));
 
     constructor(
-        public driver: DriverState, private router: Router, private snackbar: SnackbarService,
+        public driver: DriverState, private snackbar: SnackbarService,
         private dialog: MatDialog
     ) {}
 
@@ -79,9 +80,18 @@ export class ConnectionWidgetComponent implements OnInit {
     }
 
     signOut() {
-        this.driver.tryDisconnect().subscribe(() => {
-            this.snackbar.info(`Signed out`);
-            this.router.navigate(["/connect"]);
+        const dialogRef = this.dialog.open<ConfirmationModalComponent, ConfirmationModalData>(ConfirmationModalComponent, {
+            data: {
+                title: "Disconnect",
+                body: "Disconnecting will reload the page and clear all session data. Do you want to continue?",
+                confirmText: "Disconnect",
+            }
+        });
+        dialogRef.componentInstance.confirmed.subscribe(() => {
+            dialogRef.close();
+            this.driver.tryDisconnect().subscribe(() => {
+                window.location.href = "/connect";
+            });
         });
     }
 
