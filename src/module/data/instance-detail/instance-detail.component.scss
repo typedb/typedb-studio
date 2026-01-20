@@ -1,0 +1,126 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "colors";
+
+:host {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+}
+
+.detail-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.detail-content {
+    flex: 1;
+    overflow: auto;
+    padding: 16px;
+    scrollbar-width: thin;
+}
+
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.detail-section {
+    margin-bottom: 24px;
+
+    h6 {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 12px;
+    }
+
+    .text-muted {
+        color: colors.$grey;
+        font-size: 14px;
+    }
+}
+
+.attributes-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+
+    .attr-label {
+        width: 180px;
+        padding: 8px 12px;
+        font-size: 14px;
+        color: colors.$white;
+        font-weight: 500;
+        background: colors.$light-purple;
+        border-radius: 4px 0 0 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: top;
+    }
+
+    .attr-value {
+        padding: 8px 4px 8px 12px;
+        font-size: 14px;
+        color: colors.$grey;
+        background: rgba(colors.$light-purple, 0.3);
+        border-radius: 0 4px 4px 0;
+        vertical-align: top;
+        white-space: normal;
+    }
+
+    .value-row {
+        display: block;
+
+        &:not(:last-child) {
+            margin-bottom: 4px;
+        }
+    }
+
+    .value-row {
+        &:hover .copy-button {
+            opacity: 0.5;
+        }
+    }
+
+    .copy-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        margin-left: 4px;
+        vertical-align: text-bottom;
+        opacity: 0;
+        background: none;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        color: inherit;
+
+        i {
+            font-size: 11px;
+            line-height: 11px;
+            height: 11px;
+        }
+
+        &:hover {
+            opacity: 1 !important;
+            background-color: colors.$light-purple;
+        }
+    }
+}

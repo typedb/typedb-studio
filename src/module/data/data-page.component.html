@@ -1,0 +1,57 @@
+<ts-page-scaffold pageAvailability="ready">
+  <article class="data-page" style="display: flex; flex-direction: row;">
+    <!-- Left sidebar: Schema tool window -->
+    <ts-schema-tool-window
+      resizable
+      [percent]="20"
+      [mode]="'data'"
+      title="Types"
+    />
+
+    <!-- Main area: Tabs and content -->
+    <div class="main-content" resizable [percent]="80">
+      @if ((state.openTabs$ | async)!.length > 0) {
+        <mat-tab-group
+          [selectedIndex]="state.selectedTabIndex$.value"
+          (selectedIndexChange)="state.selectedTabIndex$.next($event)"
+          animationDuration="0ms"
+          class="type-tabs">
+          @for (tab of (state.openTabs$ | async); track getTabTrackId(tab); let i = $index) {
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <span class="tab-label">
+                  @if (tab.kind === 'type-table') {
+                    {{ tab.type.label }}
+                    @if (tab.totalCount > 0) {
+                      <span class="tab-count">({{ tab.totalCount }})</span>
+                    }
+                  } @else {
+                    {{ tab.type.label }}: {{ tab.instanceIID.substring(0, 8) }}...
+                  }
+                </span>
+                <button
+                  mat-icon-button
+                  class="tab-close-button"
+                  (click)="closeTab($event, i)"
+                  matTooltip="Close tab">
+                  <i class="fa-light fa-xmark"></i>
+                </button>
+              </ng-template>
+
+              @if (tab.kind === 'type-table') {
+                <ts-instance-table [tab]="tab" />
+              } @else {
+                <ts-instance-detail [type]="tab.type" [instanceIID]="tab.instanceIID" />
+              }
+            </mat-tab>
+          }
+        </mat-tab-group>
+      } @else {
+        <div class="empty-state">
+          <i class="fa-light fa-table"></i>
+          <p>Select a type from the left to view instances</p>
+        </div>
+      }
+    </div>
+  </article>
+</ts-page-scaffold>

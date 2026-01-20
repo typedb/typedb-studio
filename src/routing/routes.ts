@@ -16,6 +16,7 @@ import { QueryPageComponent } from "../module/query/query-page.component";
 import { UsersPageComponent } from "../module/user/users-page.component";
 import { AppData } from "../service/app-data.service";
 import { SchemaPageComponent } from "../module/schema/schema-page.component";
+import { DataPageComponent } from "../module/data/data-page.component";
 
 const connectGuard: CanActivateFn = (route) => {
     const [address, username] = [route.queryParamMap.get(ADDRESS), route.queryParamMap.get(USERNAME)];
@@ -37,6 +38,7 @@ export const routes: Routes = [
     { path: "connect", component: ConnectionCreatorComponent, canActivate: [connectGuard], title: "Connect" },
     { path: "query", component: QueryPageComponent, title: "Query" },
     { path: "schema", component: SchemaPageComponent, title: "Schema" },
+    { path: "data", component: DataPageComponent, title: "Data" },
     { path: "users", component: UsersPageComponent, title: "Users" },
     { path: "**", component: _404PageComponent, title: "404" },
 ];

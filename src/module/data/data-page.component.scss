@@ -1,0 +1,105 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "colors";
+@use "typography";
+@use "shapes";
+@use "mixins";
+
+.data-page {
+    height: calc(100% - 86px);
+    width: 100%;
+}
+
+.main-content {
+    @include mixins.card-appearance;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.type-tabs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    --mat-tab-label-text-tracking: 0.02em;
+
+    // Make tabs compact and left-aligned like IDE tabs
+    ::ng-deep .mat-mdc-tab-header {
+        background: rgba(colors.$black, 0.5);
+        border-bottom: 1px solid colors.$light-purple;
+    }
+
+    ::ng-deep .mat-mdc-tab-label-container {
+        flex-grow: 0;
+    }
+
+    ::ng-deep .mat-mdc-tab {
+        min-width: auto;
+        padding: 0 16px;
+        flex-grow: 0;
+    }
+
+    ::ng-deep .mat-mdc-tab-body-wrapper {
+        flex: 1;
+        overflow: hidden;
+    }
+
+    ::ng-deep .mat-mdc-tab-body-content {
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+    }
+}
+
+.tab-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tab-count {
+    font-size: 12px;
+    color: colors.$grey;
+}
+
+.tab-close-button {
+    margin-left: 4px;
+    margin-top: 4px;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+
+    i {
+        font-size: 12px;
+    }
+
+    &:hover {
+        background-color: colors.$light-purple;
+    }
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: colors.$grey;
+
+    i {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 16px;
+    }
+
+    p {
+        font-size: 14px;
+    }
+}
