@@ -12,10 +12,6 @@
 .schema-page {
     height: calc(100% - 86px);
     gap: 4px !important;
-
-    ::ng-deep app-drag-handle span {
-        display: none;
-    }
 }
 
 .tp-bento-container {

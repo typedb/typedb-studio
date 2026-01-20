@@ -690,3 +690,7 @@ tp-gcp-marketplace-integration, tp-aws-marketplace-integration, tp-azure-marketp
     color: rgba(255, 255, 255, 1);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+
+app-drag-handle span {
+    display: none !important;
+}
