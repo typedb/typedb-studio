@@ -5,7 +5,7 @@
  */
 
 import { AsyncPipe } from "@angular/common";
-import { AfterViewInit, Component, HostBinding, Input, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, HostBinding, Input, Output, EventEmitter, ViewChild } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -19,13 +19,15 @@ import { MatTree, MatTreeModule } from "@angular/material/tree";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { map } from "rxjs";
 import { MatMenuModule } from "@angular/material/menu";
-import { SchemaToolWindowState, SchemaTreeNode } from "../../../service/schema-tool-window-state.service";
+import { SchemaToolWindowState, SchemaTreeNode, SchemaTreeConceptNode } from "../../../service/schema-tool-window-state.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { AppData } from "../../../service/app-data.service";
 import { SchemaTreeNodeComponent } from "../tree-node/schema-tree-node.component";
 import { MatDialog } from "@angular/material/dialog";
 import { SchemaTextDialogComponent } from "../text-dialog/schema-text-dialog.component";
+import { SchemaConcept } from "../../../service/schema-state.service";
+import { DataEditorState } from "../../../service/data-editor-state.service";
 
 @Component({
     selector: "ts-schema-tool-window",
@@ -40,27 +42,58 @@ import { SchemaTextDialogComponent } from "../text-dialog/schema-text-dialog.com
 export class SchemaToolWindowComponent implements AfterViewInit {
 
     @Input() title = "Schema";
+    @Input() mode: "schema" | "data" = "schema";
     @HostBinding("class") readonly clazz = "schema-pane";
     @ViewChild("tree") tree!: MatTree<any>;
     refreshSchemaTooltip$ = this.state.schema.interactionDisabledReason$.pipe(map(x => x ? `` : `Refresh`));
     actionsButtonTooltip$ = this.state.schema.interactionDisabledReason$.pipe(map(x => x ? x : `More actions`));
 
     constructor(
-        public state: SchemaToolWindowState, public driver: DriverState, private snackbar: SnackbarService,
-        private appData: AppData, private dialog: MatDialog,
+        public state: SchemaToolWindowState,
+        public driver: DriverState,
+        private snackbar: SnackbarService,
+        private appData: AppData,
+        private dialog: MatDialog,
+        private dataEditorState: DataEditorState,
     ) {
     }
 
     ngAfterViewInit() {
         this.state.dataSource$.subscribe((dataSource) => {
-            dataSource.forEach( node => {
-                if (this.state.rootNodesCollapsed[node.label]) {
-                    this.tree.collapse(node);
-                } else {
-                    this.tree.expand(node);
-                }
+            // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
+            setTimeout(() => {
+                dataSource.forEach( node => {
+                    // In data mode, expand all recursively
+                    if (this.mode === "data") {
+                        this.expandNodeRecursively(node);
+                    } else {
+                        if (this.state.rootNodesCollapsed[node.label]) {
+                            this.tree.collapse(node);
+                        } else {
+                            this.tree.expand(node);
+                        }
+                    }
+                });
             });
         });
+
+        this.state.expandAll$.subscribe(() => {
+            setTimeout(() => {
+                // Use expandDescendants for each root node to expand all levels
+                this.state.dataSource$.value.forEach(node => this.tree.expandDescendants(node));
+            });
+        });
+
+        this.state.collapseAll$.subscribe(() => {
+            setTimeout(() => {
+                // Use collapseDescendants for each root node to collapse all levels
+                this.state.dataSource$.value.forEach(node => this.tree.collapseDescendants(node));
+            });
+        });
+    }
+
+    private expandNodeRecursively(node: SchemaTreeNode) {
+        this.tree.expandDescendants(node);
     }
 
     treeNodeClass(node: SchemaTreeNode): string {
@@ -86,6 +119,14 @@ export class SchemaToolWindowComponent implements AfterViewInit {
             const schemaToolWindowState = this.appData.viewState.schemaToolWindowState();
             schemaToolWindowState.rootNodesCollapsed = this.state.rootNodesCollapsed;
             this.appData.viewState.setSchemaToolWindowState(schemaToolWindowState);
+        }
+    }
+
+    onNodeClick(node: SchemaTreeNode, event: Event) {
+        // In data mode, clicking on the concept body opens a tab
+        if (this.mode === "data" && node.nodeKind === "concept") {
+            this.dataEditorState.openTypeTab(node.concept);
+            event.stopPropagation();
         }
     }
 
