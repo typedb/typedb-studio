@@ -15,11 +15,14 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { BehaviorSubject, Subscription } from "rxjs";
+import { MatDialog } from "@angular/material/dialog";
+import { Subject, Subscription } from "rxjs";
+import { debounceTime, distinctUntilChanged } from "rxjs/operators";
 import { TypeTableTab, DataEditorState, BreadcrumbItem } from "../../../service/data-editor-state.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { ApiResponse, Concept, ConceptRow, ConceptRowAnswer, isApiErrorResponse, QueryResponse } from "@typedb/driver-http";
 import { SnackbarService } from "../../../service/snackbar.service";
+import { AdvancedFilterDialogComponent, AdvancedFilterDialogData, AdvancedFilterDialogResult } from "./advanced-filter-dialog/advanced-filter-dialog.component";
 
 export interface InstanceRow {
     iid: string;
@@ -66,6 +69,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
     // Filter
     filterText = "";
     filterMode: "simple" | "advanced" = "simple";
+    private filterSubject = new Subject<string>();
 
     private subscriptions: Subscription[] = [];
 
@@ -73,12 +77,26 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         private driver: DriverState,
         private dataEditorState: DataEditorState,
         private snackbar: SnackbarService,
+        private dialog: MatDialog,
     ) {}
 
     ngOnInit() {
         this.buildColumns();
         this.fetchInstances();
         this.fetchTotalCount();
+
+        // Debounce filter input to avoid excessive server requests
+        this.subscriptions.push(
+            this.filterSubject.pipe(
+                debounceTime(300),
+                distinctUntilChanged()
+            ).subscribe(filterText => {
+                this.filterText = filterText;
+                this.currentPage = 0;
+                this.fetchInstances();
+                this.fetchTotalCount();
+            })
+        );
     }
 
     ngOnDestroy() {
@@ -135,7 +153,13 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                     clearTimeout(spinnerTimeout);
                     this.loading = false;
                     this.showSpinner = false;
-                    this.snackbar.errorPersistent(`Error fetching instances: ${err.message || err}`);
+                    let msg = ``;
+                    if (isApiErrorResponse(err)) {
+                        msg = err.err.message;
+                    } else {
+                        msg = err?.message ?? err?.toString() ?? `Unknown error`;
+                    }
+                    this.snackbar.errorPersistent(`Error fetching instances:\n${msg}`);
                     this.dataSource = [];
                 }
             });
@@ -239,9 +263,11 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
     private buildInstanceQuery(offset: number, limit: number): string {
         const type = this.tab.type;
+
+        // Use try blocks to make attribute fetching optional
         const attributeClauses = this.attributeColumns.map(attr =>
-            `$instance has ${attr} $${attr};`
-        ).join("\n        ");
+            `try { $instance has ${attr} $${attr}; };`
+        ).join("\n    ");
 
         let filterClause = "";
         if (this.filterText) {
@@ -264,17 +290,15 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         // Build select clause with all variables we want to return
         const selectVars = ["$instance", ...this.attributeColumns.map(attr => `$${attr}`)].join(", ");
 
-        return `
-match
+        const tabFilterLine = tabFilter ? `${tabFilter}\n    ` : "";
+        const filterLine = filterClause ? `${filterClause}\n    ` : "";
+
+        return `match
     $instance isa ${type.label};
-    ${tabFilter}
-    ${filterClause}
-    ${attributeClauses}
+    ${tabFilterLine}${filterLine}${attributeClauses}
 select ${selectVars};
 distinct;
-${sortClause}
-offset ${offset}; limit ${limit};
-        `.trim();
+${sortClause}offset ${offset}; limit ${limit};`.trim();
     }
 
     formatAttributeValue(value: any): string {
@@ -313,16 +337,45 @@ offset ${offset}; limit ${limit};
     }
 
     onFilterChange(filterText: string) {
-        this.filterText = filterText;
-        this.currentPage = 0; // Reset to first page
-        this.fetchInstances();
-        this.fetchTotalCount();
+        // Only auto-apply filter in simple mode
+        if (this.filterMode === "simple") {
+            this.filterSubject.next(filterText);
+        }
     }
 
-    onFilterModeChange(mode: "simple" | "advanced") {
-        this.filterMode = mode;
-        this.filterText = ""; // Clear filter when switching modes
+    openAdvancedFilterDialog() {
+        const dialogData: AdvancedFilterDialogData = {
+            typeLabel: this.tab.type.label,
+            attributeColumns: this.attributeColumns,
+            currentFilter: this.filterMode === "advanced" ? this.filterText : "",
+            tabFilter: this.tab.typeqlFilter || "",
+        };
+
+        const dialogRef = this.dialog.open<AdvancedFilterDialogComponent, AdvancedFilterDialogData, AdvancedFilterDialogResult>(
+            AdvancedFilterDialogComponent,
+            {
+                data: dialogData,
+                width: "600px",
+            }
+        );
+
+        dialogRef.afterClosed().subscribe(result => {
+            if (result) {
+                this.filterMode = "advanced";
+                this.filterText = result.filter;
+                this.currentPage = 0;
+                this.fetchInstances();
+                this.fetchTotalCount();
+            }
+        });
+    }
+
+    clearAdvancedFilter() {
+        this.filterMode = "simple";
+        this.filterText = "";
+        this.currentPage = 0;
         this.fetchInstances();
+        this.fetchTotalCount();
     }
 
     refresh() {

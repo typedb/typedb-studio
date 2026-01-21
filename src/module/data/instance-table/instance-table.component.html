@@ -1,33 +1,41 @@
 <div class="instance-table-container">
   <!-- Filter/Sort Bar -->
   <div class="filter-sort-bar card-header">
-    <div class="filter-controls">
-      <mat-button-toggle-group
-        [(value)]="filterMode"
-        (change)="onFilterModeChange($event.value)"
-        class="filter-mode-toggle">
-        <mat-button-toggle value="simple">Simple</mat-button-toggle>
-        <mat-button-toggle value="advanced">Advanced</mat-button-toggle>
-      </mat-button-toggle-group>
-
-      @if (filterMode === 'simple') {
-        <input
-          type="text"
-          placeholder="Search..."
-          [(ngModel)]="filterText"
-          (input)="onFilterChange(filterText)"
-          class="filter-input"
-        />
-      } @else {
-        <input
-          type="text"
-          placeholder="Enter TypeQL filter clause..."
-          [(ngModel)]="filterText"
-          (input)="onFilterChange(filterText)"
-          class="filter-input advanced"
-        />
-      }
+    <div class="search-input-wrapper">
+      <i class="fa-light fa-search search-icon"></i>
+      <input
+        type="text"
+        placeholder="Search"
+        [(ngModel)]="filterText"
+        (input)="onFilterChange(filterText)"
+        class="filter-input"
+      />
+      <button
+        mat-icon-button
+        class="filter-mode-button"
+        (click)="openAdvancedFilterDialog()"
+        matTooltip="Advanced TypeQL filter">
+        <i class="fa-light fa-code"></i>
+      </button>
     </div>
+
+    @if (filterMode === 'advanced' && filterText) {
+      <button
+        mat-stroked-button
+        class="active-filter-chip"
+        (click)="openAdvancedFilterDialog()"
+        matTooltip="Click to edit filter">
+        <i class="fa-light fa-filter"></i>
+        TypeQL filter active
+      </button>
+      <button
+        mat-icon-button
+        class="clear-filter-button"
+        (click)="clearAdvancedFilter()"
+        matTooltip="Clear filter">
+        <i class="fa-light fa-times"></i>
+      </button>
+    }
 
     <div class="flex-spacer"></div>
 

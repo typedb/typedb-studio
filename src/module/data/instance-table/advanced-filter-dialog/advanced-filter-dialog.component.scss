@@ -1,0 +1,97 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "colors";
+@use "shapes";
+
+.dialog-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 500px;
+}
+
+.description {
+    color: colors.$grey;
+    font-size: 14px;
+    margin: 0;
+
+    code {
+        background: colors.$light-purple;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: var(--font-family-code);
+    }
+}
+
+.filter-input-section,
+.preview-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    label {
+        font-size: 12px;
+        font-weight: 500;
+        color: colors.$grey;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+}
+
+.filter-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid colors.$light-purple;
+    border-radius: shapes.$border-radius;
+    background: colors.$black;
+    color: colors.$white;
+    font-family: var(--font-family-code);
+    font-size: 13px;
+    resize: vertical;
+    min-height: 60px;
+
+    &::placeholder {
+        color: colors.$grey;
+    }
+
+    &:focus {
+        outline: none;
+        border-color: colors.$purple;
+    }
+}
+
+.query-preview {
+    padding: 12px;
+    border: 1px solid colors.$light-purple;
+    border-radius: shapes.$border-radius;
+    background: colors.$deep-purple;
+    color: colors.$grey;
+    font-family: var(--font-family-code);
+    font-size: 12px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.dialog-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid colors.$light-purple;
+
+    .spacer {
+        flex: 1;
+    }
+
+    .clear-button {
+        color: colors.$grey;
+    }
+}

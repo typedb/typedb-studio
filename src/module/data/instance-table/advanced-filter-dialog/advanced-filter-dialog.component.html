@@ -1,0 +1,30 @@
+<tp-modal dialogTitle="Advanced Filter">
+  <div class="dialog-content">
+    <p class="description">
+      Add a TypeQL filter clause to refine your query. The <code>$instance</code> variable
+      represents each row in the table.
+    </p>
+
+    <div class="filter-input-section">
+      <label>Filter clause</label>
+      <textarea
+        [(ngModel)]="filterClause"
+        placeholder="e.g. $instance has age > 30;"
+        rows="3"
+        class="filter-textarea"
+      ></textarea>
+    </div>
+
+    <div class="preview-section">
+      <label>Query preview</label>
+      <pre class="query-preview">{{ previewQuery }}</pre>
+    </div>
+
+    <div class="dialog-actions">
+      <button mat-button (click)="clear()" class="clear-button">Clear</button>
+      <div class="spacer"></div>
+      <button mat-button (click)="close()">Cancel</button>
+      <button mat-flat-button color="primary" (click)="apply()">Apply Filter</button>
+    </div>
+  </div>
+</tp-modal>

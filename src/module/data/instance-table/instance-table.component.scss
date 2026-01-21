@@ -5,7 +5,6 @@
  */
 
 @use "colors";
-@use "typography";
 @use "shapes";
 
 .instance-table-container {
@@ -19,42 +18,97 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 16px;
+    padding: 6px 16px;
     border-bottom: 1px solid colors.$light-purple;
+    height: auto;
+    min-height: auto;
+    margin-bottom: 0;
 }
 
-.filter-controls {
+.search-input-wrapper {
+    flex: 1;
+    max-width: 400px;
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex: 1;
-}
 
-.filter-mode-toggle {
-    height: 32px;
-}
-
-.filter-input {
-    flex: 1;
-    padding: 6px 12px;
-    border: 1px solid colors.$light-purple;
-    border-radius: shapes.$border-radius;
-    background: colors.$black;
-    color: colors.$white;
-    font-size: 14px;
-
-    &::placeholder {
+    .search-icon {
+        position: absolute;
+        left: 10px;
         color: colors.$grey;
+        font-size: 14px;
+        pointer-events: none;
     }
 
-    &:focus {
-        outline: none;
-        border-color: colors.$purple;
+    .filter-input {
+        width: 100%;
+        padding: 6px 40px 6px 32px;
+        border: 1px solid colors.$light-purple;
+        border-radius: shapes.$border-radius;
+        background: colors.$black;
+        color: colors.$white;
+        font-family: var(--font-family-default);
+        font-size: 14px;
+
+        &::placeholder {
+            color: colors.$grey;
+        }
+
+        &:focus {
+            outline: none;
+            border-color: colors.$purple;
+        }
     }
 
-    &.advanced {
-        font-family: "Roboto Mono", monospace;
+    .filter-mode-button {
+        position: absolute;
+        right: 2px;
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: colors.$grey;
+
+        &:hover {
+            color: colors.$white;
+        }
+
+        i {
+            font-size: 14px;
+        }
+    }
+}
+
+.active-filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-color: colors.$purple;
+    color: colors.$purple;
+
+    i {
         font-size: 12px;
+    }
+}
+
+.clear-filter-button {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    padding: 0;
+    color: colors.$grey;
+
+    &:hover {
+        color: colors.$white;
+    }
+
+    i {
+        font-size: 14px;
     }
 }
 
@@ -125,6 +179,8 @@
 
     i {
         font-size: 48px;
+        width: 48px;
+        height: 48px;
         margin-bottom: 16px;
     }
 
