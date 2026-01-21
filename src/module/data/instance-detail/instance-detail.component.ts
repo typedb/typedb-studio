@@ -10,14 +10,43 @@ import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatButtonModule } from "@angular/material/button";
 import { MatTooltip, MatTooltipModule } from "@angular/material/tooltip";
 import { Clipboard } from "@angular/cdk/clipboard";
-import { SchemaConcept } from "../../../service/schema-state.service";
+import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
-import { ApiResponse, ConceptRowAnswer, isApiErrorResponse, QueryResponse } from "@typedb/driver-http";
+import { DataEditorState } from "../../../service/data-editor-state.service";
+import { ApiResponse, Concept, ConceptRowAnswer, Entity, isApiErrorResponse, QueryResponse, Relation, RoleType, Type } from "@typedb/driver-http";
+
+function isInstance(concept: Concept | undefined): concept is Entity | Relation {
+    return concept?.kind === "entity" || concept?.kind === "relation";
+}
+
+function isRoleType(concept: Concept | undefined): concept is RoleType {
+    return concept?.kind === "roleType";
+}
+
+function isType(concept: Concept | undefined): concept is Type {
+    return concept?.kind === "entityType" || concept?.kind === "relationType" || concept?.kind === "attributeType" || concept?.kind === "roleType";
+}
 
 interface AttributeData {
     type: string;
     values: string[];
+}
+
+interface RelationInstanceData {
+    relationTypeLabel: string;
+    relationIID: string;
+    roleplayers: RoleplayerData[];
+    attributesLoaded: boolean;
+}
+
+interface RoleplayerData {
+    roleLabel: string;
+    playerIID: string;
+    playerTypeLabel: string;
+    isSelf: boolean;
+    attributes: AttributeData[];
+    expanded: boolean;
 }
 
 @Component({
@@ -36,13 +65,34 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
     @Input({ required: true }) instanceIID!: string;
 
     attributes: AttributeData[] = [];
+    allRelations: RelationInstanceData[] = [];
+    relationTypes: string[] = [];
+    selectedRelationType: string | null = null; // null = "All"
     loading = false;
+    relationsLoading = false;
 
     constructor(
         private driver: DriverState,
         private snackbar: SnackbarService,
         private clipboard: Clipboard,
+        private schemaState: SchemaState,
+        private dataEditorState: DataEditorState,
     ) {}
+
+    get filteredRelations(): RelationInstanceData[] {
+        if (this.selectedRelationType === null) {
+            return this.allRelations;
+        }
+        return this.allRelations.filter(r => r.relationTypeLabel === this.selectedRelationType);
+    }
+
+    selectRelationType(type: string | null) {
+        this.selectedRelationType = type;
+    }
+
+    getRelationTypeCount(type: string): number {
+        return this.allRelations.filter(r => r.relationTypeLabel === type).length;
+    }
 
     copyValue(value: string, tooltip: MatTooltip) {
         this.clipboard.copy(value);
@@ -52,6 +102,7 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.fetchInstanceData();
+        this.fetchRelations();
     }
 
     ngOnDestroy() {
@@ -113,5 +164,233 @@ match
             type,
             values,
         }));
+    }
+
+    private fetchRelations() {
+        this.relationsLoading = true;
+
+        // Fetch all relations where this instance plays a role, along with all roleplayers
+        const query = `
+match
+    $instance iid ${this.instanceIID};
+    $rel links ($role: $instance);
+    $rel links ($otherRole: $player);
+    $player isa $playerType;
+        `.trim();
+
+        this.driver.query(query).subscribe({
+            next: (res: ApiResponse<QueryResponse>) => {
+                this.relationsLoading = false;
+
+                if (isApiErrorResponse(res)) {
+                    this.snackbar.errorPersistent(`Error fetching relations: ${res.err.message}`);
+                    return;
+                }
+
+                if (res.ok.answerType === "conceptRows") {
+                    const answers = (res.ok as any).answers as ConceptRowAnswer[];
+                    this.processRelations(answers);
+                }
+            },
+            error: (err) => {
+                this.relationsLoading = false;
+                const message = err?.message || (typeof err === "object" ? JSON.stringify(err) : String(err));
+                this.snackbar.errorPersistent(`Error fetching relations: ${message}`);
+            }
+        });
+    }
+
+    private processRelations(conceptRowAnswers: ConceptRowAnswer[]) {
+        // Build flat list of relation instances, keyed by IID
+        const instanceMap = new Map<string, RelationInstanceData>();
+        const typeSet = new Set<string>();
+
+        for (const answer of conceptRowAnswers) {
+            const row = answer.data;
+            const rel = row["rel"];
+            const otherRole = row["otherRole"];
+            const player = row["player"];
+            const playerType = row["playerType"];
+
+            if (!rel || rel.kind !== "relation") {
+                throw new Error(`Expected relation for $rel, got: ${JSON.stringify(rel)}`);
+            }
+            if (!isInstance(player)) {
+                throw new Error(`Expected entity or relation for $player, got: ${JSON.stringify(player)}`);
+            }
+            if (!isRoleType(otherRole)) {
+                throw new Error(`Expected role type for $otherRole, got: ${JSON.stringify(otherRole)}`);
+            }
+            if (!isType(playerType)) {
+                throw new Error(`Expected type for $playerType, got: ${JSON.stringify(playerType)}`);
+            }
+
+            const relTypeLabel = rel.type.label;
+            const relIID = rel.iid;
+            const roleLabel = otherRole.label;
+            const playerIID = player.iid;
+            const playerTypeLabel = playerType.label;
+
+            typeSet.add(relTypeLabel);
+
+            // Initialize relation instance if needed
+            if (!instanceMap.has(relIID)) {
+                instanceMap.set(relIID, {
+                    relationTypeLabel: relTypeLabel,
+                    relationIID: relIID,
+                    roleplayers: [],
+                    attributesLoaded: false,
+                });
+            }
+            const relInstance = instanceMap.get(relIID)!;
+
+            // Add roleplayer if not already present
+            const isSelf = playerIID === this.instanceIID;
+            const existingRoleplayer = relInstance.roleplayers.find(
+                rp => rp.playerIID === playerIID && rp.roleLabel === roleLabel
+            );
+            if (!existingRoleplayer) {
+                relInstance.roleplayers.push({
+                    roleLabel,
+                    playerIID,
+                    playerTypeLabel,
+                    isSelf,
+                    attributes: [],
+                    expanded: false,
+                });
+            }
+        }
+
+        // Store flat list and unique types
+        this.allRelations = Array.from(instanceMap.values());
+        this.relationTypes = Array.from(typeSet).sort();
+
+        // Load all roleplayer attributes upfront
+        this.loadAllRoleplayerAttributes();
+    }
+
+    openRoleplayerDetail(roleplayer: RoleplayerData, event: Event) {
+        event.stopPropagation();
+
+        const schema = this.schemaState.value$.value;
+        if (!schema) {
+            this.snackbar.errorPersistent("Schema not loaded");
+            return;
+        }
+
+        // Find the type in schema (could be entity or relation)
+        const playerType = schema.entities[roleplayer.playerTypeLabel] || schema.relations[roleplayer.playerTypeLabel];
+        if (!playerType) {
+            this.snackbar.errorPersistent(`Type '${roleplayer.playerTypeLabel}' not found in schema`);
+            return;
+        }
+
+        this.dataEditorState.openInstanceDetail(playerType, roleplayer.playerIID);
+    }
+
+    private loadAllRoleplayerAttributes() {
+        // Collect all non-self roleplayer IIDs from all instances
+        const allIIDs = new Set<string>();
+
+        for (const instance of this.allRelations) {
+            for (const rp of instance.roleplayers) {
+                if (!rp.isSelf) {
+                    allIIDs.add(rp.playerIID);
+                }
+            }
+        }
+
+        if (allIIDs.size === 0) {
+            for (const instance of this.allRelations) {
+                instance.attributesLoaded = true;
+            }
+            return;
+        }
+
+        // Build query for all roleplayers' attributes
+        const iidList = Array.from(allIIDs);
+        const iidConditions = iidList.map(iid => `{ $player iid ${iid}; }`).join(" or ");
+        const query = `
+match
+    ${iidConditions};
+    $player has $attr;
+        `.trim();
+
+        this.driver.query(query).subscribe({
+            next: (res: ApiResponse<QueryResponse>) => {
+                if (isApiErrorResponse(res)) {
+                    this.snackbar.errorPersistent(`Error fetching roleplayer attributes: ${res.err.message}`);
+                    return;
+                }
+
+                if (res.ok.answerType === "conceptRows") {
+                    const answers = (res.ok as any).answers as ConceptRowAnswer[];
+                    this.processAllRoleplayerAttributes(answers);
+                }
+                for (const instance of this.allRelations) {
+                    instance.attributesLoaded = true;
+                }
+            },
+            error: (err) => {
+                const message = err?.message || (typeof err === "object" ? JSON.stringify(err) : String(err));
+                this.snackbar.errorPersistent(`Error fetching roleplayer attributes: ${message}`);
+                for (const instance of this.allRelations) {
+                    instance.attributesLoaded = true;
+                }
+            }
+        });
+    }
+
+    private processAllRoleplayerAttributes(conceptRowAnswers: ConceptRowAnswer[]) {
+        // Build a map of player IID -> attribute type -> values
+        const playerAttrMap = this.buildPlayerAttributeMap(conceptRowAnswers);
+
+        // Assign attributes to all roleplayers across all instances
+        for (const instance of this.allRelations) {
+            for (const roleplayer of instance.roleplayers) {
+                if (roleplayer.isSelf) continue;
+
+                const attrMap = playerAttrMap.get(roleplayer.playerIID);
+                if (attrMap) {
+                    roleplayer.attributes = Array.from(attrMap.entries()).map(([type, values]) => ({
+                        type,
+                        values,
+                    }));
+                }
+            }
+        }
+    }
+
+    private buildPlayerAttributeMap(conceptRowAnswers: ConceptRowAnswer[]): Map<string, Map<string, string[]>> {
+        const playerAttrMap = new Map<string, Map<string, string[]>>();
+
+        for (const answer of conceptRowAnswers) {
+            const row = answer.data;
+            const player = row["player"];
+            const attr = row["attr"];
+
+            if (!isInstance(player)) {
+                throw new Error(`Expected entity or relation for $player, got: ${JSON.stringify(player)}`);
+            }
+            if (!attr || attr.kind !== "attribute") {
+                throw new Error(`Expected attribute for $attr, got: ${JSON.stringify(attr)}`);
+            }
+
+            const playerIID = player.iid;
+            const attrType = attr.type.label;
+            const attrValue = String(attr.value);
+
+            if (!playerAttrMap.has(playerIID)) {
+                playerAttrMap.set(playerIID, new Map());
+            }
+            const attrMap = playerAttrMap.get(playerIID)!;
+
+            if (!attrMap.has(attrType)) {
+                attrMap.set(attrType, []);
+            }
+            attrMap.get(attrType)!.push(attrValue);
+        }
+
+        return playerAttrMap;
     }
 }

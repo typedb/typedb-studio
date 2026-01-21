@@ -150,7 +150,8 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
     private async fetchTotalCount() {
         try {
-            const query = `match $x isa ${this.tab.type.label}; reduce $count = count;`;
+            const tabFilter = this.tab.typeqlFilter || "";
+            const query = `match $instance isa ${this.tab.type.label}; ${tabFilter} reduce $count = count;`;
 
             this.driver.query(query).subscribe({
                 next: (res: ApiResponse<QueryResponse>) => {
@@ -253,6 +254,9 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
             }
         }
 
+        // Tab-level TypeQL filter (e.g., for filtered relation views)
+        const tabFilter = this.tab.typeqlFilter || "";
+
         const sortClause = this.sortColumn && this.sortColumn !== "relations" && this.sortColumn !== "iid"
             ? `sort $${this.sortColumn} ${this.sortDirection};`
             : "";
@@ -263,6 +267,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         return `
 match
     $instance isa ${type.label};
+    ${tabFilter}
     ${filterClause}
     ${attributeClauses}
 select ${selectVars};

@@ -13,6 +13,7 @@ export interface TypeTableTab {
     type: SchemaConcept;
     totalCount: number;
     selectedInstanceIID: string | null;
+    typeqlFilter?: string;
 }
 
 export interface InstanceDetailTab {
@@ -90,6 +91,30 @@ export class DataEditorState {
                 newTabs[index] = { ...existingTab, totalCount: count };
                 this.openTabs$.next(newTabs);
             }
+        }
+    }
+
+    openFilteredTypeTab(type: SchemaConcept, typeqlFilter: string) {
+        const tabs = this.openTabs$.value;
+        // Check if a tab with the same type and filter already exists
+        const existing = tabs.find(t =>
+            t.kind === "type-table" &&
+            t.type.label === type.label &&
+            t.typeqlFilter === typeqlFilter
+        );
+
+        if (existing) {
+            this.selectedTabIndex$.next(tabs.indexOf(existing));
+        } else {
+            const newTab: TypeTableTab = {
+                kind: "type-table",
+                type,
+                totalCount: 0,
+                selectedInstanceIID: null,
+                typeqlFilter,
+            };
+            this.openTabs$.next([...tabs, newTab]);
+            this.selectedTabIndex$.next(tabs.length);
         }
     }
 }
