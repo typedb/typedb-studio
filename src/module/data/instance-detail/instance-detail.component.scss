@@ -40,15 +40,39 @@
 .detail-section {
     margin-bottom: 24px;
 
-    h6 {
-        font-size: 14px;
-        font-weight: 500;
-        margin-bottom: 12px;
-    }
-
     .text-muted {
         color: colors.$grey;
         font-size: 14px;
+    }
+}
+
+.section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0;
+    margin-bottom: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: colors.$white;
+
+    i {
+        font-size: 10px;
+        width: 10px;
+        color: colors.$grey;
+        position: relative;
+        top: -1px;
+    }
+
+    h6 {
+        font-size: 14px;
+        font-weight: 500;
+        margin: 0;
+    }
+
+    &:hover i {
+        color: colors.$white;
     }
 }
 

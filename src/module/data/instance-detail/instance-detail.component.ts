@@ -70,6 +70,8 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
     selectedRelationType: string | null = null; // null = "All"
     loading = false;
     relationsLoading = false;
+    attributesCollapsed = false;
+    relationsCollapsed = false;
 
     constructor(
         private driver: DriverState,

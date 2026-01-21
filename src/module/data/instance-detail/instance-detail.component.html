@@ -7,8 +7,12 @@
     } @else {
       <!-- Attributes Section -->
       <div class="detail-section">
-        <h6>Attributes</h6>
-        @if (attributes.length === 0) {
+        <button class="section-header" (click)="attributesCollapsed = !attributesCollapsed">
+          <i class="fa-light" [class.fa-chevron-down]="!attributesCollapsed" [class.fa-chevron-right]="attributesCollapsed"></i>
+          <h6>Attributes</h6>
+        </button>
+        @if (attributesCollapsed) {
+        } @else if (attributes.length === 0) {
           <p class="text-muted">No attributes</p>
         } @else {
           <table class="attributes-table">
@@ -40,8 +44,12 @@
 
       <!-- Relations Section -->
       <div class="detail-section">
-        <h6>Relations</h6>
-        @if (relationsLoading) {
+        <button class="section-header" (click)="relationsCollapsed = !relationsCollapsed">
+          <i class="fa-light" [class.fa-chevron-down]="!relationsCollapsed" [class.fa-chevron-right]="relationsCollapsed"></i>
+          <h6>Relations</h6>
+        </button>
+        @if (relationsCollapsed) {
+        } @else if (relationsLoading) {
           <div class="relations-loading">
             <mat-spinner diameter="24"></mat-spinner>
           </div>
