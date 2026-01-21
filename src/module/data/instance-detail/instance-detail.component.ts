@@ -14,7 +14,7 @@ import { SchemaConcept, SchemaState } from "../../../service/schema-state.servic
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { DataEditorState } from "../../../service/data-editor-state.service";
-import { ApiResponse, Concept, ConceptRowAnswer, Entity, isApiErrorResponse, QueryResponse, Relation, RoleType, Type } from "@typedb/driver-http";
+import { ApiResponse, Concept, ConceptRowAnswer, Entity, isApiErrorResponse, QueryResponse, Relation, RoleType } from "@typedb/driver-http";
 
 function isInstance(concept: Concept | undefined): concept is Entity | Relation {
     return concept?.kind === "entity" || concept?.kind === "relation";
@@ -22,10 +22,6 @@ function isInstance(concept: Concept | undefined): concept is Entity | Relation 
 
 function isRoleType(concept: Concept | undefined): concept is RoleType {
     return concept?.kind === "roleType";
-}
-
-function isType(concept: Concept | undefined): concept is Type {
-    return concept?.kind === "entityType" || concept?.kind === "relationType" || concept?.kind === "attributeType" || concept?.kind === "roleType";
 }
 
 interface AttributeData {
@@ -37,6 +33,7 @@ interface RelationInstanceData {
     relationTypeLabel: string;
     relationIID: string;
     roleplayers: RoleplayerData[];
+    attributes: AttributeData[];
     attributesLoaded: boolean;
 }
 
@@ -177,7 +174,6 @@ match
     $instance iid ${this.instanceIID};
     $rel links ($role: $instance);
     $rel links ($otherRole: $player);
-    $player isa $playerType;
         `.trim();
 
         this.driver.query(query).subscribe({
@@ -212,7 +208,6 @@ match
             const rel = row["rel"];
             const otherRole = row["otherRole"];
             const player = row["player"];
-            const playerType = row["playerType"];
 
             if (!rel || rel.kind !== "relation") {
                 throw new Error(`Expected relation for $rel, got: ${JSON.stringify(rel)}`);
@@ -223,15 +218,12 @@ match
             if (!isRoleType(otherRole)) {
                 throw new Error(`Expected role type for $otherRole, got: ${JSON.stringify(otherRole)}`);
             }
-            if (!isType(playerType)) {
-                throw new Error(`Expected type for $playerType, got: ${JSON.stringify(playerType)}`);
-            }
 
             const relTypeLabel = rel.type.label;
             const relIID = rel.iid;
             const roleLabel = otherRole.label;
             const playerIID = player.iid;
-            const playerTypeLabel = playerType.label;
+            const playerTypeLabel = player.type.label;
 
             typeSet.add(relTypeLabel);
 
@@ -241,6 +233,7 @@ match
                     relationTypeLabel: relTypeLabel,
                     relationIID: relIID,
                     roleplayers: [],
+                    attributes: [],
                     attributesLoaded: false,
                 });
             }
@@ -264,11 +257,17 @@ match
         }
 
         // Store flat list and unique types
-        this.allRelations = Array.from(instanceMap.values());
+        // Sort roleplayers so "this" (self) always appears last
+        const relations = Array.from(instanceMap.values());
+        for (const rel of relations) {
+            rel.roleplayers.sort((a, b) => (a.isSelf === b.isSelf ? 0 : a.isSelf ? 1 : -1));
+        }
+        this.allRelations = relations;
         this.relationTypes = Array.from(typeSet).sort();
 
-        // Load all roleplayer attributes upfront
+        // Load all roleplayer attributes and relation attributes upfront
         this.loadAllRoleplayerAttributes();
+        this.loadAllRelationAttributes();
     }
 
     openRoleplayerDetail(roleplayer: RoleplayerData, event: Event) {
@@ -341,6 +340,84 @@ match
                 }
             }
         });
+    }
+
+    private loadAllRelationAttributes() {
+        // Collect all relation IIDs
+        const allIIDs = this.allRelations.map(r => r.relationIID);
+
+        if (allIIDs.length === 0) {
+            return;
+        }
+
+        // Build query for all relations' attributes
+        const iidConditions = allIIDs.map(iid => `{ $rel iid ${iid}; }`).join(" or ");
+        const query = `
+match
+    ${iidConditions};
+    $rel has $attr;
+        `.trim();
+
+        this.driver.query(query).subscribe({
+            next: (res: ApiResponse<QueryResponse>) => {
+                if (isApiErrorResponse(res)) {
+                    this.snackbar.errorPersistent(`Error fetching relation attributes: ${res.err.message}`);
+                    return;
+                }
+
+                if (res.ok.answerType === "conceptRows") {
+                    const answers = (res.ok as any).answers as ConceptRowAnswer[];
+                    this.processAllRelationAttributes(answers);
+                }
+            },
+            error: (err) => {
+                const message = err?.message || (typeof err === "object" ? JSON.stringify(err) : String(err));
+                this.snackbar.errorPersistent(`Error fetching relation attributes: ${message}`);
+            }
+        });
+    }
+
+    private processAllRelationAttributes(conceptRowAnswers: ConceptRowAnswer[]) {
+        // Build a map of relation IID -> attribute type -> values
+        const relAttrMap = new Map<string, Map<string, string[]>>();
+
+        for (const answer of conceptRowAnswers) {
+            const row = answer.data;
+            const rel = row["rel"];
+            const attr = row["attr"];
+
+            if (!rel || rel.kind !== "relation") {
+                throw new Error(`Expected relation for $rel, got: ${JSON.stringify(rel)}`);
+            }
+            if (!attr || attr.kind !== "attribute") {
+                throw new Error(`Expected attribute for $attr, got: ${JSON.stringify(attr)}`);
+            }
+
+            const relIID = rel.iid;
+            const attrType = attr.type.label;
+            const attrValue = String(attr.value);
+
+            if (!relAttrMap.has(relIID)) {
+                relAttrMap.set(relIID, new Map());
+            }
+            const attrMap = relAttrMap.get(relIID)!;
+
+            if (!attrMap.has(attrType)) {
+                attrMap.set(attrType, []);
+            }
+            attrMap.get(attrType)!.push(attrValue);
+        }
+
+        // Assign attributes to all relations
+        for (const instance of this.allRelations) {
+            const attrMap = relAttrMap.get(instance.relationIID);
+            if (attrMap) {
+                instance.attributes = Array.from(attrMap.entries()).map(([type, values]) => ({
+                    type,
+                    values,
+                }));
+            }
+        }
     }
 
     private processAllRoleplayerAttributes(conceptRowAnswers: ConceptRowAnswer[]) {

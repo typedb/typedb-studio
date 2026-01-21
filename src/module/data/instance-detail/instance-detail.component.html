@@ -121,6 +121,18 @@
                     </div>
                   }
                 </div>
+
+                <!-- Relation attributes -->
+                @if (instance.attributes.length > 0) {
+                  <div class="relation-card-attrs">
+                    @for (attr of instance.attributes; track attr.type) {
+                      <div class="attr-row">
+                        <span class="attr-key">{{ attr.type }}:</span>
+                        <span class="attr-val">{{ attr.values.join(', ') }}</span>
+                      </div>
+                    }
+                  </div>
+                }
               </div>
             }
           </div>

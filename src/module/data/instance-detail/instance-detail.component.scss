@@ -244,6 +244,16 @@
     background: colors.$secondary-purple;
 }
 
+// Relation attributes section - at bottom of card
+.relation-card-attrs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    background: colors.$secondary-dark-grey;
+    border-top: 1px solid colors.$secondary-deep-grey;
+}
+
 // Roleplayer card - each roleplayer is a distinct row
 .roleplayer-card {
     display: flex;
