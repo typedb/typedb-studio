@@ -41,7 +41,7 @@
               @if (tab.kind === 'type-table') {
                 <ts-instance-table [tab]="tab" />
               } @else {
-                <ts-instance-detail [type]="tab.type" [instanceIID]="tab.instanceIID" />
+                <ts-instance-detail [type]="tab.type" [instanceIID]="tab.instanceIID" [breadcrumbs]="tab.breadcrumbs" />
               }
             </mat-tab>
           }

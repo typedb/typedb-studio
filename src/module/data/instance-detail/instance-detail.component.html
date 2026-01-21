@@ -1,4 +1,22 @@
 <div class="detail-panel">
+  @if (breadcrumbs.length > 0) {
+    <div class="breadcrumbs">
+      @for (crumb of breadcrumbs; track $index; let i = $index) {
+        <button class="breadcrumb-item" (click)="navigateToBreadcrumb(crumb, i)">
+          @if (crumb.kind === 'type-table') {
+            <i class="fa-light fa-table"></i>
+            {{ crumb.typeLabel }}
+          } @else {
+            {{ crumb.typeLabel }}: {{ crumb.instanceIID!.substring(0, 8) }}...
+          }
+        </button>
+        <i class="fa-light fa-chevron-right breadcrumb-separator"></i>
+      }
+      <span class="breadcrumb-current">
+        {{ type.label }}: {{ instanceIID.substring(0, 8) }}...
+      </span>
+    </div>
+  }
   <div class="detail-content">
     @if (loading) {
       <div class="loading-container">

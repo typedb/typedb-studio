@@ -70,13 +70,13 @@
 
 .tab-close-button {
     margin-left: 4px;
-    margin-top: 4px;
     width: 20px;
     height: 20px;
-    line-height: 20px;
 
     i {
         font-size: 12px;
+        position: relative;
+        top: 2px;
     }
 
     &:hover {

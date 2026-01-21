@@ -13,7 +13,7 @@ import { Clipboard } from "@angular/cdk/clipboard";
 import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
-import { DataEditorState } from "../../../service/data-editor-state.service";
+import { BreadcrumbItem, DataEditorState } from "../../../service/data-editor-state.service";
 import { ApiResponse, Concept, ConceptRowAnswer, Entity, isApiErrorResponse, QueryResponse, Relation, RoleType } from "@typedb/driver-http";
 
 function isInstance(concept: Concept | undefined): concept is Entity | Relation {
@@ -60,6 +60,7 @@ interface RoleplayerData {
 export class InstanceDetailComponent implements OnInit, OnDestroy {
     @Input({ required: true }) type!: SchemaConcept;
     @Input({ required: true }) instanceIID!: string;
+    @Input() breadcrumbs: BreadcrumbItem[] = [];
 
     attributes: AttributeData[] = [];
     allRelations: RelationInstanceData[] = [];
@@ -286,7 +287,17 @@ match
             return;
         }
 
-        this.dataEditorState.openInstanceDetail(playerType, roleplayer.playerIID);
+        // Build new breadcrumbs by appending current instance
+        const newBreadcrumbs: BreadcrumbItem[] = [
+            ...this.breadcrumbs,
+            { kind: "instance-detail", typeLabel: this.type.label, instanceIID: this.instanceIID }
+        ];
+
+        this.dataEditorState.openInstanceDetail(playerType, roleplayer.playerIID, newBreadcrumbs);
+    }
+
+    navigateToBreadcrumb(breadcrumb: BreadcrumbItem, index: number) {
+        this.dataEditorState.navigateToBreadcrumb(breadcrumb, index, this.breadcrumbs);
     }
 
     private loadAllRoleplayerAttributes() {

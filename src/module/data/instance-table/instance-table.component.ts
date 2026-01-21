@@ -16,7 +16,7 @@ import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { BehaviorSubject, Subscription } from "rxjs";
-import { TypeTableTab, DataEditorState } from "../../../service/data-editor-state.service";
+import { TypeTableTab, DataEditorState, BreadcrumbItem } from "../../../service/data-editor-state.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { ApiResponse, Concept, ConceptRow, ConceptRowAnswer, isApiErrorResponse, QueryResponse } from "@typedb/driver-http";
 import { SnackbarService } from "../../../service/snackbar.service";
@@ -293,7 +293,11 @@ offset ${offset}; limit ${limit};
     }
 
     onRowClick(row: InstanceRow) {
-        this.dataEditorState.openInstanceDetail(this.tab.type, row.iid);
+        // Create breadcrumb back to this table
+        const breadcrumbs: BreadcrumbItem[] = [
+            { kind: "type-table", typeLabel: this.tab.type.label }
+        ];
+        this.dataEditorState.openInstanceDetail(this.tab.type, row.iid, breadcrumbs);
     }
 
     onPageChange(event: any) {

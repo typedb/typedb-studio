@@ -6,7 +6,7 @@
 
 import { Injectable } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
-import { SchemaConcept } from "./schema-state.service";
+import { SchemaConcept, SchemaState } from "./schema-state.service";
 
 export interface TypeTableTab {
     kind: "type-table";
@@ -16,10 +16,17 @@ export interface TypeTableTab {
     typeqlFilter?: string;
 }
 
+export interface BreadcrumbItem {
+    kind: "type-table" | "instance-detail";
+    typeLabel: string;
+    instanceIID?: string;
+}
+
 export interface InstanceDetailTab {
     kind: "instance-detail";
     type: SchemaConcept;
     instanceIID: string;
+    breadcrumbs: BreadcrumbItem[];
 }
 
 export type DataTab = TypeTableTab | InstanceDetailTab;
@@ -30,6 +37,8 @@ export type DataTab = TypeTableTab | InstanceDetailTab;
 export class DataEditorState {
     openTabs$ = new BehaviorSubject<DataTab[]>([]);
     selectedTabIndex$ = new BehaviorSubject<number>(0);
+
+    constructor(private schemaState: SchemaState) {}
 
     openTypeTab(type: SchemaConcept) {
         const tabs = this.openTabs$.value;
@@ -63,7 +72,7 @@ export class DataEditorState {
         }
     }
 
-    openInstanceDetail(type: SchemaConcept, instanceIID: string) {
+    openInstanceDetail(type: SchemaConcept, instanceIID: string, breadcrumbs: BreadcrumbItem[] = []) {
         const tabs = this.openTabs$.value;
         // Check if a tab for this specific instance already exists
         const existing = tabs.find(t => t.kind === "instance-detail" && t.instanceIID === instanceIID);
@@ -75,9 +84,48 @@ export class DataEditorState {
                 kind: "instance-detail",
                 type,
                 instanceIID,
+                breadcrumbs,
             };
             this.openTabs$.next([...tabs, newTab]);
             this.selectedTabIndex$.next(tabs.length);
+        }
+    }
+
+    navigateToBreadcrumb(breadcrumb: BreadcrumbItem, breadcrumbIndex: number, allBreadcrumbs: BreadcrumbItem[]) {
+        const tabs = this.openTabs$.value;
+
+        if (breadcrumb.kind === "type-table") {
+            // Find and focus the type table tab
+            const existing = tabs.find(t => t.kind === "type-table" && t.type.label === breadcrumb.typeLabel);
+            if (existing) {
+                this.selectedTabIndex$.next(tabs.indexOf(existing));
+            } else {
+                // Reopen the type table tab
+                const schema = this.schemaState.value$.value;
+                if (schema) {
+                    const type = schema.entities[breadcrumb.typeLabel] || schema.relations[breadcrumb.typeLabel];
+                    if (type) {
+                        this.openTypeTab(type);
+                    }
+                }
+            }
+        } else if (breadcrumb.kind === "instance-detail" && breadcrumb.instanceIID) {
+            // Find and focus the instance detail tab
+            const existing = tabs.find(t => t.kind === "instance-detail" && t.instanceIID === breadcrumb.instanceIID);
+            if (existing) {
+                this.selectedTabIndex$.next(tabs.indexOf(existing));
+            } else {
+                // Reopen the instance detail tab with truncated breadcrumbs
+                const schema = this.schemaState.value$.value;
+                if (schema) {
+                    const type = schema.entities[breadcrumb.typeLabel] || schema.relations[breadcrumb.typeLabel];
+                    if (type) {
+                        // Keep only breadcrumbs before this one
+                        const truncatedBreadcrumbs = allBreadcrumbs.slice(0, breadcrumbIndex);
+                        this.openInstanceDetail(type, breadcrumb.instanceIID, truncatedBreadcrumbs);
+                    }
+                }
+            }
         }
     }
 

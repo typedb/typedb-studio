@@ -23,6 +23,58 @@
     overflow: hidden;
 }
 
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: colors.$light-purple;
+    border-bottom: 1px solid colors.$secondary-deep-grey;
+    flex-shrink: 0;
+}
+
+.breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: colors.$grey;
+    background: colors.$secondary-purple;
+    border: 1px solid colors.$secondary-deep-grey;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    i {
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &:hover {
+        color: colors.$white;
+        background: colors.$secondary-mid-deep-grey;
+        border-color: colors.$secondary-grey;
+    }
+}
+
+.breadcrumb-separator {
+    font-size: 10px;
+    color: colors.$secondary-grey;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.breadcrumb-current {
+    font-size: 13px;
+    font-weight: 500;
+    color: colors.$white;
+}
+
 .detail-content {
     flex: 1;
     overflow: auto;
