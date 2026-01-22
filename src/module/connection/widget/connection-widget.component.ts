@@ -82,9 +82,9 @@ export class ConnectionWidgetComponent implements OnInit {
     signOut() {
         const dialogRef = this.dialog.open<ConfirmationModalComponent, ConfirmationModalData>(ConfirmationModalComponent, {
             data: {
-                title: "Disconnect",
-                body: "Disconnecting will reload the page and clear all session data. Do you want to continue?",
-                confirmText: "Disconnect",
+                title: "Sign out",
+                body: "Signing out will reload the page and clear all session data. Do you want to continue?",
+                confirmText: "Sign out",
             }
         });
         dialogRef.componentInstance.confirmed.subscribe(() => {
