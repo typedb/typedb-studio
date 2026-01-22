@@ -22,7 +22,7 @@
     [class]="state.viewMode$.value"
   >
     <!-- This is the tree node template for leaf nodes -->
-    <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="16" [class]="treeNodeClass(node)">
+    <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="16" [class]="treeNodeClass(node)" [class.highlighted]="isNodeHighlighted(node)">
       <!-- use a disabled button to provide padding for tree leaf -->
       <button matIconButton disabled></button>
       <ts-schema-tree-node [data]="node" (click)="onNodeClick(node, $event)" [class.clickable]="mode === 'data' && node.nodeKind === 'concept'"/>
@@ -30,7 +30,7 @@
     <!-- This is the tree node template for expandable nodes -->
     <mat-tree-node *matTreeNodeDef="let node;when: state.hasChild" matTreeNodePadding
                     [matTreeNodePaddingIndent]="16"
-                    [cdkTreeNodeTypeaheadLabel]="node.name" [class]="treeNodeClass(node)">
+                    [cdkTreeNodeTypeaheadLabel]="node.name" [class]="treeNodeClass(node)" [class.highlighted]="isNodeHighlighted(node)">
       <button matIconButton aria-label="Toggle node" (click)="toggleNode(node)">
         <mat-icon class="mat-icon-rtl-mirror">
           {{tree.isExpanded(node) ? 'expand_more' : 'chevron_right'}}

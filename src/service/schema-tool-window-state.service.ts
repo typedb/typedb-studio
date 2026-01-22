@@ -70,6 +70,7 @@ export class SchemaToolWindowState {
     viewMode$ = new BehaviorSubject<"flat" | "hierarchical">(this.appData.viewState.schemaToolWindowState().viewMode);
     linksVisibility$ = new BehaviorSubject<Record<SchemaTreeLinkKind, boolean>>(this.appData.viewState.schemaToolWindowState().linksVisibility);
     rootNodesCollapsed: Record<SchemaTreeRootNode["label"], boolean> = this.appData.viewState.schemaToolWindowState().rootNodesCollapsed;
+    highlightedConceptLabel$ = new BehaviorSubject<string | null>(null);
 
     constructor(public schema: SchemaState, private appData: AppData) {
         schema.value$.subscribe(() => {

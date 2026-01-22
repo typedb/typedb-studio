@@ -17,7 +17,7 @@ import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
 import { MatTree, MatTreeModule } from "@angular/material/tree";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { map } from "rxjs";
+import { combineLatest, map } from "rxjs";
 import { MatMenuModule } from "@angular/material/menu";
 import { SchemaToolWindowState, SchemaTreeNode, SchemaTreeConceptNode } from "../../../service/schema-tool-window-state.service";
 import { DriverState } from "../../../service/driver-state.service";
@@ -56,6 +56,18 @@ export class SchemaToolWindowComponent implements AfterViewInit {
         private dialog: MatDialog,
         private dataEditorState: DataEditorState,
     ) {
+        // Subscribe to active tab changes to highlight the corresponding type in the schema tree
+        combineLatest([
+            this.dataEditorState.openTabs$,
+            this.dataEditorState.selectedTabIndex$
+        ]).subscribe(([tabs, selectedIndex]) => {
+            const activeTab = tabs[selectedIndex];
+            if (activeTab) {
+                this.state.highlightedConceptLabel$.next(activeTab.type.label);
+            } else {
+                this.state.highlightedConceptLabel$.next(null);
+            }
+        });
     }
 
     ngAfterViewInit() {
@@ -132,5 +144,10 @@ export class SchemaToolWindowComponent implements AfterViewInit {
 
     openSchemaTextDialog() {
         this.dialog.open(SchemaTextDialogComponent, { width: "80vw", height: "80vh" });
+    }
+
+    isNodeHighlighted(node: SchemaTreeNode): boolean {
+        if (node.nodeKind !== "concept") return false;
+        return node.concept.label === this.state.highlightedConceptLabel$.value;
     }
 }
