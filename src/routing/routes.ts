@@ -30,6 +30,7 @@ const connectGuard: CanActivateFn = (route) => {
         case "query": return of(router.parseUrl(`query`));
         case "explore": return of(router.parseUrl(`explore`));
         case "schema": return of(router.parseUrl(`schema`));
+        case "data": return of(router.parseUrl(`data`));
     }
 }
 
