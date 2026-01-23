@@ -34,11 +34,11 @@ const connectGuard: CanActivateFn = (route) => {
 }
 
 export const routes: Routes = [
-    { path: "", component: HomeComponent, title: "Home", pathMatch: "full" },
+    { path: "", component: HomeComponent, title: "Home", pathMatch: "full", data: { domain: "overview" } },
     { path: "connect", component: ConnectionCreatorComponent, canActivate: [connectGuard], title: "Connect" },
-    { path: "query", component: QueryPageComponent, title: "Query" },
-    { path: "schema", component: SchemaPageComponent, title: "Schema" },
-    { path: "data", component: DataPageComponent, title: "Data" },
-    { path: "users", component: UsersPageComponent, title: "Users" },
+    { path: "query", component: QueryPageComponent, title: "Query", data: { domain: "query" } },
+    { path: "schema", component: SchemaPageComponent, title: "Schema", data: { domain: "schema" } },
+    { path: "data", component: DataPageComponent, title: "Data", data: { domain: "data" } },
+    { path: "users", component: UsersPageComponent, title: "Users", data: { domain: "users" } },
     { path: "**", component: _404PageComponent, title: "404" },
 ];
