@@ -21,7 +21,10 @@
                 <mat-error>{{ advancedForm.controls.address.getError("errorText") }}</mat-error>
               }
               @if (addressMissingPort) {
-                <mat-hint class="port-warning">No port specified - will use default (80 for http, 443 for https)</mat-hint>
+                <mat-hint class="port-warning">No port specified — will use default (80 for http, 443 for https)</mat-hint>
+              }
+              @if (addressUsesGrpcPort) {
+                <mat-hint class="port-warning">Port 1729 is the gRPC port — TypeDB Studio uses HTTP, by default on port 8000</mat-hint>
               }
             </mat-form-field>
           </div>

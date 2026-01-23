@@ -161,6 +161,12 @@ export class ConnectionCreatorComponent {
         return !addressHasPort(address);
     }
 
+    get addressUsesGrpcPort(): boolean {
+        const address = this.advancedForm.controls.address.value;
+        if (!address || this.advancedForm.controls.address.invalid) return false;
+        return /:1729\b/.test(address);
+    }
+
     private buildConnectionConfigOrNull(): ConnectionConfig | null {
         if (this.form.invalid || !this.form.value.url) return null;
         const connectionParams = parseConnectionUrlOrNull(this.form.value.url);
