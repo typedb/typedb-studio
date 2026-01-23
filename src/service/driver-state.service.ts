@@ -6,12 +6,11 @@
 
 import { Injectable } from "@angular/core";
 import { BehaviorSubject, catchError, concatMap, distinctUntilChanged, filter, finalize, from, map, Observable, of, shareReplay, startWith, Subject, switchMap, takeUntil, tap, throwError } from "rxjs";
-import { fromPromise } from "rxjs/internal/observable/innerFrom";
 import { v4 as uuid } from "uuid";
 import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
 import { ConnectionConfig, databasesSortedByName, DEFAULT_DATABASE_NAME } from "../concept/connection";
 import { OperationMode, Transaction } from "../concept/transaction";
-import { requireValue } from "../framework/util/observable";
+import { fromPromiseWithRetry, requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { AppData } from "./app-data.service";
 import {
@@ -180,7 +179,7 @@ export class DriverState {
 
     refreshDatabaseList() {
         const driver = this.requireDriver();
-        return fromPromise(driver.getDatabases()).pipe(
+        return fromPromiseWithRetry(() => driver.getDatabases()).pipe(
             tap(res => {
                 if (isOkResponse(res)) this._databaseList$.next(databasesSortedByName(res.ok.databases));
             }),
@@ -190,7 +189,7 @@ export class DriverState {
 
     refreshUserList() {
         const driver = this.requireDriver();
-        return fromPromise(driver.getUsers()).pipe(
+        return fromPromiseWithRetry(() => driver.getUsers()).pipe(
             tap(res => {
                 if (isOkResponse(res)) this.userList$.next(res.ok.users);
             }),
@@ -223,7 +222,7 @@ export class DriverState {
 
     createAndSelectDatabase(name: string, lockId = uuid()) {
         const driver = this.requireDriver();
-        return this.tryUseWriteLock(() => fromPromise(driver.createDatabase(name)).pipe(
+        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.createDatabase(name)).pipe(
             tap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;
                 const databaseList = this.requireDatabaseList();
@@ -236,7 +235,7 @@ export class DriverState {
 
     deleteDatabase(database: Database, lockId = uuid()) {
         const driver = this.requireDriver();
-        return this.tryUseWriteLock(() => fromPromise(driver.deleteDatabase(database.name)).pipe(
+        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.deleteDatabase(database.name)).pipe(
             tap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;
                 const databaseList = this.requireDatabaseList();
@@ -250,7 +249,7 @@ export class DriverState {
     openTransaction(type: TransactionType, lockId = uuid()) {
         const databaseName = this.requireDatabase().name;
         const driver = this.requireDriver();
-        return this.tryUseWriteLock(() => fromPromise(driver.openTransaction(databaseName, type)).pipe(
+        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.openTransaction(databaseName, type)).pipe(
             tap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;
                 this._transaction$.next(new Transaction({ id: res.ok.transactionId, type: type }));
@@ -264,7 +263,7 @@ export class DriverState {
         const action = transactionOperationActionOf("commit");
         this._actionLog$.next(action);
         const driver = this.requireDriver();
-        return this.tryUseWriteLock(() => fromPromise(driver.commitTransaction(transactionId)).pipe(
+        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.commitTransaction(transactionId)).pipe(
             tap((res) => {
                 this.updateActionResult(action, res);
                 this._transaction$.next(null);
@@ -282,7 +281,7 @@ export class DriverState {
         const transactionId = this._transaction$.value?.id;
         if (transactionId == null) return of({});
         const driver = this.requireDriver();
-        return this.tryUseWriteLock(() => fromPromise(driver.closeTransaction(transactionId)).pipe(
+        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).pipe(
             tap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;
                 this._transaction$.next(null);
@@ -364,7 +363,7 @@ export class DriverState {
         return this.tryUseWriteLock(() => this.openTransaction(transactionType, lockId).pipe(
             switchMap((res) => {
                 if (isApiErrorResponse(res)) throw res;
-                return fromPromise(driver.query(res.ok.transactionId, query));
+                return fromPromiseWithRetry(() => driver.query(res.ok.transactionId, query));
             }),
             tap((res) => {
                 // Throw API errors so retry logic can catch them
@@ -397,7 +396,7 @@ export class DriverState {
                 this._actionLog$.next(queryRunAction);
             }),
             switchMap((res) => {
-                return fromPromise(driver.query(res.ok.transactionId, query));
+                return fromPromiseWithRetry(() => driver.query(res.ok.transactionId, query));
             }),
             tap((res) => this.updateActionResult(queryRunAction, res)),
             tap(() => {
@@ -415,17 +414,17 @@ export class DriverState {
     runBackgroundReadQueries(queries: string[]): Observable<ApiOkResponse<QueryResponse>> {
         const driver = this.requireDriver();
         const databaseName = this.requireDatabase().name;
-        return fromPromise(driver.openTransaction(databaseName, "read")).pipe(
+        return fromPromiseWithRetry(() => driver.openTransaction(databaseName, "read")).pipe(
             switchMap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;
                 return from(queries).pipe(
-                    concatMap(x => fromPromise(driver.query(res.ok.transactionId, x)).pipe(
+                    concatMap(x => fromPromiseWithRetry(() => driver.query(res.ok.transactionId, x)).pipe(
                         map(x => {
                             if (isApiErrorResponse(x)) throw x;
                             else return x;
                         })
                     )),
-                    finalize(() => fromPromise(driver.closeTransaction(res.ok.transactionId)).subscribe()),
+                    finalize(() => fromPromiseWithRetry(() => driver.closeTransaction(res.ok.transactionId)).subscribe()),
                 );
             }),
         );
@@ -433,32 +432,32 @@ export class DriverState {
 
     createUser(username: string, password: string) {
         const driver = this.requireDriver();
-        return fromPromise(driver.createUser(username, password));
+        return fromPromiseWithRetry(() => driver.createUser(username, password));
     }
 
     updateUser(username: string, password: string) {
         const driver = this.requireDriver();
-        return fromPromise(driver.updateUser(username, password));
+        return fromPromiseWithRetry(() => driver.updateUser(username, password));
     }
 
     deleteUser(username: string) {
         const driver = this.requireDriver();
-        return fromPromise(driver.deleteUser(username));
+        return fromPromiseWithRetry(() => driver.deleteUser(username));
     }
 
     getDatabaseSchemaText(): Observable<ApiResponse<string>> {
         const driver = this.requireDriver();
-        return fromPromise(driver.getDatabaseSchema(this.requireDatabase().name));
+        return fromPromiseWithRetry(() => driver.getDatabaseSchema(this.requireDatabase().name));
     }
 
     checkHealth() {
         const driver = this.requireDriver();
-        return fromPromise(driver.health());
+        return fromPromiseWithRetry(() => driver.health());
     }
 
     checkServerVersion() {
         const driver = this.requireDriver();
-        return fromPromise(driver.version());
+        return fromPromiseWithRetry(() => driver.version());
     }
 
     private parseServerVersionOrNull(raw: string | undefined): ServerVersion | null {
