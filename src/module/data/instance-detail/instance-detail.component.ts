@@ -26,6 +26,7 @@ function isRoleType(concept: Concept | undefined): concept is RoleType {
 
 interface AttributeData {
     type: string;
+    valueType: string;
     values: string[];
 }
 
@@ -143,26 +144,28 @@ match
 
     private processAttributes(conceptRowAnswers: ConceptRowAnswer[]) {
         // Group attributes by type
-        const attrMap = new Map<string, string[]>();
+        const attrMap = new Map<string, { valueType: string; values: string[] }>();
 
         for (const answer of conceptRowAnswers) {
             const row = answer.data;
             const attrConcept = row["attr"];
             if (attrConcept && attrConcept.kind === "attribute") {
                 const attrType = attrConcept.type?.label || "unknown";
+                const attrValueType = attrConcept.type?.valueType || "unknown";
                 const attrValue = String(attrConcept.value);
 
                 if (!attrMap.has(attrType)) {
-                    attrMap.set(attrType, []);
+                    attrMap.set(attrType, { valueType: attrValueType, values: [] });
                 }
-                attrMap.get(attrType)!.push(attrValue);
+                attrMap.get(attrType)!.values.push(attrValue);
             }
         }
 
         // Convert to AttributeData array
-        this.attributes = Array.from(attrMap.entries()).map(([type, values]) => ({
+        this.attributes = Array.from(attrMap.entries()).map(([type, data]) => ({
             type,
-            values,
+            valueType: data.valueType,
+            values: data.values,
         }));
     }
 
@@ -389,8 +392,8 @@ match
     }
 
     private processAllRelationAttributes(conceptRowAnswers: ConceptRowAnswer[]) {
-        // Build a map of relation IID -> attribute type -> values
-        const relAttrMap = new Map<string, Map<string, string[]>>();
+        // Build a map of relation IID -> attribute type -> { valueType, values }
+        const relAttrMap = new Map<string, Map<string, { valueType: string; values: string[] }>>();
 
         for (const answer of conceptRowAnswers) {
             const row = answer.data;
@@ -406,6 +409,7 @@ match
 
             const relIID = rel.iid;
             const attrType = attr.type.label;
+            const attrValueType = attr.type.valueType || "unknown";
             const attrValue = String(attr.value);
 
             if (!relAttrMap.has(relIID)) {
@@ -414,25 +418,26 @@ match
             const attrMap = relAttrMap.get(relIID)!;
 
             if (!attrMap.has(attrType)) {
-                attrMap.set(attrType, []);
+                attrMap.set(attrType, { valueType: attrValueType, values: [] });
             }
-            attrMap.get(attrType)!.push(attrValue);
+            attrMap.get(attrType)!.values.push(attrValue);
         }
 
         // Assign attributes to all relations
         for (const instance of this.allRelations) {
             const attrMap = relAttrMap.get(instance.relationIID);
             if (attrMap) {
-                instance.attributes = Array.from(attrMap.entries()).map(([type, values]) => ({
+                instance.attributes = Array.from(attrMap.entries()).map(([type, data]) => ({
                     type,
-                    values,
+                    valueType: data.valueType,
+                    values: data.values,
                 }));
             }
         }
     }
 
     private processAllRoleplayerAttributes(conceptRowAnswers: ConceptRowAnswer[]) {
-        // Build a map of player IID -> attribute type -> values
+        // Build a map of player IID -> attribute type -> { valueType, values }
         const playerAttrMap = this.buildPlayerAttributeMap(conceptRowAnswers);
 
         // Assign attributes to all roleplayers across all instances
@@ -442,17 +447,18 @@ match
 
                 const attrMap = playerAttrMap.get(roleplayer.playerIID);
                 if (attrMap) {
-                    roleplayer.attributes = Array.from(attrMap.entries()).map(([type, values]) => ({
+                    roleplayer.attributes = Array.from(attrMap.entries()).map(([type, data]) => ({
                         type,
-                        values,
+                        valueType: data.valueType,
+                        values: data.values,
                     }));
                 }
             }
         }
     }
 
-    private buildPlayerAttributeMap(conceptRowAnswers: ConceptRowAnswer[]): Map<string, Map<string, string[]>> {
-        const playerAttrMap = new Map<string, Map<string, string[]>>();
+    private buildPlayerAttributeMap(conceptRowAnswers: ConceptRowAnswer[]): Map<string, Map<string, { valueType: string; values: string[] }>> {
+        const playerAttrMap = new Map<string, Map<string, { valueType: string; values: string[] }>>();
 
         for (const answer of conceptRowAnswers) {
             const row = answer.data;
@@ -468,6 +474,7 @@ match
 
             const playerIID = player.iid;
             const attrType = attr.type.label;
+            const attrValueType = attr.type.valueType || "unknown";
             const attrValue = String(attr.value);
 
             if (!playerAttrMap.has(playerIID)) {
@@ -476,9 +483,9 @@ match
             const attrMap = playerAttrMap.get(playerIID)!;
 
             if (!attrMap.has(attrType)) {
-                attrMap.set(attrType, []);
+                attrMap.set(attrType, { valueType: attrValueType, values: [] });
             }
-            attrMap.get(attrType)!.push(attrValue);
+            attrMap.get(attrType)!.values.push(attrValue);
         }
 
         return playerAttrMap;

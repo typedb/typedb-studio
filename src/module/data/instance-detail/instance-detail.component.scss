@@ -130,27 +130,29 @@
 
 .attributes-table {
     width: 100%;
-    table-layout: fixed;
     border-collapse: separate;
     border-spacing: 0 8px;
 
     .attr-label {
-        width: 180px;
-        padding: 8px 12px;
-        font-size: 14px;
-        color: colors.$white;
+        width: 1%;
+        padding: 6px 10px;
+        font-size: 13px;
+        color: colors.$attribute-blue;
         font-weight: 500;
         background: colors.$light-purple;
         border-radius: 4px 0 0 4px;
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
         vertical-align: top;
+
+        .value-type {
+            color: colors.$grey;
+            font-weight: 400;
+        }
     }
 
     .attr-value {
-        padding: 8px 4px 8px 12px;
-        font-size: 14px;
+        padding: 6px 4px 6px 10px;
+        font-size: 13px;
         color: colors.$grey;
         background: rgba(colors.$light-purple, 0.3);
         border-radius: 0 4px 4px 0;
@@ -298,12 +300,13 @@
 
 // Relation attributes section - at bottom of card
 .relation-card-attrs {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
     padding: 10px 12px;
     background: colors.$secondary-dark-grey;
     border-top: 1px solid colors.$secondary-deep-grey;
+
+    .attributes-table {
+        border-spacing: 0 8px;
+    }
 }
 
 // Roleplayer card - each roleplayer is a distinct row

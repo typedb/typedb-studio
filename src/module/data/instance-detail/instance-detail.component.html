@@ -34,14 +34,10 @@
           <p class="text-muted">No attributes</p>
         } @else {
           <table class="attributes-table">
-            <colgroup>
-              <col style="width: 180px;">
-              <col>
-            </colgroup>
             <tbody>
               @for (attr of attributes; track attr.type) {
                 <tr>
-                  <td class="attr-label">{{ attr.type }}</td>
+                  <td class="attr-label">{{ attr.type }}<em class="value-type">, value {{ attr.valueType }}</em></td>
                   <td class="attr-value">
                     @for (value of attr.values; track $index) {
                       <div class="value-row">{{ value }}<button
@@ -143,12 +139,26 @@
                 <!-- Relation attributes -->
                 @if (instance.attributes.length > 0) {
                   <div class="relation-card-attrs">
-                    @for (attr of instance.attributes; track attr.type) {
-                      <div class="attr-row">
-                        <span class="attr-key">{{ attr.type }}:</span>
-                        <span class="attr-val">{{ attr.values.join(', ') }}</span>
-                      </div>
-                    }
+                    <table class="attributes-table">
+                      <tbody>
+                        @for (attr of instance.attributes; track attr.type) {
+                          <tr>
+                            <td class="attr-label">{{ attr.type }}<em class="value-type">, value {{ attr.valueType }}</em></td>
+                            <td class="attr-value">
+                              @for (value of attr.values; track $index) {
+                                <div class="value-row">{{ value }}<button
+                                    class="copy-button"
+                                    (click)="copyValue(value, tooltip)"
+                                    matTooltip="Copied"
+                                    matTooltipPosition="above"
+                                    matTooltipShowDelay="999999"
+                                    #tooltip="matTooltip"><i class="fa-light fa-copy"></i></button></div>
+                              }
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
                   </div>
                 }
               </div>
