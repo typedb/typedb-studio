@@ -7,6 +7,8 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
 import { SchemaConcept, SchemaState } from "./schema-state.service";
+import { AppData, PersistedDataTab } from "./app-data.service";
+import { DriverState } from "./driver-state.service";
 
 export interface TypeTableTab {
     kind: "type-table";
@@ -37,8 +39,136 @@ export type DataTab = TypeTableTab | InstanceDetailTab;
 export class DataEditorState {
     openTabs$ = new BehaviorSubject<DataTab[]>([]);
     selectedTabIndex$ = new BehaviorSubject<number>(0);
+    /** True while tabs are being restored (waiting for schema) */
+    restoringTabs$ = new BehaviorSubject<boolean>(false);
 
-    constructor(private schemaState: SchemaState) {}
+    private currentDatabaseName: string | null = null;
+
+    constructor(
+        private schemaState: SchemaState,
+        private appData: AppData,
+        private driverState: DriverState,
+    ) {
+        // Subscribe to database changes to save/restore tabs
+        this.driverState.database$.subscribe(database => {
+            this.onDatabaseChange(database?.name || null);
+        });
+
+        // Subscribe to tab changes to persist
+        this.openTabs$.subscribe(() => this.persistTabs());
+        this.selectedTabIndex$.subscribe(() => this.persistTabs());
+    }
+
+    private onDatabaseChange(databaseName: string | null) {
+        // Save current tabs before switching (if we had a database)
+        if (this.currentDatabaseName && this.currentDatabaseName !== databaseName) {
+            this.persistTabs();
+        }
+
+        // Clear tabs when disconnecting or switching databases
+        this.openTabs$.next([]);
+        this.selectedTabIndex$.next(0);
+        this.currentDatabaseName = databaseName;
+
+        // Restore tabs for the new database (if any)
+        if (databaseName) {
+            this.restoreTabsForDatabase(databaseName);
+        }
+    }
+
+    private persistTabs() {
+        if (!this.currentDatabaseName) return;
+
+        const tabs = this.openTabs$.value;
+        const persistedTabs: PersistedDataTab[] = tabs.map(tab => {
+            if (tab.kind === "type-table") {
+                return {
+                    kind: "type-table" as const,
+                    typeLabel: tab.type.label,
+                    typeqlFilter: tab.typeqlFilter,
+                };
+            } else {
+                return {
+                    kind: "instance-detail" as const,
+                    typeLabel: tab.type.label,
+                    instanceIID: tab.instanceIID,
+                    breadcrumbs: tab.breadcrumbs,
+                };
+            }
+        });
+
+        this.appData.dataExplorerTabs.setTabs(
+            this.currentDatabaseName,
+            persistedTabs,
+            this.selectedTabIndex$.value
+        );
+    }
+
+    private restoreTabsForDatabase(databaseName: string) {
+        const saved = this.appData.dataExplorerTabs.getTabs(databaseName);
+        if (!saved || saved.tabs.length === 0) return;
+
+        // Wait for schema to be available before restoring tabs
+        const schema = this.schemaState.value$.value;
+        if (!schema) {
+            // Schema not yet loaded, indicate we're waiting to restore
+            this.restoringTabs$.next(true);
+            const subscription = this.schemaState.value$.subscribe(loadedSchema => {
+                if (loadedSchema && this.currentDatabaseName === databaseName) {
+                    subscription.unsubscribe();
+                    this.restoreTabsWithSchema(saved, loadedSchema);
+                    this.restoringTabs$.next(false);
+                }
+            });
+            return;
+        }
+
+        this.restoreTabsWithSchema(saved, schema);
+    }
+
+    private restoreTabsWithSchema(
+        saved: { tabs: PersistedDataTab[]; selectedTabIndex: number },
+        schema: NonNullable<ReturnType<typeof this.schemaState.value$.getValue>>
+    ) {
+        const restoredTabs: DataTab[] = [];
+
+        for (const persistedTab of saved.tabs) {
+            // Look up the type in the schema
+            const type = schema.entities[persistedTab.typeLabel] ||
+                         schema.relations[persistedTab.typeLabel] ||
+                         schema.attributes[persistedTab.typeLabel];
+
+            if (!type) {
+                // Type no longer exists in schema, skip this tab
+                continue;
+            }
+
+            if (persistedTab.kind === "type-table") {
+                restoredTabs.push({
+                    kind: "type-table",
+                    type,
+                    totalCount: 0,
+                    selectedInstanceIID: null,
+                    typeqlFilter: persistedTab.typeqlFilter,
+                });
+            } else {
+                restoredTabs.push({
+                    kind: "instance-detail",
+                    type,
+                    instanceIID: persistedTab.instanceIID,
+                    breadcrumbs: persistedTab.breadcrumbs,
+                });
+            }
+        }
+
+        if (restoredTabs.length > 0) {
+            this.openTabs$.next(restoredTabs);
+
+            // Restore selected index, bounded by the actual tab count
+            const selectedIndex = Math.min(saved.selectedTabIndex, restoredTabs.length - 1);
+            this.selectedTabIndex$.next(selectedIndex);
+        }
+    }
 
     openTypeTab(type: SchemaConcept) {
         const tabs = this.openTabs$.value;

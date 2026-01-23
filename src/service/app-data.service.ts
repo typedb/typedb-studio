@@ -153,6 +153,75 @@ interface PreferencesData {
     };
 }
 
+const DATA_EXPLORER_TABS = "dataExplorerTabs";
+
+export interface PersistedTypeTableTab {
+    kind: "type-table";
+    typeLabel: string;
+    typeqlFilter?: string;
+}
+
+export interface PersistedInstanceDetailTab {
+    kind: "instance-detail";
+    typeLabel: string;
+    instanceIID: string;
+    breadcrumbs: { kind: "type-table" | "instance-detail"; typeLabel: string; instanceIID?: string }[];
+}
+
+export type PersistedDataTab = PersistedTypeTableTab | PersistedInstanceDetailTab;
+
+interface DataExplorerTabsData {
+    /** Maps database name to its persisted tabs */
+    databases: {
+        [databaseName: string]: {
+            tabs: PersistedDataTab[];
+            selectedTabIndex: number;
+        };
+    };
+}
+
+const INITIAL_DATA_EXPLORER_TABS: DataExplorerTabsData = {
+    databases: {},
+};
+
+function parseDataExplorerTabsData(obj: Object | null): DataExplorerTabsData {
+    return Object.assign({}, INITIAL_DATA_EXPLORER_TABS, obj) as DataExplorerTabsData;
+}
+
+class DataExplorerTabs {
+    constructor(private storage: StorageService) {
+        if (this.storage.isAccessible && this.readStorage() == null) {
+            this.writeStorage(INITIAL_DATA_EXPLORER_TABS);
+        }
+    }
+
+    private readStorage(): DataExplorerTabsData {
+        if (!this.storage.isAccessible) return INITIAL_DATA_EXPLORER_TABS;
+        return this.storage.read<DataExplorerTabsData>(DATA_EXPLORER_TABS, parseDataExplorerTabsData);
+    }
+
+    private writeStorage(data: DataExplorerTabsData): StorageWriteResult {
+        return this.storage.write(DATA_EXPLORER_TABS, data);
+    }
+
+    getTabs(databaseName: string): { tabs: PersistedDataTab[]; selectedTabIndex: number } | null {
+        const data = this.readStorage();
+        return data.databases[databaseName] || null;
+    }
+
+    setTabs(databaseName: string, tabs: PersistedDataTab[], selectedTabIndex: number): StorageWriteResult {
+        const data = this.readStorage();
+        data.databases[databaseName] = { tabs, selectedTabIndex };
+        return this.writeStorage(data);
+    }
+
+    clearTabs(databaseName: string): StorageWriteResult {
+        const data = this.readStorage();
+        delete data.databases[databaseName];
+        return this.writeStorage(data);
+    }
+}
+
 function parsePreferencesData(obj: Object | null): PreferencesData {
     return Object.assign({}, INITIAL_PREFERENCES, obj) as PreferencesData;
 }
@@ -202,6 +271,7 @@ export class AppData {
     readonly viewState = new ViewState(this.storage);
     readonly connections = new Connections(this.storage);
     readonly preferences = new Preferences(this.storage);
+    readonly dataExplorerTabs = new DataExplorerTabs(this.storage);
 
     constructor(private storage: StorageService) {
     }

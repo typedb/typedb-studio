@@ -11,7 +11,19 @@
           <span>Refresh</span>
         </button>
       </div>
-      @if ((driver.status$ | async) === "connected") {
+      @if ((driver.status$ | async) === "disconnected") {
+        <div class="answers-placeholder-container">
+          <button mat-flat-button routerLink="/connect">
+            <i class="fa-light fa-bolt"></i><span>Connect TypeDB server</span>
+          </button>
+        </div>
+      } @else if (!(driver.database$ | async)) {
+        <div class="answers-placeholder-container">
+          <button mat-flat-button (click)="openSelectDatabaseDialog()">
+            <i class="fa-light fa-database"></i><span>Select database</span>
+          </button>
+        </div>
+      } @else {
         <div class="answers-outer-container">
           <div class="answers-container answers-structure-container">
             <div id="structureView" #graphViewRef></div>
@@ -28,12 +40,6 @@
               }
             }
           </div>
-        </div>
-      } @else {
-        <div class="answers-placeholder-container">
-          <button mat-flat-button id="answersPlaceholderConnect" routerLink="/connect">
-            <i class="fa-light fa-bolt"></i><span>Connect TypeDB server</span>
-          </button>
         </div>
       }
     </div>

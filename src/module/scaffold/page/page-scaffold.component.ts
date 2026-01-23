@@ -42,6 +42,9 @@ export class PageScaffoldComponent implements AfterViewInit {
     constructor(private appData: AppData) {}
 
     ngAfterViewInit() {
+        // actionBar may not exist if pageAvailability is not "ready"
+        if (!this.actionBar?.nativeElement) return;
+
         const observer = new ResizeObserver(entries => {
             const actionBarWidth = entries[0].contentRect.width;
             this.condensed = actionBarWidth < 1200;

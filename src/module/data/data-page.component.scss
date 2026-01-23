@@ -84,7 +84,7 @@
     }
 }
 
-.empty-state {
+.empty-state, .loading-state {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -102,4 +102,22 @@
     p {
         font-size: 14px;
     }
+}
+
+.loading-state {
+    tp-spinner {
+        margin-bottom: 16px;
+    }
+}
+
+.placeholder-container {
+    height: 100%;
+    overflow: auto;
+    border: 3px dashed colors.$light-purple;
+    border-radius: shapes.$border-radius;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: colors.$black;
+    --mat-button-filled-container-height: 40px;
 }
