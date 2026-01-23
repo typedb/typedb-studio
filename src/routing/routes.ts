@@ -18,6 +18,14 @@ import { AppData } from "../service/app-data.service";
 import { SchemaPageComponent } from "../module/schema/schema-page.component";
 import { DataPageComponent } from "../module/data/data-page.component";
 
+const homeGuard: CanActivateFn = () => {
+    const appData = inject(AppData);
+    const lastUsedToolRoute = appData.viewState.lastUsedToolRoute();
+    // Redirect to last used tool if one exists (default is "query", so always redirect)
+    const router = inject(Router);
+    return of(router.parseUrl(lastUsedToolRoute));
+};
+
 const connectGuard: CanActivateFn = (route) => {
     const [address, username] = [route.queryParamMap.get(ADDRESS), route.queryParamMap.get(USERNAME)];
     if (username == null || address == null) return true;
@@ -35,7 +43,8 @@ const connectGuard: CanActivateFn = (route) => {
 }
 
 export const routes: Routes = [
-    { path: "", component: HomeComponent, title: "Home", pathMatch: "full", data: { domain: "overview" } },
+    { path: "", canActivate: [homeGuard], children: [] },
+    { path: "welcome", component: HomeComponent, title: "Welcome", data: { domain: "overview" } },
     { path: "connect", component: ConnectionCreatorComponent, canActivate: [connectGuard], title: "Connect" },
     { path: "query", component: QueryPageComponent, title: "Query", data: { domain: "query" } },
     { path: "schema", component: SchemaPageComponent, title: "Schema", data: { domain: "schema" } },

@@ -20,8 +20,8 @@
 }
 
 <div class="links">
-  <ts-sidebar-link [matTooltip]="collapsed ? 'Overview' : ''" matTooltipPosition="right" link="/" domain="overview" idSuffix="overview">
-    <i class="fa-light fa-objects-column"></i>@if (!collapsed) { <span>Overview</span> }
+  <ts-sidebar-link [matTooltip]="collapsed ? 'Home' : ''" matTooltipPosition="right" link="/welcome" domain="overview" idSuffix="home">
+    <i class="fa-light fa-objects-column"></i>@if (!collapsed) { <span>Home</span> }
   </ts-sidebar-link>
   <ts-sidebar-link [matTooltip]="collapsed ? 'Query' : ''" matTooltipPosition="right" link="/query" domain="query" idSuffix="query">
     <i class="fa-light fa-rectangle-terminal"></i>@if (!collapsed) { <span>Query</span> }
