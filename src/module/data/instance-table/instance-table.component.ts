@@ -23,6 +23,7 @@ import { DriverState } from "../../../service/driver-state.service";
 import { ApiResponse, Concept, ConceptRow, ConceptRowAnswer, isApiErrorResponse, QueryResponse } from "@typedb/driver-http";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { AdvancedFilterDialogComponent, AdvancedFilterDialogData, AdvancedFilterDialogResult } from "./advanced-filter-dialog/advanced-filter-dialog.component";
+import { extractErrorMessage } from "../../../framework/util/observable";
 
 export interface InstanceRow {
     iid: string;
@@ -168,7 +169,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
             this.loading = false;
             this.showSpinner = false;
             console.error("Error fetching instances:", error);
-            this.snackbar.errorPersistent(`Error fetching instances: ${error}`);
+            this.snackbar.errorPersistent(`Error fetching instances: ${extractErrorMessage(error)}`);
         }
     }
 

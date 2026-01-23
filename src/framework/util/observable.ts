@@ -27,6 +27,23 @@ export function requireValue<T>(behaviorSubject: BehaviorSubject<T | null>): T {
 }
 
 /**
+ * Extracts a human-readable error message from various error types.
+ * Handles ApiErrorResponse, Error objects, and unknown error shapes.
+ */
+export function extractErrorMessage(err: any): string {
+    // ApiErrorResponse from TypeDB driver
+    if (err && typeof err === "object" && "err" in err && err.err?.message) {
+        return err.err.message;
+    }
+    // Standard Error or object with message
+    if (err?.message) {
+        return err.message;
+    }
+    // Fallback
+    return err?.toString?.() ?? "Unknown error";
+}
+
+/**
  * Checks if an error is a retryable error.
  * Handles:
  * - RetryableApiError instances (5xx responses converted to errors)

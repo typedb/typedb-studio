@@ -15,6 +15,7 @@ import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { BreadcrumbItem, DataEditorState } from "../../../service/data-editor-state.service";
 import { ApiResponse, Concept, ConceptRowAnswer, Entity, isApiErrorResponse, QueryResponse, Relation, RoleType } from "@typedb/driver-http";
+import { extractErrorMessage } from "../../../framework/util/observable";
 
 function isInstance(concept: Concept | undefined): concept is Entity | Relation {
     return concept?.kind === "entity" || concept?.kind === "relation";
@@ -102,7 +103,7 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.fetchInstanceData();
+        this.fetchAttributes();
         this.fetchRelations();
     }
 
@@ -110,7 +111,17 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
         // Cleanup if needed
     }
 
-    private fetchInstanceData() {
+    private fetchAttributes() {
+        // Check if type has any owned attributes (only entities and relations can own attributes)
+        const hasOwnedAttributes = "ownedAttributes" in this.type && this.type.ownedAttributes.length > 0;
+
+        if (!hasOwnedAttributes) {
+            // No attributes to fetch - nothing to do
+            this.loading = false;
+            this.attributes = [];
+            return;
+        }
+
         this.loading = true;
 
         // Fetch all attributes for this instance
@@ -126,7 +137,7 @@ match
                 this.loading = false;
 
                 if (isApiErrorResponse(res)) {
-                    this.snackbar.errorPersistent(`Error fetching instance data: ${res.err.message}`);
+                    this.snackbar.errorPersistent(`Error fetching attributes: ${res.err.message}`);
                     return;
                 }
 
@@ -137,7 +148,7 @@ match
             },
             error: (err) => {
                 this.loading = false;
-                this.snackbar.errorPersistent(`Error fetching instance data: ${err.message || err}`);
+                this.snackbar.errorPersistent(`Error fetching attributes: ${extractErrorMessage(err)}`);
             }
         });
     }
@@ -196,8 +207,7 @@ match
             },
             error: (err) => {
                 this.relationsLoading = false;
-                const message = err?.message || (typeof err === "object" ? JSON.stringify(err) : String(err));
-                this.snackbar.errorPersistent(`Error fetching relations: ${message}`);
+                this.snackbar.errorPersistent(`Error fetching relations: ${extractErrorMessage(err)}`);
             }
         });
     }
