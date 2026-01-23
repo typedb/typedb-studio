@@ -4,10 +4,21 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { BehaviorSubject, Observable, timer, throwError } from "rxjs";
-import { retry } from "rxjs/operators";
+import { BehaviorSubject, Observable, timer, throwError, defer } from "rxjs";
+import { retry, tap } from "rxjs/operators";
 import { fromPromise } from "rxjs/internal/observable/innerFrom";
 import { INTERNAL_ERROR } from "./strings";
+
+/**
+ * Marker class to identify retryable 5xx errors thrown by fromPromiseWithRetry.
+ * Wraps the original ApiErrorResponse to preserve the status for retry logic.
+ */
+class RetryableApiError extends Error {
+    constructor(public readonly response: { status: number; err: { code: string; message: string } }) {
+        super(response.err.message);
+        this.name = "RetryableApiError";
+    }
+}
 
 export function requireValue<T>(behaviorSubject: BehaviorSubject<T | null>): T {
     const value = behaviorSubject.value;
@@ -16,18 +27,28 @@ export function requireValue<T>(behaviorSubject: BehaviorSubject<T | null>): T {
 }
 
 /**
- * Checks if an error is a retryable server error (5xx HTTP status).
- * Handles both ApiErrorResponse objects and raw Error objects with status codes.
+ * Checks if an error is a retryable error.
+ * Handles:
+ * - RetryableApiError instances (5xx responses converted to errors)
+ * - Network-level fetch failures ("Failed to fetch" TypeError)
  */
 function isRetryableError(error: any): boolean {
-    // Check for ApiErrorResponse structure with status field
-    if (error && typeof error === "object" && "status" in error) {
-        const status = error.status;
-        return typeof status === "number" && status >= 500 && status < 600;
+    if (error instanceof RetryableApiError) {
+        return true;
     }
-    // Check for Error objects that might have a status property
-    if (error instanceof Error && "status" in error) {
-        const status = (error as any).status;
+    // Network-level fetch failures (connection reset, CORS, etc.)
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Checks if a response value is an ApiErrorResponse with a 5xx status code.
+ */
+function isRetryableResponse(value: any): boolean {
+    if (value && typeof value === "object" && "status" in value && "err" in value) {
+        const status = value.status;
         return typeof status === "number" && status >= 500 && status < 600;
     }
     return false;
@@ -65,7 +86,14 @@ export function fromPromiseWithRetry<T>(
         ...config,
     };
 
-    return fromPromise(promiseFn()).pipe(
+    return defer(() => fromPromise(promiseFn())).pipe(
+        tap((value) => {
+            // TypeDB driver returns ApiErrorResponse as resolved values, not rejections.
+            // Convert 5xx responses to thrown errors so retry logic can intercept them.
+            if (isRetryableResponse(value)) {
+                throw new RetryableApiError(value as { status: number; err: { code: string; message: string } });
+            }
+        }),
         retry({
             count: maxRetries,
             delay: (error, retryCount) => {
@@ -76,8 +104,11 @@ export function fromPromiseWithRetry<T>(
                     initialDelayMs * Math.pow(backoffMultiplier, retryCount - 1),
                     maxDelayMs
                 );
+                const errorDesc = error instanceof RetryableApiError
+                    ? `status ${error.response.status}`
+                    : error.message;
                 console.warn(
-                    `Server error (status ${error?.status}), retrying in ${delay}ms (attempt ${retryCount}/${maxRetries})`
+                    `Server error (${errorDesc}), retrying in ${delay}ms (attempt ${retryCount}/${maxRetries})`
                 );
                 return timer(delay);
             },
