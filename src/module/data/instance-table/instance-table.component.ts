@@ -115,12 +115,26 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
     }
 
     private buildColumns() {
-        // Use schema to determine which attributes this type owns
+        // Use schema to determine which attributes this type and its subtypes own
         const type = this.tab.type;
         if (type.kind === "entityType" || type.kind === "relationType") {
-            this.attributeColumns = type.ownedAttributes.map(a => a.label);
+            const allAttributes = new Set<string>();
+            this.collectAttributesRecursively(type, allAttributes);
+            this.attributeColumns = Array.from(allAttributes);
         }
         this.displayedColumns = ["type", "iid", ...this.attributeColumns, "relationCounts"];
+    }
+
+    private collectAttributesRecursively(
+        type: { ownedAttributes: { label: string }[]; subtypes: any[] },
+        attributes: Set<string>
+    ) {
+        for (const attr of type.ownedAttributes) {
+            attributes.add(attr.label);
+        }
+        for (const subtype of type.subtypes) {
+            this.collectAttributesRecursively(subtype, attributes);
+        }
     }
 
     private async fetchInstances() {
