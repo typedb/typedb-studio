@@ -222,6 +222,18 @@
         min-width: 280px;
     }
 
+    .type-cell {
+        font-size: 13px;
+
+        &.entity {
+            color: colors.$entity-pink;
+        }
+
+        &.relation {
+            color: colors.$relation-yellow;
+        }
+    }
+
     .attribute-cell {
         .cell-content-wrapper {
             display: inline-flex;

@@ -33,9 +33,11 @@ type RelationCountsByType = Record<string, number>;
 
 export interface InstanceRow {
     iid: string;
+    type: string;
+    kind: "entity" | "relation";
     relationCounts: RelationCountsByType | null;
     /** Dynamic attribute columns store arrays of values */
-    [key: string]: string | RelationCountsByType | null | AttributeValue[] | undefined;
+    [key: string]: string | RelationCountsByType | null | AttributeValue[] | "entity" | "relation" | undefined;
 }
 
 @Component({
@@ -118,7 +120,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         if (type.kind === "entityType" || type.kind === "relationType") {
             this.attributeColumns = type.ownedAttributes.map(a => a.label);
         }
-        this.displayedColumns = ["iid", ...this.attributeColumns, "relationCounts"];
+        this.displayedColumns = ["type", "iid", ...this.attributeColumns, "relationCounts"];
     }
 
     private async fetchInstances() {
@@ -297,12 +299,16 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
             }
 
             const iid = instanceConcept.iid;
+            const type = instanceConcept.type.label;
+            const kind = instanceConcept.kind as "entity" | "relation";
 
             // Get existing row or create new one
             let tableRow = rowsByIid.get(iid);
             if (!tableRow) {
                 tableRow = {
                     iid,
+                    type,
+                    kind,
                     relationCounts: null,
                 };
                 rowsByIid.set(iid, tableRow);

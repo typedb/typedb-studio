@@ -84,6 +84,14 @@
       (matSortChange)="onSortChange($event)"
       class="instance-table">
 
+      <!-- Type Column -->
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+        <td mat-cell *matCellDef="let row" class="type-cell" [class.entity]="row.kind === 'entity'" [class.relation]="row.kind === 'relation'">
+          {{ row.type }}
+        </td>
+      </ng-container>
+
       <!-- IID Column -->
       <ng-container matColumnDef="iid">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>IID</th>
