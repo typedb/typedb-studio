@@ -37,29 +37,29 @@
           @for (tab of (state.openTabs$ | async); track getTabTrackId(tab); let i = $index) {
             <mat-tab>
               <ng-template mat-tab-label>
-                <span class="tab-label"
-                      (contextmenu)="openTabContextMenu($event, tab, i)"
-                      (mousedown)="onTabMouseDown($event, i)"
-                      [class.pinned]="tab.pinned">
-                  @if (tab.pinned) {
-                    <i class="fa-light fa-thumbtack pin-icon"></i>
-                  }
-                  @if (tab.kind === 'type-table') {
-                    {{ tab.type.label }}
-                    @if (tab.totalCount > 0) {
-                      <span class="tab-count">({{ tab.totalCount }})</span>
+                <div class="tab-label-container"
+                     (contextmenu)="openTabContextMenu($event, tab, i)"
+                     (auxclick)="onTabAuxClick($event, i)">
+                  <span class="tab-label" [class.pinned]="tab.pinned">
+                    @if (tab.pinned) {
+                      <i class="fa-light fa-thumbtack pin-icon"></i>
                     }
-                  } @else {
-                    {{ tab.type.label }}: {{ tab.instanceIID.substring(0, 8) }}...
-                  }
-                </span>
-                <button
-                  mat-icon-button
-                  class="tab-close-button"
-                  (click)="closeTab($event, i)"
-                  matTooltip="Close tab">
-                  <i class="fa-light fa-xmark"></i>
-                </button>
+                    @if (tab.kind === 'type-table') {
+                      {{ tab.type.label }}
+                      @if (tab.totalCount > 0) {
+                        <span class="tab-count">({{ tab.totalCount }})</span>
+                      }
+                    } @else {
+                      {{ tab.type.label }}: {{ tab.instanceIID.substring(0, 8) }}...
+                    }
+                  </span>
+                  <button
+                    mat-icon-button
+                    class="tab-close-button"
+                    (click)="closeTab($event, i)">
+                    <i class="fa-light fa-xmark"></i>
+                  </button>
+                </div>
               </ng-template>
 
               <ng-template matTabContent>

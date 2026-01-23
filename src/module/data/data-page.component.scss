@@ -57,6 +57,14 @@
     }
 }
 
+.tab-label-container {
+    display: flex;
+    align-items: center;
+    // Expand container to fill the entire tab clickable area
+    margin: -14px -16px;
+    padding: 14px 16px;
+}
+
 .tab-label {
     display: flex;
     align-items: center;

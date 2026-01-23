@@ -108,7 +108,7 @@ export class DataPageComponent implements OnInit {
         });
     }
 
-    onTabMouseDown(event: MouseEvent, index: number) {
+    onTabAuxClick(event: MouseEvent, index: number) {
         // Middle-click (button 1) closes the tab
         if (event.button === 1) {
             event.preventDefault();
