@@ -98,6 +98,12 @@
                 <div class="relation-card-header">
                   <span class="relation-type-label">{{ instance.relationTypeLabel }}</span>
                   <span class="relation-iid">{{ instance.relationIID }}</span>
+                  <button
+                      class="open-details-button header-explore"
+                      (click)="openRelationDetail(instance, $event)">
+                    Explore
+                    <i class="fa-light fa-arrow-right"></i>
+                  </button>
                 </div>
 
                 <!-- Body - roleplayers -->

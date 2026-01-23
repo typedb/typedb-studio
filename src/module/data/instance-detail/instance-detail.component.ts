@@ -299,6 +299,30 @@ match
         this.dataEditorState.openInstanceDetail(playerType, roleplayer.playerIID, newBreadcrumbs);
     }
 
+    openRelationDetail(instance: RelationInstanceData, event: Event) {
+        event.stopPropagation();
+
+        const schema = this.schemaState.value$.value;
+        if (!schema) {
+            this.snackbar.errorPersistent("Schema not loaded");
+            return;
+        }
+
+        const relationType = schema.relations[instance.relationTypeLabel];
+        if (!relationType) {
+            this.snackbar.errorPersistent(`Relation type '${instance.relationTypeLabel}' not found in schema`);
+            return;
+        }
+
+        // Build new breadcrumbs by appending current instance
+        const newBreadcrumbs: BreadcrumbItem[] = [
+            ...this.breadcrumbs,
+            { kind: "instance-detail", typeLabel: this.type.label, instanceIID: this.instanceIID }
+        ];
+
+        this.dataEditorState.openInstanceDetail(relationType, instance.relationIID, newBreadcrumbs);
+    }
+
     navigateToBreadcrumb(breadcrumb: BreadcrumbItem, index: number) {
         this.dataEditorState.navigateToBreadcrumb(breadcrumb, index, this.breadcrumbs);
     }

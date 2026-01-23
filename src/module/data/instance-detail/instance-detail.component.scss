@@ -272,7 +272,7 @@
 // Card header - darker background
 .relation-card-header {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 10px;
     padding: 10px 12px;
     background: colors.$secondary-dark-grey;
@@ -288,6 +288,11 @@
         font-family: monospace;
         font-size: 11px;
         color: colors.$secondary-grey;
+    }
+
+    .header-explore {
+        margin-left: auto;
+        margin-top: 0;
     }
 }
 
