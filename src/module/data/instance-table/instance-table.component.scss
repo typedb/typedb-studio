@@ -160,6 +160,32 @@
         min-width: 280px;
     }
 
+    .attribute-cell {
+        .cell-content-wrapper {
+            display: inline-flex;
+            align-items: center;
+            vertical-align: middle;
+        }
+
+        .copy-button {
+            opacity: 0;
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            margin-left: 8px;
+            padding: 0;
+            transition: opacity 0.15s ease;
+
+            i {
+                font-size: 12px;
+            }
+        }
+
+        &:hover .copy-button {
+            opacity: 1;
+        }
+    }
+
     .clickable-row {
         cursor: pointer;
 

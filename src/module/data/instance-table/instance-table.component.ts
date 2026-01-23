@@ -302,6 +302,8 @@ distinct;
 ${sortClause}offset ${offset}; limit ${limit};`.trim();
     }
 
+    private readonly MAX_DISPLAY_LENGTH = 50;
+
     formatAttributeValue(value: any): string {
         if (value == null) return "-";
         if (Array.isArray(value)) {
@@ -310,6 +312,25 @@ ${sortClause}offset ${offset}; limit ${limit};`.trim();
             return `${value[0]} (+${value.length - 1} more)`;
         }
         return String(value);
+    }
+
+    truncateValue(value: any): string {
+        const formatted = this.formatAttributeValue(value);
+        if (formatted.length <= this.MAX_DISPLAY_LENGTH) return formatted;
+        return formatted.substring(0, this.MAX_DISPLAY_LENGTH) + "…";
+    }
+
+    shouldShowTooltip(value: any): boolean {
+        const formatted = this.formatAttributeValue(value);
+        return formatted.length > this.MAX_DISPLAY_LENGTH;
+    }
+
+    copyToClipboard(event: Event, value: any) {
+        event.stopPropagation(); // Prevent row click
+        const text = this.formatAttributeValue(value);
+        navigator.clipboard.writeText(text).then(() => {
+            this.snackbar.success("Copied to clipboard");
+        });
     }
 
     formatRelationCount(relationCounts: any): string {
