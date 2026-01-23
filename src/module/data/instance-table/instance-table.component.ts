@@ -432,9 +432,18 @@ ${sortClause}offset ${offset}; limit ${limit};`.trim();
         return formatted.substring(0, this.MAX_DISPLAY_LENGTH) + "…";
     }
 
+    get breadcrumbs(): BreadcrumbItem[] {
+        return this.tab.breadcrumbs || [];
+    }
+
+    navigateToBreadcrumb(breadcrumb: BreadcrumbItem, index: number) {
+        this.dataEditorState.navigateToBreadcrumb(breadcrumb, index, this.breadcrumbs);
+    }
+
     onRowClick(row: InstanceRow) {
-        // Create breadcrumb back to this table
+        // Create breadcrumb back to this table, preserving any existing breadcrumbs
         const breadcrumbs: BreadcrumbItem[] = [
+            ...this.breadcrumbs,
             { kind: "type-table", typeLabel: this.tab.type.label }
         ];
         this.dataEditorState.openInstanceDetail(this.tab.type, row.iid, breadcrumbs);

@@ -453,7 +453,11 @@ match
     }
 
     exploreType() {
-        this.dataEditorState.openTypeTab(this.type);
+        const newBreadcrumbs: BreadcrumbItem[] = [
+            ...this.breadcrumbs,
+            { kind: "instance-detail", typeLabel: this.type.label, instanceIID: this.instanceIID }
+        ];
+        this.dataEditorState.openTypeTab(this.type, newBreadcrumbs);
     }
 
     openOwnRoleplayerDetail(roleplayer: RoleplayerData, event: Event) {
