@@ -269,6 +269,34 @@
     }
 }
 
+::ng-deep .column-picker-menu {
+    max-height: 400px;
+    min-width: fit-content !important;
+
+    .mat-mdc-menu-content {
+        min-width: fit-content;
+    }
+
+    .mat-mdc-menu-item {
+        padding: 0 16px;
+        min-height: 36px;
+        white-space: nowrap;
+
+        .mat-mdc-checkbox {
+            width: 100%;
+
+            .mdc-form-field {
+                width: 100%;
+                white-space: nowrap;
+            }
+
+            .mdc-label {
+                white-space: nowrap;
+            }
+        }
+    }
+}
+
 .empty-state {
     display: flex;
     flex-direction: column;

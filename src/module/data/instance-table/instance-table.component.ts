@@ -15,6 +15,8 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatTooltipModule } from "@angular/material/tooltip";
+import { MatMenuModule } from "@angular/material/menu";
+import { MatCheckboxModule } from "@angular/material/checkbox";
 import { MatDialog } from "@angular/material/dialog";
 import { Subject, Subscription } from "rxjs";
 import { debounceTime, distinctUntilChanged } from "rxjs/operators";
@@ -55,6 +57,8 @@ export interface InstanceRow {
         MatProgressSpinnerModule,
         MatButtonToggleModule,
         MatTooltipModule,
+        MatMenuModule,
+        MatCheckboxModule,
     ],
 })
 export class InstanceTableComponent implements OnInit, OnDestroy {
@@ -81,6 +85,9 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
     filterText = "";
     filterMode: "simple" | "advanced" = "simple";
     private filterSubject = new Subject<string>();
+
+    // Column visibility
+    hiddenColumns = new Set<string>();
 
     private subscriptions: Subscription[] = [];
 
@@ -122,7 +129,35 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
             this.collectAttributesRecursively(type, allAttributes);
             this.attributeColumns = Array.from(allAttributes);
         }
-        this.displayedColumns = ["type", "iid", ...this.attributeColumns, "relationCounts"];
+        this.updateDisplayedColumns();
+    }
+
+    private updateDisplayedColumns() {
+        const allColumns = ["type", "iid", ...this.attributeColumns, "relationCounts"];
+        this.displayedColumns = allColumns.filter(col => !this.hiddenColumns.has(col));
+    }
+
+    /** All available columns for the column picker */
+    get allColumns(): { id: string; label: string }[] {
+        return [
+            { id: "type", label: "Type" },
+            { id: "iid", label: "IID" },
+            ...this.attributeColumns.map(attr => ({ id: attr, label: attr })),
+            { id: "relationCounts", label: "Relations" },
+        ];
+    }
+
+    isColumnVisible(columnId: string): boolean {
+        return !this.hiddenColumns.has(columnId);
+    }
+
+    toggleColumnVisibility(columnId: string) {
+        if (this.hiddenColumns.has(columnId)) {
+            this.hiddenColumns.delete(columnId);
+        } else {
+            this.hiddenColumns.add(columnId);
+        }
+        this.updateDisplayedColumns();
     }
 
     private collectAttributesRecursively(

@@ -62,6 +62,26 @@
 
     <button
       mat-icon-button
+      [matMenuTriggerFor]="columnMenu"
+      matTooltip="Show/hide columns">
+      <i class="fa-light fa-columns-3"></i>
+    </button>
+
+    <mat-menu #columnMenu="matMenu" class="column-picker-menu">
+      @for (col of allColumns; track col.id) {
+        <button mat-menu-item (click)="toggleColumnVisibility(col.id); $event.stopPropagation()">
+          <mat-checkbox
+            [checked]="isColumnVisible(col.id)"
+            (click)="$event.stopPropagation()"
+            (change)="toggleColumnVisibility(col.id)">
+            {{ col.label }}
+          </mat-checkbox>
+        </button>
+      }
+    </mat-menu>
+
+    <button
+      mat-icon-button
       (click)="refresh()"
       matTooltip="Refresh"
       [disabled]="loading">
