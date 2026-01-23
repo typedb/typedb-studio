@@ -39,6 +39,7 @@
               <ng-template mat-tab-label>
                 <span class="tab-label"
                       (contextmenu)="openTabContextMenu($event, tab, i)"
+                      (mousedown)="onTabMouseDown($event, i)"
                       [class.pinned]="tab.pinned">
                   @if (tab.pinned) {
                     <i class="fa-light fa-thumbtack pin-icon"></i>
