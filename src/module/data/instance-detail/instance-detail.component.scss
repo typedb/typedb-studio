@@ -98,6 +98,34 @@
     }
 }
 
+.type-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .type-info {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+    }
+
+    .type-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: colors.$entity-pink;
+    }
+
+    .type-muted {
+        font-size: 14px;
+        font-style: italic;
+        color: colors.$grey;
+    }
+
+    .open-details-button {
+        margin-top: 0;
+    }
+}
+
 .section-header {
     display: flex;
     align-items: baseline;

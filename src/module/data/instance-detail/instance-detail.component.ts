@@ -70,6 +70,7 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
     selectedRelationType: string | null = null; // null = "All"
     loading = false;
     relationsLoading = false;
+    typeCollapsed = false;
     attributesCollapsed = false;
     relationsCollapsed = false;
 
@@ -335,6 +336,19 @@ match
 
     navigateToBreadcrumb(breadcrumb: BreadcrumbItem, index: number) {
         this.dataEditorState.navigateToBreadcrumb(breadcrumb, index, this.breadcrumbs);
+    }
+
+    exploreType() {
+        this.dataEditorState.openTypeTab(this.type);
+    }
+
+    get typeKindLabel(): string {
+        switch (this.type.kind) {
+            case "entityType": return "entity";
+            case "relationType": return "relation";
+            case "attributeType": return "attribute";
+            default: return "";
+        }
     }
 
     private loadAllRoleplayerAttributes() {
