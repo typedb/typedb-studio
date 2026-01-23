@@ -17,13 +17,13 @@ const VIEW_STATE = "viewState";
 
 interface ViewStateData {
     sidebarState: SidebarState;
-    lastUsedTool: Tool;
+    lastUsedTool: Tool | null;
     schemaToolWindowState: SchemaToolWindowState;
 }
 
 const INITIAL_VIEW_STATE_DATA: ViewStateData = {
     sidebarState: "collapsed",
-    lastUsedTool: "query",
+    lastUsedTool: null,
     schemaToolWindowState: {
         linksVisibility: {
             sub: true,
@@ -72,9 +72,9 @@ class ViewState {
         this.writeStorage(viewState);
     }
 
-    lastUsedTool(): Tool {
+    lastUsedTool(): Tool | null {
         const viewState = this.readStorage();
-        return viewState.lastUsedTool || INITIAL_VIEW_STATE_DATA.lastUsedTool;
+        return viewState.lastUsedTool;
     }
 
     setLastUsedTool(value: Tool) {
@@ -90,6 +90,7 @@ class ViewState {
             case "explore": return "/explore";
             case "schema": return "/schema";
             case "data": return "/data";
+            case null: return "/welcome";
         }
     }
 

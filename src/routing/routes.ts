@@ -21,7 +21,6 @@ import { DataPageComponent } from "../module/data/data-page.component";
 const homeGuard: CanActivateFn = () => {
     const appData = inject(AppData);
     const lastUsedToolRoute = appData.viewState.lastUsedToolRoute();
-    // Redirect to last used tool if one exists (default is "query", so always redirect)
     const router = inject(Router);
     return of(router.parseUrl(lastUsedToolRoute));
 };
@@ -39,6 +38,7 @@ const connectGuard: CanActivateFn = (route) => {
         case "explore": return of(router.parseUrl(`explore`));
         case "schema": return of(router.parseUrl(`schema`));
         case "data": return of(router.parseUrl(`data`));
+        default: return of(router.parseUrl(`welcome`));
     }
 }
 
