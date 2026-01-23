@@ -89,6 +89,7 @@ class ViewState {
             case "query": return "/query";
             case "explore": return "/explore";
             case "schema": return "/schema";
+            case "data": return "/data";
         }
     }
 
@@ -159,6 +160,8 @@ export interface PersistedTypeTableTab {
     kind: "type-table";
     typeLabel: string;
     typeqlFilter?: string;
+    breadcrumbs?: { kind: "type-table" | "instance-detail"; typeLabel: string; instanceIID?: string }[];
+    pinned?: boolean;
 }
 
 export interface PersistedInstanceDetailTab {
@@ -166,6 +169,7 @@ export interface PersistedInstanceDetailTab {
     typeLabel: string;
     instanceIID: string;
     breadcrumbs: { kind: "type-table" | "instance-detail"; typeLabel: string; instanceIID?: string }[];
+    pinned?: boolean;
 }
 
 export type PersistedDataTab = PersistedTypeTableTab | PersistedInstanceDetailTab;

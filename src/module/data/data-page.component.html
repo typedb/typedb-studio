@@ -37,7 +37,12 @@
           @for (tab of (state.openTabs$ | async); track getTabTrackId(tab); let i = $index) {
             <mat-tab>
               <ng-template mat-tab-label>
-                <span class="tab-label">
+                <span class="tab-label"
+                      (contextmenu)="openTabContextMenu($event, tab, i)"
+                      [class.pinned]="tab.pinned">
+                  @if (tab.pinned) {
+                    <i class="fa-light fa-thumbtack pin-icon"></i>
+                  }
                   @if (tab.kind === 'type-table') {
                     {{ tab.type.label }}
                     @if (tab.totalCount > 0) {
@@ -75,3 +80,21 @@
     </div>
   </article>
 </ts-page-scaffold>
+
+<!-- Tab context menu -->
+<div class="tab-context-menu-trigger"
+     [style.left.px]="contextMenuPosition.x"
+     [style.top.px]="contextMenuPosition.y"
+     [matMenuTriggerFor]="tabContextMenu">
+</div>
+
+<mat-menu #tabContextMenu="matMenu" [overlapTrigger]="false">
+  <ng-template matMenuContent let-tab="tab" let-index="index">
+    <button mat-menu-item (click)="closeTab($event, index)">Close</button>
+    <button mat-menu-item (click)="closeOtherTabs(tab)">Close Others</button>
+    <button mat-menu-item (click)="closeTabsToRight(tab, index)">Close to the Right</button>
+    <button mat-menu-item (click)="closeAllTabs()">Close All</button>
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="togglePinTab(tab)">{{ tab?.pinned ? 'Unpin' : 'Pin' }}</button>
+  </ng-template>
+</mat-menu>

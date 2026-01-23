@@ -61,6 +61,13 @@
     display: flex;
     align-items: center;
     gap: 8px;
+
+    &.pinned .pin-icon {
+        font-size: 11px;
+        color: colors.$grey;
+        margin-right: 2px;
+        transform: rotate(-45deg);
+    }
 }
 
 .tab-count {
@@ -120,4 +127,11 @@
     align-items: center;
     background: colors.$black;
     --mat-button-filled-container-height: 40px;
+}
+
+.tab-context-menu-trigger {
+    position: fixed;
+    visibility: hidden;
+    width: 0;
+    height: 0;
 }

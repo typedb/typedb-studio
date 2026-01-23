@@ -16,6 +16,8 @@ export interface TypeTableTab {
     totalCount: number;
     selectedInstanceIID: string | null;
     typeqlFilter?: string;
+    breadcrumbs?: BreadcrumbItem[];
+    pinned?: boolean;
 }
 
 export interface BreadcrumbItem {
@@ -29,6 +31,7 @@ export interface InstanceDetailTab {
     type: SchemaConcept;
     instanceIID: string;
     breadcrumbs: BreadcrumbItem[];
+    pinned?: boolean;
 }
 
 export type DataTab = TypeTableTab | InstanceDetailTab;
@@ -86,6 +89,8 @@ export class DataEditorState {
                     kind: "type-table" as const,
                     typeLabel: tab.type.label,
                     typeqlFilter: tab.typeqlFilter,
+                    breadcrumbs: tab.breadcrumbs,
+                    pinned: tab.pinned,
                 };
             } else {
                 return {
@@ -93,6 +98,7 @@ export class DataEditorState {
                     typeLabel: tab.type.label,
                     instanceIID: tab.instanceIID,
                     breadcrumbs: tab.breadcrumbs,
+                    pinned: tab.pinned,
                 };
             }
         });
@@ -150,6 +156,8 @@ export class DataEditorState {
                     totalCount: 0,
                     selectedInstanceIID: null,
                     typeqlFilter: persistedTab.typeqlFilter,
+                    breadcrumbs: persistedTab.breadcrumbs,
+                    pinned: persistedTab.pinned,
                 });
             } else {
                 restoredTabs.push({
@@ -157,6 +165,7 @@ export class DataEditorState {
                     type,
                     instanceIID: persistedTab.instanceIID,
                     breadcrumbs: persistedTab.breadcrumbs,
+                    pinned: persistedTab.pinned,
                 });
             }
         }
@@ -170,11 +179,19 @@ export class DataEditorState {
         }
     }
 
-    openTypeTab(type: SchemaConcept) {
+    openTypeTab(type: SchemaConcept, breadcrumbs: BreadcrumbItem[] = []) {
         const tabs = this.openTabs$.value;
-        const existing = tabs.find(t => t.kind === "type-table" && t.type.label === type.label);
+        // Find existing tab without a filter (filtered tabs are separate)
+        const existing = tabs.find(t => t.kind === "type-table" && t.type.label === type.label && !t.typeqlFilter);
 
         if (existing) {
+            // Update breadcrumbs on existing tab if new ones provided
+            if (breadcrumbs.length > 0) {
+                const index = tabs.indexOf(existing);
+                const newTabs = [...tabs];
+                newTabs[index] = { ...existing, breadcrumbs };
+                this.openTabs$.next(newTabs);
+            }
             this.selectedTabIndex$.next(tabs.indexOf(existing));
         } else {
             const newTab: TypeTableTab = {
@@ -182,6 +199,7 @@ export class DataEditorState {
                 type,
                 totalCount: 0,
                 selectedInstanceIID: null,
+                breadcrumbs: breadcrumbs.length > 0 ? breadcrumbs : undefined,
             };
             this.openTabs$.next([...tabs, newTab]);
             this.selectedTabIndex$.next(tabs.length);
@@ -200,6 +218,80 @@ export class DataEditorState {
         if (this.selectedTabIndex$.value >= newTabs.length && newTabs.length > 0) {
             this.selectedTabIndex$.next(newTabs.length - 1);
         }
+    }
+
+    closeOtherTabs(tab: DataTab) {
+        const tabs = this.openTabs$.value;
+        const index = tabs.indexOf(tab);
+        if (index === -1) return;
+
+        // Keep the target tab and all pinned tabs
+        const newTabs = tabs.filter(t => t === tab || t.pinned);
+        this.openTabs$.next(newTabs);
+
+        // Update selected index to the target tab's new position
+        const newIndex = newTabs.indexOf(tab);
+        this.selectedTabIndex$.next(newIndex);
+    }
+
+    closeTabsToRight(tab: DataTab) {
+        const tabs = this.openTabs$.value;
+        const index = tabs.indexOf(tab);
+        if (index === -1) return;
+
+        // Keep tabs up to and including the target, plus any pinned tabs after
+        const newTabs = tabs.filter((t, i) => i <= index || t.pinned);
+        this.openTabs$.next(newTabs);
+
+        // Adjust selected index if it was in the closed range
+        if (this.selectedTabIndex$.value >= newTabs.length) {
+            this.selectedTabIndex$.next(newTabs.length - 1);
+        }
+    }
+
+    closeAllTabs() {
+        const tabs = this.openTabs$.value;
+        // Keep only pinned tabs
+        const newTabs = tabs.filter(t => t.pinned);
+        this.openTabs$.next(newTabs);
+
+        if (newTabs.length > 0) {
+            // Select the first remaining tab
+            this.selectedTabIndex$.next(0);
+        } else {
+            this.selectedTabIndex$.next(0);
+        }
+    }
+
+    togglePinTab(tab: DataTab) {
+        const tabs = this.openTabs$.value;
+        const index = tabs.indexOf(tab);
+        if (index === -1) return;
+
+        const newTabs = [...tabs];
+        const updatedTab = { ...tab, pinned: !tab.pinned };
+        newTabs[index] = updatedTab;
+
+        // If pinning, move tab to the left (after other pinned tabs)
+        // If unpinning, keep in place
+        if (updatedTab.pinned) {
+            // Find the position after the last pinned tab
+            const lastPinnedIndex = newTabs.reduce((acc, t, i) => t.pinned && i !== index ? i : acc, -1);
+            if (lastPinnedIndex < index - 1) {
+                // Move to after last pinned tab
+                newTabs.splice(index, 1);
+                newTabs.splice(lastPinnedIndex + 1, 0, updatedTab);
+                // Adjust selected index if needed
+                const currentSelected = this.selectedTabIndex$.value;
+                if (currentSelected === index) {
+                    this.selectedTabIndex$.next(lastPinnedIndex + 1);
+                } else if (currentSelected > lastPinnedIndex && currentSelected < index) {
+                    this.selectedTabIndex$.next(currentSelected + 1);
+                }
+            }
+        }
+
+        this.openTabs$.next(newTabs);
     }
 
     openInstanceDetail(type: SchemaConcept, instanceIID: string, breadcrumbs: BreadcrumbItem[] = []) {
@@ -223,19 +315,27 @@ export class DataEditorState {
 
     navigateToBreadcrumb(breadcrumb: BreadcrumbItem, breadcrumbIndex: number, allBreadcrumbs: BreadcrumbItem[]) {
         const tabs = this.openTabs$.value;
+        // Keep only breadcrumbs before this one
+        const truncatedBreadcrumbs = allBreadcrumbs.slice(0, breadcrumbIndex);
 
         if (breadcrumb.kind === "type-table") {
-            // Find and focus the type table tab
-            const existing = tabs.find(t => t.kind === "type-table" && t.type.label === breadcrumb.typeLabel);
+            // Find and focus the type table tab (without filter)
+            const existing = tabs.find((t): t is TypeTableTab => t.kind === "type-table" && t.type.label === breadcrumb.typeLabel && !t.typeqlFilter);
             if (existing) {
-                this.selectedTabIndex$.next(tabs.indexOf(existing));
+                // Update breadcrumbs on existing tab
+                const index = tabs.indexOf(existing);
+                const newTabs = [...tabs];
+                const updatedTab: TypeTableTab = { ...existing, breadcrumbs: truncatedBreadcrumbs.length > 0 ? truncatedBreadcrumbs : undefined };
+                newTabs[index] = updatedTab;
+                this.openTabs$.next(newTabs);
+                this.selectedTabIndex$.next(index);
             } else {
-                // Reopen the type table tab
+                // Reopen the type table tab with truncated breadcrumbs
                 const schema = this.schemaState.value$.value;
                 if (schema) {
                     const type = schema.entities[breadcrumb.typeLabel] || schema.relations[breadcrumb.typeLabel];
                     if (type) {
-                        this.openTypeTab(type);
+                        this.openTypeTab(type, truncatedBreadcrumbs);
                     }
                 }
             }
@@ -250,8 +350,6 @@ export class DataEditorState {
                 if (schema) {
                     const type = schema.entities[breadcrumb.typeLabel] || schema.relations[breadcrumb.typeLabel];
                     if (type) {
-                        // Keep only breadcrumbs before this one
-                        const truncatedBreadcrumbs = allBreadcrumbs.slice(0, breadcrumbIndex);
                         this.openInstanceDetail(type, breadcrumb.instanceIID, truncatedBreadcrumbs);
                     }
                 }
