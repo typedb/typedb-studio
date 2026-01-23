@@ -70,7 +70,10 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
     selectedRelationType: string | null = null; // null = "All"
     loading = false;
     relationsLoading = false;
+    roleplayersLoading = false;
+    ownRoleplayers: RoleplayerData[] = [];
     typeCollapsed = false;
+    roleplayersCollapsed = false;
     attributesCollapsed = false;
     relationsCollapsed = false;
 
@@ -106,6 +109,9 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.fetchAttributes();
         this.fetchRelations();
+        if (this.type.kind === "relationType") {
+            this.fetchOwnRoleplayers();
+        }
     }
 
     ngOnDestroy() {
@@ -209,6 +215,114 @@ match
             error: (err) => {
                 this.relationsLoading = false;
                 this.snackbar.errorPersistent(`Error fetching relations: ${extractErrorMessage(err)}`);
+            }
+        });
+    }
+
+    private fetchOwnRoleplayers() {
+        this.roleplayersLoading = true;
+
+        // Fetch roleplayers of this relation instance
+        const query = `
+match
+    $rel iid ${this.instanceIID};
+    $rel links ($role: $player);
+        `.trim();
+
+        this.driver.query(query).subscribe({
+            next: (res: ApiResponse<QueryResponse>) => {
+                this.roleplayersLoading = false;
+
+                if (isApiErrorResponse(res)) {
+                    this.snackbar.errorPersistent(`Error fetching roleplayers: ${res.err.message}`);
+                    return;
+                }
+
+                if (res.ok.answerType === "conceptRows") {
+                    const answers = (res.ok as any).answers as ConceptRowAnswer[];
+                    this.processOwnRoleplayers(answers);
+                }
+            },
+            error: (err) => {
+                this.roleplayersLoading = false;
+                this.snackbar.errorPersistent(`Error fetching roleplayers: ${extractErrorMessage(err)}`);
+            }
+        });
+    }
+
+    private processOwnRoleplayers(conceptRowAnswers: ConceptRowAnswer[]) {
+        const roleplayerMap = new Map<string, RoleplayerData>();
+
+        for (const answer of conceptRowAnswers) {
+            const row = answer.data;
+            const role = row["role"];
+            const player = row["player"];
+
+            if (!isRoleType(role)) {
+                throw new Error(`Expected role type for $role, got: ${JSON.stringify(role)}`);
+            }
+            if (!isInstance(player)) {
+                throw new Error(`Expected entity or relation for $player, got: ${JSON.stringify(player)}`);
+            }
+
+            const roleLabel = role.label;
+            const playerIID = player.iid;
+            const playerTypeLabel = player.type.label;
+
+            // Use role+playerIID as key to avoid duplicates
+            const key = `${roleLabel}:${playerIID}`;
+            if (!roleplayerMap.has(key)) {
+                roleplayerMap.set(key, {
+                    roleLabel,
+                    playerIID,
+                    playerTypeLabel,
+                    isSelf: false,
+                    attributes: [],
+                    expanded: false,
+                });
+            }
+        }
+
+        this.ownRoleplayers = Array.from(roleplayerMap.values());
+        this.loadOwnRoleplayerAttributes();
+    }
+
+    private loadOwnRoleplayerAttributes() {
+        if (this.ownRoleplayers.length === 0) return;
+
+        const iidList = this.ownRoleplayers.map(rp => rp.playerIID);
+        const iidConditions = iidList.map(iid => `{ $player iid ${iid}; }`).join(" or ");
+        const query = `
+match
+    ${iidConditions};
+    $player has $attr;
+        `.trim();
+
+        this.driver.query(query).subscribe({
+            next: (res: ApiResponse<QueryResponse>) => {
+                if (isApiErrorResponse(res)) {
+                    this.snackbar.errorPersistent(`Error fetching roleplayer attributes: ${res.err.message}`);
+                    return;
+                }
+
+                if (res.ok.answerType === "conceptRows") {
+                    const answers = (res.ok as any).answers as ConceptRowAnswer[];
+                    const playerAttrMap = this.buildPlayerAttributeMap(answers);
+
+                    for (const roleplayer of this.ownRoleplayers) {
+                        const attrMap = playerAttrMap.get(roleplayer.playerIID);
+                        if (attrMap) {
+                            roleplayer.attributes = Array.from(attrMap.entries()).map(([type, data]) => ({
+                                type,
+                                valueType: data.valueType,
+                                values: data.values,
+                            }));
+                        }
+                    }
+                }
+            },
+            error: (err) => {
+                this.snackbar.errorPersistent(`Error fetching roleplayer attributes: ${extractErrorMessage(err)}`);
             }
         });
     }
@@ -340,6 +454,29 @@ match
 
     exploreType() {
         this.dataEditorState.openTypeTab(this.type);
+    }
+
+    openOwnRoleplayerDetail(roleplayer: RoleplayerData, event: Event) {
+        event.stopPropagation();
+
+        const schema = this.schemaState.value$.value;
+        if (!schema) {
+            this.snackbar.errorPersistent("Schema not loaded");
+            return;
+        }
+
+        const playerType = schema.entities[roleplayer.playerTypeLabel] || schema.relations[roleplayer.playerTypeLabel];
+        if (!playerType) {
+            this.snackbar.errorPersistent(`Type '${roleplayer.playerTypeLabel}' not found in schema`);
+            return;
+        }
+
+        const newBreadcrumbs: BreadcrumbItem[] = [
+            ...this.breadcrumbs,
+            { kind: "instance-detail", typeLabel: this.type.label, instanceIID: this.instanceIID }
+        ];
+
+        this.dataEditorState.openInstanceDetail(playerType, roleplayer.playerIID, newBreadcrumbs);
     }
 
     get typeKindLabel(): string {

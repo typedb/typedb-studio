@@ -126,6 +126,24 @@
     }
 }
 
+// Standalone roleplayers list (for relation instances)
+.roleplayers-list {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid colors.$secondary-deep-grey;
+    border-radius: 6px;
+    overflow: hidden;
+
+    > .roleplayer-card {
+        border-bottom: 1px solid colors.$secondary-deep-grey;
+        background: colors.$secondary-purple;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+}
+
 .section-header {
     display: flex;
     align-items: baseline;
