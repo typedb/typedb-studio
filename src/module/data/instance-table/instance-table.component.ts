@@ -25,9 +25,17 @@ import { SnackbarService } from "../../../service/snackbar.service";
 import { AdvancedFilterDialogComponent, AdvancedFilterDialogData, AdvancedFilterDialogResult } from "./advanced-filter-dialog/advanced-filter-dialog.component";
 import { extractErrorMessage } from "../../../framework/util/observable";
 
+/** Primitive value types that TypeDB attributes can hold */
+type AttributeValue = string | number | boolean | Date;
+
+/** Maps relation type label to count of relations of that type */
+type RelationCountsByType = Record<string, number>;
+
 export interface InstanceRow {
     iid: string;
-    [key: string]: any;
+    relationCounts: RelationCountsByType | null;
+    /** Dynamic attribute columns store arrays of values */
+    [key: string]: string | RelationCountsByType | null | AttributeValue[] | undefined;
 }
 
 @Component({
@@ -110,7 +118,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         if (type.kind === "entityType" || type.kind === "relationType") {
             this.attributeColumns = type.ownedAttributes.map(a => a.label);
         }
-        this.displayedColumns = ["iid", ...this.attributeColumns, "relations"];
+        this.displayedColumns = ["iid", ...this.attributeColumns, "relationCounts"];
     }
 
     private async fetchInstances() {
@@ -146,6 +154,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                     if (res.ok.answerType === "conceptRows") {
                         const answers = (res.ok as any).answers as ConceptRowAnswer[];
                         this.dataSource = this.transformToTableRows(answers);
+                        this.fetchRelationCounts();
                     } else {
                         this.dataSource = [];
                     }
@@ -210,6 +219,71 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         }
     }
 
+    private fetchRelationCounts() {
+        if (this.dataSource.length === 0) return;
+
+        // Build query to count relations for all instances in current page
+        // Use disjunction to match any of the instance IIDs
+        const iidBranches = this.dataSource.map(row => `{ $instance iid ${row.iid}; }`).join(" or ");
+        const query = `match ${iidBranches}; $rel links ($instance);`;
+
+        this.driver.query(query).subscribe({
+            next: (res: ApiResponse<QueryResponse>) => {
+                if (isApiErrorResponse(res)) {
+                    this.snackbar.errorPersistent(`Error fetching relation counts: ${res.err.message}`);
+                    for (const row of this.dataSource) {
+                        row.relationCounts = {};
+                    }
+                    return;
+                }
+
+                // Count unique relations per instance, grouped by relation type
+                // Map: instance IID -> relation type -> Set of relation IIDs
+                const countsByIid = new Map<string, Map<string, Set<string>>>();
+                if (res.ok.answerType === "conceptRows") {
+                    const answers = (res.ok as any).answers as ConceptRowAnswer[];
+                    for (const answer of answers) {
+                        const instance = answer.data["instance"];
+                        const rel = answer.data["rel"];
+                        if (instance?.kind === "entity" || instance?.kind === "relation") {
+                            if (rel?.kind === "relation") {
+                                if (!countsByIid.has(instance.iid)) {
+                                    countsByIid.set(instance.iid, new Map());
+                                }
+                                const typeMap = countsByIid.get(instance.iid)!;
+                                const relType = rel.type.label;
+                                if (!typeMap.has(relType)) {
+                                    typeMap.set(relType, new Set());
+                                }
+                                typeMap.get(relType)!.add(rel.iid);
+                            }
+                        }
+                    }
+                }
+
+                // Update rows with counts by type (empty object if no relations found)
+                for (const row of this.dataSource) {
+                    const typeMap = countsByIid.get(row.iid);
+                    if (typeMap) {
+                        const counts: RelationCountsByType = {};
+                        for (const [type, iids] of typeMap) {
+                            counts[type] = iids.size;
+                        }
+                        row.relationCounts = counts;
+                    } else {
+                        row.relationCounts = {};
+                    }
+                }
+            },
+            error: (err) => {
+                this.snackbar.errorPersistent(`Error fetching relation counts: ${extractErrorMessage(err)}`);
+                for (const row of this.dataSource) {
+                    row.relationCounts = {};
+                }
+            }
+        });
+    }
+
     private transformToTableRows(conceptRowAnswers: ConceptRowAnswer[]): InstanceRow[] {
         const rowsByIid = new Map<string, InstanceRow>();
 
@@ -229,18 +303,23 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
             if (!tableRow) {
                 tableRow = {
                     iid,
-                    ["relations"]: [] as any[]
+                    relationCounts: null,
                 };
                 rowsByIid.set(iid, tableRow);
             }
 
-            // Extract attribute values (merge with existing)
+            // Extract attribute values (aggregate into arrays for multi-valued attributes)
             for (const attrLabel of this.attributeColumns) {
                 const attrConcept = row[attrLabel];
                 if (attrConcept) {
                     const value = this.extractAttributeValue(attrConcept);
-                    if (tableRow[attrLabel] === undefined || tableRow[attrLabel] === null) {
-                        tableRow[attrLabel] = value;
+                    if (value != null) {
+                        const existing = tableRow[attrLabel] as AttributeValue[] | undefined;
+                        if (!existing) {
+                            tableRow[attrLabel] = [value];
+                        } else if (!existing.some(v => String(v) === String(value))) {
+                            existing.push(value);
+                        }
                     }
                 }
             }
@@ -249,14 +328,14 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         return Array.from(rowsByIid.values());
     }
 
-    private extractAttributeValue(concept: Concept): any {
+    private extractAttributeValue(concept: Concept): AttributeValue | null {
         if (!concept) return null;
 
         switch (concept.kind) {
             case "attribute":
-                return concept.value;
+                return concept.value as AttributeValue;
             case "value":
-                return concept.value;
+                return concept.value as AttributeValue;
             default:
                 return null;
         }
@@ -284,7 +363,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         // Tab-level TypeQL filter (e.g., for filtered relation views)
         const tabFilter = this.tab.typeqlFilter || "";
 
-        const sortClause = this.sortColumn && this.sortColumn !== "relations" && this.sortColumn !== "iid"
+        const sortClause = this.sortColumn && this.sortColumn !== "relationCounts" && this.sortColumn !== "iid"
             ? `sort $${this.sortColumn} ${this.sortDirection};`
             : "";
 
@@ -304,28 +383,25 @@ ${sortClause}offset ${offset}; limit ${limit};`.trim();
 
     private readonly MAX_DISPLAY_LENGTH = 50;
 
-    formatAttributeValue(value: any): string {
+    formatAttributeValue(value: AttributeValue[] | null | undefined): string {
         if (value == null) return "-";
-        if (Array.isArray(value)) {
-            if (value.length === 0) return "-";
-            if (value.length === 1) return String(value[0]);
-            return `${value[0]} (+${value.length - 1} more)`;
-        }
-        return String(value);
+        if (value.length === 0) return "-";
+        if (value.length === 1) return String(value[0]);
+        return value.join(", ");
     }
 
-    truncateValue(value: any): string {
+    truncateValue(value: AttributeValue[] | null | undefined): string {
         const formatted = this.formatAttributeValue(value);
         if (formatted.length <= this.MAX_DISPLAY_LENGTH) return formatted;
         return formatted.substring(0, this.MAX_DISPLAY_LENGTH) + "…";
     }
 
-    shouldShowTooltip(value: any): boolean {
+    shouldShowTooltip(value: AttributeValue[] | null | undefined): boolean {
         const formatted = this.formatAttributeValue(value);
         return formatted.length > this.MAX_DISPLAY_LENGTH;
     }
 
-    copyToClipboard(event: Event, value: any) {
+    copyToClipboard(event: Event, value: AttributeValue[] | null | undefined) {
         event.stopPropagation(); // Prevent row click
         const text = this.formatAttributeValue(value);
         navigator.clipboard.writeText(text).then(() => {
@@ -333,9 +409,27 @@ ${sortClause}offset ${offset}; limit ${limit};`.trim();
         });
     }
 
-    formatRelationCount(relationCounts: any): string {
-        if (!relationCounts || relationCounts.length === 0) return "-";
-        return `${relationCounts.length} relations`;
+    formatRelationCounts(counts: RelationCountsByType | null | undefined): string {
+        if (counts == null) return "…";
+        const entries = Object.entries(counts);
+        if (entries.length === 0) return "-";
+        // Calculate total
+        const total = entries.reduce((sum, [, count]) => sum + count, 0);
+        // Sort by type name for consistent display
+        entries.sort((a, b) => a[0].localeCompare(b[0]));
+        const breakdown = entries.map(([type, count]) => `${count} ${type}`).join(", ");
+        return `${total} (${breakdown})`;
+    }
+
+    shouldShowRelationTooltip(counts: RelationCountsByType | null | undefined): boolean {
+        const formatted = this.formatRelationCounts(counts);
+        return formatted.length > this.MAX_DISPLAY_LENGTH;
+    }
+
+    truncateRelationCounts(counts: RelationCountsByType | null | undefined): string {
+        const formatted = this.formatRelationCounts(counts);
+        if (formatted.length <= this.MAX_DISPLAY_LENGTH) return formatted;
+        return formatted.substring(0, this.MAX_DISPLAY_LENGTH) + "…";
     }
 
     onRowClick(row: InstanceRow) {

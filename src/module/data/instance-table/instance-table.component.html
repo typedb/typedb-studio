@@ -93,10 +93,11 @@
       }
 
       <!-- Relations column (not sortable) -->
-      <ng-container matColumnDef="relations">
+      <ng-container matColumnDef="relationCounts">
         <th mat-header-cell *matHeaderCellDef>Relations</th>
-        <td mat-cell *matCellDef="let row">
-          {{ formatRelationCount(row.relations) }}
+        <td mat-cell *matCellDef="let row"
+            [matTooltip]="shouldShowRelationTooltip(row.relationCounts) ? formatRelationCounts(row.relationCounts) : ''">
+          {{ truncateRelationCounts(row.relationCounts) }}
         </td>
       </ng-container>
 
