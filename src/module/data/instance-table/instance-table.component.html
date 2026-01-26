@@ -136,6 +136,14 @@
         </td>
       </ng-container>
 
+      <!-- Owners column (for attributes, not sortable) -->
+      <ng-container matColumnDef="ownerCounts">
+        <th mat-header-cell *matHeaderCellDef>Owners</th>
+        <td mat-cell *matCellDef="let row" class="relations-cell">
+          <span richTooltip [showTooltip]="shouldShowOwnerTooltip(row.ownerCounts)" [richTooltipContent]="formatOwnerCounts(row.ownerCounts)">{{ truncateOwnerCounts(row.ownerCounts) }}</span>
+        </td>
+      </ng-container>
+
       <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
       <tr
         mat-row

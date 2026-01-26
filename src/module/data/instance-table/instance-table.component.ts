@@ -35,13 +35,17 @@ type AttributeValue = string | number | boolean | Date;
 /** Maps relation type label to count of relations of that type */
 type RelationCountsByType = Record<string, number>;
 
+/** Maps owner type label to count of owners of that type */
+type OwnerCountsByType = Record<string, number>;
+
 export interface InstanceRow {
     iid: string;
     type: string;
     kind: "entity" | "relation" | "attribute";
     relationCounts: RelationCountsByType | null;
+    ownerCounts?: OwnerCountsByType | null;
     /** Dynamic attribute columns store arrays of values */
-    [key: string]: string | RelationCountsByType | null | AttributeValue[] | "entity" | "relation" | "attribute" | undefined;
+    [key: string]: string | RelationCountsByType | OwnerCountsByType | null | AttributeValue[] | "entity" | "relation" | "attribute" | undefined;
 }
 
 @Component({
@@ -208,9 +212,9 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
     private updateDisplayedColumns() {
         const isAttributeType = this.tab.type.kind === "attributeType";
-        // Attribute types don't have meaningful IIDs or relation counts
+        // Attribute types show owners instead of IIDs and relation counts
         const allColumns = isAttributeType
-            ? ["type", ...this.attributeColumns]
+            ? ["type", ...this.attributeColumns, "ownerCounts"]
             : ["type", "iid", ...this.attributeColumns, "relationCounts"];
         this.displayedColumns = allColumns.filter(col => !this.hiddenColumns.has(col));
     }
@@ -222,6 +226,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
             return [
                 { id: "type", label: "Type" },
                 ...this.attributeColumns.map(attr => ({ id: attr, label: attr })),
+                { id: "ownerCounts", label: "Owners" },
             ];
         }
         return [
@@ -309,14 +314,12 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                     if (res.ok.answerType === "conceptRows") {
                         const answers = (res.ok as any).answers as ConceptRowAnswer[];
                         this.dataSource = this.transformToTableRows(answers);
-                        // Only fetch relation counts for entity/relation types (attributes don't participate in relations)
+                        // Fetch relation counts for entity/relation types, owner counts for attributes
                         if (this.tab.type.kind !== "attributeType") {
                             this.fetchRelationCounts();
                         } else {
-                            // Set empty relation counts for attribute instances
-                            for (const row of this.dataSource) {
-                                row.relationCounts = {};
-                            }
+                            // Fetch owner counts for attribute instances
+                            this.fetchOwnerCounts();
                         }
                     } else {
                         this.dataSource = [];
@@ -445,6 +448,105 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                 }
             }
         });
+    }
+
+    private fetchOwnerCounts() {
+        if (this.dataSource.length === 0) return;
+
+        const attrType = this.tab.type;
+        const valueType = (attrType as any).valueType;
+
+        // Build query to count owners for all attribute values in current page
+        // Each branch binds its own $attr so we can match the value back to the row
+        const valueBranches = this.dataSource.map(row => {
+            const formattedValue = this.formatAttributeValueForQuery(row.iid, valueType);
+            return `{ $owner has $attr; $attr isa ${attrType.label}; $attr == ${formattedValue}; }`;
+        }).join(" or ");
+
+        const query = `match ${valueBranches};`;
+
+        this.driver.query(query).subscribe({
+            next: (res: ApiResponse<QueryResponse>) => {
+                if (isApiErrorResponse(res)) {
+                    this.snackbar.errorPersistent(`Error fetching owner counts: ${res.err.message}`);
+                    for (const row of this.dataSource) {
+                        row.ownerCounts = {};
+                    }
+                    return;
+                }
+
+                // Build a map: attribute value -> owner type -> Set of owner IIDs
+                const countsByValue = new Map<string, Map<string, Set<string>>>();
+
+                // Initialize map for all rows
+                for (const row of this.dataSource) {
+                    countsByValue.set(row.iid, new Map());
+                }
+
+                if (res.ok.answerType === "conceptRows") {
+                    const answers = (res.ok as any).answers as ConceptRowAnswer[];
+                    for (const answer of answers) {
+                        const owner = answer.data["owner"];
+                        const attr = answer.data["attr"];
+
+                        if ((owner?.kind === "entity" || owner?.kind === "relation") && attr?.kind === "attribute") {
+                            const attrValue = String(attr.value);
+                            const ownerType = owner.type.label;
+                            const ownerIid = owner.iid;
+
+                            if (countsByValue.has(attrValue)) {
+                                const typeMap = countsByValue.get(attrValue)!;
+                                if (!typeMap.has(ownerType)) {
+                                    typeMap.set(ownerType, new Set());
+                                }
+                                typeMap.get(ownerType)!.add(ownerIid);
+                            }
+                        }
+                    }
+                }
+
+                // Update rows with counts by type
+                for (const row of this.dataSource) {
+                    const typeMap = countsByValue.get(row.iid);
+                    if (typeMap && typeMap.size > 0) {
+                        const counts: OwnerCountsByType = {};
+                        for (const [type, iids] of typeMap) {
+                            counts[type] = iids.size;
+                        }
+                        row.ownerCounts = counts;
+                    } else {
+                        row.ownerCounts = {};
+                    }
+                }
+            },
+            error: (err) => {
+                this.snackbar.errorPersistent(`Error fetching owner counts: ${extractErrorMessage(err)}`);
+                for (const row of this.dataSource) {
+                    row.ownerCounts = {};
+                }
+            }
+        });
+    }
+
+    private formatAttributeValueForQuery(value: string, valueType: string): string {
+        switch (valueType) {
+            case "string":
+                // Escape quotes and wrap in quotes
+                return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+            case "boolean":
+            case "long":
+            case "double":
+                // Numeric and boolean values don't need quotes
+                return value;
+            case "datetime":
+            case "datetime-tz":
+            case "date":
+            case "duration":
+                return value;
+            default:
+                // Default to quoting as string
+                return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+        }
     }
 
     private transformToTableRows(conceptRowAnswers: ConceptRowAnswer[]): InstanceRow[] {
@@ -648,6 +750,29 @@ ${sortClause}offset ${offset}; limit ${limit};`.trim();
 
     truncateRelationCounts(counts: RelationCountsByType | null | undefined): string {
         const formatted = this.formatRelationCounts(counts);
+        if (formatted.length <= this.MAX_DISPLAY_LENGTH) return formatted;
+        return formatted.substring(0, this.MAX_DISPLAY_LENGTH) + "…";
+    }
+
+    formatOwnerCounts(counts: OwnerCountsByType | null | undefined): string {
+        if (counts == null) return "…";
+        const entries = Object.entries(counts);
+        if (entries.length === 0) return "-";
+        // Calculate total
+        const total = entries.reduce((sum, [, count]) => sum + count, 0);
+        // Sort by type name for consistent display
+        entries.sort((a, b) => a[0].localeCompare(b[0]));
+        const breakdown = entries.map(([type, count]) => `${count} ${type}`).join(", ");
+        return `${total} (${breakdown})`;
+    }
+
+    shouldShowOwnerTooltip(counts: OwnerCountsByType | null | undefined): boolean {
+        const formatted = this.formatOwnerCounts(counts);
+        return formatted.length > this.MAX_DISPLAY_LENGTH;
+    }
+
+    truncateOwnerCounts(counts: OwnerCountsByType | null | undefined): string {
+        const formatted = this.formatOwnerCounts(counts);
         if (formatted.length <= this.MAX_DISPLAY_LENGTH) return formatted;
         return formatted.substring(0, this.MAX_DISPLAY_LENGTH) + "…";
     }
