@@ -24,6 +24,7 @@ export interface TypeTableTab {
 export interface BreadcrumbItem {
     kind: "type-table" | "instance-detail";
     typeLabel: string;
+    typeKind: "entityType" | "relationType" | "attributeType";
     instanceIID?: string;
 }
 
@@ -161,6 +162,24 @@ export class DataEditorState {
     ) {
         const restoredTabs: DataTab[] = [];
 
+        // Helper to look up typeKind from schema
+        const getTypeKind = (typeLabel: string): "entityType" | "relationType" | "attributeType" => {
+            if (schema.entities[typeLabel]) return "entityType";
+            if (schema.relations[typeLabel]) return "relationType";
+            return "attributeType";
+        };
+
+        // Helper to convert persisted breadcrumbs to BreadcrumbItem[]
+        const convertBreadcrumbs = (persisted: typeof saved.tabs[0]["breadcrumbs"]): BreadcrumbItem[] | undefined => {
+            if (!persisted) return undefined;
+            return persisted.map(b => ({
+                kind: b.kind,
+                typeLabel: b.typeLabel,
+                typeKind: b.typeKind || getTypeKind(b.typeLabel),
+                instanceIID: b.instanceIID,
+            }));
+        };
+
         for (const persistedTab of saved.tabs) {
             // Look up the type in the schema
             const type = schema.entities[persistedTab.typeLabel] ||
@@ -179,7 +198,7 @@ export class DataEditorState {
                     totalCount: 0,
                     selectedInstanceIID: null,
                     typeqlFilter: persistedTab.typeqlFilter,
-                    breadcrumbs: persistedTab.breadcrumbs,
+                    breadcrumbs: convertBreadcrumbs(persistedTab.breadcrumbs),
                     pinned: persistedTab.pinned,
                 });
             } else {
@@ -187,7 +206,7 @@ export class DataEditorState {
                     kind: "instance-detail",
                     type,
                     instanceIID: persistedTab.instanceIID,
-                    breadcrumbs: persistedTab.breadcrumbs,
+                    breadcrumbs: convertBreadcrumbs(persistedTab.breadcrumbs) || [],
                     pinned: persistedTab.pinned,
                 });
             }

@@ -511,7 +511,7 @@ match
         // Build new breadcrumbs by appending current instance
         const newBreadcrumbs: BreadcrumbItem[] = [
             ...this.breadcrumbs,
-            { kind: "instance-detail", typeLabel: this.type.label, instanceIID: this.instanceIID }
+            { kind: "instance-detail", typeLabel: this.type.label, typeKind: this.type.kind, instanceIID: this.instanceIID }
         ];
 
         this.dataEditorState.openInstanceDetail(playerType, roleplayer.playerIID, newBreadcrumbs);
@@ -534,7 +534,7 @@ match
         // Build new breadcrumbs by appending current instance
         const newBreadcrumbs: BreadcrumbItem[] = [
             ...this.breadcrumbs,
-            { kind: "instance-detail", typeLabel: this.type.label, instanceIID: this.instanceIID }
+            { kind: "instance-detail", typeLabel: this.type.label, typeKind: this.type.kind, instanceIID: this.instanceIID }
         ];
 
         this.dataEditorState.openInstanceDetail(relationType, instance.relationIID, newBreadcrumbs);
@@ -547,7 +547,7 @@ match
     exploreType() {
         const newBreadcrumbs: BreadcrumbItem[] = [
             ...this.breadcrumbs,
-            { kind: "instance-detail", typeLabel: this.type.label, instanceIID: this.instanceIID }
+            { kind: "instance-detail", typeLabel: this.type.label, typeKind: this.type.kind, instanceIID: this.instanceIID }
         ];
         this.dataEditorState.openTypeTab(this.type, newBreadcrumbs);
     }
@@ -568,7 +568,7 @@ match
 
         const newBreadcrumbs: BreadcrumbItem[] = [
             ...this.breadcrumbs,
-            { kind: "instance-detail", typeLabel: this.type.label, instanceIID: this.instanceIID }
+            { kind: "instance-detail", typeLabel: this.type.label, typeKind: this.type.kind, instanceIID: this.instanceIID }
         ];
 
         this.dataEditorState.openInstanceDetail(playerType, roleplayer.playerIID, newBreadcrumbs);
@@ -580,6 +580,20 @@ match
             case "relationType": return "relation";
             case "attributeType": return "attribute";
             default: return "";
+        }
+    }
+
+    getTypeIconClass(typeKind: string, filled: boolean): string {
+        const style = filled ? "fa-solid" : "fa-regular";
+        switch (typeKind) {
+            case "entityType":
+                return `${style} fa-square entity`;
+            case "relationType":
+                return `${style} fa-diamond relation`;
+            case "attributeType":
+                return `${style} fa-circle attribute`;
+            default:
+                return `${style} fa-question`;
         }
     }
 
@@ -764,7 +778,7 @@ match
 
         const newBreadcrumbs: BreadcrumbItem[] = [
             ...this.breadcrumbs,
-            { kind: "instance-detail", typeLabel: this.type.label, instanceIID: this.instanceIID }
+            { kind: "instance-detail", typeLabel: this.type.label, typeKind: this.type.kind, instanceIID: this.instanceIID }
         ];
 
         this.dataEditorState.openInstanceDetail(ownerType, owner.ownerIID, newBreadcrumbs);

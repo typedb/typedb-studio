@@ -101,9 +101,37 @@
 }
 
 .breadcrumb-current {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 13px;
     font-weight: 500;
     color: colors.$white;
+
+    i {
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+.breadcrumb-icon {
+    font-size: 10px;
+    position: relative;
+    top: 1px;
+
+    &.entity {
+        color: colors.$entity-pink;
+    }
+
+    &.relation {
+        color: colors.$relation-yellow;
+    }
+
+    &.attribute {
+        color: colors.$attribute-blue;
+    }
 }
 
 .detail-content {

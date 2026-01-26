@@ -107,6 +107,24 @@
     }
 }
 
+.breadcrumb-icon {
+    font-size: 10px;
+    position: relative;
+    top: 1px;
+
+    &.entity {
+        color: colors.$entity-pink;
+    }
+
+    &.relation {
+        color: colors.$relation-yellow;
+    }
+
+    &.attribute {
+        color: colors.$attribute-blue;
+    }
+}
+
 .filter-sort-bar {
     display: flex;
     align-items: center;

@@ -904,7 +904,7 @@ ${sortClause}offset ${offset}; limit ${limit};`.trim();
         // Create breadcrumb back to this table, preserving any existing breadcrumbs
         const breadcrumbs: BreadcrumbItem[] = [
             ...this.breadcrumbs,
-            { kind: "type-table", typeLabel: this.tab.type.label }
+            { kind: "type-table", typeLabel: this.tab.type.label, typeKind: this.tab.type.kind }
         ];
         this.dataEditorState.openInstanceDetail(this.tab.type, row.iid, breadcrumbs);
     }
@@ -966,5 +966,24 @@ ${sortClause}offset ${offset}; limit ${limit};`.trim();
     refresh() {
         this.fetchInstances();
         this.fetchTotalCount();
+    }
+
+    /**
+     * Returns the icon class for a type kind.
+     * @param typeKind The kind of type (entityType, relationType, attributeType)
+     * @param filled If true, use filled icon (for instances). If false, use hollow icon (for tables).
+     */
+    getTypeIconClass(typeKind: string, filled: boolean): string {
+        const style = filled ? "fa-solid" : "fa-regular";
+        switch (typeKind) {
+            case "entityType":
+                return `${style} fa-square entity`;
+            case "relationType":
+                return `${style} fa-diamond relation`;
+            case "attributeType":
+                return `${style} fa-circle attribute`;
+            default:
+                return `${style} fa-question`;
+        }
     }
 }

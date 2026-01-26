@@ -159,11 +159,18 @@ interface PreferencesData {
 
 const DATA_EXPLORER_TABS = "dataExplorerTabs";
 
+export interface PersistedBreadcrumbItem {
+    kind: "type-table" | "instance-detail";
+    typeLabel: string;
+    typeKind?: "entityType" | "relationType" | "attributeType";
+    instanceIID?: string;
+}
+
 export interface PersistedTypeTableTab {
     kind: "type-table";
     typeLabel: string;
     typeqlFilter?: string;
-    breadcrumbs?: { kind: "type-table" | "instance-detail"; typeLabel: string; instanceIID?: string }[];
+    breadcrumbs?: PersistedBreadcrumbItem[];
     pinned?: boolean;
 }
 
@@ -171,7 +178,7 @@ export interface PersistedInstanceDetailTab {
     kind: "instance-detail";
     typeLabel: string;
     instanceIID: string;
-    breadcrumbs: { kind: "type-table" | "instance-detail"; typeLabel: string; instanceIID?: string }[];
+    breadcrumbs: PersistedBreadcrumbItem[];
     pinned?: boolean;
 }
 
