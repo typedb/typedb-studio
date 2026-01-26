@@ -45,8 +45,14 @@
     margin: 0;
 }
 
-.sb-text {
+.sb-content {
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sb-text {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -55,6 +61,15 @@
     i {
         flex-shrink: 0;
     }
+}
+
+.sb-action {
+    align-self: flex-start;
+}
+
+.truncated-indicator {
+    color: colors.$grey;
+    font-style: italic;
 }
 
 .sb-button i {

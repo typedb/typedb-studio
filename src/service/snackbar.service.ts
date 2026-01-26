@@ -5,7 +5,9 @@
  */
 
 import { Injectable } from "@angular/core";
+import { MatDialog } from "@angular/material/dialog";
 import { MatSnackBar, MatSnackBarConfig } from "@angular/material/snack-bar";
+import { ErrorDetailsDialogComponent } from "../framework/error-details-dialog/error-details-dialog.component";
 import { SnackbarComponent, SnackbarData } from "../framework/snackbar/snackbar.component";
 import { ColorStyle } from "../framework/util";
 
@@ -13,7 +15,7 @@ import { ColorStyle } from "../framework/util";
     providedIn: "root",
 })
 export class SnackbarService {
-    constructor(private snackbar: MatSnackBar) {}
+    constructor(private snackbar: MatSnackBar, private dialog: MatDialog) {}
 
     open(message: string, status: ColorStyle, config?: MatSnackBarConfig<SnackbarData>) {
         const defaultConfig: MatSnackBarConfig<SnackbarData> = {
@@ -46,6 +48,22 @@ export class SnackbarService {
     }
 
     errorPersistent(message: string, config?: MatSnackBarConfig<SnackbarData>) {
-        return this.open(message, "error", config);
+        const errorConfig: MatSnackBarConfig<SnackbarData> = {
+            ...config,
+            data: {
+                message,
+                status: "error",
+                maxLines: 4,
+                action: {
+                    label: "View error details",
+                    callback: () => this.dialog.open(ErrorDetailsDialogComponent, {
+                        data: { message },
+                        width: "600px",
+                    }),
+                },
+                ...config?.data,
+            },
+        };
+        return this.open(message, "error", errorConfig);
     }
 }
