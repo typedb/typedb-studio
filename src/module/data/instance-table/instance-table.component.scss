@@ -308,13 +308,28 @@
         min-width: fit-content;
     }
 
+    .column-menu-actions {
+        display: flex;
+        gap: 4px;
+        padding: 4px 8px;
+        border-bottom: 1px solid colors.$secondary-deep-grey;
+
+        button {
+            font-size: 12px;
+            min-height: 28px;
+            padding: 0 8px;
+        }
+    }
+
     .mat-mdc-menu-item {
-        padding: 0 16px;
+        padding: 0;
         min-height: 36px;
         white-space: nowrap;
 
         .mat-mdc-checkbox {
             width: 100%;
+            padding: 0 16px;
+            pointer-events: none;
 
             .mdc-form-field {
                 width: 100%;
@@ -323,6 +338,8 @@
 
             .mdc-label {
                 white-space: nowrap;
+                flex: 1;
+                padding-right: 16px;
             }
         }
     }

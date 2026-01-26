@@ -216,6 +216,18 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         this.updateDisplayedColumns();
     }
 
+    showAllColumns() {
+        this.hiddenColumns.clear();
+        this.updateDisplayedColumns();
+    }
+
+    hideAllColumns() {
+        for (const col of this.allColumns) {
+            this.hiddenColumns.add(col.id);
+        }
+        this.updateDisplayedColumns();
+    }
+
     private collectAttributesRecursively(
         type: { ownedAttributes: { label: string }[]; subtypes: any[] },
         attributes: Set<string>
