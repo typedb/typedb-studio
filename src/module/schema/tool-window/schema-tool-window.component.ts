@@ -21,7 +21,6 @@ import { combineLatest, map } from "rxjs";
 import { MatMenuModule } from "@angular/material/menu";
 import { SchemaToolWindowState, SchemaTreeNode, SchemaTreeConceptNode } from "../../../service/schema-tool-window-state.service";
 import { DriverState } from "../../../service/driver-state.service";
-import { SnackbarService } from "../../../service/snackbar.service";
 import { AppData } from "../../../service/app-data.service";
 import { SchemaTreeNodeComponent } from "../tree-node/schema-tree-node.component";
 import { MatDialog } from "@angular/material/dialog";
@@ -51,7 +50,6 @@ export class SchemaToolWindowComponent implements AfterViewInit {
     constructor(
         public state: SchemaToolWindowState,
         public driver: DriverState,
-        private snackbar: SnackbarService,
         private appData: AppData,
         private dialog: MatDialog,
         private dataEditorState: DataEditorState,

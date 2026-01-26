@@ -5,7 +5,7 @@
       resizable
       [percent]="20"
       [mode]="'data'"
-      [title]="'Types'"
+      [title]="'Data Explorer'"
     />
 
     <!-- Main area: Tabs and content -->
@@ -22,11 +22,12 @@
             <i class="fa-light fa-database"></i><span>Select database</span>
           </button>
         </div>
-      } @else if (state.restoringTabs$ | async) {
+      } @else if (showRestoringSpinner$ | async) {
         <div class="loading-state">
           <tp-spinner/>
-          <p>Restoring tabs...</p>
         </div>
+      } @else if (state.restoringTabs$ | async) {
+        <!-- Brief restoring period, show nothing -->
       } @else if ((state.openTabs$ | async)!.length > 0) {
         <mat-tab-group
           [selectedIndex]="state.selectedTabIndex$.value"

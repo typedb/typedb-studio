@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Component, OnInit, ViewChild } from "@angular/core";
+import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { AsyncPipe } from "@angular/common";
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
@@ -15,6 +15,7 @@ import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatDividerModule } from "@angular/material/divider";
 import { RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
+import { BehaviorSubject, Subscription } from "rxjs";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
@@ -47,12 +48,16 @@ import { AppData } from "../../service/app-data.service";
         InstanceDetailComponent,
     ],
 })
-export class DataPageComponent implements OnInit {
+export class DataPageComponent implements OnInit, OnDestroy {
     @ViewChild(MatMenuTrigger) contextMenuTrigger!: MatMenuTrigger;
 
     contextMenuPosition = { x: 0, y: 0 };
     contextMenuTab: DataTab | null = null;
     contextMenuTabIndex = 0;
+
+    showRestoringSpinner$ = new BehaviorSubject<boolean>(false);
+    private restoringTabsSubscription?: Subscription;
+    private spinnerTimeout?: ReturnType<typeof setTimeout>;
 
     constructor(
         public state: DataEditorState,
@@ -64,6 +69,30 @@ export class DataPageComponent implements OnInit {
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("data");
+
+        // Show spinner only after 500ms of restoring tabs
+        this.restoringTabsSubscription = this.state.restoringTabs$.subscribe(restoring => {
+            if (restoring) {
+                this.spinnerTimeout = setTimeout(() => {
+                    if (this.state.restoringTabs$.value) {
+                        this.showRestoringSpinner$.next(true);
+                    }
+                }, 500);
+            } else {
+                if (this.spinnerTimeout) {
+                    clearTimeout(this.spinnerTimeout);
+                    this.spinnerTimeout = undefined;
+                }
+                this.showRestoringSpinner$.next(false);
+            }
+        });
+    }
+
+    ngOnDestroy() {
+        this.restoringTabsSubscription?.unsubscribe();
+        if (this.spinnerTimeout) {
+            clearTimeout(this.spinnerTimeout);
+        }
     }
 
     openSelectDatabaseDialog() {

@@ -1,9 +1,9 @@
 <ts-page-scaffold pageAvailability="ready">
   <article #articleRef class="schema-page" style="display: flex; flex-direction: row;">
-    <ts-schema-tool-window resizable [percent]="20"/>
+    <ts-schema-tool-window resizable [percent]="20" [title]="'Schema Explorer'"/>
     <div class="visualiser-pane card" resizable [percent]="80">
       <div class="card-header">
-        <h5>Schema Visualizer</h5>
+        <h5>Visualiser</h5>
         <div class="flex-spacer"></div>
         <button mat-stroked-button [disabled]="!(state.interactable$ | async)"
                 [matTooltip]="(state.interactionDisabledReason$ | async) || ''" matTooltipPosition="below" (click)="state.refresh()">
