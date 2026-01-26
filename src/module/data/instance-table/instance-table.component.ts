@@ -156,6 +156,17 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                 }
             })
         );
+
+        // Subscribe to auto mode changes to load data when switching from manual to auto
+        this.subscriptions.push(
+            this.driver.autoTransactionEnabled$.subscribe(autoEnabled => {
+                if (autoEnabled && this.needsTransaction) {
+                    this.needsTransaction = false;
+                    this.fetchInstances();
+                    this.fetchTotalCount();
+                }
+            })
+        );
     }
 
     /** Returns true if we're in manual mode without an open transaction */

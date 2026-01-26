@@ -141,12 +141,9 @@
     }
 
     button {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
         i {
             font-size: 14px;
+            margin-right: 4px;
         }
     }
 }

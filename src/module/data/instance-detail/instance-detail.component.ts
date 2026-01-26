@@ -149,6 +149,16 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
                 }
             })
         );
+
+        // Subscribe to auto mode changes to load data when switching from manual to auto
+        this.subscriptions.push(
+            this.driver.autoTransactionEnabled$.subscribe(autoEnabled => {
+                if (autoEnabled && this.needsTransaction) {
+                    this.needsTransaction = false;
+                    this.loadData();
+                }
+            })
+        );
     }
 
     ngOnDestroy() {

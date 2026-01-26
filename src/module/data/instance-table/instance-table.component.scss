@@ -368,15 +368,12 @@
 
 .transaction-prompt {
     button {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
         i {
             font-size: 14px;
             width: auto;
             height: auto;
             margin-bottom: 0;
+            margin-right: 4px;
         }
     }
 }
