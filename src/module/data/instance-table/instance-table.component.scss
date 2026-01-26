@@ -226,12 +226,18 @@
 }
 
 .instance-table {
-    width: 100%;
-    table-layout: auto;
+    &.mat-mdc-table {
+        width: 100%;
+        table-layout: auto;
+    }
 
     th, td {
         white-space: nowrap;
         padding: 8px 16px;
+
+        &:not(:last-child) {
+            width: 0;
+        }
     }
 
     th {
@@ -251,6 +257,10 @@
         font-size: 12px;
         color: colors.$grey;
         min-width: 280px;
+
+        > span {
+            display: inline-block;
+        }
     }
 
     .type-cell {
@@ -263,6 +273,10 @@
         &.relation {
             color: colors.$relation-yellow;
         }
+
+        &.attribute {
+            color: colors.$attribute-blue;
+        }
     }
 
     .attribute-cell {
@@ -270,6 +284,10 @@
             display: inline-flex;
             align-items: center;
             vertical-align: middle;
+
+            .cell-content {
+                display: inline-block;
+            }
         }
 
         .copy-button {
@@ -288,6 +306,12 @@
 
         &:hover .copy-button {
             opacity: 1;
+        }
+    }
+
+    .relations-cell {
+        > span {
+            display: inline-block;
         }
     }
 

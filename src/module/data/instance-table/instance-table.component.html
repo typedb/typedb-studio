@@ -78,7 +78,7 @@
   </div>
 
   <!-- Table -->
-  <div class="table-wrapper">
+  <div class="table-wrapper" cdkScrollable>
     @if (showSpinner) {
       <div class="loading-overlay">
         <mat-spinner diameter="40"></mat-spinner>
@@ -95,7 +95,7 @@
       <!-- Type Column -->
       <ng-container matColumnDef="type">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
-        <td mat-cell *matCellDef="let row" class="type-cell" [class.entity]="row.kind === 'entity'" [class.relation]="row.kind === 'relation'">
+        <td mat-cell *matCellDef="let row" class="type-cell" [class.entity]="row.kind === 'entity'" [class.relation]="row.kind === 'relation'" [class.attribute]="row.kind === 'attribute'">
           {{ row.type }}
         </td>
       </ng-container>
@@ -103,8 +103,8 @@
       <!-- IID Column -->
       <ng-container matColumnDef="iid">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>IID</th>
-        <td mat-cell *matCellDef="let row" class="iid-cell" [matTooltip]="row.iid">
-          {{ row.iid }}
+        <td mat-cell *matCellDef="let row" class="iid-cell">
+          <span richTooltip [richTooltipContent]="row.iid">{{ row.iid }}</span>
         </td>
       </ng-container>
 
@@ -112,10 +112,9 @@
       @for (attr of attributeColumns; track attr) {
         <ng-container [matColumnDef]="attr">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ attr }}</th>
-          <td mat-cell *matCellDef="let row" class="attribute-cell"
-              [matTooltip]="shouldShowTooltip(row[attr]) ? formatAttributeValue(row[attr]) : ''">
+          <td mat-cell *matCellDef="let row" class="attribute-cell">
             <div class="cell-content-wrapper">
-              <span class="cell-content">{{ truncateValue(row[attr]) }}</span>
+              <span class="cell-content" richTooltip [showTooltip]="shouldShowTooltip(row[attr])" [richTooltipContent]="formatAttributeValue(row[attr])">{{ truncateValue(row[attr]) }}</span>
               @if (formatAttributeValue(row[attr]) !== '-') {
                 <button
                   mat-icon-button
@@ -132,9 +131,8 @@
       <!-- Relations column (not sortable) -->
       <ng-container matColumnDef="relationCounts">
         <th mat-header-cell *matHeaderCellDef>Relations</th>
-        <td mat-cell *matCellDef="let row"
-            [matTooltip]="shouldShowRelationTooltip(row.relationCounts) ? formatRelationCounts(row.relationCounts) : ''">
-          {{ truncateRelationCounts(row.relationCounts) }}
+        <td mat-cell *matCellDef="let row" class="relations-cell">
+          <span richTooltip [showTooltip]="shouldShowRelationTooltip(row.relationCounts)" [richTooltipContent]="formatRelationCounts(row.relationCounts)">{{ truncateRelationCounts(row.relationCounts) }}</span>
         </td>
       </ng-container>
 

@@ -1,12 +1,20 @@
 @use "colors";
 @use "shapes";
 
+:host {
+    display: block;
+    max-width: 400px;
+    transform: translateX(-50%);
+}
+
 .tooltip-container {
     border-radius: shapes.$border-radius-small;
     padding: 4px 8px;
     font-size: 14px;
     line-height: 20px;
     background: colors.$secondary-mid-deep-grey;
+    max-width: 400px;
+    word-wrap: break-word;
 
     ::ng-deep > div {
         max-width: 360px;

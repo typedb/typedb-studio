@@ -18,14 +18,16 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatMenuModule } from "@angular/material/menu";
 import { MatCheckboxModule } from "@angular/material/checkbox";
 import { MatDialog } from "@angular/material/dialog";
+import { CdkScrollable } from "@angular/cdk/scrolling";
 import { Subject, Subscription, combineLatest } from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, take } from "rxjs/operators";
 import { TypeTableTab, DataEditorState, BreadcrumbItem } from "../../../service/data-editor-state.service";
 import { DriverState } from "../../../service/driver-state.service";
-import { ApiResponse, Concept, ConceptRow, ConceptRowAnswer, isApiErrorResponse, QueryResponse } from "@typedb/driver-http";
+import { ApiResponse, Attribute, Concept, ConceptRow, ConceptRowAnswer, isApiErrorResponse, QueryResponse } from "@typedb/driver-http";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { AdvancedFilterDialogComponent, AdvancedFilterDialogData, AdvancedFilterDialogResult } from "./advanced-filter-dialog/advanced-filter-dialog.component";
 import { extractErrorMessage } from "../../../framework/util/observable";
+import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 
 /** Primitive value types that TypeDB attributes can hold */
 type AttributeValue = string | number | boolean | Date;
@@ -36,10 +38,10 @@ type RelationCountsByType = Record<string, number>;
 export interface InstanceRow {
     iid: string;
     type: string;
-    kind: "entity" | "relation";
+    kind: "entity" | "relation" | "attribute";
     relationCounts: RelationCountsByType | null;
     /** Dynamic attribute columns store arrays of values */
-    [key: string]: string | RelationCountsByType | null | AttributeValue[] | "entity" | "relation" | undefined;
+    [key: string]: string | RelationCountsByType | null | AttributeValue[] | "entity" | "relation" | "attribute" | undefined;
 }
 
 @Component({
@@ -59,6 +61,8 @@ export interface InstanceRow {
         MatTooltipModule,
         MatMenuModule,
         MatCheckboxModule,
+        RichTooltipDirective,
+        CdkScrollable,
     ],
 })
 export class InstanceTableComponent implements OnInit, OnDestroy {
@@ -195,17 +199,31 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
             const allAttributes = new Set<string>();
             this.collectAttributesRecursively(type, allAttributes);
             this.attributeColumns = Array.from(allAttributes);
+        } else if (type.kind === "attributeType") {
+            // Attribute types display their value in a "value" column
+            this.attributeColumns = ["value"];
         }
         this.updateDisplayedColumns();
     }
 
     private updateDisplayedColumns() {
-        const allColumns = ["type", "iid", ...this.attributeColumns, "relationCounts"];
+        const isAttributeType = this.tab.type.kind === "attributeType";
+        // Attribute types don't have meaningful IIDs or relation counts
+        const allColumns = isAttributeType
+            ? ["type", ...this.attributeColumns]
+            : ["type", "iid", ...this.attributeColumns, "relationCounts"];
         this.displayedColumns = allColumns.filter(col => !this.hiddenColumns.has(col));
     }
 
     /** All available columns for the column picker */
     get allColumns(): { id: string; label: string }[] {
+        const isAttributeType = this.tab.type.kind === "attributeType";
+        if (isAttributeType) {
+            return [
+                { id: "type", label: "Type" },
+                ...this.attributeColumns.map(attr => ({ id: attr, label: attr })),
+            ];
+        }
         return [
             { id: "type", label: "Type" },
             { id: "iid", label: "IID" },
@@ -291,7 +309,15 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                     if (res.ok.answerType === "conceptRows") {
                         const answers = (res.ok as any).answers as ConceptRowAnswer[];
                         this.dataSource = this.transformToTableRows(answers);
-                        this.fetchRelationCounts();
+                        // Only fetch relation counts for entity/relation types (attributes don't participate in relations)
+                        if (this.tab.type.kind !== "attributeType") {
+                            this.fetchRelationCounts();
+                        } else {
+                            // Set empty relation counts for attribute instances
+                            for (const row of this.dataSource) {
+                                row.relationCounts = {};
+                            }
+                        }
                     } else {
                         this.dataSource = [];
                     }
@@ -423,43 +449,71 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
     private transformToTableRows(conceptRowAnswers: ConceptRowAnswer[]): InstanceRow[] {
         const rowsByIid = new Map<string, InstanceRow>();
+        const isAttributeType = this.tab.type.kind === "attributeType";
 
         for (const answer of conceptRowAnswers) {
             const row = answer.data;
 
             // Extract instance IID
             const instanceConcept = row["instance"];
-            if (!instanceConcept || (instanceConcept.kind !== "entity" && instanceConcept.kind !== "relation")) {
-                continue;
-            }
+            if (!instanceConcept) continue;
 
-            const iid = instanceConcept.iid;
-            const type = instanceConcept.type.label;
-            const kind = instanceConcept.kind as "entity" | "relation";
+            // Handle attribute instances differently
+            if (isAttributeType) {
+                if (instanceConcept.kind !== "attribute") continue;
 
-            // Get existing row or create new one
-            let tableRow = rowsByIid.get(iid);
-            if (!tableRow) {
-                tableRow = {
-                    iid,
-                    type,
-                    kind,
-                    relationCounts: null,
-                };
-                rowsByIid.set(iid, tableRow);
-            }
+                const attrInstance = instanceConcept as Attribute;
+                const type = attrInstance.type.label;
+                const value = attrInstance.value as AttributeValue;
+                // Use value as key since attribute instances are identified by their value
+                const key = String(value);
 
-            // Extract attribute values (aggregate into arrays for multi-valued attributes)
-            for (const attrLabel of this.attributeColumns) {
-                const attrConcept = row[attrLabel];
-                if (attrConcept) {
-                    const value = this.extractAttributeValue(attrConcept);
-                    if (value != null) {
-                        const existing = tableRow[attrLabel] as AttributeValue[] | undefined;
-                        if (!existing) {
-                            tableRow[attrLabel] = [value];
-                        } else if (!existing.some(v => String(v) === String(value))) {
-                            existing.push(value);
+                // Get existing row or create new one
+                let tableRow = rowsByIid.get(key);
+                if (!tableRow) {
+                    tableRow = {
+                        iid: key, // Use value as identifier
+                        type,
+                        kind: "attribute",
+                        relationCounts: null,
+                        value: [value],
+                    };
+                    rowsByIid.set(key, tableRow);
+                }
+            } else {
+                // Entity/relation instances
+                if (instanceConcept.kind !== "entity" && instanceConcept.kind !== "relation") {
+                    continue;
+                }
+
+                const iid = instanceConcept.iid;
+                const type = instanceConcept.type.label;
+                const kind = instanceConcept.kind as "entity" | "relation";
+
+                // Get existing row or create new one
+                let tableRow = rowsByIid.get(iid);
+                if (!tableRow) {
+                    tableRow = {
+                        iid,
+                        type,
+                        kind,
+                        relationCounts: null,
+                    };
+                    rowsByIid.set(iid, tableRow);
+                }
+
+                // Extract attribute values (aggregate into arrays for multi-valued attributes)
+                for (const attrLabel of this.attributeColumns) {
+                    const attrConcept = row[attrLabel];
+                    if (attrConcept) {
+                        const value = this.extractAttributeValue(attrConcept);
+                        if (value != null) {
+                            const existing = tableRow[attrLabel] as AttributeValue[] | undefined;
+                            if (!existing) {
+                                tableRow[attrLabel] = [value];
+                            } else if (!existing.some(v => String(v) === String(value))) {
+                                existing.push(value);
+                            }
                         }
                     }
                 }
@@ -484,6 +538,31 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
     private buildInstanceQuery(offset: number, limit: number): string {
         const type = this.tab.type;
+
+        // For attribute types, we don't need to fetch owned attributes - the value is on the instance itself
+        if (type.kind === "attributeType") {
+            let filterClause = "";
+            if (this.filterText) {
+                if (this.filterMode === "simple") {
+                    // Simple mode: search in the attribute value
+                    filterClause = `$instance contains "${this.filterText}";`;
+                } else {
+                    // Advanced mode: use raw TypeQL
+                    filterClause = this.filterText;
+                }
+            }
+
+            const tabFilter = this.tab.typeqlFilter || "";
+            const tabFilterLine = tabFilter ? `${tabFilter}\n    ` : "";
+            const filterLine = filterClause ? `${filterClause}\n    ` : "";
+
+            return `match
+    $instance isa ${type.label};
+    ${tabFilterLine}${filterLine}
+select $instance;
+distinct;
+offset ${offset}; limit ${limit};`.trim();
+        }
 
         // Use try blocks to make attribute fetching optional
         const attributeClauses = this.attributeColumns.map(attr =>
