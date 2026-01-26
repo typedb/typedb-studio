@@ -78,6 +78,24 @@
     }
 }
 
+.tab-type-icon {
+    font-size: 10px;
+    position: relative;
+    top: 2px;
+
+    &.entity {
+        color: colors.$entity-pink;
+    }
+
+    &.relation {
+        color: colors.$relation-yellow;
+    }
+
+    &.attribute {
+        color: colors.$attribute-blue;
+    }
+}
+
 .tab-count {
     font-size: 12px;
     color: colors.$grey;

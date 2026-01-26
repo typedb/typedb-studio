@@ -104,7 +104,7 @@
       <ng-container matColumnDef="iid">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>IID</th>
         <td mat-cell *matCellDef="let row" class="iid-cell">
-          <span richTooltip [richTooltipContent]="row.iid">{{ row.iid }}</span>
+          {{ row.iid }}
         </td>
       </ng-container>
 

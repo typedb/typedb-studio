@@ -46,11 +46,13 @@
                       <i class="fa-light fa-thumbtack pin-icon"></i>
                     }
                     @if (tab.kind === 'type-table') {
+                      <i class="tab-type-icon" [ngClass]="getTypeIconClass(tab.type.kind, false)"></i>
                       {{ tab.type.label }}
                       @if (tab.totalCount > 0) {
                         <span class="tab-count">({{ tab.totalCount }})</span>
                       }
                     } @else {
+                      <i class="tab-type-icon" [ngClass]="getTypeIconClass(tab.type.kind, true)"></i>
                       {{ tab.type.label }}: {{ tab.instanceIID.substring(0, 8) }}...
                     }
                   </span>

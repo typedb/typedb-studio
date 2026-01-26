@@ -5,7 +5,7 @@
  */
 
 import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
-import { AsyncPipe } from "@angular/common";
+import { AsyncPipe, NgClass } from "@angular/common";
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from "@angular/material/button";
@@ -33,6 +33,7 @@ import { AppData } from "../../service/app-data.service";
     styleUrls: ["./data-page.component.scss"],
     imports: [
         AsyncPipe,
+        NgClass,
         RouterLink,
         MatTabsModule,
         MatIconModule,
@@ -159,5 +160,24 @@ export class DataPageComponent implements OnInit, OnDestroy {
 
     togglePinTab(tab: DataTab) {
         this.state.togglePinTab(tab);
+    }
+
+    /**
+     * Returns the icon class for a type kind.
+     * @param typeKind The kind of type (entityType, relationType, attributeType)
+     * @param filled If true, use filled icon (for instances). If false, use hollow icon (for tables).
+     */
+    getTypeIconClass(typeKind: string, filled: boolean): string {
+        const style = filled ? "fa-solid" : "fa-regular";
+        switch (typeKind) {
+            case "entityType":
+                return `${style} fa-square entity`;
+            case "relationType":
+                return `${style} fa-diamond relation`;
+            case "attributeType":
+                return `${style} fa-circle attribute`;
+            default:
+                return `${style} fa-question`;
+        }
     }
 }
