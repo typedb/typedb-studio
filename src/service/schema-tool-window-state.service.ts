@@ -214,8 +214,8 @@ export class SchemaToolWindowState {
         const state = this.appData.viewState.schemaToolWindowState();
 
         this.dataSource$.value.forEach(node => {
-            this.rootNodesCollapsed[node.label] = true;
-            state.rootNodesCollapsed[node.label] = true;
+            this.rootNodesCollapsed[node.label] = false;
+            state.rootNodesCollapsed[node.label] = false;
         });
 
         this.appData.viewState.setSchemaToolWindowState(state);

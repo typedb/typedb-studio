@@ -29,4 +29,8 @@ When setting up TypeDB tooling (driver SDKs, etc.) ensure that the installed dri
 
 - Prefer extending existing components over creating new ones
 - Follow established patterns in the codebase for consistency
+
+## General Agent Guidelines
+
 - Do prompt for clarification when making architectural decisions
+- Don't redirect shell script output to 'nul' on Windows

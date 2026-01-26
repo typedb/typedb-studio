@@ -98,8 +98,11 @@ export class SchemaToolWindowComponent implements AfterViewInit {
 
         this.state.collapseAll$.subscribe(() => {
             setTimeout(() => {
-                // Use collapseDescendants for each root node to collapse all levels
-                this.state.dataSource$.value.forEach(node => this.tree.collapseDescendants(node));
+                // Expand root nodes, collapse only concept nodes' descendants (subtypes)
+                this.state.dataSource$.value.forEach(node => {
+                    this.tree.expand(node);
+                    node.children?.forEach(conceptNode => this.tree.collapseDescendants(conceptNode));
+                });
             });
         });
     }
@@ -120,17 +123,25 @@ export class SchemaToolWindowComponent implements AfterViewInit {
     }
 
     toggleNode(node: SchemaTreeNode) {
-        if (this.tree.isExpanded(node)) {
-            this.tree.collapse(node);
-        } else {
-            this.tree.expand(node);
-        }
-
         if (node.nodeKind === "root") {
-            this.state.rootNodesCollapsed[node.label] = !this.tree.isExpanded(node);
+            // For root nodes, toggle between showing all expanded vs collapsed to second level
+            const allCollapsed = node.children?.every(child => !this.tree.isExpanded(child)) ?? true;
+            if (allCollapsed) {
+                this.tree.expandDescendants(node);
+            } else {
+                this.tree.expand(node);
+                node.children?.forEach(conceptNode => this.tree.collapseDescendants(conceptNode));
+            }
+            this.state.rootNodesCollapsed[node.label] = false;
             const schemaToolWindowState = this.appData.viewState.schemaToolWindowState();
             schemaToolWindowState.rootNodesCollapsed = this.state.rootNodesCollapsed;
             this.appData.viewState.setSchemaToolWindowState(schemaToolWindowState);
+        } else {
+            if (this.tree.isExpanded(node)) {
+                this.tree.collapse(node);
+            } else {
+                this.tree.expand(node);
+            }
         }
     }
 
