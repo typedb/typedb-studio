@@ -115,7 +115,8 @@
         </div>
       }
 
-      <!-- Attributes Section -->
+      <!-- Attributes Section (not for attribute instances - they don't own other attributes) -->
+      @if (type.kind !== 'attributeType') {
       <div class="detail-section">
         <button class="section-header" (click)="attributesCollapsed = !attributesCollapsed">
           <i class="fa-light" [class.fa-chevron-down]="!attributesCollapsed" [class.fa-chevron-right]="attributesCollapsed"></i>
@@ -147,8 +148,10 @@
           </table>
         }
       </div>
+      }
 
-      <!-- Relations Section -->
+      <!-- Relations Section (not for attributes - they cannot be roleplayers) -->
+      @if (type.kind !== 'attributeType') {
       <div class="detail-section">
         <button class="section-header" (click)="relationsCollapsed = !relationsCollapsed">
           <i class="fa-light" [class.fa-chevron-down]="!relationsCollapsed" [class.fa-chevron-right]="relationsCollapsed"></i>
@@ -264,6 +267,52 @@
           </div>
         }
       </div>
+      }
+
+      <!-- Owners Section (only for attributes) -->
+      @if (type.kind === 'attributeType') {
+      <div class="detail-section">
+        <button class="section-header" (click)="ownersCollapsed = !ownersCollapsed">
+          <i class="fa-light" [class.fa-chevron-down]="!ownersCollapsed" [class.fa-chevron-right]="ownersCollapsed"></i>
+          <h6>Owners</h6>
+        </button>
+        @if (ownersCollapsed) {
+        } @else if (ownersLoading) {
+          <div class="relations-loading">
+            <mat-spinner diameter="24"></mat-spinner>
+          </div>
+        } @else if (owners.length === 0) {
+          <p class="text-muted">No owners</p>
+        } @else {
+          <div class="roleplayers-list">
+            @for (owner of owners; track owner.ownerIID) {
+              <div class="roleplayer-card">
+                <div class="roleplayer-info">
+                  <div class="player-details">
+                    <span class="player-type" [ngClass]="owner.ownerKind">{{ owner.ownerTypeLabel }}</span>
+                    <span class="player-iid">{{ owner.ownerIID }}</span>
+                  </div>
+                  <button
+                      class="open-details-button"
+                      (click)="openOwnerDetail(owner, $event)">
+                    Explore
+                    <i class="fa-light fa-arrow-right"></i>
+                  </button>
+                </div>
+                <div class="roleplayer-attrs">
+                  @for (attr of owner.attributes; track attr.type) {
+                    <div class="attr-row">
+                      <span class="attr-key">{{ attr.type }}:</span>
+                      <span class="attr-val">{{ attr.values.join(', ') }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+      }
 
     }
   </div>

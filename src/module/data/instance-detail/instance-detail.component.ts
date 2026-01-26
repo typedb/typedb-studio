@@ -12,7 +12,7 @@ import { MatTooltip, MatTooltipModule } from "@angular/material/tooltip";
 import { Clipboard } from "@angular/cdk/clipboard";
 import { Subscription } from "rxjs";
 import { filter, take } from "rxjs/operators";
-import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
+import { SchemaAttribute, SchemaConcept, SchemaState } from "../../../service/schema-state.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { BreadcrumbItem, DataEditorState } from "../../../service/data-editor-state.service";
@@ -50,6 +50,13 @@ interface RoleplayerData {
     expanded: boolean;
 }
 
+interface OwnerData {
+    ownerIID: string;
+    ownerTypeLabel: string;
+    ownerKind: "entity" | "relation";
+    attributes: AttributeData[];
+}
+
 @Component({
     selector: "ts-instance-detail",
     templateUrl: "./instance-detail.component.html",
@@ -74,10 +81,13 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
     relationsLoading = false;
     roleplayersLoading = false;
     ownRoleplayers: RoleplayerData[] = [];
+    owners: OwnerData[] = [];
+    ownersLoading = false;
     typeCollapsed = false;
     roleplayersCollapsed = false;
     attributesCollapsed = false;
     relationsCollapsed = false;
+    ownersCollapsed = false;
 
     /** True when in manual mode with no open transaction */
     needsTransaction = false;
@@ -190,10 +200,15 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
         this.loadedWithTransactionId = this.driver.currentTransaction?.id ?? null;
         this.isDataStale = false;
 
-        this.fetchAttributes();
-        this.fetchRelations();
-        if (this.type.kind === "relationType") {
-            this.fetchOwnRoleplayers();
+        if (this.type.kind === "attributeType") {
+            // For attributes, fetch owners instead of attributes/relations
+            this.fetchOwners();
+        } else {
+            this.fetchAttributes();
+            this.fetchRelations();
+            if (this.type.kind === "relationType") {
+                this.fetchOwnRoleplayers();
+            }
         }
     }
 
@@ -566,6 +581,193 @@ match
             case "attributeType": return "attribute";
             default: return "";
         }
+    }
+
+    private formatAttributeValue(value: string, valueType: string): string {
+        switch (valueType) {
+            case "string":
+                // Escape quotes and wrap in quotes
+                return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+            case "boolean":
+            case "long":
+            case "double":
+                // Numeric and boolean values don't need quotes
+                return value;
+            case "datetime":
+            case "datetime-tz":
+                // DateTime values are returned as ISO strings
+                return value;
+            case "date":
+                // Date values
+                return value;
+            case "duration":
+                // Duration values
+                return value;
+            default:
+                // Default to quoting as string
+                return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+        }
+    }
+
+    private fetchOwners() {
+        this.ownersLoading = true;
+
+        // For attributes, instanceIID is actually the attribute value (not a real IID)
+        // We need to query by value, formatting appropriately for the value type
+        const attrType = this.type as SchemaAttribute;
+        const valueType = attrType.valueType;
+        const formattedValue = this.formatAttributeValue(this.instanceIID, valueType);
+
+        // Fetch all entities/relations that own this attribute
+        const query = `
+match
+    $owner has ${this.type.label} ${formattedValue};
+        `.trim();
+
+        this.driver.query(query).subscribe({
+            next: (res: ApiResponse<QueryResponse>) => {
+                this.ownersLoading = false;
+
+                if (isApiErrorResponse(res)) {
+                    this.snackbar.errorPersistent(`Error fetching owners: ${res.err.message}`);
+                    return;
+                }
+
+                if (res.ok.answerType === "conceptRows") {
+                    const answers = (res.ok as any).answers as ConceptRowAnswer[];
+                    this.processOwners(answers);
+                }
+            },
+            error: (err) => {
+                this.ownersLoading = false;
+                this.snackbar.errorPersistent(`Error fetching owners: ${extractErrorMessage(err)}`);
+            }
+        });
+    }
+
+    private processOwners(conceptRowAnswers: ConceptRowAnswer[]) {
+        const ownerMap = new Map<string, OwnerData>();
+
+        for (const answer of conceptRowAnswers) {
+            const row = answer.data;
+            const owner = row["owner"];
+
+            if (!isInstance(owner)) {
+                throw new Error(`Expected entity or relation for $owner, got: ${JSON.stringify(owner)}`);
+            }
+
+            const ownerIID = owner.iid;
+            if (!ownerMap.has(ownerIID)) {
+                ownerMap.set(ownerIID, {
+                    ownerIID,
+                    ownerTypeLabel: owner.type.label,
+                    ownerKind: owner.kind as "entity" | "relation",
+                    attributes: [],
+                });
+            }
+        }
+
+        this.owners = Array.from(ownerMap.values());
+        this.loadOwnerAttributes();
+    }
+
+    private loadOwnerAttributes() {
+        if (this.owners.length === 0) return;
+
+        const iidList = this.owners.map(o => o.ownerIID);
+        const iidConditions = iidList.map(iid => `{ $owner iid ${iid}; }`).join(" or ");
+        const query = `
+match
+    ${iidConditions};
+    $owner has $attr;
+        `.trim();
+
+        this.driver.query(query).subscribe({
+            next: (res: ApiResponse<QueryResponse>) => {
+                if (isApiErrorResponse(res)) {
+                    this.snackbar.errorPersistent(`Error fetching owner attributes: ${res.err.message}`);
+                    return;
+                }
+
+                if (res.ok.answerType === "conceptRows") {
+                    const answers = (res.ok as any).answers as ConceptRowAnswer[];
+                    this.processOwnerAttributes(answers);
+                }
+            },
+            error: (err) => {
+                this.snackbar.errorPersistent(`Error fetching owner attributes: ${extractErrorMessage(err)}`);
+            }
+        });
+    }
+
+    private processOwnerAttributes(conceptRowAnswers: ConceptRowAnswer[]) {
+        // Build a map of owner IID -> attribute type -> { valueType, values }
+        const ownerAttrMap = new Map<string, Map<string, { valueType: string; values: string[] }>>();
+
+        for (const answer of conceptRowAnswers) {
+            const row = answer.data;
+            const owner = row["owner"];
+            const attr = row["attr"];
+
+            if (!isInstance(owner)) {
+                throw new Error(`Expected entity or relation for $owner, got: ${JSON.stringify(owner)}`);
+            }
+            if (!attr || attr.kind !== "attribute") {
+                throw new Error(`Expected attribute for $attr, got: ${JSON.stringify(attr)}`);
+            }
+
+            const ownerIID = owner.iid;
+            const attrType = attr.type.label;
+            const attrValueType = attr.type.valueType || "unknown";
+            const attrValue = String(attr.value);
+
+            if (!ownerAttrMap.has(ownerIID)) {
+                ownerAttrMap.set(ownerIID, new Map());
+            }
+            const attrMap = ownerAttrMap.get(ownerIID)!;
+
+            if (!attrMap.has(attrType)) {
+                attrMap.set(attrType, { valueType: attrValueType, values: [] });
+            }
+            attrMap.get(attrType)!.values.push(attrValue);
+        }
+
+        // Assign attributes to owners
+        for (const owner of this.owners) {
+            const attrMap = ownerAttrMap.get(owner.ownerIID);
+            if (attrMap) {
+                owner.attributes = Array.from(attrMap.entries()).map(([type, data]) => ({
+                    type,
+                    valueType: data.valueType,
+                    values: data.values,
+                }));
+            }
+        }
+    }
+
+    openOwnerDetail(owner: OwnerData, event: Event) {
+        event.stopPropagation();
+        const schema = this.schemaState.value$.value;
+        if (!schema) {
+            this.snackbar.errorPersistent("Schema not loaded");
+            return;
+        }
+
+        const ownerType = owner.ownerKind === "entity"
+            ? schema.entities[owner.ownerTypeLabel]
+            : schema.relations[owner.ownerTypeLabel];
+
+        if (!ownerType) {
+            this.snackbar.errorPersistent(`Type '${owner.ownerTypeLabel}' not found in schema`);
+            return;
+        }
+
+        const newBreadcrumbs: BreadcrumbItem[] = [
+            ...this.breadcrumbs,
+            { kind: "instance-detail", typeLabel: this.type.label, instanceIID: this.instanceIID }
+        ];
+
+        this.dataEditorState.openInstanceDetail(ownerType, owner.ownerIID, newBreadcrumbs);
     }
 
     private loadAllRoleplayerAttributes() {
