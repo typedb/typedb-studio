@@ -4,7 +4,6 @@
 :host {
     display: block;
     max-width: 400px;
-    transform: translateX(-50%);
 }
 
 .tooltip-container {
@@ -33,5 +32,12 @@
 
     p + p {
         margin-top: 0.5em;
+    }
+
+    .tooltip-text {
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin: 0;
+        min-width: 200px;
     }
 }

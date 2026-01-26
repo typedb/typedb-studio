@@ -23,13 +23,17 @@ export class RichTooltipDirective implements OnDestroy {
             this._overlayRef.dispose();
         }
 
-        const rect = this._elementRef.nativeElement.getBoundingClientRect();
-
-        // Use global position strategy with manually calculated position
+        // Use flexible connected position strategy for automatic viewport handling
         const positionStrategy = this._overlay.position()
-            .global()
-            .left(`${rect.left + rect.width / 2}px`)
-            .top(`${rect.bottom + 5}px`);
+            .flexibleConnectedTo(this._elementRef)
+            .withPositions([
+                // Below, with overlay starting from anchor's left edge
+                { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 5 },
+                // Above, with overlay starting from anchor's left edge
+                { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -5 },
+            ])
+            .withPush(true)
+            .withViewportMargin(8);
 
         this._overlayRef = this._overlay.create({
             positionStrategy,
