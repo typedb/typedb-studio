@@ -153,8 +153,8 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
                 if (!this.driver.autoTransactionEnabled$.value && tx != null && tx.id !== this.loadedWithTransactionId) {
                     this.isDataStale = true;
                 }
-                // Clear stale flag when switching to auto mode
-                if (this.driver.autoTransactionEnabled$.value) {
+                // Clear stale flag when switching to auto mode or when transaction is closed
+                if (this.driver.autoTransactionEnabled$.value || tx == null) {
                     this.isDataStale = false;
                 }
             })

@@ -128,6 +128,22 @@
         </ng-container>
       }
 
+      <!-- Value Type column (for attributes) -->
+      <ng-container matColumnDef="valueType">
+        <th mat-header-cell *matHeaderCellDef>Value Type</th>
+        <td mat-cell *matCellDef="let row" class="value-type-cell">
+          {{ row.valueType }}
+        </td>
+      </ng-container>
+
+      <!-- Roleplayers column (for relations, not sortable) -->
+      <ng-container matColumnDef="roleplayerCounts">
+        <th mat-header-cell *matHeaderCellDef>Roleplayers</th>
+        <td mat-cell *matCellDef="let row" class="relations-cell">
+          <span richTooltip [showTooltip]="shouldShowRoleplayerTooltip(row.roleplayerCounts)" [richTooltipContent]="formatRoleplayerCounts(row.roleplayerCounts)">{{ truncateRoleplayerCounts(row.roleplayerCounts) }}</span>
+        </td>
+      </ng-container>
+
       <!-- Relations column (not sortable) -->
       <ng-container matColumnDef="relationCounts">
         <th mat-header-cell *matHeaderCellDef>Relations</th>

@@ -38,14 +38,20 @@ type RelationCountsByType = Record<string, number>;
 /** Maps owner type label to count of owners of that type */
 type OwnerCountsByType = Record<string, number>;
 
+/** Maps role label to count of roleplayers for that role */
+type RoleplayerCountsByRole = Record<string, number>;
+
 export interface InstanceRow {
     iid: string;
     type: string;
     kind: "entity" | "relation" | "attribute";
     relationCounts: RelationCountsByType | null;
     ownerCounts?: OwnerCountsByType | null;
+    roleplayerCounts?: RoleplayerCountsByRole | null;
+    /** Value type for attribute instances */
+    valueType?: string;
     /** Dynamic attribute columns store arrays of values */
-    [key: string]: string | RelationCountsByType | OwnerCountsByType | null | AttributeValue[] | "entity" | "relation" | "attribute" | undefined;
+    [key: string]: string | RelationCountsByType | OwnerCountsByType | RoleplayerCountsByRole | null | AttributeValue[] | "entity" | "relation" | "attribute" | undefined;
 }
 
 @Component({
@@ -158,8 +164,8 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                 if (!this.driver.autoTransactionEnabled$.value && tx != null && tx.id !== this.loadedWithTransactionId) {
                     this.isDataStale = true;
                 }
-                // Clear stale flag when switching to auto mode
-                if (this.driver.autoTransactionEnabled$.value) {
+                // Clear stale flag when switching to auto mode or when transaction is closed
+                if (this.driver.autoTransactionEnabled$.value || tx == null) {
                     this.isDataStale = false;
                 }
             })
@@ -211,22 +217,37 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
     }
 
     private updateDisplayedColumns() {
-        const isAttributeType = this.tab.type.kind === "attributeType";
-        // Attribute types show owners instead of IIDs and relation counts
-        const allColumns = isAttributeType
-            ? ["type", ...this.attributeColumns, "ownerCounts"]
-            : ["type", "iid", ...this.attributeColumns, "relationCounts"];
+        const typeKind = this.tab.type.kind;
+        // Different column sets for different type kinds
+        let allColumns: string[];
+        if (typeKind === "attributeType") {
+            allColumns = ["type", ...this.attributeColumns, "valueType", "ownerCounts"];
+        } else if (typeKind === "relationType") {
+            allColumns = ["type", "iid", ...this.attributeColumns, "roleplayerCounts", "relationCounts"];
+        } else {
+            allColumns = ["type", "iid", ...this.attributeColumns, "relationCounts"];
+        }
         this.displayedColumns = allColumns.filter(col => !this.hiddenColumns.has(col));
     }
 
     /** All available columns for the column picker */
     get allColumns(): { id: string; label: string }[] {
-        const isAttributeType = this.tab.type.kind === "attributeType";
-        if (isAttributeType) {
+        const typeKind = this.tab.type.kind;
+        if (typeKind === "attributeType") {
             return [
                 { id: "type", label: "Type" },
                 ...this.attributeColumns.map(attr => ({ id: attr, label: attr })),
+                { id: "valueType", label: "Value Type" },
                 { id: "ownerCounts", label: "Owners" },
+            ];
+        }
+        if (typeKind === "relationType") {
+            return [
+                { id: "type", label: "Type" },
+                { id: "iid", label: "IID" },
+                ...this.attributeColumns.map(attr => ({ id: attr, label: attr })),
+                { id: "roleplayerCounts", label: "Roleplayers" },
+                { id: "relationCounts", label: "Relations" },
             ];
         }
         return [
@@ -314,12 +335,14 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                     if (res.ok.answerType === "conceptRows") {
                         const answers = (res.ok as any).answers as ConceptRowAnswer[];
                         this.dataSource = this.transformToTableRows(answers);
-                        // Fetch relation counts for entity/relation types, owner counts for attributes
-                        if (this.tab.type.kind !== "attributeType") {
-                            this.fetchRelationCounts();
-                        } else {
-                            // Fetch owner counts for attribute instances
+                        // Fetch additional data based on type kind
+                        if (this.tab.type.kind === "attributeType") {
                             this.fetchOwnerCounts();
+                        } else {
+                            this.fetchRelationCounts();
+                            if (this.tab.type.kind === "relationType") {
+                                this.fetchRoleplayerCounts();
+                            }
                         }
                     } else {
                         this.dataSource = [];
@@ -450,6 +473,73 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         });
     }
 
+    private fetchRoleplayerCounts() {
+        if (this.dataSource.length === 0) return;
+
+        // Build query to get roleplayers for all relation instances in current page
+        const iidBranches = this.dataSource.map(row => `{ $rel iid ${row.iid}; }`).join(" or ");
+        const query = `match ${iidBranches}; $rel links ($role: $player);`;
+
+        this.driver.query(query).subscribe({
+            next: (res: ApiResponse<QueryResponse>) => {
+                if (isApiErrorResponse(res)) {
+                    this.snackbar.errorPersistent(`Error fetching roleplayer counts: ${res.err.message}`);
+                    for (const row of this.dataSource) {
+                        row.roleplayerCounts = {};
+                    }
+                    return;
+                }
+
+                // Count unique roleplayers per relation, grouped by role
+                // Map: relation IID -> role label -> Set of player IIDs
+                const countsByIid = new Map<string, Map<string, Set<string>>>();
+                if (res.ok.answerType === "conceptRows") {
+                    const answers = (res.ok as any).answers as ConceptRowAnswer[];
+                    for (const answer of answers) {
+                        const rel = answer.data["rel"];
+                        const role = answer.data["role"];
+                        const player = answer.data["player"];
+
+                        if (rel?.kind === "relation" && role?.kind === "roleType") {
+                            const playerIid = (player?.kind === "entity" || player?.kind === "relation") ? player.iid : null;
+                            if (playerIid) {
+                                if (!countsByIid.has(rel.iid)) {
+                                    countsByIid.set(rel.iid, new Map());
+                                }
+                                const roleMap = countsByIid.get(rel.iid)!;
+                                const roleLabel = role.label;
+                                if (!roleMap.has(roleLabel)) {
+                                    roleMap.set(roleLabel, new Set());
+                                }
+                                roleMap.get(roleLabel)!.add(playerIid);
+                            }
+                        }
+                    }
+                }
+
+                // Update rows with counts by role
+                for (const row of this.dataSource) {
+                    const roleMap = countsByIid.get(row.iid);
+                    if (roleMap && roleMap.size > 0) {
+                        const counts: RoleplayerCountsByRole = {};
+                        for (const [role, iids] of roleMap) {
+                            counts[role] = iids.size;
+                        }
+                        row.roleplayerCounts = counts;
+                    } else {
+                        row.roleplayerCounts = {};
+                    }
+                }
+            },
+            error: (err) => {
+                this.snackbar.errorPersistent(`Error fetching roleplayer counts: ${extractErrorMessage(err)}`);
+                for (const row of this.dataSource) {
+                    row.roleplayerCounts = {};
+                }
+            }
+        });
+    }
+
     private fetchOwnerCounts() {
         if (this.dataSource.length === 0) return;
 
@@ -567,6 +657,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                 const attrInstance = instanceConcept as Attribute;
                 const type = attrInstance.type.label;
                 const value = attrInstance.value as AttributeValue;
+                const valueType = attrInstance.type.valueType || "unknown";
                 // Use value as key since attribute instances are identified by their value
                 const key = String(value);
 
@@ -579,6 +670,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                         kind: "attribute",
                         relationCounts: null,
                         value: [value],
+                        valueType,
                     };
                     rowsByIid.set(key, tableRow);
                 }
@@ -773,6 +865,29 @@ ${sortClause}offset ${offset}; limit ${limit};`.trim();
 
     truncateOwnerCounts(counts: OwnerCountsByType | null | undefined): string {
         const formatted = this.formatOwnerCounts(counts);
+        if (formatted.length <= this.MAX_DISPLAY_LENGTH) return formatted;
+        return formatted.substring(0, this.MAX_DISPLAY_LENGTH) + "…";
+    }
+
+    formatRoleplayerCounts(counts: RoleplayerCountsByRole | null | undefined): string {
+        if (counts == null) return "…";
+        const entries = Object.entries(counts);
+        if (entries.length === 0) return "-";
+        // Calculate total
+        const total = entries.reduce((sum, [, count]) => sum + count, 0);
+        // Sort by role name for consistent display
+        entries.sort((a, b) => a[0].localeCompare(b[0]));
+        const breakdown = entries.map(([role, count]) => `${count} ${role}`).join(", ");
+        return `${total} (${breakdown})`;
+    }
+
+    shouldShowRoleplayerTooltip(counts: RoleplayerCountsByRole | null | undefined): boolean {
+        const formatted = this.formatRoleplayerCounts(counts);
+        return formatted.length > this.MAX_DISPLAY_LENGTH;
+    }
+
+    truncateRoleplayerCounts(counts: RoleplayerCountsByRole | null | undefined): string {
+        const formatted = this.formatRoleplayerCounts(counts);
         if (formatted.length <= this.MAX_DISPLAY_LENGTH) return formatted;
         return formatted.substring(0, this.MAX_DISPLAY_LENGTH) + "…";
     }
