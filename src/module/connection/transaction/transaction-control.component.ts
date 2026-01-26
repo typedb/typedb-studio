@@ -13,6 +13,7 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { combineLatest, map } from "rxjs";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
+import { AppData } from "../../../service/app-data.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { TransactionType } from "@typedb/driver-http";
@@ -44,7 +45,7 @@ export class TransactionControlComponent {
     );
     closeButtonVisible$ = this.openButtonVisible$;
 
-    constructor(public driver: DriverState, private formBuilder: FormBuilder, private snackbar: SnackbarService) {
+    constructor(public driver: DriverState, private formBuilder: FormBuilder, private snackbar: SnackbarService, private appData: AppData) {
         this.transactionConfigDisabled$.subscribe((disabled) => {
             if (disabled) this.driver.transactionControls.disable();
             else this.driver.transactionControls.enable();
@@ -57,6 +58,7 @@ export class TransactionControlComponent {
             // TODO: confirm before closing with uncommitted changes
             this.driver.closeTransaction().subscribe();
             this.driver.autoTransactionEnabled$.next(operationMode === "auto");
+            this.appData.preferences.setTransactionMode(operationMode);
         });
     }
 

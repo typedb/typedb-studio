@@ -6,6 +6,7 @@
 
 import { Injectable } from "@angular/core";
 import { ConnectionConfig, ConnectionJson } from "../concept/connection";
+import { OperationMode } from "../concept/transaction";
 import { SchemaToolWindowState, SidebarState, sidebarStates, Tool, tools } from "../concept/view-state";
 import { StorageService, StorageWriteResult } from "./storage.service";
 
@@ -153,6 +154,7 @@ interface PreferencesData {
     connections: {
         showAdvancedConfigByDefault: boolean;
     };
+    transactionMode: OperationMode;
 }
 
 const DATA_EXPLORER_TABS = "dataExplorerTabs";
@@ -234,7 +236,8 @@ function parsePreferencesData(obj: Object | null): PreferencesData {
 const INITIAL_PREFERENCES: PreferencesData = {
     connections: {
         showAdvancedConfigByDefault: true,
-    }
+    },
+    transactionMode: "auto",
 };
 
 class Preferences {
@@ -264,6 +267,17 @@ class Preferences {
             return this.writeStorage(prefs);
         },
     };
+
+    transactionMode(): OperationMode {
+        const prefs = this.readStorage();
+        return prefs?.transactionMode ?? INITIAL_PREFERENCES.transactionMode;
+    }
+
+    setTransactionMode(value: OperationMode): StorageWriteResult {
+        const prefs = this.readStorage()!;
+        prefs.transactionMode = value;
+        return this.writeStorage(prefs);
+    }
 }
 
 @Injectable({

@@ -55,9 +55,9 @@ export class DriverState {
 
     transactionControls = this.formBuilder.nonNullable.group({
         type: ["read" as TransactionType, []],
-        operationMode: ["auto" as OperationMode, []],
+        operationMode: [this.appData.preferences.transactionMode() as OperationMode, []],
     });
-    autoTransactionEnabled$ = new BehaviorSubject(true);
+    autoTransactionEnabled$ = new BehaviorSubject(this.appData.preferences.transactionMode() === "auto");
     transactionHasUncommittedChanges$ = this.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
     transactionTypeChanges$ = this.transactionControls.valueChanges.pipe(
         filter((changes) => !!changes.type),
