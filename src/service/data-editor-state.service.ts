@@ -9,6 +9,7 @@ import { BehaviorSubject } from "rxjs";
 import { SchemaConcept, SchemaState } from "./schema-state.service";
 import { AppData, PersistedDataTab } from "./app-data.service";
 import { DriverState } from "./driver-state.service";
+import { SnackbarService } from "./snackbar.service";
 
 export interface TypeTableTab {
     kind: "type-table";
@@ -51,6 +52,7 @@ export class DataEditorState {
         private schemaState: SchemaState,
         private appData: AppData,
         private driverState: DriverState,
+        private snackbar: SnackbarService,
     ) {
         // Subscribe to database changes to save/restore tabs
         this.driverState.database$.subscribe(database => {
@@ -60,6 +62,27 @@ export class DataEditorState {
         // Subscribe to tab changes to persist
         this.openTabs$.subscribe(() => this.persistTabs());
         this.selectedTabIndex$.subscribe(() => this.persistTabs());
+    }
+
+    /**
+     * Checks if a transaction is available for data queries.
+     * In manual mode without an open transaction, shows a snackbar and returns false.
+     */
+    requiresTransaction(): boolean {
+        if (!this.driverState.autoTransactionEnabled$.value && !this.driverState.transactionOpen) {
+            this.snackbar.warn("Open a transaction in order to explore your data", {
+                data: {
+                    message: "Open a transaction in order to explore your data",
+                    status: "warn",
+                    action: {
+                        label: "Open read transaction",
+                        callback: () => this.driverState.openTransaction("read"),
+                    },
+                },
+            });
+            return false;
+        }
+        return true;
     }
 
     private onDatabaseChange(databaseName: string | null) {

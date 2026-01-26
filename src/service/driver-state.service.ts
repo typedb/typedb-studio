@@ -90,6 +90,14 @@ export class DriverState {
         return this._transaction$;
     }
 
+    get transactionOpen(): boolean {
+        return this._transaction$.value != null;
+    }
+
+    get currentTransaction(): Transaction | null {
+        return this._transaction$.value;
+    }
+
     get actionLog$(): Observable<DriverAction> {
         return this._actionLog$;
     }

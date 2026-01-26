@@ -10,6 +10,8 @@ import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatButtonModule } from "@angular/material/button";
 import { MatTooltip, MatTooltipModule } from "@angular/material/tooltip";
 import { Clipboard } from "@angular/cdk/clipboard";
+import { Subscription } from "rxjs";
+import { filter, take } from "rxjs/operators";
 import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
@@ -77,6 +79,17 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
     attributesCollapsed = false;
     relationsCollapsed = false;
 
+    /** True when in manual mode with no open transaction */
+    needsTransaction = false;
+
+    /** Transaction ID used to load the current data (for stale detection) */
+    private loadedWithTransactionId: string | null = null;
+
+    /** True when data was loaded in a different transaction than the current one */
+    isDataStale = false;
+
+    private subscriptions: Subscription[] = [];
+
     constructor(
         private driver: DriverState,
         private snackbar: SnackbarService,
@@ -107,15 +120,71 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        // Check if we need a transaction before loading data
+        if (this.checkNeedsTransaction()) {
+            // Subscribe to transaction state changes to auto-load when transaction opens
+            this.subscriptions.push(
+                this.driver.transaction$.pipe(
+                    filter(tx => tx != null),
+                    take(1) // Only react once when transaction first opens
+                ).subscribe(() => {
+                    this.needsTransaction = false;
+                    this.loadData();
+                })
+            );
+        } else {
+            this.loadData();
+        }
+
+        // Subscribe to transaction changes to detect stale data (only relevant in manual mode)
+        this.subscriptions.push(
+            this.driver.transaction$.subscribe(tx => {
+                // Only show stale warning in manual mode when a different transaction is open
+                if (!this.driver.autoTransactionEnabled$.value && tx != null && tx.id !== this.loadedWithTransactionId) {
+                    this.isDataStale = true;
+                }
+                // Clear stale flag when switching to auto mode
+                if (this.driver.autoTransactionEnabled$.value) {
+                    this.isDataStale = false;
+                }
+            })
+        );
+    }
+
+    ngOnDestroy() {
+        this.subscriptions.forEach(sub => sub.unsubscribe());
+    }
+
+    /** Returns true if we're in manual mode without an open transaction */
+    private checkNeedsTransaction(): boolean {
+        if (!this.driver.autoTransactionEnabled$.value && !this.driver.transactionOpen) {
+            this.needsTransaction = true;
+            return true;
+        }
+        return false;
+    }
+
+    /** Called from template to open a transaction and load data */
+    openTransactionAndLoad() {
+        this.driver.openTransaction("read").subscribe();
+        // Data will load automatically via the transaction$ subscription
+    }
+
+    /** Refresh data with current transaction */
+    refresh() {
+        this.loadData();
+    }
+
+    private loadData() {
+        // Record current transaction ID for stale detection
+        this.loadedWithTransactionId = this.driver.currentTransaction?.id ?? null;
+        this.isDataStale = false;
+
         this.fetchAttributes();
         this.fetchRelations();
         if (this.type.kind === "relationType") {
             this.fetchOwnRoleplayers();
         }
-    }
-
-    ngOnDestroy() {
-        // Cleanup if needed
     }
 
     private fetchAttributes() {
@@ -401,7 +470,6 @@ match
 
     openRoleplayerDetail(roleplayer: RoleplayerData, event: Event) {
         event.stopPropagation();
-
         const schema = this.schemaState.value$.value;
         if (!schema) {
             this.snackbar.errorPersistent("Schema not loaded");
@@ -426,7 +494,6 @@ match
 
     openRelationDetail(instance: RelationInstanceData, event: Event) {
         event.stopPropagation();
-
         const schema = this.schemaState.value$.value;
         if (!schema) {
             this.snackbar.errorPersistent("Schema not loaded");
@@ -462,7 +529,6 @@ match
 
     openOwnRoleplayerDetail(roleplayer: RoleplayerData, event: Event) {
         event.stopPropagation();
-
         const schema = this.schemaState.value$.value;
         if (!schema) {
             this.snackbar.errorPersistent("Schema not loaded");

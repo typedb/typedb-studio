@@ -23,6 +23,37 @@
     overflow: hidden;
 }
 
+.stale-data-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: colors.$secondary-dark-yellow;
+    font-size: 13px;
+    flex-shrink: 0;
+
+    > i {
+        font-size: 16px;
+    }
+
+    span {
+        flex: 1;
+    }
+
+    button {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        padding: 4px 12px;
+        min-height: 28px;
+
+        i {
+            font-size: 12px;
+        }
+    }
+}
+
 .breadcrumbs {
     display: flex;
     align-items: center;
@@ -89,6 +120,37 @@
     padding: 40px;
 }
 
+.transaction-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: colors.$grey;
+
+    > i {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 16px;
+    }
+
+    p {
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+
+    button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        i {
+            font-size: 14px;
+        }
+    }
+}
+
 .detail-section {
     margin-bottom: 24px;
 
@@ -112,7 +174,18 @@
     .type-label {
         font-size: 14px;
         font-weight: 600;
-        color: colors.$entity-pink;
+
+        &.entity {
+            color: colors.$entity-pink;
+        }
+
+        &.relation {
+            color: colors.$relation-yellow;
+        }
+
+        &.attribute {
+            color: colors.$attribute-blue;
+        }
     }
 
     .type-muted {

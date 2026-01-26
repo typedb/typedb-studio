@@ -1,4 +1,16 @@
 <div class="instance-table-container">
+  <!-- Stale data banner -->
+  @if (isDataStale) {
+    <div class="stale-data-banner">
+      <i class="fa-light fa-clock-rotate-left"></i>
+      <span>Data was loaded in a different transaction</span>
+      <button mat-stroked-button (click)="refresh()">
+        <i class="fa-light fa-refresh"></i>
+        Refresh
+      </button>
+    </div>
+  }
+
   <!-- Breadcrumbs -->
   @if (breadcrumbs.length > 0) {
     <div class="breadcrumbs">
@@ -158,7 +170,16 @@
         class="clickable-row"></tr>
     </table>
 
-    @if (!loading && dataSource.length === 0) {
+    @if (needsTransaction) {
+      <div class="transaction-prompt">
+        <i class="fa-light fa-lock"></i>
+        <p>Open a transaction to explore your data</p>
+        <button mat-stroked-button (click)="openTransactionAndLoad()">
+          <i class="fa-light fa-play"></i>
+          Open read transaction
+        </button>
+      </div>
+    } @else if (!loading && dataSource.length === 0) {
       <div class="empty-state">
         <i class="fa-light fa-inbox"></i>
         <p>No instances found</p>

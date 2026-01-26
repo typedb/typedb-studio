@@ -1,4 +1,16 @@
 <div class="detail-panel">
+  <!-- Stale data banner -->
+  @if (isDataStale) {
+    <div class="stale-data-banner">
+      <i class="fa-light fa-clock-rotate-left"></i>
+      <span>Data was loaded in a different transaction</span>
+      <button mat-stroked-button (click)="refresh()">
+        <i class="fa-light fa-refresh"></i>
+        Refresh
+      </button>
+    </div>
+  }
+
   @if (breadcrumbs.length > 0) {
     <div class="breadcrumbs">
       @for (crumb of breadcrumbs; track $index; let i = $index) {
@@ -18,7 +30,16 @@
     </div>
   }
   <div class="detail-content">
-    @if (loading) {
+    @if (needsTransaction) {
+      <div class="transaction-prompt">
+        <i class="fa-light fa-lock"></i>
+        <p>Open a transaction to explore your data</p>
+        <button mat-stroked-button (click)="openTransactionAndLoad()">
+          <i class="fa-light fa-play"></i>
+          Open read transaction
+        </button>
+      </div>
+    } @else if (loading) {
       <div class="loading-container">
         <mat-spinner diameter="40"></mat-spinner>
       </div>
@@ -33,11 +54,11 @@
           <div class="type-row">
             <span class="type-info">
               @if (type.supertype) {
-                <span class="type-label">{{ type.label }}</span>
+                <span class="type-label" [ngClass]="typeKindLabel">{{ type.label }}</span>
                 <span class="type-muted">sub {{ type.supertype.label }}</span>
               } @else {
                 <span class="type-muted">{{ typeKindLabel }}</span>
-                <span class="type-label">{{ type.label }}</span>
+                <span class="type-label" [ngClass]="typeKindLabel">{{ type.label }}</span>
               }
             </span>
             <button class="open-details-button" (click)="exploreType()">

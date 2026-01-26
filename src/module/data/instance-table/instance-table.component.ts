@@ -18,8 +18,8 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatMenuModule } from "@angular/material/menu";
 import { MatCheckboxModule } from "@angular/material/checkbox";
 import { MatDialog } from "@angular/material/dialog";
-import { Subject, Subscription } from "rxjs";
-import { debounceTime, distinctUntilChanged } from "rxjs/operators";
+import { Subject, Subscription, combineLatest } from "rxjs";
+import { debounceTime, distinctUntilChanged, filter, take } from "rxjs/operators";
 import { TypeTableTab, DataEditorState, BreadcrumbItem } from "../../../service/data-editor-state.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { ApiResponse, Concept, ConceptRow, ConceptRowAnswer, isApiErrorResponse, QueryResponse } from "@typedb/driver-http";
@@ -72,6 +72,15 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
     loadingStartTime = 0;
     showSpinner = false;
 
+    /** True when in manual mode with no open transaction */
+    needsTransaction = false;
+
+    /** Transaction ID used to load the current data (for stale detection) */
+    private loadedWithTransactionId: string | null = null;
+
+    /** True when data was loaded in a different transaction than the current one */
+    isDataStale = false;
+
     // Pagination
     currentPage = 0;
     pageSize = 100;
@@ -100,8 +109,24 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.buildColumns();
-        this.fetchInstances();
-        this.fetchTotalCount();
+
+        // Check if we need a transaction before loading data
+        if (this.checkNeedsTransaction()) {
+            // Subscribe to transaction state changes to auto-load when transaction opens
+            this.subscriptions.push(
+                this.driver.transaction$.pipe(
+                    filter(tx => tx != null),
+                    take(1) // Only react once when transaction first opens
+                ).subscribe(() => {
+                    this.needsTransaction = false;
+                    this.fetchInstances();
+                    this.fetchTotalCount();
+                })
+            );
+        } else {
+            this.fetchInstances();
+            this.fetchTotalCount();
+        }
 
         // Debounce filter input to avoid excessive server requests
         this.subscriptions.push(
@@ -111,10 +136,41 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
             ).subscribe(filterText => {
                 this.filterText = filterText;
                 this.currentPage = 0;
-                this.fetchInstances();
-                this.fetchTotalCount();
+                if (!this.needsTransaction) {
+                    this.fetchInstances();
+                    this.fetchTotalCount();
+                }
             })
         );
+
+        // Subscribe to transaction changes to detect stale data (only relevant in manual mode)
+        this.subscriptions.push(
+            this.driver.transaction$.subscribe(tx => {
+                // Only show stale warning in manual mode when a different transaction is open
+                if (!this.driver.autoTransactionEnabled$.value && tx != null && tx.id !== this.loadedWithTransactionId) {
+                    this.isDataStale = true;
+                }
+                // Clear stale flag when switching to auto mode
+                if (this.driver.autoTransactionEnabled$.value) {
+                    this.isDataStale = false;
+                }
+            })
+        );
+    }
+
+    /** Returns true if we're in manual mode without an open transaction */
+    private checkNeedsTransaction(): boolean {
+        if (!this.driver.autoTransactionEnabled$.value && !this.driver.transactionOpen) {
+            this.needsTransaction = true;
+            return true;
+        }
+        return false;
+    }
+
+    /** Called from template to open a transaction and load data */
+    openTransactionAndLoad() {
+        this.driver.openTransaction("read").subscribe();
+        // Data will load automatically via the transaction$ subscription
     }
 
     ngOnDestroy() {
@@ -177,6 +233,9 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         this.loadingStartTime = Date.now();
         this.showSpinner = false;
 
+        // Record current transaction ID for stale detection
+        const currentTxId = this.driver.currentTransaction?.id ?? null;
+
         // Show spinner only after 1 second
         const spinnerTimeout = setTimeout(() => {
             if (this.loading) {
@@ -200,6 +259,10 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                         this.dataSource = [];
                         return;
                     }
+
+                    // Record transaction used for this data load
+                    this.loadedWithTransactionId = currentTxId;
+                    this.isDataStale = false;
 
                     // Transform response to table rows
                     if (res.ok.answerType === "conceptRows") {
