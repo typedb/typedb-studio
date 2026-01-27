@@ -165,10 +165,10 @@ export class DataPageComponent implements OnInit, OnDestroy {
     /**
      * Returns the icon class for a type kind.
      * @param typeKind The kind of type (entityType, relationType, attributeType)
-     * @param filled If true, use filled icon (for instances). If false, use hollow icon (for tables).
+     * @param filled If true, use hollow icon (for instances). If false, use filled icon (for type tables).
      */
     getTypeIconClass(typeKind: string, filled: boolean): string {
-        const style = filled ? "fa-solid" : "fa-regular";
+        const style = filled ? "fa-regular" : "fa-solid";
         switch (typeKind) {
             case "entityType":
                 return `${style} fa-square entity`;
