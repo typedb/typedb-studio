@@ -98,7 +98,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
     // Pagination
     currentPage = 0;
     pageSize = 100;
-    pageSizeOptions = [50, 100, 200];
+    pageSizeOptions = [10, 25, 50, 100, 250, 500];
 
     // Sorting
     sortColumn = "";
@@ -312,7 +312,9 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
         try {
             const offset = this.currentPage * this.pageSize;
-            const query = this.buildInstanceQuery(offset, this.pageSize);
+            const query = this.tab.type.kind === "attributeType"
+                ? this.buildAttributeTypeQuery(offset, this.pageSize)
+                : this.buildInstanceQuery(offset, this.pageSize);
 
             // Execute query via driver
             this.driver.query(query).subscribe({
@@ -374,7 +376,29 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
     private async fetchTotalCount() {
         try {
             const tabFilter = this.tab.typeqlFilter || "";
-            const query = `match $instance isa ${this.tab.type.label}; ${tabFilter} reduce $count = count;`;
+            const tabFilterClause = tabFilter ? `${tabFilter} ` : "";
+
+            // Build filter clause to match the instance query
+            let filterClause = "";
+            if (this.filterText) {
+                if (this.tab.type.kind === "attributeType") {
+                    // For attribute types, filter on the attribute value
+                    if (this.filterMode === "simple") {
+                        filterClause = `$instance contains "${this.filterText}"; `;
+                    } else {
+                        filterClause = `${this.filterText} `;
+                    }
+                } else {
+                    // For entity/relation types, filter on owned attributes
+                    if (this.filterMode === "simple") {
+                        filterClause = `$instance has $attr; $attr contains "${this.filterText}"; `;
+                    } else {
+                        filterClause = `${this.filterText} `;
+                    }
+                }
+            }
+
+            const query = `match $instance isa ${this.tab.type.label}; ${tabFilterClause}${filterClause}reduce $count = count;`;
 
             this.driver.query(query).subscribe({
                 next: (res: ApiResponse<QueryResponse>) => {
@@ -730,39 +754,19 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Build query for entity/relation types using a two-match approach:
+     * - First match: get instances with filtering and pagination
+     * - Second match: fetch attributes for those instances
+     *
+     * For default sort (by IID) without filter: simple match is stable
+     * For attribute sort OR when filtering: use select $instance; distinct; before pagination
+     * to ensure we get the correct number of unique instances
+     */
     private buildInstanceQuery(offset: number, limit: number): string {
         const type = this.tab.type;
 
-        // For attribute types, we don't need to fetch owned attributes - the value is on the instance itself
-        if (type.kind === "attributeType") {
-            let filterClause = "";
-            if (this.filterText) {
-                if (this.filterMode === "simple") {
-                    // Simple mode: search in the attribute value
-                    filterClause = `$instance contains "${this.filterText}";`;
-                } else {
-                    // Advanced mode: use raw TypeQL
-                    filterClause = this.filterText;
-                }
-            }
-
-            const tabFilter = this.tab.typeqlFilter || "";
-            const tabFilterLine = tabFilter ? `${tabFilter}\n    ` : "";
-            const filterLine = filterClause ? `${filterClause}\n    ` : "";
-
-            return `match
-    $instance isa ${type.label};
-    ${tabFilterLine}${filterLine}
-select $instance;
-distinct;
-offset ${offset}; limit ${limit};`.trim();
-        }
-
-        // Use try blocks to make attribute fetching optional
-        const attributeClauses = this.attributeColumns.map(attr =>
-            `try { $instance has ${attr} $${attr}; };`
-        ).join("\n    ");
-
+        // User filter
         let filterClause = "";
         if (this.filterText) {
             if (this.filterMode === "simple") {
@@ -774,25 +778,86 @@ offset ${offset}; limit ${limit};`.trim();
             }
         }
 
-        // Tab-level TypeQL filter (e.g., for filtered relation views)
+        // Tab-level TypeQL filter (structural filter, e.g., for filtered relation views)
         const tabFilter = this.tab.typeqlFilter || "";
+        const tabFilterLine = tabFilter ? `${tabFilter}\n    ` : "";
+        const filterLine = filterClause ? `${filterClause}\n    ` : "";
 
-        const sortClause = this.sortColumn && this.sortColumn !== "relationCounts" && this.sortColumn !== "iid"
-            ? `sort $${this.sortColumn} ${this.sortDirection};`
-            : "";
+        // Build attribute try clauses for second match
+        const attributeClauses = this.attributeColumns.map(attr =>
+            `try { $instance has ${attr} $${attr}; };`
+        ).join("\n    ");
 
         // Build select clause with all variables we want to return
         const selectVars = ["$instance", ...this.attributeColumns.map(attr => `$${attr}`)].join(", ");
 
+        // Check if we're sorting by an attribute column
+        const sortByAttribute = this.sortColumn && this.sortColumn !== "relationCounts" && this.sortColumn !== "iid" && this.sortColumn !== "type";
+
+        // Need distinct when filtering (filter can match multiple attrs per instance) or sorting by attribute
+        const needsDistinct = filterClause || sortByAttribute;
+
+        if (sortByAttribute) {
+            // When sorting by attribute, include it in first match, use distinct before pagination
+            return `match
+    $instance isa ${type.label};
+    ${tabFilterLine}${filterLine}try { $instance has ${this.sortColumn} $${this.sortColumn}; };
+sort $${this.sortColumn} ${this.sortDirection};
+select $instance;
+distinct;
+offset ${offset}; limit ${limit};
+match
+    ${attributeClauses}
+select ${selectVars};`.trim();
+        } else if (needsDistinct) {
+            // Filtering without sort - need distinct to deduplicate instances matching multiple attrs
+            return `match
+    $instance isa ${type.label};
+    ${tabFilterLine}${filterLine}
+select $instance;
+distinct;
+offset ${offset}; limit ${limit};
+match
+    ${attributeClauses}
+select ${selectVars};`.trim();
+        } else {
+            // Default sort (by IID) without filter - simple first match is stable
+            return `match
+    $instance isa ${type.label};
+    ${tabFilterLine}
+offset ${offset}; limit ${limit};
+match
+    ${attributeClauses}
+select ${selectVars};`.trim();
+        }
+    }
+
+    /**
+     * Build query for attribute types (single match - no two-match approach needed).
+     */
+    private buildAttributeTypeQuery(offset: number, limit: number): string {
+        const type = this.tab.type;
+
+        let filterClause = "";
+        if (this.filterText) {
+            if (this.filterMode === "simple") {
+                // Simple mode: search in the attribute value
+                filterClause = `$instance contains "${this.filterText}";`;
+            } else {
+                // Advanced mode: use raw TypeQL
+                filterClause = this.filterText;
+            }
+        }
+
+        const tabFilter = this.tab.typeqlFilter || "";
         const tabFilterLine = tabFilter ? `${tabFilter}\n    ` : "";
         const filterLine = filterClause ? `${filterClause}\n    ` : "";
 
         return `match
     $instance isa ${type.label};
-    ${tabFilterLine}${filterLine}${attributeClauses}
-select ${selectVars};
-distinct;
-${sortClause}offset ${offset}; limit ${limit};`.trim();
+    ${tabFilterLine}${filterLine}
+select $instance;
+offset ${offset}; limit ${limit};`.trim();
     }
 
     private readonly MAX_DISPLAY_LENGTH = 50;
@@ -892,18 +957,9 @@ ${sortClause}offset ${offset}; limit ${limit};`.trim();
         return formatted.substring(0, this.MAX_DISPLAY_LENGTH) + "…";
     }
 
-    get breadcrumbs(): BreadcrumbItem[] {
-        return this.tab.breadcrumbs || [];
-    }
-
-    navigateToBreadcrumb(breadcrumb: BreadcrumbItem, index: number) {
-        this.dataEditorState.navigateToBreadcrumb(breadcrumb, index, this.breadcrumbs);
-    }
-
     onRowClick(row: InstanceRow) {
-        // Create breadcrumb back to this table, preserving any existing breadcrumbs
+        // Create breadcrumb back to this table
         const breadcrumbs: BreadcrumbItem[] = [
-            ...this.breadcrumbs,
             { kind: "type-table", typeLabel: this.tab.type.label, typeKind: this.tab.type.kind }
         ];
         this.dataEditorState.openInstanceDetail(this.tab.type, row.iid, breadcrumbs);
@@ -968,22 +1024,4 @@ ${sortClause}offset ${offset}; limit ${limit};`.trim();
         this.fetchTotalCount();
     }
 
-    /**
-     * Returns the icon class for a type kind.
-     * @param typeKind The kind of type (entityType, relationType, attributeType)
-     * @param filled If true, use filled icon (for instances). If false, use hollow icon (for tables).
-     */
-    getTypeIconClass(typeKind: string, filled: boolean): string {
-        const style = filled ? "fa-solid" : "fa-regular";
-        switch (typeKind) {
-            case "entityType":
-                return `${style} fa-square entity`;
-            case "relationType":
-                return `${style} fa-diamond relation`;
-            case "attributeType":
-                return `${style} fa-circle attribute`;
-            default:
-                return `${style} fa-question`;
-        }
-    }
 }

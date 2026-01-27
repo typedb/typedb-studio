@@ -545,11 +545,8 @@ match
     }
 
     exploreType() {
-        const newBreadcrumbs: BreadcrumbItem[] = [
-            ...this.breadcrumbs,
-            { kind: "instance-detail", typeLabel: this.type.label, typeKind: this.type.kind, instanceIID: this.instanceIID }
-        ];
-        this.dataEditorState.openTypeTab(this.type, newBreadcrumbs);
+        // Open type table with empty breadcrumbs (fresh start)
+        this.dataEditorState.openTypeTab(this.type, [], true);
     }
 
     openOwnRoleplayerDetail(roleplayer: RoleplayerData, event: Event) {
@@ -584,7 +581,7 @@ match
     }
 
     getTypeIconClass(typeKind: string, filled: boolean): string {
-        const style = filled ? "fa-solid" : "fa-regular";
+        const style = filled ? "fa-regular" : "fa-solid";
         switch (typeKind) {
             case "entityType":
                 return `${style} fa-square entity`;
