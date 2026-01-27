@@ -88,7 +88,6 @@ class ViewState {
         const lastUsedTool = this.lastUsedTool();
         switch (lastUsedTool) {
             case "query": return "/query";
-            case "explore": return "/explore";
             case "schema": return "/schema";
             case "data": return "/data";
             case null: return "/welcome";

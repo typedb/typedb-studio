@@ -35,7 +35,6 @@ const connectGuard: CanActivateFn = (route) => {
     const router = inject(Router);
     switch (appData.viewState.lastUsedTool()) {
         case "query": return of(router.parseUrl(`query`));
-        case "explore": return of(router.parseUrl(`explore`));
         case "schema": return of(router.parseUrl(`schema`));
         case "data": return of(router.parseUrl(`data`));
         default: return of(router.parseUrl(`welcome`));
