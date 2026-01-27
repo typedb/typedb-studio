@@ -1,9 +1,15 @@
-<span class="sb-text">
-  <i [class]="'fa-solid ' + icon"></i>
-  <div>
-    @for (messagePart of messageParts; track $index) {<p>{{ messagePart }}</p>}
-  </div>
-</span>
+<div class="sb-content">
+  <span class="sb-text">
+    <i [class]="'fa-solid ' + icon"></i>
+    <div>
+      @for (line of displayLines; track $index) {<p>{{ line }}</p>}
+      @if (isTruncated) {<p class="truncated-indicator">...</p>}
+    </div>
+  </span>
+  @if (action) {
+    <button class="sb-action" mat-stroked-button (click)="onAction()">{{ action.label }}</button>
+  }
+</div>
 <button class="sb-button" mat-icon-button (click)="close()">
   <i class="fa-light fa-xmark"></i>
 </button>

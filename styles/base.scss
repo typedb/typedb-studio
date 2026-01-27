@@ -255,7 +255,7 @@ code, .text-code {
 }
 
 em {
-    font-weight: typography.$semi-bold;
+    font-weight: typography.$regular;
     color: colors.$secondary-extra-light-grey;
 }
 
@@ -689,4 +689,8 @@ tp-gcp-marketplace-integration, tp-aws-marketplace-integration, tp-azure-marketp
     border-color: colors.$secondary-mid-deep-grey;
     color: rgba(255, 255, 255, 1);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+app-drag-handle span {
+    display: none !important;
 }

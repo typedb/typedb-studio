@@ -1,12 +1,19 @@
 @use "colors";
 @use "shapes";
 
+:host {
+    display: block;
+    max-width: 400px;
+}
+
 .tooltip-container {
     border-radius: shapes.$border-radius-small;
     padding: 4px 8px;
     font-size: 14px;
     line-height: 20px;
     background: colors.$secondary-mid-deep-grey;
+    max-width: 400px;
+    word-wrap: break-word;
 
     ::ng-deep > div {
         max-width: 360px;
@@ -25,5 +32,12 @@
 
     p + p {
         margin-top: 0.5em;
+    }
+
+    .tooltip-text {
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin: 0;
+        min-width: 200px;
     }
 }

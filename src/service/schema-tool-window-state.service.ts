@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, Subject } from "rxjs";
 import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from "./schema-state.service";
 import { Injectable } from "@angular/core";
 import { AppData } from "./app-data.service";
@@ -70,6 +70,7 @@ export class SchemaToolWindowState {
     viewMode$ = new BehaviorSubject<"flat" | "hierarchical">(this.appData.viewState.schemaToolWindowState().viewMode);
     linksVisibility$ = new BehaviorSubject<Record<SchemaTreeLinkKind, boolean>>(this.appData.viewState.schemaToolWindowState().linksVisibility);
     rootNodesCollapsed: Record<SchemaTreeRootNode["label"], boolean> = this.appData.viewState.schemaToolWindowState().rootNodesCollapsed;
+    highlightedConceptLabel$ = new BehaviorSubject<string | null>(null);
 
     constructor(public schema: SchemaState, private appData: AppData) {
         schema.value$.subscribe(() => {
@@ -207,15 +208,31 @@ export class SchemaToolWindowState {
         this.appData.viewState.setSchemaToolWindowState(state);
     }
 
+    collapseAll$ = new Subject<void>();
+
     collapseAll() {
         const state = this.appData.viewState.schemaToolWindowState();
 
         this.dataSource$.value.forEach(node => {
-            this.rootNodesCollapsed[node.label] = true;
-            state.rootNodesCollapsed[node.label] = true;
+            this.rootNodesCollapsed[node.label] = false;
+            state.rootNodesCollapsed[node.label] = false;
         });
-        this.dataSource$.next(this.dataSource$.value);
-        
+
         this.appData.viewState.setSchemaToolWindowState(state);
+        this.collapseAll$.next();
+    }
+
+    expandAll$ = new Subject<void>();
+
+    expandAll() {
+        const state = this.appData.viewState.schemaToolWindowState();
+
+        this.dataSource$.value.forEach(node => {
+            this.rootNodesCollapsed[node.label] = false;
+            state.rootNodesCollapsed[node.label] = false;
+        });
+
+        this.appData.viewState.setSchemaToolWindowState(state);
+        this.expandAll$.next();
     }
 }

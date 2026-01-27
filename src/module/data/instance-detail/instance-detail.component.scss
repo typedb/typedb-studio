@@ -1,0 +1,591 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "colors";
+
+:host {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+}
+
+.detail-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.stale-data-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: colors.$secondary-dark-yellow;
+    font-size: 13px;
+    flex-shrink: 0;
+
+    > i {
+        font-size: 16px;
+    }
+
+    span {
+        flex: 1;
+    }
+
+    button {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        padding: 4px 12px;
+        min-height: 28px;
+
+        i {
+            font-size: 12px;
+        }
+    }
+}
+
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: colors.$light-purple;
+    border-bottom: 1px solid colors.$secondary-deep-grey;
+    flex-shrink: 0;
+}
+
+.breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: colors.$grey;
+    background: colors.$secondary-purple;
+    border: 1px solid colors.$secondary-deep-grey;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    i {
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &:hover {
+        color: colors.$white;
+        background: colors.$secondary-mid-deep-grey;
+        border-color: colors.$secondary-grey;
+    }
+}
+
+.breadcrumb-separator {
+    font-size: 10px;
+    color: colors.$secondary-grey;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.breadcrumb-current {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: colors.$white;
+
+    i {
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+.breadcrumb-icon {
+    font-size: 10px;
+    position: relative;
+    top: 1px;
+
+    &.entity {
+        color: colors.$entity-pink;
+    }
+
+    &.relation {
+        color: colors.$relation-yellow;
+    }
+
+    &.attribute {
+        color: colors.$attribute-blue;
+    }
+}
+
+.detail-content {
+    flex: 1;
+    overflow: auto;
+    padding: 16px;
+    scrollbar-width: thin;
+}
+
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.transaction-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: colors.$grey;
+
+    > i {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 16px;
+    }
+
+    p {
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+
+    button {
+        i {
+            font-size: 14px;
+            margin-right: 4px;
+        }
+    }
+}
+
+.detail-section {
+    margin-bottom: 24px;
+
+    .text-muted {
+        color: colors.$grey;
+        font-size: 14px;
+    }
+}
+
+.type-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .type-info {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+    }
+
+    .type-label {
+        font-size: 14px;
+        font-weight: 600;
+
+        &.entity {
+            color: colors.$entity-pink;
+        }
+
+        &.relation {
+            color: colors.$relation-yellow;
+        }
+
+        &.attribute {
+            color: colors.$attribute-blue;
+        }
+    }
+
+    .type-muted {
+        font-size: 14px;
+        font-style: italic;
+        color: colors.$grey;
+    }
+
+    .value-type {
+        font-size: 14px;
+        color: colors.$grey;
+    }
+
+    .open-details-button {
+        margin-top: 0;
+    }
+}
+
+// Standalone roleplayers list (for relation instances)
+.roleplayers-list {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid colors.$secondary-deep-grey;
+    border-radius: 6px;
+    overflow: hidden;
+
+    > .roleplayer-card {
+        border-bottom: 1px solid colors.$secondary-deep-grey;
+        background: colors.$secondary-purple;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+}
+
+.section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0;
+    margin-bottom: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: colors.$white;
+
+    i {
+        font-size: 10px;
+        width: 10px;
+        color: colors.$grey;
+        position: relative;
+        top: -1px;
+    }
+
+    h6 {
+        font-size: 14px;
+        font-weight: 500;
+        margin: 0;
+    }
+
+    &:hover i {
+        color: colors.$white;
+    }
+}
+
+.attributes-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+
+    .attr-label {
+        width: 1%;
+        padding: 6px 10px;
+        font-size: 13px;
+        color: colors.$attribute-blue;
+        font-weight: 500;
+        background: colors.$light-purple;
+        border-radius: 4px 0 0 4px;
+        white-space: nowrap;
+        vertical-align: top;
+
+        .value-type {
+            color: colors.$grey;
+            font-weight: 400;
+        }
+    }
+
+    .attr-value {
+        padding: 6px 4px 6px 10px;
+        font-size: 13px;
+        color: colors.$grey;
+        background: rgba(colors.$light-purple, 0.3);
+        border-radius: 0 4px 4px 0;
+        vertical-align: top;
+        white-space: normal;
+    }
+
+    .value-row {
+        display: block;
+
+        &:not(:last-child) {
+            margin-bottom: 4px;
+        }
+
+        &:hover .copy-button {
+            opacity: 0.5;
+        }
+    }
+
+    .copy-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        margin-left: 4px;
+        vertical-align: text-bottom;
+        opacity: 0;
+        background: none;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        color: inherit;
+
+        i {
+            font-size: 11px;
+            line-height: 11px;
+            height: 11px;
+        }
+
+        &:hover {
+            opacity: 1 !important;
+            background-color: colors.$light-purple;
+        }
+    }
+}
+
+// Relations loading
+.relations-loading {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+}
+
+// Filter chips for relation types
+.relation-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: colors.$grey;
+    background: colors.$secondary-purple;
+    border: 1px solid colors.$secondary-deep-grey;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+        background: colors.$secondary-dark-grey;
+        border-color: colors.$secondary-grey;
+    }
+
+    &.active {
+        color: colors.$purple;
+        background: colors.$relation-yellow;
+        border-color: colors.$relation-yellow;
+
+        .chip-count {
+            background: rgba(colors.$purple, 0.2);
+            color: colors.$purple;
+        }
+    }
+
+    .chip-count {
+        font-size: 11px;
+        background: rgba(colors.$relation-yellow, 0.25);
+        color: colors.$relation-yellow;
+        padding: 1px 6px;
+        border-radius: 8px;
+    }
+}
+
+// Relations list
+.relations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+// Relation card - outer container with border
+.relation-card {
+    border: 1px solid colors.$secondary-deep-grey;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+// Card header - darker background
+.relation-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: colors.$secondary-dark-grey;
+    border-left: 3px solid colors.$relation-yellow;
+
+    .relation-type-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: colors.$relation-yellow;
+    }
+
+    .relation-iid {
+        font-family: monospace;
+        font-size: 11px;
+        color: colors.$secondary-grey;
+    }
+
+    .header-explore {
+        margin-left: auto;
+        margin-top: 0;
+    }
+}
+
+// Card body - lighter background
+.relation-card-body {
+    display: flex;
+    flex-direction: column;
+    background: colors.$secondary-purple;
+}
+
+// Relation attributes section - at bottom of card
+.relation-card-attrs {
+    padding: 10px 12px;
+    background: colors.$secondary-dark-grey;
+    border-top: 1px solid colors.$secondary-deep-grey;
+
+    .attributes-table {
+        border-spacing: 0 8px;
+    }
+}
+
+// Roleplayer card - each roleplayer is a distinct row
+.roleplayer-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid colors.$secondary-deep-grey;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &.is-self {
+        opacity: 1;
+    }
+}
+
+// Roleplayer info - role label on top, player details below
+.roleplayer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+    min-width: 180px;
+
+    .role-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: colors.$prism-purple;
+    }
+
+    .player-details {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+
+        .player-type {
+            font-size: 13px;
+            font-weight: 500;
+            color: colors.$entity-pink;
+        }
+
+        .player-iid {
+            font-family: monospace;
+            font-size: 11px;
+            color: colors.$secondary-light-grey;
+        }
+
+        .self-tag {
+            font-size: 11px;
+            color: colors.$secondary-light-grey;
+            background: colors.$secondary-mid-deep-grey;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-style: italic;
+        }
+    }
+}
+
+// Roleplayer attributes - vertical scroll pane
+.roleplayer-attrs {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+    max-height: 80px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding: 8px;
+    border: 1px solid colors.$secondary-deep-grey;
+    border-radius: 4px;
+    background: colors.$purple;
+}
+
+.attr-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 12px;
+
+    .attr-key {
+        color: colors.$attribute-blue;
+        flex-shrink: 0;
+    }
+
+    .attr-val {
+        color: colors.$grey;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.open-details-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: colors.$grey;
+    background: colors.$secondary-dark-grey;
+    border: 1px solid colors.$secondary-deep-grey;
+    border-radius: 4px;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+
+    i {
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &:hover {
+        background: colors.$secondary-mid-deep-grey;
+        border-color: colors.$secondary-grey;
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+}

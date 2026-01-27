@@ -1,0 +1,176 @@
+<div class="instance-table-container">
+  <!-- Stale data banner -->
+  @if (isDataStale) {
+    <div class="stale-data-banner">
+      <i class="fa-light fa-clock-rotate-left"></i>
+      <span>Data was loaded in a different transaction</span>
+      <button mat-stroked-button (click)="refresh()">
+        <i class="fa-light fa-refresh"></i>
+        Refresh
+      </button>
+    </div>
+  }
+
+  <!-- Filter/Sort Bar -->
+  <div class="filter-sort-bar card-header">
+    <div class="search-input-wrapper">
+      <i class="fa-light fa-search search-icon"></i>
+      <input
+        type="text"
+        placeholder="Search"
+        [(ngModel)]="filterText"
+        (input)="onFilterChange(filterText)"
+        class="filter-input"
+      />
+    </div>
+
+    <div class="flex-spacer"></div>
+
+    <button
+      mat-icon-button
+      [matMenuTriggerFor]="columnMenu"
+      matTooltip="Show/hide columns">
+      <i class="fa-light fa-columns-3"></i>
+    </button>
+
+    <mat-menu #columnMenu="matMenu" class="column-picker-menu">
+      <div class="column-menu-actions">
+        <button mat-button (click)="showAllColumns(); $event.stopPropagation()">Show all</button>
+        <button mat-button (click)="hideAllColumns(); $event.stopPropagation()">Hide all</button>
+      </div>
+      @for (col of allColumns; track col.id) {
+        <button mat-menu-item (click)="toggleColumnVisibility(col.id); $event.stopPropagation()">
+          <mat-checkbox [checked]="isColumnVisible(col.id)">
+            {{ col.label }}
+          </mat-checkbox>
+        </button>
+      }
+    </mat-menu>
+
+    <button
+      mat-icon-button
+      (click)="refresh()"
+      matTooltip="Refresh"
+      [disabled]="loading">
+      <i class="fa-light fa-refresh" [class.fa-spin]="loading"></i>
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrapper" cdkScrollable>
+    @if (showSpinner) {
+      <div class="loading-overlay">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    }
+
+    <table
+      mat-table
+      [dataSource]="dataSource"
+      matSort
+      (matSortChange)="onSortChange($event)"
+      class="instance-table">
+
+      <!-- Type Column -->
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+        <td mat-cell *matCellDef="let row" class="type-cell" [class.entity]="row.kind === 'entity'" [class.relation]="row.kind === 'relation'" [class.attribute]="row.kind === 'attribute'">
+          {{ row.type }}
+        </td>
+      </ng-container>
+
+      <!-- IID Column -->
+      <ng-container matColumnDef="iid">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>IID</th>
+        <td mat-cell *matCellDef="let row" class="iid-cell">
+          {{ row.iid }}
+        </td>
+      </ng-container>
+
+      <!-- Dynamic attribute columns -->
+      @for (attr of attributeColumns; track attr) {
+        <ng-container [matColumnDef]="attr">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ attr }}</th>
+          <td mat-cell *matCellDef="let row" class="attribute-cell">
+            <div class="cell-content-wrapper">
+              <span class="cell-content" richTooltip [showTooltip]="shouldShowTooltip(row[attr])" [richTooltipContent]="formatAttributeValue(row[attr])">{{ truncateValue(row[attr]) }}</span>
+              @if (formatAttributeValue(row[attr]) !== '-') {
+                <button
+                  mat-icon-button
+                  class="copy-button"
+                  (click)="copyToClipboard($event, row[attr])">
+                  <i class="fa-light fa-copy"></i>
+                </button>
+              }
+            </div>
+          </td>
+        </ng-container>
+      }
+
+      <!-- Value Type column (for attributes) -->
+      <ng-container matColumnDef="valueType">
+        <th mat-header-cell *matHeaderCellDef>Value Type</th>
+        <td mat-cell *matCellDef="let row" class="value-type-cell">
+          {{ row.valueType }}
+        </td>
+      </ng-container>
+
+      <!-- Roleplayers column (for relations, not sortable) -->
+      <ng-container matColumnDef="roleplayerCounts">
+        <th mat-header-cell *matHeaderCellDef>Roleplayers</th>
+        <td mat-cell *matCellDef="let row" class="relations-cell">
+          <span richTooltip [showTooltip]="shouldShowRoleplayerTooltip(row.roleplayerCounts)" [richTooltipContent]="formatRoleplayerCounts(row.roleplayerCounts)">{{ truncateRoleplayerCounts(row.roleplayerCounts) }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Relations column (not sortable) -->
+      <ng-container matColumnDef="relationCounts">
+        <th mat-header-cell *matHeaderCellDef>Relations</th>
+        <td mat-cell *matCellDef="let row" class="relations-cell">
+          <span richTooltip [showTooltip]="shouldShowRelationTooltip(row.relationCounts)" [richTooltipContent]="formatRelationCounts(row.relationCounts)">{{ truncateRelationCounts(row.relationCounts) }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Owners column (for attributes, not sortable) -->
+      <ng-container matColumnDef="ownerCounts">
+        <th mat-header-cell *matHeaderCellDef>Owners</th>
+        <td mat-cell *matCellDef="let row" class="relations-cell">
+          <span richTooltip [showTooltip]="shouldShowOwnerTooltip(row.ownerCounts)" [richTooltipContent]="formatOwnerCounts(row.ownerCounts)">{{ truncateOwnerCounts(row.ownerCounts) }}</span>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: displayedColumns"
+        (click)="onRowClick(row)"
+        class="clickable-row"></tr>
+    </table>
+
+    @if (needsTransaction) {
+      <div class="transaction-prompt">
+        <i class="fa-light fa-lock"></i>
+        <p>Open a transaction to explore your data</p>
+        <button mat-stroked-button (click)="openTransactionAndLoad()">
+          <i class="fa-light fa-play"></i>
+          Open read transaction
+        </button>
+      </div>
+    } @else if (!loading && dataSource.length === 0) {
+      <div class="empty-state">
+        <i class="fa-light fa-inbox"></i>
+        <p>No instances found</p>
+      </div>
+    }
+  </div>
+
+  <!-- Pagination -->
+  <mat-paginator
+    [length]="totalCount"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="pageSizeOptions"
+    [pageIndex]="currentPage"
+    (page)="onPageChange($event)"
+    showFirstLastButtons>
+  </mat-paginator>
+</div>

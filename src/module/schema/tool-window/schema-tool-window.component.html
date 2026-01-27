@@ -22,21 +22,21 @@
     [class]="state.viewMode$.value"
   >
     <!-- This is the tree node template for leaf nodes -->
-    <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="16" [class]="treeNodeClass(node)">
+    <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="16" [class]="treeNodeClass(node)" [class.highlighted]="isNodeHighlighted(node)">
       <!-- use a disabled button to provide padding for tree leaf -->
       <button matIconButton disabled></button>
-      <ts-schema-tree-node [data]="node"/>
+      <ts-schema-tree-node [data]="node" (click)="onNodeClick(node, $event)" [class.clickable]="mode === 'data' && node.nodeKind === 'concept'"/>
     </mat-tree-node>
     <!-- This is the tree node template for expandable nodes -->
     <mat-tree-node *matTreeNodeDef="let node;when: state.hasChild" matTreeNodePadding
-                    [matTreeNodePaddingIndent]="16" (click)="toggleNode(node)"
-                    [cdkTreeNodeTypeaheadLabel]="node.name" [class]="treeNodeClass(node)">
-      <button matIconButton aria-label="Toggle node">
+                    [matTreeNodePaddingIndent]="16"
+                    [cdkTreeNodeTypeaheadLabel]="node.name" [class]="treeNodeClass(node)" [class.highlighted]="isNodeHighlighted(node)">
+      <button matIconButton aria-label="Toggle node" (click)="toggleNode(node)">
         <mat-icon class="mat-icon-rtl-mirror">
           {{tree.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
         </mat-icon>
       </button>
-      <ts-schema-tree-node [data]="node"/>
+      <ts-schema-tree-node [data]="node" (click)="onNodeClick(node, $event)" [class.clickable]="mode === 'data' && node.nodeKind === 'concept'"/>
     </mat-tree-node>
   </mat-tree>
   <div class="gutter"></div>
@@ -44,6 +44,10 @@
 
 <mat-menu #actionsMenu="matMenu">
   <span class="menu-content">
+    <button mat-menu-item (click)="state.expandAll()">
+      <i class="fa-light fa-arrows-from-line"></i>
+      <span>Expand all</span>
+    </button>
     <button mat-menu-item (click)="state.collapseAll()">
       <i class="fa-light fa-arrows-to-line"></i>
       <span>Collapse all</span>

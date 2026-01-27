@@ -166,6 +166,18 @@
                 border-top: 1px solid colors.$light-purple;
             }
         }
+
+        ts-schema-tree-node.clickable {
+            cursor: pointer;
+
+            &:hover {
+                background-color: colors.$light-purple;
+            }
+        }
+
+        mat-tree-node.highlighted {
+            background-color: colors.$light-purple;
+        }
     }
 }
 

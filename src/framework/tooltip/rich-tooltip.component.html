@@ -1,9 +1,7 @@
 <div>
   <div class="tooltip-container">
-    @if (contentLines) {
-      @for (line of contentLines; track line) {
-        <p>{{ line }}</p>
-      }
+    @if (contentIsString()) {
+      <p class="tooltip-text">{{ content }}</p>
     } @else {
       <ng-container *ngTemplateOutlet="$any(content)"/>
     }
