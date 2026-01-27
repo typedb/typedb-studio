@@ -55,11 +55,11 @@
           <div class="type-row">
             <span class="type-info">
               @if (type.supertype) {
-                <span class="type-label" [ngClass]="typeKindLabel">{{ type.label }}</span>
+                <span class="type-label" [ngClass]="typeKindLabel">{{ type.label }}@if (type.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
                 <span class="type-muted">sub {{ type.supertype.label }}</span>
               } @else {
                 <span class="type-muted">{{ typeKindLabel }}</span>
-                <span class="type-label" [ngClass]="typeKindLabel">{{ type.label }}</span>
+                <span class="type-label" [ngClass]="typeKindLabel">{{ type.label }}@if (type.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
               }
             </span>
             <button class="open-details-button" (click)="exploreType()">
