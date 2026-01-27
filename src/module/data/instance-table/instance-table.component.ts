@@ -17,7 +17,6 @@ import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatMenuModule } from "@angular/material/menu";
 import { MatCheckboxModule } from "@angular/material/checkbox";
-import { MatDialog } from "@angular/material/dialog";
 import { CdkScrollable } from "@angular/cdk/scrolling";
 import { Subject, Subscription, combineLatest } from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, take } from "rxjs/operators";
@@ -25,7 +24,6 @@ import { TypeTableTab, DataEditorState, BreadcrumbItem } from "../../../service/
 import { DriverState } from "../../../service/driver-state.service";
 import { ApiResponse, Attribute, Concept, ConceptRow, ConceptRowAnswer, isApiErrorResponse, QueryResponse } from "@typedb/driver-http";
 import { SnackbarService } from "../../../service/snackbar.service";
-import { AdvancedFilterDialogComponent, AdvancedFilterDialogData, AdvancedFilterDialogResult } from "./advanced-filter-dialog/advanced-filter-dialog.component";
 import { extractErrorMessage } from "../../../framework/util/observable";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 
@@ -106,7 +104,6 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
     // Filter
     filterText = "";
-    filterMode: "simple" | "advanced" = "simple";
     private filterSubject = new Subject<string>();
 
     // Column visibility
@@ -118,7 +115,6 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         private driver: DriverState,
         private dataEditorState: DataEditorState,
         private snackbar: SnackbarService,
-        private dialog: MatDialog,
     ) {}
 
     ngOnInit() {
@@ -383,18 +379,10 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
             if (this.filterText) {
                 if (this.tab.type.kind === "attributeType") {
                     // For attribute types, filter on the attribute value
-                    if (this.filterMode === "simple") {
-                        filterClause = `$instance contains "${this.filterText}"; `;
-                    } else {
-                        filterClause = `${this.filterText} `;
-                    }
+                    filterClause = `$instance contains "${this.filterText}"; `;
                 } else {
                     // For entity/relation types, filter on owned attributes
-                    if (this.filterMode === "simple") {
-                        filterClause = `$instance has $attr; $attr contains "${this.filterText}"; `;
-                    } else {
-                        filterClause = `${this.filterText} `;
-                    }
+                    filterClause = `$instance has $attr; $attr contains "${this.filterText}"; `;
                 }
             }
 
@@ -766,16 +754,10 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
     private buildInstanceQuery(offset: number, limit: number): string {
         const type = this.tab.type;
 
-        // User filter
+        // User filter - search in all text attributes
         let filterClause = "";
         if (this.filterText) {
-            if (this.filterMode === "simple") {
-                // Simple mode: search in all text attributes
-                filterClause = `$instance has $attr; $attr contains "${this.filterText}";`;
-            } else {
-                // Advanced mode: use raw TypeQL
-                filterClause = this.filterText;
-            }
+            filterClause = `$instance has $attr; $attr contains "${this.filterText}";`;
         }
 
         // Tab-level TypeQL filter (structural filter, e.g., for filtered relation views)
@@ -838,15 +820,10 @@ select ${selectVars};`.trim();
     private buildAttributeTypeQuery(offset: number, limit: number): string {
         const type = this.tab.type;
 
+        // Filter on the attribute value
         let filterClause = "";
         if (this.filterText) {
-            if (this.filterMode === "simple") {
-                // Simple mode: search in the attribute value
-                filterClause = `$instance contains "${this.filterText}";`;
-            } else {
-                // Advanced mode: use raw TypeQL
-                filterClause = this.filterText;
-            }
+            filterClause = `$instance contains "${this.filterText}";`;
         }
 
         const tabFilter = this.tab.typeqlFilter || "";
@@ -978,45 +955,7 @@ offset ${offset}; limit ${limit};`.trim();
     }
 
     onFilterChange(filterText: string) {
-        // Only auto-apply filter in simple mode
-        if (this.filterMode === "simple") {
-            this.filterSubject.next(filterText);
-        }
-    }
-
-    openAdvancedFilterDialog() {
-        const dialogData: AdvancedFilterDialogData = {
-            typeLabel: this.tab.type.label,
-            attributeColumns: this.attributeColumns,
-            currentFilter: this.filterMode === "advanced" ? this.filterText : "",
-            tabFilter: this.tab.typeqlFilter || "",
-        };
-
-        const dialogRef = this.dialog.open<AdvancedFilterDialogComponent, AdvancedFilterDialogData, AdvancedFilterDialogResult>(
-            AdvancedFilterDialogComponent,
-            {
-                data: dialogData,
-                width: "600px",
-            }
-        );
-
-        dialogRef.afterClosed().subscribe(result => {
-            if (result) {
-                this.filterMode = "advanced";
-                this.filterText = result.filter;
-                this.currentPage = 0;
-                this.fetchInstances();
-                this.fetchTotalCount();
-            }
-        });
-    }
-
-    clearAdvancedFilter() {
-        this.filterMode = "simple";
-        this.filterText = "";
-        this.currentPage = 0;
-        this.fetchInstances();
-        this.fetchTotalCount();
+        this.filterSubject.next(filterText);
     }
 
     refresh() {
