@@ -19,7 +19,6 @@ import {
 } from "@typedb/driver-http";
 import { FormBuilder } from "@angular/forms";
 import { QueryTypeDetector } from "./query-type-detector.service";
-import { SnackbarService } from "./snackbar.service";
 
 export type DriverStatus = "disconnected" | "connecting" | "connected" | "reconnecting";
 
@@ -74,7 +73,7 @@ export class DriverState {
         shareReplay(1),
     );
 
-    constructor(private appData: AppData, private formBuilder: FormBuilder, private queryTypeDetector: QueryTypeDetector, private snackbar: SnackbarService) {
+    constructor(private appData: AppData, private formBuilder: FormBuilder, private queryTypeDetector: QueryTypeDetector) {
         (window as any)["driverState"] = this;
     }
 
@@ -308,48 +307,27 @@ export class DriverState {
 
     /**
      * Execute a query in auto mode with automatic transaction type detection.
+     * Uses oneShotQuery for better performance (single HTTP call handles transaction lifecycle).
      * Delegates to QueryTypeDetector which handles retry escalation internally.
-     * On success: auto-commits for write/schema, auto-closes for read.
      *
      * Only logs the final successful action to history (not failed retry attempts).
-     * Transaction operations are silent (not logged to history).
      */
     private autoQuery(query: string): Observable<ApiResponse<QueryResponse>> {
         const queryAction = queryRunActionOf(query);
+        const databaseName = this.requireDatabase().name;
 
         return this.queryTypeDetector.runWithAutoType(
             query,
-            (transactionType: TransactionType) => this.executeQueryWithType(query, transactionType)
+            (transactionType: TransactionType) => this.executeOneShotQuery(query, databaseName, transactionType)
         ).pipe(
-            tap(({ type, result }) => {
-                // Log the action now that retries have resolved
+            tap(({ result }) => {
                 this.updateActionResult(queryAction, result);
                 this._actionLog$.next(queryAction);
-
-                // Auto-commit for write/schema, auto-close for read
-                if (type !== "read" && isOkResponse(result)) {
-                    this.commitTransaction().subscribe({
-                        error: (err) => {
-                            console.error('Auto-commit failed:', err);
-                            const msg = this.extractErrorMessage(err);
-                            this.snackbar.errorPersistent(`Error: ${msg}\nCaused: Failed to commit transaction.`);
-                        }
-                    });
-                } else {
-                    this.closeTransaction().subscribe({
-                        error: (err) => console.error('Auto-close failed:', err)
-                    });
-                }
             }),
             map(({ result }) => result),
             catchError((err) => {
-                // Log the failed query action
                 this.updateActionResultUnexpectedError(queryAction, err);
                 this._actionLog$.next(queryAction);
-
-                this.closeTransaction().subscribe({
-                    error: (closeErr) => console.error('Close on error failed:', closeErr)
-                });
                 return throwError(() => err);
             }),
             takeUntil(this._stopSignal$)
@@ -357,35 +335,19 @@ export class DriverState {
     }
 
     /**
-     * Execute a query with a specific transaction type.
-     * Opens transaction, executes query, closes on error.
-     * Used as the callback for QueryTypeDetector.runWithAutoType().
-     *
-     * Note: Does NOT track or log actions - caller (autoQuery) handles that.
-     * Transaction operations are silent (not logged to history).
+     * Execute a oneshot query with a specific transaction type.
+     * Uses oneShotQuery which handles the full transaction lifecycle in one call.
+     * Commits for write/schema transactions, closes for read transactions.
      */
-    private executeQueryWithType(query: string, transactionType: TransactionType): Observable<ApiResponse<QueryResponse>> {
+    private executeOneShotQuery(query: string, databaseName: string, transactionType: TransactionType): Observable<ApiResponse<QueryResponse>> {
         const driver = this.requireDriver();
-        const lockId = uuid();
+        const shouldCommit = transactionType !== "read";
 
-        return this.tryUseWriteLock(() => this.openTransaction(transactionType, lockId).pipe(
-            switchMap((res) => {
-                if (isApiErrorResponse(res)) throw res;
-                return fromPromiseWithRetry(() => driver.query(res.ok.transactionId, query));
-            }),
+        return fromPromiseWithRetry(() => driver.oneShotQuery(query, shouldCommit, databaseName, transactionType)).pipe(
             tap((res) => {
-                // Throw API errors so retry logic can catch them
                 if (isApiErrorResponse(res)) throw res;
             }),
-            catchError((err) => {
-                // Close transaction on error, then rethrow for retry logic
-                // Must wait for close to complete before rethrowing to avoid race with retry's openTransaction
-                return this.closeTransaction(lockId).pipe(
-                    catchError(() => of({})),  // Ignore close errors
-                    switchMap(() => throwError(() => err))
-                );
-            }),
-        ), lockId);
+        );
     }
 
     /**
@@ -503,11 +465,4 @@ export class DriverState {
         action.result = err;
     }
 
-    private extractErrorMessage(err: any): string {
-        if (isApiErrorResponse(err)) {
-            return err.err.message;
-        } else {
-            return err?.message ?? err?.toString() ?? `Unknown error`;
-        }
-    }
 }
