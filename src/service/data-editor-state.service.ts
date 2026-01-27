@@ -221,17 +221,18 @@ export class DataEditorState {
         }
     }
 
-    openTypeTab(type: SchemaConcept, breadcrumbs: BreadcrumbItem[] = []) {
+    openTypeTab(type: SchemaConcept, breadcrumbs: BreadcrumbItem[] = [], resetBreadcrumbs = false) {
         const tabs = this.openTabs$.value;
         // Find existing tab without a filter (filtered tabs are separate)
         const existing = tabs.find(t => t.kind === "type-table" && t.type.label === type.label && !t.typeqlFilter);
 
         if (existing) {
-            // Update breadcrumbs on existing tab if new ones provided
-            if (breadcrumbs.length > 0) {
+            // Update breadcrumbs on existing tab if new ones provided or reset requested
+            if (breadcrumbs.length > 0 || resetBreadcrumbs) {
                 const index = tabs.indexOf(existing);
                 const newTabs = [...tabs];
-                newTabs[index] = { ...existing, breadcrumbs };
+                const updatedTab: TypeTableTab = { ...(existing as TypeTableTab), breadcrumbs: breadcrumbs.length > 0 ? breadcrumbs : undefined };
+                newTabs[index] = updatedTab;
                 this.openTabs$.next(newTabs);
             }
             this.selectedTabIndex$.next(tabs.indexOf(existing));
