@@ -50,13 +50,13 @@
       </div>
     } @else {
       <div class="form-input-block">
-        <div class="form-input-row-description"><p>Enter connection URL</p></div>
+        <div class="form-input-row-description"><p>Enter connection string</p></div>
         <div class="help-input-row">
           <mat-form-field>
-            <input matInput [formControl]="form.controls.url" [type]="connectionUrlRevealed ? 'text' : 'password'" [placeholder]="connectionUrlPlaceholder">
+            <input matInput [formControl]="form.controls.url" [type]="connectionStringRevealed ? 'text' : 'password'" [placeholder]="connectionStringPlaceholder">
             <div class="tp-password-input-suffix" matSuffix>
-              <button type="button" tabindex="-1" mat-icon-button (click)="connectionUrlRevealed = !connectionUrlRevealed" aria-label="Hide connection URL" aria-pressed="hide">
-                <i [class]="connectionUrlRevealed ? 'fa-light fa-eye-slash' : 'fa-light fa-eye'"></i>
+              <button type="button" tabindex="-1" mat-icon-button (click)="connectionStringRevealed = !connectionStringRevealed" aria-label="Hide connection string" aria-pressed="hide">
+                <i [class]="connectionStringRevealed ? 'fa-light fa-eye-slash' : 'fa-light fa-eye'"></i>
               </button>
             </div>
             @if (form.controls.url.getError("errorText")) {
@@ -91,6 +91,6 @@
   <div class="rich-tooltip">
     <p><strong>Format:</strong> typedb://username:password&commat;address</p>
     <p><strong>Example:</strong> typedb://admin:password&commat;http://localhost:8000</p>
-    <p><strong>Note:</strong> For TypeDB Cloud, you should have a credentials file containing your Connection URL.</p>
+    <p><strong>Note:</strong> For TypeDB Cloud, you should have a credentials file containing your connection string.</p>
   </div>
 </ng-template>

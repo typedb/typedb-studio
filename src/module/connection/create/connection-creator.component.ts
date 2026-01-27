@@ -13,7 +13,7 @@ import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { DriverParams, isApiErrorResponse, isBasicParams } from "@typedb/driver-http";
-import { CONNECTION_URL_PLACEHOLDER, ConnectionConfig, connectionUrl, parseConnectionUrlOrNull } from "../../../concept/connection";
+import { CONNECTION_STRING_PLACEHOLDER, ConnectionConfig, connectionUrl, parseConnectionUrlOrNull } from "../../../concept/connection";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
 import { ADDRESS, NAME, USERNAME } from "../../../framework/util/url-params";
@@ -77,10 +77,10 @@ export class ConnectionCreatorComponent {
     savedConnections = this.appData.connections.list();
     advancedConfigActiveOptions: FormOption<boolean>[] = [
         { value: true, viewValue: `Use address and credentials` },
-        { value: false, viewValue: `Use connection URL` },
+        { value: false, viewValue: `Use connection string` },
     ];
-    connectionUrlRevealed = false;
-    connectionUrlPlaceholder = CONNECTION_URL_PLACEHOLDER;
+    connectionStringRevealed = false;
+    connectionStringPlaceholder = CONNECTION_STRING_PLACEHOLDER;
     passwordRevealed = false;
 
     readonly form = this.formBuilder.group({
