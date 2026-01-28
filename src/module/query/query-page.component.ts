@@ -129,7 +129,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     transactionOperationString(action: TransactionOperationAction) {
         switch (action.operation) {
             case "open": return "opened transaction";
-            case "commit": return "committed transaction";
+            case "commit": return action.status === "error" ? "commit failed" : "committed";
             case "close": return "closed transaction";
         }
     }

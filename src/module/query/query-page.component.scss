@@ -26,10 +26,6 @@
 .query-page {
     height: calc(100% - 86px);
     gap: 4px !important;
-
-    ::ng-deep app-drag-handle span {
-        display: none;
-    }
 }
 
 .tp-bento-container {
@@ -350,7 +346,7 @@ button {
     }
 
     .transaction-operation-type {
-        min-width: 140px;
+        white-space: nowrap;
     }
 }
 

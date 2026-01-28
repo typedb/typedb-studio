@@ -64,7 +64,7 @@ export class UserChangePasswordDialogComponent {
             next: () => {
                 this.close();
                 if (this.isEditingCurrentlyLoggedInUser) {
-                    this.snackbar.info(`Password changed for user '${this.data.username}'. You can now reconnect with the new credentials.`);
+                    window.location.href = "/connect";
                 } else {
                     this.snackbar.success(`Password changed for user '${this.data.username}'.`);
                 }

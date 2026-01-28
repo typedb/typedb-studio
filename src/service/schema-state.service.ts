@@ -320,7 +320,7 @@ class SchemaBuilder {
     private attachRelatedRoles() {
         for (const answer of this.relatedRoles.answers) {
             const [rel, role] = [answer.data["t"], answer.data["related"]];
-            if (!rel || !role || rel.kind !== "relationType" || role.kind !== "roleType") throw this.unexpectedRoleplayersAnswer(answer);
+            if (!rel || !role || rel.kind !== "relationType" || role.kind !== "roleType") throw this.unexpectedLinksAnswer(answer);
             const relNode: SchemaRelation = this.expectRelationType(rel.label);
             this.propagateRelatedRoles(relNode, role);
         }
@@ -389,7 +389,7 @@ class SchemaBuilder {
         return `Unexpected played roles answer: ${JSON.stringify(answer.data)}`;
     }
 
-    private unexpectedRoleplayersAnswer(answer: ConceptRowsQueryResponse["answers"][number]) {
+    private unexpectedLinksAnswer(answer: ConceptRowsQueryResponse["answers"][number]) {
         return `Unexpected related roles answer: ${JSON.stringify(answer.data)}`;
     }
 }

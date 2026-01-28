@@ -5,12 +5,21 @@
  */
 
 import { Component, HostBinding, Inject } from "@angular/core";
+import { MatButtonModule } from "@angular/material/button";
 import { ColorStyle } from "../util";
 import { MAT_SNACK_BAR_DATA, MatSnackBarRef } from "@angular/material/snack-bar";
+
+export interface SnackbarAction {
+    label: string;
+    callback: () => void;
+}
 
 export interface SnackbarData {
     message: string;
     status: ColorStyle;
+    action?: SnackbarAction;
+    /** Maximum lines to show before truncating (default: no limit) */
+    maxLines?: number;
 }
 
 const statusIcons: Record<ColorStyle, string> = {
@@ -26,19 +35,37 @@ const statusIcons: Record<ColorStyle, string> = {
     templateUrl: "snackbar.component.html",
     styleUrls: ["snackbar.component.scss"],
     standalone: true,
+    imports: [MatButtonModule],
 })
 export class SnackbarComponent {
     readonly message: string;
-    readonly messageParts: string[];
+    readonly displayLines: string[];
+    readonly isTruncated: boolean;
+    readonly action?: SnackbarAction;
     @HostBinding("class") readonly status: ColorStyle;
 
     constructor(private matSnackBarRef: MatSnackBarRef<SnackbarComponent>, @Inject(MAT_SNACK_BAR_DATA) data: SnackbarData) {
         this.message = data.message;
         this.status = data.status;
-        this.messageParts = data.message.split(`\n`);
+        this.action = data.action;
+
+        // Filter out empty lines and limit to maxLines if specified
+        const allLines = data.message.split(`\n`).filter(line => line.trim().length > 0);
+        if (data.maxLines && allLines.length > data.maxLines) {
+            this.displayLines = allLines.slice(0, data.maxLines);
+            this.isTruncated = true;
+        } else {
+            this.displayLines = allLines;
+            this.isTruncated = false;
+        }
     }
 
     close(): void {
+        this.matSnackBarRef.dismiss();
+    }
+
+    onAction(): void {
+        this.action?.callback();
         this.matSnackBarRef.dismiss();
     }
 

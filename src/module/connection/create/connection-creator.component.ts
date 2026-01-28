@@ -13,7 +13,7 @@ import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { DriverParams, isApiErrorResponse, isBasicParams } from "@typedb/driver-http";
-import { CONNECTION_URL_PLACEHOLDER, ConnectionConfig, connectionUrl, parseConnectionUrlOrNull } from "../../../concept/connection";
+import { CONNECTION_STRING_PLACEHOLDER, ConnectionConfig, connectionUrl, parseConnectionUrlOrNull } from "../../../concept/connection";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
 import { ADDRESS, NAME, USERNAME } from "../../../framework/util/url-params";
@@ -32,12 +32,24 @@ const connectionUrlValidator: ValidatorFn = (control: AbstractControl<string>) =
 };
 
 const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
-    if (control.value.startsWith(`http://`) || control.value.startsWith(`https://`)) return null;
-    else return { errorText: `Please specify http:// or https://` };
+    const value = control.value;
+    if (!value.startsWith(`http://`) && !value.startsWith(`https://`)) {
+        return { errorText: `Please specify http:// or https://` };
+    }
+    return null;
+}
+
+function addressHasPort(address: string): boolean {
+    // Check for port format: http(s)://<address>:<port>
+    // Match http(s):// followed by address content, then :port (digits)
+    const portPattern = /^https?:\/\/.+:\d+/;
+    return portPattern.test(address);
 }
 
 function isSafari(): boolean {
-    return window.navigator.userAgent.includes("Safari");
+    const ua = window.navigator.userAgent;
+    // Chrome's user agent contains "Safari", so we must exclude it
+    return ua.includes("Safari") && !ua.includes("Chrome") && !ua.includes("Chromium");
 } 
 
 const safariMixedContentValidator: ValidatorFn = (control: AbstractControl<string>) => {
@@ -65,10 +77,10 @@ export class ConnectionCreatorComponent {
     savedConnections = this.appData.connections.list();
     advancedConfigActiveOptions: FormOption<boolean>[] = [
         { value: true, viewValue: `Use address and credentials` },
-        { value: false, viewValue: `Use connection URL` },
+        { value: false, viewValue: `Use connection string` },
     ];
-    connectionUrlRevealed = false;
-    connectionUrlPlaceholder = CONNECTION_URL_PLACEHOLDER;
+    connectionStringRevealed = false;
+    connectionStringPlaceholder = CONNECTION_STRING_PLACEHOLDER;
     passwordRevealed = false;
 
     readonly form = this.formBuilder.group({
@@ -141,6 +153,18 @@ export class ConnectionCreatorComponent {
 
     get canSubmit() {
         return (this.form.dirty || this.advancedForm.dirty) && this.form.valid;
+    }
+
+    get addressMissingPort(): boolean {
+        const address = this.advancedForm.controls.address.value;
+        if (!address || this.advancedForm.controls.address.invalid) return false;
+        return !addressHasPort(address);
+    }
+
+    get addressUsesGrpcPort(): boolean {
+        const address = this.advancedForm.controls.address.value;
+        if (!address || this.advancedForm.controls.address.invalid) return false;
+        return /:1729\b/.test(address);
     }
 
     private buildConnectionConfigOrNull(): ConnectionConfig | null {

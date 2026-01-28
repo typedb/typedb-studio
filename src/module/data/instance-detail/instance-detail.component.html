@@ -1,0 +1,320 @@
+<div class="detail-panel">
+  <!-- Stale data banner -->
+  @if (isDataStale) {
+    <div class="stale-data-banner">
+      <i class="fa-light fa-clock-rotate-left"></i>
+      <span>Data was loaded in a different transaction</span>
+      <button mat-stroked-button (click)="refresh()">
+        <i class="fa-light fa-refresh"></i>
+        Refresh
+      </button>
+    </div>
+  }
+
+  @if (breadcrumbs.length > 0) {
+    <div class="breadcrumbs">
+      @for (crumb of breadcrumbs; track $index; let i = $index) {
+        <button class="breadcrumb-item" (click)="navigateToBreadcrumb(crumb, i)">
+          <i class="breadcrumb-icon" [ngClass]="getTypeIconClass(crumb.typeKind, crumb.kind === 'instance-detail')"></i>
+          @if (crumb.kind === 'type-table') {
+            {{ crumb.typeLabel }}
+          } @else {
+            {{ crumb.typeLabel }}: {{ crumb.instanceIID!.substring(0, 8) }}...
+          }
+        </button>
+        <i class="fa-light fa-chevron-right breadcrumb-separator"></i>
+      }
+      <span class="breadcrumb-current">
+        <i class="breadcrumb-icon" [ngClass]="getTypeIconClass(type.kind, true)"></i>
+        {{ type.label }}: {{ instanceIID.substring(0, 8) }}...
+      </span>
+    </div>
+  }
+  <div class="detail-content">
+    @if (needsTransaction) {
+      <div class="transaction-prompt">
+        <i class="fa-light fa-lock"></i>
+        <p>Open a transaction to explore your data</p>
+        <button mat-stroked-button (click)="openTransactionAndLoad()">
+          <i class="fa-light fa-play"></i>
+          Open read transaction
+        </button>
+      </div>
+    } @else if (loading) {
+      <div class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    } @else {
+      <!-- Type Section -->
+      <div class="detail-section">
+        <button class="section-header" (click)="typeCollapsed = !typeCollapsed">
+          <i class="fa-light" [class.fa-chevron-down]="!typeCollapsed" [class.fa-chevron-right]="typeCollapsed"></i>
+          <h6>Type</h6>
+        </button>
+        @if (!typeCollapsed) {
+          <div class="type-row">
+            <span class="type-info">
+              @if (type.supertype) {
+                <span class="type-label" [ngClass]="typeKindLabel">{{ type.label }}@if (type.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
+                <span class="type-muted">sub {{ type.supertype.label }}</span>
+              } @else {
+                <span class="type-muted">{{ typeKindLabel }}</span>
+                <span class="type-label" [ngClass]="typeKindLabel">{{ type.label }}@if (type.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
+              }
+            </span>
+            <button class="open-details-button" (click)="exploreType()">
+              Explore
+              <i class="fa-light fa-arrow-right"></i>
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- Links Section (only for relations) -->
+      @if (type.kind === 'relationType') {
+        <div class="detail-section">
+          <button class="section-header" (click)="linksCollapsed = !linksCollapsed">
+            <i class="fa-light" [class.fa-chevron-down]="!linksCollapsed" [class.fa-chevron-right]="linksCollapsed"></i>
+            <h6>Links</h6>
+          </button>
+          @if (linksCollapsed) {
+          } @else if (linksLoading) {
+            <div class="relations-loading">
+              <mat-spinner diameter="24"></mat-spinner>
+            </div>
+          } @else if (ownLinks.length === 0) {
+            <p class="text-muted">No links</p>
+          } @else {
+            <div class="links-list">
+              @for (link of ownLinks; track link.roleLabel + link.playerIID) {
+                <div class="link-card">
+                  <div class="link-info">
+                    <span class="role-label">{{ link.roleLabel }}</span>
+                    <div class="player-details">
+                      <span class="player-type">{{ link.playerTypeLabel }}</span>
+                      <span class="player-iid">{{ link.playerIID }}</span>
+                    </div>
+                    <button
+                        class="open-details-button"
+                        (click)="openOwnLinkDetail(link, $event)">
+                      Explore
+                      <i class="fa-light fa-arrow-right"></i>
+                    </button>
+                  </div>
+                  <div class="link-attrs">
+                    @for (attr of link.attributes; track attr.type) {
+                      <div class="attr-row">
+                        <span class="attr-key">{{ attr.type }}:</span>
+                        <span class="attr-val">{{ attr.values.join(', ') }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Attributes Section (not for attribute instances - they don't own other attributes) -->
+      @if (type.kind !== 'attributeType') {
+      <div class="detail-section">
+        <button class="section-header" (click)="attributesCollapsed = !attributesCollapsed">
+          <i class="fa-light" [class.fa-chevron-down]="!attributesCollapsed" [class.fa-chevron-right]="attributesCollapsed"></i>
+          <h6>Attributes</h6>
+        </button>
+        @if (attributesCollapsed) {
+        } @else if (attributes.length === 0) {
+          <p class="text-muted">No attributes</p>
+        } @else {
+          <table class="attributes-table">
+            <tbody>
+              @for (attr of attributes; track attr.type) {
+                <tr>
+                  <td class="attr-label">{{ attr.type }}<em class="value-type">, value {{ attr.valueType }}</em></td>
+                  <td class="attr-value">
+                    @for (value of attr.values; track $index) {
+                      <div class="value-row">{{ value }}<button
+                          class="copy-button"
+                          (click)="copyValue(value, tooltip)"
+                          matTooltip="Copied"
+                          matTooltipPosition="above"
+                          matTooltipShowDelay="999999"
+                          #tooltip="matTooltip"><i class="fa-light fa-copy"></i></button></div>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+      }
+
+      <!-- Relations Section (not for attributes - they cannot be links) -->
+      @if (type.kind !== 'attributeType') {
+      <div class="detail-section">
+        <button class="section-header" (click)="relationsCollapsed = !relationsCollapsed">
+          <i class="fa-light" [class.fa-chevron-down]="!relationsCollapsed" [class.fa-chevron-right]="relationsCollapsed"></i>
+          <h6>Relations</h6>
+        </button>
+        @if (relationsCollapsed) {
+        } @else if (relationsLoading) {
+          <div class="relations-loading">
+            <mat-spinner diameter="24"></mat-spinner>
+          </div>
+        } @else if (allRelations.length === 0) {
+          <p class="text-muted">No relations</p>
+        } @else {
+          <!-- Filter chips -->
+          <div class="relation-filter-chips">
+            <button
+                class="filter-chip"
+                [class.active]="selectedRelationType === null"
+                (click)="selectRelationType(null)">
+              All
+              <span class="chip-count">{{ allRelations.length }}</span>
+            </button>
+            @for (relType of relationTypes; track relType) {
+              <button
+                  class="filter-chip"
+                  [class.active]="selectedRelationType === relType"
+                  (click)="selectRelationType(relType)">
+                {{ relType }}
+                <span class="chip-count">{{ getRelationTypeCount(relType) }}</span>
+              </button>
+            }
+          </div>
+
+          <!-- Flat list of all relation instances -->
+          <div class="relations-list">
+            @for (instance of filteredRelations; track instance.relationIID) {
+              <div class="relation-card">
+                <!-- Header -->
+                <div class="relation-card-header">
+                  <span class="relation-type-label">{{ instance.relationTypeLabel }}</span>
+                  <span class="relation-iid">{{ instance.relationIID }}</span>
+                  <button
+                      class="open-details-button header-explore"
+                      (click)="openRelationDetail(instance, $event)">
+                    Explore
+                    <i class="fa-light fa-arrow-right"></i>
+                  </button>
+                </div>
+
+                <!-- Body - links -->
+                <div class="relation-card-body">
+                  @for (link of instance.links; track link.roleLabel + link.playerIID) {
+                    <div class="link-card" [class.is-self]="link.isSelf">
+                      <div class="link-info">
+                        <span class="role-label">{{ link.roleLabel }}</span>
+                        <div class="player-details">
+                          <span class="player-type">{{ link.playerTypeLabel }}</span>
+                          <span class="player-iid">{{ link.playerIID }}</span>
+                          @if (link.isSelf) {
+                            <span class="self-tag">this</span>
+                          }
+                        </div>
+                        @if (!link.isSelf) {
+                          <button
+                              class="open-details-button"
+                              (click)="openLinkDetail(link, $event)">
+                            Explore
+                            <i class="fa-light fa-arrow-right"></i>
+                          </button>
+                        }
+                      </div>
+                      @if (!link.isSelf) {
+                        <div class="link-attrs">
+                          @for (attr of link.attributes; track attr.type) {
+                            <div class="attr-row">
+                              <span class="attr-key">{{ attr.type }}:</span>
+                              <span class="attr-val">{{ attr.values.join(', ') }}</span>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <!-- Relation attributes -->
+                @if (instance.attributes.length > 0) {
+                  <div class="relation-card-attrs">
+                    <table class="attributes-table">
+                      <tbody>
+                        @for (attr of instance.attributes; track attr.type) {
+                          <tr>
+                            <td class="attr-label">{{ attr.type }}<em class="value-type">, value {{ attr.valueType }}</em></td>
+                            <td class="attr-value">
+                              @for (value of attr.values; track $index) {
+                                <div class="value-row">{{ value }}<button
+                                    class="copy-button"
+                                    (click)="copyValue(value, tooltip)"
+                                    matTooltip="Copied"
+                                    matTooltipPosition="above"
+                                    matTooltipShowDelay="999999"
+                                    #tooltip="matTooltip"><i class="fa-light fa-copy"></i></button></div>
+                              }
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+      }
+
+      <!-- Owners Section (only for attributes) -->
+      @if (type.kind === 'attributeType') {
+      <div class="detail-section">
+        <button class="section-header" (click)="ownersCollapsed = !ownersCollapsed">
+          <i class="fa-light" [class.fa-chevron-down]="!ownersCollapsed" [class.fa-chevron-right]="ownersCollapsed"></i>
+          <h6>Owners</h6>
+        </button>
+        @if (ownersCollapsed) {
+        } @else if (ownersLoading) {
+          <div class="relations-loading">
+            <mat-spinner diameter="24"></mat-spinner>
+          </div>
+        } @else if (owners.length === 0) {
+          <p class="text-muted">No owners</p>
+        } @else {
+          <div class="links-list">
+            @for (owner of owners; track owner.ownerIID) {
+              <div class="link-card">
+                <div class="link-info">
+                  <div class="player-details">
+                    <span class="player-type" [ngClass]="owner.ownerKind">{{ owner.ownerTypeLabel }}</span>
+                    <span class="player-iid">{{ owner.ownerIID }}</span>
+                  </div>
+                  <button
+                      class="open-details-button"
+                      (click)="openOwnerDetail(owner, $event)">
+                    Explore
+                    <i class="fa-light fa-arrow-right"></i>
+                  </button>
+                </div>
+                <div class="link-attrs">
+                  @for (attr of owner.attributes; track attr.type) {
+                    <div class="attr-row">
+                      <span class="attr-key">{{ attr.type }}:</span>
+                      <span class="attr-val">{{ attr.values.join(', ') }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+      }
+
+    }
+  </div>
+</div>

@@ -32,6 +32,34 @@ tp-form-actions {
     width: unset;
 }
 
+hr {
+    width: 100%;
+    border: none;
+    border-top: 1px solid var(--content-border-color);
+}
+
+.links {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 24px;
+
+    a {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        &:hover {
+            color: colors.$green;
+        }
+    }
+
+    i:first-child, svg:first-child {
+        width: 20px;
+        font-size: 16px;
+        text-align: center;
+    }
+}
+
 tp-form-actions ::ng-deep tp-button {
     display: block;
     min-width: 140px;

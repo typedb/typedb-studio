@@ -13,6 +13,7 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { combineLatest, map } from "rxjs";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
+import { AppData } from "../../../service/app-data.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { TransactionType } from "@typedb/driver-http";
@@ -29,6 +30,7 @@ export class TransactionControlComponent {
     transactionTypes: TransactionType[] = ["read", "write", "schema"];
     operationModes: OperationMode[] = ["auto", "manual"];
     hasUncommittedChanges$ = this.driver.transactionHasUncommittedChanges$;
+    transactionTypeVisible$ = this.driver.transactionOperationModeChanges$.pipe(map((mode) => mode === "manual"));
     commitButtonDisabled$ = this.hasUncommittedChanges$.pipe(map(x => !x));
     transactionWidgetTooltip$ = this.hasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
     closeButtonDisabled$ = this.driver.transaction$.pipe(map(tx => !tx));
@@ -43,7 +45,7 @@ export class TransactionControlComponent {
     );
     closeButtonVisible$ = this.openButtonVisible$;
 
-    constructor(public driver: DriverState, private formBuilder: FormBuilder, private snackbar: SnackbarService) {
+    constructor(public driver: DriverState, private formBuilder: FormBuilder, private snackbar: SnackbarService, private appData: AppData) {
         this.transactionConfigDisabled$.subscribe((disabled) => {
             if (disabled) this.driver.transactionControls.disable();
             else this.driver.transactionControls.enable();
@@ -56,16 +58,37 @@ export class TransactionControlComponent {
             // TODO: confirm before closing with uncommitted changes
             this.driver.closeTransaction().subscribe();
             this.driver.autoTransactionEnabled$.next(operationMode === "auto");
+            this.appData.preferences.setTransactionMode(operationMode);
         });
     }
 
     open() {
         if (!this.driver.transactionControls.value.type) throw new Error(INTERNAL_ERROR);
-        this.driver.openTransaction(this.driver.transactionControls.value.type).subscribe();
+        this.driver.openTransaction(this.driver.transactionControls.value.type).subscribe({
+            error: (err) => {
+                let msg = ``;
+                if (typeof err === "object" && "err" in err && err.err?.message) {
+                    msg = err.err.message;
+                } else {
+                    msg = err?.message ?? err?.toString() ?? `Unknown error`;
+                }
+                this.snackbar.errorPersistent(`Error: ${msg}\nCaused: Failed to open transaction.`);
+            }
+        });
     }
 
     commit() {
-        this.driver.commitTransaction().subscribe();
+        this.driver.commitTransaction().subscribe({
+            error: (err) => {
+                let msg = ``;
+                if (typeof err === "object" && "err" in err && err.err?.message) {
+                    msg = err.err.message;
+                } else {
+                    msg = err?.message ?? err?.toString() ?? `Unknown error`;
+                }
+                this.snackbar.errorPersistent(`Error: ${msg}\nCaused: Failed to commit transaction.`);
+            }
+        });
     }
 
     close() {

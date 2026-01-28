@@ -6,6 +6,7 @@
 
 import { Injectable } from "@angular/core";
 import { ConnectionConfig, ConnectionJson } from "../concept/connection";
+import { OperationMode } from "../concept/transaction";
 import { SchemaToolWindowState, SidebarState, sidebarStates, Tool, tools } from "../concept/view-state";
 import { StorageService, StorageWriteResult } from "./storage.service";
 
@@ -17,13 +18,13 @@ const VIEW_STATE = "viewState";
 
 interface ViewStateData {
     sidebarState: SidebarState;
-    lastUsedTool: Tool;
+    lastUsedTool: Tool | null;
     schemaToolWindowState: SchemaToolWindowState;
 }
 
 const INITIAL_VIEW_STATE_DATA: ViewStateData = {
     sidebarState: "collapsed",
-    lastUsedTool: "query",
+    lastUsedTool: null,
     schemaToolWindowState: {
         linksVisibility: {
             sub: true,
@@ -72,9 +73,9 @@ class ViewState {
         this.writeStorage(viewState);
     }
 
-    lastUsedTool(): Tool {
+    lastUsedTool(): Tool | null {
         const viewState = this.readStorage();
-        return viewState.lastUsedTool || INITIAL_VIEW_STATE_DATA.lastUsedTool;
+        return viewState.lastUsedTool;
     }
 
     setLastUsedTool(value: Tool) {
@@ -87,8 +88,9 @@ class ViewState {
         const lastUsedTool = this.lastUsedTool();
         switch (lastUsedTool) {
             case "query": return "/query";
-            case "explore": return "/explore";
             case "schema": return "/schema";
+            case "data": return "/data";
+            case null: return "/welcome";
         }
     }
 
@@ -151,6 +153,86 @@ interface PreferencesData {
     connections: {
         showAdvancedConfigByDefault: boolean;
     };
+    transactionMode: OperationMode;
+}
+
+const DATA_EXPLORER_TABS = "dataExplorerTabs";
+
+export interface PersistedBreadcrumbItem {
+    kind: "type-table" | "instance-detail";
+    typeLabel: string;
+    typeKind?: "entityType" | "relationType" | "attributeType";
+    instanceIID?: string;
+}
+
+export interface PersistedTypeTableTab {
+    kind: "type-table";
+    typeLabel: string;
+    typeqlFilter?: string;
+    breadcrumbs?: PersistedBreadcrumbItem[];
+    pinned?: boolean;
+}
+
+export interface PersistedInstanceDetailTab {
+    kind: "instance-detail";
+    typeLabel: string;
+    instanceIID: string;
+    breadcrumbs: PersistedBreadcrumbItem[];
+    pinned?: boolean;
+}
+
+export type PersistedDataTab = PersistedTypeTableTab | PersistedInstanceDetailTab;
+
+interface DataExplorerTabsData {
+    /** Maps database name to its persisted tabs */
+    databases: {
+        [databaseName: string]: {
+            tabs: PersistedDataTab[];
+            selectedTabIndex: number;
+        };
+    };
+}
+
+const INITIAL_DATA_EXPLORER_TABS: DataExplorerTabsData = {
+    databases: {},
+};
+
+function parseDataExplorerTabsData(obj: Object | null): DataExplorerTabsData {
+    return Object.assign({}, INITIAL_DATA_EXPLORER_TABS, obj) as DataExplorerTabsData;
+}
+
+class DataExplorerTabs {
+    constructor(private storage: StorageService) {
+        if (this.storage.isAccessible && this.readStorage() == null) {
+            this.writeStorage(INITIAL_DATA_EXPLORER_TABS);
+        }
+    }
+
+    private readStorage(): DataExplorerTabsData {
+        if (!this.storage.isAccessible) return INITIAL_DATA_EXPLORER_TABS;
+        return this.storage.read<DataExplorerTabsData>(DATA_EXPLORER_TABS, parseDataExplorerTabsData);
+    }
+
+    private writeStorage(data: DataExplorerTabsData): StorageWriteResult {
+        return this.storage.write(DATA_EXPLORER_TABS, data);
+    }
+
+    getTabs(databaseName: string): { tabs: PersistedDataTab[]; selectedTabIndex: number } | null {
+        const data = this.readStorage();
+        return data.databases[databaseName] || null;
+    }
+
+    setTabs(databaseName: string, tabs: PersistedDataTab[], selectedTabIndex: number): StorageWriteResult {
+        const data = this.readStorage();
+        data.databases[databaseName] = { tabs, selectedTabIndex };
+        return this.writeStorage(data);
+    }
+
+    clearTabs(databaseName: string): StorageWriteResult {
+        const data = this.readStorage();
+        delete data.databases[databaseName];
+        return this.writeStorage(data);
+    }
 }
 
 function parsePreferencesData(obj: Object | null): PreferencesData {
@@ -160,7 +242,8 @@ function parsePreferencesData(obj: Object | null): PreferencesData {
 const INITIAL_PREFERENCES: PreferencesData = {
     connections: {
         showAdvancedConfigByDefault: true,
-    }
+    },
+    transactionMode: "auto",
 };
 
 class Preferences {
@@ -190,6 +273,17 @@ class Preferences {
             return this.writeStorage(prefs);
         },
     };
+
+    transactionMode(): OperationMode {
+        const prefs = this.readStorage();
+        return prefs?.transactionMode ?? INITIAL_PREFERENCES.transactionMode;
+    }
+
+    setTransactionMode(value: OperationMode): StorageWriteResult {
+        const prefs = this.readStorage()!;
+        prefs.transactionMode = value;
+        return this.writeStorage(prefs);
+    }
 }
 
 @Injectable({
@@ -202,6 +296,7 @@ export class AppData {
     readonly viewState = new ViewState(this.storage);
     readonly connections = new Connections(this.storage);
     readonly preferences = new Preferences(this.storage);
+    readonly dataExplorerTabs = new DataExplorerTabs(this.storage);
 
     constructor(private storage: StorageService) {
     }

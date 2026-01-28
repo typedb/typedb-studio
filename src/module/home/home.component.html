@@ -36,21 +36,37 @@
       </div>
 
       <div class="tp-bento-container row">
-
-        <a class="tp-bento-box hoverable tp-icon-card flex-1" href="https://cloud.typedb.com" target="_blank">
-          <i class="fa-thin fa-bolt"></i>
-          <div class="tp-icon-card-content">
-            <h3>Run TypeDB in the cloud<i class="fa-light fa-arrow-up-right"></i></h3>
-            <p>Run TypeDB for free in the cloud without installing anything</p>
-          </div>
-        </a>
-        <a class="tp-bento-box hoverable tp-icon-card flex-1" target="_blank" href="https://typedb.com/docs/home/install/ce">
-          <i class="fa-thin fa-cubes"></i>
-          <div class="tp-icon-card-content">
-            <h3>Install TypeDB CE locally<i class="fa-light fa-arrow-up-right"></i></h3>
-            <p>Download, install and run TypeDB Community Edition on your local machine or in Docker</p>
-          </div>
-        </a>
+        @if (isConnected$ | async) {
+          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/data">
+            <i class="fa-thin fa-table"></i>
+            <div class="tp-icon-card-content">
+              <h3>Explore your data</h3>
+              <p>Browse and explore your data using the interactive data explorer</p>
+            </div>
+          </a>
+          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/schema">
+            <i class="fa-thin fa-vector-square"></i>
+            <div class="tp-icon-card-content">
+              <h3>Visualise your schema</h3>
+              <p>View and understand your database schema in a visual graph representation</p>
+            </div>
+          </a>
+        } @else {
+          <a class="tp-bento-box hoverable tp-icon-card flex-1" href="https://cloud.typedb.com" target="_blank">
+            <i class="fa-thin fa-bolt"></i>
+            <div class="tp-icon-card-content">
+              <h3>Run TypeDB in the cloud<i class="fa-light fa-arrow-up-right"></i></h3>
+              <p>Run TypeDB for free in the cloud without installing anything</p>
+            </div>
+          </a>
+          <a class="tp-bento-box hoverable tp-icon-card flex-1" target="_blank" href="https://typedb.com/docs/home/install/ce">
+            <i class="fa-thin fa-cubes"></i>
+            <div class="tp-icon-card-content">
+              <h3>Install TypeDB CE locally<i class="fa-light fa-arrow-up-right"></i></h3>
+              <p>Download, install and run TypeDB Community Edition on your local machine or in Docker</p>
+            </div>
+          </a>
+        }
       </div>
 
       <div class="tp-bento-container row tp-bento-box tp-additional-resources-container">
@@ -84,17 +100,17 @@
             <i class="fa-light fa-arrow-up-right"></i>
           </a>
           <a href="https://typedb.com/docs" target="_blank">
-            <i class="fa-light fa-files"></i>
+            <i class="fa-light fa-file-lines"></i>
             <span>Docs</span>
             <i class="fa-light fa-arrow-up-right"></i>
           </a>
           <a href="https://typedb.com/docs/home/get-started/" target="_blank">
-            <i class="fa-light fa-files"></i>
+            <i class="fa-light fa-seedling"></i>
             <span>Get Started</span>
             <i class="fa-light fa-arrow-up-right"></i>
           </a>
           <a href="https://typedb.com/docs/examples/" target="_blank">
-            <i class="fa-light fa-files"></i>
+            <i class="fa-light fa-flask"></i>
             <span>Examples</span>
             <i class="fa-light fa-arrow-up-right"></i>
           </a>

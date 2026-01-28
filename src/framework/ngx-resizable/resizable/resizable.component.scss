@@ -48,28 +48,17 @@ $spacing: 8px;
   position: absolute;
   z-index: 1;
   span {
-      position: absolute;
-      box-sizing: border-box;
-      display: block;
-      border: 1px solid #ccc;    
+      display: none;
   }
 }
 .rg-right, .rg-left {
   span {
-      border-width: 0 1px;
-      top: 50%; margin-top: -10px;
-      margin: -10px 0 0 $spacing/4;
-      height: 20px;
-      width: $spacing/2;
+      display: none;
   }
 }
 .rg-top, .rg-bottom {
   span {
-      border-width: 1px 0;
-      left: 50%;
-      margin: $spacing/4 0 0 -10px;
-      width: 20px;
-      height: $spacing/2;
+      display: none;
   }
 }
 .rg-top     {

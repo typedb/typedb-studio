@@ -10,6 +10,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
+import { MatDialog } from "@angular/material/dialog";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
@@ -21,6 +22,7 @@ import { filter, map, Observable, startWith } from "rxjs";
 import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
 import { SchemaState } from "../../service/schema-state.service";
+import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaToolWindowComponent } from "./tool-window/schema-tool-window.component";
 
@@ -43,7 +45,11 @@ export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     constructor(
         protected state: SchemaState, public driver: DriverState, private appData: AppData,
-        private destroyRef: DestroyRef) {
+        private destroyRef: DestroyRef, private dialog: MatDialog) {
+    }
+
+    openSelectDatabaseDialog() {
+        this.dialog.open(DatabaseSelectDialogComponent);
     }
 
     ngOnInit() {

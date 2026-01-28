@@ -166,6 +166,24 @@
                 border-top: 1px solid colors.$light-purple;
             }
         }
+
+        .tree-node-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+
+            &.clickable {
+                cursor: pointer;
+
+                &:hover {
+                    background-color: colors.$light-purple;
+                }
+            }
+        }
+
+        mat-tree-node.highlighted .tree-node-content {
+            background-color: colors.$light-purple;
+        }
     }
 }
 

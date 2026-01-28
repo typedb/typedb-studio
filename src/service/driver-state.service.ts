@@ -5,13 +5,12 @@
  */
 
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, concatMap, distinctUntilChanged, filter, finalize, from, map, Observable, of, shareReplay, startWith, Subject, switchMap, takeUntil, tap } from "rxjs";
-import { fromPromise } from "rxjs/internal/observable/innerFrom";
+import { BehaviorSubject, catchError, concatMap, distinctUntilChanged, filter, finalize, from, map, Observable, of, shareReplay, startWith, Subject, switchMap, takeUntil, tap, throwError } from "rxjs";
 import { v4 as uuid } from "uuid";
 import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
 import { ConnectionConfig, databasesSortedByName, DEFAULT_DATABASE_NAME } from "../concept/connection";
 import { OperationMode, Transaction } from "../concept/transaction";
-import { requireValue } from "../framework/util/observable";
+import { fromPromiseWithRetry, requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { AppData } from "./app-data.service";
 import {
@@ -19,6 +18,7 @@ import {
     TypeDBHttpDriver, User, VersionResponse
 } from "@typedb/driver-http";
 import { FormBuilder } from "@angular/forms";
+import { QueryTypeDetector } from "./query-type-detector.service";
 
 export type DriverStatus = "disconnected" | "connecting" | "connected" | "reconnecting";
 
@@ -54,9 +54,9 @@ export class DriverState {
 
     transactionControls = this.formBuilder.nonNullable.group({
         type: ["read" as TransactionType, []],
-        operationMode: ["auto" as OperationMode, []],
+        operationMode: [this.appData.preferences.transactionMode() as OperationMode, []],
     });
-    autoTransactionEnabled$ = new BehaviorSubject(true);
+    autoTransactionEnabled$ = new BehaviorSubject(this.appData.preferences.transactionMode() === "auto");
     transactionHasUncommittedChanges$ = this.transaction$.pipe(map(tx => tx?.hasUncommittedChanges ?? false));
     transactionTypeChanges$ = this.transactionControls.valueChanges.pipe(
         filter((changes) => !!changes.type),
@@ -73,7 +73,7 @@ export class DriverState {
         shareReplay(1),
     );
 
-    constructor(private appData: AppData, private formBuilder: FormBuilder) {
+    constructor(private appData: AppData, private formBuilder: FormBuilder, private queryTypeDetector: QueryTypeDetector) {
         (window as any)["driverState"] = this;
     }
 
@@ -87,6 +87,14 @@ export class DriverState {
 
     get transaction$(): Observable<Transaction | null> {
         return this._transaction$;
+    }
+
+    get transactionOpen(): boolean {
+        return this._transaction$.value != null;
+    }
+
+    get currentTransaction(): Transaction | null {
+        return this._transaction$.value;
     }
 
     get actionLog$(): Observable<DriverAction> {
@@ -156,7 +164,7 @@ export class DriverState {
                 catchError((err) => {
                     this.connection$.next(null); // TODO: revisit - is an 'errored' connection config still valid?
                     this._status$.next("disconnected");
-                    throw err;
+                    return throwError(() => err);
                 }),
             );
         }, lockId);
@@ -178,7 +186,7 @@ export class DriverState {
 
     refreshDatabaseList() {
         const driver = this.requireDriver();
-        return fromPromise(driver.getDatabases()).pipe(
+        return fromPromiseWithRetry(() => driver.getDatabases()).pipe(
             tap(res => {
                 if (isOkResponse(res)) this._databaseList$.next(databasesSortedByName(res.ok.databases));
             }),
@@ -188,7 +196,7 @@ export class DriverState {
 
     refreshUserList() {
         const driver = this.requireDriver();
-        return fromPromise(driver.getUsers()).pipe(
+        return fromPromiseWithRetry(() => driver.getUsers()).pipe(
             tap(res => {
                 if (isOkResponse(res)) this.userList$.next(res.ok.users);
             }),
@@ -221,7 +229,7 @@ export class DriverState {
 
     createAndSelectDatabase(name: string, lockId = uuid()) {
         const driver = this.requireDriver();
-        return this.tryUseWriteLock(() => fromPromise(driver.createDatabase(name)).pipe(
+        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.createDatabase(name)).pipe(
             tap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;
                 const databaseList = this.requireDatabaseList();
@@ -234,7 +242,7 @@ export class DriverState {
 
     deleteDatabase(database: Database, lockId = uuid()) {
         const driver = this.requireDriver();
-        return this.tryUseWriteLock(() => fromPromise(driver.deleteDatabase(database.name)).pipe(
+        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.deleteDatabase(database.name)).pipe(
             tap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;
                 const databaseList = this.requireDatabaseList();
@@ -247,20 +255,13 @@ export class DriverState {
 
     openTransaction(type: TransactionType, lockId = uuid()) {
         const databaseName = this.requireDatabase().name;
-        const action = transactionOperationActionOf("open");
-        this._actionLog$.next(action);
         const driver = this.requireDriver();
-        return this.tryUseWriteLock(() => fromPromise(driver.openTransaction(databaseName, type)).pipe(
+        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.openTransaction(databaseName, type)).pipe(
             tap((res) => {
-                this.updateActionResult(action, res);
                 if (isApiErrorResponse(res)) throw res.err;
                 this._transaction$.next(new Transaction({ id: res.ok.transactionId, type: type }));
             }),
             takeUntil(this._stopSignal$),
-            catchError((err) => {
-                this.updateActionResultUnexpectedError(action, err);
-                throw err;
-            }),
         ), lockId);
     }
 
@@ -269,7 +270,7 @@ export class DriverState {
         const action = transactionOperationActionOf("commit");
         this._actionLog$.next(action);
         const driver = this.requireDriver();
-        return this.tryUseWriteLock(() => fromPromise(driver.commitTransaction(transactionId)).pipe(
+        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.commitTransaction(transactionId)).pipe(
             tap((res) => {
                 this.updateActionResult(action, res);
                 this._transaction$.next(null);
@@ -278,7 +279,7 @@ export class DriverState {
             takeUntil(this._stopSignal$),
             catchError((err) => {
                 this.updateActionResultUnexpectedError(action, err);
-                throw err;
+                return throwError(() => err);
             }),
         ), lockId);
     }
@@ -286,31 +287,78 @@ export class DriverState {
     closeTransaction(lockId = uuid()) {
         const transactionId = this._transaction$.value?.id;
         if (transactionId == null) return of({});
-        const action = transactionOperationActionOf("close");
-        this._actionLog$.next(action);
         const driver = this.requireDriver();
-        return this.tryUseWriteLock(() => fromPromise(driver.closeTransaction(transactionId)).pipe(
+        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).pipe(
             tap((res) => {
-                this.updateActionResult(action, res);
                 if (isApiErrorResponse(res)) throw res.err;
                 this._transaction$.next(null);
             }),
             takeUntil(this._stopSignal$),
-            catchError((err) => {
-                this.updateActionResultUnexpectedError(action, err);
-                throw err;
-            }),
         ), lockId);
     }
 
     query(query: string): Observable<ApiResponse<QueryResponse>> {
-        const lockId = uuid();
-        const maybeOpenTransaction$ = this.autoTransactionEnabled$.value
-            ? this.openTransaction(this.transactionControls.value.type!, lockId)
-            : of({ ok: { transactionId: this.requireTransaction().id } });
+        if (this.autoTransactionEnabled$.value) {
+            return this.autoQuery(query);
+        } else {
+            return this.manualQuery(query);
+        }
+    }
+
+    /**
+     * Execute a query in auto mode with automatic transaction type detection.
+     * Uses oneShotQuery for better performance (single HTTP call handles transaction lifecycle).
+     * Delegates to QueryTypeDetector which handles retry escalation internally.
+     *
+     * Only logs the final successful action to history (not failed retry attempts).
+     */
+    private autoQuery(query: string): Observable<ApiResponse<QueryResponse>> {
+        const queryAction = queryRunActionOf(query);
+        const databaseName = this.requireDatabase().name;
+
+        return this.queryTypeDetector.runWithAutoType(
+            query,
+            (transactionType: TransactionType) => this.executeOneShotQuery(query, databaseName, transactionType)
+        ).pipe(
+            tap(({ result }) => {
+                this.updateActionResult(queryAction, result);
+                this._actionLog$.next(queryAction);
+            }),
+            map(({ result }) => result),
+            catchError((err) => {
+                this.updateActionResultUnexpectedError(queryAction, err);
+                this._actionLog$.next(queryAction);
+                return throwError(() => err);
+            }),
+            takeUntil(this._stopSignal$)
+        );
+    }
+
+    /**
+     * Execute a oneshot query with a specific transaction type.
+     * Uses oneShotQuery which handles the full transaction lifecycle in one call.
+     * Commits for write/schema transactions, closes for read transactions.
+     */
+    private executeOneShotQuery(query: string, databaseName: string, transactionType: TransactionType): Observable<ApiResponse<QueryResponse>> {
+        const driver = this.requireDriver();
+        const shouldCommit = transactionType !== "read";
+
+        return fromPromiseWithRetry(() => driver.oneShotQuery(query, shouldCommit, databaseName, transactionType)).pipe(
+            tap((res) => {
+                if (isApiErrorResponse(res)) throw res;
+            }),
+        );
+    }
+
+    /**
+     * Execute a query in manual mode using the existing open transaction.
+     */
+    private manualQuery(query: string): Observable<ApiResponse<QueryResponse>> {
         let queryRunAction: QueryRunAction;
         const driver = this.requireDriver();
-        return this.tryUseWriteLock(() => maybeOpenTransaction$.pipe(
+        const lockId = uuid();
+
+        return this.tryUseWriteLock(() => of({ ok: { transactionId: this.requireTransaction().id } }).pipe(
             tap(() => {
                 const transaction = this.requireTransaction();
                 queryRunAction = queryRunActionOf(query);
@@ -318,25 +366,16 @@ export class DriverState {
                 this._actionLog$.next(queryRunAction);
             }),
             switchMap((res) => {
-                if (isApiErrorResponse(res)) throw res;
-                return fromPromise(driver.query(res.ok.transactionId, query));
+                return fromPromiseWithRetry(() => driver.query(res.ok.transactionId, query));
             }),
             tap((res) => this.updateActionResult(queryRunAction, res)),
-            // TODO: maybe extract TransactionStateService
             tap(() => {
                 const transaction = this.requireTransaction();
-                if (!this.autoTransactionEnabled$.value) this._transaction$.next(transaction);
-            }),
-            tap((res) => {
-                if (this.autoTransactionEnabled$.value) {
-                    if (this.transactionControls.value.type !== "read" && isOkResponse(res)) this.commitTransaction(lockId).subscribe();
-                    else this.closeTransaction(lockId).subscribe();
-                }
+                this._transaction$.next(transaction);
             }),
             catchError((err) => {
                 if (queryRunAction) this.updateActionResultUnexpectedError(queryRunAction, err);
-                if (this.autoTransactionEnabled$.value) this.closeTransaction(lockId).subscribe();
-                throw err;
+                return throwError(() => err);
             }),
             takeUntil(this._stopSignal$)
         ), lockId);
@@ -345,17 +384,17 @@ export class DriverState {
     runBackgroundReadQueries(queries: string[]): Observable<ApiOkResponse<QueryResponse>> {
         const driver = this.requireDriver();
         const databaseName = this.requireDatabase().name;
-        return fromPromise(driver.openTransaction(databaseName, "read")).pipe(
+        return fromPromiseWithRetry(() => driver.openTransaction(databaseName, "read")).pipe(
             switchMap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;
                 return from(queries).pipe(
-                    concatMap(x => fromPromise(driver.query(res.ok.transactionId, x)).pipe(
+                    concatMap(x => fromPromiseWithRetry(() => driver.query(res.ok.transactionId, x)).pipe(
                         map(x => {
                             if (isApiErrorResponse(x)) throw x;
                             else return x;
                         })
                     )),
-                    finalize(() => fromPromise(driver.closeTransaction(res.ok.transactionId)).subscribe()),
+                    finalize(() => fromPromiseWithRetry(() => driver.closeTransaction(res.ok.transactionId)).subscribe()),
                 );
             }),
         );
@@ -363,32 +402,32 @@ export class DriverState {
 
     createUser(username: string, password: string) {
         const driver = this.requireDriver();
-        return fromPromise(driver.createUser(username, password));
+        return fromPromiseWithRetry(() => driver.createUser(username, password));
     }
 
     updateUser(username: string, password: string) {
         const driver = this.requireDriver();
-        return fromPromise(driver.updateUser(username, password));
+        return fromPromiseWithRetry(() => driver.updateUser(username, password));
     }
 
     deleteUser(username: string) {
         const driver = this.requireDriver();
-        return fromPromise(driver.deleteUser(username));
+        return fromPromiseWithRetry(() => driver.deleteUser(username));
     }
 
     getDatabaseSchemaText(): Observable<ApiResponse<string>> {
         const driver = this.requireDriver();
-        return fromPromise(driver.getDatabaseSchema(this.requireDatabase().name));
+        return fromPromiseWithRetry(() => driver.getDatabaseSchema(this.requireDatabase().name));
     }
 
     checkHealth() {
         const driver = this.requireDriver();
-        return fromPromise(driver.health());
+        return fromPromiseWithRetry(() => driver.health());
     }
 
     checkServerVersion() {
         const driver = this.requireDriver();
-        return fromPromise(driver.version());
+        return fromPromiseWithRetry(() => driver.version());
     }
 
     private parseServerVersionOrNull(raw: string | undefined): ServerVersion | null {
@@ -425,4 +464,5 @@ export class DriverState {
         action.status = "error";
         action.result = err;
     }
+
 }

@@ -16,6 +16,14 @@ import { QueryPageComponent } from "../module/query/query-page.component";
 import { UsersPageComponent } from "../module/user/users-page.component";
 import { AppData } from "../service/app-data.service";
 import { SchemaPageComponent } from "../module/schema/schema-page.component";
+import { DataPageComponent } from "../module/data/data-page.component";
+
+const homeGuard: CanActivateFn = () => {
+    const appData = inject(AppData);
+    const lastUsedToolRoute = appData.viewState.lastUsedToolRoute();
+    const router = inject(Router);
+    return of(router.parseUrl(lastUsedToolRoute));
+};
 
 const connectGuard: CanActivateFn = (route) => {
     const [address, username] = [route.queryParamMap.get(ADDRESS), route.queryParamMap.get(USERNAME)];
@@ -27,16 +35,19 @@ const connectGuard: CanActivateFn = (route) => {
     const router = inject(Router);
     switch (appData.viewState.lastUsedTool()) {
         case "query": return of(router.parseUrl(`query`));
-        case "explore": return of(router.parseUrl(`explore`));
         case "schema": return of(router.parseUrl(`schema`));
+        case "data": return of(router.parseUrl(`data`));
+        default: return of(router.parseUrl(`welcome`));
     }
 }
 
 export const routes: Routes = [
-    { path: "", component: HomeComponent, title: "Home", pathMatch: "full" },
+    { path: "", canActivate: [homeGuard], children: [] },
+    { path: "welcome", component: HomeComponent, title: "Welcome", data: { domain: "overview" } },
     { path: "connect", component: ConnectionCreatorComponent, canActivate: [connectGuard], title: "Connect" },
-    { path: "query", component: QueryPageComponent, title: "Query" },
-    { path: "schema", component: SchemaPageComponent, title: "Schema" },
-    { path: "users", component: UsersPageComponent, title: "Users" },
+    { path: "query", component: QueryPageComponent, title: "Query", data: { domain: "query" } },
+    { path: "schema", component: SchemaPageComponent, title: "Schema", data: { domain: "schema" } },
+    { path: "data", component: DataPageComponent, title: "Data", data: { domain: "data" } },
+    { path: "users", component: UsersPageComponent, title: "Users", data: { domain: "users" } },
     { path: "**", component: _404PageComponent, title: "404" },
 ];

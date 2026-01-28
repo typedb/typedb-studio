@@ -1,0 +1,341 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "colors";
+@use "shapes";
+
+.instance-table-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.stale-data-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: colors.$secondary-dark-yellow;
+    font-size: 13px;
+    flex-shrink: 0;
+
+    > i {
+        font-size: 16px;
+    }
+
+    span {
+        flex: 1;
+    }
+
+    button {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        padding: 4px 12px;
+        min-height: 28px;
+
+        i {
+            font-size: 12px;
+        }
+    }
+}
+
+.filter-sort-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 16px;
+    border-bottom: 1px solid colors.$light-purple;
+    height: auto;
+    min-height: auto;
+    margin-bottom: 0;
+}
+
+.search-input-wrapper {
+    flex: 1;
+    max-width: 400px;
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .search-icon {
+        position: absolute;
+        left: 10px;
+        color: colors.$grey;
+        font-size: 14px;
+        pointer-events: none;
+    }
+
+    .filter-input {
+        width: 100%;
+        padding: 6px 40px 6px 32px;
+        border: 1px solid colors.$light-purple;
+        border-radius: shapes.$border-radius;
+        background: colors.$black;
+        color: colors.$white;
+        font-family: var(--font-family-default);
+        font-size: 14px;
+
+        &::placeholder {
+            color: colors.$grey;
+        }
+
+        &:focus {
+            outline: none;
+            border-color: colors.$purple;
+        }
+    }
+
+    .filter-mode-button {
+        position: absolute;
+        right: 2px;
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: colors.$grey;
+
+        &:hover {
+            color: colors.$white;
+        }
+
+        i {
+            font-size: 14px;
+        }
+    }
+}
+
+.active-filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-color: colors.$purple;
+    color: colors.$purple;
+
+    i {
+        font-size: 12px;
+    }
+}
+
+.clear-filter-button {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    padding: 0;
+    color: colors.$grey;
+
+    &:hover {
+        color: colors.$white;
+    }
+
+    i {
+        font-size: 14px;
+    }
+}
+
+.table-wrapper {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    scrollbar-width: thin;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10;
+}
+
+.instance-table {
+    &.mat-mdc-table {
+        width: 100%;
+        table-layout: auto;
+    }
+
+    th, td {
+        white-space: nowrap;
+        padding: 8px 16px;
+
+        &:not(:last-child) {
+            width: 0;
+        }
+    }
+
+    th {
+        font-size: 14px;
+        font-weight: 500;
+        background: colors.$purple;
+        border-bottom: 1px solid colors.$light-purple;
+    }
+
+    td {
+        font-size: 14px;
+        border-bottom: 1px solid colors.$light-purple;
+    }
+
+    .iid-cell {
+        font-family: "Roboto Mono", monospace;
+        font-size: 12px;
+        color: colors.$grey;
+        min-width: 280px;
+
+        > span {
+            display: inline-block;
+        }
+    }
+
+    .type-cell {
+        font-size: 13px;
+
+        &.entity {
+            color: colors.$entity-pink;
+        }
+
+        &.relation {
+            color: colors.$relation-yellow;
+        }
+
+        &.attribute {
+            color: colors.$attribute-blue;
+        }
+    }
+
+    .attribute-cell {
+        .cell-content-wrapper {
+            display: inline-flex;
+            align-items: center;
+            vertical-align: middle;
+
+            .cell-content {
+                display: inline-block;
+            }
+        }
+
+        .copy-button {
+            opacity: 0;
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            margin-left: 8px;
+            padding: 0;
+            transition: opacity 0.15s ease;
+
+            i {
+                font-size: 12px;
+            }
+        }
+
+        &:hover .copy-button {
+            opacity: 1;
+        }
+    }
+
+    .relations-cell {
+        > span {
+            display: inline-block;
+        }
+    }
+
+    .clickable-row {
+        cursor: pointer;
+
+        &:hover {
+            background: colors.$light-purple;
+        }
+    }
+}
+
+::ng-deep .column-picker-menu {
+    max-height: 400px;
+    min-width: fit-content !important;
+
+    .mat-mdc-menu-content {
+        min-width: fit-content;
+    }
+
+    .column-menu-actions {
+        display: flex;
+        gap: 4px;
+        padding: 4px 8px;
+        border-bottom: 1px solid colors.$secondary-deep-grey;
+
+        button {
+            font-size: 12px;
+            min-height: 28px;
+            padding: 0 8px;
+        }
+    }
+
+    .mat-mdc-menu-item {
+        padding: 0;
+        min-height: 36px;
+        white-space: nowrap;
+
+        .mat-mdc-checkbox {
+            width: 100%;
+            padding: 0 16px;
+            pointer-events: none;
+
+            .mdc-form-field {
+                width: 100%;
+                white-space: nowrap;
+            }
+
+            .mdc-label {
+                white-space: nowrap;
+                flex: 1;
+                padding-right: 16px;
+            }
+        }
+    }
+}
+
+.empty-state, .transaction-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: colors.$grey;
+
+    i {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 16px;
+    }
+
+    p {
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+}
+
+.transaction-prompt {
+    button {
+        i {
+            font-size: 14px;
+            width: auto;
+            height: auto;
+            margin-bottom: 0;
+            margin-right: 4px;
+        }
+    }
+}

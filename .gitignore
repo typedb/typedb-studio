@@ -29,6 +29,9 @@ yarn-error.log
 !.vscode/extensions.json
 .history/*
 
+# AI agents
+.claude/
+
 # Miscellaneous
 /.angular/cache
 .sass-cache/
