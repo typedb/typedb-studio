@@ -167,15 +167,21 @@
             }
         }
 
-        ts-schema-tree-node.clickable {
-            cursor: pointer;
+        .tree-node-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
 
-            &:hover {
-                background-color: colors.$light-purple;
+            &.clickable {
+                cursor: pointer;
+
+                &:hover {
+                    background-color: colors.$light-purple;
+                }
             }
         }
 
-        mat-tree-node.highlighted {
+        mat-tree-node.highlighted .tree-node-content {
             background-color: colors.$light-purple;
         }
     }

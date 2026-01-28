@@ -25,7 +25,9 @@
     <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="16" [class]="treeNodeClass(node)" [class.highlighted]="isNodeHighlighted(node)">
       <!-- use a disabled button to provide padding for tree leaf -->
       <button matIconButton disabled></button>
-      <ts-schema-tree-node [data]="node" (click)="onNodeClick(node, $event)" [class.clickable]="mode === 'data' && node.nodeKind === 'concept'"/>
+      <div class="tree-node-content" [class.clickable]="mode === 'data' && node.nodeKind === 'concept'" (click)="onNodeClick(node, $event)">
+        <ts-schema-tree-node [data]="node"/>
+      </div>
     </mat-tree-node>
     <!-- This is the tree node template for expandable nodes -->
     <mat-tree-node *matTreeNodeDef="let node;when: state.hasChild" matTreeNodePadding
@@ -36,7 +38,9 @@
           {{tree.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
         </mat-icon>
       </button>
-      <ts-schema-tree-node [data]="node" (click)="onNodeClick(node, $event)" [class.clickable]="mode === 'data' && node.nodeKind === 'concept'"/>
+      <div class="tree-node-content" [class.clickable]="mode === 'data' && node.nodeKind === 'concept'" (click)="onNodeClick(node, $event)">
+        <ts-schema-tree-node [data]="node"/>
+      </div>
     </mat-tree-node>
   </mat-tree>
   <div class="gutter"></div>
@@ -77,6 +81,14 @@
     <button mat-menu-item (click)="state.toggleLinksVisibility('plays')">
       <i class="fa-light fa-check" [class.invisible]="!state.linksVisibility$.value.plays"></i>
       <span>Show plays</span>
+    </button>
+    <button mat-menu-item (click)="state.showAllLinks()">
+      <i class="fa-light fa-check invisible"></i>
+      <span>Show all capabilities</span>
+    </button>
+    <button mat-menu-item (click)="state.hideAllLinks()">
+      <i class="fa-light fa-check invisible"></i>
+      <span>Hide all capabilities</span>
     </button>
     <mat-divider></mat-divider>
     <button mat-menu-item (click)="openSchemaTextDialog()">

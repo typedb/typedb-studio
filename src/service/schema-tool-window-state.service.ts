@@ -208,6 +208,40 @@ export class SchemaToolWindowState {
         this.appData.viewState.setSchemaToolWindowState(state);
     }
 
+    showAllLinks() {
+        this.linksVisibility$.next({
+            sub: true,
+            owns: true,
+            relates: true,
+            plays: true,
+        });
+        const state = this.appData.viewState.schemaToolWindowState();
+        state.linksVisibility = this.linksVisibility$.value;
+        this.appData.viewState.setSchemaToolWindowState(state);
+    }
+
+    hideAllLinks() {
+        this.linksVisibility$.next({
+            sub: false,
+            owns: false,
+            relates: false,
+            plays: false,
+        });
+        const state = this.appData.viewState.schemaToolWindowState();
+        state.linksVisibility = this.linksVisibility$.value;
+        this.appData.viewState.setSchemaToolWindowState(state);
+    }
+
+    areAllLinksVisible(): boolean {
+        const v = this.linksVisibility$.value;
+        return v.sub && v.owns && v.relates && v.plays;
+    }
+
+    areAllLinksHidden(): boolean {
+        const v = this.linksVisibility$.value;
+        return !v.sub && !v.owns && !v.relates && !v.plays;
+    }
+
     collapseAll$ = new Subject<void>();
 
     collapseAll() {
