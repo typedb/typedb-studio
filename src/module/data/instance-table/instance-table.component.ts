@@ -750,6 +750,8 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
      * For default sort (by IID) without filter: simple match is stable
      * For attribute sort OR when filtering: use select $instance; distinct; before pagination
      * to ensure we get the correct number of unique instances
+     *
+     * When there are no attribute columns, we skip the second match entirely.
      */
     private buildInstanceQuery(offset: number, limit: number): string {
         const type = this.tab.type;
@@ -765,19 +767,31 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         const tabFilterLine = tabFilter ? `${tabFilter}\n    ` : "";
         const filterLine = filterClause ? `${filterClause}\n    ` : "";
 
-        // Build attribute try clauses for second match
-        const attributeClauses = this.attributeColumns.map(attr =>
-            `try { $instance has ${attr} $${attr}; };`
-        ).join("\n    ");
+        // Check if we have any attribute columns to fetch
+        const hasAttributes = this.attributeColumns.length > 0;
+
+        // Build attribute try clauses for second match (only if we have attributes)
+        const attributeClauses = hasAttributes
+            ? this.attributeColumns.map(attr =>
+                `try { $instance has ${attr} $${attr}; };`
+            ).join("\n    ")
+            : "";
 
         // Build select clause with all variables we want to return
-        const selectVars = ["$instance", ...this.attributeColumns.map(attr => `$${attr}`)].join(", ");
+        const selectVars = hasAttributes
+            ? ["$instance", ...this.attributeColumns.map(attr => `$${attr}`)].join(", ")
+            : "$instance";
 
         // Check if we're sorting by an attribute column
         const sortByAttribute = this.sortColumn && this.sortColumn !== "relationCounts" && this.sortColumn !== "iid" && this.sortColumn !== "type";
 
         // Need distinct when filtering (filter can match multiple attrs per instance) or sorting by attribute
         const needsDistinct = filterClause || sortByAttribute;
+
+        // Build the second match clause only if we have attributes to fetch
+        const secondMatch = hasAttributes
+            ? `\nmatch\n    ${attributeClauses}\nselect ${selectVars};`
+            : `\nselect ${selectVars};`;
 
         if (sortByAttribute) {
             // When sorting by attribute, include it in first match, use distinct before pagination
@@ -787,10 +801,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 sort $${this.sortColumn} ${this.sortDirection};
 select $instance;
 distinct;
-offset ${offset}; limit ${limit};
-match
-    ${attributeClauses}
-select ${selectVars};`.trim();
+offset ${offset}; limit ${limit};${secondMatch}`.trim();
         } else if (needsDistinct) {
             // Filtering without sort - need distinct to deduplicate instances matching multiple attrs
             return `match
@@ -798,19 +809,13 @@ select ${selectVars};`.trim();
     ${tabFilterLine}${filterLine}
 select $instance;
 distinct;
-offset ${offset}; limit ${limit};
-match
-    ${attributeClauses}
-select ${selectVars};`.trim();
+offset ${offset}; limit ${limit};${secondMatch}`.trim();
         } else {
             // Default sort (by IID) without filter - simple first match is stable
             return `match
     $instance isa ${type.label};
     ${tabFilterLine}
-offset ${offset}; limit ${limit};
-match
-    ${attributeClauses}
-select ${selectVars};`.trim();
+offset ${offset}; limit ${limit};${secondMatch}`.trim();
         }
     }
 
