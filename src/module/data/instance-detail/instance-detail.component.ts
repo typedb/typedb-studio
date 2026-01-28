@@ -36,12 +36,12 @@ interface AttributeData {
 interface RelationInstanceData {
     relationTypeLabel: string;
     relationIID: string;
-    roleplayers: RoleplayerData[];
+    links: LinkData[];
     attributes: AttributeData[];
     attributesLoaded: boolean;
 }
 
-interface RoleplayerData {
+interface LinkData {
     roleLabel: string;
     playerIID: string;
     playerTypeLabel: string;
@@ -79,12 +79,12 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
     selectedRelationType: string | null = null; // null = "All"
     loading = false;
     relationsLoading = false;
-    roleplayersLoading = false;
-    ownRoleplayers: RoleplayerData[] = [];
+    linksLoading = false;
+    ownLinks: LinkData[] = [];
     owners: OwnerData[] = [];
     ownersLoading = false;
     typeCollapsed = false;
-    roleplayersCollapsed = false;
+    linksCollapsed = false;
     attributesCollapsed = false;
     relationsCollapsed = false;
     ownersCollapsed = false;
@@ -207,7 +207,7 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
             this.fetchAttributes();
             this.fetchRelations();
             if (this.type.kind === "relationType") {
-                this.fetchOwnRoleplayers();
+                this.fetchOwnLinks();
             }
         }
     }
@@ -284,7 +284,7 @@ match
     private fetchRelations() {
         this.relationsLoading = true;
 
-        // Fetch all relations where this instance plays a role, along with all roleplayers
+        // Fetch all relations where this instance plays a role, along with all links
         const query = `
 match
     $instance iid ${this.instanceIID};
@@ -313,10 +313,10 @@ match
         });
     }
 
-    private fetchOwnRoleplayers() {
-        this.roleplayersLoading = true;
+    private fetchOwnLinks() {
+        this.linksLoading = true;
 
-        // Fetch roleplayers of this relation instance
+        // Fetch links of this relation instance
         const query = `
 match
     $rel iid ${this.instanceIID};
@@ -325,27 +325,27 @@ match
 
         this.driver.query(query).subscribe({
             next: (res: ApiResponse<QueryResponse>) => {
-                this.roleplayersLoading = false;
+                this.linksLoading = false;
 
                 if (isApiErrorResponse(res)) {
-                    this.snackbar.errorPersistent(`Error fetching roleplayers: ${res.err.message}`);
+                    this.snackbar.errorPersistent(`Error fetching links: ${res.err.message}`);
                     return;
                 }
 
                 if (res.ok.answerType === "conceptRows") {
                     const answers = (res.ok as any).answers as ConceptRowAnswer[];
-                    this.processOwnRoleplayers(answers);
+                    this.processOwnLinks(answers);
                 }
             },
             error: (err) => {
-                this.roleplayersLoading = false;
-                this.snackbar.errorPersistent(`Error fetching roleplayers: ${extractErrorMessage(err)}`);
+                this.linksLoading = false;
+                this.snackbar.errorPersistent(`Error fetching links: ${extractErrorMessage(err)}`);
             }
         });
     }
 
-    private processOwnRoleplayers(conceptRowAnswers: ConceptRowAnswer[]) {
-        const roleplayerMap = new Map<string, RoleplayerData>();
+    private processOwnLinks(conceptRowAnswers: ConceptRowAnswer[]) {
+        const linkMap = new Map<string, LinkData>();
 
         for (const answer of conceptRowAnswers) {
             const row = answer.data;
@@ -365,8 +365,8 @@ match
 
             // Use role+playerIID as key to avoid duplicates
             const key = `${roleLabel}:${playerIID}`;
-            if (!roleplayerMap.has(key)) {
-                roleplayerMap.set(key, {
+            if (!linkMap.has(key)) {
+                linkMap.set(key, {
                     roleLabel,
                     playerIID,
                     playerTypeLabel,
@@ -377,14 +377,14 @@ match
             }
         }
 
-        this.ownRoleplayers = Array.from(roleplayerMap.values());
-        this.loadOwnRoleplayerAttributes();
+        this.ownLinks = Array.from(linkMap.values());
+        this.loadOwnLinkAttributes();
     }
 
-    private loadOwnRoleplayerAttributes() {
-        if (this.ownRoleplayers.length === 0) return;
+    private loadOwnLinkAttributes() {
+        if (this.ownLinks.length === 0) return;
 
-        const iidList = this.ownRoleplayers.map(rp => rp.playerIID);
+        const iidList = this.ownLinks.map(rp => rp.playerIID);
         const iidConditions = iidList.map(iid => `{ $player iid ${iid}; }`).join(" or ");
         const query = `
 match
@@ -395,7 +395,7 @@ match
         this.driver.query(query).subscribe({
             next: (res: ApiResponse<QueryResponse>) => {
                 if (isApiErrorResponse(res)) {
-                    this.snackbar.errorPersistent(`Error fetching roleplayer attributes: ${res.err.message}`);
+                    this.snackbar.errorPersistent(`Error fetching link attributes: ${res.err.message}`);
                     return;
                 }
 
@@ -403,10 +403,10 @@ match
                     const answers = (res.ok as any).answers as ConceptRowAnswer[];
                     const playerAttrMap = this.buildPlayerAttributeMap(answers);
 
-                    for (const roleplayer of this.ownRoleplayers) {
-                        const attrMap = playerAttrMap.get(roleplayer.playerIID);
+                    for (const link of this.ownLinks) {
+                        const attrMap = playerAttrMap.get(link.playerIID);
                         if (attrMap) {
-                            roleplayer.attributes = Array.from(attrMap.entries()).map(([type, data]) => ({
+                            link.attributes = Array.from(attrMap.entries()).map(([type, data]) => ({
                                 type,
                                 valueType: data.valueType,
                                 values: data.values,
@@ -416,7 +416,7 @@ match
                 }
             },
             error: (err) => {
-                this.snackbar.errorPersistent(`Error fetching roleplayer attributes: ${extractErrorMessage(err)}`);
+                this.snackbar.errorPersistent(`Error fetching link attributes: ${extractErrorMessage(err)}`);
             }
         });
     }
@@ -455,20 +455,20 @@ match
                 instanceMap.set(relIID, {
                     relationTypeLabel: relTypeLabel,
                     relationIID: relIID,
-                    roleplayers: [],
+                    links: [],
                     attributes: [],
                     attributesLoaded: false,
                 });
             }
             const relInstance = instanceMap.get(relIID)!;
 
-            // Add roleplayer if not already present
+            // Add link if not already present
             const isSelf = playerIID === this.instanceIID;
-            const existingRoleplayer = relInstance.roleplayers.find(
+            const existingLink = relInstance.links.find(
                 rp => rp.playerIID === playerIID && rp.roleLabel === roleLabel
             );
-            if (!existingRoleplayer) {
-                relInstance.roleplayers.push({
+            if (!existingLink) {
+                relInstance.links.push({
                     roleLabel,
                     playerIID,
                     playerTypeLabel,
@@ -480,20 +480,20 @@ match
         }
 
         // Store flat list and unique types
-        // Sort roleplayers so "this" (self) always appears last
+        // Sort links so "this" (self) always appears last
         const relations = Array.from(instanceMap.values());
         for (const rel of relations) {
-            rel.roleplayers.sort((a, b) => (a.isSelf === b.isSelf ? 0 : a.isSelf ? 1 : -1));
+            rel.links.sort((a, b) => (a.isSelf === b.isSelf ? 0 : a.isSelf ? 1 : -1));
         }
         this.allRelations = relations;
         this.relationTypes = Array.from(typeSet).sort();
 
-        // Load all roleplayer attributes and relation attributes upfront
-        this.loadAllRoleplayerAttributes();
+        // Load all link attributes and relation attributes upfront
+        this.loadAllLinkAttributes();
         this.loadAllRelationAttributes();
     }
 
-    openRoleplayerDetail(roleplayer: RoleplayerData, event: Event) {
+    openLinkDetail(link: LinkData, event: Event) {
         event.stopPropagation();
         const schema = this.schemaState.value$.value;
         if (!schema) {
@@ -502,9 +502,9 @@ match
         }
 
         // Find the type in schema (could be entity or relation)
-        const playerType = schema.entities[roleplayer.playerTypeLabel] || schema.relations[roleplayer.playerTypeLabel];
+        const playerType = schema.entities[link.playerTypeLabel] || schema.relations[link.playerTypeLabel];
         if (!playerType) {
-            this.snackbar.errorPersistent(`Type '${roleplayer.playerTypeLabel}' not found in schema`);
+            this.snackbar.errorPersistent(`Type '${link.playerTypeLabel}' not found in schema`);
             return;
         }
 
@@ -514,7 +514,7 @@ match
             { kind: "instance-detail", typeLabel: this.type.label, typeKind: this.type.kind, instanceIID: this.instanceIID }
         ];
 
-        this.dataEditorState.openInstanceDetail(playerType, roleplayer.playerIID, newBreadcrumbs);
+        this.dataEditorState.openInstanceDetail(playerType, link.playerIID, newBreadcrumbs);
     }
 
     openRelationDetail(instance: RelationInstanceData, event: Event) {
@@ -549,7 +549,7 @@ match
         this.dataEditorState.openTypeTab(this.type, [], true);
     }
 
-    openOwnRoleplayerDetail(roleplayer: RoleplayerData, event: Event) {
+    openOwnLinkDetail(link: LinkData, event: Event) {
         event.stopPropagation();
         const schema = this.schemaState.value$.value;
         if (!schema) {
@@ -557,9 +557,9 @@ match
             return;
         }
 
-        const playerType = schema.entities[roleplayer.playerTypeLabel] || schema.relations[roleplayer.playerTypeLabel];
+        const playerType = schema.entities[link.playerTypeLabel] || schema.relations[link.playerTypeLabel];
         if (!playerType) {
-            this.snackbar.errorPersistent(`Type '${roleplayer.playerTypeLabel}' not found in schema`);
+            this.snackbar.errorPersistent(`Type '${link.playerTypeLabel}' not found in schema`);
             return;
         }
 
@@ -568,7 +568,7 @@ match
             { kind: "instance-detail", typeLabel: this.type.label, typeKind: this.type.kind, instanceIID: this.instanceIID }
         ];
 
-        this.dataEditorState.openInstanceDetail(playerType, roleplayer.playerIID, newBreadcrumbs);
+        this.dataEditorState.openInstanceDetail(playerType, link.playerIID, newBreadcrumbs);
     }
 
     get typeKindLabel(): string {
@@ -781,12 +781,12 @@ match
         this.dataEditorState.openInstanceDetail(ownerType, owner.ownerIID, newBreadcrumbs);
     }
 
-    private loadAllRoleplayerAttributes() {
-        // Collect all non-self roleplayer IIDs from all instances
+    private loadAllLinkAttributes() {
+        // Collect all non-self link IIDs from all instances
         const allIIDs = new Set<string>();
 
         for (const instance of this.allRelations) {
-            for (const rp of instance.roleplayers) {
+            for (const rp of instance.links) {
                 if (!rp.isSelf) {
                     allIIDs.add(rp.playerIID);
                 }
@@ -800,7 +800,7 @@ match
             return;
         }
 
-        // Build query for all roleplayers' attributes
+        // Build query for all links' attributes
         const iidList = Array.from(allIIDs);
         const iidConditions = iidList.map(iid => `{ $player iid ${iid}; }`).join(" or ");
         const query = `
@@ -812,13 +812,13 @@ match
         this.driver.query(query).subscribe({
             next: (res: ApiResponse<QueryResponse>) => {
                 if (isApiErrorResponse(res)) {
-                    this.snackbar.errorPersistent(`Error fetching roleplayer attributes: ${res.err.message}`);
+                    this.snackbar.errorPersistent(`Error fetching link attributes: ${res.err.message}`);
                     return;
                 }
 
                 if (res.ok.answerType === "conceptRows") {
                     const answers = (res.ok as any).answers as ConceptRowAnswer[];
-                    this.processAllRoleplayerAttributes(answers);
+                    this.processAllLinkAttributes(answers);
                 }
                 for (const instance of this.allRelations) {
                     instance.attributesLoaded = true;
@@ -826,7 +826,7 @@ match
             },
             error: (err) => {
                 const message = err?.message || (typeof err === "object" ? JSON.stringify(err) : String(err));
-                this.snackbar.errorPersistent(`Error fetching roleplayer attributes: ${message}`);
+                this.snackbar.errorPersistent(`Error fetching link attributes: ${message}`);
                 for (const instance of this.allRelations) {
                     instance.attributesLoaded = true;
                 }
@@ -914,18 +914,18 @@ match
         }
     }
 
-    private processAllRoleplayerAttributes(conceptRowAnswers: ConceptRowAnswer[]) {
+    private processAllLinkAttributes(conceptRowAnswers: ConceptRowAnswer[]) {
         // Build a map of player IID -> attribute type -> { valueType, values }
         const playerAttrMap = this.buildPlayerAttributeMap(conceptRowAnswers);
 
-        // Assign attributes to all roleplayers across all instances
+        // Assign attributes to all links across all instances
         for (const instance of this.allRelations) {
-            for (const roleplayer of instance.roleplayers) {
-                if (roleplayer.isSelf) continue;
+            for (const link of instance.links) {
+                if (link.isSelf) continue;
 
-                const attrMap = playerAttrMap.get(roleplayer.playerIID);
+                const attrMap = playerAttrMap.get(link.playerIID);
                 if (attrMap) {
-                    roleplayer.attributes = Array.from(attrMap.entries()).map(([type, data]) => ({
+                    link.attributes = Array.from(attrMap.entries()).map(([type, data]) => ({
                         type,
                         valueType: data.valueType,
                         values: data.values,

@@ -70,39 +70,39 @@
         }
       </div>
 
-      <!-- Roleplayers Section (only for relations) -->
+      <!-- Links Section (only for relations) -->
       @if (type.kind === 'relationType') {
         <div class="detail-section">
-          <button class="section-header" (click)="roleplayersCollapsed = !roleplayersCollapsed">
-            <i class="fa-light" [class.fa-chevron-down]="!roleplayersCollapsed" [class.fa-chevron-right]="roleplayersCollapsed"></i>
-            <h6>Roleplayers</h6>
+          <button class="section-header" (click)="linksCollapsed = !linksCollapsed">
+            <i class="fa-light" [class.fa-chevron-down]="!linksCollapsed" [class.fa-chevron-right]="linksCollapsed"></i>
+            <h6>Links</h6>
           </button>
-          @if (roleplayersCollapsed) {
-          } @else if (roleplayersLoading) {
+          @if (linksCollapsed) {
+          } @else if (linksLoading) {
             <div class="relations-loading">
               <mat-spinner diameter="24"></mat-spinner>
             </div>
-          } @else if (ownRoleplayers.length === 0) {
-            <p class="text-muted">No roleplayers</p>
+          } @else if (ownLinks.length === 0) {
+            <p class="text-muted">No links</p>
           } @else {
-            <div class="roleplayers-list">
-              @for (roleplayer of ownRoleplayers; track roleplayer.roleLabel + roleplayer.playerIID) {
-                <div class="roleplayer-card">
-                  <div class="roleplayer-info">
-                    <span class="role-label">{{ roleplayer.roleLabel }}</span>
+            <div class="links-list">
+              @for (link of ownLinks; track link.roleLabel + link.playerIID) {
+                <div class="link-card">
+                  <div class="link-info">
+                    <span class="role-label">{{ link.roleLabel }}</span>
                     <div class="player-details">
-                      <span class="player-type">{{ roleplayer.playerTypeLabel }}</span>
-                      <span class="player-iid">{{ roleplayer.playerIID }}</span>
+                      <span class="player-type">{{ link.playerTypeLabel }}</span>
+                      <span class="player-iid">{{ link.playerIID }}</span>
                     </div>
                     <button
                         class="open-details-button"
-                        (click)="openOwnRoleplayerDetail(roleplayer, $event)">
+                        (click)="openOwnLinkDetail(link, $event)">
                       Explore
                       <i class="fa-light fa-arrow-right"></i>
                     </button>
                   </div>
-                  <div class="roleplayer-attrs">
-                    @for (attr of roleplayer.attributes; track attr.type) {
+                  <div class="link-attrs">
+                    @for (attr of link.attributes; track attr.type) {
                       <div class="attr-row">
                         <span class="attr-key">{{ attr.type }}:</span>
                         <span class="attr-val">{{ attr.values.join(', ') }}</span>
@@ -151,7 +151,7 @@
       </div>
       }
 
-      <!-- Relations Section (not for attributes - they cannot be roleplayers) -->
+      <!-- Relations Section (not for attributes - they cannot be links) -->
       @if (type.kind !== 'attributeType') {
       <div class="detail-section">
         <button class="section-header" (click)="relationsCollapsed = !relationsCollapsed">
@@ -202,31 +202,31 @@
                   </button>
                 </div>
 
-                <!-- Body - roleplayers -->
+                <!-- Body - links -->
                 <div class="relation-card-body">
-                  @for (roleplayer of instance.roleplayers; track roleplayer.roleLabel + roleplayer.playerIID) {
-                    <div class="roleplayer-card" [class.is-self]="roleplayer.isSelf">
-                      <div class="roleplayer-info">
-                        <span class="role-label">{{ roleplayer.roleLabel }}</span>
+                  @for (link of instance.links; track link.roleLabel + link.playerIID) {
+                    <div class="link-card" [class.is-self]="link.isSelf">
+                      <div class="link-info">
+                        <span class="role-label">{{ link.roleLabel }}</span>
                         <div class="player-details">
-                          <span class="player-type">{{ roleplayer.playerTypeLabel }}</span>
-                          <span class="player-iid">{{ roleplayer.playerIID }}</span>
-                          @if (roleplayer.isSelf) {
+                          <span class="player-type">{{ link.playerTypeLabel }}</span>
+                          <span class="player-iid">{{ link.playerIID }}</span>
+                          @if (link.isSelf) {
                             <span class="self-tag">this</span>
                           }
                         </div>
-                        @if (!roleplayer.isSelf) {
+                        @if (!link.isSelf) {
                           <button
                               class="open-details-button"
-                              (click)="openRoleplayerDetail(roleplayer, $event)">
+                              (click)="openLinkDetail(link, $event)">
                             Explore
                             <i class="fa-light fa-arrow-right"></i>
                           </button>
                         }
                       </div>
-                      @if (!roleplayer.isSelf) {
-                        <div class="roleplayer-attrs">
-                          @for (attr of roleplayer.attributes; track attr.type) {
+                      @if (!link.isSelf) {
+                        <div class="link-attrs">
+                          @for (attr of link.attributes; track attr.type) {
                             <div class="attr-row">
                               <span class="attr-key">{{ attr.type }}:</span>
                               <span class="attr-val">{{ attr.values.join(', ') }}</span>
@@ -285,10 +285,10 @@
         } @else if (owners.length === 0) {
           <p class="text-muted">No owners</p>
         } @else {
-          <div class="roleplayers-list">
+          <div class="links-list">
             @for (owner of owners; track owner.ownerIID) {
-              <div class="roleplayer-card">
-                <div class="roleplayer-info">
+              <div class="link-card">
+                <div class="link-info">
                   <div class="player-details">
                     <span class="player-type" [ngClass]="owner.ownerKind">{{ owner.ownerTypeLabel }}</span>
                     <span class="player-iid">{{ owner.ownerIID }}</span>
@@ -300,7 +300,7 @@
                     <i class="fa-light fa-arrow-right"></i>
                   </button>
                 </div>
-                <div class="roleplayer-attrs">
+                <div class="link-attrs">
                   @for (attr of owner.attributes; track attr.type) {
                     <div class="attr-row">
                       <span class="attr-key">{{ attr.type }}:</span>

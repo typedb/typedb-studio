@@ -115,11 +115,11 @@
         </td>
       </ng-container>
 
-      <!-- Roleplayers column (for relations, not sortable) -->
-      <ng-container matColumnDef="roleplayerCounts">
-        <th mat-header-cell *matHeaderCellDef>Roleplayers</th>
+      <!-- Links column (for relations, not sortable) -->
+      <ng-container matColumnDef="linkCounts">
+        <th mat-header-cell *matHeaderCellDef>Links</th>
         <td mat-cell *matCellDef="let row" class="relations-cell">
-          <span richTooltip [showTooltip]="shouldShowRoleplayerTooltip(row.roleplayerCounts)" [richTooltipContent]="formatRoleplayerCounts(row.roleplayerCounts)">{{ truncateRoleplayerCounts(row.roleplayerCounts) }}</span>
+          <span richTooltip [showTooltip]="shouldShowLinkTooltip(row.linkCounts)" [richTooltipContent]="formatLinkCounts(row.linkCounts)">{{ truncateLinkCounts(row.linkCounts) }}</span>
         </td>
       </ng-container>
 

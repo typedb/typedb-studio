@@ -36,8 +36,8 @@ type RelationCountsByType = Record<string, number>;
 /** Maps owner type label to count of owners of that type */
 type OwnerCountsByType = Record<string, number>;
 
-/** Maps role label to count of roleplayers for that role */
-type RoleplayerCountsByRole = Record<string, number>;
+/** Maps role label to count of links for that role */
+type LinkCountsByRole = Record<string, number>;
 
 export interface InstanceRow {
     iid: string;
@@ -45,11 +45,11 @@ export interface InstanceRow {
     kind: "entity" | "relation" | "attribute";
     relationCounts: RelationCountsByType | null;
     ownerCounts?: OwnerCountsByType | null;
-    roleplayerCounts?: RoleplayerCountsByRole | null;
+    linkCounts?: LinkCountsByRole | null;
     /** Value type for attribute instances */
     valueType?: string;
     /** Dynamic attribute columns store arrays of values */
-    [key: string]: string | RelationCountsByType | OwnerCountsByType | RoleplayerCountsByRole | null | AttributeValue[] | "entity" | "relation" | "attribute" | undefined;
+    [key: string]: string | RelationCountsByType | OwnerCountsByType | LinkCountsByRole | null | AttributeValue[] | "entity" | "relation" | "attribute" | undefined;
 }
 
 @Component({
@@ -219,7 +219,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         if (typeKind === "attributeType") {
             allColumns = ["type", ...this.attributeColumns, "valueType", "ownerCounts"];
         } else if (typeKind === "relationType") {
-            allColumns = ["type", "iid", ...this.attributeColumns, "roleplayerCounts", "relationCounts"];
+            allColumns = ["type", "iid", ...this.attributeColumns, "linkCounts", "relationCounts"];
         } else {
             allColumns = ["type", "iid", ...this.attributeColumns, "relationCounts"];
         }
@@ -242,7 +242,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                 { id: "type", label: "Type" },
                 { id: "iid", label: "IID" },
                 ...this.attributeColumns.map(attr => ({ id: attr, label: attr })),
-                { id: "roleplayerCounts", label: "Roleplayers" },
+                { id: "linkCounts", label: "Links" },
                 { id: "relationCounts", label: "Relations" },
             ];
         }
@@ -339,7 +339,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                         } else {
                             this.fetchRelationCounts();
                             if (this.tab.type.kind === "relationType") {
-                                this.fetchRoleplayerCounts();
+                                this.fetchLinkCounts();
                             }
                         }
                     } else {
@@ -485,24 +485,24 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         });
     }
 
-    private fetchRoleplayerCounts() {
+    private fetchLinkCounts() {
         if (this.dataSource.length === 0) return;
 
-        // Build query to get roleplayers for all relation instances in current page
+        // Build query to get links for all relation instances in current page
         const iidBranches = this.dataSource.map(row => `{ $rel iid ${row.iid}; }`).join(" or ");
         const query = `match ${iidBranches}; $rel links ($role: $player);`;
 
         this.driver.query(query).subscribe({
             next: (res: ApiResponse<QueryResponse>) => {
                 if (isApiErrorResponse(res)) {
-                    this.snackbar.errorPersistent(`Error fetching roleplayer counts: ${res.err.message}`);
+                    this.snackbar.errorPersistent(`Error fetching link counts: ${res.err.message}`);
                     for (const row of this.dataSource) {
-                        row.roleplayerCounts = {};
+                        row.linkCounts = {};
                     }
                     return;
                 }
 
-                // Count unique roleplayers per relation, grouped by role
+                // Count unique links per relation, grouped by role
                 // Map: relation IID -> role label -> Set of player IIDs
                 const countsByIid = new Map<string, Map<string, Set<string>>>();
                 if (res.ok.answerType === "conceptRows") {
@@ -533,20 +533,20 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                 for (const row of this.dataSource) {
                     const roleMap = countsByIid.get(row.iid);
                     if (roleMap && roleMap.size > 0) {
-                        const counts: RoleplayerCountsByRole = {};
+                        const counts: LinkCountsByRole = {};
                         for (const [role, iids] of roleMap) {
                             counts[role] = iids.size;
                         }
-                        row.roleplayerCounts = counts;
+                        row.linkCounts = counts;
                     } else {
-                        row.roleplayerCounts = {};
+                        row.linkCounts = {};
                     }
                 }
             },
             error: (err) => {
-                this.snackbar.errorPersistent(`Error fetching roleplayer counts: ${extractErrorMessage(err)}`);
+                this.snackbar.errorPersistent(`Error fetching link counts: ${extractErrorMessage(err)}`);
                 for (const row of this.dataSource) {
-                    row.roleplayerCounts = {};
+                    row.linkCounts = {};
                 }
             }
         });
@@ -911,7 +911,7 @@ offset ${offset}; limit ${limit};`.trim();
         return formatted.substring(0, this.MAX_DISPLAY_LENGTH) + "…";
     }
 
-    formatRoleplayerCounts(counts: RoleplayerCountsByRole | null | undefined): string {
+    formatLinkCounts(counts: LinkCountsByRole | null | undefined): string {
         if (counts == null) return "…";
         const entries = Object.entries(counts);
         if (entries.length === 0) return "-";
@@ -923,13 +923,13 @@ offset ${offset}; limit ${limit};`.trim();
         return `${total} (${breakdown})`;
     }
 
-    shouldShowRoleplayerTooltip(counts: RoleplayerCountsByRole | null | undefined): boolean {
-        const formatted = this.formatRoleplayerCounts(counts);
+    shouldShowLinkTooltip(counts: LinkCountsByRole | null | undefined): boolean {
+        const formatted = this.formatLinkCounts(counts);
         return formatted.length > this.MAX_DISPLAY_LENGTH;
     }
 
-    truncateRoleplayerCounts(counts: RoleplayerCountsByRole | null | undefined): string {
-        const formatted = this.formatRoleplayerCounts(counts);
+    truncateLinkCounts(counts: LinkCountsByRole | null | undefined): string {
+        const formatted = this.formatLinkCounts(counts);
         if (formatted.length <= this.MAX_DISPLAY_LENGTH) return formatted;
         return formatted.substring(0, this.MAX_DISPLAY_LENGTH) + "…";
     }

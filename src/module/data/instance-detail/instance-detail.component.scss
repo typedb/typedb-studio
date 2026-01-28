@@ -229,15 +229,15 @@
     }
 }
 
-// Standalone roleplayers list (for relation instances)
-.roleplayers-list {
+// Standalone links list (for relation instances)
+.links-list {
     display: flex;
     flex-direction: column;
     border: 1px solid colors.$secondary-deep-grey;
     border-radius: 6px;
     overflow: hidden;
 
-    > .roleplayer-card {
+    > .link-card {
         border-bottom: 1px solid colors.$secondary-deep-grey;
         background: colors.$secondary-purple;
 
@@ -463,8 +463,8 @@
     }
 }
 
-// Roleplayer card - each roleplayer is a distinct row
-.roleplayer-card {
+// Link card - each link is a distinct row
+.link-card {
     display: flex;
     align-items: flex-start;
     gap: 12px;
@@ -480,8 +480,8 @@
     }
 }
 
-// Roleplayer info - role label on top, player details below
-.roleplayer-info {
+// Link info - role label on top, player details below
+.link-info {
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -522,8 +522,8 @@
     }
 }
 
-// Roleplayer attributes - vertical scroll pane
-.roleplayer-attrs {
+// Link attributes - vertical scroll pane
+.link-attrs {
     display: flex;
     flex-direction: column;
     gap: 2px;
