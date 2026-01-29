@@ -1,0 +1,47 @@
+<tp-modal dialogTitle="Connection string editor" [isBusy]="false">
+  <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
+    <tp-form-input [form]="form" field="address" label="Address"
+                   placeholder="http://localhost:8000" [focusInitial]="true" />
+
+    <tp-form-input [form]="form" field="username" label="Username" />
+
+    <mat-form-field>
+      <mat-label>Password</mat-label>
+      <input matInput [formControl]="form.controls.password"
+             [type]="passwordRevealed ? 'text' : 'password'">
+      <div class="tp-password-input-suffix" matSuffix>
+        <button type="button" tabindex="-1" mat-icon-button
+                (click)="passwordRevealed = !passwordRevealed"
+                aria-label="Toggle password visibility">
+          <i [class]="passwordRevealed ? 'fa-light fa-eye-slash' : 'fa-light fa-eye'"></i>
+        </button>
+      </div>
+      @if (form.controls.password.getError("errorText")) {
+        <mat-error>{{ form.controls.password.getError("errorText") }}</mat-error>
+      }
+    </mat-form-field>
+
+    <tp-form-input [form]="form" field="database" label="Database (optional)" />
+
+    <tp-form-input [form]="form" field="name" label="Connection name (optional)" />
+
+    <div class="preview-section">
+      <label class="preview-label">Connection string preview</label>
+      <div class="preview-row">
+        <div class="preview-text">{{ connectionStringPreview }}</div>
+        <button type="button" tabindex="-1" mat-icon-button
+                (click)="previewRevealed = !previewRevealed"
+                aria-label="Toggle preview visibility">
+          <i [class]="previewRevealed ? 'fa-light fa-eye-slash' : 'fa-light fa-eye'"></i>
+        </button>
+      </div>
+    </div>
+
+    <tp-form-actions
+      [cancellable]="true" submitText="Use this connection string"
+      [isSubmitting]="isSubmitting$ | async"
+      [submitDisabled]="form.invalid"
+      buttonIdPrefix="connectionStringEditor" (cancel)="close()"
+    />
+  </tp-form>
+</tp-modal>

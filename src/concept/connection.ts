@@ -71,8 +71,9 @@ export function connectionString(props: ConnectionParams) {
 }
 
 function connectionStringBasic(props: ConnectionParamsBasic) {
-    const { username, password, addresses, database } = props;
-    return `${SCHEME}${username}:${password}@${addresses.join(",")}/${database ?? ''}`;
+    const { username, password, addresses, database, name } = props;
+    const base = `${SCHEME}${username}:${password}@${addresses.join(",")}/${database ?? ''}`;
+    return name ? `${base}?name=${encodeURIComponent(name)}` : base;
 }
 
 function connectionStringTranslated(props: ConnectionParamsTranslated) {

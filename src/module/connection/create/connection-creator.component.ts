@@ -8,6 +8,7 @@ import { AsyncPipe, Location } from "@angular/common";
 import { Component, OnInit } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCheckboxModule } from "@angular/material/checkbox";
+import { MatDialog } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
@@ -25,6 +26,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { AbstractControl, FormBuilder, FormControl, ReactiveFormsModule, ValidatorFn } from "@angular/forms";
 import { BehaviorSubject, combineLatest, filter, first, map, tap } from "rxjs";
 import { FormActionsComponent, FormComponent, FormInputComponent, FormOption, FormToggleGroupComponent, requiredValidator } from "../../../framework/form";
+import { ConnectionStringEditorDialogComponent } from "./connection-string-editor-dialog/connection-string-editor-dialog.component";
 
 const connectionStringValidator: ValidatorFn = (control: AbstractControl<string>) => {
     const params = parseConnectionStringOrNull(control.value);
@@ -105,7 +107,7 @@ export class ConnectionCreatorComponent {
     constructor(
         private formBuilder: FormBuilder, private appData: AppData,
         private driver: DriverState, private snackbar: SnackbarService, private location: Location,
-        private router: Router, route: ActivatedRoute,
+        private router: Router, route: ActivatedRoute, private dialog: MatDialog,
     ) {
         (window as any).connectionCreator = this;
 
@@ -217,6 +219,16 @@ export class ConnectionCreatorComponent {
 
     cancel() {
         this.router.navigate(["/"]);
+    }
+
+    openConnectionStringEditor() {
+        const dialogRef = this.dialog.open(ConnectionStringEditorDialogComponent);
+        dialogRef.afterClosed().subscribe((result: string | undefined) => {
+            if (result) {
+                this.form.patchValue({ url: result });
+                this.form.controls.url.markAsDirty();
+            }
+        });
     }
 
     private connectionNameUniqueValidator(control: AbstractControl<string>) {
