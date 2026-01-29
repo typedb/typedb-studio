@@ -18,7 +18,7 @@ export class ConnectionConfig {
     constructor(props: { name?: string, params: ConnectionParams, preferences: ConnectionPreferences }) {
         this.name = props.name ?? ConnectionConfig.autoName(props.params);
         this.params = props.params;
-        this.url = connectionUrl(props.params);
+        this.url = connectionString(props.params);
         this.preferences = props.preferences;
     }
 
@@ -42,7 +42,7 @@ export class ConnectionConfig {
 
     static fromJSONOrNull(json: Partial<ConnectionJson>): ConnectionConfig | null {
         if (!json.name || !json.url || !json.preferences) return null;
-        const params = parseConnectionUrlOrNull(json.url) || null;
+        const params = parseConnectionStringOrNull(json.url) || null;
         if (!params) return null;
         return new ConnectionConfig({
             name: json.name,
@@ -63,25 +63,25 @@ export type ConnectionParamsTranslated = DriverParamsTranslated & { database?: s
 export type ConnectionParams = ConnectionParamsBasic | ConnectionParamsTranslated;
 
 const SCHEME = "typedb://";
-export const CONNECTION_STRING_PLACEHOLDER = connectionUrlBasic({ username: "username", password: "password", addresses: ["http://address"] });
+export const CONNECTION_STRING_PLACEHOLDER = connectionStringBasic({ username: "username", password: "password", addresses: ["http://address"] });
 
-export function connectionUrl(props: ConnectionParams) {
-    if (`translatedAddresses` in props) return connectionUrlTranslated(props);
-    else return connectionUrlBasic(props);
+export function connectionString(props: ConnectionParams) {
+    if (`translatedAddresses` in props) return connectionStringTranslated(props);
+    else return connectionStringBasic(props);
 }
 
-function connectionUrlBasic(props: ConnectionParamsBasic) {
+function connectionStringBasic(props: ConnectionParamsBasic) {
     const { username, password, addresses, database } = props;
     return `${SCHEME}${username}:${password}@${addresses.join(",")}/${database ?? ''}`;
 }
 
-function connectionUrlTranslated(props: ConnectionParamsTranslated) {
+function connectionStringTranslated(props: ConnectionParamsTranslated) {
     const { username, password, translatedAddresses, database } = props;
     const translatedAddressStrings = translatedAddresses.map((x) => `${x.external};${x.internal}`);
-    return connectionUrlBasic({ username, password, addresses: translatedAddressStrings, database });
+    return connectionStringBasic({ username, password, addresses: translatedAddressStrings, database });
 }
 
-export function parseConnectionUrlOrNull(rawValue: string): (DriverParams & { database?: string }) | null {
+export function parseConnectionStringOrNull(rawValue: string): (DriverParams & { database?: string }) | null {
     if (rawValue.startsWith(SCHEME)) return parseConnectionHostAndPathOrNull(rawValue.substring(SCHEME.length));
     else return null;
 }
