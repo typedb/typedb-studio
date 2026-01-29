@@ -63,7 +63,7 @@ export type ConnectionParamsTranslated = DriverParamsTranslated & { database?: s
 export type ConnectionParams = ConnectionParamsBasic | ConnectionParamsTranslated;
 
 const SCHEME = "typedb://";
-export const CONNECTION_STRING_PLACEHOLDER = connectionUrlBasic({ username: "username", password: "password", addresses: ["address"] });
+export const CONNECTION_STRING_PLACEHOLDER = connectionUrlBasic({ username: "username", password: "password", addresses: ["http://address"] });
 
 export function connectionUrl(props: ConnectionParams) {
     if (`translatedAddresses` in props) return connectionUrlTranslated(props);

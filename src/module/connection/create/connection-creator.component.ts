@@ -27,8 +27,13 @@ import { BehaviorSubject, combineLatest, filter, first, map, tap } from "rxjs";
 import { FormActionsComponent, FormComponent, FormInputComponent, FormOption, FormToggleGroupComponent, requiredValidator } from "../../../framework/form";
 
 const connectionUrlValidator: ValidatorFn = (control: AbstractControl<string>) => {
-    if (parseConnectionUrlOrNull(control.value)) return null;
-    else return { errorText: `Format: typedb://username:password@address` };
+    const params = parseConnectionUrlOrNull(control.value);
+    if (!params) return { errorText: `Format: typedb://username:password@address` };
+    const addresses = isBasicParams(params) ? params.addresses : params.translatedAddresses.map(x => x.external);
+    if (addresses.some(addr => !addr.startsWith(`http://`) && !addr.startsWith(`https://`))) {
+        return { errorText: `Address must include http:// or https://` };
+    }
+    return null;
 };
 
 const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
