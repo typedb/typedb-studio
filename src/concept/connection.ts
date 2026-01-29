@@ -94,18 +94,26 @@ function parseConnectionHostAndPathOrNull(rawValue: string): ConnectionParams | 
     if (!passwordRaw?.length) return null;
     const password = decodeURIComponent(passwordRaw);
 
-    // Safari-compatible: find first "/" not part of "://" or "//"
+    // Safari-compatible: find first "/" or "?" not part of "://" or "//"
     const protocolMatch = connection.match(/:\/\/|\/\//);
     const searchStart = protocolMatch ? (protocolMatch.index! + protocolMatch[0].length) : 0;
     const slashIndex = connection.indexOf('/', searchStart);
-    const [addressesRaw, path] = slashIndex === -1
+    const queryIndex = connection.indexOf('?', searchStart);
+    // Find the first delimiter (/ or ?) after the protocol, preferring the earlier one
+    const delimiterIndex = slashIndex === -1 ? queryIndex
+        : queryIndex === -1 ? slashIndex
+        : Math.min(slashIndex, queryIndex);
+    const [addressesRaw, pathAndQuery] = delimiterIndex === -1
         ? [connection, undefined] as [string, undefined]
-        : [connection.substring(0, slashIndex), connection.substring(slashIndex + 1)] as [string, string];
+        : [connection.substring(0, delimiterIndex), connection.substring(delimiterIndex)] as [string, string];
     if (!addressesRaw?.length) return null;
     const addresses = addressesRaw.split(`,`);
     if (!addresses.length) return null;
 
-    const [pathname, query] = path?.length ? path.split(`?`, 2) : [undefined, undefined];
+    // pathAndQuery may start with "/" (path) or "?" (query only)
+    // Strip leading "/" if present, then split on "?"
+    const normalized = pathAndQuery?.startsWith('/') ? pathAndQuery.substring(1) : pathAndQuery;
+    const [pathname, query] = normalized?.length ? normalized.split(`?`, 2) : [undefined, undefined];
     const database = pathname?.length ? pathname : undefined;
     const searchParams = query?.length ? new URLSearchParams(query) : undefined;
     const name = searchParams?.get(`name`) ?? undefined;
