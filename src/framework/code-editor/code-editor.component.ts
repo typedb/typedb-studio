@@ -5,7 +5,7 @@
  */
 
 import { CodeEditor } from "@acrodata/code-editor";
-import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output } from "@angular/core";
 import { TypeQL, typeqlAutocompleteExtension } from "../codemirror-lang-typeql";
 import { basicDark } from "./theme";
 import { Extension, Prec } from "@codemirror/state";
@@ -20,7 +20,10 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
     styleUrls: ["code-editor.component.scss"],
     standalone: true,
     imports: [CodeEditor, ReactiveFormsModule],
-}) export class CodeEditorComponent {
+    host: {
+        '[class.has-scrollbar]': 'hasScrollbar'
+    }
+}) export class CodeEditorComponent implements AfterViewInit, OnDestroy {
 
     @Input() keymap: Extension = Prec.highest(keymap.of([
         { key: "Alt-Space", run: startCompletion, preventDefault: true },
@@ -35,6 +38,25 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
     protected readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
 
     ran = false;
+    copied = false;
+    hasScrollbar = false;
+    private resizeObserver?: ResizeObserver;
+
+    constructor(private elementRef: ElementRef<HTMLElement>) {}
+
+    ngAfterViewInit() {
+        const scroller = this.elementRef.nativeElement.querySelector('.cm-scroller');
+        if (scroller) {
+            this.resizeObserver = new ResizeObserver(() => {
+                this.hasScrollbar = scroller.scrollHeight > scroller.clientHeight;
+            });
+            this.resizeObserver.observe(scroller);
+        }
+    }
+
+    ngOnDestroy() {
+        this.resizeObserver?.disconnect();
+    }
 
     async onRunButtonClick() {
         this.ran = true;
@@ -44,5 +66,17 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
         setTimeout(() => {
             this.ran = false;
         }, 3000);
+    }
+
+    async onCopyButtonClick() {
+        try {
+            await navigator.clipboard.writeText(this.formControlProp.value);
+            this.copied = true;
+            setTimeout(() => {
+                this.copied = false;
+            }, 3000);
+        } catch (err) {
+            console.error('Failed to copy code:', err);
+        }
     }
 }

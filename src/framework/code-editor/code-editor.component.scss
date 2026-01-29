@@ -9,8 +9,24 @@
 :host {
     display: block;
     position: relative;
-}
 
-i {
-    color: colors.$green;
+    ::ng-deep .cm-scroller {
+        scrollbar-width: thin;
+    }
+
+    .copy-overlay {
+        right: 8px;
+    }
+
+    .copy-overlay + .copy-overlay {
+        right: 48px;
+    }
+
+    &.has-scrollbar .copy-overlay {
+        right: 18px;
+    }
+
+    &.has-scrollbar .copy-overlay + .copy-overlay {
+        right: 58px;
+    }
 }

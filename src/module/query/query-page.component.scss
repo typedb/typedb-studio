@@ -199,10 +199,17 @@ button {
     overflow: auto;
     scrollbar-width: thin;
     .copy-overlay {
-        right: 20px;
+        right: 14px;
     }
     .copy-overlay + .copy-overlay {
-        right: 60px;
+        right: 54px;
+    }
+
+    &.has-scrollbar .copy-overlay {
+        right: 22px;
+    }
+    &.has-scrollbar .copy-overlay + .copy-overlay {
+        right: 62px;
     }
 }
 
@@ -333,6 +340,34 @@ button {
 
         .mat-divider {
             margin-top: 8px;
+        }
+    }
+
+    .history-code-editor {
+        margin-top: 4px;
+        border: 1px solid colors.$light-purple;
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+
+        tp-code-editor {
+            display: block;
+
+            ::ng-deep code-editor {
+                .cm-editor {
+                    max-height: 120px;
+                    overflow: auto;
+                    scrollbar-width: thin;
+                }
+
+                .cm-scroller {
+                    overflow: auto;
+                }
+
+                .cm-content {
+                    min-height: 56px;
+                }
+            }
         }
     }
 

@@ -7,7 +7,7 @@
 import { CodeEditor } from "@acrodata/code-editor";
 import { AsyncPipe, DatePipe } from "@angular/common";
 import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
-import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatDialog } from "@angular/material/dialog";
@@ -24,9 +24,10 @@ import { ResizableDirective } from "@hhangular/resizable";
 import { filter, map, startWith } from "rxjs";
 import { CodeEditorComponent } from "../../framework/code-editor/code-editor.component";
 import { otherExampleLinter, TypeQL, typeqlAutocompleteExtension } from "../../framework/codemirror-lang-typeql";
-import { DriverAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
+import { DriverAction, QueryRunAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
+import { ActionDurationPipe } from "../../framework/util/action-duration.pipe";
 import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
@@ -49,13 +50,14 @@ import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-win
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, ResizableDirective,
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
-        MatMenuModule, SchemaToolWindowComponent, VibeQueryComponent, CodeEditorComponent,
+        MatMenuModule, SchemaToolWindowComponent, VibeQueryComponent, CodeEditorComponent, ActionDurationPipe,
     ]
 })
 export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     @ViewChild(CodeEditor) codeEditor!: CodeEditor;
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
+    @ViewChild("logTextarea") logTextarea?: ElementRef<HTMLTextAreaElement>;
     @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
 
@@ -67,6 +69,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
+    private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();
     editorKeymap = Prec.highest(keymap.of([
         { key: "Alt-Space", run: startCompletion, preventDefault: true },
         {
@@ -80,6 +83,8 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     ]));
     copiedLog = false;
     sentLogToAI = false;
+    logHasScrollbar = false;
+    private logResizeObserver?: ResizeObserver;
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
@@ -102,10 +107,21 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         ).subscribe((canvasEl) => {
             this.state.graphOutput.canvasEl = canvasEl;
         });
+
+        if (this.logTextarea) {
+            this.logResizeObserver = new ResizeObserver(() => {
+                const el = this.logTextarea?.nativeElement;
+                if (el) {
+                    this.logHasScrollbar = el.scrollHeight > el.clientHeight;
+                }
+            });
+            this.logResizeObserver.observe(this.logTextarea.nativeElement);
+        }
     }
 
     ngOnDestroy() {
         this.state.graphOutput.destroy();
+        this.logResizeObserver?.disconnect();
     }
 
     openSelectDatabaseDialog() {
@@ -116,14 +132,17 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.state.runQuery(this.state.queryEditorControl.value);
     }
 
-    queryHistoryPreview(query: string) {
-        return query.split(`\n`).slice(0, 2).join(`\n`);
+    getHistoryEntryControl(entry: QueryRunAction): FormControl<string> {
+        let control = this.historyEntryControls.get(entry);
+        if (!control) {
+            control = new FormControl(entry.query, { nonNullable: true });
+            this.historyEntryControls.set(entry, control);
+        }
+        return control;
     }
 
-    // TODO: any angular dev with a shred of self-respect would make this be a pipe
-    actionDurationString(action: DriverAction) {
-        if (action.completedAtTimestamp == undefined) return ``;
-        return `${action.completedAtTimestamp - action.startedAtTimestamp}ms`;
+    runHistoryQuery(entry: QueryRunAction) {
+        this.state.runQuery(entry.query);
     }
 
     transactionOperationString(action: TransactionOperationAction) {
