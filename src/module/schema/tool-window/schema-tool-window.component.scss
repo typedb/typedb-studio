@@ -49,6 +49,7 @@
     }
 
     mat-tree {
+        flex: 1;
         padding: 0;
         box-sizing: border-box;
         height: 100%;
@@ -86,8 +87,7 @@
         }
 
         mat-tree-node.root:not(.entities) {
-            --mat-tree-node-min-height: 46px;
-            padding-top: 16px;
+            margin-top: 16px;
         }
 
         mat-tree-node.root button mat-icon {
@@ -167,22 +167,22 @@
             }
         }
 
+        mat-tree-node.clickable {
+            cursor: pointer;
+
+            &:hover {
+                background-color: colors.$light-purple;
+            }
+        }
+
+        mat-tree-node.highlighted {
+            background-color: colors.$light-purple;
+        }
+
         .tree-node-content {
             flex: 1;
             display: flex;
             align-items: center;
-
-            &.clickable {
-                cursor: pointer;
-
-                &:hover {
-                    background-color: colors.$light-purple;
-                }
-            }
-        }
-
-        mat-tree-node.highlighted .tree-node-content {
-            background-color: colors.$light-purple;
         }
     }
 }

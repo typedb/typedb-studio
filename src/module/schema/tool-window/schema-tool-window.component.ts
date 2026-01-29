@@ -144,10 +144,18 @@ export class SchemaToolWindowComponent implements AfterViewInit {
     }
 
     onNodeClick(node: SchemaTreeNode, event: Event) {
-        // In data mode, clicking on the concept body opens a tab
-        if (this.mode === "data" && node.nodeKind === "concept") {
-            this.dataEditorState.openTypeTab(node.concept);
-            event.stopPropagation();
+        if (this.mode === "data") {
+            // In data mode, clicking on the concept body opens a tab
+            if (node.nodeKind === "concept") {
+                this.dataEditorState.openTypeTab(node.concept);
+                event.stopPropagation();
+            }
+        } else {
+            // In other modes, clicking toggles expand/collapse
+            if (node.nodeKind === "concept" || node.nodeKind === "root") {
+                this.toggleNode(node);
+                event.stopPropagation();
+            }
         }
     }
 
