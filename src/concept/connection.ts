@@ -94,7 +94,13 @@ function parseConnectionHostAndPathOrNull(rawValue: string): ConnectionParams | 
     if (!passwordRaw?.length) return null;
     const password = decodeURIComponent(passwordRaw);
 
-    const [addressesRaw, path] = connection.split(/(?<![:/])\//, 2) as [string?, string?] ?? undefined;
+    // Safari-compatible: find first "/" not part of "://" or "//"
+    const protocolMatch = connection.match(/:\/\/|\/\//);
+    const searchStart = protocolMatch ? (protocolMatch.index! + protocolMatch[0].length) : 0;
+    const slashIndex = connection.indexOf('/', searchStart);
+    const [addressesRaw, path] = slashIndex === -1
+        ? [connection, undefined] as [string, undefined]
+        : [connection.substring(0, slashIndex), connection.substring(slashIndex + 1)] as [string, string];
     if (!addressesRaw?.length) return null;
     const addresses = addressesRaw.split(`,`);
     if (!addresses.length) return null;
