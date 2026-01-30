@@ -6,7 +6,7 @@
 
 import { inject, Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { BehaviorSubject, combineLatest, first, map, Observable, shareReplay, startWith } from "rxjs";
+import { BehaviorSubject, combineLatest, first, map, Observable, shareReplay, startWith, switchMap } from "rxjs";
 import { DriverAction } from "../concept/action";
 import {createSigmaRenderer, GraphVisualiser} from "../framework/graph-visualiser";
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
@@ -15,6 +15,7 @@ import { Layouts } from "../framework/graph-visualiser/layouts";
 import { detectOS } from "../framework/util/os";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
+import { QueryTabsState } from "./query-tabs-state.service";
 import { SchemaState } from "./schema-state.service";
 import { SnackbarService } from "./snackbar.service";
 import {
@@ -42,10 +43,10 @@ export class QueryPageState {
     vibeQuery = inject(VibeQueryState);
     schema = inject(SchemaState);
     private snackbar = inject(SnackbarService);
+    queryTabs = inject(QueryTabsState);
 
     queryTypeControl = new FormControl("code" as QueryType, {nonNullable: true});
     queryTypes: QueryType[] = ["code", "chat"];
-    queryEditorControl = new FormControl("", {nonNullable: true});
     outputTypeControl = new FormControl("log" as OutputType, { nonNullable: true });
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
     readonly logOutput = new LogOutputState();
@@ -54,14 +55,24 @@ export class QueryPageState {
     readonly rawOutput = new RawOutputState();
     readonly history = new HistoryWindowState(this.driver);
     answersOutputEnabled = true;
+
+    private readonly currentTabQuery$ = this.queryTabs.openTabs$.pipe(
+        switchMap(() => {
+            const currentTab = this.queryTabs.currentTab;
+            if (!currentTab) return new BehaviorSubject("");
+            const control = this.queryTabs.getTabControl(currentTab);
+            return control.valueChanges.pipe(startWith(control.value));
+        })
+    );
+
     readonly runDisabledReason$ = combineLatest([
         this.driver.status$, this.driver.database$, this.driver.transactionOperationModeChanges$,
-        this.driver.transaction$, this.queryEditorControl.valueChanges.pipe(startWith(this.queryEditorControl.value))
-    ]).pipe(map(([status, db, txMode, tx, _query]) => {
+        this.driver.transaction$, this.currentTabQuery$, this.queryTabs.selectedTabIndex$
+    ]).pipe(map(([status, db, txMode, tx, query]) => {
         if (status !== "connected") return NO_SERVER_CONNECTED;
         else if (db == null) return NO_DATABASE_SELECTED;
         else if (txMode === "manual" && !tx) return NO_OPEN_TRANSACTION;
-        else if (!this.queryEditorControl.value.length) return QUERY_BLANK; // _query becomes blank after a page navigation for some reason
+        else if (!query.length) return QUERY_BLANK;
         else return null;
     }), shareReplay(1));
     readonly runTooltip$ = this.runDisabledReason$.pipe(map(x => x ? x : `Run query (${RUN_KEY_BINDING})`));
@@ -77,7 +88,19 @@ export class QueryPageState {
         });
     }
 
+    get currentQueryControl(): FormControl<string> | null {
+        const currentTab = this.queryTabs.currentTab;
+        if (!currentTab) return null;
+        return this.queryTabs.getTabControl(currentTab);
+    }
+
     // TODO: LIMIT 1000 by default, configurable
+
+    runCurrentTabQuery() {
+        const currentTab = this.queryTabs.currentTab;
+        if (!currentTab) return;
+        this.runQuery(currentTab.query);
+    }
 
     runQuery(query: string) {
         this.initialiseOutput(query);

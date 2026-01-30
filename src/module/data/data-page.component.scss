@@ -101,15 +101,27 @@
     color: colors.$grey;
 }
 
-.tab-close-button {
+.tab-close-button.mat-mdc-icon-button {
+    --mdc-icon-button-state-layer-size: 20px;
     margin-left: 4px;
     width: 20px;
     height: 20px;
+    padding: 0;
+    position: relative;
+
+    &::ng-deep .mat-mdc-button-touch-target {
+        height: 20px;
+        width: 20px;
+    }
 
     i {
         font-size: 12px;
-        position: relative;
-        top: 2px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        line-height: 1;
+        height: 12px;
     }
 
     &:hover {
