@@ -14,7 +14,6 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { Database } from "@typedb/driver-http";
 import { combineLatest, distinctUntilChanged, map } from "rxjs";
-import { ConfirmationModalComponent, ConfirmationModalData } from "../../../framework/modal/confirmation/confirmation-modal.component";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { DatabaseCreateDialogComponent } from "../../database/create-dialog/database-create-dialog.component";
@@ -80,18 +79,8 @@ export class ConnectionWidgetComponent implements OnInit {
     }
 
     signOut() {
-        const dialogRef = this.dialog.open<ConfirmationModalComponent, ConfirmationModalData>(ConfirmationModalComponent, {
-            data: {
-                title: "Sign out",
-                body: "Signing out will reload the page and clear all session data. Do you want to continue?",
-                confirmText: "Sign out",
-            }
-        });
-        dialogRef.componentInstance.confirmed.subscribe(() => {
-            dialogRef.close();
-            this.driver.tryDisconnect().subscribe(() => {
-                window.location.href = "/connect";
-            });
+        this.driver.tryDisconnect().subscribe(() => {
+            window.location.href = "/connect";
         });
     }
 
