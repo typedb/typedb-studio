@@ -56,7 +56,10 @@ export class QueryPageState {
     readonly history = new HistoryWindowState(this.driver);
     answersOutputEnabled = true;
 
-    private readonly currentTabQuery$ = this.queryTabs.openTabs$.pipe(
+    private readonly currentTabQuery$ = combineLatest([
+        this.queryTabs.openTabs$,
+        this.queryTabs.selectedTabIndex$
+    ]).pipe(
         switchMap(() => {
             const currentTab = this.queryTabs.currentTab;
             if (!currentTab) return new BehaviorSubject("");

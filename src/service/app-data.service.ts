@@ -245,16 +245,13 @@ class DataExplorerTabs {
 const QUERY_TABS = "queryTabs";
 
 interface QueryTabsData {
-    databases: {
-        [databaseName: string]: {
-            tabs: PersistedQueryTab[];
-            selectedTabIndex: number;
-        };
-    };
+    tabs: PersistedQueryTab[];
+    selectedTabIndex: number;
 }
 
 const INITIAL_QUERY_TABS: QueryTabsData = {
-    databases: {},
+    tabs: [],
+    selectedTabIndex: 0,
 };
 
 function parseQueryTabsData(obj: Object | null): QueryTabsData {
@@ -277,21 +274,12 @@ class QueryTabs {
         return this.storage.write(QUERY_TABS, data);
     }
 
-    getTabs(databaseName: string): { tabs: PersistedQueryTab[]; selectedTabIndex: number } | null {
-        const data = this.readStorage();
-        return data.databases[databaseName] || null;
+    getTabs(): { tabs: PersistedQueryTab[]; selectedTabIndex: number } {
+        return this.readStorage();
     }
 
-    setTabs(databaseName: string, tabs: PersistedQueryTab[], selectedTabIndex: number): StorageWriteResult {
-        const data = this.readStorage();
-        data.databases[databaseName] = { tabs, selectedTabIndex };
-        return this.writeStorage(data);
-    }
-
-    clearTabs(databaseName: string): StorageWriteResult {
-        const data = this.readStorage();
-        delete data.databases[databaseName];
-        return this.writeStorage(data);
+    setTabs(tabs: PersistedQueryTab[], selectedTabIndex: number): StorageWriteResult {
+        return this.writeStorage({ tabs, selectedTabIndex });
     }
 }
 

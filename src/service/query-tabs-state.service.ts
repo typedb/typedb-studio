@@ -8,7 +8,6 @@ import { Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { BehaviorSubject } from "rxjs";
 import { AppData, PersistedQueryTab } from "./app-data.service";
-import { DriverState } from "./driver-state.service";
 
 export interface QueryTab {
     id: string;
@@ -24,16 +23,10 @@ export class QueryTabsState {
     openTabs$ = new BehaviorSubject<QueryTab[]>([]);
     selectedTabIndex$ = new BehaviorSubject<number>(0);
 
-    private currentDatabaseName: string | null = null;
     private tabControls = new Map<string, FormControl<string>>();
 
-    constructor(
-        private appData: AppData,
-        private driverState: DriverState,
-    ) {
-        this.driverState.database$.subscribe(database => {
-            this.onDatabaseChange(database?.name || null);
-        });
+    constructor(private appData: AppData) {
+        this.restoreTabs();
 
         this.openTabs$.subscribe(() => this.persistTabs());
         this.selectedTabIndex$.subscribe(() => this.persistTabs());
@@ -57,24 +50,7 @@ export class QueryTabsState {
         return control;
     }
 
-    private onDatabaseChange(databaseName: string | null) {
-        if (this.currentDatabaseName && this.currentDatabaseName !== databaseName) {
-            this.persistTabs();
-        }
-
-        this.tabControls.clear();
-        this.openTabs$.next([]);
-        this.selectedTabIndex$.next(0);
-        this.currentDatabaseName = databaseName;
-
-        if (databaseName) {
-            this.restoreTabsForDatabase(databaseName);
-        }
-    }
-
     private persistTabs() {
-        if (!this.currentDatabaseName) return;
-
         const tabs = this.openTabs$.value;
         const persistedTabs: PersistedQueryTab[] = tabs.map(tab => ({
             id: tab.id,
@@ -84,15 +60,14 @@ export class QueryTabsState {
         }));
 
         this.appData.queryTabs.setTabs(
-            this.currentDatabaseName,
             persistedTabs,
             this.selectedTabIndex$.value
         );
     }
 
-    private restoreTabsForDatabase(databaseName: string) {
-        const saved = this.appData.queryTabs.getTabs(databaseName);
-        if (!saved || saved.tabs.length === 0) {
+    private restoreTabs() {
+        const saved = this.appData.queryTabs.getTabs();
+        if (saved.tabs.length === 0) {
             this.newTab();
             return;
         }
