@@ -38,8 +38,12 @@ export class PageScaffoldComponent implements AfterViewInit {
 
     leftSidebarState = this.appData.viewState.sidebarState();
     condensed = false;
+    initializing = true;
 
-    constructor(private appData: AppData) {}
+    constructor(private appData: AppData) {
+        // Disable CSS transitions during initial render to prevent sidebar flicker
+        setTimeout(() => this.initializing = false);
+    }
 
     ngAfterViewInit() {
         // actionBar may not exist if pageAvailability is not "ready"
