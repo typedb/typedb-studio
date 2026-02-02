@@ -48,6 +48,12 @@
           </div>
         </div>
       </div>
+      <div class="form-input-block">
+        <div class="form-input-row-description"><p>(Optional) Specify a name for this connection</p></div>
+        <div>
+          <tp-form-input [form]="form" field="name" label="Connection name"/>
+        </div>
+      </div>
     } @else {
       <div class="form-input-block">
         <div class="form-input-row-description"><p>Enter connection string</p></div>
@@ -63,16 +69,10 @@
               <mat-error>{{ form.controls.url.getError("errorText") }}</mat-error>
             }
           </mat-form-field>
-          <i class="help-tooltip-button fa-light fa-circle-question" richTooltip [richTooltipContent]="connectionUriHelpTooltipContent"></i>
+          <i class="help-tooltip-button fa-light fa-gear" (click)="openConnectionStringEditor()" matTooltip="Connection string builder"></i>
         </div>
       </div>
     }
-    <div class="form-input-block">
-      <div class="form-input-row-description"><p>(Optional) Specify a name for this connection</p></div>
-      <div>
-        <tp-form-input [form]="form" field="name" label="Connection name"/>
-      </div>
-    </div>
     <tp-form-actions
       [isSubmitting]="isSubmitting$ | async" buttonIdPrefix="createOrg" (cancel)="cancel()"
       [submitDisabled]="!canSubmit" submitText="Connect" cancelText="Cancel" [cancellable]="true"
@@ -87,10 +87,3 @@
   </div>
 </ng-template>
 
-<ng-template #connectionUriHelpTooltipContent>
-  <div class="rich-tooltip">
-    <p><strong>Format:</strong> typedb://username:password&commat;address</p>
-    <p><strong>Example:</strong> typedb://admin:password&commat;http://localhost:8000</p>
-    <p><strong>Note:</strong> For TypeDB Cloud, you should have a credentials file containing your connection string.</p>
-  </div>
-</ng-template>

@@ -11,4 +11,8 @@ body {
     .mat-mdc-dialog-surface {
         overflow: hidden;
     }
+
+    .mat-mdc-dialog-container .mat-mdc-dialog-title + .mat-mdc-dialog-content {
+        padding-top: 4px;
+    }
 }

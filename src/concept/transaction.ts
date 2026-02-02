@@ -35,7 +35,7 @@ export class Transaction {
 
     // static fromApiJSONOrNull(json: Partial<TransactionApiJson>): Transaction | null {
     //     if (!json.name || !json.url || !json.preferences) return null;
-    //     const params = parseConnectionUrlOrNull(json.url) || null;
+    //     const params = parseConnectionStringOrNull(json.url) || null;
     //     if (!params) return null;
     //     return new ConnectionConfig({
     //         name: json.name,

@@ -127,8 +127,45 @@ i.fa-xmark {
 }
 
 .card-header {
-    h5, mat-button-toggle-group, button {
+    h5, mat-button-toggle-group, button, .row-limit-control {
         z-index: 10;
+    }
+}
+
+.row-limit-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    label {
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    mat-select {
+        width: 100px;
+        height: 32px;
+        padding: 0 12px;
+        border: 1px solid colors.$light-purple;
+        border-radius: shapes.$border-radius-small;
+        background: colors.$deep-purple;
+        --mat-select-trigger-text-size: 14px;
+
+        ::ng-deep {
+            .mat-mdc-select-trigger {
+                height: 100%;
+                display: flex;
+                align-items: center;
+            }
+
+            .mat-mdc-select-value,
+            .mat-mdc-select-value-text,
+            .mat-mdc-select-min-line {
+                white-space: nowrap !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+            }
+        }
     }
 }
 
@@ -185,6 +222,157 @@ button {
     }
 }
 
+// Query tabs styles
+.query-tabs-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 10;
+    border: 1px solid colors.$light-purple;
+    border-radius: shapes.$border-radius shapes.$border-radius 0 0;
+    background: colors.$black;
+}
+
+.query-tabs-header-row {
+    display: flex;
+    align-items: stretch;
+    background: rgba(colors.$black, 0.5);
+    border-bottom: 1px solid colors.$light-purple;
+}
+
+.query-tabs-scroll {
+    display: flex;
+    align-items: stretch;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    flex: 0 1 auto;
+    height: 40px;
+}
+
+.query-tab {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    cursor: pointer;
+    border-right: 1px solid colors.$light-purple;
+    white-space: nowrap;
+    color: colors.$grey;
+    transition: background-color 100ms, color 100ms;
+    font-size: 14px;
+
+    &:hover {
+        background-color: rgba(colors.$light-purple, 0.2);
+    }
+
+    &.active {
+        color: colors.$white;
+        background-color: rgba(colors.$light-purple, 0.3);
+    }
+}
+
+.query-tab-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &.pinned .pin-icon {
+        font-size: 11px;
+        color: colors.$grey;
+        margin-right: 2px;
+        transform: rotate(-45deg);
+    }
+}
+
+.query-tab-close-button.mat-mdc-icon-button {
+    --mdc-icon-button-state-layer-size: 20px;
+    margin-left: 4px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    position: relative;
+
+    &::ng-deep .mat-mdc-button-touch-target {
+        height: 20px;
+        width: 20px;
+    }
+
+    i {
+        font-size: 12px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        line-height: 1;
+        height: 12px;
+    }
+
+    &:hover {
+        background-color: colors.$light-purple;
+    }
+}
+
+.new-query-tab-button.mat-mdc-icon-button {
+    --mdc-icon-button-state-layer-size: 28px;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    position: relative;
+    align-self: center;
+    margin: 0 6px;
+
+    &::ng-deep .mat-mdc-button-touch-target {
+        height: 28px;
+        width: 28px;
+    }
+
+    i {
+        font-size: 14px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        line-height: 1;
+        height: 14px;
+    }
+
+    &:hover {
+        background-color: rgba(colors.$light-purple, 0.3);
+    }
+}
+
+.query-tab-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.query-tab-panel {
+    display: none;
+    height: 100%;
+
+    &.active {
+        display: block;
+    }
+
+    tp-code-editor {
+        display: block;
+        height: 100%;
+
+        ::ng-deep code-editor {
+            height: 100%;
+        }
+    }
+}
+
+.query-tab-context-menu-trigger {
+    position: fixed;
+    visibility: hidden;
+    width: 0;
+    height: 0;
+}
+
 .answers-outer-container {
     height: 100%;
     width: 100%;
@@ -199,10 +387,17 @@ button {
     overflow: auto;
     scrollbar-width: thin;
     .copy-overlay {
-        right: 20px;
+        right: 14px;
     }
     .copy-overlay + .copy-overlay {
-        right: 60px;
+        right: 54px;
+    }
+
+    &.has-scrollbar .copy-overlay {
+        right: 22px;
+    }
+    &.has-scrollbar .copy-overlay + .copy-overlay {
+        right: 62px;
     }
 }
 
@@ -333,6 +528,34 @@ button {
 
         .mat-divider {
             margin-top: 8px;
+        }
+    }
+
+    .history-code-editor {
+        margin-top: 4px;
+        border: 1px solid colors.$light-purple;
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+
+        tp-code-editor {
+            display: block;
+
+            ::ng-deep code-editor {
+                .cm-editor {
+                    max-height: 120px;
+                    overflow: auto;
+                    scrollbar-width: thin;
+                }
+
+                .cm-scroller {
+                    overflow: auto;
+                }
+
+                .cm-content {
+                    min-height: 56px;
+                }
+            }
         }
     }
 

@@ -22,6 +22,7 @@
             "tsConfig": "tsconfig.app.json",
             "assets": [
                 "src/assets",
+                "src/site.webmanifest",
                 {
                     "glob": "**/*",
                     "input": "./node_modules/typedb-web-common/src/fonts",

@@ -1,0 +1,9 @@
+<tp-modal dialogTitle="Rename tab">
+  <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
+    <tp-form-input type="text" [form]="form" field="name" label="Tab name" [focusInitial]="true" />
+    <tp-form-actions
+      [cancellable]="true" submitText="Rename" [isSubmitting]="isSubmitting$ | async"
+      buttonIdPrefix="renameTabModal" (cancel)="close()"
+    />
+  </tp-form>
+</tp-modal>

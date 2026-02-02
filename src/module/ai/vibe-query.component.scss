@@ -39,6 +39,10 @@ $card-header-height: 44px;
         ::ng-deep .cm-editor {
             border-radius: shapes.$border-radius-small;
         }
+
+        ::ng-deep .cm-content {
+            min-height: 56px;
+        }
     }
 }
 

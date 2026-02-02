@@ -5,11 +5,11 @@
  */
 
 import { CodeEditor } from "@acrodata/code-editor";
-import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output } from "@angular/core";
 import { TypeQL, typeqlAutocompleteExtension } from "../codemirror-lang-typeql";
 import { basicDark } from "./theme";
 import { Extension, Prec } from "@codemirror/state";
-import { keymap } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
 import { startCompletion } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
 import { FormControl, ReactiveFormsModule } from "@angular/forms";
@@ -20,7 +20,10 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
     styleUrls: ["code-editor.component.scss"],
     standalone: true,
     imports: [CodeEditor, ReactiveFormsModule],
-}) export class CodeEditorComponent {
+    host: {
+        '[class.has-scrollbar]': 'hasScrollbar'
+    }
+}) export class CodeEditorComponent implements AfterViewInit, OnDestroy {
 
     @Input() keymap: Extension = Prec.highest(keymap.of([
         { key: "Alt-Space", run: startCompletion, preventDefault: true },
@@ -34,7 +37,48 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
     protected readonly TypeQL = TypeQL;
     protected readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
 
+    // Workaround for WKWebView IME input issues on macOS (Tauri)
+    // Only applied when running in Tauri to avoid breaking dead keys/IME in browsers
+    private readonly wkWebViewFix = EditorView.domEventHandlers({
+        keydown: (event, view) => {
+            // Only handle printable characters that WKWebView fails to input
+            if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                const transaction = view.state.replaceSelection(event.key);
+                view.dispatch(transaction);
+                event.preventDefault();
+                return true;
+            }
+            return false;
+        }
+    });
+
+    private readonly isTauriMac = !!(window as any).__TAURI_INTERNALS__ && navigator.platform.startsWith('Mac');
+
+    get extensions(): Extension[] {
+        const baseExtensions = [this.codeEditorTheme, TypeQL(), typeqlAutocompleteExtension(), this.keymap];
+        return this.isTauriMac ? [...baseExtensions, this.wkWebViewFix] : baseExtensions;
+    }
+
     ran = false;
+    copied = false;
+    hasScrollbar = false;
+    private resizeObserver?: ResizeObserver;
+
+    constructor(private elementRef: ElementRef<HTMLElement>) {}
+
+    ngAfterViewInit() {
+        const scroller = this.elementRef.nativeElement.querySelector('.cm-scroller');
+        if (scroller) {
+            this.resizeObserver = new ResizeObserver(() => {
+                this.hasScrollbar = scroller.scrollHeight > scroller.clientHeight;
+            });
+            this.resizeObserver.observe(scroller);
+        }
+    }
+
+    ngOnDestroy() {
+        this.resizeObserver?.disconnect();
+    }
 
     async onRunButtonClick() {
         this.ran = true;
@@ -44,5 +88,17 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
         setTimeout(() => {
             this.ran = false;
         }, 3000);
+    }
+
+    async onCopyButtonClick() {
+        try {
+            await navigator.clipboard.writeText(this.formControlProp.value);
+            this.copied = true;
+            setTimeout(() => {
+                this.copied = false;
+            }, 3000);
+        } catch (err) {
+            console.error('Failed to copy code:', err);
+        }
     }
 }

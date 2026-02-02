@@ -78,10 +78,27 @@ tp-form.form {
 
 .help-input-row {
     display: flex;
+    align-items: flex-start;
     gap: 8px;
 
     mat-form-field {
         flex: 1;
+    }
+
+    > .help-tooltip-button {
+        cursor: pointer;
+        color: colors.$grey;
+        font-size: 18px;
+        padding: 8px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        border-radius: shapes.$border-radius-small;
+
+        &:hover {
+            background: colors.$secondary-purple;
+            color: colors.$white;
+        }
     }
 }
 

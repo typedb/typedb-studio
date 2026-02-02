@@ -14,7 +14,7 @@ import { fromPromiseWithRetry, requireValue } from "../framework/util/observable
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { AppData } from "./app-data.service";
 import {
-    ApiOkResponse, ApiResponse, Database, isApiErrorResponse, isOkResponse, QueryResponse, TransactionType,
+    ApiOkResponse, ApiResponse, Database, isApiErrorResponse, isOkResponse, QueryOptions, QueryResponse, TransactionType,
     TypeDBHttpDriver, User, VersionResponse
 } from "@typedb/driver-http";
 import { FormBuilder } from "@angular/forms";
@@ -297,11 +297,11 @@ export class DriverState {
         ), lockId);
     }
 
-    query(query: string): Observable<ApiResponse<QueryResponse>> {
+    query(query: string, queryOptions?: QueryOptions): Observable<ApiResponse<QueryResponse>> {
         if (this.autoTransactionEnabled$.value) {
-            return this.autoQuery(query);
+            return this.autoQuery(query, queryOptions);
         } else {
-            return this.manualQuery(query);
+            return this.manualQuery(query, queryOptions);
         }
     }
 
@@ -312,13 +312,13 @@ export class DriverState {
      *
      * Only logs the final successful action to history (not failed retry attempts).
      */
-    private autoQuery(query: string): Observable<ApiResponse<QueryResponse>> {
+    private autoQuery(query: string, queryOptions?: QueryOptions): Observable<ApiResponse<QueryResponse>> {
         const queryAction = queryRunActionOf(query);
         const databaseName = this.requireDatabase().name;
 
         return this.queryTypeDetector.runWithAutoType(
             query,
-            (transactionType: TransactionType) => this.executeOneShotQuery(query, databaseName, transactionType)
+            (transactionType: TransactionType) => this.executeOneShotQuery(query, databaseName, transactionType, queryOptions)
         ).pipe(
             tap(({ result }) => {
                 this.updateActionResult(queryAction, result);
@@ -339,11 +339,11 @@ export class DriverState {
      * Uses oneShotQuery which handles the full transaction lifecycle in one call.
      * Commits for write/schema transactions, closes for read transactions.
      */
-    private executeOneShotQuery(query: string, databaseName: string, transactionType: TransactionType): Observable<ApiResponse<QueryResponse>> {
+    private executeOneShotQuery(query: string, databaseName: string, transactionType: TransactionType, queryOptions?: QueryOptions): Observable<ApiResponse<QueryResponse>> {
         const driver = this.requireDriver();
         const shouldCommit = transactionType !== "read";
 
-        return fromPromiseWithRetry(() => driver.oneShotQuery(query, shouldCommit, databaseName, transactionType)).pipe(
+        return fromPromiseWithRetry(() => driver.oneShotQuery(query, shouldCommit, databaseName, transactionType, undefined, queryOptions)).pipe(
             tap((res) => {
                 if (isApiErrorResponse(res)) throw res;
             }),
@@ -353,7 +353,7 @@ export class DriverState {
     /**
      * Execute a query in manual mode using the existing open transaction.
      */
-    private manualQuery(query: string): Observable<ApiResponse<QueryResponse>> {
+    private manualQuery(query: string, queryOptions?: QueryOptions): Observable<ApiResponse<QueryResponse>> {
         let queryRunAction: QueryRunAction;
         const driver = this.requireDriver();
         const lockId = uuid();
@@ -366,7 +366,7 @@ export class DriverState {
                 this._actionLog$.next(queryRunAction);
             }),
             switchMap((res) => {
-                return fromPromiseWithRetry(() => driver.query(res.ok.transactionId, query));
+                return fromPromiseWithRetry(() => driver.query(res.ok.transactionId, query, queryOptions));
             }),
             tap((res) => this.updateActionResult(queryRunAction, res)),
             tap(() => {

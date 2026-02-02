@@ -1,5 +1,8 @@
 # Agent Instructions for TypeDB Studio
 
+TypeDB Studio is an interactive visual environment for working with TypeDB.
+It is an Angular app whose source code lives under the `src` directory.
+
 ## Submodule Dependencies
 
 **typedb-web** is a Git submodule dependency used via pnpm workspace:

@@ -8,12 +8,13 @@ import { AsyncPipe, Location } from "@angular/common";
 import { Component, OnInit } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCheckboxModule } from "@angular/material/checkbox";
+import { MatDialog } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { DriverParams, isApiErrorResponse, isBasicParams } from "@typedb/driver-http";
-import { CONNECTION_STRING_PLACEHOLDER, ConnectionConfig, connectionUrl, parseConnectionUrlOrNull } from "../../../concept/connection";
+import { CONNECTION_STRING_PLACEHOLDER, ConnectionConfig, connectionString, parseConnectionStringOrNull } from "../../../concept/connection";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
 import { ADDRESS, NAME, USERNAME } from "../../../framework/util/url-params";
@@ -25,10 +26,16 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { AbstractControl, FormBuilder, FormControl, ReactiveFormsModule, ValidatorFn } from "@angular/forms";
 import { BehaviorSubject, combineLatest, filter, first, map, tap } from "rxjs";
 import { FormActionsComponent, FormComponent, FormInputComponent, FormOption, FormToggleGroupComponent, requiredValidator } from "../../../framework/form";
+import { ConnectionStringEditorDialogComponent } from "./connection-string-editor-dialog/connection-string-editor-dialog.component";
 
-const connectionUrlValidator: ValidatorFn = (control: AbstractControl<string>) => {
-    if (parseConnectionUrlOrNull(control.value)) return null;
-    else return { errorText: `Format: typedb://username:password@address` };
+const connectionStringValidator: ValidatorFn = (control: AbstractControl<string>) => {
+    const params = parseConnectionStringOrNull(control.value);
+    if (!params) return { errorText: `Format: typedb://username:password@address` };
+    const addresses = isBasicParams(params) ? params.addresses : params.translatedAddresses.map(x => x.external);
+    if (addresses.some(addr => !addr.startsWith(`http://`) && !addr.startsWith(`https://`))) {
+        return { errorText: `Address must include http:// or https://` };
+    }
+    return null;
 };
 
 const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
@@ -86,7 +93,7 @@ export class ConnectionCreatorComponent {
     readonly form = this.formBuilder.group({
         name: ["", []],
         advancedConfigActive: [this.appData.preferences.connection.showAdvancedConfigByDefault(), [requiredValidator]],
-        url: ["", [requiredValidator, connectionUrlValidator]],
+        url: ["", [requiredValidator, connectionStringValidator]],
         saveConnectionDetails: [false, [requiredValidator]],
     });
     // TODO: support multiple addresses
@@ -100,7 +107,7 @@ export class ConnectionCreatorComponent {
     constructor(
         private formBuilder: FormBuilder, private appData: AppData,
         private driver: DriverState, private snackbar: SnackbarService, private location: Location,
-        private router: Router, route: ActivatedRoute,
+        private router: Router, route: ActivatedRoute, private dialog: MatDialog,
     ) {
         (window as any).connectionCreator = this;
 
@@ -120,7 +127,7 @@ export class ConnectionCreatorComponent {
     private updateAdvancedConfigOnUrlChanges() {
         combineLatest([this.form.controls.url.valueChanges]).pipe(
             filter(([url]) => !this.form.controls.name.dirty && !!url),
-            map(([url]) => parseConnectionUrlOrNull(url!)),
+            map(([url]) => parseConnectionStringOrNull(url!)),
             filter(params => !!params),
             map(params => params!)
         ).subscribe((params) => {
@@ -145,7 +152,7 @@ export class ConnectionCreatorComponent {
             tap((params) => {
                 if (!params.addresses[0]?.length || !params.username) return;
             }),
-            map((params) => connectionUrl(params)),
+            map((params) => connectionString(params)),
         ).subscribe(url => {
             this.form.patchValue({ url }, { emitEvent: false });
         });
@@ -169,7 +176,7 @@ export class ConnectionCreatorComponent {
 
     private buildConnectionConfigOrNull(): ConnectionConfig | null {
         if (this.form.invalid || !this.form.value.url) return null;
-        const connectionParams = parseConnectionUrlOrNull(this.form.value.url);
+        const connectionParams = parseConnectionStringOrNull(this.form.value.url);
         if (!connectionParams) return null;
         return new ConnectionConfig({
             name: this.form.value.name || ConnectionConfig.autoName(connectionParams),
@@ -212,6 +219,16 @@ export class ConnectionCreatorComponent {
 
     cancel() {
         this.router.navigate(["/"]);
+    }
+
+    openConnectionStringEditor() {
+        const dialogRef = this.dialog.open(ConnectionStringEditorDialogComponent);
+        dialogRef.afterClosed().subscribe((result: string | undefined) => {
+            if (result) {
+                this.form.patchValue({ url: result });
+                this.form.controls.url.markAsDirty();
+            }
+        });
     }
 
     private connectionNameUniqueValidator(control: AbstractControl<string>) {

@@ -1,0 +1,49 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "colors";
+@use "shapes";
+
+tp-form {
+    display: block;
+}
+
+mat-form-field {
+    width: 100%;
+}
+
+.preview-section {
+    margin-top: 16px;
+    padding: 16px;
+    background: colors.$secondary-purple;
+    border-radius: shapes.$border-radius;
+    border: shapes.$border;
+}
+
+.preview-label {
+    display: block;
+    margin-bottom: 8px;
+    color: colors.$grey;
+    font-size: 12px;
+    line-height: 12px;
+    font-style: italic;
+}
+
+.preview-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preview-text {
+    flex: 1;
+    color: colors.$white;
+    font-family: monospace;
+    font-size: 14px;
+    padding: 8px 0;
+    word-break: break-all;
+    user-select: all;
+}

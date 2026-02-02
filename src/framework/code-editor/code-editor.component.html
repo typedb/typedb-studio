@@ -1,5 +1,8 @@
-<code-editor [extensions]="[codeEditorTheme, TypeQL(), typeqlAutocompleteExtension(), keymap]"
+<code-editor [extensions]="extensions"
              [formControl]="formControlProp"/>
 <div class="copy-overlay" [class.visible]="runOverlayVisible" (click)="onRunButtonClick()">
   <i [class]="ran ? 'fal fa-check' : 'fal fa-play'"></i>
+</div>
+<div class="copy-overlay" [class.visible]="runOverlayVisible" (click)="onCopyButtonClick()">
+  <i [class]="copied ? 'fal fa-check' : 'fal fa-copy'"></i>
 </div>
