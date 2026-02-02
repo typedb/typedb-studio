@@ -173,3 +173,9 @@
     width: 0;
     height: 0;
 }
+
+.menu-content {
+    mat-divider {
+        margin: 4px 8px;
+    }
+}

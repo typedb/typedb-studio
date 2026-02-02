@@ -245,12 +245,15 @@
 
 <mat-menu #queryTabContextMenu="matMenu" [overlapTrigger]="false">
   <ng-template matMenuContent let-tab="tab" let-index="index">
-    <button mat-menu-item (click)="closeQueryTab($event, index)">Close</button>
-    <button mat-menu-item (click)="closeOtherQueryTabs(tab)">Close Others</button>
-    <button mat-menu-item (click)="closeQueryTabsToRight(tab)">Close to the Right</button>
-    <button mat-menu-item (click)="closeAllQueryTabs()">Close All</button>
-    <mat-divider></mat-divider>
-    <button mat-menu-item (click)="togglePinQueryTab(tab)">{{ tab?.pinned ? 'Unpin' : 'Pin' }}</button>
-    <button mat-menu-item (click)="openRenameTabDialog(tab)">Rename</button>
+    <span class="menu-content">
+      <button mat-menu-item (click)="closeQueryTab($event, index)">Close</button>
+      <button mat-menu-item (click)="closeOtherQueryTabs(tab)">Close Others</button>
+      <button mat-menu-item (click)="closeQueryTabsToRight(tab)">Close to the Right</button>
+      <button mat-menu-item (click)="closeAllQueryTabs()">Close All</button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="togglePinQueryTab(tab)">{{ tab?.pinned ? 'Unpin' : 'Pin' }}</button>
+      <button mat-menu-item (click)="duplicateQueryTab(tab)">Duplicate</button>
+      <button mat-menu-item (click)="openRenameTabDialog(tab)">Rename</button>
+    </span>
   </ng-template>
 </mat-menu>

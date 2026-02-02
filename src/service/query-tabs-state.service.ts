@@ -234,6 +234,24 @@ export class QueryTabsState {
         this.openTabs$.next(newTabs);
     }
 
+    duplicateTab(tab: QueryTab): QueryTab {
+        const tabs = this.openTabs$.value;
+        const index = tabs.indexOf(tab);
+        const insertIndex = index === -1 ? tabs.length : index + 1;
+
+        const newTab: QueryTab = {
+            id: crypto.randomUUID(),
+            name: `${tab.name} (copy)`,
+            query: tab.query,
+        };
+
+        const newTabs = [...tabs];
+        newTabs.splice(insertIndex, 0, newTab);
+        this.openTabs$.next(newTabs);
+        this.selectedTabIndex$.next(insertIndex);
+        return newTab;
+    }
+
     updateTabQuery(tabId: string, query: string) {
         const tabs = this.openTabs$.value;
         const index = tabs.findIndex(t => t.id === tabId);
