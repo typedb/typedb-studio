@@ -29,4 +29,15 @@
     &.has-scrollbar .copy-overlay + .copy-overlay {
         right: 58px;
     }
+
+    // Show overlays on hover
+    .copy-overlay.visible {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    &:hover .copy-overlay.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
