@@ -19,6 +19,14 @@
           </div>
           <div class="flex-spacer"></div>
           @if (state.queryTypeControl.value === 'code') {
+            <div class="row-limit-control">
+              <label>Limit:</label>
+              <mat-select [formControl]="state.rowLimitControl" panelClass="row-limit-panel">
+                @for (option of state.rowLimitOptions; track option.value) {
+                  <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
+              </mat-select>
+            </div>
             <button mat-stroked-button [disabled]="!(state.runEnabled$ | async)"
                     [matTooltip]="(state.runTooltip$ | async) || ''" matTooltipPosition="below"
                     [matTooltipShowDelay]="(state.runDisabledReason$ | async) ? 0 : 500" (click)="runQuery()">

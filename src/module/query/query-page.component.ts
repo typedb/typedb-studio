@@ -43,6 +43,7 @@ import { keymap } from "@codemirror/view";
 import { startCompletion } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
 import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
+import { MatSelectModule } from "@angular/material/select";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
 
 @Component({
@@ -53,7 +54,7 @@ import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-win
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, ResizableDirective,
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
-        MatMenuModule, SchemaToolWindowComponent, VibeQueryComponent, CodeEditorComponent, ActionDurationPipe,
+        MatMenuModule, MatSelectModule, SchemaToolWindowComponent, VibeQueryComponent, CodeEditorComponent, ActionDurationPipe,
     ]
 })
 export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {

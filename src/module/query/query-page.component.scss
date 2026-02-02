@@ -127,8 +127,45 @@ i.fa-xmark {
 }
 
 .card-header {
-    h5, mat-button-toggle-group, button {
+    h5, mat-button-toggle-group, button, .row-limit-control {
         z-index: 10;
+    }
+}
+
+.row-limit-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    label {
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    mat-select {
+        width: 100px;
+        height: 32px;
+        padding: 0 12px;
+        border: 1px solid colors.$light-purple;
+        border-radius: shapes.$border-radius-small;
+        background: colors.$deep-purple;
+        --mat-select-trigger-text-size: 14px;
+
+        ::ng-deep {
+            .mat-mdc-select-trigger {
+                height: 100%;
+                display: flex;
+                align-items: center;
+            }
+
+            .mat-mdc-select-value,
+            .mat-mdc-select-value-text,
+            .mat-mdc-select-min-line {
+                white-space: nowrap !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+            }
+        }
     }
 }
 
