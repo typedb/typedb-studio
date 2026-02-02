@@ -9,7 +9,7 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, O
 import { TypeQL, typeqlAutocompleteExtension } from "../codemirror-lang-typeql";
 import { basicDark } from "./theme";
 import { Extension, Prec } from "@codemirror/state";
-import { keymap } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
 import { startCompletion } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
 import { FormControl, ReactiveFormsModule } from "@angular/forms";
@@ -36,6 +36,28 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
     readonly codeEditorTheme = basicDark;
     protected readonly TypeQL = TypeQL;
     protected readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
+
+    // Workaround for WKWebView IME input issues on macOS (Tauri)
+    // Only applied when running in Tauri to avoid breaking dead keys/IME in browsers
+    private readonly wkWebViewFix = EditorView.domEventHandlers({
+        keydown: (event, view) => {
+            // Only handle printable characters that WKWebView fails to input
+            if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                const transaction = view.state.replaceSelection(event.key);
+                view.dispatch(transaction);
+                event.preventDefault();
+                return true;
+            }
+            return false;
+        }
+    });
+
+    private readonly isTauriMac = !!(window as any).__TAURI_INTERNALS__ && navigator.platform.startsWith('Mac');
+
+    get extensions(): Extension[] {
+        const baseExtensions = [this.codeEditorTheme, TypeQL(), typeqlAutocompleteExtension(), this.keymap];
+        return this.isTauriMac ? [...baseExtensions, this.wkWebViewFix] : baseExtensions;
+    }
 
     ran = false;
     copied = false;
