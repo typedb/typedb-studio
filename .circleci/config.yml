@@ -426,7 +426,7 @@ jobs:
             tar -xf ghr_v0.16.2_linux_amd64.tar.gz
             ghr_v0.16.2_linux_amd64/ghr -t ${REPO_GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} \
               -r ${CIRCLE_PROJECT_REPONAME} -n "TypeDB Studio $(cat VERSION)" -b "$(cat ./RELEASE_NOTES_LATEST.md)" \
-              -c ${CIRCLE_SHA1} -delete $(cat VERSION)
+              -c ${CIRCLE_SHA1} -delete -draft $(cat VERSION)
 
   deploy-brew:
     executor: linux-x86_64
