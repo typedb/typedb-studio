@@ -186,6 +186,13 @@ export interface PersistedInstanceDetailTab {
 
 export type PersistedDataTab = PersistedTypeTableTab | PersistedInstanceDetailTab;
 
+export interface PersistedQueryTab {
+    id: string;
+    name: string;
+    query: string;
+    pinned?: boolean;
+}
+
 interface DataExplorerTabsData {
     /** Maps database name to its persisted tabs */
     databases: {
@@ -235,6 +242,47 @@ class DataExplorerTabs {
         const data = this.readStorage();
         delete data.databases[databaseName];
         return this.writeStorage(data);
+    }
+}
+
+const QUERY_TABS = "queryTabs";
+
+interface QueryTabsData {
+    tabs: PersistedQueryTab[];
+    selectedTabIndex: number;
+}
+
+const INITIAL_QUERY_TABS: QueryTabsData = {
+    tabs: [],
+    selectedTabIndex: 0,
+};
+
+function parseQueryTabsData(obj: Object | null): QueryTabsData {
+    return Object.assign({}, INITIAL_QUERY_TABS, obj) as QueryTabsData;
+}
+
+class QueryTabs {
+    constructor(private storage: StorageService) {
+        if (this.storage.isAccessible && this.readStorage() == null) {
+            this.writeStorage(INITIAL_QUERY_TABS);
+        }
+    }
+
+    private readStorage(): QueryTabsData {
+        if (!this.storage.isAccessible) return INITIAL_QUERY_TABS;
+        return this.storage.read<QueryTabsData>(QUERY_TABS, parseQueryTabsData);
+    }
+
+    private writeStorage(data: QueryTabsData): StorageWriteResult {
+        return this.storage.write(QUERY_TABS, data);
+    }
+
+    getTabs(): { tabs: PersistedQueryTab[]; selectedTabIndex: number } {
+        return this.readStorage();
+    }
+
+    setTabs(tabs: PersistedQueryTab[], selectedTabIndex: number): StorageWriteResult {
+        return this.writeStorage({ tabs, selectedTabIndex });
     }
 }
 
@@ -312,6 +360,7 @@ export class AppData {
     readonly connections = new Connections(this.storage);
     readonly preferences = new Preferences(this.storage);
     readonly dataExplorerTabs = new DataExplorerTabs(this.storage);
+    readonly queryTabs = new QueryTabs(this.storage);
 
     constructor(private storage: StorageService) {
     }

@@ -94,11 +94,13 @@
 
 <mat-menu #tabContextMenu="matMenu" [overlapTrigger]="false">
   <ng-template matMenuContent let-tab="tab" let-index="index">
-    <button mat-menu-item (click)="closeTab($event, index)">Close</button>
-    <button mat-menu-item (click)="closeOtherTabs(tab)">Close Others</button>
-    <button mat-menu-item (click)="closeTabsToRight(tab, index)">Close to the Right</button>
-    <button mat-menu-item (click)="closeAllTabs()">Close All</button>
-    <mat-divider></mat-divider>
-    <button mat-menu-item (click)="togglePinTab(tab)">{{ tab?.pinned ? 'Unpin' : 'Pin' }}</button>
+    <span class="menu-content">
+      <button mat-menu-item (click)="closeTab($event, index)">Close</button>
+      <button mat-menu-item (click)="closeOtherTabs(tab)">Close Others</button>
+      <button mat-menu-item (click)="closeTabsToRight(tab, index)">Close to the Right</button>
+      <button mat-menu-item (click)="closeAllTabs()">Close All</button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="togglePinTab(tab)">{{ tab?.pinned ? 'Unpin' : 'Pin' }}</button>
+    </span>
   </ng-template>
 </mat-menu>

@@ -17,6 +17,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
+import { MatTabsModule } from "@angular/material/tabs";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { Prec } from "@codemirror/state";
@@ -32,14 +33,16 @@ import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.direc
 import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
 import { QueryPageState, QueryType } from "../../service/query-page-state.service";
+import { QueryTab, QueryTabsState } from "../../service/query-tabs-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
 import { VibeQueryComponent } from "../ai/vibe-query.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
+import { RenameTabDialogComponent, RenameTabDialogData } from "./rename-tab-dialog/rename-tab-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { keymap } from "@codemirror/view";
 import { startCompletion } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
-import { MatMenuModule } from "@angular/material/menu";
+import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatSelectModule } from "@angular/material/select";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
 
@@ -50,7 +53,7 @@ import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-win
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, ResizableDirective,
-        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
+        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
         MatMenuModule, MatSelectModule, SchemaToolWindowComponent, VibeQueryComponent, CodeEditorComponent, ActionDurationPipe,
     ]
 })
@@ -61,12 +64,19 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild("logTextarea") logTextarea?: ElementRef<HTMLTextAreaElement>;
     @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
+    @ViewChild("queryTabContextMenuTrigger") queryTabContextMenuTrigger!: MatMenuTrigger;
 
     state = inject(QueryPageState);
     driver = inject(DriverState);
+    queryTabsState = inject(QueryTabsState);
     private appData = inject(AppData);
     private snackbar = inject(SnackbarService);
     private dialog = inject(MatDialog);
+
+    // Query tab context menu state
+    queryTabContextMenuPosition = { x: 0, y: 0 };
+    queryTabContextMenuTab: QueryTab | null = null;
+    queryTabContextMenuTabIndex = 0;
 
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
@@ -130,7 +140,80 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     runQuery() {
-        this.state.runQuery(this.state.queryEditorControl.value);
+        this.state.runCurrentTabQuery();
+    }
+
+    // Query tab methods
+    onQueryTabChange(index: number) {
+        this.queryTabsState.selectTab(index);
+    }
+
+    newQueryTab() {
+        this.queryTabsState.newTab();
+    }
+
+    closeQueryTab(event: Event, tabIndex: number) {
+        event.stopPropagation();
+        const tab = this.queryTabsState.openTabs$.value[tabIndex];
+        if (tab) {
+            this.queryTabsState.closeTab(tab);
+        }
+    }
+
+    openQueryTabContextMenu(event: MouseEvent, tab: QueryTab, index: number) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.queryTabContextMenuPosition = { x: event.clientX, y: event.clientY };
+        this.queryTabContextMenuTab = tab;
+        this.queryTabContextMenuTabIndex = index;
+        this.queryTabContextMenuTrigger.menuData = { tab, index };
+        this.queryTabContextMenuTrigger.openMenu();
+
+        setTimeout(() => {
+            const activeElement = document.activeElement as HTMLElement;
+            if (activeElement?.classList.contains("mat-mdc-menu-item")) {
+                activeElement.blur();
+            }
+        });
+    }
+
+    onQueryTabAuxClick(event: MouseEvent, index: number) {
+        if (event.button === 1) {
+            event.preventDefault();
+            this.closeQueryTab(event, index);
+        }
+    }
+
+    closeOtherQueryTabs(tab: QueryTab) {
+        this.queryTabsState.closeOtherTabs(tab);
+    }
+
+    closeQueryTabsToRight(tab: QueryTab) {
+        this.queryTabsState.closeTabsToRight(tab);
+    }
+
+    closeAllQueryTabs() {
+        this.queryTabsState.closeAllTabs();
+    }
+
+    togglePinQueryTab(tab: QueryTab) {
+        this.queryTabsState.togglePinTab(tab);
+    }
+
+    openRenameTabDialog(tab: QueryTab) {
+        const dialogRef = this.dialog.open(RenameTabDialogComponent, {
+            data: { currentName: tab.name } as RenameTabDialogData,
+            width: "400px",
+        });
+        dialogRef.afterClosed().subscribe((newName: string | undefined) => {
+            if (newName) {
+                this.queryTabsState.renameTab(tab, newName);
+            }
+        });
+    }
+
+    duplicateQueryTab(tab: QueryTab) {
+        this.queryTabsState.duplicateTab(tab);
     }
 
     getHistoryEntryControl(entry: QueryRunAction): FormControl<string> {
