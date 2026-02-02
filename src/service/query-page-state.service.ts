@@ -21,9 +21,21 @@ import {
     ApiResponse, Attribute, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse, Value
 } from "@typedb/driver-http";
 import { VibeQueryState } from "./vibe-query-state.service";
+import { AppData, RowLimit } from "./app-data.service";
 
 export type QueryType = "code" | "chat";
 export type OutputType = "raw" | "log" | "table" | "graph";
+export { RowLimit } from "./app-data.service";
+
+export const ROW_LIMIT_OPTIONS: { value: RowLimit; label: string }[] = [
+    { value: 10, label: "10" },
+    { value: 50, label: "50" },
+    { value: 100, label: "100" },
+    { value: 500, label: "500" },
+    { value: 1000, label: "1000" },
+    { value: 5000, label: "5000" },
+    { value: "none", label: "No limit" },
+];
 
 const NO_SERVER_CONNECTED = `No server connected`;
 const NO_DATABASE_SELECTED = `No database selected`;
@@ -39,6 +51,7 @@ const RUN_KEY_BINDING = detectOS() === "mac" ? "⌘+Enter" : "Ctrl+Enter";
 export class QueryPageState {
 
     private driver = inject(DriverState);
+    private appData = inject(AppData);
     vibeQuery = inject(VibeQueryState);
     schema = inject(SchemaState);
     private snackbar = inject(SnackbarService);
@@ -48,6 +61,8 @@ export class QueryPageState {
     queryEditorControl = new FormControl("", {nonNullable: true});
     outputTypeControl = new FormControl("log" as OutputType, { nonNullable: true });
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
+    rowLimitControl = new FormControl(this.appData.preferences.queryRowLimit(), { nonNullable: true });
+    rowLimitOptions = ROW_LIMIT_OPTIONS;
     readonly logOutput = new LogOutputState();
     readonly tableOutput = new TableOutputState();
     readonly graphOutput = new GraphOutputState();
@@ -75,13 +90,16 @@ export class QueryPageState {
             if (disabled) this.outputTypeControl.disable();
             else this.outputTypeControl.enable();
         });
+        this.rowLimitControl.valueChanges.subscribe((value) => {
+            this.appData.preferences.setQueryRowLimit(value);
+        });
     }
-
-    // TODO: LIMIT 1000 by default, configurable
 
     runQuery(query: string) {
         this.initialiseOutput(query);
-        this.driver.query(query).subscribe({
+        const rowLimit = this.rowLimitControl.value;
+        const queryOptions = rowLimit !== "none" ? { answerCountLimit: rowLimit } : undefined;
+        this.driver.query(query, queryOptions).subscribe({
             next: (res) => {
                 this.outputQueryResponse(res);
             },
@@ -262,27 +280,32 @@ export class LogOutputState {
                 if (res.ok.queryType === "write") lines.push(`Finished writes. Printing rows...`);
                 else lines.push(`Printing rows...`);
 
-                if (res.ok.answers.length) {
-                    const varNames = Object.keys(res.ok.answers[0]).sort();
+                const answers = res.ok.answers;
+
+                if (answers.length) {
+                    const varNames = Object.keys(answers[0]).sort();
                     if (varNames.length) {
-                        const columnNames = Object.keys(res.ok.answers[0].data);
+                        const columnNames = Object.keys(answers[0].data);
                         const variableColumnWidth = columnNames.length > 0 ? Math.max(...columnNames.map(s => s.length)) : 0;
-                        res.ok.answers.forEach((rowAnswer, idx) => {
+                        answers.forEach((rowAnswer, idx) => {
                             if (idx == 0) lines.push(this.lineDashSeparator(variableColumnWidth));
                             lines.push(this.conceptRowDisplayString(rowAnswer.data, variableColumnWidth))
                         })
                     } else lines.push(`No columns to show.`);
                 }
 
-                lines.push(`Finished. Total rows: ${res.ok.answers.length}`);
+                lines.push(`Finished. Total rows: ${answers.length}`);
                 break;
             }
             case "conceptDocuments": {
                 lines.push(`Finished ${res.ok.queryType} query compilation and validation...`);
                 if (res.ok.queryType === "write") lines.push(`Finished writes. Printing documents...`);
                 else lines.push(`Printing documents...`);
-                res.ok.answers.forEach(x => lines.push(this.conceptDocumentDisplayString(x)));
-                lines.push(`Finished. Total documents: ${res.ok.answers.length}`);
+
+                const answers = res.ok.answers;
+                answers.forEach(x => lines.push(this.conceptDocumentDisplayString(x)));
+
+                lines.push(`Finished. Total documents: ${answers.length}`);
                 break;
             }
             default:
@@ -360,7 +383,7 @@ export class TableOutputState {
             }
             case "conceptRows": {
                 const answers = res.ok.answers;
-                if (res.ok.answers.length) {
+                if (answers.length) {
                     const varNames = Object.keys(answers[0].data);
                     if (varNames.length) {
                         this.status = "ok";

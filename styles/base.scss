@@ -694,3 +694,12 @@ tp-gcp-marketplace-integration, tp-aws-marketplace-integration, tp-azure-marketp
 app-drag-handle span {
     display: none !important;
 }
+
+// Row limit dropdown panel
+.row-limit-panel.mat-mdc-select-panel {
+    min-width: 100px !important;
+
+    .mat-mdc-option .mdc-list-item__primary-text {
+        white-space: nowrap;
+    }
+}

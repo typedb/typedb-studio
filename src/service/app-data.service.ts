@@ -10,6 +10,8 @@ import { OperationMode } from "../concept/transaction";
 import { SchemaToolWindowState, SidebarState, sidebarStates, Tool, tools } from "../concept/view-state";
 import { StorageService, StorageWriteResult } from "./storage.service";
 
+export type RowLimit = 10 | 50 | 100 | 500 | 1000 | 5000 | "none";
+
 function isObjectWithFields<FIELD extends string>(obj: unknown, fields: FIELD[]): obj is { [K in typeof fields[number]]: unknown } {
     return obj != null && typeof obj === "object" && fields.every(x => x in obj);
 }
@@ -154,6 +156,7 @@ interface PreferencesData {
         showAdvancedConfigByDefault: boolean;
     };
     transactionMode: OperationMode;
+    queryRowLimit: RowLimit;
 }
 
 const DATA_EXPLORER_TABS = "dataExplorerTabs";
@@ -244,6 +247,7 @@ const INITIAL_PREFERENCES: PreferencesData = {
         showAdvancedConfigByDefault: true,
     },
     transactionMode: "auto",
+    queryRowLimit: 100,
 };
 
 class Preferences {
@@ -282,6 +286,17 @@ class Preferences {
     setTransactionMode(value: OperationMode): StorageWriteResult {
         const prefs = this.readStorage()!;
         prefs.transactionMode = value;
+        return this.writeStorage(prefs);
+    }
+
+    queryRowLimit(): RowLimit {
+        const prefs = this.readStorage();
+        return prefs?.queryRowLimit ?? INITIAL_PREFERENCES.queryRowLimit;
+    }
+
+    setQueryRowLimit(value: RowLimit): StorageWriteResult {
+        const prefs = this.readStorage()!;
+        prefs.queryRowLimit = value;
         return this.writeStorage(prefs);
     }
 }
