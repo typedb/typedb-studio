@@ -18,7 +18,7 @@ import { MatTableModule } from "@angular/material/table";
 import { MatTree, MatTreeModule } from "@angular/material/tree";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { combineLatest, map } from "rxjs";
-import { MatMenuModule } from "@angular/material/menu";
+import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { SchemaToolWindowState, SchemaTreeNode, SchemaTreeConceptNode } from "../../../service/schema-tool-window-state.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { AppData } from "../../../service/app-data.service";
@@ -27,6 +27,9 @@ import { MatDialog } from "@angular/material/dialog";
 import { SchemaTextDialogComponent } from "../text-dialog/schema-text-dialog.component";
 import { SchemaConcept } from "../../../service/schema-state.service";
 import { DataEditorState } from "../../../service/data-editor-state.service";
+import { QueryTabsState } from "../../../service/query-tabs-state.service";
+import { QueryPageState } from "../../../service/query-page-state.service";
+import { SnackbarService } from "../../../service/snackbar.service";
 
 @Component({
     selector: "ts-schema-tool-window",
@@ -44,8 +47,13 @@ export class SchemaToolWindowComponent implements AfterViewInit {
     @Input() mode: "schema" | "data" = "schema";
     @HostBinding("class") readonly clazz = "schema-pane";
     @ViewChild("tree") tree!: MatTree<any>;
+    @ViewChild("conceptContextMenuTrigger") conceptContextMenuTrigger!: MatMenuTrigger;
     refreshSchemaTooltip$ = this.state.schema.interactionDisabledReason$.pipe(map(x => x ? `` : `Refresh`));
     actionsButtonTooltip$ = this.state.schema.interactionDisabledReason$.pipe(map(x => x ? x : `More actions`));
+
+    // Concept context menu state
+    conceptContextMenuPosition = { x: 0, y: 0 };
+    conceptContextMenuConcept: SchemaConcept | null = null;
 
     constructor(
         public state: SchemaToolWindowState,
@@ -53,6 +61,9 @@ export class SchemaToolWindowComponent implements AfterViewInit {
         private appData: AppData,
         private dialog: MatDialog,
         private dataEditorState: DataEditorState,
+        private queryTabsState: QueryTabsState,
+        private queryPageState: QueryPageState,
+        private snackbar: SnackbarService,
     ) {
         // Subscribe to active tab changes to highlight the corresponding type in the schema tree
         combineLatest([
@@ -166,5 +177,39 @@ export class SchemaToolWindowComponent implements AfterViewInit {
     isNodeHighlighted(node: SchemaTreeNode): boolean {
         if (node.nodeKind !== "concept") return false;
         return node.concept.label === this.state.highlightedConceptLabel$.value;
+    }
+
+    openConceptContextMenu(event: MouseEvent, concept: SchemaConcept) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.conceptContextMenuPosition = { x: event.clientX, y: event.clientY };
+        this.conceptContextMenuConcept = concept;
+        this.conceptContextMenuTrigger.menuData = { concept };
+        this.conceptContextMenuTrigger.openMenu();
+
+        setTimeout(() => {
+            const activeElement = document.activeElement as HTMLElement;
+            if (activeElement?.classList.contains("mat-mdc-menu-item")) {
+                activeElement.blur();
+            }
+        });
+    }
+
+    async copyTypeLabel(concept: SchemaConcept) {
+        try {
+            await navigator.clipboard.writeText(concept.label);
+            this.snackbar.success("Type label copied", { duration: 2500 });
+        } catch (e) {
+            console.warn(e);
+        }
+    }
+
+    loadInstances(concept: SchemaConcept) {
+        const typeLabel = concept.label;
+        const query = `match $x isa ${typeLabel}; fetch { $x.* };`;
+        const tab = this.queryTabsState.newTab();
+        this.queryTabsState.renameTab(tab, `${typeLabel} instances`);
+        this.queryTabsState.getTabControl(tab).setValue(query);
+        this.queryPageState.runQuery(query);
     }
 }

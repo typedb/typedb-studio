@@ -25,7 +25,7 @@
     <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="16" [class]="treeNodeClass(node)" [class.highlighted]="isNodeHighlighted(node)" [class.clickable]="node.nodeKind === 'concept' || node.nodeKind === 'root'">
       <!-- use a disabled button to provide padding for tree leaf -->
       <button matIconButton disabled></button>
-      <div class="tree-node-content" (click)="onNodeClick(node, $event)">
+      <div class="tree-node-content" (click)="onNodeClick(node, $event)" (contextmenu)="node.nodeKind === 'concept' && openConceptContextMenu($event, node.concept)">
         <ts-schema-tree-node [data]="node"/>
       </div>
     </mat-tree-node>
@@ -38,7 +38,7 @@
           {{tree.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
         </mat-icon>
       </button>
-      <div class="tree-node-content" (click)="onNodeClick(node, $event)">
+      <div class="tree-node-content" (click)="onNodeClick(node, $event)" (contextmenu)="node.nodeKind === 'concept' && openConceptContextMenu($event, node.concept)">
         <ts-schema-tree-node [data]="node"/>
       </div>
     </mat-tree-node>
@@ -96,4 +96,23 @@
       <span>View schema text</span>
     </button>
   </span>
+</mat-menu>
+
+<!-- Concept context menu trigger -->
+<div class="concept-context-menu-trigger"
+     [style.left.px]="conceptContextMenuPosition.x"
+     [style.top.px]="conceptContextMenuPosition.y"
+     [matMenuTriggerFor]="conceptContextMenu"
+     #conceptContextMenuTrigger="matMenuTrigger">
+</div>
+
+<mat-menu #conceptContextMenu="matMenu" [overlapTrigger]="false">
+  <ng-template matMenuContent let-concept="concept">
+    <span class="menu-content">
+      <button mat-menu-item (click)="copyTypeLabel(concept)">Copy type label</button>
+      @if (mode !== 'data') {
+        <button mat-menu-item (click)="loadInstances(concept)">Load instances</button>
+      }
+    </span>
+  </ng-template>
 </mat-menu>
