@@ -1,0 +1,29 @@
+<div class="message" [class.user]="message.sender === 'user'" [class.ai]="message.sender === 'ai'">
+  <div class="message-content">
+    @if (message.isProcessing) {
+      <div class="typing-indicator">
+        <tp-spinner [size]="20"/>
+      </div>
+    } @else {
+      <div class="message-text">
+        @for (part of message.content; track $index; let i = $index) {
+          @if (part.type === 'text') {
+            <markdown>{{ part.content }}</markdown>
+          } @else if (part.type === 'code') {
+            <tp-code-editor
+              [formControlProp]="part.formControl"
+              [runOverlayVisible]="true"
+              (runButtonClick)="onRunClick(i, part.formControl.value)"/>
+          } @else if (part.type === 'output') {
+            <ts-chat-output [outputState]="part.outputState"/>
+          }
+        }
+        @if (message.error) {
+          <div class="error-message">
+            <i class="fa-solid fa-triangle-exclamation"></i>{{ message.error }}
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

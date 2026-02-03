@@ -1,0 +1,103 @@
+<ts-page-scaffold pageAvailability="ready">
+  <article class="chat-page" style="display: flex; flex-direction: row;">
+    <!-- Left sidebar: Schema tool window -->
+    <ts-schema-tool-window
+      resizable
+      [percent]="20"
+      [mode]="'schema'"
+      [title]="'Chat'"
+    />
+
+    <!-- Main area: Chat interface -->
+    <div class="main-content" resizable [percent]="80">
+      @if ((driver.status$ | async) === "disconnected") {
+        <div class="placeholder-container">
+          <button mat-flat-button routerLink="/connect">
+            <i class="fa-light fa-bolt"></i><span>Connect TypeDB server</span>
+          </button>
+        </div>
+      } @else if (!(driver.database$ | async)) {
+        <div class="placeholder-container">
+          <button mat-flat-button (click)="openSelectDatabaseDialog()">
+            <i class="fa-light fa-database"></i><span>Select database</span>
+          </button>
+        </div>
+      } @else {
+        <div class="chat-container">
+          <!-- Header -->
+          <div class="chat-header">
+            <div class="flex-spacer"></div>
+            <div class="row-limit-control">
+              <label>Limit:</label>
+              <mat-select [formControl]="state.rowLimitControl" panelClass="row-limit-panel">
+                @for (option of state.rowLimitOptions; track option.value) {
+                  <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
+              </mat-select>
+            </div>
+          </div>
+
+          <!-- Messages area -->
+          <div class="messages" #messagesContainer>
+            @for (msg of state.messages$ | async; track trackMessageById($index, msg)) {
+              <ts-chat-message [message]="msg" (runQuery)="onRunQuery($event)"/>
+            }
+
+            @if ((state.messages$ | async)?.length === 0) {
+              <div class="welcome-content">
+                <i class="fa-thin fa-sparkles"></i>
+                <h3>Query with AI assistant</h3>
+                <aside class="text-muted">Powered by OpenAI. Chat data is shared for model training purposes. Rate limits apply.<br/>AI code generation can make mistakes, so double-check it.</aside>
+              </div>
+            }
+
+            <div class="spacer"></div>
+          </div>
+
+          <!-- Input area -->
+          <div class="input-container">
+            @let messages = state.messages$ | async;
+            <form (submit)="onSubmit($event)" class="input-box">
+              <div class="input-top">
+                <textarea [formControl]="state.promptControl"
+                         [disabled]="!!(state.isProcessing$ | async)"
+                         placeholder="Describe what to query next"
+                         rows="1"
+                         cdkTextareaAutosize
+                         cdkAutosizeMinRows="1"
+                         cdkAutosizeMaxRows="6"
+                         #promptInput
+                         (keydown.enter)="onInputKeyDownEnter($any($event))">
+                </textarea>
+              </div>
+              <div class="input-bottom">
+                <div class="flex-spacer"></div>
+                <div class="input-actions">
+                  <button type="button" class="commands-button" [matMenuTriggerFor]="commandsMenu" matTooltip="Commands">
+                    <i class="fa-light fa-slash-forward"></i>
+                  </button>
+                  <mat-menu #commandsMenu="matMenu" class="commands-menu">
+                    <button mat-menu-item [disabled]="!messages?.length || messages!.length <= 4" (click)="compactChat()">
+                      <i class="fa-light fa-compress"></i>
+                      <span>Compact</span>
+                    </button>
+                    <button mat-menu-item [disabled]="!messages?.length" (click)="clearChat()">
+                      <i class="fa-light fa-trash-can"></i>
+                      <span>Clear</span>
+                    </button>
+                  </mat-menu>
+                  <button type="submit"
+                          class="send-button"
+                          [disabled]="!state.promptControl.value || !(driver.database$ | async) || (state.isProcessing$ | async)">
+                      <i class="fa-light fa-arrow-up"></i>
+                      <span>Send</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+    </div>
+  </article>
+</ts-page-scaffold>

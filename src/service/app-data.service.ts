@@ -92,6 +92,7 @@ class ViewState {
             case "query": return "/query";
             case "schema": return "/schema";
             case "data": return "/data";
+            case "chat": return "/chat";
             case null: return "/welcome";
         }
     }
@@ -286,6 +287,69 @@ class QueryTabs {
     }
 }
 
+const CHAT_CONVERSATIONS = "chatConversations";
+
+export interface PersistedChatMessage {
+    id: string;
+    sender: 'user' | 'ai';
+    timestamp: string;
+    content: Array<{
+        type: 'text' | 'code';
+        content?: string;
+        language?: string;
+    }>;
+}
+
+interface ChatConversationsData {
+    databases: {
+        [databaseName: string]: {
+            messages: PersistedChatMessage[];
+        };
+    };
+}
+
+const INITIAL_CHAT_CONVERSATIONS: ChatConversationsData = {
+    databases: {},
+};
+
+function parseChatConversationsData(obj: Object | null): ChatConversationsData {
+    return Object.assign({}, INITIAL_CHAT_CONVERSATIONS, obj) as ChatConversationsData;
+}
+
+class ChatConversations {
+    constructor(private storage: StorageService) {
+        if (this.storage.isAccessible && this.readStorage() == null) {
+            this.writeStorage(INITIAL_CHAT_CONVERSATIONS);
+        }
+    }
+
+    private readStorage(): ChatConversationsData {
+        if (!this.storage.isAccessible) return INITIAL_CHAT_CONVERSATIONS;
+        return this.storage.read<ChatConversationsData>(CHAT_CONVERSATIONS, parseChatConversationsData);
+    }
+
+    private writeStorage(data: ChatConversationsData): StorageWriteResult {
+        return this.storage.write(CHAT_CONVERSATIONS, data);
+    }
+
+    getConversation(databaseName: string): PersistedChatMessage[] | null {
+        const data = this.readStorage();
+        return data.databases[databaseName]?.messages || null;
+    }
+
+    setConversation(databaseName: string, messages: PersistedChatMessage[]): StorageWriteResult {
+        const data = this.readStorage();
+        data.databases[databaseName] = { messages };
+        return this.writeStorage(data);
+    }
+
+    clearConversation(databaseName: string): StorageWriteResult {
+        const data = this.readStorage();
+        delete data.databases[databaseName];
+        return this.writeStorage(data);
+    }
+}
+
 function parsePreferencesData(obj: Object | null): PreferencesData {
     return Object.assign({}, INITIAL_PREFERENCES, obj) as PreferencesData;
 }
@@ -361,6 +425,7 @@ export class AppData {
     readonly preferences = new Preferences(this.storage);
     readonly dataExplorerTabs = new DataExplorerTabs(this.storage);
     readonly queryTabs = new QueryTabs(this.storage);
+    readonly chatConversations = new ChatConversations(this.storage);
 
     constructor(private storage: StorageService) {
     }

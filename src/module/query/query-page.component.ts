@@ -32,10 +32,9 @@ import { ActionDurationPipe } from "../../framework/util/action-duration.pipe";
 import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
-import { QueryPageState, QueryType } from "../../service/query-page-state.service";
+import { QueryPageState } from "../../service/query-page-state.service";
 import { QueryTab, QueryTabsState } from "../../service/query-tabs-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
-import { VibeQueryComponent } from "../ai/vibe-query.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { RenameTabDialogComponent, RenameTabDialogData } from "./rename-tab-dialog/rename-tab-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
@@ -54,7 +53,7 @@ import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-win
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, ResizableDirective,
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
-        MatMenuModule, MatSelectModule, SchemaToolWindowComponent, VibeQueryComponent, CodeEditorComponent, ActionDurationPipe,
+        MatMenuModule, MatSelectModule, SchemaToolWindowComponent, CodeEditorComponent, ActionDurationPipe,
     ]
 })
 export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -93,7 +92,6 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         indentWithTab,
     ]));
     copiedLog = false;
-    sentLogToAI = false;
     logHasScrollbar = false;
     private logResizeObserver?: ResizeObserver;
 
@@ -258,18 +256,6 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         }
     }
 
-    queryTypeIconClass(queryType: QueryType): string {
-        switch (queryType) {
-            case "code": return "fa-light fa-code";
-            case "chat": return "fa-light fa-wand-magic-sparkles";
-            default: return "";
-        }
-    }
-
-    clearChat() {
-        this.state.clearChat();
-    }
-
     async copyLog() {
         try {
             await navigator.clipboard.writeText(this.state.logOutput.control.value);
@@ -282,17 +268,6 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         } catch (err) {
             console.error('Failed to copy results log:', err);
         }
-    }
-
-    sendLogToAI() {
-        this.sentLogToAI = true;
-        this.state.vibeQuery.promptControl.patchValue(this.state.logOutput.control.value);
-        setTimeout(() => {
-            this.state.vibeQuery.submitPrompt();
-        });
-        setTimeout(() => {
-            this.sentLogToAI = false;
-        }, 3000);
     }
 
     readonly isQueryRun = isQueryRun;
