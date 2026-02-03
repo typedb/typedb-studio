@@ -53,3 +53,17 @@ a.selected .linkspan {
         border-bottom-right-radius: 2px;
     }
 }
+
+// Sparkles icon - gradient when not selected, green when selected/hovered
+a:not(.selected):not(:hover) i.fa-wand-magic-sparkles {
+    background: linear-gradient(105deg, #F96480 0%, #FDD257 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+a.selected i.fa-wand-magic-sparkles,
+a:hover i.fa-wand-magic-sparkles {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+}

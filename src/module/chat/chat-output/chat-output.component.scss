@@ -1,0 +1,176 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "colors";
+@use "shapes";
+
+.chat-output-container {
+    margin-top: 0.75rem;
+}
+
+.output-header {
+    padding: 0.5rem 0.5rem 0 0;
+    background-color: transparent;
+
+    mat-button-toggle-group {
+        height: 28px;
+
+        ::ng-deep .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
+            padding: 0 12px;
+            line-height: 28px;
+            text-transform: lowercase;
+        }
+    }
+
+    ::ng-deep mat-button-toggle-group,
+    ::ng-deep .mat-button-toggle-group {
+        border-radius: shapes.$border-radius-small shapes.$border-radius-small 0 0 !important;
+        border-bottom: none !important;
+    }
+
+    ::ng-deep .mat-button-toggle:first-child .mat-button-toggle-button {
+        border-top-left-radius: shapes.$border-radius-small !important;
+        border-bottom-left-radius: 0 !important;
+    }
+
+    ::ng-deep .mat-button-toggle:last-child .mat-button-toggle-button {
+        border-top-right-radius: shapes.$border-radius-small !important;
+        border-bottom-right-radius: 0 !important;
+    }
+
+    ::ng-deep .mat-button-toggle .mat-button-toggle-button {
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+    }
+}
+
+.output-content {
+    height: 400px;
+    overflow: auto;
+    scrollbar-width: thin;
+    border: shapes.$border;
+    border-top-left-radius: 0;
+    border-top-right-radius: shapes.$border-radius-small;
+    border-bottom-right-radius: shapes.$border-radius-small;
+    border-bottom-left-radius: shapes.$border-radius-small;
+    background-color: colors.$deep-purple;
+}
+
+.output-view {
+    &.invisible {
+        visibility: hidden;
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+    }
+}
+
+.log-view, .raw-view {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    mat-form-field {
+        width: 100%;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+
+        ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+            display: none;
+        }
+
+        ::ng-deep .mat-mdc-form-field-flex {
+            height: 100%;
+        }
+
+        ::ng-deep .mat-mdc-text-field-wrapper {
+            background: transparent;
+            padding: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        ::ng-deep .mdc-notched-outline {
+            display: none;
+        }
+
+        ::ng-deep .mat-mdc-form-field-infix {
+            height: 100%;
+        }
+    }
+
+    .output-text-box {
+        font-family: var(--font-family-code);
+        line-height: 1.5;
+        resize: none;
+        height: 100% !important;
+        padding: 0.75rem;
+        background: transparent;
+        color: var(--fg1);
+        scrollbar-width: thin;
+    }
+}
+
+.table-view {
+    table {
+        width: 100%;
+
+        th, td {
+            line-height: 1.5;
+            padding: 0.5rem 0.75rem;
+        }
+
+        th {
+            background-color: var(--bg3);
+            color: var(--fg2);
+            font-weight: var(--font-weight-semi-bold);
+        }
+
+        td {
+            border-bottom: 1px solid var(--bg4);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+    }
+}
+
+.graph-view {
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .graph-container {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    .status-text {
+        z-index: 1;
+    }
+}
+
+.status-text-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
+    padding: 1rem;
+}
+
+.status-text {
+    color: var(--fg2);
+    text-align: center;
+}

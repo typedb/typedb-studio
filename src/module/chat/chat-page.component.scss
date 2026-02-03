@@ -1,0 +1,255 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "@angular/material" as mat;
+@use "colors";
+@use "shapes";
+
+:host {
+    display: block;
+    height: 100%;
+}
+
+.chat-page {
+    height: calc(100% - 86px);
+}
+
+.main-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.placeholder-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        i {
+            font-size: 16px;
+        }
+    }
+}
+
+.chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+
+    // Code editors get a lighter background
+    ::ng-deep tp-code-editor .cm-editor {
+        background-color: colors.$deep-purple;
+    }
+
+    ::ng-deep tp-code-editor .cm-gutters {
+        background-color: colors.$deep-purple;
+    }
+}
+
+.chat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--bg4);
+    background-color: var(--bg1);
+    min-height: 44px;
+
+    .row-limit-control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        label {
+            font-size: 13px;
+            color: var(--fg2);
+        }
+
+        mat-select {
+            width: 80px;
+
+            ::ng-deep .mat-mdc-select-trigger {
+                font-size: 13px;
+            }
+        }
+    }
+}
+
+.messages {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    padding: 16px;
+    padding-right: 16px;
+
+    ts-chat-message,
+    .welcome-content,
+    .spacer {
+        width: 100%;
+        max-width: 720px;
+    }
+
+    .spacer {
+        min-height: 16px;
+        flex: 1;
+    }
+}
+
+.welcome-content {
+    width: 100%;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    text-wrap: balance;
+    z-index: 10;
+
+    i {
+        height: 48px;
+        width: 48px;
+        font-size: 48px;
+        @include colors.text-gradient(#F96480, #FDD257);
+    }
+
+    h3 {
+        font-size: 24px;
+        line-height: 1.5;
+        margin-top: 1rem;
+    }
+
+    aside {
+        margin-top: 0.5rem;
+        font-size: 12px;
+    }
+}
+
+.input-container {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: center;
+}
+
+.input-box {
+    width: 100%;
+    max-width: 720px;
+    background: rgba(colors.$light-purple, 0.4);
+    border: 1px solid colors.$light-purple;
+    border-radius: shapes.$border-radius;
+    overflow: hidden;
+    transition: border-color 150ms;
+
+    &:focus-within {
+        border-color: var(--primary);
+    }
+}
+
+.input-top {
+    padding: 12px;
+
+    textarea {
+        width: 100%;
+        background: transparent;
+        border: none;
+        outline: none;
+        resize: none;
+        font-family: inherit;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--fg1);
+        scrollbar-width: none;
+        min-height: 21px;
+
+        &::placeholder {
+            color: rgba(colors.$secondary-light-grey, 0.8);
+            font-style: italic;
+        }
+
+        &:disabled {
+            opacity: 0.6;
+        }
+    }
+}
+
+.input-bottom {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    .flex-spacer {
+        flex: 1;
+    }
+}
+
+.input-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.commands-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: shapes.$border-radius-small;
+    background: transparent;
+    color: var(--fg2);
+    cursor: pointer;
+    transition: background-color 150ms, color 150ms;
+
+    i {
+        font-size: 14px;
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--fg1);
+    }
+}
+
+.send-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: shapes.$border-radius-small;
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--fg1);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 150ms;
+
+    i {
+        font-size: 13px;
+    }
+
+    &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+}

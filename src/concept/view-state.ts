@@ -9,7 +9,7 @@ import { SchemaTreeLinkNode } from "../service/schema-tool-window-state.service"
 export const sidebarStates = ["expanded", "collapsed"] as const;
 export type SidebarState = typeof sidebarStates[number];
 
-export const tools = ["query", "schema", "data"] as const;
+export const tools = ["query", "schema", "data", "chat"] as const;
 export type Tool = typeof tools[number];
 
 export interface SchemaToolWindowState {

@@ -21,10 +21,8 @@ import { SnackbarService } from "./snackbar.service";
 import {
     ApiResponse, Attribute, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse, Value
 } from "@typedb/driver-http";
-import { VibeQueryState } from "./vibe-query-state.service";
 import { AppData, RowLimit } from "./app-data.service";
 
-export type QueryType = "code" | "chat";
 export type OutputType = "raw" | "log" | "table" | "graph";
 export { RowLimit } from "./app-data.service";
 
@@ -53,13 +51,10 @@ export class QueryPageState {
 
     private driver = inject(DriverState);
     private appData = inject(AppData);
-    vibeQuery = inject(VibeQueryState);
     schema = inject(SchemaState);
     private snackbar = inject(SnackbarService);
     queryTabs = inject(QueryTabsState);
 
-    queryTypeControl = new FormControl("code" as QueryType, {nonNullable: true});
-    queryTypes: QueryType[] = ["code", "chat"];
     outputTypeControl = new FormControl("log" as OutputType, { nonNullable: true });
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
     rowLimitControl = new FormControl(this.appData.preferences.queryRowLimit(), { nonNullable: true });
@@ -155,10 +150,6 @@ export class QueryPageState {
                 });
             },
         });
-    }
-
-    clearChat() {
-        this.vibeQuery.messages$.next([]);
     }
 
     private initialiseOutput(query: string) {

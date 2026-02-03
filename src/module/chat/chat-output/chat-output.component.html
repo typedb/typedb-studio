@@ -1,0 +1,86 @@
+<div class="chat-output-container">
+  <div class="output-header">
+    <mat-button-toggle-group [formControl]="outputState.outputTypeControl">
+      @for (outputType of outputTypes; track outputType) {
+        <mat-button-toggle [value]="outputType">{{ outputType }}</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+  </div>
+
+  <div class="output-content">
+    <!-- Log View -->
+    <div class="output-view log-view" [hidden]="outputState.outputTypeControl.value !== 'log'">
+      <mat-form-field class="code-text-field">
+        <textarea class="output-text-box" [formControl]="outputState.log.control" readonly matInput></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Table View -->
+    @if (outputState.outputTypeControl.value === 'table') {
+      <div class="output-view table-view">
+        @switch (outputState.table.status) {
+          @case ("ok") {
+            <table mat-table [dataSource]="outputState.table.data$" matSort (matSortChange)="outputState.table.handleMatSortChange($event)">
+              @for (column of outputState.table.columns; track column) {
+                <ng-container [matColumnDef]="column">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ column }}</th>
+                  <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
+                </ng-container>
+              }
+              <tr mat-header-row *matHeaderRowDef="outputState.table.displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: outputState.table.displayedColumns"></tr>
+            </table>
+          }
+          @case ("error") {
+            <div class="status-text-container"><p class="status-text">This query returned an error.</p></div>
+          }
+          @case ("running") {
+            <div class="status-text-container"><p class="status-text">Running query...</p></div>
+          }
+          @case ("answerlessQueryType") {
+            <div class="status-text-container"><p class="status-text">Query completed. This query type does not return answers.</p></div>
+          }
+          @case ("answerOutputDisabled") {
+            <div class="status-text-container"><p class="status-text">Query completed. Answer output is disabled.</p></div>
+          }
+          @case ("noColumns") {
+            <div class="status-text-container"><p class="status-text">Query completed. No columns were returned.</p></div>
+          }
+          @case ("noAnswers") {
+            <div class="status-text-container"><p class="status-text">Query completed. No answers were returned.</p></div>
+          }
+        }
+      </div>
+    }
+
+    <!-- Graph View -->
+    <div class="output-view graph-view" [class]="outputState.outputTypeControl.value === 'graph' ? '' : 'invisible'">
+      <div class="graph-container" #graphViewRef></div>
+
+      @switch (outputState.graph.status) {
+        @case ("error") {
+          <p class="status-text">This query returned an error.</p>
+        }
+        @case ("running") {
+          <p class="status-text">Running query...</p>
+        }
+        @case ("graphlessQueryType") {
+          <p class="status-text">Query completed. This query type cannot be displayed as a graph.</p>
+        }
+        @case ("answerOutputDisabled") {
+          <p class="status-text">Query completed. Answer output is disabled.</p>
+        }
+        @case ("noAnswers") {
+          <p class="status-text">Query completed. No answers were returned.</p>
+        }
+      }
+    </div>
+
+    <!-- Raw View -->
+    <div class="output-view raw-view" [hidden]="outputState.outputTypeControl.value !== 'raw'">
+      <mat-form-field class="code-text-field">
+        <textarea class="output-text-box" [formControl]="outputState.raw.control" readonly matInput></textarea>
+      </mat-form-field>
+    </div>
+  </div>
+</div>
