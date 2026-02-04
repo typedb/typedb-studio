@@ -28,17 +28,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-
-    button {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
-        i {
-            font-size: 16px;
-        }
-    }
+    border: 3px dashed colors.$light-purple;
+    border-radius: shapes.$border-radius;
+    background: colors.$black;
 }
+
 
 .chat-container {
     flex: 1;
@@ -111,17 +105,15 @@
     }
 }
 
+.placeholder-content,
 .welcome-content {
-    width: 100%;
-    margin: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     text-wrap: balance;
-    z-index: 10;
 
-    i {
+    > i {
         height: 48px;
         width: 48px;
         font-size: 48px;
@@ -138,6 +130,24 @@
         margin-top: 0.5rem;
         font-size: 12px;
     }
+
+    button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 1.5rem;
+
+        i {
+            font-size: 16px;
+        }
+    }
+}
+
+.welcome-content {
+    width: 100%;
+    flex: 1;
+    justify-content: center;
+    z-index: 10;
 }
 
 .input-container {
