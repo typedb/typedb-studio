@@ -55,6 +55,12 @@
     ::ng-deep tp-code-editor .cm-gutters {
         background-color: colors.$deep-purple;
     }
+
+    // Always show code editor overlay buttons
+    ::ng-deep tp-code-editor .copy-overlay.visible {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+    }
 }
 
 .chat-header {
