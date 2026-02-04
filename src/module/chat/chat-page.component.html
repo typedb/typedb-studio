@@ -12,15 +12,25 @@
     <div class="main-content" resizable [percent]="80">
       @if ((driver.status$ | async) === "disconnected") {
         <div class="placeholder-container">
-          <button mat-flat-button routerLink="/connect">
-            <i class="fa-light fa-bolt"></i><span>Connect TypeDB server</span>
-          </button>
+          <div class="placeholder-content">
+            <i class="fa-thin fa-sparkles"></i>
+            <h3>Query with AI assistant</h3>
+            <aside class="text-muted">Powered by OpenAI. Chat data is shared for model training purposes. Rate limits apply.<br/>AI code generation can make mistakes, so double-check it.</aside>
+            <button mat-flat-button routerLink="/connect">
+              <i class="fa-light fa-bolt"></i><span>Connect TypeDB server</span>
+            </button>
+          </div>
         </div>
       } @else if (!(driver.database$ | async)) {
         <div class="placeholder-container">
-          <button mat-flat-button (click)="openSelectDatabaseDialog()">
-            <i class="fa-light fa-database"></i><span>Select database</span>
-          </button>
+          <div class="placeholder-content">
+            <i class="fa-thin fa-sparkles"></i>
+            <h3>Query with AI assistant</h3>
+            <aside class="text-muted">Powered by OpenAI. Chat data is shared for model training purposes. Rate limits apply.<br/>AI code generation can make mistakes, so double-check it.</aside>
+            <button mat-flat-button (click)="openSelectDatabaseDialog()">
+              <i class="fa-light fa-database"></i><span>Select database</span>
+            </button>
+          </div>
         </div>
       } @else {
         <div class="chat-container">
@@ -49,9 +59,9 @@
                 <h3>Query with AI assistant</h3>
                 <aside class="text-muted">Powered by OpenAI. Chat data is shared for model training purposes. Rate limits apply.<br/>AI code generation can make mistakes, so double-check it.</aside>
               </div>
+            } @else {
+              <div class="spacer"></div>
             }
-
-            <div class="spacer"></div>
           </div>
 
           <!-- Input area -->
