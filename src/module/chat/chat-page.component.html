@@ -38,7 +38,7 @@
           <div class="chat-header">
             <div class="flex-spacer"></div>
             <div class="row-limit-control">
-              <label>Limit:</label>
+              <label>Limit query results:</label>
               <mat-select [formControl]="state.rowLimitControl" panelClass="row-limit-panel">
                 @for (option of state.rowLimitOptions; track option.value) {
                   <mat-option [value]="option.value">{{ option.label }}</mat-option>
