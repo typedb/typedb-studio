@@ -111,6 +111,11 @@ export class StudioConverter implements ILogicalGraphConverter {
     }
 
     private maybeCreateEdge(answerIndex: number, edge: DataConstraintAny, label: string, from: DataVertex, to: DataVertex, queryFrom: ConstraintVertexOrSpecial, queryTo: ConstraintVertexOrSpecial) {
+        // Don't create edges if either vertex is unavailable
+        if (from.kind === "unavailable" || to.kind === "unavailable") {
+            return;
+        }
+
         if (this.shouldCreateEdge(edge, queryFrom, queryTo)) {
             let fromKey = this.put_vertex(answerIndex, from, queryFrom);
             let toKey = this.put_vertex(answerIndex, to, queryTo);
@@ -131,7 +136,7 @@ export class StudioConverter implements ILogicalGraphConverter {
     // Vertices
     put_vertex(answerIndex: number, vertex: DataVertex, queryVertex: ConstraintVertexOrSpecial): string {
         const key = vertexMapKey(vertex);
-        if (this.shouldCreateNode(queryVertex)) {
+        if (this.shouldCreateNode(queryVertex) && vertex.kind !== "unavailable") {
             this.createVertex(key, this.vertexAttributes(vertex))
         }
         return key;
@@ -257,11 +262,25 @@ export class StudioConverter implements ILogicalGraphConverter {
 }
 
 export function shouldCreateNode(structure: AnalyzedPipelineBackCompat, vertex: ConstraintVertexOrSpecial) {
-    return !(
-        (vertex.tag === "label" ||
-            (vertex.tag == "variable" && !structure.outputs.includes(vertex.id))
-        )
-    );
+    // Labels should not create nodes
+    if (vertex.tag === "label") {
+        return false;
+    }
+
+    // For variables, check if they're in outputs or if outputs is empty (show all)
+    if (vertex.tag === "variable") {
+        const outputs = structure.outputs || [];
+        // TODO: Remove this check once we drop support for TypeDB 3.7
+        // TypeDB 3.7 returns an empty outputs array, so we show all variables when outputs is empty
+        if (outputs.length === 0) {
+            return true;
+        }
+        // Otherwise, only show variables that are in outputs
+        return outputs.includes(vertex.id);
+    }
+
+    // For other vertex types (expression, functionCall, etc.), include them
+    return true;
 }
 
 export function shouldCreateEdge(structure: AnalyzedPipelineBackCompat, _edge: ConstraintBackCompat, from: ConstraintVertexOrSpecial, to: ConstraintVertexOrSpecial) {
