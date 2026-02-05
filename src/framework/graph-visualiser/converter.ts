@@ -111,6 +111,11 @@ export class StudioConverter implements ILogicalGraphConverter {
     }
 
     private maybeCreateEdge(answerIndex: number, edge: DataConstraintAny, label: string, from: DataVertex, to: DataVertex, queryFrom: ConstraintVertexOrSpecial, queryTo: ConstraintVertexOrSpecial) {
+        // Don't create edges if either vertex is unavailable
+        if (from.kind === "unavailable" || to.kind === "unavailable") {
+            return;
+        }
+
         if (this.shouldCreateEdge(edge, queryFrom, queryTo)) {
             let fromKey = this.put_vertex(answerIndex, from, queryFrom);
             let toKey = this.put_vertex(answerIndex, to, queryTo);
@@ -131,7 +136,7 @@ export class StudioConverter implements ILogicalGraphConverter {
     // Vertices
     put_vertex(answerIndex: number, vertex: DataVertex, queryVertex: ConstraintVertexOrSpecial): string {
         const key = vertexMapKey(vertex);
-        if (this.shouldCreateNode(queryVertex)) {
+        if (this.shouldCreateNode(queryVertex) && vertex.kind !== "unavailable") {
             this.createVertex(key, this.vertexAttributes(vertex))
         }
         return key;
@@ -256,35 +261,22 @@ export class StudioConverter implements ILogicalGraphConverter {
     }
 }
 
-function getSelectedVariables(structure: AnalyzedPipelineBackCompat): string[] {
-    // Check if structure has stages (new format) and look for select stage
-    if ('stages' in structure && Array.isArray(structure.stages)) {
-        const selectStage = structure.stages.find((stage: any) => stage.tag === 'select') as any;
-        if (selectStage && 'variables' in selectStage && Array.isArray(selectStage.variables)) {
-            return selectStage.variables;
-        }
-    }
-    // Fall back to outputs if available
-    return structure.outputs || [];
-}
-
 export function shouldCreateNode(structure: AnalyzedPipelineBackCompat, vertex: ConstraintVertexOrSpecial) {
     // Labels should not create nodes
     if (vertex.tag === "label") {
         return false;
     }
 
-    // For variables, check if they're selected/output
+    // For variables, check if they're in outputs or if outputs is empty (show all)
     if (vertex.tag === "variable") {
-        const selectedVars = getSelectedVariables(structure);
         const outputs = structure.outputs || [];
-
-        // Include node if it's in selected variables OR in outputs, OR if both are empty (show everything)
-        const isSelected = selectedVars.includes(vertex.id);
-        const isOutput = outputs.includes(vertex.id);
-        const showAll = selectedVars.length === 0 && outputs.length === 0;
-
-        return isSelected || isOutput || showAll;
+        // TODO: Remove this check once we drop support for TypeDB 3.7
+        // TypeDB 3.7 returns an empty outputs array, so we show all variables when outputs is empty
+        if (outputs.length === 0) {
+            return true;
+        }
+        // Otherwise, only show variables that are in outputs
+        return outputs.includes(vertex.id);
     }
 
     // For other vertex types (expression, functionCall, etc.), include them
