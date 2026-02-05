@@ -256,12 +256,39 @@ export class StudioConverter implements ILogicalGraphConverter {
     }
 }
 
+function getSelectedVariables(structure: AnalyzedPipelineBackCompat): string[] {
+    // Check if structure has stages (new format) and look for select stage
+    if ('stages' in structure && Array.isArray(structure.stages)) {
+        const selectStage = structure.stages.find((stage: any) => stage.tag === 'select') as any;
+        if (selectStage && 'variables' in selectStage && Array.isArray(selectStage.variables)) {
+            return selectStage.variables;
+        }
+    }
+    // Fall back to outputs if available
+    return structure.outputs || [];
+}
+
 export function shouldCreateNode(structure: AnalyzedPipelineBackCompat, vertex: ConstraintVertexOrSpecial) {
-    return !(
-        (vertex.tag === "label" ||
-            (vertex.tag == "variable" && !structure.outputs.includes(vertex.id))
-        )
-    );
+    // Labels should not create nodes
+    if (vertex.tag === "label") {
+        return false;
+    }
+
+    // For variables, check if they're selected/output
+    if (vertex.tag === "variable") {
+        const selectedVars = getSelectedVariables(structure);
+        const outputs = structure.outputs || [];
+
+        // Include node if it's in selected variables OR in outputs, OR if both are empty (show everything)
+        const isSelected = selectedVars.includes(vertex.id);
+        const isOutput = outputs.includes(vertex.id);
+        const showAll = selectedVars.length === 0 && outputs.length === 0;
+
+        return isSelected || isOutput || showAll;
+    }
+
+    // For other vertex types (expression, functionCall, etc.), include them
+    return true;
 }
 
 export function shouldCreateEdge(structure: AnalyzedPipelineBackCompat, _edge: ConstraintBackCompat, from: ConstraintVertexOrSpecial, to: ConstraintVertexOrSpecial) {
