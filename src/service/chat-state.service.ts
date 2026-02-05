@@ -319,19 +319,62 @@ export class ChatState {
 
     compactConversation(): void {
         const messages = this.messages$.value;
-        if (messages.length <= 4) return;
+        if (messages.length === 0) return;
 
-        // Remove output blocks from all messages except the last 4
-        const compacted = messages.map((msg, idx) => {
-            if (idx >= messages.length - 4) return msg;
-            return {
-                ...msg,
-                content: msg.content.filter(part => part.type !== 'output')
-            };
+        // Set processing state
+        this.isProcessing$.next(true);
+
+        // Convert to cloud message format (excluding output blocks)
+        const conversation: CloudChatMessage[] = messages.map((msg) => ({
+            role: msg.sender === "user" ? "user" : "assistant",
+            content: msg.content
+                .filter((chunk): chunk is MessagePartText | MessagePartCode => chunk.type !== 'output')
+                .map((chunk) => chunk.type === 'text' ? chunk.content : chunk.formControl.value)
+                .join("\n\n"),
+        }));
+
+        // Call backend to compact conversation using OpenAI Responses API
+        this.driver.getDatabaseSchemaText().pipe(
+            switchMap((res) => {
+                if (isOkResponse(res)) {
+                    return this.cloud.aiCompact({
+                        schema: res.ok,
+                        conversation
+                    });
+                }
+                else throw res;
+            }),
+        ).subscribe({
+            next: (response) => {
+                // Parse the compacted conversation back into ChatMessageData format
+                const compactedMessages: ChatMessageData[] = response.compactedConversation.map((cloudMsg) => {
+                    const parser = new StreamingMarkdownParser(this.formBuilder);
+                    const content = parser.parseChunk(cloudMsg.content);
+
+                    return {
+                        id: this.generateMessageId(),
+                        content,
+                        sender: cloudMsg.role === "user" ? "user" : "ai",
+                        timestamp: new Date(),
+                    };
+                });
+
+                this.messages$.next(compactedMessages);
+                this.persistConversation();
+                this.isProcessing$.next(false);
+            },
+            error: (err) => {
+                console.error('Compaction failed:', err);
+                // Fallback to simple output removal if backend fails
+                const compacted = messages.map((msg) => ({
+                    ...msg,
+                    content: msg.content.filter(part => part.type !== 'output')
+                }));
+                this.messages$.next(compacted);
+                this.persistConversation();
+                this.isProcessing$.next(false);
+            }
         });
-
-        this.messages$.next(compacted);
-        this.persistConversation();
     }
 
     clearConversation(): void {

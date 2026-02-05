@@ -78,6 +78,9 @@
 
         mat-select {
             width: 80px;
+            border: shapes.$border;
+            border-radius: shapes.$border-radius-small;
+            padding: 6px 12px;
 
             ::ng-deep .mat-mdc-select-trigger {
                 font-size: 13px;
