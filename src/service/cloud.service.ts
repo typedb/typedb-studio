@@ -20,6 +20,15 @@ export interface AIChatResponse {
     response: string;
 }
 
+export interface AICompactRequest {
+    schema: string;
+    conversation: ChatMessage[];
+}
+
+export interface AICompactResponse {
+    compactedConversation: ChatMessage[];
+}
+
 @Injectable({
     providedIn: "root",
 })
@@ -28,5 +37,9 @@ export class CloudService {
 
     aiChat(schema: string, conversation: ChatMessage[]): Observable<AIChatResponse> {
         return this.http.post<AIChatResponse>(`${environment.cloudUrl}/ai/chat`, { schema, conversation });
+    }
+
+    aiCompact(request: AICompactRequest): Observable<AICompactResponse> {
+        return this.http.post<AICompactResponse>(`${environment.cloudUrl}/ai/compact`, request);
     }
 }

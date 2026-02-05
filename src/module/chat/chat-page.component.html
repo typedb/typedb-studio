@@ -87,7 +87,7 @@
                     <i class="fa-light fa-slash-forward"></i>
                   </button>
                   <mat-menu #commandsMenu="matMenu" class="commands-menu">
-                    <button mat-menu-item [disabled]="!messages?.length || messages!.length <= 4" (click)="compactChat()">
+                    <button mat-menu-item [disabled]="!messages?.length" (click)="compactChat()">
                       <i class="fa-light fa-compress"></i>
                       <span>Compact</span>
                     </button>
