@@ -41,7 +41,7 @@
     "graphology-layout-forceatlas2": "0.10.1",
     "graphology-layout-noverlap": "0.4.2",
     "ngx-markdown": "20.1.0",
-    "posthog-js": "1.268.8",
+    "posthog-js": "1.343.1",
     "prismjs": "1.29.0",
     "rxjs": "~7.8.0",
     "sigma": "3.0.1",

@@ -174,7 +174,13 @@ export class QueryPageState {
         this.logOutput.appendBlankLine();
         this.logOutput.appendQueryResult(res);
         this.tableOutput.push(res);
-        this.graphOutput.push(res);
+        try {
+            this.graphOutput.push(res);
+        } catch (err) {
+            console.error("[Graph Output Error]", err);
+            this.graphOutput.status = "error";
+            this.snackbar.errorPersistent(`Failed to render graph visualization: ${err}`);
+        }
         this.rawOutput.push(JSON.stringify(res, null, 2));
     }
 
@@ -493,7 +499,15 @@ export class GraphOutputState {
     }
 
     push(res: ApiResponse<QueryResponse>) {
-        if (!this.canvasEl) throw `Missing canvas element`;
+        if (!this.canvasEl) {
+            const error = `Missing canvas element for graph visualization. The graph container may not be properly initialized in the DOM.`;
+            console.error("[GraphOutputState] Canvas element not assigned:", {
+                canvasEl: this.canvasEl,
+                visualiser: this.visualiser,
+                status: this.status,
+            });
+            throw error;
+        }
 
         if (isApiErrorResponse(res)) {
             this.status = "error";

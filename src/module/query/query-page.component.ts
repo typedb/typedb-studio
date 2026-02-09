@@ -22,7 +22,7 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { Prec } from "@codemirror/state";
 import { ResizableDirective } from "@hhangular/resizable";
-import { filter, map, startWith } from "rxjs";
+import { map, startWith } from "rxjs";
 import { CodeEditorComponent } from "../../framework/code-editor/code-editor.component";
 import { otherExampleLinter, TypeQL, typeqlAutocompleteExtension } from "../../framework/codemirror-lang-typeql";
 import { DriverAction, QueryRunAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
@@ -111,9 +111,12 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.graphViewRef.changes.pipe(
             map(x => x as QueryList<ElementRef<HTMLElement>>),
             startWith(this.graphViewRef),
-            filter(queryList => queryList.length > 0),
-            map(x => x.first.nativeElement),
-        ).subscribe((canvasEl) => {
+        ).subscribe((queryList) => {
+            if (queryList.length === 0) {
+                console.warn("[QueryPage] Graph canvas element not found in DOM. QueryList is empty.");
+                return;
+            }
+            const canvasEl = queryList.first.nativeElement;
             this.state.graphOutput.canvasEl = canvasEl;
         });
 
