@@ -65,34 +65,6 @@
     padding: 16px;
     position: relative;
     overflow: hidden;
-
-    &.query-pane::before {
-        content: '';
-        position: absolute;
-        width: 300%;
-        height: 300%;
-        top: -100%;
-        left: -100%;
-        background: radial-gradient(
-                circle at center,
-                colors.$light-purple 0%,
-                transparent 30%
-        );
-        opacity: 0.6;
-        animation: mobile-light-source 60s infinite ease-in-out;
-        z-index: 1;
-        pointer-events: none;
-        transform: translate(25%, 25%);
-    }
-
-    // Rest of your card styles
-    // ...
-
-    &.query-pane {
-        position: relative;
-        background: colors.$deep-purple;
-        z-index: 0; // Ensure this is lower than the pseudo-element
-    }
 }
 
 i.fa-xmark {
@@ -140,12 +112,13 @@ i.fa-xmark {
     label {
         font-size: 14px;
         white-space: nowrap;
+        color: colors.$grey;
     }
 
     mat-select {
-        width: 100px;
+        width: 80px;
         height: 32px;
-        padding: 0 12px;
+        padding: 0 10px;
         border: 1px solid colors.$light-purple;
         border-radius: shapes.$border-radius-small;
         background: colors.$deep-purple;
@@ -230,7 +203,7 @@ button {
     overflow: hidden;
     z-index: 10;
     border: 1px solid colors.$light-purple;
-    border-radius: shapes.$border-radius shapes.$border-radius 0 0;
+    border-radius: shapes.$border-radius;
     background: colors.$black;
 }
 
@@ -241,13 +214,65 @@ button {
     border-bottom: 1px solid colors.$light-purple;
 }
 
+.tab-scroll-button.mat-mdc-icon-button {
+    --mdc-icon-button-state-layer-size: 24px;
+    width: 24px;
+    height: 40px;
+    padding: 0;
+    border-radius: 0;
+    flex-shrink: 0;
+    display: none;
+    position: relative;
+
+    &::ng-deep .mat-mdc-button-touch-target {
+        height: 40px;
+        width: 24px;
+    }
+
+    &::ng-deep .mat-mdc-button-persistent-ripple {
+        border-radius: 0;
+    }
+
+    &.visible {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &.left {
+        border-right: 1px solid colors.$light-purple;
+    }
+
+    &.right {
+        border-left: 1px solid colors.$light-purple;
+    }
+
+    i {
+        font-size: 12px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        line-height: 1;
+        height: 12px;
+    }
+
+    &:hover {
+        background-color: rgba(colors.$light-purple, 0.3);
+    }
+}
+
 .query-tabs-scroll {
     display: flex;
     align-items: stretch;
     overflow-x: auto;
-    scrollbar-width: thin;
+    scrollbar-width: none;
     flex: 0 1 auto;
     height: 40px;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 .query-tab {
@@ -339,6 +364,19 @@ button {
 
     &:hover {
         background-color: rgba(colors.$light-purple, 0.3);
+    }
+}
+
+.query-tabs-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-right: 12px;
+    flex-shrink: 0;
+
+    button[mat-stroked-button] {
+        --mdc-outlined-button-container-height: 32px;
+        font-size: 14px;
     }
 }
 

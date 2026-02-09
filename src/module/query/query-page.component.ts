@@ -64,6 +64,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     @ViewChild("queryTabContextMenuTrigger") queryTabContextMenuTrigger!: MatMenuTrigger;
+    @ViewChild("tabsScrollContainer") tabsScrollContainer?: ElementRef<HTMLElement>;
 
     state = inject(QueryPageState);
     driver = inject(DriverState);
@@ -93,7 +94,10 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     ]));
     copiedLog = false;
     logHasScrollbar = false;
+    canScrollLeft = false;
+    canScrollRight = false;
     private logResizeObserver?: ResizeObserver;
+    private tabsScrollObserver?: ResizeObserver;
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
@@ -129,11 +133,52 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
             });
             this.logResizeObserver.observe(this.logTextarea.nativeElement);
         }
+
+        if (this.tabsScrollContainer) {
+            this.tabsScrollObserver = new ResizeObserver(() => {
+                this.updateTabsScrollState();
+            });
+            this.tabsScrollObserver.observe(this.tabsScrollContainer.nativeElement);
+        }
     }
 
     ngOnDestroy() {
         this.state.graphOutput.destroy();
         this.logResizeObserver?.disconnect();
+        this.tabsScrollObserver?.disconnect();
+    }
+
+    // Tab scroll methods
+    updateTabsScrollState() {
+        const el = this.tabsScrollContainer?.nativeElement;
+        if (!el) return;
+        this.canScrollLeft = el.scrollLeft > 0;
+        this.canScrollRight = el.scrollLeft < el.scrollWidth - el.clientWidth - 1;
+    }
+
+    onTabsScroll() {
+        this.updateTabsScrollState();
+    }
+
+    onTabsWheel(event: WheelEvent) {
+        const el = this.tabsScrollContainer?.nativeElement;
+        if (!el) return;
+        if (event.deltaY !== 0) {
+            event.preventDefault();
+            el.scrollLeft += event.deltaY;
+        }
+    }
+
+    scrollTabsLeft() {
+        const el = this.tabsScrollContainer?.nativeElement;
+        if (!el) return;
+        el.scrollBy({ left: -200, behavior: "smooth" });
+    }
+
+    scrollTabsRight() {
+        const el = this.tabsScrollContainer?.nativeElement;
+        if (!el) return;
+        el.scrollBy({ left: 200, behavior: "smooth" });
     }
 
     openSelectDatabaseDialog() {
@@ -151,6 +196,16 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     newQueryTab() {
         this.queryTabsState.newTab();
+        this.scrollTabsToEnd();
+    }
+
+    private scrollTabsToEnd() {
+        setTimeout(() => {
+            const el = this.tabsScrollContainer?.nativeElement;
+            if (!el) return;
+            // Scroll to maximum possible position
+            el.scrollLeft = el.scrollWidth;
+        }, 50);
     }
 
     closeQueryTab(event: Event, tabIndex: number) {
@@ -178,7 +233,13 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         });
     }
 
-    onQueryTabAuxClick(event: MouseEvent, index: number) {
+    onQueryTabMouseDown(event: MouseEvent) {
+        if (event.button === 1) {
+            event.preventDefault();
+        }
+    }
+
+    onQueryTabMouseUp(event: MouseEvent, index: number) {
         if (event.button === 1) {
             event.preventDefault();
             this.closeQueryTab(event, index);
