@@ -11,7 +11,7 @@ import { isOkResponse, isApiErrorResponse, ApiResponse, QueryResponse } from "@t
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { ChatMessage as CloudChatMessage, CloudService } from "./cloud.service";
 import { DriverState } from "./driver-state.service";
-import { AppData, RowLimit } from "./app-data.service";
+import { AppData, PersistedChatMessage, PersistedConversation, RowLimit } from "./app-data.service";
 import { LogOutputState, TableOutputState, GraphOutputState, RawOutputState, ROW_LIMIT_OPTIONS } from "./query-page-state.service";
 
 interface MessagePartText {
@@ -51,15 +51,12 @@ export interface ChatMessageData {
     error?: string;
 }
 
-export interface PersistedChatMessage {
+export interface ConversationSummary {
     id: string;
-    sender: 'user' | 'ai';
-    timestamp: string;
-    content: Array<{
-        type: 'text' | 'code';
-        content?: string;
-        language?: string;
-    }>;
+    title: string;
+    messageCount: number;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 class StreamingMarkdownParser {
@@ -128,6 +125,12 @@ function createOutputState(formBuilder: FormBuilder): OutputState {
     };
 }
 
+function truncateTitle(text: string, maxLen = 50): string {
+    const firstLine = text.split('\n')[0].trim();
+    if (firstLine.length <= maxLen) return firstLine || 'New conversation';
+    return firstLine.substring(0, maxLen - 3) + '...';
+}
+
 @Injectable({
     providedIn: "root",
 })
@@ -140,6 +143,8 @@ export class ChatState {
 
     messages$ = new BehaviorSubject<ChatMessageData[]>([]);
     isProcessing$ = new BehaviorSubject<boolean>(false);
+    conversations$ = new BehaviorSubject<ConversationSummary[]>([]);
+    selectedConversationId$ = new BehaviorSubject<string | null>(null);
     promptControl = new FormControl("", { nonNullable: true });
     rowLimitControl = new FormControl(this.appData.preferences.queryRowLimit(), { nonNullable: true });
     rowLimitOptions = ROW_LIMIT_OPTIONS;
@@ -151,16 +156,24 @@ export class ChatState {
         // Subscribe to database changes to load/save conversations
         this.driver.database$.subscribe((database) => {
             // Save current conversation before switching
-            if (this.currentDatabaseName) {
+            if (this.currentDatabaseName && this.selectedConversationId$.value) {
                 this.persistConversation();
             }
 
             this.currentDatabaseName = database?.name || null;
 
-            // Load conversation for new database
             if (this.currentDatabaseName) {
-                this.restoreFromPersistence();
+                this.refreshConversationList();
+                const selectedId = this.appData.chatConversations.getSelectedConversationId(this.currentDatabaseName);
+                if (selectedId) {
+                    this.selectConversation(selectedId);
+                } else {
+                    this.selectedConversationId$.next(null);
+                    this.messages$.next([]);
+                }
             } else {
+                this.conversations$.next([]);
+                this.selectedConversationId$.next(null);
                 this.messages$.next([]);
             }
         });
@@ -170,10 +183,98 @@ export class ChatState {
         return `msg_${Date.now()}_${++this.messageIdCounter}`;
     }
 
+    private refreshConversationList(): void {
+        if (!this.currentDatabaseName) return;
+        const persisted = this.appData.chatConversations.getConversationList(this.currentDatabaseName);
+        this.conversations$.next(persisted.map(c => ({
+            id: c.id,
+            title: c.title,
+            messageCount: c.messages.length,
+            createdAt: new Date(c.createdAt),
+            updatedAt: new Date(c.updatedAt),
+        })));
+    }
+
+    newConversation(): void {
+        if (!this.currentDatabaseName) return;
+
+        // Persist current conversation first (only if it has messages)
+        if (this.selectedConversationId$.value && this.messages$.value.length > 0) {
+            this.persistConversation();
+        }
+
+        this.destroyGraphVisualizers();
+
+        // Don't persist the new conversation yet — it will be persisted
+        // when the first message is sent (in submitPrompt/persistConversation)
+        const newId = crypto.randomUUID();
+        this.appData.chatConversations.setSelectedConversationId(this.currentDatabaseName, newId);
+        this.selectedConversationId$.next(newId);
+        this.messages$.next([]);
+    }
+
+    selectConversation(conversationId: string): void {
+        if (!this.currentDatabaseName) return;
+
+        // Persist current conversation first
+        if (this.selectedConversationId$.value && this.selectedConversationId$.value !== conversationId) {
+            this.persistConversation();
+        }
+
+        this.destroyGraphVisualizers();
+
+        this.selectedConversationId$.next(conversationId);
+        this.appData.chatConversations.setSelectedConversationId(this.currentDatabaseName, conversationId);
+        this.restoreFromPersistence();
+    }
+
+    deleteConversation(conversationId: string): void {
+        if (!this.currentDatabaseName) return;
+
+        if (this.selectedConversationId$.value === conversationId) {
+            this.destroyGraphVisualizers();
+        }
+
+        this.appData.chatConversations.deleteConversation(this.currentDatabaseName, conversationId);
+        this.refreshConversationList();
+
+        if (this.selectedConversationId$.value === conversationId) {
+            const remaining = this.conversations$.value;
+            if (remaining.length > 0) {
+                this.selectConversation(remaining[0].id);
+            } else {
+                this.selectedConversationId$.next(null);
+                this.messages$.next([]);
+            }
+        }
+    }
+
+    renameConversation(conversationId: string, title: string): void {
+        if (!this.currentDatabaseName) return;
+        this.appData.chatConversations.renameConversation(this.currentDatabaseName, conversationId, title);
+        this.refreshConversationList();
+    }
+
+    private destroyGraphVisualizers(): void {
+        for (const msg of this.messages$.value) {
+            for (const part of msg.content) {
+                if (part.type === 'output') {
+                    part.outputState.graph.destroy();
+                }
+            }
+        }
+    }
+
     submitPrompt(): void {
         const prompt = this.promptControl.value;
         if (!prompt?.length) return;
         if (this.isProcessing$.value) throw new Error(INTERNAL_ERROR);
+
+        // Auto-create a conversation if none exists
+        if (!this.selectedConversationId$.value && this.currentDatabaseName) {
+            this.newConversation();
+        }
+
         this.isProcessing$.next(true);
 
         const conversation = [
@@ -378,32 +479,49 @@ export class ChatState {
     }
 
     clearConversation(): void {
-        // Destroy any graph visualizers
-        for (const msg of this.messages$.value) {
-            for (const part of msg.content) {
-                if (part.type === 'output') {
-                    part.outputState.graph.destroy();
-                }
-            }
-        }
-
+        this.destroyGraphVisualizers();
         this.messages$.next([]);
         this.persistConversation();
     }
 
     private persistConversation(): void {
-        if (!this.currentDatabaseName) return;
+        if (!this.currentDatabaseName || !this.selectedConversationId$.value) return;
+
+        const existing = this.appData.chatConversations.getConversation(
+            this.currentDatabaseName, this.selectedConversationId$.value
+        );
 
         const serialized = this.serializeMessages(this.messages$.value);
-        this.appData.chatConversations.setConversation(this.currentDatabaseName, serialized);
+
+        // Auto-generate title from first user message if still default
+        let title = existing?.title || 'New conversation';
+        if (title === 'New conversation' && serialized.length > 0) {
+            const firstUserMsg = serialized.find(m => m.sender === 'user');
+            if (firstUserMsg) {
+                const textContent = firstUserMsg.content.find(p => p.type === 'text')?.content || '';
+                title = truncateTitle(textContent);
+            }
+        }
+
+        const conv: PersistedConversation = {
+            id: this.selectedConversationId$.value,
+            title,
+            createdAt: existing?.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            messages: serialized,
+        };
+        this.appData.chatConversations.setConversation(this.currentDatabaseName, conv);
+        this.refreshConversationList();
     }
 
     private restoreFromPersistence(): void {
-        if (!this.currentDatabaseName) return;
+        if (!this.currentDatabaseName || !this.selectedConversationId$.value) return;
 
-        const saved = this.appData.chatConversations.getConversation(this.currentDatabaseName);
-        if (saved && saved.length > 0) {
-            this.messages$.next(this.deserializeMessages(saved));
+        const conv = this.appData.chatConversations.getConversation(
+            this.currentDatabaseName, this.selectedConversationId$.value
+        );
+        if (conv && conv.messages.length > 0) {
+            this.messages$.next(this.deserializeMessages(conv.messages));
         } else {
             this.messages$.next([]);
         }

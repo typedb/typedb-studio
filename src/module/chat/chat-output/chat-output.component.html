@@ -65,7 +65,14 @@
           <p class="status-text">Running query...</p>
         }
         @case ("graphlessQueryType") {
-          <p class="status-text">Query completed. This query type cannot be displayed as a graph.</p>
+          <div class="status-text status-text-left">
+            <p>Query completed. This query type cannot be displayed as a graph.</p>
+            <p>Graph output is available for the following query types:</p>
+            <ul>
+              <li>Match queries without Fetch</li>
+              <li>Insert queries</li>
+            </ul>
+          </div>
         }
         @case ("answerOutputDisabled") {
           <p class="status-text">Query completed. Answer output is disabled.</p>
