@@ -300,20 +300,66 @@ export interface PersistedChatMessage {
     }>;
 }
 
+export interface PersistedConversation {
+    id: string;
+    title: string;
+    createdAt: string;
+    updatedAt: string;
+    messages: PersistedChatMessage[];
+}
+
+function truncateTitle(text: string, maxLen = 50): string {
+    const firstLine = text.split('\n')[0].trim();
+    if (firstLine.length <= maxLen) return firstLine || 'New conversation';
+    return firstLine.substring(0, maxLen - 3) + '...';
+}
+
 interface ChatConversationsData {
+    version: 2;
     databases: {
         [databaseName: string]: {
-            messages: PersistedChatMessage[];
+            conversations: PersistedConversation[];
+            selectedConversationId: string | null;
         };
     };
 }
 
 const INITIAL_CHAT_CONVERSATIONS: ChatConversationsData = {
+    version: 2,
     databases: {},
 };
 
 function parseChatConversationsData(obj: Object | null): ChatConversationsData {
-    return Object.assign({}, INITIAL_CHAT_CONVERSATIONS, obj) as ChatConversationsData;
+    if (obj == null) return INITIAL_CHAT_CONVERSATIONS;
+
+    const data = obj as any;
+    if (!data.version) {
+        // Migrate V1 -> V2
+        const v2: ChatConversationsData = { version: 2, databases: {} };
+        const v1Databases = data.databases as { [db: string]: { messages: PersistedChatMessage[] } } | undefined;
+        for (const [dbName, dbData] of Object.entries(v1Databases || {})) {
+            if (dbData.messages && dbData.messages.length > 0) {
+                const convId = crypto.randomUUID();
+                const firstUserMsg = dbData.messages.find(m => m.sender === 'user');
+                const title = firstUserMsg
+                    ? truncateTitle(firstUserMsg.content.find(p => p.type === 'text')?.content || 'Conversation')
+                    : 'Conversation';
+                v2.databases[dbName] = {
+                    conversations: [{
+                        id: convId,
+                        title,
+                        createdAt: dbData.messages[0]?.timestamp || new Date().toISOString(),
+                        updatedAt: dbData.messages[dbData.messages.length - 1]?.timestamp || new Date().toISOString(),
+                        messages: dbData.messages,
+                    }],
+                    selectedConversationId: convId,
+                };
+            }
+        }
+        return v2;
+    }
+
+    return Object.assign({}, INITIAL_CHAT_CONVERSATIONS, data) as ChatConversationsData;
 }
 
 class ChatConversations {
@@ -332,18 +378,64 @@ class ChatConversations {
         return this.storage.write(CHAT_CONVERSATIONS, data);
     }
 
-    getConversation(databaseName: string): PersistedChatMessage[] | null {
+    getConversationList(databaseName: string): PersistedConversation[] {
         const data = this.readStorage();
-        return data.databases[databaseName]?.messages || null;
+        return data.databases[databaseName]?.conversations || [];
     }
 
-    setConversation(databaseName: string, messages: PersistedChatMessage[]): StorageWriteResult {
+    getSelectedConversationId(databaseName: string): string | null {
         const data = this.readStorage();
-        data.databases[databaseName] = { messages };
+        return data.databases[databaseName]?.selectedConversationId || null;
+    }
+
+    getConversation(databaseName: string, conversationId: string): PersistedConversation | null {
+        const data = this.readStorage();
+        const dbData = data.databases[databaseName];
+        return dbData?.conversations.find(c => c.id === conversationId) || null;
+    }
+
+    setConversation(databaseName: string, conversation: PersistedConversation): StorageWriteResult {
+        const data = this.readStorage();
+        if (!data.databases[databaseName]) {
+            data.databases[databaseName] = { conversations: [], selectedConversationId: null };
+        }
+        const idx = data.databases[databaseName].conversations.findIndex(c => c.id === conversation.id);
+        if (idx >= 0) {
+            data.databases[databaseName].conversations[idx] = conversation;
+        } else {
+            data.databases[databaseName].conversations.unshift(conversation);
+        }
         return this.writeStorage(data);
     }
 
-    clearConversation(databaseName: string): StorageWriteResult {
+    setSelectedConversationId(databaseName: string, conversationId: string | null): StorageWriteResult {
+        const data = this.readStorage();
+        if (!data.databases[databaseName]) {
+            data.databases[databaseName] = { conversations: [], selectedConversationId: null };
+        }
+        data.databases[databaseName].selectedConversationId = conversationId;
+        return this.writeStorage(data);
+    }
+
+    deleteConversation(databaseName: string, conversationId: string): StorageWriteResult {
+        const data = this.readStorage();
+        const dbData = data.databases[databaseName];
+        if (!dbData) return this.writeStorage(data);
+        dbData.conversations = dbData.conversations.filter(c => c.id !== conversationId);
+        if (dbData.selectedConversationId === conversationId) {
+            dbData.selectedConversationId = dbData.conversations[0]?.id || null;
+        }
+        return this.writeStorage(data);
+    }
+
+    renameConversation(databaseName: string, conversationId: string, title: string): StorageWriteResult {
+        const data = this.readStorage();
+        const conv = data.databases[databaseName]?.conversations.find(c => c.id === conversationId);
+        if (conv) conv.title = title;
+        return this.writeStorage(data);
+    }
+
+    clearDatabase(databaseName: string): StorageWriteResult {
         const data = this.readStorage();
         delete data.databases[databaseName];
         return this.writeStorage(data);

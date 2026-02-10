@@ -173,4 +173,17 @@
 .status-text {
     color: var(--fg2);
     text-align: center;
+
+    &.status-text-left {
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        ul {
+            margin: 0;
+            padding-left: 1.25rem;
+        }
+    }
 }
+

@@ -37,7 +37,7 @@
 .chat-container {
     flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     min-height: 0;
     overflow: hidden;
 
@@ -57,6 +57,13 @@
     }
 }
 
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
 .chat-header {
     display: flex;
     align-items: center;
@@ -65,6 +72,12 @@
     border-bottom: 1px solid var(--bg4);
     background-color: var(--bg1);
     min-height: 44px;
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
 
     .row-limit-control {
         display: flex;
@@ -223,6 +236,66 @@
     gap: 8px;
 }
 
+.conversation-trigger {
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    border-radius: shapes.$border-radius-small;
+    color: colors.$grey;
+    font-size: 14px;
+    line-height: 32px;
+    transition: background 100ms, color 100ms;
+
+    .trigger-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 260px;
+    }
+
+    i {
+        width: 12px;
+        height: 12px;
+        font-size: 12px;
+        margin-left: 8px;
+        transition: color 100ms;
+        flex-shrink: 0;
+    }
+
+    &:hover {
+        color: colors.$green;
+        background: colors.$secondary-purple;
+    }
+}
+
+.new-chat-btn {
+    --mdc-outlined-button-container-height: 32px;
+    font-size: 14px;
+}
+
+.header-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: shapes.$border-radius-small;
+    background: transparent;
+    color: var(--fg2);
+    cursor: pointer;
+    transition: background-color 150ms, color 150ms;
+
+    i {
+        font-size: 14px;
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--fg1);
+    }
+}
+
 .commands-button {
     display: flex;
     align-items: center;
@@ -270,5 +343,83 @@
     &:disabled {
         opacity: 0.4;
         cursor: not-allowed;
+    }
+}
+
+// History menu panel (rendered in overlay, needs ::ng-deep)
+::ng-deep .history-menu.mat-mdc-menu-panel {
+    width: 300px;
+    max-width: 300px;
+    max-height: 480px;
+
+    .history-group-label {
+        padding: 10px 16px 4px;
+        font-size: 12px;
+        color: colors.$secondary-light-grey;
+        font-weight: 500;
+    }
+
+    button.mat-mdc-menu-item {
+        .mat-mdc-menu-item-text {
+            width: 100%;
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        &.selected {
+            background: rgba(255, 255, 255, 0.08);
+        }
+    }
+
+    .history-item-content {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .history-item-title {
+        font-size: 13px;
+        line-height: 1.7;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .history-item-meta {
+        font-size: 11px;
+        line-height: 1.7;
+        color: colors.$secondary-light-grey;
+    }
+
+    .history-item-time {
+        font-size: 12px;
+        color: colors.$secondary-light-grey;
+        flex-shrink: 0;
+    }
+
+    .history-delete-btn {
+        font-size: 12px;
+        color: colors.$secondary-light-grey;
+        opacity: 0;
+        flex-shrink: 0;
+        padding: 4px;
+        align-self: center;
+        transition: opacity 150ms, color 150ms;
+
+        &:hover {
+            color: colors.$red;
+        }
+    }
+
+    button.mat-mdc-menu-item:hover .history-delete-btn {
+        opacity: 1;
+    }
+
+    .history-empty {
+        padding: 8px 16px;
+        font-size: 13px;
+        color: colors.$secondary-grey;
     }
 }

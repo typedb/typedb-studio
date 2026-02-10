@@ -20,7 +20,7 @@ import { ResizableDirective } from "@hhangular/resizable";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
 import { ChatMessageComponent, RunQueryEvent } from "./chat-message/chat-message.component";
-import { ChatState } from "../../service/chat-state.service";
+import { ChatMessageData, ChatState, ConversationSummary } from "../../service/chat-state.service";
 import { DriverState } from "../../service/driver-state.service";
 import { AppData } from "../../service/app-data.service";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
@@ -51,8 +51,12 @@ export class ChatPageComponent implements OnInit, AfterViewInit, AfterViewChecke
     @ViewChild("messagesContainer") messagesContainer?: ElementRef<HTMLElement>;
     @ViewChild("promptInput") promptInput?: ElementRef<HTMLTextAreaElement>;
 
+    conversationGroups: { label: string; conversations: ConversationSummary[] }[] = [];
+
     private shouldScrollToBottom = false;
     private lastMessageCount = 0;
+    private historyIndex = -1;
+    private historyDraft = "";
 
     constructor(
         public state: ChatState,
@@ -63,6 +67,10 @@ export class ChatPageComponent implements OnInit, AfterViewInit, AfterViewChecke
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("chat");
+
+        this.state.conversations$.subscribe(convs => {
+            this.conversationGroups = this.groupConversations(convs);
+        });
 
         // Auto-scroll when new messages arrive
         this.state.messages$.subscribe(messages => {
@@ -104,7 +112,48 @@ export class ChatPageComponent implements OnInit, AfterViewInit, AfterViewChecke
         if (!event.shiftKey) {
             event.preventDefault();
             this.state.submitPrompt();
+            this.historyIndex = -1;
+            this.historyDraft = "";
         }
+    }
+
+    onInputKeyDownArrow(event: KeyboardEvent): void {
+        const textarea = event.target as HTMLTextAreaElement;
+        const userMessages = this.state.messages$.value.filter(m => m.sender === "user");
+        if (!userMessages.length) return;
+
+        if (event.key === "ArrowUp" && textarea.selectionStart === 0 && textarea.selectionEnd === 0) {
+            event.preventDefault();
+            if (this.historyIndex === -1) {
+                this.historyDraft = this.state.promptControl.value;
+                this.historyIndex = userMessages.length - 1;
+            } else if (this.historyIndex > 0) {
+                this.historyIndex--;
+            } else {
+                return;
+            }
+            this.state.promptControl.setValue(this.extractMessageText(userMessages[this.historyIndex]));
+            setTimeout(() => textarea.setSelectionRange(0, 0));
+        } else if (event.key === "ArrowDown" && this.historyIndex >= 0) {
+            const atEnd = textarea.selectionStart === textarea.value.length;
+            if (!atEnd) return;
+            event.preventDefault();
+            if (this.historyIndex < userMessages.length - 1) {
+                this.historyIndex++;
+                this.state.promptControl.setValue(this.extractMessageText(userMessages[this.historyIndex]));
+            } else {
+                this.historyIndex = -1;
+                this.state.promptControl.setValue(this.historyDraft);
+            }
+            setTimeout(() => textarea.setSelectionRange(0, 0));
+        }
+    }
+
+    private extractMessageText(message: ChatMessageData): string {
+        return message.content
+            .filter(part => part.type === "text")
+            .map(part => part.content)
+            .join("\n");
     }
 
     onRunQuery(event: RunQueryEvent): void {
@@ -117,6 +166,64 @@ export class ChatPageComponent implements OnInit, AfterViewInit, AfterViewChecke
 
     compactChat(): void {
         this.state.compactConversation();
+    }
+
+    get selectedConversationTitle(): string {
+        const convs = this.state.conversations$.value;
+        const selectedId = this.state.selectedConversationId$.value;
+        const selected = convs.find(c => c.id === selectedId);
+        if (!selected) return "Past Conversations";
+        const title = selected.title;
+        if (title.length <= 30) return title;
+        return title.substring(0, 30).trimEnd() + "...";
+    }
+
+    onNewConversation(): void {
+        this.state.newConversation();
+    }
+
+    formatRelativeTime(date: Date): string {
+        const diffMs = Date.now() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        if (diffMins < 1) return "now";
+        if (diffMins < 60) return `${diffMins}m`;
+        if (diffHours < 24) return `${diffHours}h`;
+        return `${diffDays}d`;
+    }
+
+    private groupConversations(conversations: ConversationSummary[]): { label: string; conversations: ConversationSummary[] }[] {
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const startOfYesterday = startOfToday - 86400000;
+        const startOfWeek = startOfToday - 7 * 86400000;
+        const startOfMonth = startOfToday - 30 * 86400000;
+
+        const buckets: { [key: string]: ConversationSummary[] } = {
+            "Today": [], "Yesterday": [], "Past week": [], "Past month": [], "Older": [],
+        };
+
+        for (const conv of conversations) {
+            const t = conv.updatedAt.getTime();
+            if (t >= startOfToday) buckets["Today"].push(conv);
+            else if (t >= startOfYesterday) buckets["Yesterday"].push(conv);
+            else if (t >= startOfWeek) buckets["Past week"].push(conv);
+            else if (t >= startOfMonth) buckets["Past month"].push(conv);
+            else buckets["Older"].push(conv);
+        }
+
+        return Object.entries(buckets)
+            .filter(([_, convs]) => convs.length > 0)
+            .map(([label, convs]) => ({ label, conversations: convs }));
+    }
+
+    onSelectConversation(id: string): void {
+        this.state.selectConversation(id);
+    }
+
+    onDeleteConversation(id: string): void {
+        this.state.deleteConversation(id);
     }
 
     trackMessageById(index: number, message: { id: string }): string {
