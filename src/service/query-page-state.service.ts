@@ -565,6 +565,11 @@ export class GraphOutputState {
         }
     }
 
+    resize() {
+        this.visualiser?.sigma.resize();
+        this.visualiser?.sigma.refresh();
+    }
+
     destroy() {
         this.visualiser?.destroy();
         this.visualiser = null;
