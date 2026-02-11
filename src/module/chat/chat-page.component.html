@@ -88,7 +88,7 @@
             <!-- Messages area -->
             <div class="messages" #messagesContainer>
               @for (msg of state.messages$ | async; track trackMessageById($index, msg)) {
-                <ts-chat-message [message]="msg" (runQuery)="onRunQuery($event)"/>
+                <ts-chat-message [message]="msg" (runQuery)="onRunQuery($event)" (sendLogToAi)="onSendLogToAi($event)"/>
               }
 
               @if ((state.messages$ | async)?.length === 0) {

@@ -160,6 +160,11 @@ export class ChatPageComponent implements OnInit, AfterViewInit, AfterViewChecke
         this.state.executeQueryInMessage(event.messageId, event.blockIndex, event.query);
     }
 
+    onSendLogToAi(logText: string): void {
+        this.state.promptControl.setValue(logText);
+        this.state.submitPrompt();
+    }
+
     clearChat(): void {
         this.state.clearConversation();
     }
