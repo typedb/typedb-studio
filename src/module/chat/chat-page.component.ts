@@ -175,6 +175,10 @@ export class ChatPageComponent implements OnInit, AfterViewInit, AfterViewChecke
 
     onRunQuery(event: RunQueryEvent): void {
         this.state.executeQueryInMessage(event.messageId, event.blockIndex, event.query);
+        setTimeout(() => {
+            const el = this.messagesContainer?.nativeElement.querySelector(`[data-output-block="${event.messageId}-${event.blockIndex}"]`);
+            el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
     }
 
     onSendLogToAi(logText: string): void {
