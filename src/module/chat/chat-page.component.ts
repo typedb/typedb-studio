@@ -5,8 +5,8 @@
  */
 
 import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnInit, ViewChild } from "@angular/core";
-import { AsyncPipe } from "@angular/common";
-import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { AsyncPipe, DatePipe } from "@angular/common";
+import { FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
 import { MatButtonModule } from "@angular/material/button";
 import { MatTooltipModule } from "@angular/material/tooltip";
@@ -17,12 +17,19 @@ import { MatMenuModule } from "@angular/material/menu";
 import { MatDialog } from "@angular/material/dialog";
 import { TextFieldModule } from "@angular/cdk/text-field";
 import { ResizableDirective } from "@hhangular/resizable";
+import { CodeEditorComponent } from "../../framework/code-editor/code-editor.component";
+import { SpinnerComponent } from "../../framework/spinner/spinner.component";
+import { ActionDurationPipe } from "../../framework/util/action-duration.pipe";
+import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
+import { DriverAction, QueryRunAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
 import { ChatMessageComponent, RunQueryEvent } from "./chat-message/chat-message.component";
 import { ChatMessageData, ChatState, ConversationSummary } from "../../service/chat-state.service";
 import { DriverState } from "../../service/driver-state.service";
+import { HistoryWindowState } from "../../service/query-page-state.service";
 import { AppData } from "../../service/app-data.service";
+import { SnackbarService } from "../../service/snackbar.service";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 
 @Component({
@@ -31,6 +38,7 @@ import { DatabaseSelectDialogComponent } from "../database/select-dialog/databas
     styleUrls: ["./chat-page.component.scss"],
     imports: [
         AsyncPipe,
+        DatePipe,
         RouterLink,
         FormsModule,
         ReactiveFormsModule,
@@ -45,6 +53,10 @@ import { DatabaseSelectDialogComponent } from "../database/select-dialog/databas
         PageScaffoldComponent,
         SchemaToolWindowComponent,
         ChatMessageComponent,
+        CodeEditorComponent,
+        SpinnerComponent,
+        ActionDurationPipe,
+        RichTooltipDirective,
     ],
 })
 export class ChatPageComponent implements OnInit, AfterViewInit, AfterViewChecked {
@@ -52,18 +64,23 @@ export class ChatPageComponent implements OnInit, AfterViewInit, AfterViewChecke
     @ViewChild("promptInput") promptInput?: ElementRef<HTMLTextAreaElement>;
 
     conversationGroups: { label: string; conversations: ConversationSummary[] }[] = [];
+    history: HistoryWindowState;
 
     private shouldScrollToBottom = false;
     private lastMessageCount = 0;
     private historyIndex = -1;
     private historyDraft = "";
+    private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();
 
     constructor(
         public state: ChatState,
         public driver: DriverState,
         private appData: AppData,
         private dialog: MatDialog,
-    ) {}
+        private snackbar: SnackbarService,
+    ) {
+        this.history = new HistoryWindowState(driver);
+    }
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("chat");
@@ -164,6 +181,49 @@ export class ChatPageComponent implements OnInit, AfterViewInit, AfterViewChecke
         this.state.promptControl.setValue(logText);
         this.state.submitPrompt();
     }
+
+    getHistoryEntryControl(entry: QueryRunAction): FormControl<string> {
+        let control = this.historyEntryControls.get(entry);
+        if (!control) {
+            control = new FormControl(entry.query, { nonNullable: true });
+            this.historyEntryControls.set(entry, control);
+        }
+        return control;
+    }
+
+    runHistoryQuery(entry: QueryRunAction) {
+        this.state.promptControl.setValue(entry.query);
+        this.state.submitPrompt();
+    }
+
+    transactionOperationString(action: TransactionOperationAction) {
+        switch (action.operation) {
+            case "open": return "opened transaction";
+            case "commit": return action.status === "error" ? "commit failed" : "committed";
+            case "close": return "closed transaction";
+        }
+    }
+
+    historyEntryErrorTooltip(entry: DriverAction) {
+        if (!entry.result) return ``;
+        else if ("err" in entry.result && !!entry.result.err?.message) return entry.result.err.message;
+        else if ("message" in entry.result) return entry.result.message as string;
+        else return entry.result.toString();
+    }
+
+    async copyHistoryEntryErrorTooltip(entry: DriverAction) {
+        const tooltip = this.historyEntryErrorTooltip(entry);
+        if (!tooltip) return;
+        try {
+            await navigator.clipboard.writeText(tooltip);
+            this.snackbar.success("Error text copied", { duration: 2500 });
+        } catch (e) {
+            console.error('Failed to copy error text:', e);
+        }
+    }
+
+    readonly isQueryRun = isQueryRun;
+    readonly isTransactionOperation = isTransactionOperation;
 
     clearChat(): void {
         this.state.clearConversation();

@@ -6,7 +6,9 @@
 
 @use "@angular/material" as mat;
 @use "colors";
+@use "media";
 @use "shapes";
+@use "typography";
 
 :host {
     display: block;
@@ -343,6 +345,104 @@
     &:disabled {
         opacity: 0.4;
         cursor: not-allowed;
+    }
+}
+
+.right-panes {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.history-pane {
+    flex: 1;
+
+    @media (max-width: media.$max-width-mobile) {
+        display: none;
+    }
+
+    .history-container {
+        height: 100%;
+        width: 100%;
+        overflow: auto;
+        scrollbar-width: thin;
+    }
+
+    ol li {
+        list-style: none;
+        margin-top: 8px;
+
+        aside {
+            display: flex;
+            align-items: center;
+
+            .bullet {
+                margin: 0 4px;
+            }
+
+            tp-spinner {
+                width: unset;
+            }
+
+            .action-status {
+                margin-left: 8px;
+            }
+
+            .action-status i {
+                margin-left: 6px;
+                font-size: 12px;
+
+                &.fa-xmark {
+                    color: #{colors.$red};
+                    cursor: pointer;
+                }
+            }
+        }
+
+        .mat-divider {
+            margin-top: 8px;
+        }
+    }
+
+    .history-code-editor {
+        margin-top: 4px;
+        border: 1px solid colors.$light-purple;
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+
+        tp-code-editor {
+            display: block;
+
+            ::ng-deep code-editor {
+                .cm-editor {
+                    max-height: 120px;
+                    overflow: auto;
+                    scrollbar-width: thin;
+                }
+
+                .cm-scroller {
+                    overflow: auto;
+                }
+
+                .cm-content {
+                    min-height: 56px;
+                }
+            }
+        }
+    }
+
+    mat-form-field {
+        margin-top: 4px;
+
+        textarea {
+            resize: none;
+            @include typography.code;
+        }
+    }
+
+    .transaction-operation-type {
+        white-space: nowrap;
     }
 }
 
