@@ -31,6 +31,7 @@ export interface RunQueryEvent {
 export class ChatMessageComponent {
     @Input({ required: true }) message!: ChatMessageData;
     @Output() runQuery = new EventEmitter<RunQueryEvent>();
+    @Output() sendLogToAi = new EventEmitter<string>();
 
     onRunClick(blockIndex: number, query: string): void {
         this.runQuery.emit({

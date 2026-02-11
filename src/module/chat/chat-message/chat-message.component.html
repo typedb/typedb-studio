@@ -15,7 +15,7 @@
               [runOverlayVisible]="true"
               (runButtonClick)="onRunClick(i, part.formControl.value)"/>
           } @else if (part.type === 'output') {
-            <ts-chat-output [outputState]="part.outputState"/>
+            <ts-chat-output [outputState]="part.outputState" (sendLogToAi)="sendLogToAi.emit($event)"/>
           }
         }
         @if (message.error) {
