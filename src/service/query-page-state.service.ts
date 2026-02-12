@@ -36,7 +36,7 @@ export interface RunOutputState {
     raw: RawOutputState;
 }
 
-function createRunOutputState(label: string, query: string): RunOutputState {
+export function createRunOutputState(label: string, query: string): RunOutputState {
     return {
         id: crypto.randomUUID(),
         label,

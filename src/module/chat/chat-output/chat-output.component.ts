@@ -6,6 +6,7 @@
 
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
@@ -13,6 +14,7 @@ import { MatTableModule } from "@angular/material/table";
 import { MatSortModule } from "@angular/material/sort";
 import { Subscription } from "rxjs";
 import { OutputState, OutputType } from "../../../service/chat-state.service";
+import { RunOutputState } from "../../../service/query-page-state.service";
 
 @Component({
     selector: "ts-chat-output",
@@ -21,6 +23,7 @@ import { OutputState, OutputType } from "../../../service/chat-state.service";
     imports: [
         FormsModule,
         ReactiveFormsModule,
+        MatButtonModule,
         MatButtonToggleModule,
         MatFormFieldModule,
         MatInputModule,
@@ -38,31 +41,86 @@ export class ChatOutputComponent implements AfterViewInit, OnDestroy {
     aiSent = false;
     private outputTypeSub?: Subscription;
 
+    get currentRun(): RunOutputState | null {
+        const { runs, selectedRunIndex } = this.outputState;
+        if (selectedRunIndex < 0 || selectedRunIndex >= runs.length) return null;
+        return runs[selectedRunIndex];
+    }
+
     ngAfterViewInit() {
-        if (this.graphViewRef && this.outputState) {
-            this.outputState.graph.canvasEl = this.graphViewRef.nativeElement;
+        if (this.graphViewRef && this.currentRun) {
+            this.currentRun.graph.canvasEl = this.graphViewRef.nativeElement;
         }
         this.outputTypeSub = this.outputState.outputTypeControl.valueChanges.subscribe((value) => {
             if (value === "graph") {
-                requestAnimationFrame(() => this.outputState.graph.resize());
+                requestAnimationFrame(() => this.currentRun?.graph.resize());
             }
         });
     }
 
+    selectRun(index: number) {
+        const { runs, selectedRunIndex } = this.outputState;
+        if (index < 0 || index >= runs.length) return;
+        if (index === selectedRunIndex) return;
+
+        const oldRun = this.currentRun;
+        if (oldRun) oldRun.graph.detach();
+
+        this.outputState.selectedRunIndex = index;
+
+        const newRun = this.currentRun;
+        if (newRun && this.graphViewRef) {
+            newRun.graph.attach(this.graphViewRef.nativeElement);
+        }
+    }
+
+    closeRun(event: Event, index: number) {
+        event.stopPropagation();
+        const { runs } = this.outputState;
+        if (index < 0 || index >= runs.length) return;
+
+        const runToClose = runs[index];
+
+        if (index === this.outputState.selectedRunIndex) {
+            runToClose.graph.detach();
+        }
+
+        runToClose.graph.destroy();
+        runs.splice(index, 1);
+
+        if (runs.length === 0) {
+            this.outputState.selectedRunIndex = -1;
+        } else if (index < this.outputState.selectedRunIndex) {
+            this.outputState.selectedRunIndex--;
+        } else if (index === this.outputState.selectedRunIndex) {
+            this.outputState.selectedRunIndex = Math.min(index, runs.length - 1);
+            const newRun = this.currentRun;
+            if (newRun && this.graphViewRef) {
+                newRun.graph.attach(this.graphViewRef.nativeElement);
+            }
+        }
+    }
+
     onCopyLogClick() {
-        navigator.clipboard.writeText(this.outputState.log.control.value);
+        const run = this.currentRun;
+        if (!run) return;
+        navigator.clipboard.writeText(run.log.control.value);
         this.copied = true;
         setTimeout(() => this.copied = false, 3000);
     }
 
     onAiClick() {
-        this.sendLogToAi.emit(this.outputState.log.control.value);
+        const run = this.currentRun;
+        if (!run) return;
+        this.sendLogToAi.emit(run.log.control.value);
         this.aiSent = true;
         setTimeout(() => this.aiSent = false, 3000);
     }
 
     ngOnDestroy() {
         this.outputTypeSub?.unsubscribe();
-        this.outputState?.graph.destroy();
+        for (const run of this.outputState.runs) {
+            run.graph.destroy();
+        }
     }
 }
