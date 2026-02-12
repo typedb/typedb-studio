@@ -6,11 +6,11 @@
 
 import { inject, Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { BehaviorSubject, combineLatest, first, map, Observable, shareReplay, startWith, switchMap } from "rxjs";
+import { BehaviorSubject, combineLatest, first, map, Observable, pairwise, shareReplay, startWith, switchMap } from "rxjs";
 import { DriverAction } from "../concept/action";
 import {createSigmaRenderer, GraphVisualiser} from "../framework/graph-visualiser";
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
-import { newVisualGraph } from "../framework/graph-visualiser/graph";
+import { newVisualGraph, VisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
 import { detectOS } from "../framework/util/os";
 import { INTERNAL_ERROR } from "../framework/util/strings";
@@ -25,6 +25,24 @@ import { AppData, RowLimit } from "./app-data.service";
 
 export type OutputType = "raw" | "log" | "table" | "graph";
 export { RowLimit } from "./app-data.service";
+
+export interface TabOutputState {
+    log: LogOutputState;
+    table: TableOutputState;
+    graph: GraphOutputState;
+    raw: RawOutputState;
+    outputTypeControl: FormControl<OutputType>;
+}
+
+function createTabOutputState(): TabOutputState {
+    return {
+        log: new LogOutputState(),
+        table: new TableOutputState(),
+        graph: new GraphOutputState(),
+        raw: new RawOutputState(),
+        outputTypeControl: new FormControl("log" as OutputType, { nonNullable: true }),
+    };
+}
 
 export const ROW_LIMIT_OPTIONS: { value: RowLimit; label: string }[] = [
     { value: 10, label: "10" },
@@ -55,16 +73,50 @@ export class QueryPageState {
     private snackbar = inject(SnackbarService);
     queryTabs = inject(QueryTabsState);
 
-    outputTypeControl = new FormControl("log" as OutputType, { nonNullable: true });
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
     rowLimitControl = new FormControl(this.appData.preferences.queryRowLimit(), { nonNullable: true });
     rowLimitOptions = ROW_LIMIT_OPTIONS;
-    readonly logOutput = new LogOutputState();
-    readonly tableOutput = new TableOutputState();
-    readonly graphOutput = new GraphOutputState();
-    readonly rawOutput = new RawOutputState();
     readonly history = new HistoryWindowState(this.driver);
     answersOutputEnabled = true;
+
+    private tabOutputStates = new Map<string, TabOutputState>();
+    private _fallbackOutputState = createTabOutputState();
+    private _graphCanvasEl: HTMLElement | null = null;
+
+    getOrCreateTabOutputState(tabId: string): TabOutputState {
+        let state = this.tabOutputStates.get(tabId);
+        if (!state) {
+            state = createTabOutputState();
+            this.tabOutputStates.set(tabId, state);
+        }
+        return state;
+    }
+
+    private get currentTabOutputState(): TabOutputState {
+        const tab = this.queryTabs.currentTab;
+        if (!tab) return this._fallbackOutputState;
+        return this.getOrCreateTabOutputState(tab.id);
+    }
+
+    get outputTypeControl(): FormControl<OutputType> {
+        return this.currentTabOutputState.outputTypeControl;
+    }
+
+    get logOutput(): LogOutputState {
+        return this.currentTabOutputState.log;
+    }
+
+    get tableOutput(): TableOutputState {
+        return this.currentTabOutputState.table;
+    }
+
+    get graphOutput(): GraphOutputState {
+        return this.currentTabOutputState.graph;
+    }
+
+    get rawOutput(): RawOutputState {
+        return this.currentTabOutputState.raw;
+    }
 
     private readonly currentTabQuery$ = combineLatest([
         this.queryTabs.openTabs$,
@@ -95,13 +147,54 @@ export class QueryPageState {
 
     constructor() {
         (window as any)["queryToolState"] = this;
-        this.outputDisabled$.subscribe((disabled) => {
-            if (disabled) this.outputTypeControl.disable();
-            else this.outputTypeControl.enable();
+        combineLatest([this.outputDisabled$, this.queryTabs.selectedTabIndex$]).subscribe(([disabled]) => {
+            const control = this.outputTypeControl;
+            if (disabled) control.disable();
+            else control.enable();
         });
         this.rowLimitControl.valueChanges.subscribe((value) => {
             this.appData.preferences.setQueryRowLimit(value);
         });
+        this.queryTabs.openTabs$.pipe(pairwise()).subscribe(([oldTabs, newTabs]) => {
+            const newTabIds = new Set(newTabs.map(t => t.id));
+            for (const oldTab of oldTabs) {
+                if (!newTabIds.has(oldTab.id)) {
+                    this.cleanupTabOutputState(oldTab.id);
+                }
+            }
+        });
+    }
+
+    cleanupTabOutputState(tabId: string): void {
+        const state = this.tabOutputStates.get(tabId);
+        if (state) {
+            state.graph.destroy();
+            this.tabOutputStates.delete(tabId);
+        }
+    }
+
+    setGraphCanvasEl(el: HTMLElement): void {
+        this._graphCanvasEl = el;
+        this.graphOutput.canvasEl = el;
+    }
+
+    handleTabSwitch(previousTabId: string | null): void {
+        const currentTab = this.queryTabs.currentTab;
+        if (previousTabId && previousTabId !== currentTab?.id) {
+            const prevOutput = this.tabOutputStates.get(previousTabId);
+            if (prevOutput) {
+                prevOutput.graph.detach();
+            }
+        }
+        if (currentTab && this._graphCanvasEl) {
+            this.graphOutput.attach(this._graphCanvasEl);
+        }
+    }
+
+    destroyAllGraphOutputs(): void {
+        for (const state of this.tabOutputStates.values()) {
+            state.graph.destroy();
+        }
     }
 
     get currentQueryControl(): FormControl<string> | null {
@@ -494,6 +587,7 @@ export class GraphOutputState {
     visualiser: GraphVisualiser | null = null;
     query?: string;
     database?: string;
+    private _preservedGraph: VisualGraph | null = null;
 
     constructor() {
     }
@@ -515,7 +609,8 @@ export class GraphOutputState {
         }
 
         if (!this.visualiser) {
-            const graph = newVisualGraph();
+            const graph = this._preservedGraph ?? newVisualGraph();
+            this._preservedGraph = graph;
             const sigma = createSigmaRenderer(this.canvasEl, defaultSigmaSettings as any, graph);
             const layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
             // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
@@ -570,9 +665,27 @@ export class GraphOutputState {
         this.visualiser?.sigma.refresh();
     }
 
+    detach(): void {
+        if (this.visualiser) {
+            this._preservedGraph = this.visualiser.graph;
+            this.visualiser.sigma.kill();
+            this.visualiser = null;
+        }
+    }
+
+    attach(canvasEl: HTMLElement): void {
+        this.canvasEl = canvasEl;
+        if (this._preservedGraph && this._preservedGraph.nodes().length > 0 && !this.visualiser) {
+            const sigma = createSigmaRenderer(canvasEl, defaultSigmaSettings as any, this._preservedGraph);
+            const layout = Layouts.createForceAtlasStatic(this._preservedGraph, undefined);
+            this.visualiser = new GraphVisualiser(this._preservedGraph, sigma, layout);
+        }
+    }
+
     destroy() {
         this.visualiser?.destroy();
         this.visualiser = null;
+        this._preservedGraph = null;
     }
 }
 

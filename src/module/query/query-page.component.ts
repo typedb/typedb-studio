@@ -96,6 +96,8 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     logHasScrollbar = false;
     canScrollLeft = false;
     canScrollRight = false;
+    private canvasEl?: HTMLElement;
+    private previousTabId: string | null = null;
     private logResizeObserver?: ResizeObserver;
     private tabsScrollObserver?: ResizeObserver;
 
@@ -120,8 +122,14 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
                 console.warn("[QueryPage] Graph canvas element not found in DOM. QueryList is empty.");
                 return;
             }
-            const canvasEl = queryList.first.nativeElement;
-            this.state.graphOutput.canvasEl = canvasEl;
+            this.canvasEl = queryList.first.nativeElement;
+            this.state.setGraphCanvasEl(this.canvasEl);
+        });
+
+        this.previousTabId = this.queryTabsState.currentTab?.id ?? null;
+        this.queryTabsState.selectedTabIndex$.subscribe(() => {
+            this.state.handleTabSwitch(this.previousTabId);
+            this.previousTabId = this.queryTabsState.currentTab?.id ?? null;
         });
 
         if (this.logTextarea) {
@@ -143,7 +151,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.state.graphOutput.destroy();
+        this.state.destroyAllGraphOutputs();
         this.logResizeObserver?.disconnect();
         this.tabsScrollObserver?.disconnect();
     }
