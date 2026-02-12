@@ -71,7 +71,10 @@
         </div>
       <div resizable [percent]="50" class="results-pane card-bottom">
         <div class="run-tabs-header-row">
-          <div class="run-tabs-scroll">
+          <button mat-icon-button class="tab-scroll-button left" [class.visible]="canScrollRunsLeft" (click)="scrollRunTabsLeft()">
+            <i class="fa-light fa-chevron-left"></i>
+          </button>
+          <div class="run-tabs-scroll" #runTabsScrollContainer (scroll)="onRunTabsScroll()" (wheel)="onRunTabsWheel($event)">
             @if (state.currentTabRuns.length === 0) {
               <div class="run-tab active placeholder">
                 <span class="run-tab-label">Run 1</span>
@@ -91,6 +94,9 @@
               </div>
             }
           </div>
+          <button mat-icon-button class="tab-scroll-button right" [class.visible]="canScrollRunsRight" (click)="scrollRunTabsRight()">
+            <i class="fa-light fa-chevron-right"></i>
+          </button>
           <div class="flex-spacer"></div>
           <div class="run-tabs-controls">
             <mat-button-toggle-group [formControl]="state.outputTypeControl" [matTooltip]="(state.outputDisabledReason$ | async) || ''" matTooltipPosition="below">
