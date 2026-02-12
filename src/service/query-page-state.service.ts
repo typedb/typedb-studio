@@ -26,22 +26,49 @@ import { AppData, RowLimit } from "./app-data.service";
 export type OutputType = "raw" | "log" | "table" | "graph";
 export { RowLimit } from "./app-data.service";
 
-export interface TabOutputState {
+export interface RunOutputState {
+    id: string;
+    label: string;
+    query: string;
     log: LogOutputState;
     table: TableOutputState;
     graph: GraphOutputState;
     raw: RawOutputState;
+}
+
+function createRunOutputState(label: string, query: string): RunOutputState {
+    return {
+        id: crypto.randomUUID(),
+        label,
+        query,
+        log: new LogOutputState(),
+        table: new TableOutputState(),
+        graph: new GraphOutputState(),
+        raw: new RawOutputState(),
+    };
+}
+
+export interface TabOutputState {
+    runs: RunOutputState[];
+    selectedRunIndex: number;
+    runCounter: number;
     outputTypeControl: FormControl<OutputType>;
 }
 
 function createTabOutputState(): TabOutputState {
     return {
-        log: new LogOutputState(),
-        table: new TableOutputState(),
-        graph: new GraphOutputState(),
-        raw: new RawOutputState(),
+        runs: [],
+        selectedRunIndex: -1,
+        runCounter: 0,
         outputTypeControl: new FormControl("log" as OutputType, { nonNullable: true }),
     };
+}
+
+function currentRun(tabState: TabOutputState): RunOutputState | null {
+    if (tabState.selectedRunIndex < 0 || tabState.selectedRunIndex >= tabState.runs.length) {
+        return null;
+    }
+    return tabState.runs[tabState.selectedRunIndex];
 }
 
 export const ROW_LIMIT_OPTIONS: { value: RowLimit; label: string }[] = [
@@ -81,6 +108,7 @@ export class QueryPageState {
 
     private tabOutputStates = new Map<string, TabOutputState>();
     private _fallbackOutputState = createTabOutputState();
+    private _fallbackRunState = createRunOutputState("", "");
     private _graphCanvasEl: HTMLElement | null = null;
 
     getOrCreateTabOutputState(tabId: string): TabOutputState {
@@ -98,24 +126,36 @@ export class QueryPageState {
         return this.getOrCreateTabOutputState(tab.id);
     }
 
+    private get currentRunState(): RunOutputState {
+        return currentRun(this.currentTabOutputState) ?? this._fallbackRunState;
+    }
+
     get outputTypeControl(): FormControl<OutputType> {
         return this.currentTabOutputState.outputTypeControl;
     }
 
+    get currentTabRuns(): RunOutputState[] {
+        return this.currentTabOutputState.runs;
+    }
+
+    get selectedRunIndex(): number {
+        return this.currentTabOutputState.selectedRunIndex;
+    }
+
     get logOutput(): LogOutputState {
-        return this.currentTabOutputState.log;
+        return this.currentRunState.log;
     }
 
     get tableOutput(): TableOutputState {
-        return this.currentTabOutputState.table;
+        return this.currentRunState.table;
     }
 
     get graphOutput(): GraphOutputState {
-        return this.currentTabOutputState.graph;
+        return this.currentRunState.graph;
     }
 
     get rawOutput(): RawOutputState {
-        return this.currentTabOutputState.raw;
+        return this.currentRunState.raw;
     }
 
     private readonly currentTabQuery$ = combineLatest([
@@ -168,32 +208,83 @@ export class QueryPageState {
     cleanupTabOutputState(tabId: string): void {
         const state = this.tabOutputStates.get(tabId);
         if (state) {
-            state.graph.destroy();
+            for (const run of state.runs) {
+                run.graph.destroy();
+            }
             this.tabOutputStates.delete(tabId);
         }
     }
 
     setGraphCanvasEl(el: HTMLElement): void {
         this._graphCanvasEl = el;
-        this.graphOutput.canvasEl = el;
+        const run = currentRun(this.currentTabOutputState);
+        if (run) {
+            run.graph.canvasEl = el;
+        }
     }
 
     handleTabSwitch(previousTabId: string | null): void {
         const currentTab = this.queryTabs.currentTab;
         if (previousTabId && previousTabId !== currentTab?.id) {
-            const prevOutput = this.tabOutputStates.get(previousTabId);
-            if (prevOutput) {
-                prevOutput.graph.detach();
+            const prevTabState = this.tabOutputStates.get(previousTabId);
+            if (prevTabState) {
+                const prevRun = currentRun(prevTabState);
+                if (prevRun) prevRun.graph.detach();
             }
         }
         if (currentTab && this._graphCanvasEl) {
-            this.graphOutput.attach(this._graphCanvasEl);
+            const curRun = currentRun(this.currentTabOutputState);
+            if (curRun) curRun.graph.attach(this._graphCanvasEl);
         }
     }
 
     destroyAllGraphOutputs(): void {
-        for (const state of this.tabOutputStates.values()) {
-            state.graph.destroy();
+        for (const tabState of this.tabOutputStates.values()) {
+            for (const run of tabState.runs) {
+                run.graph.destroy();
+            }
+        }
+    }
+
+    selectRun(index: number) {
+        const tabState = this.currentTabOutputState;
+        if (index < 0 || index >= tabState.runs.length) return;
+        if (index === tabState.selectedRunIndex) return;
+
+        const oldRun = currentRun(tabState);
+        if (oldRun) oldRun.graph.detach();
+
+        tabState.selectedRunIndex = index;
+
+        const newRun = currentRun(tabState);
+        if (newRun && this._graphCanvasEl) {
+            newRun.graph.attach(this._graphCanvasEl);
+        }
+    }
+
+    closeRun(index: number) {
+        const tabState = this.currentTabOutputState;
+        if (index < 0 || index >= tabState.runs.length) return;
+
+        const runToClose = tabState.runs[index];
+
+        if (index === tabState.selectedRunIndex) {
+            runToClose.graph.detach();
+        }
+
+        runToClose.graph.destroy();
+        tabState.runs.splice(index, 1);
+
+        if (tabState.runs.length === 0) {
+            tabState.selectedRunIndex = -1;
+        } else if (index < tabState.selectedRunIndex) {
+            tabState.selectedRunIndex--;
+        } else if (index === tabState.selectedRunIndex) {
+            tabState.selectedRunIndex = Math.min(index, tabState.runs.length - 1);
+            const newRun = currentRun(tabState);
+            if (newRun && this._graphCanvasEl) {
+                newRun.graph.attach(this._graphCanvasEl);
+            }
         }
     }
 
@@ -210,12 +301,33 @@ export class QueryPageState {
     }
 
     runQuery(query: string) {
-        this.initialiseOutput(query);
+        const tabState = this.currentTabOutputState;
+
+        // Detach current run's graph before creating new run
+        const oldRun = currentRun(tabState);
+        if (oldRun) oldRun.graph.detach();
+
+        // Create new run
+        tabState.runCounter++;
+        const newRun = createRunOutputState(`Run ${tabState.runCounter}`, query);
+        tabState.runs.push(newRun);
+        tabState.selectedRunIndex = tabState.runs.length - 1;
+
+        // Initialise the new run's outputs
+        newRun.log.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);
+        newRun.table.status = "running";
+        newRun.graph.status = "running";
+        newRun.graph.query = query;
+        newRun.graph.database = this.driver.requireDatabase().name;
+        if (this._graphCanvasEl) {
+            newRun.graph.canvasEl = this._graphCanvasEl;
+        }
+
         const rowLimit = this.rowLimitControl.value;
         const queryOptions = rowLimit !== "none" ? { answerCountLimit: rowLimit } : undefined;
         this.driver.query(query, queryOptions).subscribe({
             next: (res) => {
-                this.outputQueryResponse(res);
+                this.outputQueryResponseToRun(newRun, res);
             },
             error: (err) => {
                 this.driver.checkHealth().subscribe({
@@ -245,44 +357,31 @@ export class QueryPageState {
         });
     }
 
-    private initialiseOutput(query: string) {
-        this.logOutput.clear();
-        this.tableOutput.clear();
-        this.graphOutput.destroy();
-        this.rawOutput.clear();
-
-        this.logOutput.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);
-        this.tableOutput.status = "running";
-        this.graphOutput.status = "running";
-        this.graphOutput.query = query;
-        this.graphOutput.database = this.driver.requireDatabase().name;
+    private outputQueryResponseToRun(run: RunOutputState, res: ApiResponse<QueryResponse>) {
+        if (this.answersOutputEnabled) this.outputQueryResponseWithAnswers(run, res);
+        else this.outputQueryResponseNoAnswers(run);
     }
 
-    private outputQueryResponse(res: ApiResponse<QueryResponse>) {
-        if (this.answersOutputEnabled) this.outputQueryResponseWithAnswers(res);
-        else this.outputQueryResponseNoAnswers();
-    }
-
-    private outputQueryResponseWithAnswers(res: ApiResponse<QueryResponse>) {
-        this.logOutput.appendBlankLine();
-        this.logOutput.appendQueryResult(res);
-        this.tableOutput.push(res);
+    private outputQueryResponseWithAnswers(run: RunOutputState, res: ApiResponse<QueryResponse>) {
+        run.log.appendBlankLine();
+        run.log.appendQueryResult(res);
+        run.table.push(res);
         try {
-            this.graphOutput.push(res);
+            run.graph.push(res);
         } catch (err) {
             console.error("[Graph Output Error]", err);
-            this.graphOutput.status = "error";
+            run.graph.status = "error";
             this.snackbar.errorPersistent(`Failed to render graph visualization: ${err}`);
         }
-        this.rawOutput.push(JSON.stringify(res, null, 2));
+        run.raw.push(JSON.stringify(res, null, 2));
     }
 
-    private outputQueryResponseNoAnswers() {
-        this.logOutput.appendBlankLine();
-        this.logOutput.appendLines(`${RESULT}${SUCCESS}`);
-        this.tableOutput.status = "answerOutputDisabled";
-        this.graphOutput.status = "answerOutputDisabled";
-        this.rawOutput.push(SUCCESS_RAW);
+    private outputQueryResponseNoAnswers(run: RunOutputState) {
+        run.log.appendBlankLine();
+        run.log.appendLines(`${RESULT}${SUCCESS}`);
+        run.table.status = "answerOutputDisabled";
+        run.graph.status = "answerOutputDisabled";
+        run.raw.push(SUCCESS_RAW);
     }
 }
 
@@ -583,26 +682,40 @@ type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutput
 export class GraphOutputState {
 
     status: GraphOutputStatus = "ok";
-    canvasEl!: HTMLElement;
     visualiser: GraphVisualiser | null = null;
     query?: string;
     database?: string;
+    private _canvasEl: HTMLElement | null = null;
     private _preservedGraph: VisualGraph | null = null;
+    private _pendingResponses: ApiResponse<QueryResponse>[] = [];
 
     constructor() {
     }
 
-    push(res: ApiResponse<QueryResponse>) {
-        if (!this.canvasEl) {
-            const error = `Missing canvas element for graph visualization. The graph container may not be properly initialized in the DOM.`;
-            console.error("[GraphOutputState] Canvas element not assigned:", {
-                canvasEl: this.canvasEl,
-                visualiser: this.visualiser,
-                status: this.status,
-            });
-            throw error;
-        }
+    get canvasEl(): HTMLElement | null {
+        return this._canvasEl;
+    }
 
+    set canvasEl(el: HTMLElement) {
+        this._canvasEl = el;
+        if (this._pendingResponses.length > 0) {
+            const pending = [...this._pendingResponses];
+            this._pendingResponses = [];
+            for (const res of pending) {
+                this.pushInternal(res);
+            }
+        }
+    }
+
+    push(res: ApiResponse<QueryResponse>) {
+        if (!this._canvasEl) {
+            this._pendingResponses.push(res);
+            return;
+        }
+        this.pushInternal(res);
+    }
+
+    private pushInternal(res: ApiResponse<QueryResponse>) {
         if (isApiErrorResponse(res)) {
             this.status = "error";
             return;
@@ -611,7 +724,7 @@ export class GraphOutputState {
         if (!this.visualiser) {
             const graph = this._preservedGraph ?? newVisualGraph();
             this._preservedGraph = graph;
-            const sigma = createSigmaRenderer(this.canvasEl, defaultSigmaSettings as any, graph);
+            const sigma = createSigmaRenderer(this._canvasEl!, defaultSigmaSettings as any, graph);
             const layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
             // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
             this.visualiser = new GraphVisualiser(graph, sigma, layout);
@@ -633,22 +746,6 @@ export class GraphOutputState {
                 }
                 this.visualiser.colorEdgesByConstraintIndex(false);
                 this.status = "ok";
-                // document.getElementById("query-highlight-div").innerHTML = highlightedQuery;
-                // if (res.queryStructure != null) {
-                //     highlightedQuery = studio.colorQuery(form.query.value, query_result.queryStructure);
-                //     studio.colorEdgesByConstraintIndex(false);
-                // }
-                // document.getElementById("query-highlight-div").innerHTML = highlightedQuery;
-                // if (res.answers.length) {
-                //     const varNames = Object.keys(res.answers[0]);
-                //     if (varNames.length) {
-                //         this.status = "ok";
-                //         this.appendColumns(...varNames);
-                //         setTimeout(() => {
-                //             this.appendConceptRows(...res.answers);
-                //         });
-                //     } else this.status = "noColumns";
-                // } else this.status = "noAnswers";
                 break;
             }
             case "conceptDocuments": {

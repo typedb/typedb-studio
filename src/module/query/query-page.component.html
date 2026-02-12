@@ -70,9 +70,29 @@
           </div>
         </div>
       <div resizable [percent]="50" class="results-pane card-bottom">
-        <div class="card-header">
-          <h5>Results</h5>
-          <div>
+        <div class="run-tabs-header-row">
+          <div class="run-tabs-scroll">
+            @if (state.currentTabRuns.length === 0) {
+              <div class="run-tab active placeholder">
+                <span class="run-tab-label">Run 1</span>
+                <button mat-icon-button class="run-tab-close-button" disabled>
+                  <i class="fa-light fa-xmark"></i>
+                </button>
+              </div>
+            }
+            @for (run of state.currentTabRuns; track run.id; let i = $index) {
+              <div class="run-tab"
+                   [class.active]="state.selectedRunIndex === i"
+                   (click)="onRunTabChange(i)">
+                <span class="run-tab-label">{{ run.label }}</span>
+                <button mat-icon-button class="run-tab-close-button" (click)="closeRunTab($event, i)">
+                  <i class="fa-light fa-xmark"></i>
+                </button>
+              </div>
+            }
+          </div>
+          <div class="flex-spacer"></div>
+          <div class="run-tabs-controls">
             <mat-button-toggle-group [formControl]="state.outputTypeControl" [matTooltip]="(state.outputDisabledReason$ | async) || ''" matTooltipPosition="below">
               @for (outputType of state.outputTypes; track outputType) {
                 <mat-button-toggle [value]="outputType">{{ outputType }}</mat-button-toggle>
@@ -80,7 +100,7 @@
             </mat-button-toggle-group>
           </div>
         </div>
-        @if ((driver.status$ | async) === "connected" && (driver.database$ | async)) {
+        @if ((driver.status$ | async) === "connected" && (driver.database$ | async) && state.currentTabRuns.length > 0) {
           <div class="answers-outer-container">
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'log'" [class.has-scrollbar]="logHasScrollbar">
               <mat-form-field class="code-text-field">
