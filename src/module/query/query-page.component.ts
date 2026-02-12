@@ -286,6 +286,16 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.queryTabsState.duplicateTab(tab);
     }
 
+    // Run tab methods
+    onRunTabChange(index: number) {
+        this.state.selectRun(index);
+    }
+
+    closeRunTab(event: Event, index: number) {
+        event.stopPropagation();
+        this.state.closeRun(index);
+    }
+
     getHistoryEntryControl(entry: QueryRunAction): FormControl<string> {
         let control = this.historyEntryControls.get(entry);
         if (!control) {
