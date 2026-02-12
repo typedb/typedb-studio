@@ -2,7 +2,7 @@
   <article #articleRef class="query-page" style="display: flex; flex-direction: row;">
     <ts-schema-tool-window resizable [percent]="20" [title]="'Query Editor'"/>
     <div class="main-panes" resizable [percent]="60">
-      <div resizable [percent]="50" class="query-pane">
+      <div resizable [percent]="50" class="query-pane card-top">
         <div class="query-tabs-container">
             @if ((queryTabsState.openTabs$ | async)!.length > 0) {
               <div class="query-tabs-header-row">
@@ -69,7 +69,7 @@
             }
           </div>
         </div>
-      <div resizable [percent]="50" class="results-pane card">
+      <div resizable [percent]="50" class="results-pane card-bottom">
         <div class="card-header">
           <h5>Results</h5>
           <div>

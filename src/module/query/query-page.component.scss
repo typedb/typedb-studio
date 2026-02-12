@@ -37,12 +37,17 @@
 }
 
 .main-panes {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0 !important;
+
     @media (max-width: media.$max-width-mobile) {
         margin-left: -8px;
     }
 }
 
-.main-panes, .right-panes {
+.right-panes {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -65,6 +70,35 @@
     padding: 16px;
     position: relative;
     overflow: hidden;
+}
+
+.card-top {
+    border: shapes.$border;
+    border-radius: shapes.$border-radius shapes.$border-radius 0 0;
+    border-bottom: none;
+
+    ::ng-deep + app-drag-handle {
+        border-left: shapes.$border;
+        border-right: shapes.$border;
+        position: relative;
+
+        &::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 1px;
+            background: colors.$light-purple;
+        }
+    }
+}
+
+.card-bottom {
+    border: shapes.$border;
+    border-top: none;
+    border-radius: 0 0 shapes.$border-radius shapes.$border-radius;
 }
 
 i.fa-xmark {
@@ -99,6 +133,9 @@ i.fa-xmark {
 }
 
 .card-header {
+    margin-left: 8px;
+    margin-top: 8px;
+
     h5, mat-button-toggle-group, button, .row-limit-control {
         z-index: 10;
     }
@@ -202,8 +239,8 @@ button {
     flex-direction: column;
     overflow: hidden;
     z-index: 10;
-    border: 1px solid colors.$light-purple;
-    border-radius: shapes.$border-radius;
+    border: none;
+    border-radius: shapes.$border-radius-small shapes.$border-radius-small 0 0;
     background: colors.$black;
 }
 
