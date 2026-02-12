@@ -12,7 +12,9 @@
 }
 
 .output-header {
-    padding: 0.5rem 0.5rem 0 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 0;
     background-color: transparent;
 
     mat-button-toggle-group {
@@ -44,6 +46,79 @@
     ::ng-deep .mat-button-toggle .mat-button-toggle-button {
         border-bottom-left-radius: 0 !important;
         border-bottom-right-radius: 0 !important;
+    }
+}
+
+.run-tabs-scroll {
+    display: flex;
+    align-items: stretch;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex: 0 1 auto;
+    height: 28px;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.run-tab {
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    color: colors.$grey;
+    transition: background-color 100ms, color 100ms;
+    font-size: 12px;
+    border: shapes.$border;
+    border-bottom: none;
+    border-right: none;
+    border-radius: shapes.$border-radius-small shapes.$border-radius-small 0 0;
+
+    &:hover:not(.active) {
+        background-color: rgba(colors.$light-purple, 0.2);
+    }
+
+    &.active, &.active:hover {
+        color: colors.$white;
+        background-color: colors.$deep-purple;
+    }
+
+    &.placeholder {
+        cursor: default;
+    }
+}
+
+.run-tab-label {
+    user-select: none;
+}
+
+.run-tab-close-button.mat-mdc-icon-button {
+    --mdc-icon-button-state-layer-size: 16px;
+    margin-left: 4px;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    position: relative;
+
+    &::ng-deep .mat-mdc-button-touch-target {
+        height: 16px;
+        width: 16px;
+    }
+
+    i {
+        font-size: 10px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        line-height: 1;
+        height: 10px;
+    }
+
+    &:hover {
+        background-color: colors.$light-purple;
     }
 }
 

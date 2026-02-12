@@ -12,7 +12,7 @@ import { INTERNAL_ERROR } from "../framework/util/strings";
 import { ChatMessage as CloudChatMessage, CloudService } from "./cloud.service";
 import { DriverState } from "./driver-state.service";
 import { AppData, PersistedChatMessage, PersistedConversation, RowLimit } from "./app-data.service";
-import { LogOutputState, TableOutputState, GraphOutputState, RawOutputState, ROW_LIMIT_OPTIONS } from "./query-page-state.service";
+import { ROW_LIMIT_OPTIONS, RunOutputState, createRunOutputState } from "./query-page-state.service";
 
 interface MessagePartText {
     type: 'text';
@@ -33,11 +33,15 @@ interface MessagePartOutput {
 type MessagePart = MessagePartText | MessagePartCode | MessagePartOutput;
 
 export interface OutputState {
-    log: LogOutputState;
-    table: TableOutputState;
-    graph: GraphOutputState;
-    raw: RawOutputState;
+    runs: RunOutputState[];
+    selectedRunIndex: number;
+    runCounter: number;
     outputTypeControl: FormControl<OutputType>;
+}
+
+function currentChatRun(state: OutputState): RunOutputState | null {
+    if (state.selectedRunIndex < 0 || state.selectedRunIndex >= state.runs.length) return null;
+    return state.runs[state.selectedRunIndex];
 }
 
 export type OutputType = "log" | "table" | "graph" | "raw";
@@ -117,10 +121,9 @@ class StreamingMarkdownParser {
 
 function createOutputState(formBuilder: FormBuilder): OutputState {
     return {
-        log: new LogOutputState(),
-        table: new TableOutputState(),
-        graph: new GraphOutputState(),
-        raw: new RawOutputState(),
+        runs: [],
+        selectedRunIndex: -1,
+        runCounter: 0,
         outputTypeControl: formBuilder.nonNullable.control("log" as OutputType),
     };
 }
@@ -259,7 +262,9 @@ export class ChatState {
         for (const msg of this.messages$.value) {
             for (const part of msg.content) {
                 if (part.type === 'output') {
-                    part.outputState.graph.destroy();
+                    for (const run of part.outputState.runs) {
+                        run.graph.destroy();
+                    }
                 }
             }
         }
@@ -359,14 +364,9 @@ export class ChatState {
         let outputState: OutputState;
 
         if (nextPart && nextPart.type === 'output') {
-            // Reuse existing output state
             outputState = nextPart.outputState;
-            outputState.log.clear();
-            outputState.table.clear();
-            outputState.graph.destroy();
-            outputState.raw.clear();
         } else {
-            // Create new output state
+            // Create new output state container
             outputState = createOutputState(this.formBuilder);
 
             // Insert output block after code block
@@ -377,12 +377,22 @@ export class ChatState {
             message.content.splice(codeBlockIndex + 1, 0, outputPart);
         }
 
-        // Initialize output
-        outputState.log.appendLines(`## Running> `, query, ``, `## Timestamp> ${new Date().toISOString()}`);
-        outputState.table.status = "running";
-        outputState.graph.status = "running";
-        outputState.graph.query = query;
-        outputState.graph.database = this.driver.requireDatabase().name;
+        // Detach current run's graph before creating new run
+        const oldRun = currentChatRun(outputState);
+        if (oldRun) oldRun.graph.detach();
+
+        // Create new run
+        outputState.runCounter++;
+        const newRun = createRunOutputState(`Run ${outputState.runCounter}`, query);
+        outputState.runs.push(newRun);
+        outputState.selectedRunIndex = outputState.runs.length - 1;
+
+        // Initialize the new run's outputs
+        newRun.log.appendLines(`## Running> `, query, ``, `## Timestamp> ${new Date().toISOString()}`);
+        newRun.table.status = "running";
+        newRun.graph.status = "running";
+        newRun.graph.query = query;
+        newRun.graph.database = this.driver.requireDatabase().name;
 
         this.messages$.next([...messages]);
 
@@ -392,7 +402,7 @@ export class ChatState {
 
         this.driver.query(query, queryOptions).subscribe({
             next: (res) => {
-                this.outputQueryResponse(outputState, res);
+                this.outputQueryResponseToRun(newRun, res);
                 this.messages$.next([...this.messages$.value]);
             },
             error: (err) => {
@@ -402,20 +412,20 @@ export class ChatState {
                 } else {
                     errorMsg = err?.message ?? err?.toString() ?? `Unknown error`;
                 }
-                outputState.log.appendLines(``, `## Result> Error`, ``, errorMsg);
-                outputState.table.status = "error";
-                outputState.graph.status = "error";
+                newRun.log.appendLines(``, `## Result> Error`, ``, errorMsg);
+                newRun.table.status = "error";
+                newRun.graph.status = "error";
                 this.messages$.next([...this.messages$.value]);
             },
         });
     }
 
-    private outputQueryResponse(outputState: OutputState, res: ApiResponse<QueryResponse>): void {
-        outputState.log.appendBlankLine();
-        outputState.log.appendQueryResult(res);
-        outputState.table.push(res);
-        outputState.graph.push(res);
-        outputState.raw.push(JSON.stringify(res, null, 2));
+    private outputQueryResponseToRun(run: RunOutputState, res: ApiResponse<QueryResponse>): void {
+        run.log.appendBlankLine();
+        run.log.appendQueryResult(res);
+        run.table.push(res);
+        run.graph.push(res);
+        run.raw.push(JSON.stringify(res, null, 2));
     }
 
     compactConversation(): void {
