@@ -65,6 +65,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     @ViewChild("queryTabContextMenuTrigger") queryTabContextMenuTrigger!: MatMenuTrigger;
     @ViewChild("tabsScrollContainer") tabsScrollContainer?: ElementRef<HTMLElement>;
+    @ViewChild("runTabsScrollContainer") runTabsScrollContainer?: ElementRef<HTMLElement>;
 
     state = inject(QueryPageState);
     driver = inject(DriverState);
@@ -96,10 +97,13 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     logHasScrollbar = false;
     canScrollLeft = false;
     canScrollRight = false;
+    canScrollRunsLeft = false;
+    canScrollRunsRight = false;
     private canvasEl?: HTMLElement;
     private previousTabId: string | null = null;
     private logResizeObserver?: ResizeObserver;
     private tabsScrollObserver?: ResizeObserver;
+    private runTabsScrollObserver?: ResizeObserver;
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
@@ -148,12 +152,20 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
             });
             this.tabsScrollObserver.observe(this.tabsScrollContainer.nativeElement);
         }
+
+        if (this.runTabsScrollContainer) {
+            this.runTabsScrollObserver = new ResizeObserver(() => {
+                this.updateRunTabsScrollState();
+            });
+            this.runTabsScrollObserver.observe(this.runTabsScrollContainer.nativeElement);
+        }
     }
 
     ngOnDestroy() {
         this.state.destroyAllGraphOutputs();
         this.logResizeObserver?.disconnect();
         this.tabsScrollObserver?.disconnect();
+        this.runTabsScrollObserver?.disconnect();
     }
 
     // Tab scroll methods
@@ -185,6 +197,39 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     scrollTabsRight() {
         const el = this.tabsScrollContainer?.nativeElement;
+        if (!el) return;
+        el.scrollBy({ left: 200, behavior: "smooth" });
+    }
+
+    // Run tab scroll methods
+    updateRunTabsScrollState() {
+        const el = this.runTabsScrollContainer?.nativeElement;
+        if (!el) return;
+        this.canScrollRunsLeft = el.scrollLeft > 0;
+        this.canScrollRunsRight = el.scrollLeft < el.scrollWidth - el.clientWidth - 1;
+    }
+
+    onRunTabsScroll() {
+        this.updateRunTabsScrollState();
+    }
+
+    onRunTabsWheel(event: WheelEvent) {
+        const el = this.runTabsScrollContainer?.nativeElement;
+        if (!el) return;
+        if (event.deltaY !== 0) {
+            event.preventDefault();
+            el.scrollLeft += event.deltaY;
+        }
+    }
+
+    scrollRunTabsLeft() {
+        const el = this.runTabsScrollContainer?.nativeElement;
+        if (!el) return;
+        el.scrollBy({ left: -200, behavior: "smooth" });
+    }
+
+    scrollRunTabsRight() {
+        const el = this.runTabsScrollContainer?.nativeElement;
         if (!el) return;
         el.scrollBy({ left: 200, behavior: "smooth" });
     }
