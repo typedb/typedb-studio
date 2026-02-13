@@ -6,7 +6,7 @@
 
 import { inject, Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { BehaviorSubject, combineLatest, first, map, Observable, pairwise, shareReplay, startWith, switchMap } from "rxjs";
+import { BehaviorSubject, combineLatest, map, Observable, pairwise, shareReplay, startWith, switchMap } from "rxjs";
 import { DriverAction } from "../concept/action";
 import {createSigmaRenderer, GraphVisualiser} from "../framework/graph-visualiser";
 import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
@@ -330,6 +330,8 @@ export class QueryPageState {
                 this.outputQueryResponseToRun(newRun, res);
             },
             error: (err) => {
+                newRun.table.status = "error";
+                newRun.graph.status = "error";
                 this.driver.checkHealth().subscribe({
                     next: () => {
                         let msg = ``;
@@ -338,19 +340,13 @@ export class QueryPageState {
                         } else {
                             msg = err?.message ?? err?.toString() ?? `Unknown error`;
                         }
-                        this.snackbar.errorPersistent(`Error: ${msg}\n`
-                            + `Caused: Failed to execute query.`);
+                        newRun.log.appendBlankLine();
+                        newRun.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
                     },
                     error: () => {
-                        this.driver.connection$.pipe(first()).subscribe((connection) => {
-                            if (connection && connection.url.includes(`localhost`)) {
-                                this.snackbar.errorPersistent(`Unable to connect to TypeDB server.\n`
-                                    + `Ensure the server is still running.`);
-                            } else {
-                                this.snackbar.errorPersistent(`Unable to connect to TypeDB server.\n`
-                                    + `Check your network connection and ensure the server is still running.`);
-                            }
-                        });
+                        const msg = `Unable to connect to TypeDB server.`;
+                        newRun.log.appendBlankLine();
+                        newRun.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
                     }
                 });
             },

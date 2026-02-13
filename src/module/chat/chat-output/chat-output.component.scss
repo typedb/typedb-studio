@@ -208,6 +208,8 @@
 }
 
 .table-view {
+    height: 100%;
+
     table {
         width: 100%;
 
@@ -256,7 +258,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100px;
+    height: 100%;
     padding: 1rem;
 }
 
