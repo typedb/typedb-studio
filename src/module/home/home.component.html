@@ -6,18 +6,42 @@
     <p class="tp-subtitle">Connect to TypeDB and explore your data in an interactive visual environment</p>
 
     <div class="home-page-body">
-      <div class="tp-bento-box tp-deploy-cluster">
-        <div class="tp-deploy-cluster-button-area">
-          @if (isConnected$ | async) {
-            <h2>Query your data</h2>
-            <p>Execute TypeQL queries using the query tool</p>
-            <div class="flex-spacer"></div>
-            <a routerLink="/query">
-              <tp-button buttonId="goToQueryTool" buttonStyle="primary-outline green stroke">
-                Query TypeDB
-              </tp-button>
-            </a>
-          } @else {
+      @if (isConnected$ | async) {
+        <div class="tp-bento-container row">
+          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/query">
+            <i class="fa-thin fa-rectangle-terminal"></i>
+            <div class="tp-icon-card-content">
+              <h3>Query your data</h3>
+              <p>Execute TypeQL queries using the query tool</p>
+            </div>
+          </a>
+          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/data">
+            <i class="fa-thin fa-table"></i>
+            <div class="tp-icon-card-content">
+              <h3>Explore your data</h3>
+              <p>Browse and explore your data using the interactive data explorer</p>
+            </div>
+          </a>
+        </div>
+        <div class="tp-bento-container row">
+          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/schema">
+            <i class="fa-thin fa-vector-square"></i>
+            <div class="tp-icon-card-content">
+              <h3>Visualise your schema</h3>
+              <p>View and understand your database schema in a visual graph representation</p>
+            </div>
+          </a>
+          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/chat">
+            <i class="fa-thin fa-wand-magic-sparkles"></i>
+            <div class="tp-icon-card-content">
+              <h3>Query with AI agent</h3>
+              <p>Use an AI agent to query and explore your data with natural language</p>
+            </div>
+          </a>
+        </div>
+      } @else {
+        <div class="tp-bento-box tp-deploy-cluster">
+          <div class="tp-deploy-cluster-button-area">
             <h2>Connect to a TypeDB server</h2>
             <p>Connect to TypeDB CE, Cloud or Enterprise <strong>(version 3.3 or higher)</strong></p>
             <div class="flex-spacer"></div>
@@ -26,32 +50,15 @@
                 Connect
               </tp-button>
             </a>
-          }
+          </div>
+
+          <div class="flex-spacer"></div>
+          <div class="logo">
+            <img src="/assets/water-wheel.svg" alt=""/>
+          </div>
         </div>
 
-        <div class="flex-spacer"></div>
-        <div class="logo">
-          <img src="/assets/water-wheel.svg" alt=""/>
-        </div>
-      </div>
-
-      <div class="tp-bento-container row">
-        @if (isConnected$ | async) {
-          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/data">
-            <i class="fa-thin fa-table"></i>
-            <div class="tp-icon-card-content">
-              <h3>Explore your data</h3>
-              <p>Browse and explore your data using the interactive data explorer</p>
-            </div>
-          </a>
-          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/schema">
-            <i class="fa-thin fa-vector-square"></i>
-            <div class="tp-icon-card-content">
-              <h3>Visualise your schema</h3>
-              <p>View and understand your database schema in a visual graph representation</p>
-            </div>
-          </a>
-        } @else {
+        <div class="tp-bento-container row">
           <a class="tp-bento-box hoverable tp-icon-card flex-1" href="https://cloud.typedb.com" target="_blank">
             <i class="fa-thin fa-bolt"></i>
             <div class="tp-icon-card-content">
@@ -66,8 +73,8 @@
               <p>Download, install and run TypeDB Community Edition on your local machine or in Docker</p>
             </div>
           </a>
-        }
-      </div>
+        </div>
+      }
 
       <div class="tp-bento-container row tp-bento-box tp-additional-resources-container">
         <h3>Additional Resources</h3>
