@@ -167,7 +167,7 @@
                   @if (isTransactionOperation(entry)) {
                     <p class="transaction-operation-type">{{ transactionOperationString(entry) }}</p>
                   } @else {
-                    <p class="transaction-operation-type">{{ entry.status === "error" ? "query failed" : "ran query" }}</p>
+                    <p class="transaction-operation-type">{{ entry.status === "error" ? "query failed" : ($any(entry).autoCommitted ? "ran + committed query" : "ran query") }}</p>
                   }
                   <span class="flex-spacer"></span>
                   <div class="action-status">
