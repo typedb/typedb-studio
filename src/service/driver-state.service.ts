@@ -320,7 +320,8 @@ export class DriverState {
             query,
             (transactionType: TransactionType) => this.executeOneShotQuery(query, databaseName, transactionType, queryOptions)
         ).pipe(
-            tap(({ result }) => {
+            tap(({ type, result }) => {
+                queryAction.autoCommitted = type !== "read";
                 this.updateActionResult(queryAction, result);
                 this._actionLog$.next(queryAction);
             }),

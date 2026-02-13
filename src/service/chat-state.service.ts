@@ -421,8 +421,9 @@ export class ChatState {
     }
 
     private outputQueryResponseToRun(run: RunOutputState, res: ApiResponse<QueryResponse>): void {
+        const autoCommitted = this.driver.autoTransactionEnabled$.value && !isApiErrorResponse(res) && res.ok.queryType !== "read";
         run.log.appendBlankLine();
-        run.log.appendQueryResult(res);
+        run.log.appendQueryResult(res, autoCommitted);
         run.table.push(res);
         run.graph.push(res);
         run.raw.push(JSON.stringify(res, null, 2));

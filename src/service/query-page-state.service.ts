@@ -358,13 +358,14 @@ export class QueryPageState {
     }
 
     private outputQueryResponseToRun(run: RunOutputState, res: ApiResponse<QueryResponse>) {
-        if (this.answersOutputEnabled) this.outputQueryResponseWithAnswers(run, res);
-        else this.outputQueryResponseNoAnswers(run);
+        const autoCommitted = this.driver.autoTransactionEnabled$.value && !isApiErrorResponse(res) && res.ok.queryType !== "read";
+        if (this.answersOutputEnabled) this.outputQueryResponseWithAnswers(run, res, autoCommitted);
+        else this.outputQueryResponseNoAnswers(run, autoCommitted);
     }
 
-    private outputQueryResponseWithAnswers(run: RunOutputState, res: ApiResponse<QueryResponse>) {
+    private outputQueryResponseWithAnswers(run: RunOutputState, res: ApiResponse<QueryResponse>, autoCommitted: boolean) {
         run.log.appendBlankLine();
-        run.log.appendQueryResult(res);
+        run.log.appendQueryResult(res, autoCommitted);
         run.table.push(res);
         try {
             run.graph.push(res);
@@ -376,9 +377,10 @@ export class QueryPageState {
         run.raw.push(JSON.stringify(res, null, 2));
     }
 
-    private outputQueryResponseNoAnswers(run: RunOutputState) {
+    private outputQueryResponseNoAnswers(run: RunOutputState, autoCommitted: boolean) {
         run.log.appendBlankLine();
         run.log.appendLines(`${RESULT}${SUCCESS}`);
+        if (autoCommitted) run.log.appendLines(`Committed.`);
         run.table.status = "answerOutputDisabled";
         run.graph.status = "answerOutputDisabled";
         run.raw.push(SUCCESS_RAW);
@@ -476,7 +478,7 @@ export class LogOutputState {
         this.appendLines(``);
     }
 
-    appendQueryResult(res: ApiResponse<QueryResponse>) {
+    appendQueryResult(res: ApiResponse<QueryResponse>, autoCommitted?: boolean) {
         if (isApiErrorResponse(res)) {
             this.appendLines(`${RESULT}${ERROR}`, ``, res.err.message);
             return;
@@ -526,6 +528,11 @@ export class LogOutputState {
             default:
                 throw new Error(INTERNAL_ERROR);
         }
+
+        if (autoCommitted) {
+            lines.push(`Committed.`);
+        }
+
         this.appendLines(...lines);
         this.appendBlankLine();
     }

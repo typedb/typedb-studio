@@ -18,6 +18,7 @@ interface DriverActionBase {
 export interface QueryRunAction extends DriverActionBase {
     actionType: "queryRun";
     query: string;
+    autoCommitted?: boolean;
     result?: ApiResponse<QueryResponse>;
 }
 
