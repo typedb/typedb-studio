@@ -60,7 +60,7 @@
               </table>
             }
             @case ("error") {
-              <div class="status-text-container"><p class="status-text">This query returned an error.</p></div>
+              <div class="status-text-container"><p class="status-text">This query returned an error. <a (click)="outputState.outputTypeControl.patchValue('log')">View in log</a></p></div>
             }
             @case ("running") {
               <div class="status-text-container"><p class="status-text">Running query...</p></div>
@@ -87,7 +87,7 @@
 
         @switch (currentRun.graph.status) {
           @case ("error") {
-            <p class="status-text">This query returned an error.</p>
+            <p class="status-text">This query returned an error. <a (click)="outputState.outputTypeControl.patchValue('log')">View in log</a></p>
           }
           @case ("running") {
             <p class="status-text">Running query...</p>
