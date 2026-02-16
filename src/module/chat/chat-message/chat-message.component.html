@@ -1,4 +1,4 @@
-<div class="message" [class.user]="message.sender === 'user'" [class.ai]="message.sender === 'ai'">
+<div class="message" [class.user]="message.sender === 'user'" [class.ai]="message.sender === 'ai'" [attr.data-message-id]="message.id">
   <div class="message-content">
     @if (message.isProcessing) {
       <div class="typing-indicator">

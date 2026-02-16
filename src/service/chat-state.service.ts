@@ -6,7 +6,7 @@
 
 import { inject, Injectable } from "@angular/core";
 import { FormBuilder, FormControl } from "@angular/forms";
-import { BehaviorSubject, switchMap } from "rxjs";
+import { BehaviorSubject, Subject, switchMap } from "rxjs";
 import { isOkResponse, isApiErrorResponse, ApiResponse, QueryResponse } from "@typedb/driver-http";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { ChatMessage as CloudChatMessage, CloudService } from "./cloud.service";
@@ -146,6 +146,7 @@ export class ChatState {
 
     messages$ = new BehaviorSubject<ChatMessageData[]>([]);
     isProcessing$ = new BehaviorSubject<boolean>(false);
+    aiResponseStarted$ = new Subject<void>();
     conversations$ = new BehaviorSubject<ConversationSummary[]>([]);
     selectedConversationId$ = new BehaviorSubject<string | null>(null);
     promptControl = new FormControl("", { nonNullable: true });
@@ -323,11 +324,13 @@ export class ChatState {
                     const messages = this.messages$.value;
                     const currentAiMsg = messages[messages.length - 1];
                     if (currentAiMsg.sender !== "ai") throw new Error(INTERNAL_ERROR);
+                    const isFirstChunk = currentAiMsg.isProcessing;
                     currentAiMsg.content = parser.parseChunk(res.response);
                     currentAiMsg.isProcessing = false;
                     currentAiMsg.timestamp = new Date();
                     this.messages$.next([...messages]);
                     this.persistConversation();
+                    if (isFirstChunk) this.aiResponseStarted$.next();
                 },
                 error: (err) => {
                     console.error(err);
