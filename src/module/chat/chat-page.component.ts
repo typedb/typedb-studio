@@ -124,6 +124,7 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     onSubmit(event: Event): void {
         event.preventDefault();
         this.state.submitPrompt();
+        setTimeout(() => this.scrollToBottom());
     }
 
     onInputKeyDownEnter(event: KeyboardEvent): void {
@@ -132,6 +133,7 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
             this.state.submitPrompt();
             this.historyIndex = -1;
             this.historyDraft = "";
+            setTimeout(() => this.scrollToBottom());
         }
     }
 
@@ -200,6 +202,7 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     runHistoryQuery(entry: QueryRunAction) {
         this.state.promptControl.setValue(entry.query);
         this.state.submitPrompt();
+        setTimeout(() => this.scrollToBottom());
     }
 
     transactionOperationString(action: TransactionOperationAction) {
