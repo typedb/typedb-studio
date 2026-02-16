@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnInit, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from "@angular/core";
 import { AsyncPipe, DatePipe } from "@angular/common";
 import { FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
@@ -59,15 +59,13 @@ import { DatabaseSelectDialogComponent } from "../database/select-dialog/databas
         RichTooltipDirective,
     ],
 })
-export class ChatPageComponent implements OnInit, AfterViewInit, AfterViewChecked {
+export class ChatPageComponent implements OnInit, AfterViewInit {
     @ViewChild("messagesContainer") messagesContainer?: ElementRef<HTMLElement>;
     @ViewChild("promptInput") promptInput?: ElementRef<HTMLTextAreaElement>;
 
     conversationGroups: { label: string; conversations: ConversationSummary[] }[] = [];
     history: HistoryWindowState;
 
-    private shouldScrollToBottom = false;
-    private lastMessageCount = 0;
     private historyIndex = -1;
     private historyDraft = "";
     private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();
@@ -89,12 +87,8 @@ export class ChatPageComponent implements OnInit, AfterViewInit, AfterViewChecke
             this.conversationGroups = this.groupConversations(convs);
         });
 
-        // Auto-scroll when new messages arrive
-        this.state.messages$.subscribe(messages => {
-            if (messages.length > this.lastMessageCount) {
-                this.shouldScrollToBottom = true;
-            }
-            this.lastMessageCount = messages.length;
+        this.state.aiResponseStarted$.subscribe(() => {
+            setTimeout(() => this.scrollToLastUserMessage());
         });
     }
 
@@ -102,17 +96,24 @@ export class ChatPageComponent implements OnInit, AfterViewInit, AfterViewChecke
         this.promptInput?.nativeElement.focus();
     }
 
-    ngAfterViewChecked() {
-        if (this.shouldScrollToBottom && this.messagesContainer) {
-            this.scrollToBottom();
-            this.shouldScrollToBottom = false;
-        }
-    }
-
     private scrollToBottom(): void {
         if (this.messagesContainer) {
             const el = this.messagesContainer.nativeElement;
             el.scrollTop = el.scrollHeight;
+        }
+    }
+
+    private scrollToLastUserMessage(): void {
+        if (!this.messagesContainer) return;
+        const container = this.messagesContainer.nativeElement;
+        const userMessages = container.querySelectorAll('[data-message-id].user');
+        const lastUserMsg = userMessages[userMessages.length - 1] as HTMLElement | undefined;
+        if (lastUserMsg) {
+            const containerRect = container.getBoundingClientRect();
+            const msgRect = lastUserMsg.getBoundingClientRect();
+            container.scrollTop += msgRect.top - containerRect.top;
+        } else {
+            this.scrollToBottom();
         }
     }
 
@@ -184,6 +185,7 @@ export class ChatPageComponent implements OnInit, AfterViewInit, AfterViewChecke
     onSendLogToAi(logText: string): void {
         this.state.promptControl.setValue(logText);
         this.state.submitPrompt();
+        setTimeout(() => this.scrollToBottom());
     }
 
     getHistoryEntryControl(entry: QueryRunAction): FormControl<string> {
