@@ -307,6 +307,7 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
 
     onNewConversation(): void {
         this.state.newConversation();
+        setTimeout(() => this.promptInput?.nativeElement.focus());
     }
 
     formatRelativeTime(date: Date): string {
