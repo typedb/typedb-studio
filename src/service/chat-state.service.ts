@@ -67,6 +67,7 @@ class StreamingMarkdownParser {
     private buffer = '';
     private insideCode = false;
     private currentLang = '';
+    private completedParts: MessagePart[] = [];
 
     constructor(private formBuilder: FormBuilder) {}
 
@@ -76,46 +77,55 @@ class StreamingMarkdownParser {
 
     parseChunk(chunk: string): MessagePart[] {
         this.buffer += chunk;
-        const parts: MessagePart[] = [];
 
         while (true) {
             if (!this.insideCode) {
                 const codeStart = this.buffer.indexOf('```');
                 if (codeStart === -1) break;
 
-                if (codeStart > 0) {
-                    parts.push({ type: 'text', content: this.buffer.slice(0, codeStart) });
+                const endOfLine = this.buffer.indexOf('\n', codeStart);
+                if (endOfLine === -1) {
+                    // Fence found but no newline yet — flush preceding text and wait
+                    if (codeStart > 0) {
+                        this.completedParts.push({ type: 'text', content: this.buffer.slice(0, codeStart) });
+                        this.buffer = this.buffer.slice(codeStart);
+                    }
+                    break;
                 }
 
-                const endOfLine = this.buffer.indexOf('\n', codeStart);
-                this.currentLang = endOfLine !== -1 ? this.buffer.slice(codeStart + 3, endOfLine).trim() : '';
-                this.buffer = endOfLine !== -1 ? this.buffer.slice(endOfLine + 1) : '';
+                if (codeStart > 0) {
+                    this.completedParts.push({ type: 'text', content: this.buffer.slice(0, codeStart) });
+                }
+
+                this.currentLang = this.buffer.slice(codeStart + 3, endOfLine).trim();
+                this.buffer = this.buffer.slice(endOfLine + 1);
                 this.insideCode = true;
             } else {
                 const codeEnd = this.buffer.indexOf('```');
                 if (codeEnd === -1) break;
 
-                parts.push({ type: 'code', language: this.currentLang || 'typeql', formControl: this.newFormControl(this.buffer.slice(0, codeEnd)) });
+                this.completedParts.push({ type: 'code', language: this.currentLang || 'typeql', formControl: this.newFormControl(this.buffer.slice(0, codeEnd)) });
                 this.buffer = this.buffer.slice(codeEnd + 3);
                 this.insideCode = false;
                 this.currentLang = '';
             }
         }
 
-        parts.push({ type: 'text', content: this.buffer });
-        return parts;
+        if (this.insideCode) {
+            return [...this.completedParts, { type: 'code', language: this.currentLang || 'typeql', formControl: this.newFormControl(this.buffer) }];
+        }
+        return [...this.completedParts, { type: 'text', content: this.buffer }];
     }
 
     flush(): MessagePart[] {
-        if (this.buffer.length === 0) return [];
-        const segs: MessagePart[] = [];
+        if (this.buffer.length === 0) return [...this.completedParts];
         if (this.insideCode) {
-            segs.push({ type: 'code', language: this.currentLang || 'typeql', formControl: this.newFormControl(this.buffer) });
+            this.completedParts.push({ type: 'code', language: this.currentLang || 'typeql', formControl: this.newFormControl(this.buffer) });
         } else {
-            segs.push({ type: 'text', content: this.buffer });
+            this.completedParts.push({ type: 'text', content: this.buffer });
         }
         this.buffer = '';
-        return segs;
+        return [...this.completedParts];
     }
 }
 
@@ -320,17 +330,17 @@ export class ChatState {
                     else throw res;
                 }),
             ).subscribe({
-                next: (res) => {
+                next: (chunk) => {
                     const messages = this.messages$.value;
                     const currentAiMsg = messages[messages.length - 1];
                     if (currentAiMsg.sender !== "ai") throw new Error(INTERNAL_ERROR);
                     const isFirstChunk = currentAiMsg.isProcessing;
-                    currentAiMsg.content = parser.parseChunk(res.response);
-                    currentAiMsg.isProcessing = false;
-                    currentAiMsg.timestamp = new Date();
+                    currentAiMsg.content = parser.parseChunk(chunk);
+                    if (isFirstChunk) {
+                        currentAiMsg.isProcessing = false;
+                        this.aiResponseStarted$.next();
+                    }
                     this.messages$.next([...messages]);
-                    this.persistConversation();
-                    if (isFirstChunk) this.aiResponseStarted$.next();
                 },
                 error: (err) => {
                     console.error(err);
@@ -341,6 +351,12 @@ export class ChatState {
                     this.isProcessing$.next(false);
                 },
                 complete: () => {
+                    const messages = this.messages$.value;
+                    const currentAiMsg = messages[messages.length - 1];
+                    currentAiMsg.content = parser.flush();
+                    currentAiMsg.timestamp = new Date();
+                    this.messages$.next([...messages]);
+                    this.persistConversation();
                     this.isProcessing$.next(false);
                 },
             });

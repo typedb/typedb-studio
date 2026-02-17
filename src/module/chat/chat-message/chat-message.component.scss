@@ -14,8 +14,6 @@
     ::ng-deep markdown {
         // Headings
         h1, h2, h3, h4, h5, h6 {
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
             font-weight: var(--font-weight-semi-bold);
             line-height: 1.3;
 
@@ -24,12 +22,12 @@
             }
         }
 
-        h1 { font-size: 1.75rem; }
-        h2 { font-size: 1.5rem; }
-        h3 { font-size: 1.25rem; }
-        h4 { font-size: 1.1rem; }
-        h5 { font-size: 1rem; }
-        h6 { font-size: 0.9rem; }
+        h1 { font-size: 1.75em; margin-top: 1.5em; margin-bottom: 0.6em; }
+        h2 { font-size: 1.5em; margin-top: 1.4em; margin-bottom: 0.5em; }
+        h3 { font-size: 1.25em; margin-top: 1.3em; margin-bottom: 0.4em; }
+        h4 { font-size: 1.1em; margin-top: 1.2em; margin-bottom: 0.3em; }
+        h5 { font-size: 1em; margin-top: 1.1em; margin-bottom: 0.3em; }
+        h6 { font-size: 0.9em; margin-top: 1em; margin-bottom: 0.25em; }
 
         // Paragraphs
         p {
