@@ -8,7 +8,7 @@
       <div class="message-text">
         @for (part of message.content; track $index; let i = $index) {
           @if (part.type === 'text') {
-            <markdown>{{ part.content }}</markdown>
+            <markdown [data]="part.content"></markdown>
           } @else if (part.type === 'code') {
             @if (i + 1 < message.content.length && message.content[i + 1].type === 'output') {
               <div class="code-output-group">

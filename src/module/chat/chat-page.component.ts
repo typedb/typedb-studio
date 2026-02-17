@@ -4,7 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, NgZone, OnInit, ViewChild } from "@angular/core";
+import { filter, pairwise } from "rxjs";
 import { AsyncPipe, DatePipe } from "@angular/common";
 import { FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
@@ -64,11 +65,14 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     @ViewChild("promptInput") promptInput?: ElementRef<HTMLTextAreaElement>;
 
     conversationGroups: { label: string; conversations: ConversationSummary[] }[] = [];
+    conversationRelativeTimes = new Map<string, string>();
     history: HistoryWindowState;
+    showScrollToBottom = false;
 
     private historyIndex = -1;
     private historyDraft = "";
     private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();
+    private userScrolledDuringStream = false;
 
     constructor(
         public state: ChatState,
@@ -76,6 +80,7 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
         private appData: AppData,
         private dialog: MatDialog,
         private snackbar: SnackbarService,
+        private zone: NgZone,
     ) {
         this.history = new HistoryWindowState(driver);
     }
@@ -85,15 +90,63 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
 
         this.state.conversations$.subscribe(convs => {
             this.conversationGroups = this.groupConversations(convs);
+            this.conversationRelativeTimes = new Map(convs.map(c => [c.id, this.formatRelativeTime(c.updatedAt)]));
         });
 
         this.state.aiResponseStarted$.subscribe(() => {
+            this.userScrolledDuringStream = false;
             setTimeout(() => this.scrollToLastUserMessage());
+        });
+
+        this.state.isProcessing$.pipe(
+            pairwise(),
+            filter(([prev, curr]) => prev && !curr),
+        ).subscribe(() => {
+            // Capture scroll position before Angular re-renders (DOM still has wrapper)
+            const container = this.messagesContainer?.nativeElement;
+            const savedScrollTop = container?.scrollTop ?? 0;
+
+            setTimeout(() => {
+                // After Angular re-renders (wrapper removed) — correct the jump
+                if (!container) return;
+                container.style.scrollBehavior = 'auto';
+                if (this.userScrolledDuringStream) {
+                    container.scrollTop = savedScrollTop;
+                } else {
+                    this.scrollToLastUserMessage();
+                }
+                container.style.scrollBehavior = '';
+            });
         });
     }
 
     ngAfterViewInit() {
         this.promptInput?.nativeElement.focus();
+
+        const container = this.messagesContainer?.nativeElement;
+        if (container) {
+            const onUserScroll = () => {
+                if (this.state.isProcessing$.value) {
+                    this.userScrolledDuringStream = true;
+                }
+            };
+            container.addEventListener('wheel', onUserScroll, { passive: true });
+            container.addEventListener('touchmove', onUserScroll, { passive: true });
+
+            const updateScrollToBottom = () => {
+                const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+                const show = distanceFromBottom > 150;
+                if (show !== this.showScrollToBottom) {
+                    this.zone.run(() => this.showScrollToBottom = show);
+                }
+            };
+            container.addEventListener('scroll', updateScrollToBottom, { passive: true });
+            setTimeout(updateScrollToBottom);
+        }
+    }
+
+    onScrollToBottom(): void {
+        this.scrollToBottom();
     }
 
     private scrollToBottom(): void {
