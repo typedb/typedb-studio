@@ -9,6 +9,10 @@
 
  :host {
     text-align: center;
+
+    [mat-dialog-title] {
+        overflow: visible;
+    }
  }
 
  .body {
@@ -26,6 +30,197 @@ p {
 
 .tp-logo {
     max-width: 96px;
+    user-select: none;
+
+    &.wobble {
+        animation: wobble 0.4s ease-in-out 1;
+    }
+
+    &.wobble-more {
+        animation: wobble-more 0.45s ease-in-out 1;
+    }
+
+    &.pre-explode {
+        animation: shake 0.6s linear infinite;
+    }
+
+    &.explode {
+        animation: explode 2s ease-out forwards;
+    }
+}
+
+@keyframes wobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+}
+
+@keyframes wobble-more {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(8deg); }
+    75% { transform: rotate(-8deg); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translate(0, 0); }
+    10% { transform: translate(-2px, 1px); }
+    20% { transform: translate(2px, -1px); }
+    30% { transform: translate(-3px, 0px); }
+    40% { transform: translate(1px, 2px); }
+    50% { transform: translate(-1px, -2px); }
+    60% { transform: translate(3px, 1px); }
+    70% { transform: translate(-2px, -1px); }
+    80% { transform: translate(1px, 2px); }
+    90% { transform: translate(-1px, -1px); }
+}
+
+@keyframes explode {
+    0% { transform: scale(1) rotate(0deg); opacity: 1; }
+    30% { transform: scale(3) rotate(540deg); opacity: 1; }
+    42% { transform: scale(4.5) rotate(600deg); opacity: 1; }
+    55% { transform: scale(4.5) rotate(600deg); opacity: 0.6; filter: blur(1px); }
+    100% { transform: scale(4.5) rotate(600deg); opacity: 0; filter: blur(5px); }
+}
+
+.screen-flash {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: white;
+    opacity: 0;
+    animation: flash 1.8s ease-out 0.3s forwards;
+    pointer-events: none;
+}
+
+@keyframes flash {
+    0% { opacity: 0; }
+    28% { opacity: 0.15; }
+    30% { opacity: 0.9; }
+    55% { opacity: 0.3; }
+    100% { opacity: 0; }
+}
+
+.confetti-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 10001;
+    pointer-events: none;
+}
+
+.confetti {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 2px;
+    opacity: 0;
+    animation: confetti-burst 1.8s linear forwards;
+
+    // Entity (pink, square) - default shape
+    &:nth-child(1)  { background: colors.$entity-pink;    --x: -676px;  --y: -650px;  --r: 720deg;  animation-delay: 0.78s; }
+    &:nth-child(2)  { background: colors.$entity-pink;    --x: 780px;   --y: -546px;  --r: -540deg; animation-delay: 0.82s; }
+    &:nth-child(3)  { background: colors.$entity-pink;    --x: -442px;  --y: -780px;  --r: 480deg;  animation-delay: 0.76s; }
+    &:nth-child(4)  { background: colors.$entity-pink;    --x: 910px;   --y: -364px;  --r: -660deg; animation-delay: 0.84s; }
+    &:nth-child(5)  { background: colors.$entity-pink;    --x: -884px;  --y: -130px;  --r: 540deg;  animation-delay: 0.74s; }
+    &:nth-child(6)  { background: colors.$entity-pink;    --x: 624px;   --y: -832px;  --r: -420deg; animation-delay: 0.80s; }
+    &:nth-child(7)  { background: colors.$entity-pink;    --x: -1118px; --y: -416px;  --r: 600deg;  animation-delay: 0.77s; }
+    &:nth-child(8)  { background: colors.$entity-pink;    --x: 546px;   --y: -754px;  --r: -480deg; animation-delay: 0.83s; }
+    &:nth-child(9)  { background: colors.$entity-pink;    --x: -208px;  --y: -884px;  --r: 600deg;  animation-delay: 0.75s; }
+    &:nth-child(10) { background: colors.$entity-pink;    --x: 286px;   --y: -104px;  --r: -720deg; animation-delay: 0.81s; }
+    &:nth-child(11) { background: colors.$entity-pink;    --x: -754px;  --y: -286px;  --r: 420deg;  animation-delay: 0.79s; }
+    &:nth-child(12) { background: colors.$entity-pink;    --x: 1092px;  --y: -572px;  --r: -540deg; animation-delay: 0.85s; }
+    &:nth-child(13) { background: colors.$entity-pink;    --x: -520px;  --y: -728px;  --r: 500deg;  animation-delay: 0.73s; }
+    &:nth-child(14) { background: colors.$entity-pink;    --x: -598px;  --y: -442px;  --r: 560deg;  animation-delay: 0.86s; }
+    &:nth-child(15) { background: colors.$entity-pink;    --x: 728px;   --y: -676px;  --r: -620deg; animation-delay: 0.77s; }
+    &:nth-child(16) { background: colors.$entity-pink;    --x: -936px;  --y: -598px;  --r: 680deg;  animation-delay: 0.82s; }
+    &:nth-child(17) { background: colors.$entity-pink;    --x: 494px;   --y: -208px;  --r: -480deg; animation-delay: 0.75s; }
+    &:nth-child(18) { background: colors.$entity-pink;    --x: -260px;  --y: -754px;  --r: 520deg;  animation-delay: 0.84s; }
+    &:nth-child(19) { background: colors.$entity-pink;    --x: 962px;   --y: -494px;  --r: -560deg; animation-delay: 0.79s; }
+    &:nth-child(20) { background: colors.$entity-pink;    --x: -806px;  --y: -182px;  --r: 640deg;  animation-delay: 0.81s; }
+
+    // Attribute (blue, diamond)
+    &:nth-child(21) { background: colors.$attribute-blue;  --x: -988px;  --y: -494px;  --r: 660deg;  animation-delay: 0.77s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(22) { background: colors.$attribute-blue;  --x: 624px;   --y: -390px;  --r: -480deg; animation-delay: 0.83s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(23) { background: colors.$attribute-blue;  --x: -546px;  --y: -702px;  --r: 560deg;  animation-delay: 0.75s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(24) { background: colors.$attribute-blue;  --x: 988px;   --y: -78px;   --r: -600deg; animation-delay: 0.79s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(25) { background: colors.$attribute-blue;  --x: -910px;  --y: -624px;  --r: 700deg;  animation-delay: 0.85s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(26) { background: colors.$attribute-blue;  --x: 416px;   --y: -910px;  --r: -540deg; animation-delay: 0.81s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(27) { background: colors.$attribute-blue;  --x: -1144px; --y: -260px;  --r: 580deg;  animation-delay: 0.76s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(28) { background: colors.$attribute-blue;  --x: 364px;   --y: -858px;  --r: -520deg; animation-delay: 0.84s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(29) { background: colors.$attribute-blue;  --x: -1040px; --y: -312px;  --r: 440deg;  animation-delay: 0.78s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(30) { background: colors.$attribute-blue;  --x: 702px;   --y: -156px;  --r: -680deg; animation-delay: 0.82s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(31) { background: colors.$attribute-blue;  --x: -286px;  --y: -910px;  --r: 580deg;  animation-delay: 0.74s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(32) { background: colors.$attribute-blue;  --x: 1040px;  --y: -442px;  --r: -440deg; animation-delay: 0.86s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(33) { background: colors.$attribute-blue;  --x: -728px;  --y: -624px;  --r: 620deg;  animation-delay: 0.80s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(34) { background: colors.$attribute-blue;  --x: -832px;  --y: -728px;  --r: 620deg;  animation-delay: 0.73s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(35) { background: colors.$attribute-blue;  --x: 858px;   --y: -260px;  --r: -560deg; animation-delay: 0.83s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(36) { background: colors.$attribute-blue;  --x: -494px;  --y: -546px;  --r: 500deg;  animation-delay: 0.77s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(37) { background: colors.$attribute-blue;  --x: 650px;   --y: -832px;  --r: -700deg; animation-delay: 0.85s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(38) { background: colors.$attribute-blue;  --x: -1118px; --y: -182px;  --r: 460deg;  animation-delay: 0.79s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(39) { background: colors.$attribute-blue;  --x: 572px;   --y: -676px;  --r: -640deg; animation-delay: 0.76s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(40) { background: colors.$attribute-blue;  --x: -962px;  --y: -468px;  --r: 540deg;  animation-delay: 0.82s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+
+    // Relation (yellow, circle)
+    &:nth-child(41) { background: colors.$relation-yellow; --x: -780px;  --y: -780px;  --r: 640deg;  animation-delay: 0.78s; border-radius: 50%; }
+    &:nth-child(42) { background: colors.$relation-yellow; --x: 468px;   --y: -884px;  --r: -560deg; animation-delay: 0.84s; border-radius: 50%; }
+    &:nth-child(43) { background: colors.$relation-yellow; --x: -962px;  --y: -208px;  --r: 500deg;  animation-delay: 0.76s; border-radius: 50%; }
+    &:nth-child(44) { background: colors.$relation-yellow; --x: 936px;   --y: -780px;  --r: -700deg; animation-delay: 0.80s; border-radius: 50%; }
+    &:nth-child(45) { background: colors.$relation-yellow; --x: -624px;  --y: -52px;   --r: 620deg;  animation-delay: 0.74s; border-radius: 50%; }
+    &:nth-child(46) { background: colors.$relation-yellow; --x: 754px;   --y: -676px;  --r: -460deg; animation-delay: 0.82s; border-radius: 50%; }
+    &:nth-child(47) { background: colors.$relation-yellow; --x: -442px;  --y: -962px;  --r: 720deg;  animation-delay: 0.77s; border-radius: 50%; }
+    &:nth-child(48) { background: colors.$relation-yellow; --x: 754px;   --y: -234px;  --r: -460deg; animation-delay: 0.85s; border-radius: 50%; }
+    &:nth-child(49) { background: colors.$relation-yellow; --x: -364px;  --y: -936px;  --r: 740deg;  animation-delay: 0.75s; border-radius: 50%; }
+    &:nth-child(50) { background: colors.$relation-yellow; --x: 1092px;  --y: -104px;  --r: -580deg; animation-delay: 0.83s; border-radius: 50%; }
+    &:nth-child(51) { background: colors.$relation-yellow; --x: -1092px; --y: -728px;  --r: 680deg;  animation-delay: 0.79s; border-radius: 50%; }
+    &:nth-child(52) { background: colors.$relation-yellow; --x: 208px;   --y: -936px;  --r: -640deg; animation-delay: 0.81s; border-radius: 50%; }
+    &:nth-child(53) { background: colors.$relation-yellow; --x: -858px;  --y: -520px;  --r: 560deg;  animation-delay: 0.73s; border-radius: 50%; }
+    &:nth-child(54) { background: colors.$relation-yellow; --x: -702px;  --y: -390px;  --r: 580deg;  animation-delay: 0.86s; border-radius: 50%; }
+    &:nth-child(55) { background: colors.$relation-yellow; --x: 572px;   --y: -624px;  --r: -520deg; animation-delay: 0.77s; border-radius: 50%; }
+    &:nth-child(56) { background: colors.$relation-yellow; --x: -416px;  --y: -806px;  --r: 660deg;  animation-delay: 0.84s; border-radius: 50%; }
+    &:nth-child(57) { background: colors.$relation-yellow; --x: 1014px;  --y: -468px;  --r: -600deg; animation-delay: 0.76s; border-radius: 50%; }
+    &:nth-child(58) { background: colors.$relation-yellow; --x: -884px;  --y: -650px;  --r: 720deg;  animation-delay: 0.80s; border-radius: 50%; }
+    &:nth-child(59) { background: colors.$relation-yellow; --x: 338px;   --y: -858px;  --r: -480deg; animation-delay: 0.75s; border-radius: 50%; }
+    &:nth-child(60) { background: colors.$relation-yellow; --x: -1040px; --y: -338px;  --r: 640deg;  animation-delay: 0.83s; border-radius: 50%; }
+
+    // Extra entity (pink, square)
+    &:nth-child(61) { background: colors.$entity-pink;    --x: 910px;   --y: -260px;  --r: 580deg;  animation-delay: 0.74s; }
+    &:nth-child(62) { background: colors.$entity-pink;    --x: -390px;  --y: -780px;  --r: -640deg; animation-delay: 0.80s; }
+    &:nth-child(63) { background: colors.$entity-pink;    --x: 832px;   --y: -572px;  --r: 500deg;  animation-delay: 0.83s; }
+    &:nth-child(64) { background: colors.$entity-pink;    --x: -1040px; --y: -390px;  --r: -560deg; animation-delay: 0.76s; }
+    &:nth-child(65) { background: colors.$entity-pink;    --x: 338px;   --y: -910px;  --r: 680deg;  animation-delay: 0.85s; }
+    &:nth-child(66) { background: colors.$entity-pink;    --x: -572px;  --y: -832px;  --r: -480deg; animation-delay: 0.78s; }
+    &:nth-child(67) { background: colors.$entity-pink;    --x: 1040px;  --y: -156px;  --r: 720deg;  animation-delay: 0.81s; }
+
+    // Extra attribute (blue, diamond)
+    &:nth-child(68) { background: colors.$attribute-blue;  --x: -936px;  --y: -546px;  --r: 620deg;  animation-delay: 0.77s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(69) { background: colors.$attribute-blue;  --x: 702px;   --y: -780px;  --r: -540deg; animation-delay: 0.84s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(70) { background: colors.$attribute-blue;  --x: -260px;  --y: -962px;  --r: 460deg;  animation-delay: 0.75s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(71) { background: colors.$attribute-blue;  --x: 858px;   --y: -182px;  --r: -680deg; animation-delay: 0.82s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(72) { background: colors.$attribute-blue;  --x: -780px;  --y: -702px;  --r: 540deg;  animation-delay: 0.79s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(73) { background: colors.$attribute-blue;  --x: 494px;   --y: -858px;  --r: -600deg; animation-delay: 0.86s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+    &:nth-child(74) { background: colors.$attribute-blue;  --x: -1092px; --y: -130px;  --r: 700deg;  animation-delay: 0.73s; border-radius: 0; transform: rotate(45deg); width: 18px; height: 18px; }
+
+    // Extra relation (yellow, circle)
+    &:nth-child(75) { background: colors.$relation-yellow; --x: 624px;   --y: -936px;  --r: -720deg; animation-delay: 0.76s; border-radius: 50%; }
+    &:nth-child(76) { background: colors.$relation-yellow; --x: -858px;  --y: -650px;  --r: 560deg;  animation-delay: 0.83s; border-radius: 50%; }
+    &:nth-child(77) { background: colors.$relation-yellow; --x: 936px;   --y: -442px;  --r: -500deg; animation-delay: 0.78s; border-radius: 50%; }
+    &:nth-child(78) { background: colors.$relation-yellow; --x: -494px;  --y: -884px;  --r: 640deg;  animation-delay: 0.81s; border-radius: 50%; }
+    &:nth-child(79) { background: colors.$relation-yellow; --x: 208px;   --y: -1040px; --r: -580deg; animation-delay: 0.75s; border-radius: 50%; }
+    &:nth-child(80) { background: colors.$relation-yellow; --x: -962px;  --y: -468px;  --r: 700deg;  animation-delay: 0.84s; border-radius: 50%; }
+}
+
+@keyframes confetti-burst {
+    0%   { opacity: 1;    transform: translate(0, 0)                                                    rotate(0deg)                   scale(1);    }
+    10%  { opacity: 1;    transform: translate(calc(var(--x) * 0.22),  calc(var(--y) * 0.22 + 10px))    rotate(calc(var(--r) * 0.2))   scale(0.94); }
+    20%  { opacity: 1;    transform: translate(calc(var(--x) * 0.36),  calc(var(--y) * 0.36 + 42px))    rotate(calc(var(--r) * 0.33))  scale(0.88); }
+    30%  { opacity: 0.95; transform: translate(calc(var(--x) * 0.48),  calc(var(--y) * 0.48 + 94px))    rotate(calc(var(--r) * 0.44))  scale(0.82); }
+    40%  { opacity: 0.9;  transform: translate(calc(var(--x) * 0.59),  calc(var(--y) * 0.59 + 166px))   rotate(calc(var(--r) * 0.55))  scale(0.76); }
+    50%  { opacity: 0.8;  transform: translate(calc(var(--x) * 0.67),  calc(var(--y) * 0.67 + 260px))   rotate(calc(var(--r) * 0.62))  scale(0.7);  }
+    60%  { opacity: 0.65; transform: translate(calc(var(--x) * 0.75),  calc(var(--y) * 0.75 + 374px))   rotate(calc(var(--r) * 0.7))   scale(0.64); }
+    70%  { opacity: 0.45; transform: translate(calc(var(--x) * 0.82),  calc(var(--y) * 0.82 + 510px))   rotate(calc(var(--r) * 0.77))  scale(0.58); }
+    80%  { opacity: 0.28; transform: translate(calc(var(--x) * 0.89),  calc(var(--y) * 0.89 + 666px))   rotate(calc(var(--r) * 0.84))  scale(0.52); }
+    90%  { opacity: 0.12; transform: translate(calc(var(--x) * 0.95),  calc(var(--y) * 0.95 + 842px))   rotate(calc(var(--r) * 0.92))  scale(0.46); }
+    100% { opacity: 0;    transform: translate(calc(var(--x) * 1.1),   calc(var(--y) * 1.1  + 1040px))  rotate(var(--r))                scale(0.4);  }
 }
 
 tp-form-actions {
