@@ -46,6 +46,6 @@ export class SidebarComponent {
     }
 
     showAppInfoDialog() {
-        this.dialog.open(AppInfoDialogComponent, { width: "360px" });
+        this.dialog.open(AppInfoDialogComponent, { width: "360px", panelClass: "app-info-dialog-panel" });
     }
 }

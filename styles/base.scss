@@ -581,6 +581,17 @@ button.dangerous {
     color: colors.$red;
 }
 
+.app-info-dialog-panel {
+    overflow: visible;
+
+    .mat-mdc-dialog-container,
+    .mdc-dialog__container,
+    .mdc-dialog__surface,
+    .mat-mdc-dialog-surface {
+        overflow: visible;
+    }
+}
+
 .tp-sidebar-team-selection-panel.mat-mdc-select-panel {
     background: rgba(colors.$light-purple, 0.3);
     backdrop-filter: blur(10px);
