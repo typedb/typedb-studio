@@ -6,7 +6,7 @@
 
 import { inject, Injectable } from "@angular/core";
 import { FormBuilder, FormControl } from "@angular/forms";
-import { BehaviorSubject, Subject, switchMap } from "rxjs";
+import { BehaviorSubject, Subject, Subscription, switchMap } from "rxjs";
 import { isOkResponse, isApiErrorResponse, ApiResponse, QueryResponse } from "@typedb/driver-http";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { ChatMessage as CloudChatMessage, CloudService } from "./cloud.service";
@@ -169,6 +169,8 @@ export class ChatState {
 
     private messageIdCounter = 0;
     private currentDatabaseName: string | null = null;
+    private activeStreamSubscription: Subscription | null = null;
+    private activeStreamParser: StreamingMarkdownParser | null = null;
 
     constructor() {
         // Subscribe to database changes to load/save conversations
@@ -303,6 +305,27 @@ export class ChatState {
         return messages;
     }
 
+    cancelStream(): void {
+        if (!this.activeStreamSubscription) return;
+        this.activeStreamSubscription.unsubscribe();
+        this.activeStreamSubscription = null;
+
+        // Flush any partial content into the AI message
+        const messages = this.messages$.value;
+        const currentAiMsg = messages[messages.length - 1];
+        if (currentAiMsg?.sender === 'ai') {
+            if (this.activeStreamParser) {
+                currentAiMsg.content = this.activeStreamParser.flush();
+            }
+            currentAiMsg.isProcessing = false;
+            currentAiMsg.timestamp = new Date();
+        }
+        this.activeStreamParser = null;
+        this.messages$.next([...messages]);
+        this.persistConversation();
+        this.isProcessing$.next(false);
+    }
+
     submitPrompt(): void {
         const prompt = this.promptControl.value;
         if (!prompt?.length) return;
@@ -344,9 +367,10 @@ export class ChatState {
         this.promptControl.patchValue("");
 
         const parser = new StreamingMarkdownParser(this.formBuilder);
+        this.activeStreamParser = parser;
 
         try {
-            this.driver.getDatabaseSchemaText().pipe(
+            this.activeStreamSubscription = this.driver.getDatabaseSchemaText().pipe(
                 switchMap((res) => {
                     if (isOkResponse(res)) return this.cloud.aiChat(res.ok, conversation);
                     else throw res;
@@ -370,6 +394,8 @@ export class ChatState {
                     aiMsg.isProcessing = false;
                     aiMsg.timestamp = new Date();
                     this.messages$.next([...this.messages$.value]);
+                    this.activeStreamSubscription = null;
+                    this.activeStreamParser = null;
                     this.isProcessing$.next(false);
                 },
                 complete: () => {
@@ -379,6 +405,8 @@ export class ChatState {
                     currentAiMsg.timestamp = new Date();
                     this.messages$.next([...messages]);
                     this.persistConversation();
+                    this.activeStreamSubscription = null;
+                    this.activeStreamParser = null;
                     this.isProcessing$.next(false);
                 },
             });
@@ -388,6 +416,8 @@ export class ChatState {
             aiMsg.isProcessing = false;
             aiMsg.timestamp = new Date();
             this.messages$.next([...this.messages$.value]);
+            this.activeStreamSubscription = null;
+            this.activeStreamParser = null;
             this.isProcessing$.next(false);
         }
     }
@@ -510,9 +540,10 @@ export class ChatState {
         }));
 
         const parser = new StreamingMarkdownParser(this.formBuilder);
+        this.activeStreamParser = parser;
 
         // Call backend to compact conversation (streamed via SSE)
-        this.driver.getDatabaseSchemaText().pipe(
+        this.activeStreamSubscription = this.driver.getDatabaseSchemaText().pipe(
             switchMap((res) => {
                 if (isOkResponse(res)) {
                     return this.cloud.aiCompact({
@@ -541,6 +572,8 @@ export class ChatState {
                 aiMsg.content = [];
                 aiMsg.timestamp = new Date();
                 this.messages$.next([...this.messages$.value]);
+                this.activeStreamSubscription = null;
+                this.activeStreamParser = null;
                 this.isProcessing$.next(false);
             },
             complete: () => {
@@ -550,6 +583,8 @@ export class ChatState {
                 currentAiMsg.timestamp = new Date();
                 this.messages$.next([...messages]);
                 this.persistConversation();
+                this.activeStreamSubscription = null;
+                this.activeStreamParser = null;
                 this.isProcessing$.next(false);
             },
         });

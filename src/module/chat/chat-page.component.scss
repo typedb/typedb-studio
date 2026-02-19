@@ -374,22 +374,24 @@
 .send-button {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
+    justify-content: center;
+    padding: 6px;
     border: none;
     border-radius: shapes.$border-radius-small;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.2);
     color: var(--fg1);
     font-size: 13px;
     cursor: pointer;
     transition: background-color 150ms;
 
     i {
-        font-size: 13px;
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
     }
 
     &:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.3);
     }
 
     &:disabled {

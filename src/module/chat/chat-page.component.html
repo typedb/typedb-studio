@@ -153,12 +153,18 @@
                         <span>Clear conversation <span class="command-slash">(/clear)</span></span>
                       </button>
                     </mat-menu>
-                    <button type="submit"
-                            class="send-button"
-                            [disabled]="!state.promptControl.value || !(driver.database$ | async) || (state.isProcessing$ | async)">
-                        <i class="fa-light fa-arrow-up"></i>
-                        <span>Send</span>
-                    </button>
+                    @if (state.isProcessing$ | async) {
+                      <button type="button" class="send-button" (click)="onStopStream()" matTooltip="Stop" [matTooltipShowDelay]="500">
+                        <i class="fa-solid fa-stop"></i>
+                      </button>
+                    } @else {
+                      <button type="submit"
+                              class="send-button"
+                              [disabled]="!state.promptControl.value || !(driver.database$ | async)"
+                              matTooltip="Send message" [matTooltipShowDelay]="500">
+                          <i class="fa-light fa-arrow-up"></i>
+                      </button>
+                    }
                   </div>
                 </div>
               </form>
