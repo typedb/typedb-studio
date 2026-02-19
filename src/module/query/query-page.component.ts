@@ -19,7 +19,7 @@ import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { RouterLink } from "@angular/router";
+import { Router, RouterLink } from "@angular/router";
 import { Prec } from "@codemirror/state";
 import { ResizableDirective } from "@hhangular/resizable";
 import { map, startWith } from "rxjs";
@@ -31,6 +31,7 @@ import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { ActionDurationPipe } from "../../framework/util/action-duration.pipe";
 import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
+import { ChatState } from "../../service/chat-state.service";
 import { DriverState } from "../../service/driver-state.service";
 import { QueryPageState } from "../../service/query-page-state.service";
 import { QueryTab, QueryTabsState } from "../../service/query-tabs-state.service";
@@ -71,8 +72,10 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     driver = inject(DriverState);
     queryTabsState = inject(QueryTabsState);
     private appData = inject(AppData);
+    private chatState = inject(ChatState);
     private snackbar = inject(SnackbarService);
     private dialog = inject(MatDialog);
+    private router = inject(Router);
 
     // Query tab context menu state
     queryTabContextMenuPosition = { x: 0, y: 0 };
@@ -94,6 +97,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         indentWithTab,
     ]));
     copiedLog = false;
+    sentLogToAi = false;
     logHasScrollbar = false;
     canScrollLeft = false;
     canScrollRight = false;
@@ -378,6 +382,19 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         } catch (e) {
             console.warn(e);
         }
+    }
+
+    sendLogToAi(): void {
+        const logText = this.state.logOutput.control.value;
+        if (!logText) return;
+
+        this.chatState.newConversation();
+        if (!this.chatState.selectedConversationId$.value) return;
+
+        this.chatState.pendingMessage = logText;
+        this.sentLogToAi = true;
+        setTimeout(() => this.sentLogToAi = false, 3000);
+        this.router.navigate(['/chat']);
     }
 
     async copyLog() {
