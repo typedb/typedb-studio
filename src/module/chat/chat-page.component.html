@@ -87,7 +87,7 @@
 
             <!-- Messages area -->
             <div class="messages-wrapper">
-              <div class="messages" #messagesContainer>
+              <div class="messages" #messagesContainer [class.is-streaming]="!!(state.isProcessing$ | async)">
                 @let msgs = state.messages$ | async;
                 @let isStreaming = !!(state.isProcessing$ | async);
                 @for (msg of msgs; track trackMessageById($index, msg); let i = $index) {

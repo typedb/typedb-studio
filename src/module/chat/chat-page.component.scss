@@ -144,14 +144,13 @@
 .messages {
     height: 100%;
     overflow: auto;
+    scroll-behavior: smooth;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 16px;
-    scroll-behavior: smooth;
     scrollbar-width: thin;
     padding: 16px;
-    padding-right: 16px;
 
     ts-chat-message,
     .welcome-content,
