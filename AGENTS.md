@@ -33,6 +33,12 @@ When setting up TypeDB tooling (driver SDKs, etc.) ensure that the installed dri
 - Prefer extending existing components over creating new ones
 - Follow established patterns in the codebase for consistency
 
+## CSS Pitfalls
+
+These are common CSS pitfalls. Whenever a CSS issue takes at least a couple of iterations to fix, do add debug logs for the user to test in the browser, and on getting the fix right, please add a bullet point here so we can do better in the future.
+
+- **Flex overflow scroll room**: When a flex child's content overflows its shrunk box, `scrollHeight` is set by the overflow — sibling elements after it fall *within* the overflow and don't extend it. To add scroll room, insert elements *inside* the overflowing child.
+
 ## General Agent Guidelines
 
 - Do prompt for clarification when making architectural decisions

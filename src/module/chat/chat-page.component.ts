@@ -5,7 +5,6 @@
  */
 
 import { AfterViewInit, Component, ElementRef, NgZone, OnInit, ViewChild } from "@angular/core";
-import { filter, pairwise } from "rxjs";
 import { AsyncPipe, DatePipe } from "@angular/common";
 import { FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
@@ -72,7 +71,6 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     private historyIndex = -1;
     private historyDraft = "";
     private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();
-    private userScrolledDuringStream = false;
 
     constructor(
         public state: ChatState,
@@ -93,31 +91,6 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
             this.conversationRelativeTimes = new Map(convs.map(c => [c.id, this.formatRelativeTime(c.updatedAt)]));
         });
 
-        this.state.aiResponseStarted$.subscribe(() => {
-            this.userScrolledDuringStream = false;
-            setTimeout(() => this.scrollToLastUserMessage());
-        });
-
-        this.state.isProcessing$.pipe(
-            pairwise(),
-            filter(([prev, curr]) => prev && !curr),
-        ).subscribe(() => {
-            // Capture scroll position before Angular re-renders (DOM still has wrapper)
-            const container = this.messagesContainer?.nativeElement;
-            const savedScrollTop = container?.scrollTop ?? 0;
-
-            setTimeout(() => {
-                // After Angular re-renders (wrapper removed) — correct the jump
-                if (!container) return;
-                container.style.scrollBehavior = 'auto';
-                if (this.userScrolledDuringStream) {
-                    container.scrollTop = savedScrollTop;
-                } else {
-                    this.scrollToLastUserMessage();
-                }
-                container.style.scrollBehavior = '';
-            });
-        });
 
         if (this.state.pendingMessage) {
             const message = this.state.pendingMessage;
@@ -131,14 +104,6 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
 
         const container = this.messagesContainer?.nativeElement;
         if (container) {
-            const onUserScroll = () => {
-                if (this.state.isProcessing$.value) {
-                    this.userScrolledDuringStream = true;
-                }
-            };
-            container.addEventListener('wheel', onUserScroll, { passive: true });
-            container.addEventListener('touchmove', onUserScroll, { passive: true });
-
             const updateScrollToBottom = () => {
                 const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
                 const show = distanceFromBottom > 150;
@@ -148,6 +113,49 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
             };
             container.addEventListener('scroll', updateScrollToBottom, { passive: true });
             setTimeout(updateScrollToBottom);
+
+            // When streaming ends, suppress smooth scrolling for the entire
+            // DOM transition (filler removal + streaming-pair unwrap) so the
+            // layout change doesn't cause a visible scroll animation.
+            this.state.isProcessing$.subscribe(isProcessing => {
+                if (!isProcessing) {
+                    const fillers = container.querySelectorAll('.scroll-filler');
+                    console.log('[stream-end] subscriber fired', {
+                        scrollTop: container.scrollTop,
+                        scrollHeight: container.scrollHeight,
+                        clientHeight: container.clientHeight,
+                        fillerCount: fillers.length,
+                        hasStreamingPair: !!container.querySelector('.streaming-pair'),
+                    });
+                    const savedTop = container.scrollTop;
+                    container.style.scrollBehavior = 'auto';
+                    fillers.forEach(f => f.remove());
+                    container.scrollTop = savedTop;
+                    console.log('[stream-end] after cleanup', {
+                        scrollTop: container.scrollTop,
+                        scrollHeight: container.scrollHeight,
+                    });
+                    setTimeout(() => {
+                        console.log('[stream-end] after setTimeout (before restore)', {
+                            scrollTop: container.scrollTop,
+                            scrollHeight: container.scrollHeight,
+                            savedTop,
+                            hasStreamingPair: !!container.querySelector('.streaming-pair'),
+                        });
+                        container.scrollTop = savedTop;
+                        console.log('[stream-end] after setTimeout (after restore)', {
+                            scrollTop: container.scrollTop,
+                        });
+                        container.style.scrollBehavior = '';
+                        requestAnimationFrame(() => {
+                            console.log('[stream-end] after rAF', {
+                                scrollTop: container.scrollTop,
+                                scrollHeight: container.scrollHeight,
+                            });
+                        });
+                    });
+                }
+            });
         }
     }
 
@@ -158,8 +166,12 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     private scrollToBottom(): void {
         if (this.messagesContainer) {
             const el = this.messagesContainer.nativeElement;
-            el.scrollTop = el.scrollHeight;
+            el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
         }
+    }
+
+    private scheduleScrollToLastUserMessage(): void {
+        setTimeout(() => this.scrollToLastUserMessage());
     }
 
     private scrollToLastUserMessage(): void {
@@ -170,9 +182,30 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
         if (lastUserMsg) {
             const containerRect = container.getBoundingClientRect();
             const msgRect = lastUserMsg.getBoundingClientRect();
-            container.scrollTop += msgRect.top - containerRect.top;
+            const msgAbsoluteTop = msgRect.top - containerRect.top + container.scrollTop;
+            const maxVisibleHeight = 10 * 22; // ~10 lines at 22px line-height
+            const targetScrollTop = msgRect.height > maxVisibleHeight
+                ? msgAbsoluteTop + msgRect.height - maxVisibleHeight
+                : msgAbsoluteTop;
+
+            const maxScroll = container.scrollHeight - container.clientHeight;
+
+            // Add scroll room inside the streaming-pair (whose content overflow
+            // determines scrollHeight) so the target position is reachable
+            if (targetScrollTop > maxScroll) {
+                const streamingPair = container.querySelector('.streaming-pair');
+                const target = streamingPair || container;
+                const extraNeeded = Math.ceil(targetScrollTop - maxScroll) + 16;
+                const filler = document.createElement('div');
+                filler.className = 'scroll-filler';
+                filler.style.height = `${extraNeeded}px`;
+                filler.style.flexShrink = '0';
+                target.appendChild(filler);
+            }
+
+            container.scrollTop = targetScrollTop;
         } else {
-            this.scrollToBottom();
+            container.scrollTop = container.scrollHeight;
         }
     }
 
@@ -187,7 +220,7 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
             this.state.cancelStream();
         }
         this.state.submitPrompt();
-        setTimeout(() => this.scrollToBottom());
+        this.scheduleScrollToLastUserMessage();
     }
 
     onInputKeyDownEnter(event: KeyboardEvent): void {
@@ -204,7 +237,7 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
             this.state.submitPrompt();
             this.historyIndex = -1;
             this.historyDraft = "";
-            setTimeout(() => this.scrollToBottom());
+            this.scheduleScrollToLastUserMessage();
         }
     }
 
@@ -273,7 +306,7 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     onSendLogToAi(logText: string): void {
         this.state.promptControl.setValue(logText);
         this.state.submitPrompt();
-        setTimeout(() => this.scrollToBottom());
+        this.scheduleScrollToLastUserMessage();
     }
 
     getHistoryEntryControl(entry: QueryRunAction): FormControl<string> {
