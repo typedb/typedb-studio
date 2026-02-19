@@ -119,40 +119,13 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
             // layout change doesn't cause a visible scroll animation.
             this.state.isProcessing$.subscribe(isProcessing => {
                 if (!isProcessing) {
-                    const fillers = container.querySelectorAll('.scroll-filler');
-                    console.log('[stream-end] subscriber fired', {
-                        scrollTop: container.scrollTop,
-                        scrollHeight: container.scrollHeight,
-                        clientHeight: container.clientHeight,
-                        fillerCount: fillers.length,
-                        hasStreamingPair: !!container.querySelector('.streaming-pair'),
-                    });
                     const savedTop = container.scrollTop;
                     container.style.scrollBehavior = 'auto';
-                    fillers.forEach(f => f.remove());
+                    container.querySelectorAll('.scroll-filler').forEach(f => f.remove());
                     container.scrollTop = savedTop;
-                    console.log('[stream-end] after cleanup', {
-                        scrollTop: container.scrollTop,
-                        scrollHeight: container.scrollHeight,
-                    });
                     setTimeout(() => {
-                        console.log('[stream-end] after setTimeout (before restore)', {
-                            scrollTop: container.scrollTop,
-                            scrollHeight: container.scrollHeight,
-                            savedTop,
-                            hasStreamingPair: !!container.querySelector('.streaming-pair'),
-                        });
                         container.scrollTop = savedTop;
-                        console.log('[stream-end] after setTimeout (after restore)', {
-                            scrollTop: container.scrollTop,
-                        });
                         container.style.scrollBehavior = '';
-                        requestAnimationFrame(() => {
-                            console.log('[stream-end] after rAF', {
-                                scrollTop: container.scrollTop,
-                                scrollHeight: container.scrollHeight,
-                            });
-                        });
                     });
                 }
             });
