@@ -321,6 +321,16 @@ export class ChatState {
             currentAiMsg.timestamp = new Date();
         }
         this.activeStreamParser = null;
+
+        // Append an "Interrupted" info message
+        const interruptedMsg: ChatMessageData = {
+            id: this.generateMessageId(),
+            content: [{ type: "text", content: "*Interrupted*" }],
+            sender: "ai",
+            timestamp: new Date(),
+        };
+        messages.push(interruptedMsg);
+
         this.messages$.next([...messages]);
         this.persistConversation();
         this.isProcessing$.next(false);

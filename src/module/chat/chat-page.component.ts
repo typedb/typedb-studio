@@ -183,6 +183,9 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     onSubmit(event: Event): void {
         event.preventDefault();
         if (this.handleSlashCommand()) return;
+        if (this.state.isProcessing$.value) {
+            this.state.cancelStream();
+        }
         this.state.submitPrompt();
         setTimeout(() => this.scrollToBottom());
     }
@@ -194,6 +197,9 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
                 this.historyIndex = -1;
                 this.historyDraft = "";
                 return;
+            }
+            if (this.state.isProcessing$.value) {
+                this.state.cancelStream();
             }
             this.state.submitPrompt();
             this.historyIndex = -1;
