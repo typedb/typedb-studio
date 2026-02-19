@@ -118,6 +118,12 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
                 container.style.scrollBehavior = '';
             });
         });
+
+        if (this.state.pendingMessage) {
+            const message = this.state.pendingMessage;
+            this.state.pendingMessage = null;
+            setTimeout(() => this.onSendLogToAi(message));
+        }
     }
 
     ngAfterViewInit() {

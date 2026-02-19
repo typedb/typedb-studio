@@ -162,6 +162,7 @@ export class ChatState {
     promptControl = new FormControl("", { nonNullable: true });
     rowLimitControl = new FormControl(this.appData.preferences.queryRowLimit(), { nonNullable: true });
     rowLimitOptions = ROW_LIMIT_OPTIONS;
+    pendingMessage: string | null = null;
 
     private messageIdCounter = 0;
     private currentDatabaseName: string | null = null;
