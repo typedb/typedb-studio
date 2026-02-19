@@ -223,7 +223,7 @@
                       @if (entry.status === "success") {
                         <i class="fa-light fa-check"></i>
                       } @else {
-                        <i class="fa-light fa-xmark" richTooltip [richTooltipContent]="historyEntryErrorTooltip(entry)" (click)="copyHistoryEntryErrorTooltip(entry)"></i>
+                        <i class="fa-light fa-xmark" matTooltip="View error details" (click)="openErrorDetails(entry)"></i>
                       }
                     }
                   </div>

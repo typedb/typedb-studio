@@ -36,6 +36,7 @@ import { DriverState } from "../../service/driver-state.service";
 import { QueryPageState } from "../../service/query-page-state.service";
 import { QueryTab, QueryTabsState } from "../../service/query-tabs-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
+import { ErrorDetailsDialogComponent } from "../../framework/error-details-dialog/error-details-dialog.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { RenameTabDialogComponent, RenameTabDialogData } from "./rename-tab-dialog/rename-tab-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
@@ -373,15 +374,13 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         else return entry.result.toString();
     }
 
-    async copyHistoryEntryErrorTooltip(entry: DriverAction) {
-        const tooltip = this.historyEntryErrorTooltip(entry);
-        if (!tooltip) return;
-        try {
-            await navigator.clipboard.writeText(tooltip);
-            this.snackbar.success("Error text copied", { duration: 2500 });
-        } catch (e) {
-            console.warn(e);
-        }
+    openErrorDetails(entry: DriverAction) {
+        const message = this.historyEntryErrorTooltip(entry);
+        if (!message) return;
+        this.dialog.open(ErrorDetailsDialogComponent, {
+            data: { message },
+            width: "600px",
+        });
     }
 
     sendLogToAi(): void {
@@ -391,6 +390,10 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.chatState.newConversation();
         if (!this.chatState.selectedConversationId$.value) return;
 
+        const run = this.state.currentTabRuns[this.state.selectedRunIndex];
+        if (run?.query) {
+            this.chatState.pendingTitle = run.query;
+        }
         this.chatState.pendingMessage = logText;
         this.sentLogToAi = true;
         setTimeout(() => this.sentLogToAi = false, 3000);
