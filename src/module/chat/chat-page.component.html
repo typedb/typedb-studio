@@ -153,7 +153,7 @@
                         <span>Clear conversation <span class="command-slash">(/clear)</span></span>
                       </button>
                     </mat-menu>
-                    @if (state.isProcessing$ | async) {
+                    @if ((state.isProcessing$ | async) && !state.promptControl.value) {
                       <button type="button" class="send-button" (click)="onStopStream()" matTooltip="Stop" [matTooltipShowDelay]="500">
                         <i class="fa-solid fa-stop"></i>
                       </button>
