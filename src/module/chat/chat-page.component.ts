@@ -314,6 +314,10 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     readonly isQueryRun = isQueryRun;
     readonly isTransactionOperation = isTransactionOperation;
 
+    onStopStream(): void {
+        this.state.cancelStream();
+    }
+
     clearChat(): void {
         this.state.clearConversation();
     }
