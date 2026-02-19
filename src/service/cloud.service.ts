@@ -7,7 +7,7 @@
 import { Injectable, NgZone } from "@angular/core";
 import { Observable } from "rxjs";
 import { environment } from "../environments/environment";
-import { HttpClient } from "@angular/common/http";
+
 
 export interface ChatMessage {
     role: ChatRole;
@@ -21,15 +21,12 @@ export interface AICompactRequest {
     conversation: ChatMessage[];
 }
 
-export interface AICompactResponse {
-    compactedConversation: ChatMessage[];
-}
 
 @Injectable({
     providedIn: "root",
 })
 export class CloudService {
-    constructor(private http: HttpClient, private zone: NgZone) {}
+    constructor(private zone: NgZone) {}
 
     aiChat(schema: string, conversation: ChatMessage[]): Observable<string> {
         return new Observable<string>(subscriber => {
@@ -106,7 +103,61 @@ export class CloudService {
         return parts.length > 0 ? parts.join('') : null;
     }
 
-    aiCompact(request: AICompactRequest): Observable<AICompactResponse> {
-        return this.http.post<AICompactResponse>(`${environment.cloudUrl}/ai/compact`, request);
+    aiCompact(request: AICompactRequest): Observable<string> {
+        return new Observable<string>(subscriber => {
+            const controller = new AbortController();
+
+            this.zone.runOutsideAngular(() => {
+                fetch(`${environment.cloudUrl}/ai/chat/compact`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/event-stream',
+                    },
+                    body: JSON.stringify(request),
+                    signal: controller.signal,
+                }).then(async response => {
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        throw new Error(errorBody || `HTTP ${response.status}`);
+                    }
+
+                    const reader = response.body!.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const events = buffer.split('\n\n');
+                        buffer = events.pop()!;
+
+                        for (const event of events) {
+                            const data = this.parseEventData(event);
+                            if (data != null && data !== '[DONE]') {
+                                this.zone.run(() => subscriber.next(data));
+                            }
+                        }
+                    }
+
+                    if (buffer.trim()) {
+                        const data = this.parseEventData(buffer);
+                        if (data != null && data !== '[DONE]') {
+                            this.zone.run(() => subscriber.next(data));
+                        }
+                    }
+
+                    this.zone.run(() => subscriber.complete());
+                }).catch(err => {
+                    if (err.name !== 'AbortError') {
+                        this.zone.run(() => subscriber.error(err));
+                    }
+                });
+            });
+
+            return () => controller.abort();
+        });
     }
 }
