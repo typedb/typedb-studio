@@ -182,6 +182,7 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
 
     onSubmit(event: Event): void {
         event.preventDefault();
+        if (this.handleSlashCommand()) return;
         this.state.submitPrompt();
         setTimeout(() => this.scrollToBottom());
     }
@@ -189,11 +190,31 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     onInputKeyDownEnter(event: KeyboardEvent): void {
         if (!event.shiftKey) {
             event.preventDefault();
+            if (this.handleSlashCommand()) {
+                this.historyIndex = -1;
+                this.historyDraft = "";
+                return;
+            }
             this.state.submitPrompt();
             this.historyIndex = -1;
             this.historyDraft = "";
             setTimeout(() => this.scrollToBottom());
         }
+    }
+
+    private handleSlashCommand(): boolean {
+        const prompt = this.state.promptControl.value.trim();
+        if (prompt === "/clear") {
+            this.state.promptControl.setValue("");
+            this.clearChat();
+            return true;
+        }
+        if (prompt === "/compact") {
+            this.state.promptControl.setValue("");
+            this.compactChat();
+            return true;
+        }
+        return false;
     }
 
     onInputKeyDownArrow(event: KeyboardEvent): void {

@@ -14,6 +14,7 @@ import { DriverState } from "./driver-state.service";
 import { AppData, PersistedChatMessage, PersistedConversation, RowLimit } from "./app-data.service";
 import { ROW_LIMIT_OPTIONS, RunOutputState, createRunOutputState } from "./query-page-state.service";
 
+
 interface MessagePartText {
     type: 'text';
     content: string;
@@ -154,6 +155,7 @@ export class ChatState {
     private formBuilder = inject(FormBuilder);
     private appData = inject(AppData);
 
+
     messages$ = new BehaviorSubject<ChatMessageData[]>([]);
     isProcessing$ = new BehaviorSubject<boolean>(false);
     aiResponseStarted$ = new Subject<void>();
@@ -283,6 +285,24 @@ export class ChatState {
         }
     }
 
+    /**
+     * Returns messages starting after the last /compact call (skipping the /compact
+     * user message and the info message, keeping only the AI's compacted response onward).
+     * If no /compact exists, returns all messages.
+     */
+    private getMessagesAfterLastCompact(): ChatMessageData[] {
+        const messages = this.messages$.value;
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const msg = messages[i];
+            if (msg.sender === 'user' && msg.content.length > 0 && msg.content[0].type === 'text' && msg.content[0].content === '/compact') {
+                // Skip the /compact user message (i) and the info message (i+1),
+                // start from the AI's compacted response (i+2)
+                return messages.slice(i + 2);
+            }
+        }
+        return messages;
+    }
+
     submitPrompt(): void {
         const prompt = this.promptControl.value;
         if (!prompt?.length) return;
@@ -296,7 +316,7 @@ export class ChatState {
         this.isProcessing$.next(true);
 
         const conversation = [
-            ...this.messages$.value.map((msg) => ({
+            ...this.getMessagesAfterLastCompact().map((msg) => ({
                 role: msg.sender === "user" ? "user" : "assistant",
                 content: msg.content
                     .filter((chunk): chunk is MessagePartText | MessagePartCode => chunk.type !== 'output')
@@ -454,10 +474,33 @@ export class ChatState {
         const messages = this.messages$.value;
         if (messages.length === 0) return;
 
+        // Append /compact user message, info message, and AI placeholder
+        const compactMsg: ChatMessageData = {
+            id: this.generateMessageId(),
+            content: [{ type: "text", content: "/compact" }],
+            sender: "user",
+            timestamp: new Date(),
+        };
+        const infoMsg: ChatMessageData = {
+            id: this.generateMessageId(),
+            content: [{ type: "text", content: "*This conversation is being compacted to reduce the context size.*" }],
+            sender: "ai",
+            timestamp: new Date(),
+        };
+        const aiMsg: ChatMessageData = {
+            id: this.generateMessageId(),
+            content: [],
+            sender: "ai",
+            timestamp: new Date(),
+            isProcessing: true,
+        };
+        this.messages$.value.push(compactMsg, infoMsg, aiMsg);
+        this.messages$.next([...this.messages$.value]);
+
         // Set processing state
         this.isProcessing$.next(true);
 
-        // Convert to cloud message format (excluding output blocks)
+        // Convert to cloud message format (excluding output blocks and the /compact message)
         const conversation: CloudChatMessage[] = messages.map((msg) => ({
             role: msg.sender === "user" ? "user" : "assistant",
             content: msg.content
@@ -466,7 +509,9 @@ export class ChatState {
                 .join("\n\n"),
         }));
 
-        // Call backend to compact conversation using OpenAI Responses API
+        const parser = new StreamingMarkdownParser(this.formBuilder);
+
+        // Call backend to compact conversation (streamed via SSE)
         this.driver.getDatabaseSchemaText().pipe(
             switchMap((res) => {
                 if (isOkResponse(res)) {
@@ -478,35 +523,35 @@ export class ChatState {
                 else throw res;
             }),
         ).subscribe({
-            next: (response) => {
-                // Parse the compacted conversation back into ChatMessageData format
-                const compactedMessages: ChatMessageData[] = response.compactedConversation.map((cloudMsg) => {
-                    const parser = new StreamingMarkdownParser(this.formBuilder);
-                    const content = parser.parseChunk(cloudMsg.content);
-
-                    return {
-                        id: this.generateMessageId(),
-                        content,
-                        sender: cloudMsg.role === "user" ? "user" : "ai",
-                        timestamp: new Date(),
-                    };
-                });
-
-                this.messages$.next(compactedMessages);
-                this.persistConversation();
-                this.isProcessing$.next(false);
+            next: (chunk) => {
+                const messages = this.messages$.value;
+                const currentAiMsg = messages[messages.length - 1];
+                const isFirstChunk = currentAiMsg.isProcessing;
+                currentAiMsg.content = parser.parseChunk(chunk);
+                if (isFirstChunk) {
+                    currentAiMsg.isProcessing = false;
+                    this.aiResponseStarted$.next();
+                }
+                this.messages$.next([...messages]);
             },
             error: (err) => {
                 console.error('Compaction failed:', err);
-                // Fallback to simple output removal if backend fails
-                const compacted = messages.map((msg) => ({
-                    ...msg,
-                    content: msg.content.filter(part => part.type !== 'output')
-                }));
-                this.messages$.next(compacted);
+                aiMsg.error = err?.err?.message ?? err?.error?.message ?? err?.message ?? err?.toString() ?? INTERNAL_ERROR;
+                aiMsg.isProcessing = false;
+                aiMsg.content = [];
+                aiMsg.timestamp = new Date();
+                this.messages$.next([...this.messages$.value]);
+                this.isProcessing$.next(false);
+            },
+            complete: () => {
+                const messages = this.messages$.value;
+                const currentAiMsg = messages[messages.length - 1];
+                currentAiMsg.content = parser.flush();
+                currentAiMsg.timestamp = new Date();
+                this.messages$.next([...messages]);
                 this.persistConversation();
                 this.isProcessing$.next(false);
-            }
+            },
         });
     }
 
