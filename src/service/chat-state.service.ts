@@ -139,9 +139,9 @@ function createOutputState(formBuilder: FormBuilder): OutputState {
 }
 
 function truncateTitle(text: string, maxLen = 50): string {
-    const firstLine = text.split('\n')[0].trim();
-    if (firstLine.length <= maxLen) return firstLine || 'New conversation';
-    return firstLine.substring(0, maxLen - 3) + '...';
+    const collapsed = text.replace(/\s+/g, ' ').trim();
+    if (collapsed.length <= maxLen) return collapsed || 'New conversation';
+    return collapsed.substring(0, maxLen - 3) + '...';
 }
 
 @Injectable({
@@ -163,6 +163,7 @@ export class ChatState {
     rowLimitControl = new FormControl(this.appData.preferences.queryRowLimit(), { nonNullable: true });
     rowLimitOptions = ROW_LIMIT_OPTIONS;
     pendingMessage: string | null = null;
+    pendingTitle: string | null = null;
 
     private messageIdCounter = 0;
     private currentDatabaseName: string | null = null;
@@ -526,11 +527,16 @@ export class ChatState {
 
         // Auto-generate title from first user message if still default
         let title = existing?.title || 'New conversation';
-        if (title === 'New conversation' && serialized.length > 0) {
-            const firstUserMsg = serialized.find(m => m.sender === 'user');
-            if (firstUserMsg) {
-                const textContent = firstUserMsg.content.find(p => p.type === 'text')?.content || '';
-                title = truncateTitle(textContent);
+        if (title === 'New conversation') {
+            if (this.pendingTitle) {
+                title = truncateTitle(this.pendingTitle);
+                this.pendingTitle = null;
+            } else if (serialized.length > 0) {
+                const firstUserMsg = serialized.find(m => m.sender === 'user');
+                if (firstUserMsg) {
+                    const textContent = firstUserMsg.content.find(p => p.type === 'text')?.content || '';
+                    title = truncateTitle(textContent);
+                }
             }
         }
 

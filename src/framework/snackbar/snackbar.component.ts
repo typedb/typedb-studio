@@ -49,15 +49,22 @@ export class SnackbarComponent {
         this.status = data.status;
         this.action = data.action;
 
-        // Filter out empty lines and limit to maxLines if specified
+        // Filter out empty lines, truncate long lines, and limit to maxLines if specified
+        const maxLineLength = 200;
         const allLines = data.message.split(`\n`).filter(line => line.trim().length > 0);
+        let truncated = false;
         if (data.maxLines && allLines.length > data.maxLines) {
-            this.displayLines = allLines.slice(0, data.maxLines);
-            this.isTruncated = true;
-        } else {
-            this.displayLines = allLines;
-            this.isTruncated = false;
+            allLines.splice(data.maxLines);
+            truncated = true;
         }
+        this.displayLines = allLines.map(line => {
+            if (line.length > maxLineLength) {
+                truncated = true;
+                return line.slice(0, maxLineLength) + "...";
+            }
+            return line;
+        });
+        this.isTruncated = truncated;
     }
 
     close(): void {
