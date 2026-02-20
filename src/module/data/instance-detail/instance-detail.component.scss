@@ -138,7 +138,7 @@
     flex: 1;
     overflow: auto;
     padding: 16px;
-    scrollbar-width: thin;
+
 }
 
 .loading-container {
@@ -531,7 +531,7 @@
     min-width: 0;
     max-height: 80px;
     overflow-y: auto;
-    scrollbar-width: thin;
+
     padding: 8px;
     border: 1px solid colors.$secondary-deep-grey;
     border-radius: 4px;

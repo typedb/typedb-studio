@@ -2,56 +2,21 @@
   <article #articleRef class="query-page" style="display: flex; flex-direction: row;">
     <ts-schema-tool-window resizable [percent]="20" [title]="'Query Editor'"/>
     <div class="main-panes" resizable [percent]="60">
-      <div resizable [percent]="50" class="query-pane card">
-        <div class="card-header">
-          <h5>Query</h5>
-          <div>
-            <mat-button-toggle-group class="no-checkmark-toggle" [formControl]="state.queryTypeControl">
-              @for (queryType of state.queryTypes; track queryType) {
-                <mat-button-toggle [value]="queryType">
-                  <i [class]="queryTypeIconClass(queryType)"></i> {{ queryType }}
-                  @if (queryType === 'chat') {
-                    <span class="beta-badge">ALPHA</span>
-                  }
-                </mat-button-toggle>
-              }
-            </mat-button-toggle-group>
-          </div>
-          <div class="flex-spacer"></div>
-          @if (state.queryTypeControl.value === 'code') {
-            <div class="row-limit-control">
-              <label>Limit:</label>
-              <mat-select [formControl]="state.rowLimitControl" panelClass="row-limit-panel">
-                @for (option of state.rowLimitOptions; track option.value) {
-                  <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                }
-              </mat-select>
-            </div>
-            <button mat-stroked-button [disabled]="!(state.runEnabled$ | async)"
-                    [matTooltip]="(state.runTooltip$ | async) || ''" matTooltipPosition="below"
-                    [matTooltipShowDelay]="(state.runDisabledReason$ | async) ? 0 : 500" (click)="runQuery()">
-              <i class="fa-light fa-play"></i>
-              <span>Run</span>
-            </button>
-          } @else if (state.queryTypeControl.value === 'chat') {
-            @let messages = state.vibeQuery.messages$ | async;
-            <button mat-stroked-button [disabled]="!messages?.length" (click)="clearChat()">
-              <i class="fa-light fa-xmark"></i>
-              <span>Clear chat</span>
-            </button>
-          }
-        </div>
-        @if (state.queryTypeControl.value === 'code') {
-          <div class="query-tabs-container">
+      <div resizable [percent]="50" class="query-pane card-top">
+        <div class="query-tabs-container">
             @if ((queryTabsState.openTabs$ | async)!.length > 0) {
               <div class="query-tabs-header-row">
-                <div class="query-tabs-scroll">
+                <button mat-icon-button class="tab-scroll-button left" [class.visible]="canScrollLeft" (click)="scrollTabsLeft()">
+                  <i class="fa-light fa-chevron-left"></i>
+                </button>
+                <div class="query-tabs-scroll" #tabsScrollContainer (scroll)="onTabsScroll()" (wheel)="onTabsWheel($event)">
                   @for (tab of (queryTabsState.openTabs$ | async); track tab.id; let i = $index) {
                     <div class="query-tab"
                          [class.active]="queryTabsState.selectedTabIndex$.value === i"
                          (click)="onQueryTabChange(i)"
                          (contextmenu)="openQueryTabContextMenu($event, tab, i)"
-                         (auxclick)="onQueryTabAuxClick($event, i)"
+                         (mousedown)="onQueryTabMouseDown($event)"
+                         (mouseup)="onQueryTabMouseUp($event, i)"
                          (dblclick)="openRenameTabDialog(tab)">
                       <span class="query-tab-label" [class.pinned]="tab.pinned">
                         @if (tab.pinned) {
@@ -68,9 +33,29 @@
                     </div>
                   }
                 </div>
+                <button mat-icon-button class="tab-scroll-button right" [class.visible]="canScrollRight" (click)="scrollTabsRight()">
+                  <i class="fa-light fa-chevron-right"></i>
+                </button>
                 <button mat-icon-button class="new-query-tab-button" (click)="newQueryTab()" matTooltip="New query tab" [matTooltipShowDelay]="500">
                   <i class="fa-light fa-plus"></i>
                 </button>
+                <div class="flex-spacer"></div>
+                <div class="query-tabs-controls">
+                  <div class="row-limit-control">
+                    <label>Limit:</label>
+                    <mat-select [formControl]="state.rowLimitControl" panelClass="row-limit-panel">
+                      @for (option of state.rowLimitOptions; track option.value) {
+                        <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                      }
+                    </mat-select>
+                  </div>
+                  <button mat-stroked-button [disabled]="!(state.runEnabled$ | async)"
+                          [matTooltip]="(state.runTooltip$ | async) || ''" matTooltipPosition="below"
+                          [matTooltipShowDelay]="(state.runDisabledReason$ | async) ? 0 : 500" (click)="runQuery()">
+                    <i class="fa-light fa-play"></i>
+                    <span>Run</span>
+                  </button>
+                </div>
               </div>
               <div class="query-tab-content">
                 @if (!codeEditorHidden) {
@@ -83,15 +68,37 @@
               </div>
             }
           </div>
-        }
-        @if (state.queryTypeControl.value === 'chat') {
-          <ts-vibe-query class="ai-assistant-pane"/>
-        }
-      </div>
-      <div resizable [percent]="50" class="results-pane card">
-        <div class="card-header">
-          <h5>Results</h5>
-          <div>
+        </div>
+      <div resizable [percent]="50" class="results-pane card-bottom">
+        <div class="run-tabs-header-row">
+          <button mat-icon-button class="tab-scroll-button left" [class.visible]="canScrollRunsLeft" (click)="scrollRunTabsLeft()">
+            <i class="fa-light fa-chevron-left"></i>
+          </button>
+          <div class="run-tabs-scroll" #runTabsScrollContainer (scroll)="onRunTabsScroll()" (wheel)="onRunTabsWheel($event)">
+            @if (state.currentTabRuns.length === 0) {
+              <div class="run-tab active placeholder">
+                <span class="run-tab-label">Run 1</span>
+                <button mat-icon-button class="run-tab-close-button" disabled>
+                  <i class="fa-light fa-xmark"></i>
+                </button>
+              </div>
+            }
+            @for (run of state.currentTabRuns; track run.id; let i = $index) {
+              <div class="run-tab"
+                   [class.active]="state.selectedRunIndex === i"
+                   (click)="onRunTabChange(i)">
+                <span class="run-tab-label">{{ run.label }}</span>
+                <button mat-icon-button class="run-tab-close-button" (click)="closeRunTab($event, i)">
+                  <i class="fa-light fa-xmark"></i>
+                </button>
+              </div>
+            }
+          </div>
+          <button mat-icon-button class="tab-scroll-button right" [class.visible]="canScrollRunsRight" (click)="scrollRunTabsRight()">
+            <i class="fa-light fa-chevron-right"></i>
+          </button>
+          <div class="flex-spacer"></div>
+          <div class="run-tabs-controls">
             <mat-button-toggle-group [formControl]="state.outputTypeControl" [matTooltip]="(state.outputDisabledReason$ | async) || ''" matTooltipPosition="below">
               @for (outputType of state.outputTypes; track outputType) {
                 <mat-button-toggle [value]="outputType">{{ outputType }}</mat-button-toggle>
@@ -99,14 +106,14 @@
             </mat-button-toggle-group>
           </div>
         </div>
-        @if ((driver.status$ | async) === "connected" && (driver.database$ | async)) {
+        @if ((driver.status$ | async) === "connected" && (driver.database$ | async) && state.currentTabRuns.length > 0) {
           <div class="answers-outer-container">
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'log'" [class.has-scrollbar]="logHasScrollbar">
               <mat-form-field class="code-text-field">
                 <textarea #logTextarea class="answers-text-box" [formControl]="state.logOutput.control" readonly matInput></textarea>
               </mat-form-field>
-              <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value.length" (click)="sendLogToAI()">
-                <i [class]="sentLogToAI ? 'fal fa-check' : 'fal fa-wand-magic-sparkles'"></i>
+              <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value.length" (click)="sendLogToAi()">
+                <i [class]="sentLogToAi ? 'fal fa-check' : 'fal fa-wand-magic-sparkles'"></i>
               </div>
               <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value.length" (click)="copyLog()">
                 <i [class]="copiedLog ? 'fal fa-check' : 'fal fa-copy'"></i>
@@ -205,7 +212,7 @@
                   @if (isTransactionOperation(entry)) {
                     <p class="transaction-operation-type">{{ transactionOperationString(entry) }}</p>
                   } @else {
-                    <p class="transaction-operation-type">{{ entry.status === "error" ? "query failed" : "ran query" }}</p>
+                    <p class="transaction-operation-type">{{ entry.status === "error" ? "query failed" : ($any(entry).autoCommitted ? "ran + committed query" : "ran query") }}</p>
                   }
                   <span class="flex-spacer"></span>
                   <div class="action-status">
@@ -216,7 +223,7 @@
                       @if (entry.status === "success") {
                         <i class="fa-light fa-check"></i>
                       } @else {
-                        <i class="fa-light fa-xmark" richTooltip [richTooltipContent]="historyEntryErrorTooltip(entry)" (click)="copyHistoryEntryErrorTooltip(entry)"></i>
+                        <i class="fa-light fa-xmark" matTooltip="View error details" (click)="openErrorDetails(entry)"></i>
                       }
                     }
                   </div>

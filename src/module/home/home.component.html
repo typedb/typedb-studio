@@ -3,21 +3,45 @@
     <h1 class="tp-title">
       Welcome to TypeDB Studio
     </h1>
-    <p class="tp-subtitle">Connect to TypeDB and explore your data in an interactive visual environment</p>
+    <p class="tp-subtitle">Work with your TypeDB data in an interactive visual environment</p>
 
     <div class="home-page-body">
-      <div class="tp-bento-box tp-deploy-cluster">
-        <div class="tp-deploy-cluster-button-area">
-          @if (isConnected$ | async) {
-            <h2>Query your data</h2>
-            <p>Execute TypeQL queries using the query tool</p>
-            <div class="flex-spacer"></div>
-            <a routerLink="/query">
-              <tp-button buttonId="goToQueryTool" buttonStyle="primary-outline green stroke">
-                Query TypeDB
-              </tp-button>
-            </a>
-          } @else {
+      @if (isConnected$ | async) {
+        <div class="tp-bento-container row">
+          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/query">
+            <i class="fa-thin fa-rectangle-terminal"></i>
+            <div class="tp-icon-card-content">
+              <h3>Query your data</h3>
+              <p>Execute TypeQL queries using the query tool</p>
+            </div>
+          </a>
+          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/data">
+            <i class="fa-thin fa-table"></i>
+            <div class="tp-icon-card-content">
+              <h3>Explore your data</h3>
+              <p>Browse and explore your data using the interactive data explorer</p>
+            </div>
+          </a>
+        </div>
+        <div class="tp-bento-container row">
+          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/schema">
+            <i class="fa-thin fa-vector-square"></i>
+            <div class="tp-icon-card-content">
+              <h3>Visualise your schema</h3>
+              <p>View and understand your database schema in a visual graph representation</p>
+            </div>
+          </a>
+          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/agent-mode">
+            <i class="fa-thin fa-sparkles"></i>
+            <div class="tp-icon-card-content">
+              <h3>Build with AI agent</h3>
+              <p>Use an AI agent to develop and query your database with natural language</p>
+            </div>
+          </a>
+        </div>
+      } @else {
+        <div class="tp-bento-box tp-deploy-cluster">
+          <div class="tp-deploy-cluster-button-area">
             <h2>Connect to a TypeDB server</h2>
             <p>Connect to TypeDB CE, Cloud or Enterprise <strong>(version 3.3 or higher)</strong></p>
             <div class="flex-spacer"></div>
@@ -26,32 +50,15 @@
                 Connect
               </tp-button>
             </a>
-          }
+          </div>
+
+          <div class="flex-spacer"></div>
+          <div class="logo">
+            <img src="/assets/water-wheel.svg" alt=""/>
+          </div>
         </div>
 
-        <div class="flex-spacer"></div>
-        <div class="logo">
-          <img src="/assets/water-wheel.svg" alt=""/>
-        </div>
-      </div>
-
-      <div class="tp-bento-container row">
-        @if (isConnected$ | async) {
-          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/data">
-            <i class="fa-thin fa-table"></i>
-            <div class="tp-icon-card-content">
-              <h3>Explore your data</h3>
-              <p>Browse and explore your data using the interactive data explorer</p>
-            </div>
-          </a>
-          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/schema">
-            <i class="fa-thin fa-vector-square"></i>
-            <div class="tp-icon-card-content">
-              <h3>Visualise your schema</h3>
-              <p>View and understand your database schema in a visual graph representation</p>
-            </div>
-          </a>
-        } @else {
+        <div class="tp-bento-container row">
           <a class="tp-bento-box hoverable tp-icon-card flex-1" href="https://cloud.typedb.com" target="_blank">
             <i class="fa-thin fa-bolt"></i>
             <div class="tp-icon-card-content">
@@ -66,13 +73,30 @@
               <p>Download, install and run TypeDB Community Edition on your local machine or in Docker</p>
             </div>
           </a>
-        }
-      </div>
+        </div>
+      }
 
       <div class="tp-bento-container row tp-bento-box tp-additional-resources-container">
         <h3>Additional Resources</h3>
         <p>Check out the community or learn more about TypeDB</p>
         <div class="tp-additional-resources">
+          <a href="https://typedb.com/docs" target="_blank">
+            <i class="fa-light fa-file-lines"></i>
+            <span>Docs</span>
+            <i class="fa-light fa-arrow-up-right"></i>
+          </a>
+          <a href="https://typedb.com/docs/home/get-started/" target="_blank">
+            <i class="fa-light fa-seedling"></i>
+            <span>Get Started</span>
+            <i class="fa-light fa-arrow-up-right"></i>
+          </a>
+          <a href="https://github.com/typedb/typedb" target="_blank">
+            <svg viewBox="0 0 24 24" height="20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#f3f3f3" fill-rule="evenodd" clip-rule="evenodd" d="M12.0099 0C5.36875 0 0 5.49998 0 12.3042C0 17.7432 3.43994 22.3472 8.21205 23.9767C8.80869 24.0991 9.02724 23.7119 9.02724 23.3862C9.02724 23.1009 9.00757 22.1232 9.00757 21.1044C5.6667 21.8379 4.97099 19.6377 4.97099 19.6377C4.43409 18.2117 3.63858 17.8452 3.63858 17.8452C2.54511 17.0914 3.71823 17.0914 3.71823 17.0914C4.93117 17.1729 5.56763 18.3544 5.56763 18.3544C6.64118 20.2284 8.37111 19.6989 9.06706 19.3729C9.16638 18.5784 9.48473 18.0284 9.82275 17.7229C7.15817 17.4377 4.35469 16.3784 4.35469 11.6522C4.35469 10.3077 4.8316 9.20771 5.58729 8.35222C5.46807 8.04672 5.0504 6.78347 5.70677 5.09273C5.70677 5.09273 6.72083 4.76673 9.00732 6.35572C9.98625 6.08639 10.9958 5.94938 12.0099 5.94823C13.024 5.94823 14.0577 6.09097 15.0123 6.35572C17.299 4.76673 18.3131 5.09273 18.3131 5.09273C18.9695 6.78347 18.5515 8.04672 18.4323 8.35222C19.2079 9.20771 19.6652 10.3077 19.6652 11.6522C19.6652 16.3784 16.8617 17.4172 14.1772 17.7229C14.6148 18.1099 14.9924 18.8432 14.9924 20.0044C14.9924 21.6544 14.9727 22.9787 14.9727 23.3859C14.9727 23.7119 15.1915 24.0991 15.7879 23.9769C20.56 22.3469 23.9999 17.7432 23.9999 12.3042C24.0196 5.49998 18.6312 0 12.0099 0Z" />
+            </svg>
+            <span>GitHub</span>
+            <i class="fa-light fa-arrow-up-right"></i>
+          </a>
           <a href="https://typedb.com" target="_blank">
             <svg width="20" height="20" viewBox="0 0 22 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" id="typedb">
               <path fill-rule="evenodd" clip-rule="evenodd" d="M22 13.1675C22 7.18494 17.0751 2.33508 11 2.33508C4.92487 2.33508 0 7.18494 0 13.1675C0 19.1501 4.92487 24 11 24C17.0751 24 22 19.1501 22 13.1675ZM6.57074 7.91736L15.29 7.91734C18.2677 7.91734 20.6816 10.2945 20.6816 13.2268C20.6816 16.1569 18.2695 18.5322 15.2941 18.5322L6.63986 18.5258C3.66107 18.5236 1.24319 16.153 1.22788 13.2196C1.21267 10.3062 3.59858 7.93239 6.55697 7.91741L6.57074 7.91736Z" fill="currentColor"/>
@@ -92,26 +116,9 @@
             <span>Chat Server</span>
             <i class="fa-light fa-arrow-up-right"></i>
           </a>
-          <a href="https://github.com/typedb/typedb" target="_blank">
-            <svg viewBox="0 0 24 24" height="20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <path fill="#f3f3f3" fill-rule="evenodd" clip-rule="evenodd" d="M12.0099 0C5.36875 0 0 5.49998 0 12.3042C0 17.7432 3.43994 22.3472 8.21205 23.9767C8.80869 24.0991 9.02724 23.7119 9.02724 23.3862C9.02724 23.1009 9.00757 22.1232 9.00757 21.1044C5.6667 21.8379 4.97099 19.6377 4.97099 19.6377C4.43409 18.2117 3.63858 17.8452 3.63858 17.8452C2.54511 17.0914 3.71823 17.0914 3.71823 17.0914C4.93117 17.1729 5.56763 18.3544 5.56763 18.3544C6.64118 20.2284 8.37111 19.6989 9.06706 19.3729C9.16638 18.5784 9.48473 18.0284 9.82275 17.7229C7.15817 17.4377 4.35469 16.3784 4.35469 11.6522C4.35469 10.3077 4.8316 9.20771 5.58729 8.35222C5.46807 8.04672 5.0504 6.78347 5.70677 5.09273C5.70677 5.09273 6.72083 4.76673 9.00732 6.35572C9.98625 6.08639 10.9958 5.94938 12.0099 5.94823C13.024 5.94823 14.0577 6.09097 15.0123 6.35572C17.299 4.76673 18.3131 5.09273 18.3131 5.09273C18.9695 6.78347 18.5515 8.04672 18.4323 8.35222C19.2079 9.20771 19.6652 10.3077 19.6652 11.6522C19.6652 16.3784 16.8617 17.4172 14.1772 17.7229C14.6148 18.1099 14.9924 18.8432 14.9924 20.0044C14.9924 21.6544 14.9727 22.9787 14.9727 23.3859C14.9727 23.7119 15.1915 24.0991 15.7879 23.9769C20.56 22.3469 23.9999 17.7432 23.9999 12.3042C24.0196 5.49998 18.6312 0 12.0099 0Z" />
-            </svg>
-            <span>GitHub</span>
-            <i class="fa-light fa-arrow-up-right"></i>
-          </a>
-          <a href="https://typedb.com/docs" target="_blank">
-            <i class="fa-light fa-file-lines"></i>
-            <span>Docs</span>
-            <i class="fa-light fa-arrow-up-right"></i>
-          </a>
-          <a href="https://typedb.com/docs/home/get-started/" target="_blank">
-            <i class="fa-light fa-seedling"></i>
-            <span>Get Started</span>
-            <i class="fa-light fa-arrow-up-right"></i>
-          </a>
-          <a href="https://typedb.com/docs/examples/" target="_blank">
-            <i class="fa-light fa-flask"></i>
-            <span>Examples</span>
+          <a href="https://typedb.com#contact" target="_blank">
+            <i class="fa-light fa-envelope"></i>
+            <span>Get in touch</span>
             <i class="fa-light fa-arrow-up-right"></i>
           </a>
         </div>

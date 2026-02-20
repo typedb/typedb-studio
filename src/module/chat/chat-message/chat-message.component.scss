@@ -1,0 +1,206 @@
+/*!/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "colors";
+@use "shapes";
+@use "typography";
+
+:host {
+    display: block;
+
+    ::ng-deep markdown {
+        // Headings
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: var(--font-weight-semi-bold);
+            line-height: 1.3;
+        }
+
+        h1 { font-size: 1.75em; margin-top: 1.5em; margin-bottom: 0.6em; }
+        h2 { font-size: 1.5em; margin-top: 1.4em; margin-bottom: 0.5em; }
+        h3 { font-size: 1.25em; margin-top: 1.3em; margin-bottom: 0.4em; }
+        h4 { font-size: 1.1em; margin-top: 1.2em; margin-bottom: 0.3em; }
+        h5 { font-size: 1em; margin-top: 1.1em; margin-bottom: 0.3em; }
+        h6 { font-size: 0.9em; margin-top: 1em; margin-bottom: 0.25em; }
+
+        // Paragraphs
+        p {
+            margin: 0;
+            line-height: 1.6;
+            white-space: break-spaces;
+        }
+
+        // Lists
+        ul, ol {
+            margin: 0.5rem 0;
+            padding-left: 2rem;
+            line-height: 1.6;
+
+            &:first-child {
+                margin-top: 0;
+            }
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+
+            li {
+                margin: 0.5rem 0;
+
+                // Nested lists
+                ul, ol {
+                    margin-top: 0.25rem;
+                    margin-bottom: 0.25rem;
+                    padding-left: 2rem;
+                }
+            }
+        }
+
+        // Code
+        code {
+            font-family: var(--font-family-code);
+            font-size: 0.9em;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 0.15em 0.4em;
+            border-radius: shapes.$border-radius-small;
+        }
+
+        pre {
+            margin: 0.5rem 0;
+            padding: 0.75rem;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: shapes.$border-radius-small;
+            overflow-x: auto;
+
+            code {
+                background: none;
+                padding: 0;
+            }
+        }
+
+        // Links
+        a {
+            color: var(--primary);
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        // Blockquotes
+        blockquote {
+            margin: 0.5rem 0;
+            padding-left: 1rem;
+            border-left: 3px solid var(--bg4);
+            color: var(--fg2);
+        }
+
+        // Horizontal rules
+        hr {
+            margin: 1rem 0;
+            border: none;
+            border-top: 1px solid var(--bg4);
+        }
+    }
+
+    ::ng-deep markdown + tp-code-editor {
+        display: block;
+        margin-top: 1rem;
+    }
+
+    // Faded bullet markers - separate selector for better specificity
+    ::ng-deep markdown ul li::marker,
+    ::ng-deep markdown ol li::marker {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    tp-code-editor {
+        margin-bottom: 0.5rem;
+
+        ::ng-deep .cm-editor {
+            border-radius: shapes.$border-radius-small;
+        }
+
+        ::ng-deep .cm-content {
+            min-height: 56px;
+        }
+    }
+}
+
+.message {
+    width: 100%;
+    display: flex;
+    align-self: flex-start;
+
+    &.user {
+        justify-content: flex-end;
+
+        .message-content {
+            background-color: var(--color-secondary-purple);
+            color: white;
+            border-radius: shapes.$border-radius-small;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            padding: 0.75rem 1rem;
+            max-width: calc(100% - 44px);
+        }
+
+        .message-text {
+            max-height: 48em;
+            overflow-y: auto;
+
+            margin: -0.75rem -1rem;
+            padding: 0.75rem 1rem;
+        }
+    }
+
+    &.ai {
+        .message-content {
+            width: 100%;
+            color: var(--fg1);
+        }
+
+        ::ng-deep markdown p {
+            margin: 1.5em 0;
+        }
+    }
+}
+
+.message-content {
+    position: relative;
+    word-wrap: break-word;
+    z-index: 10;
+}
+
+.message-text {
+    markdown {
+        white-space: normal;
+        overflow-wrap: break-word;
+    }
+}
+
+.error-message {
+    color: var(--color-grey);
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: shapes.$border-radius-small;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+
+    i {
+        font-size: 1rem;
+        color: var(--color-red);
+    }
+}
+
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+}

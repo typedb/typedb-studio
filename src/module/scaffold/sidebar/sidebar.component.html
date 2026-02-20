@@ -26,6 +26,9 @@
   <ts-sidebar-link [matTooltip]="collapsed ? 'Query' : ''" matTooltipPosition="right" link="/query" domain="query" idSuffix="query">
     <i class="fa-light fa-rectangle-terminal"></i>@if (!collapsed) { <span>Query</span> }
   </ts-sidebar-link>
+  <ts-sidebar-link [matTooltip]="collapsed ? 'Agent mode' : ''" matTooltipPosition="right" link="/agent-mode" domain="chat" idSuffix="chat">
+    <i class="fa-light fa-sparkles"></i>@if (!collapsed) { <span>Agent mode</span> }
+  </ts-sidebar-link>
 <!--  <ts-sidebar-link [matTooltip]="collapsed ? 'Explore' : ''" matTooltipPosition="right" link="/explore" domain="explore" idSuffix="explore">-->
 <!--    <i class="fa-light fa-diagram-project"></i>@if (!collapsed) { <span>Explore</span> }-->
 <!--  </ts-sidebar-link>-->

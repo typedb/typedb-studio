@@ -1,11 +1,11 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "typedb-studio",
-  "version": "3.8.1",
+  "version": "3.9.0",
   "identifier": "com.typedb.studio",
   "build": {
-    "beforeDevCommand": "pnpm start",
-    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "pnpm ng serve -c local-tauri",
+    "devUrl": "http://localhost:1421",
     "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist/typedb-studio/browser"
   },
@@ -31,7 +31,7 @@
     ],
     "windows": {
       "wix": {
-        "version": "3.8.1"
+        "version": "3.9.0"
       }
     },
     "macOS": {

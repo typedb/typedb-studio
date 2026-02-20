@@ -81,7 +81,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "port": 1420
+            "port": 1420,
+            "ssl": true
           },
           "configurations": {
             "production": {
@@ -92,6 +93,11 @@
             },
             "local": {
               "buildTarget": "typedb-studio:build:local"
+            },
+            "local-tauri": {
+              "buildTarget": "typedb-studio:build:local",
+              "ssl": false,
+              "port": 1421
             }
           },
           "defaultConfiguration": "local"

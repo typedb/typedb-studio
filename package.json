@@ -1,6 +1,6 @@
 {
   "name": "typedb-studio",
-  "version": "3.8.1",
+  "version": "3.9.0",
   "scripts": {
     "ng": "ng",
     "generate-grammar": "lezer-generator --typeScript src/framework/codemirror-lang-typeql/typeql.grammar -o src/framework/codemirror-lang-typeql/generated/typeql.grammar.generated",
@@ -9,7 +9,8 @@
     "build:dev": "ng build -c development",
     "build:prod": "ng build -c production",
     "watch": "ng build --watch --configuration development",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev"
   },
   "private": true,
   "dependencies": {
@@ -25,13 +26,17 @@
     "@angular/platform-browser": "20.0.3",
     "@angular/platform-browser-dynamic": "20.0.3",
     "@angular/router": "20.0.3",
-    "@codemirror/autocomplete": "6.18.6",
-    "@codemirror/commands": "6.8.1",
-    "@codemirror/lint": "6.8.5",
+    "@codemirror/autocomplete": "6.20.0",
+    "@codemirror/commands": "6.10.1",
+    "@codemirror/language": "6.12.1",
+    "@codemirror/state": "6.5.3",
+    "@codemirror/view": "6.38.8",
+    "@codemirror/lint": "6.9.4",
     "@customerio/cdp-analytics-browser": "0.2.0",
     "@hhangular/resizable": "1.18.1",
     "@intercom/messenger-js-sdk": "0.0.14",
-    "@lezer/common": "^1.0.0",
+    "@lezer/common": "1.5.0",
+    "@lezer/highlight": "1.2.3",
     "@lezer/lr": "1.4.2",
     "@sigma/edge-curve": "3.1.0",
     "@sigma/node-square": "3.0.0",
@@ -41,7 +46,7 @@
     "graphology-layout-forceatlas2": "0.10.1",
     "graphology-layout-noverlap": "0.4.2",
     "ngx-markdown": "20.1.0",
-    "posthog-js": "1.268.8",
+    "posthog-js": "1.343.1",
     "prismjs": "1.29.0",
     "rxjs": "~7.8.0",
     "sigma": "3.0.1",
@@ -50,18 +55,14 @@
     "typedb-web-common": "workspace:*",
     "uuid": "11.1.0",
     "zone.js": "~0.15.1",
-    "@tauri-apps/api": "^2",
+    "@tauri-apps/api": "~2.10.0",
     "@tauri-apps/plugin-opener": "^2"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "20.0.2",
     "@angular/cli": "20.0.2",
     "@angular/compiler-cli": "20.0.3",
-    "@codemirror/language": "6.11.0",
-    "@codemirror/state": "6.5.2",
-    "@codemirror/view": "6.36.5",
-    "@lezer/generator": "1.7.3",
-    "@lezer/highlight": "1.2.1",
+    "@lezer/generator": "1.8.0",
     "@sanity/asset-utils": "1.3.0",
     "@sanity/icons": "3.4.0",
     "@sanity/types": "3.14.4",
@@ -78,7 +79,7 @@
     "netlify-plugin-discord": "0.0.2",
     "typescript": "5.8.3",
     "unplugin-lezer": "1.0.1",
-    "@tauri-apps/cli": "^2"
+    "@tauri-apps/cli": "~2.10.0"
   },
   "browserslist": [
     "defaults and fully supports es6-module"

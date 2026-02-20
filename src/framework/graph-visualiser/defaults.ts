@@ -150,6 +150,7 @@ export const defaultStructureParameters: StudioConverterStructureParameters = {
 };
 
 export const defaultSigmaSettings: Partial<SigmaSettings> = {
+    allowInvalidContainer: true,
     zoomToSizeRatioFunction: (x) => x,
     minCameraRatio: 0.1,
     maxCameraRatio: 10,

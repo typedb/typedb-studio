@@ -33,6 +33,9 @@ export class AnalyticsService {
         alias: (alias: string, original?: string) => {
             posthog.alias(alias, original);
         },
+        capture: (event: string, properties?: Properties) => {
+            posthog.capture(event, properties);
+        },
         capturePageView: () => {
             posthog.capture("$pageview");
         },

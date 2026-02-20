@@ -68,7 +68,7 @@ tp-button i {
     height: 14px;
     font-size: 14px;
     margin-right: 0;
-    margin-left: 4px;
+    margin-left: 6px;
 }
 
 @keyframes beacon {
@@ -79,9 +79,3 @@ tp-button i {
     100% { opacity: 1 }
 }
 
-tp-button i.fa-wand-magic-sparkles {
-    background: linear-gradient(105deg, #F96480 0%, #FDD257 100%);
-    width: auto;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}

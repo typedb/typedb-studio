@@ -92,6 +92,7 @@ class ViewState {
             case "query": return "/query";
             case "schema": return "/schema";
             case "data": return "/data";
+            case "chat": return "/agent-mode";
             case null: return "/welcome";
         }
     }
@@ -286,6 +287,161 @@ class QueryTabs {
     }
 }
 
+const CHAT_CONVERSATIONS = "chatConversations";
+
+export interface PersistedChatMessage {
+    id: string;
+    sender: 'user' | 'ai';
+    timestamp: string;
+    content: Array<{
+        type: 'text' | 'code';
+        content?: string;
+        language?: string;
+    }>;
+}
+
+export interface PersistedConversation {
+    id: string;
+    title: string;
+    createdAt: string;
+    updatedAt: string;
+    messages: PersistedChatMessage[];
+}
+
+function truncateTitle(text: string, maxLen = 50): string {
+    const firstLine = text.split('\n')[0].trim();
+    if (firstLine.length <= maxLen) return firstLine || 'New conversation';
+    return firstLine.substring(0, maxLen - 3) + '...';
+}
+
+interface ChatConversationsData {
+    version: 2;
+    databases: {
+        [databaseName: string]: {
+            conversations: PersistedConversation[];
+            selectedConversationId: string | null;
+        };
+    };
+}
+
+const INITIAL_CHAT_CONVERSATIONS: ChatConversationsData = {
+    version: 2,
+    databases: {},
+};
+
+function parseChatConversationsData(obj: Object | null): ChatConversationsData {
+    if (obj == null) return INITIAL_CHAT_CONVERSATIONS;
+
+    const data = obj as any;
+    if (!data.version) {
+        // Migrate V1 -> V2
+        const v2: ChatConversationsData = { version: 2, databases: {} };
+        const v1Databases = data.databases as { [db: string]: { messages: PersistedChatMessage[] } } | undefined;
+        for (const [dbName, dbData] of Object.entries(v1Databases || {})) {
+            if (dbData.messages && dbData.messages.length > 0) {
+                const convId = crypto.randomUUID();
+                const firstUserMsg = dbData.messages.find(m => m.sender === 'user');
+                const title = firstUserMsg
+                    ? truncateTitle(firstUserMsg.content.find(p => p.type === 'text')?.content || 'Conversation')
+                    : 'Conversation';
+                v2.databases[dbName] = {
+                    conversations: [{
+                        id: convId,
+                        title,
+                        createdAt: dbData.messages[0]?.timestamp || new Date().toISOString(),
+                        updatedAt: dbData.messages[dbData.messages.length - 1]?.timestamp || new Date().toISOString(),
+                        messages: dbData.messages,
+                    }],
+                    selectedConversationId: convId,
+                };
+            }
+        }
+        return v2;
+    }
+
+    return Object.assign({}, INITIAL_CHAT_CONVERSATIONS, data) as ChatConversationsData;
+}
+
+class ChatConversations {
+    constructor(private storage: StorageService) {
+        if (this.storage.isAccessible && this.readStorage() == null) {
+            this.writeStorage(INITIAL_CHAT_CONVERSATIONS);
+        }
+    }
+
+    private readStorage(): ChatConversationsData {
+        if (!this.storage.isAccessible) return INITIAL_CHAT_CONVERSATIONS;
+        return this.storage.read<ChatConversationsData>(CHAT_CONVERSATIONS, parseChatConversationsData);
+    }
+
+    private writeStorage(data: ChatConversationsData): StorageWriteResult {
+        return this.storage.write(CHAT_CONVERSATIONS, data);
+    }
+
+    getConversationList(databaseName: string): PersistedConversation[] {
+        const data = this.readStorage();
+        return data.databases[databaseName]?.conversations || [];
+    }
+
+    getSelectedConversationId(databaseName: string): string | null {
+        const data = this.readStorage();
+        return data.databases[databaseName]?.selectedConversationId || null;
+    }
+
+    getConversation(databaseName: string, conversationId: string): PersistedConversation | null {
+        const data = this.readStorage();
+        const dbData = data.databases[databaseName];
+        return dbData?.conversations.find(c => c.id === conversationId) || null;
+    }
+
+    setConversation(databaseName: string, conversation: PersistedConversation): StorageWriteResult {
+        const data = this.readStorage();
+        if (!data.databases[databaseName]) {
+            data.databases[databaseName] = { conversations: [], selectedConversationId: null };
+        }
+        const idx = data.databases[databaseName].conversations.findIndex(c => c.id === conversation.id);
+        if (idx >= 0) {
+            data.databases[databaseName].conversations[idx] = conversation;
+        } else {
+            data.databases[databaseName].conversations.unshift(conversation);
+        }
+        return this.writeStorage(data);
+    }
+
+    setSelectedConversationId(databaseName: string, conversationId: string | null): StorageWriteResult {
+        const data = this.readStorage();
+        if (!data.databases[databaseName]) {
+            data.databases[databaseName] = { conversations: [], selectedConversationId: null };
+        }
+        data.databases[databaseName].selectedConversationId = conversationId;
+        return this.writeStorage(data);
+    }
+
+    deleteConversation(databaseName: string, conversationId: string): StorageWriteResult {
+        const data = this.readStorage();
+        const dbData = data.databases[databaseName];
+        if (!dbData) return this.writeStorage(data);
+        dbData.conversations = dbData.conversations.filter(c => c.id !== conversationId);
+        if (dbData.selectedConversationId === conversationId) {
+            dbData.selectedConversationId = dbData.conversations[0]?.id || null;
+        }
+        return this.writeStorage(data);
+    }
+
+    renameConversation(databaseName: string, conversationId: string, title: string): StorageWriteResult {
+        const data = this.readStorage();
+        const conv = data.databases[databaseName]?.conversations.find(c => c.id === conversationId);
+        if (conv) conv.title = title;
+        return this.writeStorage(data);
+    }
+
+    clearDatabase(databaseName: string): StorageWriteResult {
+        const data = this.readStorage();
+        delete data.databases[databaseName];
+        return this.writeStorage(data);
+    }
+}
+
 function parsePreferencesData(obj: Object | null): PreferencesData {
     return Object.assign({}, INITIAL_PREFERENCES, obj) as PreferencesData;
 }
@@ -361,6 +517,7 @@ export class AppData {
     readonly preferences = new Preferences(this.storage);
     readonly dataExplorerTabs = new DataExplorerTabs(this.storage);
     readonly queryTabs = new QueryTabs(this.storage);
+    readonly chatConversations = new ChatConversations(this.storage);
 
     constructor(private storage: StorageService) {
     }

@@ -37,12 +37,17 @@
 }
 
 .main-panes {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0 !important;
+
     @media (max-width: media.$max-width-mobile) {
         margin-left: -8px;
     }
 }
 
-.main-panes, .right-panes {
+.right-panes {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -65,34 +70,120 @@
     padding: 16px;
     position: relative;
     overflow: hidden;
+}
 
-    &.query-pane::before {
-        content: '';
-        position: absolute;
-        width: 300%;
-        height: 300%;
-        top: -100%;
-        left: -100%;
-        background: radial-gradient(
-                circle at center,
-                colors.$light-purple 0%,
-                transparent 30%
-        );
-        opacity: 0.6;
-        animation: mobile-light-source 60s infinite ease-in-out;
-        z-index: 1;
-        pointer-events: none;
-        transform: translate(25%, 25%);
-    }
+.card-top {
+    border: shapes.$border;
+    border-radius: shapes.$border-radius shapes.$border-radius 0 0;
+    border-bottom: none;
 
-    // Rest of your card styles
-    // ...
-
-    &.query-pane {
+    ::ng-deep + app-drag-handle {
+        border-left: shapes.$border;
+        border-right: shapes.$border;
         position: relative;
-        background: colors.$deep-purple;
-        z-index: 0; // Ensure this is lower than the pseudo-element
+
+        &::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 1px;
+            background: colors.$light-purple;
+        }
     }
+}
+
+.card-bottom {
+    border: shapes.$border;
+    border-top: none;
+    border-radius: 0 0 shapes.$border-radius shapes.$border-radius;
+}
+
+// Run tabs styles
+.run-tabs-header-row {
+    display: flex;
+    align-items: stretch;
+    background: rgba(colors.$black, 0.5);
+    border-bottom: 1px solid colors.$light-purple;
+}
+
+.run-tabs-scroll {
+    display: flex;
+    align-items: stretch;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex: 0 1 auto;
+    height: 40px;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.run-tab {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    cursor: pointer;
+    border-right: 1px solid colors.$light-purple;
+    white-space: nowrap;
+    color: colors.$grey;
+    transition: background-color 100ms, color 100ms;
+    font-size: 14px;
+
+    &:hover:not(.active) {
+        background-color: rgba(colors.$light-purple, 0.2);
+    }
+
+    &.active, &.active:hover {
+        color: colors.$white;
+        background-color: rgba(colors.$light-purple, 0.3);
+    }
+
+    &.placeholder {
+        cursor: default;
+    }
+}
+
+.run-tab-label {
+    user-select: none;
+}
+
+.run-tab-close-button.mat-mdc-icon-button {
+    --mdc-icon-button-state-layer-size: 20px;
+    margin-left: 4px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    position: relative;
+
+    &::ng-deep .mat-mdc-button-touch-target {
+        height: 20px;
+        width: 20px;
+    }
+
+    i {
+        font-size: 12px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        line-height: 1;
+        height: 12px;
+    }
+
+    &:hover {
+        background-color: colors.$light-purple;
+    }
+}
+
+.run-tabs-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-right: 12px;
+    flex-shrink: 0;
 }
 
 i.fa-xmark {
@@ -127,6 +218,10 @@ i.fa-xmark {
 }
 
 .card-header {
+    margin-left: 16px;
+    margin-top: 8px;
+    margin-right: 16px;
+
     h5, mat-button-toggle-group, button, .row-limit-control {
         z-index: 10;
     }
@@ -140,12 +235,13 @@ i.fa-xmark {
     label {
         font-size: 14px;
         white-space: nowrap;
+        color: colors.$grey;
     }
 
     mat-select {
-        width: 100px;
+        width: 80px;
         height: 32px;
-        padding: 0 12px;
+        padding: 0 10px;
         border: 1px solid colors.$light-purple;
         border-radius: shapes.$border-radius-small;
         background: colors.$deep-purple;
@@ -212,7 +308,7 @@ button {
 .code-editor-container {
     height: 100%;
     overflow: auto;
-    scrollbar-width: thin;
+
     border: 1px solid colors.$light-purple;
     background: colors.$black;
     z-index: 10;
@@ -229,8 +325,8 @@ button {
     flex-direction: column;
     overflow: hidden;
     z-index: 10;
-    border: 1px solid colors.$light-purple;
-    border-radius: shapes.$border-radius shapes.$border-radius 0 0;
+    border: none;
+    border-radius: shapes.$border-radius-small shapes.$border-radius-small 0 0;
     background: colors.$black;
 }
 
@@ -241,13 +337,65 @@ button {
     border-bottom: 1px solid colors.$light-purple;
 }
 
+.tab-scroll-button.mat-mdc-icon-button {
+    --mdc-icon-button-state-layer-size: 24px;
+    width: 24px;
+    height: 40px;
+    padding: 0;
+    border-radius: 0;
+    flex-shrink: 0;
+    display: none;
+    position: relative;
+
+    &::ng-deep .mat-mdc-button-touch-target {
+        height: 40px;
+        width: 24px;
+    }
+
+    &::ng-deep .mat-mdc-button-persistent-ripple {
+        border-radius: 0;
+    }
+
+    &.visible {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &.left {
+        border-right: 1px solid colors.$light-purple;
+    }
+
+    &.right {
+        border-left: 1px solid colors.$light-purple;
+    }
+
+    i {
+        font-size: 12px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        line-height: 1;
+        height: 12px;
+    }
+
+    &:hover {
+        background-color: rgba(colors.$light-purple, 0.3);
+    }
+}
+
 .query-tabs-scroll {
     display: flex;
     align-items: stretch;
     overflow-x: auto;
-    scrollbar-width: thin;
+    scrollbar-width: none;
     flex: 0 1 auto;
     height: 40px;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 .query-tab {
@@ -261,11 +409,11 @@ button {
     transition: background-color 100ms, color 100ms;
     font-size: 14px;
 
-    &:hover {
+    &:hover:not(.active) {
         background-color: rgba(colors.$light-purple, 0.2);
     }
 
-    &.active {
+    &.active, &.active:hover {
         color: colors.$white;
         background-color: rgba(colors.$light-purple, 0.3);
     }
@@ -342,6 +490,19 @@ button {
     }
 }
 
+.query-tabs-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-right: 12px;
+    flex-shrink: 0;
+
+    button[mat-stroked-button] {
+        --mdc-outlined-button-container-height: 32px;
+        font-size: 14px;
+    }
+}
+
 .query-tab-content {
     flex: 1;
     overflow: hidden;
@@ -376,7 +537,6 @@ button {
 .answers-outer-container {
     height: 100%;
     width: 100%;
-    border: 1px solid colors.$light-purple;
     background: colors.$black;
     position: relative;
 }
@@ -385,7 +545,7 @@ button {
     position: absolute;
     inset: 0;
     overflow: auto;
-    scrollbar-width: thin;
+
     .copy-overlay {
         right: 14px;
     }
@@ -437,7 +597,7 @@ button {
     .answers-text-box {
         height: 100% !important;
         resize: none;
-        scrollbar-width: thin;
+    
         @include typography.code;
     }
 }
@@ -492,7 +652,7 @@ button {
         height: 100%;
         width: 100%;
         overflow: auto;
-        scrollbar-width: thin;
+    
     }
 
     ol li {
@@ -545,7 +705,7 @@ button {
                 .cm-editor {
                     max-height: 120px;
                     overflow: auto;
-                    scrollbar-width: thin;
+                
                 }
 
                 .cm-scroller {

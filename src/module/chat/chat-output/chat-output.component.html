@@ -1,0 +1,122 @@
+<div class="chat-output-container">
+  <div class="output-header">
+    <div class="run-tabs-scroll">
+      @if (outputState.runs.length === 0) {
+        <div class="run-tab active placeholder">
+          <span class="run-tab-label">Run 1</span>
+          <button mat-icon-button class="run-tab-close-button" disabled>
+            <i class="fa-light fa-xmark"></i>
+          </button>
+        </div>
+      }
+      @for (run of outputState.runs; track run.id; let i = $index) {
+        <div class="run-tab"
+             [class.active]="outputState.selectedRunIndex === i"
+             (click)="selectRun(i)">
+          <span class="run-tab-label">{{ run.label }}</span>
+          <button mat-icon-button class="run-tab-close-button" (click)="closeRun($event, i)">
+            <i class="fa-light fa-xmark"></i>
+          </button>
+        </div>
+      }
+    </div>
+    <div class="flex-spacer"></div>
+    <mat-button-toggle-group [formControl]="outputState.outputTypeControl">
+      @for (outputType of outputTypes; track outputType) {
+        <mat-button-toggle [value]="outputType">{{ outputType }}</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+  </div>
+
+  @if (currentRun) {
+    <div class="output-content">
+      <!-- Log View -->
+      <div class="output-view log-view" [hidden]="outputState.outputTypeControl.value !== 'log'">
+        <mat-form-field class="code-text-field">
+          <textarea class="output-text-box" [formControl]="currentRun.log.control" readonly matInput></textarea>
+        </mat-form-field>
+        <div class="copy-overlay visible" (click)="onAiClick()">
+          <i [class]="aiSent ? 'fal fa-check' : 'fal fa-wand-magic-sparkles'"></i>
+        </div>
+        <div class="copy-overlay visible" (click)="onCopyLogClick()">
+          <i [class]="copied ? 'fal fa-check' : 'fal fa-copy'"></i>
+        </div>
+      </div>
+
+      <!-- Table View -->
+      @if (outputState.outputTypeControl.value === 'table') {
+        <div class="output-view table-view">
+          @switch (currentRun.table.status) {
+            @case ("ok") {
+              <table mat-table [dataSource]="currentRun.table.data$" matSort (matSortChange)="currentRun.table.handleMatSortChange($event)">
+                @for (column of currentRun.table.columns; track column) {
+                  <ng-container [matColumnDef]="column">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ column }}</th>
+                    <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
+                  </ng-container>
+                }
+                <tr mat-header-row *matHeaderRowDef="currentRun.table.displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: currentRun.table.displayedColumns"></tr>
+              </table>
+            }
+            @case ("error") {
+              <div class="status-text-container"><p class="status-text">This query returned an error. <a (click)="outputState.outputTypeControl.patchValue('log')">View in log</a></p></div>
+            }
+            @case ("running") {
+              <div class="status-text-container"><p class="status-text">Running query...</p></div>
+            }
+            @case ("answerlessQueryType") {
+              <div class="status-text-container"><p class="status-text">Query completed. This query type does not return answers.</p></div>
+            }
+            @case ("answerOutputDisabled") {
+              <div class="status-text-container"><p class="status-text">Query completed. Answer output is disabled.</p></div>
+            }
+            @case ("noColumns") {
+              <div class="status-text-container"><p class="status-text">Query completed. No columns were returned.</p></div>
+            }
+            @case ("noAnswers") {
+              <div class="status-text-container"><p class="status-text">Query completed. No answers were returned.</p></div>
+            }
+          }
+        </div>
+      }
+
+      <!-- Graph View -->
+      <div class="output-view graph-view" [class]="outputState.outputTypeControl.value === 'graph' ? '' : 'invisible'">
+        <div class="graph-container" #graphViewRef></div>
+
+        @switch (currentRun.graph.status) {
+          @case ("error") {
+            <p class="status-text">This query returned an error. <a (click)="outputState.outputTypeControl.patchValue('log')">View in log</a></p>
+          }
+          @case ("running") {
+            <p class="status-text">Running query...</p>
+          }
+          @case ("graphlessQueryType") {
+            <div class="status-text status-text-left">
+              <p>Query completed. This query type cannot be displayed as a graph.</p>
+              <p>Graph output is available for the following query types:</p>
+              <ul>
+                <li>Match queries without Fetch</li>
+                <li>Insert queries</li>
+              </ul>
+            </div>
+          }
+          @case ("answerOutputDisabled") {
+            <p class="status-text">Query completed. Answer output is disabled.</p>
+          }
+          @case ("noAnswers") {
+            <p class="status-text">Query completed. No answers were returned.</p>
+          }
+        }
+      </div>
+
+      <!-- Raw View -->
+      <div class="output-view raw-view" [hidden]="outputState.outputTypeControl.value !== 'raw'">
+        <mat-form-field class="code-text-field">
+          <textarea class="output-text-box" [formControl]="currentRun.raw.control" readonly matInput></textarea>
+        </mat-form-field>
+      </div>
+    </div>
+  }
+</div>

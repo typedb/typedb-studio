@@ -1,0 +1,41 @@
+<div class="message" [class.user]="message.sender === 'user'" [class.ai]="message.sender === 'ai'" [attr.data-message-id]="message.id">
+  <div class="message-content">
+    @if (message.isProcessing) {
+      <div class="typing-indicator">
+        <tp-spinner [size]="20"/>
+      </div>
+    } @else {
+      <div class="message-text">
+        @for (part of message.content; track $index; let i = $index) {
+          @if (part.type === 'text') {
+            <markdown [data]="part.content"></markdown>
+          } @else if (part.type === 'code') {
+            @if (i + 1 < message.content.length && message.content[i + 1].type === 'output') {
+              <div class="code-output-group">
+                <tp-code-editor
+                  [formControlProp]="part.formControl"
+                  [runOverlayVisible]="true"
+                  (runButtonClick)="onRunClick(i, part.formControl.value)"/>
+                <ts-chat-output [attr.data-output-block]="message.id + '-' + i" [outputState]="$any(message.content[i + 1]).outputState" (sendLogToAi)="sendLogToAi.emit($event)"/>
+              </div>
+            } @else {
+              <tp-code-editor
+                [formControlProp]="part.formControl"
+                [runOverlayVisible]="true"
+                (runButtonClick)="onRunClick(i, part.formControl.value)"/>
+            }
+          } @else if (part.type === 'output') {
+            @if (i === 0 || message.content[i - 1].type !== 'code') {
+              <ts-chat-output [outputState]="part.outputState" (sendLogToAi)="sendLogToAi.emit($event)"/>
+            }
+          }
+        }
+        @if (message.error) {
+          <div class="error-message">
+            <i class="fa-solid fa-triangle-exclamation"></i>{{ message.error }}
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

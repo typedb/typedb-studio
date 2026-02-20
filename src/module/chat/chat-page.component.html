@@ -1,0 +1,221 @@
+<ts-page-scaffold pageAvailability="ready">
+  <article class="chat-page" style="display: flex; flex-direction: row;">
+    <!-- Left sidebar: Schema tool window -->
+    <ts-schema-tool-window
+      resizable
+      [percent]="20"
+      [mode]="'schema'"
+      [title]="'Agent mode'"
+    />
+
+    <!-- Main area: Chat interface -->
+    <div class="main-content" resizable [percent]="60">
+      @if ((driver.status$ | async) === "disconnected") {
+        <div class="placeholder-container">
+          <div class="placeholder-content">
+            <i class="fa-thin fa-sparkles"></i>
+            <h3>Build with AI agent</h3>
+            <aside class="text-muted">Powered by OpenAI. Chat data is shared for model training purposes. Rate limits apply.<br/>AI code generation can make mistakes, so double-check it.</aside>
+            <button mat-flat-button routerLink="/connect">
+              <i class="fa-light fa-bolt"></i><span>Connect TypeDB server</span>
+            </button>
+          </div>
+        </div>
+      } @else if (!(driver.database$ | async)) {
+        <div class="placeholder-container">
+          <div class="placeholder-content">
+            <i class="fa-thin fa-sparkles"></i>
+            <h3>Build with AI agent</h3>
+            <aside class="text-muted">Powered by OpenAI. Chat data is shared for model training purposes. Rate limits apply.<br/>AI code generation can make mistakes, so double-check it.</aside>
+            <button mat-flat-button (click)="openSelectDatabaseDialog()">
+              <i class="fa-light fa-database"></i><span>Select database</span>
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="chat-container">
+          <!-- Main chat area -->
+          <div class="chat-main">
+            <!-- Header -->
+            <div class="chat-header">
+              <div class="header-left">
+                <button class="conversation-trigger"
+                        [matMenuTriggerFor]="historyMenu"
+                        matTooltip="Past Conversations"
+                        [matTooltipShowDelay]="500">
+                  <span class="trigger-title">{{ selectedConversationTitle }}</span>
+                  <i class="fa-light fa-chevron-down"></i>
+                </button>
+                <mat-menu #historyMenu="matMenu" class="history-menu">
+                  @for (group of conversationGroups; track group.label) {
+                    <div class="history-group-label">{{ group.label }}</div>
+                    @for (conv of group.conversations; track conv.id) {
+                      <button mat-menu-item
+                              [class.selected]="conv.id === (state.selectedConversationId$ | async)"
+                              (click)="onSelectConversation(conv.id)">
+                        <div class="history-item-content">
+                          <span class="history-item-title">{{ conv.title }}</span>
+                          <span class="history-item-meta">{{ conv.messageCount }} messages</span>
+                        </div>
+                        <span class="history-item-time">{{ conversationRelativeTimes.get(conv.id) }}</span>
+                        <i class="fa-light fa-trash-can history-delete-btn"
+                           matTooltip="Delete chat"
+                           [matTooltipShowDelay]="500"
+                           (click)="onDeleteConversation(conv.id); $event.stopPropagation()"></i>
+                      </button>
+                    }
+                  }
+                  @if ((state.conversations$ | async)?.length === 0) {
+                    <div class="history-empty">No conversations yet</div>
+                  }
+                </mat-menu>
+              </div>
+              <div class="flex-spacer"></div>
+              <button mat-stroked-button class="new-chat-btn" [disabled]="(state.messages$ | async)?.length === 0" (click)="onNewConversation()">
+                <i class="fa-light fa-plus"></i>
+                <span>New chat</span>
+              </button>
+              <div class="row-limit-control">
+                <label>Limit query results:</label>
+                <mat-select [formControl]="state.rowLimitControl" panelClass="row-limit-panel">
+                  @for (option of state.rowLimitOptions; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </div>
+            </div>
+
+            <!-- Messages area -->
+            <div class="messages-wrapper">
+              <div class="messages" #messagesContainer [class.is-streaming]="!!(state.isProcessing$ | async)">
+                @let msgs = state.messages$ | async;
+                @let isStreaming = !!(state.isProcessing$ | async);
+                @for (msg of msgs; track trackMessageById($index, msg); let i = $index) {
+                  @if (isStreaming && i === msgs!.length - 2) {
+                    <div class="streaming-pair">
+                      <ts-chat-message [message]="msgs![msgs!.length - 2]" (runQuery)="onRunQuery($event)" (sendLogToAi)="onSendLogToAi($event)"/>
+                      <ts-chat-message [message]="msgs![msgs!.length - 1]" (runQuery)="onRunQuery($event)" (sendLogToAi)="onSendLogToAi($event)"/>
+                    </div>
+                  } @else if (!(isStreaming && i === msgs!.length - 1)) {
+                    <ts-chat-message [message]="msg" (runQuery)="onRunQuery($event)" (sendLogToAi)="onSendLogToAi($event)"/>
+                  }
+                }
+
+                @if (msgs?.length === 0) {
+                  <div class="welcome-content">
+                    <i class="fa-thin fa-sparkles"></i>
+                    <h3>Build with AI agent</h3>
+                    <aside class="text-muted">Powered by OpenAI. Chat data is shared for model training purposes. Rate limits apply.<br/>AI code generation can make mistakes, so double-check it.</aside>
+                  </div>
+                } @else {
+                  <div class="spacer"></div>
+                }
+              </div>
+
+              @if (showScrollToBottom) {
+                <button class="scroll-to-bottom-btn" (click)="onScrollToBottom()">
+                  <i class="fa-light fa-arrow-down"></i>
+                </button>
+              }
+            </div>
+
+            <!-- Input area -->
+            <div class="input-container">
+              @let messages = state.messages$ | async;
+              <form (submit)="onSubmit($event)" class="input-box">
+                <div class="input-top">
+                  <textarea [formControl]="state.promptControl"
+                           [disabled]="!!(state.isProcessing$ | async)"
+                           placeholder="Describe what to query next"
+                           rows="1"
+                           cdkTextareaAutosize
+                           cdkAutosizeMinRows="1"
+                           cdkAutosizeMaxRows="6"
+                           #promptInput
+                           (keydown.enter)="onInputKeyDownEnter($any($event))"
+                           (keydown.arrowup)="onInputKeyDownArrow($any($event))"
+                           (keydown.arrowdown)="onInputKeyDownArrow($any($event))">
+                  </textarea>
+                </div>
+                <div class="input-bottom">
+                  <div class="flex-spacer"></div>
+                  <div class="input-actions">
+                    <button type="button" class="commands-button" [matMenuTriggerFor]="commandsMenu" matTooltip="Commands">
+                      <i class="fa-light fa-slash-forward"></i>
+                    </button>
+                    <mat-menu #commandsMenu="matMenu" class="commands-menu">
+                      <button mat-menu-item [disabled]="!messages?.length" (click)="compactChat()">
+                        <i class="fa-light fa-compress"></i>
+                        <span>Compact <span class="command-slash">(/compact)</span></span>
+                      </button>
+                      <button mat-menu-item [disabled]="!messages?.length" (click)="clearChat()">
+                        <i class="fa-light fa-trash-can"></i>
+                        <span>Clear conversation <span class="command-slash">(/clear)</span></span>
+                      </button>
+                    </mat-menu>
+                    @if ((state.isProcessing$ | async) && !state.promptControl.value) {
+                      <button type="button" class="send-button" (click)="onStopStream()" matTooltip="Stop" [matTooltipShowDelay]="500">
+                        <i class="fa-solid fa-stop"></i>
+                      </button>
+                    } @else {
+                      <button type="submit"
+                              class="send-button"
+                              [disabled]="!state.promptControl.value || !(driver.database$ | async)"
+                              matTooltip="Send message" [matTooltipShowDelay]="500">
+                          <i class="fa-light fa-arrow-up"></i>
+                      </button>
+                    }
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Right sidebar: History pane -->
+    <div resizable [percent]="20" class="right-panes">
+      <div class="history-pane card">
+        <div class="card-header">
+          <h5>Query History</h5>
+        </div>
+        <div class="history-container">
+          <ol>
+            @for (entry of history.entries; track entry) {
+              <li class="history-entry">
+                <aside class="text-muted">
+                  <time>{{ entry.startedAtTimestamp | date:'HH:mm' }}</time>
+                  <span class="bullet">&bull;</span>
+                  @if (isTransactionOperation(entry)) {
+                    <p class="transaction-operation-type">{{ transactionOperationString(entry) }}</p>
+                  } @else {
+                    <p class="transaction-operation-type">{{ entry.status === "error" ? "query failed" : ($any(entry).autoCommitted ? "ran + committed query" : "ran query") }}</p>
+                  }
+                  <span class="flex-spacer"></span>
+                  <div class="action-status">
+                    @if (entry.status === "pending") {
+                      <tp-spinner [size]="14"/>
+                    } @else {
+                      <span>{{ entry | actionDuration }}</span>
+                      @if (entry.status === "success") {
+                        <i class="fa-light fa-check"></i>
+                      } @else {
+                        <i class="fa-light fa-xmark" richTooltip [richTooltipContent]="historyEntryErrorTooltip(entry)" (click)="copyHistoryEntryErrorTooltip(entry)"></i>
+                      }
+                    }
+                  </div>
+                </aside>
+                @if (isQueryRun(entry)) {
+                  <div class="history-code-editor">
+                    <tp-code-editor [formControlProp]="getHistoryEntryControl(entry)" [runOverlayVisible]="true" (runButtonClick)="runHistoryQuery(entry)"/>
+                  </div>
+                }
+              </li>
+            }
+          </ol>
+        </div>
+      </div>
+    </div>
+  </article>
+</ts-page-scaffold>

@@ -72,7 +72,7 @@ export function connectionString(props: ConnectionParams) {
 
 function connectionStringBasic(props: ConnectionParamsBasic) {
     const { username, password, addresses, database, name } = props;
-    const base = `${SCHEME}${username}:${password}@${addresses.join(",")}/${database ?? ''}`;
+    const base = `${SCHEME}${encodeURIComponent(username)}:${encodeURIComponent(password)}@${addresses.join(",")}/${database ?? ''}`;
     return name ? `${base}?name=${encodeURIComponent(name)}` : base;
 }
 
@@ -91,9 +91,15 @@ function parseConnectionHostAndPathOrNull(rawValue: string): ConnectionParams | 
     const [auth, connection] = rawValue.split(`@`, 2) as [string, string?];
     if (!connection?.length) return null;
 
-    const [username, passwordRaw] = auth.split(`:`, 2) as [string, string?];
+    const [usernameRaw, passwordRaw] = auth.split(`:`, 2) as [string, string?];
     if (!passwordRaw?.length) return null;
-    const password = decodeURIComponent(passwordRaw);
+    let username: string, password: string;
+    try {
+        username = decodeURIComponent(usernameRaw);
+        password = decodeURIComponent(passwordRaw);
+    } catch {
+        return null;
+    }
 
     // Safari-compatible: find first "/" or "?" not part of "://" or "//"
     const protocolMatch = connection.match(/:\/\/|\/\//);
