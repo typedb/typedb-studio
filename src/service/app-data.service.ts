@@ -92,7 +92,7 @@ class ViewState {
             case "query": return "/query";
             case "schema": return "/schema";
             case "data": return "/data";
-            case "chat": return "/chat";
+            case "chat": return "/agent-mode";
             case null: return "/welcome";
         }
     }
