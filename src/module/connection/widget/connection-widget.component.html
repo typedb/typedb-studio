@@ -24,7 +24,7 @@
 <mat-menu #connectionMenuRef="matMenu" [overlapTrigger]="false">
   <span class="menu-content" (mouseenter)="onConnectionMenuMouseEnter()" (mouseleave)="onConnectionMenuMouseLeave()" (click)="$event.stopPropagation()">
     @let connection = (driver.connection$ | async);
-    <aside>Server: {{ connection?.name ?? 'not connected' }}</aside>
+    <aside>Server: {{ connection?.name ?? 'not connected' }} @if (driver.serverVersion$ | async; as sv) {<span class="server-version">({{ sv.distribution }} {{ sv.version }})</span>}</aside>
     <mat-divider/>
     @if (connection) {
       <button mat-menu-item routerLink="/connect" (click)="connectionMenuTrigger.closeMenu()"><i class="fa-light fa-swap-arrows"></i><span>Change connection</span></button>

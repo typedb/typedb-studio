@@ -97,6 +97,10 @@ i.ts-beacon {
     aside {
         margin: 6px 16px;
         @include typography.aside;
+
+        .server-version {
+            color: colors.$secondary-light-grey;
+        }
     }
 
     mat-divider {

@@ -41,6 +41,7 @@ export class DriverState {
 
     private _status$ = new BehaviorSubject<DriverStatus>("disconnected");
     connection$ = new BehaviorSubject<ConnectionConfig | null>(null);
+    serverVersion$ = new BehaviorSubject<VersionResponse | null>(null);
     database$ = new BehaviorSubject<Database | null>(null);
     private _transaction$ = new BehaviorSubject<Transaction | null>(null);
 
@@ -136,6 +137,7 @@ export class DriverState {
                 tap((res) => {
                     if (isOkResponse(res) && res.ok != null) {
                         const rawVersion = (res.ok as Partial<VersionResponse>).version;
+                        this.serverVersion$.next(res.ok as VersionResponse);
                         const parsedVersion = this.parseServerVersionOrNull(rawVersion);
                         if (parsedVersion?.major === 3 && parsedVersion.minor >= 3) return;
                         else if (parsedVersion == null) throw { customError: `Unsupported TypeDB server version.\nTypeDB Studio supports TypeDB 3.3.0 and above.` };
@@ -177,6 +179,7 @@ export class DriverState {
         const maybeCloseTransaction$ = this._transaction$.value ? this.closeTransaction(lockId) : of({});
         return maybeCloseTransaction$.pipe(tap(() => this.tryUseWriteLock(() => {
             this.connection$.next(null);
+            this.serverVersion$.next(null);
             this.database$.next(null);
             this._databaseList$.next(null);
             this.userList$.next(null);
