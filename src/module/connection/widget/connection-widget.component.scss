@@ -43,6 +43,18 @@
     .connection-area {
         display: flex;
         align-items: center;
+        overflow: hidden;
+    }
+
+    .db-trigger {
+        overflow: hidden;
+        max-width: 280px;
+
+        .db-trigger-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
     }
 }
 
@@ -134,6 +146,26 @@ i.ts-beacon {
                 opacity: 1;
             }
         }
+    }
+
+    ::ng-deep .mat-mdc-menu-item-text {
+        display: flex !important;
+        align-items: center;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .db-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+    }
+
+    i.fa-trash-can {
+        flex-shrink: 0;
+        margin-left: 8px;
     }
 
     button.selected {
