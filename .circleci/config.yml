@@ -105,12 +105,14 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          brew install python@3.11
+          export PATH="$(brew --prefix python@3.11)/libexec/bin:$PATH"
           nvm install 22
           nvm use 22
           corepack enable
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
-          rustup target add <<parameters.target-triple>> 
+          rustup target add <<parameters.target-triple>>
           npx tauri build --target <<parameters.target-triple>>
           # --define version doesn't seem to work, so we just write it into the VERSION file.
           git rev-parse HEAD > VERSION
@@ -126,6 +128,8 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          brew install python@3.11
+          export PATH="$(brew --prefix python@3.11)/libexec/bin:$PATH"
           nvm install 22
           nvm use 22
           corepack enable
