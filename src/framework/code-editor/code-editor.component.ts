@@ -37,9 +37,9 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
     protected readonly TypeQL = TypeQL;
     protected readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
 
-    // Workaround for WKWebView IME input issues on macOS (Tauri)
+    // Workaround for WebView IME input issues on macOS and Linux (Tauri)
     // Only applied when running in Tauri to avoid breaking dead keys/IME in browsers
-    private readonly wkWebViewFix = EditorView.domEventHandlers({
+    private readonly webViewInputFix = EditorView.domEventHandlers({
         keydown: (event, view) => {
             // Only handle printable characters that WKWebView fails to input
             if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
@@ -52,11 +52,11 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
         }
     });
 
-    private readonly isTauriMac = !!(window as any).__TAURI_INTERNALS__ && navigator.platform.startsWith('Mac');
+    private readonly isTauriMacOrLinux = !!(window as any).__TAURI_INTERNALS__ && (navigator.platform.startsWith('Mac') || navigator.platform.startsWith('Linux'));
 
     get extensions(): Extension[] {
         const baseExtensions = [this.codeEditorTheme, TypeQL(), typeqlAutocompleteExtension(), this.keymap];
-        return this.isTauriMac ? [...baseExtensions, this.wkWebViewFix] : baseExtensions;
+        return this.isTauriMacOrLinux ? [...baseExtensions, this.webViewInputFix] : baseExtensions;
     }
 
     ran = false;
