@@ -16,10 +16,6 @@
         h1, h2, h3, h4, h5, h6 {
             font-weight: var(--font-weight-semi-bold);
             line-height: 1.3;
-
-            &:first-child {
-                margin-top: 0;
-            }
         }
 
         h1 { font-size: 1.75em; margin-top: 1.5em; margin-bottom: 0.6em; }
