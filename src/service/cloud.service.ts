@@ -33,7 +33,7 @@ export class CloudService {
             const controller = new AbortController();
 
             this.zone.runOutsideAngular(() => {
-                fetch(`${environment.cloudUrl}/ai/chat`, {
+                fetch(`${environment.cloudUrl}/ai/v1/chat`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -43,8 +43,7 @@ export class CloudService {
                     signal: controller.signal,
                 }).then(async response => {
                     if (!response.ok) {
-                        const errorBody = await response.text();
-                        throw new Error(errorBody || `HTTP ${response.status}`);
+                        throw new Error(await this.extractErrorBody(response));
                     }
 
                     const reader = response.body!.getReader();
@@ -87,6 +86,16 @@ export class CloudService {
         });
     }
 
+    private async extractErrorBody(response: Response): Promise<string> {
+        const body = await response.text();
+        if (!body) return `HTTP ${response.status}`;
+        try {
+            const json = JSON.parse(body);
+            if (json.message) return json.message;
+        } catch {}
+        return body;
+    }
+
     private parseEventData(event: string): string | null {
         const parts: string[] = [];
         for (const line of event.split('\n')) {
@@ -108,7 +117,7 @@ export class CloudService {
             const controller = new AbortController();
 
             this.zone.runOutsideAngular(() => {
-                fetch(`${environment.cloudUrl}/ai/chat/compact`, {
+                fetch(`${environment.cloudUrl}/ai/v1/chat/compact`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -118,8 +127,7 @@ export class CloudService {
                     signal: controller.signal,
                 }).then(async response => {
                     if (!response.ok) {
-                        const errorBody = await response.text();
-                        throw new Error(errorBody || `HTTP ${response.status}`);
+                        throw new Error(await this.extractErrorBody(response));
                     }
 
                     const reader = response.body!.getReader();
