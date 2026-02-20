@@ -37,11 +37,10 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
     protected readonly TypeQL = TypeQL;
     protected readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
 
-    // Workaround for WebView IME input issues on macOS and Linux (Tauri)
-    // Only applied when running in Tauri to avoid breaking dead keys/IME in browsers
-    private readonly webViewInputFix = EditorView.domEventHandlers({
+    // Workaround for WebKit IME input issues (Safari on macOS, Tauri WKWebView on macOS/Linux)
+    private readonly webKitInputFix = EditorView.domEventHandlers({
         keydown: (event, view) => {
-            // Only handle printable characters that WKWebView fails to input
+            // Only handle printable characters that WebKit fails to input
             if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
                 const transaction = view.state.replaceSelection(event.key);
                 view.dispatch(transaction);
@@ -52,11 +51,15 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
         }
     });
 
-    private readonly isTauriMacOrLinux = !!(window as any).__TAURI_INTERNALS__ && (navigator.platform.startsWith('Mac') || navigator.platform.startsWith('Linux'));
+    private readonly isSafari = /safari/i.test(navigator.userAgent) && !/chrome/i.test(navigator.userAgent);
+    private readonly isTauri = !!(window as any).__TAURI_INTERNALS__;
+    private readonly needsWebKitInputFix =
+        (navigator.platform.startsWith('Mac') && (this.isSafari || this.isTauri))
+        || (navigator.platform.startsWith('Linux') && this.isTauri);
 
     get extensions(): Extension[] {
         const baseExtensions = [this.codeEditorTheme, TypeQL(), typeqlAutocompleteExtension(), this.keymap];
-        return this.isTauriMacOrLinux ? [...baseExtensions, this.webViewInputFix] : baseExtensions;
+        return this.needsWebKitInputFix ? [...baseExtensions, this.webKitInputFix] : baseExtensions;
     }
 
     ran = false;
