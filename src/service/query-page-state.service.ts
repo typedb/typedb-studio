@@ -771,6 +771,7 @@ export class GraphOutputState {
             this.visualiser.sigma.kill();
             this.visualiser = null;
         }
+        this._canvasEl = null;
     }
 
     attach(canvasEl: HTMLElement): void {

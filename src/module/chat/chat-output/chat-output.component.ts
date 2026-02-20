@@ -64,8 +64,9 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
     private attachCanvasIfNeeded() {
         const run = this.currentRun;
         if (run && run !== this.lastAttachedRun && this.graphViewRef) {
-            run.graph.canvasEl = this.graphViewRef.nativeElement;
+            run.graph.attach(this.graphViewRef.nativeElement);
             this.lastAttachedRun = run;
+            requestAnimationFrame(() => run.graph.resize());
         }
     }
 
@@ -131,7 +132,8 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
     ngOnDestroy() {
         this.outputTypeSub?.unsubscribe();
         for (const run of this.outputState.runs) {
-            run.graph.destroy();
+            run.graph.detach();
         }
+        this.lastAttachedRun = null;
     }
 }
