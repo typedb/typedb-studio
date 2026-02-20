@@ -4,8 +4,8 @@
   "version": "3.8.1",
   "identifier": "com.typedb.studio",
   "build": {
-    "beforeDevCommand": "pnpm start",
-    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "pnpm ng serve -c local-tauri",
+    "devUrl": "http://localhost:1421",
     "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist/typedb-studio/browser"
   },
