@@ -9,8 +9,9 @@
 
     @if (databaseVisible$ | async) {
       <i class="fa-light fa-chevron-right"></i>
-      <button #databaseMenuTrigger="matMenuTrigger" [matMenuTriggerFor]="databaseMenuRef">
-        <i class="fa-light fa-database"></i> {{ databaseText$ | async }}
+      <button class="db-trigger" #databaseMenuTrigger="matMenuTrigger" [matMenuTriggerFor]="databaseMenuRef"
+              [matTooltip]="(databaseText$ | async) || ''">
+        <i class="fa-light fa-database"></i><span class="db-trigger-text">{{ databaseText$ | async }}</span>
       </button>
     }
   </div>
@@ -48,8 +49,7 @@
       @let selected = database.name == (driver.database$ | async)?.name;
       <button mat-menu-item (click)="selectDatabase(database)" [class.selected]="selected">
         <i class="fa-light fa-check" [class.invisible]="!selected"></i>
-        <span>{{ database.name }}</span>
-        <span class="flex-spacer"></span>
+        <span class="db-name" [matTooltip]="database.name">{{ database.name }}</span>
         <i class="fa-light fa-trash-can" matTooltip="Delete database" matTooltipPosition="above" (click)="onDeleteDatabaseClick(database, $event);"></i>
       </button>
     }
