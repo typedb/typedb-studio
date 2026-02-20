@@ -37,13 +37,15 @@ export class CloudService {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'text/event-stream',
+                        'Accept': 'text/event-stream, application/json',
                     },
                     body: JSON.stringify({ schema, conversation }),
                     signal: controller.signal,
                 }).then(async response => {
                     if (!response.ok) {
-                        throw new Error(await this.extractErrorBody(response));
+                        const error = new Error(await this.extractErrorBody(response));
+                        (error as any).status = response.status;
+                        throw error;
                     }
 
                     const reader = response.body!.getReader();
@@ -121,7 +123,7 @@ export class CloudService {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'text/event-stream',
+                        'Accept': 'text/event-stream, application/json',
                     },
                     body: JSON.stringify(request),
                     signal: controller.signal,
