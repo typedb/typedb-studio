@@ -149,7 +149,7 @@
     flex-direction: column;
     align-items: center;
     gap: 16px;
-    scrollbar-width: thin;
+
     padding: 16px;
 
     ts-chat-message,
@@ -416,7 +416,7 @@
         height: 100%;
         width: 100%;
         overflow: auto;
-        scrollbar-width: thin;
+    
     }
 
     ol li {
@@ -469,7 +469,7 @@
                 .cm-editor {
                     max-height: 120px;
                     overflow: auto;
-                    scrollbar-width: thin;
+                
                 }
 
                 .cm-scroller {
@@ -502,6 +502,7 @@
     width: 300px;
     max-width: 300px;
     max-height: 480px;
+
 
     .history-group-label {
         padding: 10px 16px 4px;

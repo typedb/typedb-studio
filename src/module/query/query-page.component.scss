@@ -308,7 +308,7 @@ button {
 .code-editor-container {
     height: 100%;
     overflow: auto;
-    scrollbar-width: thin;
+
     border: 1px solid colors.$light-purple;
     background: colors.$black;
     z-index: 10;
@@ -545,7 +545,7 @@ button {
     position: absolute;
     inset: 0;
     overflow: auto;
-    scrollbar-width: thin;
+
     .copy-overlay {
         right: 14px;
     }
@@ -597,7 +597,7 @@ button {
     .answers-text-box {
         height: 100% !important;
         resize: none;
-        scrollbar-width: thin;
+    
         @include typography.code;
     }
 }
@@ -652,7 +652,7 @@ button {
         height: 100%;
         width: 100%;
         overflow: auto;
-        scrollbar-width: thin;
+    
     }
 
     ol li {
@@ -705,7 +705,7 @@ button {
                 .cm-editor {
                     max-height: 120px;
                     overflow: auto;
-                    scrollbar-width: thin;
+                
                 }
 
                 .cm-scroller {

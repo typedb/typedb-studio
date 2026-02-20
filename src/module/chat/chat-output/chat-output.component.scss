@@ -134,7 +134,7 @@
 .output-content {
     height: 400px;
     overflow: auto;
-    scrollbar-width: thin;
+
     border: shapes.$border;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
@@ -203,7 +203,7 @@
         padding: 0.75rem;
         background: transparent;
         color: var(--fg1);
-        scrollbar-width: thin;
+    
     }
 }
 

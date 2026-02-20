@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from "@angular/core";
+import { AfterViewChecked, AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -31,7 +31,7 @@ import { RunOutputState } from "../../../service/query-page-state.service";
         MatSortModule,
     ],
 })
-export class ChatOutputComponent implements AfterViewInit, OnDestroy {
+export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnDestroy {
     @Input({ required: true }) outputState!: OutputState;
     @Output() sendLogToAi = new EventEmitter<string>();
     @ViewChild("graphViewRef") graphViewRef?: ElementRef<HTMLElement>;
@@ -40,6 +40,7 @@ export class ChatOutputComponent implements AfterViewInit, OnDestroy {
     copied = false;
     aiSent = false;
     private outputTypeSub?: Subscription;
+    private lastAttachedRun: RunOutputState | null = null;
 
     get currentRun(): RunOutputState | null {
         const { runs, selectedRunIndex } = this.outputState;
@@ -48,14 +49,24 @@ export class ChatOutputComponent implements AfterViewInit, OnDestroy {
     }
 
     ngAfterViewInit() {
-        if (this.graphViewRef && this.currentRun) {
-            this.currentRun.graph.canvasEl = this.graphViewRef.nativeElement;
-        }
+        this.attachCanvasIfNeeded();
         this.outputTypeSub = this.outputState.outputTypeControl.valueChanges.subscribe((value) => {
             if (value === "graph") {
                 requestAnimationFrame(() => this.currentRun?.graph.resize());
             }
         });
+    }
+
+    ngAfterViewChecked() {
+        this.attachCanvasIfNeeded();
+    }
+
+    private attachCanvasIfNeeded() {
+        const run = this.currentRun;
+        if (run && run !== this.lastAttachedRun && this.graphViewRef) {
+            run.graph.canvasEl = this.graphViewRef.nativeElement;
+            this.lastAttachedRun = run;
+        }
     }
 
     selectRun(index: number) {
