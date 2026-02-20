@@ -397,7 +397,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.chatState.pendingMessage = logText;
         this.sentLogToAi = true;
         setTimeout(() => this.sentLogToAi = false, 3000);
-        this.router.navigate(['/chat']);
+        this.router.navigate(['/agent-mode']);
     }
 
     async copyLog() {
