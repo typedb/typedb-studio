@@ -87,7 +87,7 @@ importers:
         specifier: 3.0.0
         version: 3.0.0(sigma@3.0.1(graphology-types@0.24.8))
       '@tauri-apps/api':
-        specifier: ^2
+        specifier: ~2.10.0
         version: 2.10.1
       '@tauri-apps/plugin-opener':
         specifier: ^2
@@ -160,7 +160,7 @@ importers:
         specifier: 3.14.4
         version: 3.14.4
       '@tauri-apps/cli':
-        specifier: ^2
+        specifier: ~2.10.0
         version: 2.10.0
       '@types/chroma-js':
         specifier: 3.1.1
