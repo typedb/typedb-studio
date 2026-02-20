@@ -400,13 +400,20 @@ export class ChatState {
                 },
                 error: (err) => {
                     console.error(err);
+                    this.activeStreamSubscription = null;
+                    this.activeStreamParser = null;
+
                     aiMsg.error = err?.err?.message ?? err?.error?.message ?? err?.message ?? err?.toString() ?? INTERNAL_ERROR;
                     aiMsg.isProcessing = false;
                     aiMsg.timestamp = new Date();
                     this.messages$.next([...this.messages$.value]);
-                    this.activeStreamSubscription = null;
-                    this.activeStreamParser = null;
                     this.isProcessing$.next(false);
+
+                    if (err?.status === 413) {
+                        // Request too large — restore prompt and auto-compact
+                        this.promptControl.setValue(prompt);
+                        this.compactConversation();
+                    }
                 },
                 complete: () => {
                     const messages = this.messages$.value;
@@ -523,7 +530,7 @@ export class ChatState {
         };
         const infoMsg: ChatMessageData = {
             id: this.generateMessageId(),
-            content: [{ type: "text", content: "*This conversation is being compacted to reduce the context size.*" }],
+            content: [{ type: "text", content: "*Compacting conversation to free up space...*" }],
             sender: "ai",
             timestamp: new Date(),
         };
