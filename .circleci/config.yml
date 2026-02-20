@@ -86,7 +86,6 @@ commands:
           command: |
             nvm install 22
             nvm use 22
-            npm install --global corepack@0.17.0
             corepack enable
             corepack prepare pnpm@10.12.1 --activate
             pnpm install
@@ -108,7 +107,6 @@ commands:
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           nvm install 22
           nvm use 22
-          npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
@@ -130,7 +128,6 @@ commands:
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           nvm install 22
           nvm use 22
-          npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
@@ -148,7 +145,6 @@ commands:
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           nvm install 22
           nvm use 22
-          npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
@@ -177,7 +173,6 @@ commands:
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           nvm install 22
           nvm use 22
-          npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
@@ -204,7 +199,6 @@ commands:
           export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
           nvm install 22
           nvm use 22
-          npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
@@ -231,7 +225,6 @@ commands:
           export DEPLOY_APT_PASSWORD=$REPO_TYPEDB_PASSWORD
           nvm install 22
           nvm use 22
-          npm install --global corepack@0.17.0
           corepack enable
           corepack prepare pnpm@10.12.1 --activate
           pnpm build

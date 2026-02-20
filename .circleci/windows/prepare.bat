@@ -36,8 +36,6 @@ REM install node modules
 
 CALL nvm install 22.16.0
 CALL nvm use 22.16.0
-CALL npm install --global corepack@0.17.0 --verbose
-
 CALL corepack enable
 CALL corepack prepare pnpm@10.12.1 --activate
 CALL pnpm config set store-dir .pnpm-store
