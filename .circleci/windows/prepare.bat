@@ -29,8 +29,8 @@ REM install Rust
 curl -L -o rustup-init.exe https://win.rustup.rs/x86_64
 rustup-init.exe -y
 set PATH=%USERPROFILE%\.cargo\bin;%PATH%
-rustup install 1.86.0
-rustup default 1.86.0
+rustup install 1.93.1
+rustup default 1.93.1
 
 REM install node modules
 
