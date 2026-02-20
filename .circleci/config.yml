@@ -94,7 +94,7 @@ commands:
   install-rust:
     steps:
       - run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain 1.86.0
+          curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain 1.93.1
 
   deploy-mac-snapshot:
     parameters:
