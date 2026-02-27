@@ -505,6 +505,48 @@ class Preferences {
     }
 }
 
+const PANEL_LAYOUT = "panelLayout";
+
+type PanelLayoutPage = "query" | "schema" | "data" | "chat";
+
+interface PanelLayoutData {
+    [page: string]: number[];
+}
+
+const INITIAL_PANEL_LAYOUT: PanelLayoutData = {};
+
+function parsePanelLayoutData(obj: Object | null): PanelLayoutData {
+    return Object.assign({}, INITIAL_PANEL_LAYOUT, obj) as PanelLayoutData;
+}
+
+class PanelLayout {
+    constructor(private storage: StorageService) {
+        if (this.storage.isAccessible && this.readStorage() == null) {
+            this.writeStorage(INITIAL_PANEL_LAYOUT);
+        }
+    }
+
+    private readStorage(): PanelLayoutData {
+        if (!this.storage.isAccessible) return INITIAL_PANEL_LAYOUT;
+        return this.storage.read<PanelLayoutData>(PANEL_LAYOUT, parsePanelLayoutData);
+    }
+
+    private writeStorage(data: PanelLayoutData): StorageWriteResult {
+        return this.storage.write(PANEL_LAYOUT, data);
+    }
+
+    get(page: PanelLayoutPage): number[] | null {
+        const data = this.readStorage();
+        return data[page] || null;
+    }
+
+    set(page: PanelLayoutPage, sizes: number[]): StorageWriteResult {
+        const data = this.readStorage();
+        data[page] = sizes;
+        return this.writeStorage(data);
+    }
+}
+
 @Injectable({
     providedIn: "root",
 })
@@ -518,6 +560,7 @@ export class AppData {
     readonly dataExplorerTabs = new DataExplorerTabs(this.storage);
     readonly queryTabs = new QueryTabs(this.storage);
     readonly chatConversations = new ChatConversations(this.storage);
+    readonly panelLayout = new PanelLayout(this.storage);
 
     constructor(private storage: StorageService) {
     }

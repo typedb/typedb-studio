@@ -3,13 +3,14 @@
     <!-- Left sidebar: Schema tool window -->
     <ts-schema-tool-window
       resizable
-      [percent]="20"
+      [percent]="panelSizes[0]"
+      (percentChange)="onPanelResize(0, $event)"
       [mode]="'schema'"
       [title]="'Agent mode'"
     />
 
     <!-- Main area: Chat interface -->
-    <div class="main-content" resizable [percent]="60">
+    <div class="main-content" resizable [percent]="panelSizes[1]" (percentChange)="onPanelResize(1, $event)">
       @if ((driver.status$ | async) === "disconnected") {
         <div class="placeholder-container">
           <div class="placeholder-content">
@@ -175,7 +176,7 @@
     </div>
 
     <!-- Right sidebar: History pane -->
-    <div resizable [percent]="20" class="right-panes">
+    <div resizable [percent]="panelSizes[2]" (percentChange)="onPanelResize(2, $event)" class="right-panes">
       <div class="history-pane card">
         <div class="card-header">
           <h5>Query History</h5>

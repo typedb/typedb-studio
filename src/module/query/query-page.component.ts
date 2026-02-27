@@ -97,6 +97,9 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         indentWithTab,
     ]));
+    private static readonly DEFAULT_PANEL_SIZES = [20, 60, 20, 50, 50];
+    panelSizes = [...QueryPageComponent.DEFAULT_PANEL_SIZES];
+
     copiedLog = false;
     sentLogToAi = false;
     logHasScrollbar = false;
@@ -112,6 +115,10 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
+        const saved = this.appData.panelLayout.get("query");
+        if (saved && saved.length === QueryPageComponent.DEFAULT_PANEL_SIZES.length) {
+            this.panelSizes = saved;
+        }
         this.renderCodeEditorWithDelay();
     }
 
@@ -412,6 +419,11 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         } catch (err) {
             console.error('Failed to copy results log:', err);
         }
+    }
+
+    onPanelResize(index: number, percent: number) {
+        this.panelSizes[index] = percent;
+        this.appData.panelLayout.set("query", [...this.panelSizes]);
     }
 
     readonly isQueryRun = isQueryRun;
