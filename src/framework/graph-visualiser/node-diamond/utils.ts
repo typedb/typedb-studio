@@ -3,6 +3,8 @@ import { drawDiscNodeLabel } from "sigma/rendering";
 import { Settings } from "sigma/settings";
 import { NodeDisplayData, PartialButFor } from "sigma/types";
 
+const ASPECT = 2.0;
+
 export function drawDiamondNodeLabel<
     N extends Attributes = Attributes,
     E extends Attributes = Attributes,
@@ -42,28 +44,30 @@ export function drawDiamondNodeHover<
         const textWidth = context.measureText(data.label).width,
             boxWidth = Math.round(textWidth + 5),
             boxHeight = Math.round(size + 2 * PADDING),
-            radius = Math.max(data.size, size / 2) + PADDING;
+            rx = (Math.max(data.size, size / 2) + PADDING) * ASPECT,
+            ry = Math.max(data.size, size / 2) + PADDING;
 
         context.beginPath();
-        context.moveTo(data.x + radius, data.y + boxHeight / 2);
-        context.lineTo(data.x + radius + boxWidth, data.y + boxHeight / 2);
-        context.lineTo(data.x + radius + boxWidth, data.y - boxHeight / 2);
-        context.lineTo(data.x + radius, data.y - boxHeight / 2);
-        context.lineTo(data.x + radius, data.y - radius);
-        context.lineTo(data.x, data.y - radius * 1.2);
-        context.lineTo(data.x - radius, data.y);
-        context.lineTo(data.x, data.y + radius * 1.2);
-        context.lineTo(data.x + radius, data.y + radius);
-        context.lineTo(data.x + radius, data.y + boxHeight / 2);
+        context.moveTo(data.x + rx, data.y + boxHeight / 2);
+        context.lineTo(data.x + rx + boxWidth, data.y + boxHeight / 2);
+        context.lineTo(data.x + rx + boxWidth, data.y - boxHeight / 2);
+        context.lineTo(data.x + rx, data.y - boxHeight / 2);
+        context.lineTo(data.x + rx, data.y - ry);
+        context.lineTo(data.x, data.y - ry);
+        context.lineTo(data.x - rx, data.y);
+        context.lineTo(data.x, data.y + ry);
+        context.lineTo(data.x + rx, data.y + ry);
+        context.lineTo(data.x + rx, data.y + boxHeight / 2);
         context.closePath();
         context.fill();
     } else {
-        const radius = data.size + PADDING;
+        const rx = (data.size + PADDING) * ASPECT;
+        const ry = data.size + PADDING;
         context.beginPath();
-        context.moveTo(data.x, data.y - radius);
-        context.lineTo(data.x + radius, data.y);
-        context.lineTo(data.x, data.y + radius);
-        context.lineTo(data.x - radius, data.y);
+        context.moveTo(data.x, data.y - ry);
+        context.lineTo(data.x + rx, data.y);
+        context.lineTo(data.x, data.y + ry);
+        context.lineTo(data.x - rx, data.y);
         context.closePath();
         context.fill();
     }

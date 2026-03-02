@@ -8,24 +8,23 @@ varying vec2 v_uv;
 
 uniform float u_correctionRatio;
 
-const float CORNER_RADIUS = 0.12;
+const float ASPECT = 2.0;
+const float CORNER_RADIUS = 0.16;
 const float BORDER_WIDTH = 0.06;
 const vec4 transparent = vec4(0.0, 0.0, 0.0, 0.0);
 
-// SDF for a rounded diamond (rhombus). The diamond has half-diagonals (b.x, b.y).
-float sdRoundedDiamond(vec2 p, vec2 b, float r) {
+// Rhombus SDF (Inigo Quilez). b = half-diagonals.
+float ndot(vec2 a, vec2 b) { return a.x*b.x - a.y*b.y; }
+float sdRhombus(vec2 p, vec2 b) {
   p = abs(p);
-  float ndot = b.x * p.x + b.y * p.y;
-  float len2 = dot(b, b);
-  float d = (ndot - len2) / len2;
-  vec2 q = p - b * clamp(ndot / len2, 0.0, 1.0);
-  float dist = length(q) * sign(d);
-  return dist - r;
+  float h = clamp(ndot(b - 2.0*p, b) / dot(b, b), -1.0, 1.0);
+  float d = length(p - 0.5*b*vec2(1.0 - h, 1.0 + h));
+  return d * sign(p.x*b.y + p.y*b.x - b.x*b.y);
 }
 
 void main(void) {
-  vec2 halfDiag = vec2(0.5, 0.5);
-  float dist = sdRoundedDiamond(v_uv, halfDiag, CORNER_RADIUS);
+  vec2 halfDiag = vec2(0.5 * ASPECT, 0.5);
+  float dist = sdRhombus(v_uv, halfDiag) - CORNER_RADIUS;
 
   float aaWidth = u_correctionRatio * 2.0;
 

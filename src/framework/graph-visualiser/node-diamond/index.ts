@@ -11,8 +11,8 @@ const { UNSIGNED_BYTE, FLOAT } = WebGLRenderingContext;
 
 const UNIFORMS = ["u_sizeRatio", "u_correctionRatio", "u_cameraAngle", "u_matrix"] as const;
 
-// Bounding box needs to fully contain the diamond. The diamond tips touch at +/-1 on each axis,
-// so the bounding quad at +/-1 is just enough. We add a small margin for anti-aliasing.
+const ASPECT = 2.0;
+// Bounding box needs to fully contain the diamond. Add a small margin for anti-aliasing.
 const MARGIN = 1.05;
 
 export class NodeDiamondProgram<
@@ -39,8 +39,8 @@ export class NodeDiamondProgram<
             ],
             CONSTANT_ATTRIBUTES: [{ name: "a_offset", size: 2, type: FLOAT }],
             CONSTANT_DATA: [
-                [MARGIN, MARGIN],  [-MARGIN, MARGIN],  [MARGIN, -MARGIN],
-                [-MARGIN, MARGIN], [MARGIN, -MARGIN], [-MARGIN, -MARGIN],
+                [ASPECT * MARGIN, MARGIN],  [-ASPECT * MARGIN, MARGIN],  [ASPECT * MARGIN, -MARGIN],
+                [-ASPECT * MARGIN, MARGIN], [ASPECT * MARGIN, -MARGIN], [-ASPECT * MARGIN, -MARGIN],
             ],
         };
     }
