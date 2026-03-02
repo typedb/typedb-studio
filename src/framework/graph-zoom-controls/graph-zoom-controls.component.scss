@@ -1,0 +1,54 @@
+@use "colors";
+
+:host {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 10;
+}
+
+.zoom-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.zoom-button.reset-button {
+  border-radius: 6px;
+  border: 1px solid colors.$secondary-deep-grey;
+  background: colors.$secondary-purple;
+}
+
+.zoom-pair {
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  border: 1px solid colors.$secondary-deep-grey;
+  background: colors.$secondary-purple;
+  overflow: hidden;
+}
+
+.zoom-button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: colors.$secondary-light-grey;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 13px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: colors.$secondary-dark-grey;
+  }
+}
+
+.divider {
+  height: 1px;
+  background: colors.$secondary-deep-grey;
+}

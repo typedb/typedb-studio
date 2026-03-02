@@ -12,9 +12,9 @@
 }
 
 .panel-toggle-button {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   border: 1px solid colors.$secondary-deep-grey;
   background: colors.$secondary-purple;
   cursor: pointer;
@@ -34,7 +34,6 @@
 }
 
 .panel {
-  margin-top: 8px;
   width: 280px;
   max-height: 420px;
   background: colors.$deep-purple;

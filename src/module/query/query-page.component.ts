@@ -46,6 +46,7 @@ import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatSelectModule } from "@angular/material/select";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
 import { GraphCustomisationPanelComponent } from "../../framework/graph-customisation-panel/graph-customisation-panel.component";
+import { GraphZoomControlsComponent } from "../../framework/graph-zoom-controls/graph-zoom-controls.component";
 
 @Component({
     selector: "ts-query-page",
@@ -57,6 +58,7 @@ import { GraphCustomisationPanelComponent } from "../../framework/graph-customis
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule,
         MatMenuModule, MatSelectModule, SchemaToolWindowComponent, CodeEditorComponent, ActionDurationPipe,
         GraphCustomisationPanelComponent,
+        GraphZoomControlsComponent,
     ]
 })
 export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {

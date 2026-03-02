@@ -126,14 +126,11 @@ export class GraphVisualiser {
     centerCamera(): void {
         const nodes = this.graph.nodes();
         if (nodes.length === 0) return;
-        let sumX = 0, sumY = 0;
-        nodes.forEach(node => {
-            sumX += this.graph.getNodeAttribute(node, "x");
-            sumY += this.graph.getNodeAttribute(node, "y");
-        });
+        // With autoRescale off, sigma normalizes the extent to [0,1].
+        // The graph center always maps to (0.5, 0.5) in normalized space.
         this.sigma.getCamera().setState({
-            x: sumX / nodes.length,
-            y: sumY / nodes.length,
+            x: 0.5,
+            y: 0.5,
             ratio: 1,
             angle: 0,
         });

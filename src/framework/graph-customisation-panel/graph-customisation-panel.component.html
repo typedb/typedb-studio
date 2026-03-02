@@ -1,6 +1,5 @@
-<!-- Toggle button -->
-<button class="panel-toggle-button" (click)="toggle()" matTooltip="Customise graph appearance" [matTooltipShowDelay]="500">
-  <svg viewBox="0 0 24 24" width="20" height="20">
+<button class="panel-toggle-button" (click)="toggle()" matTooltip="Customise appearance" [matTooltipShowDelay]="500">
+  <svg viewBox="0 0 24 24" width="16" height="16">
     <path d="M12 2 A10 10 0 0 1 22 12 L12 12 Z" fill="#FF87DC"/>
     <path d="M22 12 A10 10 0 0 1 12 22 L12 12 Z" fill="#F6C94C"/>
     <path d="M12 22 A10 10 0 0 1 2 12 L12 12 Z" fill="#7BA0FF"/>
@@ -8,7 +7,6 @@
   </svg>
 </button>
 
-<!-- Panel -->
 @if (isOpen) {
   <div class="panel">
     <div class="panel-header">

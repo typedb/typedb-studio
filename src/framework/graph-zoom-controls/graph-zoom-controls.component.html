@@ -1,0 +1,14 @@
+<div class="zoom-controls">
+  <button class="zoom-button reset-button" (click)="resetZoom()" matTooltip="Reset view" [matTooltipShowDelay]="500">
+    <i class="fa-light fa-crosshairs"></i>
+  </button>
+  <div class="zoom-pair">
+    <button class="zoom-button" (click)="zoomIn()" matTooltip="Zoom in" [matTooltipShowDelay]="500">
+      <i class="fa-light fa-plus"></i>
+    </button>
+    <div class="divider"></div>
+    <button class="zoom-button" (click)="zoomOut()" matTooltip="Zoom out" [matTooltipShowDelay]="500">
+      <i class="fa-light fa-minus"></i>
+    </button>
+  </div>
+</div>

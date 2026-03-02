@@ -158,6 +158,7 @@
             <div class="answers-container answers-structure-container" [class]="state.outputTypeControl.value === 'graph' ? '' : 'invisible'">
               <div id="structureView" #graphViewRef></div>
               <ts-graph-customisation-panel [visualiser]="state.graphOutput.visualiser"/>
+              <ts-graph-zoom-controls [visualiser]="state.graphOutput.visualiser"/>
 
               @switch (state.graphOutput.status) {
                 @case ("error") {

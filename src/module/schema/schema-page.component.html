@@ -28,6 +28,7 @@
           <div class="answers-container answers-structure-container">
             <div id="structureView" #graphViewRef></div>
             <ts-graph-customisation-panel [visualiser]="state.visualiser.visualiser"/>
+            <ts-graph-zoom-controls [visualiser]="state.visualiser.visualiser"/>
 
             @switch (state.visualiser.status) {
               @case ("error") {
