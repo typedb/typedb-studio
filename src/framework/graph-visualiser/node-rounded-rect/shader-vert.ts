@@ -9,8 +9,8 @@ attribute vec2 a_offset;
 
 uniform mat3 u_matrix;
 uniform float u_sizeRatio;
-uniform float u_cameraAngle;
 uniform float u_correctionRatio;
+uniform float u_cameraAngle;
 
 varying vec4 v_color;
 varying vec4 v_borderColor;

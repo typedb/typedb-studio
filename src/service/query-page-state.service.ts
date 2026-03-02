@@ -22,6 +22,7 @@ import {
     ApiResponse, Attribute, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse, Value
 } from "@typedb/driver-http";
 import { AppData, RowLimit } from "./app-data.service";
+import { GraphStyleService } from "./graph-style.service";
 
 export type OutputType = "raw" | "log" | "table" | "graph";
 export { RowLimit } from "./app-data.service";
@@ -36,14 +37,14 @@ export interface RunOutputState {
     raw: RawOutputState;
 }
 
-export function createRunOutputState(label: string, query: string): RunOutputState {
+export function createRunOutputState(label: string, query: string, styleService?: GraphStyleService): RunOutputState {
     return {
         id: crypto.randomUUID(),
         label,
         query,
         log: new LogOutputState(),
         table: new TableOutputState(),
-        graph: new GraphOutputState(),
+        graph: new GraphOutputState(styleService),
         raw: new RawOutputState(),
     };
 }
@@ -99,6 +100,7 @@ export class QueryPageState {
     schema = inject(SchemaState);
     private snackbar = inject(SnackbarService);
     queryTabs = inject(QueryTabsState);
+    private graphStyleService = inject(GraphStyleService);
 
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
     rowLimitControl = new FormControl(this.appData.preferences.queryRowLimit(), { nonNullable: true });
@@ -108,7 +110,7 @@ export class QueryPageState {
 
     private tabOutputStates = new Map<string, TabOutputState>();
     private _fallbackOutputState = createTabOutputState();
-    private _fallbackRunState = createRunOutputState("", "");
+    private _fallbackRunState = createRunOutputState("", "", this.graphStyleService);
     private _graphCanvasEl: HTMLElement | null = null;
 
     getOrCreateTabOutputState(tabId: string): TabOutputState {
@@ -309,7 +311,7 @@ export class QueryPageState {
 
         // Create new run
         tabState.runCounter++;
-        const newRun = createRunOutputState(`Run ${tabState.runCounter}`, query);
+        const newRun = createRunOutputState(`Run ${tabState.runCounter}`, query, this.graphStyleService);
         tabState.runs.push(newRun);
         tabState.selectedRunIndex = tabState.runs.length - 1;
 
@@ -691,8 +693,10 @@ export class GraphOutputState {
     private _canvasEl: HTMLElement | null = null;
     private _preservedGraph: VisualGraph | null = null;
     private _pendingResponses: ApiResponse<QueryResponse>[] = [];
+    private _styleService?: GraphStyleService;
 
-    constructor() {
+    constructor(styleService?: GraphStyleService) {
+        this._styleService = styleService;
     }
 
     get canvasEl(): HTMLElement | null {
@@ -730,7 +734,7 @@ export class GraphOutputState {
             const sigma = createSigmaRenderer(this._canvasEl!, defaultSigmaSettings as any, graph);
             const layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
             // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
-            this.visualiser = new GraphVisualiser(graph, sigma, layout);
+            this.visualiser = new GraphVisualiser(graph, sigma, layout, this._styleService);
         }
 
         switch (res.ok.answerType) {
@@ -779,7 +783,7 @@ export class GraphOutputState {
         if (this._preservedGraph && this._preservedGraph.nodes().length > 0 && !this.visualiser) {
             const sigma = createSigmaRenderer(canvasEl, defaultSigmaSettings as any, this._preservedGraph);
             const layout = Layouts.createForceAtlasStatic(this._preservedGraph, undefined);
-            this.visualiser = new GraphVisualiser(this._preservedGraph, sigma, layout);
+            this.visualiser = new GraphVisualiser(this._preservedGraph, sigma, layout, this._styleService);
         }
     }
 

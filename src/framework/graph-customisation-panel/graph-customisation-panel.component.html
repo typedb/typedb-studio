@@ -1,0 +1,157 @@
+<!-- Toggle button -->
+<button class="panel-toggle-button" (click)="toggle()" matTooltip="Customise graph appearance" [matTooltipShowDelay]="500">
+  <svg viewBox="0 0 24 24" width="20" height="20">
+    <path d="M12 2 A10 10 0 0 1 22 12 L12 12 Z" fill="#FF87DC"/>
+    <path d="M22 12 A10 10 0 0 1 12 22 L12 12 Z" fill="#F6C94C"/>
+    <path d="M12 22 A10 10 0 0 1 2 12 L12 12 Z" fill="#7BA0FF"/>
+    <path d="M2 12 A10 10 0 0 1 12 2 L12 12 Z" fill="#02DAC9"/>
+  </svg>
+</button>
+
+<!-- Panel -->
+@if (isOpen) {
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Graph Style</span>
+      <button class="panel-close" (click)="toggle()">
+        <i class="fa-light fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+      <button class="tab" [class.active]="activeTab === 'kind'" (click)="activeTab = 'kind'">By Kind</button>
+      <button class="tab" [class.active]="activeTab === 'type'" (click)="activeTab = 'type'; refreshDiscoveredTypes()">By Type</button>
+    </div>
+
+    <div class="panel-body">
+      <!-- Kind-based styles -->
+      @if (activeTab === 'kind') {
+        <div class="style-list">
+          @for (row of displayKinds; track row.kind) {
+            <div class="style-row">
+              <span class="style-label">{{ row.label }}</span>
+              <div class="style-controls">
+                <span matTooltip="Fill" [matTooltipShowDelay]="500">
+                  <div class="color-swatch fill-swatch"
+                       [style.background]="getKindColor(row.kind)"
+                       [colorPicker]="getKindColor(row.kind)"
+                       cpAlphaChannel="forced"
+                       cpOutputFormat="hex"
+                       cpPosition="left"
+                       cpPositionOffset="-50"
+                       cpFallbackColor="#000000"
+                       [cpUseRootViewContainer]="true"
+                       (colorPickerChange)="setKindColor(row.kind, $event)">
+                  </div>
+                </span>
+                <span matTooltip="Border" [matTooltipShowDelay]="500">
+                  <div class="color-swatch border-swatch"
+                       [style.border-color]="getKindBorderColor(row.kind)"
+                       [colorPicker]="getKindBorderColor(row.kind)"
+                       cpAlphaChannel="forced"
+                       cpOutputFormat="hex"
+                       cpPosition="left"
+                       cpPositionOffset="-50"
+                       cpFallbackColor="#000000"
+                       [cpUseRootViewContainer]="true"
+                       (colorPickerChange)="setKindBorderColor(row.kind, $event)">
+                  </div>
+                </span>
+                <mat-form-field class="shape-field" subscriptSizing="dynamic">
+                  <mat-select [value]="getKindShape(row.kind)"
+                              panelClass="graph-style-select-panel"
+                              (selectionChange)="setKindShape(row.kind, $event.value)">
+                    @for (shape of shapes; track shape.value) {
+                      <mat-option [value]="shape.value">{{ shape.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field class="size-field" subscriptSizing="dynamic">
+                  <input matInput type="number"
+                         [value]="getKindSize(row.kind)"
+                         (change)="setKindSize(row.kind, +$any($event.target).value)"
+                         min="2" max="20" step="1">
+                </mat-form-field>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Type-based overrides -->
+      @if (activeTab === 'type') {
+        <div class="style-list">
+          @if (discoveredTypes.length === 0) {
+            <p class="empty-message">No types found. Run a query first to discover types.</p>
+          }
+          @for (row of discoveredTypes; track row.typeLabel) {
+            <div class="style-row">
+              <div class="type-label-row">
+                <span class="style-label">{{ row.typeLabel }}</span>
+                @if (hasTypeOverride(row.typeLabel)) {
+                  <button class="clear-button" (click)="clearTypeOverride(row.typeLabel)" matTooltip="Clear override" [matTooltipShowDelay]="300">
+                    <i class="fa-light fa-xmark"></i>
+                  </button>
+                }
+              </div>
+              <div class="style-controls">
+                <span matTooltip="Fill" [matTooltipShowDelay]="500">
+                  <div class="color-swatch fill-swatch"
+                       [style.background]="getTypeColor(row.typeLabel, row.kind)"
+                       [colorPicker]="getTypeColor(row.typeLabel, row.kind)"
+                       cpAlphaChannel="forced"
+                       cpOutputFormat="hex"
+                       cpPosition="left"
+                       cpPositionOffset="-50"
+                       cpFallbackColor="#000000"
+                       [cpUseRootViewContainer]="true"
+                       (colorPickerChange)="setTypeColor(row.typeLabel, $event)">
+                  </div>
+                </span>
+                <span matTooltip="Border" [matTooltipShowDelay]="500">
+                  <div class="color-swatch border-swatch"
+                       [style.border-color]="getTypeBorderColor(row.typeLabel, row.kind)"
+                       [colorPicker]="getTypeBorderColor(row.typeLabel, row.kind)"
+                       cpAlphaChannel="forced"
+                       cpOutputFormat="hex"
+                       cpPosition="left"
+                       cpPositionOffset="-50"
+                       cpFallbackColor="#000000"
+                       [cpUseRootViewContainer]="true"
+                       (colorPickerChange)="setTypeBorderColor(row.typeLabel, $event)">
+                  </div>
+                </span>
+                <mat-form-field class="shape-field" subscriptSizing="dynamic">
+                  <mat-select [value]="getTypeShape(row.typeLabel, row.kind)"
+                              panelClass="graph-style-select-panel"
+                              (selectionChange)="setTypeShape(row.typeLabel, $event.value)">
+                    @for (shape of shapes; track shape.value) {
+                      <mat-option [value]="shape.value">{{ shape.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field class="size-field" subscriptSizing="dynamic">
+                  <input matInput type="number"
+                         [value]="getTypeSize(row.typeLabel, row.kind)"
+                         (change)="setTypeSize(row.typeLabel, +$any($event.target).value)"
+                         min="2" max="20" step="1">
+                </mat-form-field>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Footer actions -->
+    <div class="panel-footer">
+      <button class="action-button" (click)="reLayout()" matTooltip="Re-randomise positions and re-run layout" [matTooltipShowDelay]="500">
+        <i class="fa-light fa-refresh"></i> Re-layout
+      </button>
+      <button class="action-button reset" (click)="resetAll()" matTooltip="Reset all styles to defaults" [matTooltipShowDelay]="500">
+        Reset
+      </button>
+    </div>
+  </div>
+}

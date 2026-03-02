@@ -29,7 +29,6 @@ import { DriverAction, QueryRunAction, TransactionOperationAction, isQueryRun, i
 import { basicDark } from "../../framework/code-editor/theme";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { ActionDurationPipe } from "../../framework/util/action-duration.pipe";
-import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
 import { ChatState } from "../../service/chat-state.service";
 import { DriverState } from "../../service/driver-state.service";
@@ -46,6 +45,7 @@ import { indentWithTab } from "@codemirror/commands";
 import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatSelectModule } from "@angular/material/select";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
+import { GraphCustomisationPanelComponent } from "../../framework/graph-customisation-panel/graph-customisation-panel.component";
 
 @Component({
     selector: "ts-query-page",
@@ -54,8 +54,9 @@ import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-win
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, ResizableDirective,
-        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
+        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule,
         MatMenuModule, MatSelectModule, SchemaToolWindowComponent, CodeEditorComponent, ActionDurationPipe,
+        GraphCustomisationPanelComponent,
     ]
 })
 export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {

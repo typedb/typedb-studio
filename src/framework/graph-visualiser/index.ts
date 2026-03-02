@@ -18,6 +18,7 @@ import { convertLogicalGraphWith } from "./visualisation";
 import {LayoutWrapper} from "./layouts";
 import chroma from "chroma-js";
 import {shouldCreateEdge, shouldCreateNode, StudioConverter} from "./converter";
+import type { GraphStyleService } from "../../service/graph-style.service";
 
 export interface StudioState {
     activeQueryDatabase: string | null;
@@ -29,15 +30,113 @@ export class GraphVisualiser {
     layout: LayoutWrapper;
     interactionHandler: InteractionHandler;
     state: StudioState;
+    styleService: GraphStyleService | null = null;
     private styleParameters: StudioConverterStyleParameters = studioDefaultSettings.defaultQueryStyleParameters;
     private structureParameters: StudioConverterStructureParameters = studioDefaultSettings.defaultStructureParameters;
 
-    constructor(graph: VisualGraph, sigma: Sigma, layout: LayoutWrapper) {
+    constructor(graph: VisualGraph, sigma: Sigma, layout: LayoutWrapper, styleService?: GraphStyleService) {
         this.graph = graph;
         this.sigma = sigma;
         this.layout = layout;
         this.state = { activeQueryDatabase: null };
-        this.interactionHandler = new InteractionHandler(graph, sigma, this.state, studioDefaultSettings.defaultQueryStyleParameters);
+        this.styleService = styleService ?? null;
+        if (styleService) {
+            this.applyServiceStyles(styleService);
+        }
+        this.interactionHandler = new InteractionHandler(graph, sigma, this.state, this.styleParameters);
+    }
+
+    private applyServiceStyles(service: GraphStyleService): void {
+        const kindColors: Record<string, string> = {} as any;
+        const kindBorderColors: Record<string, string> = {} as any;
+        const kindShapes: Record<string, string> = {} as any;
+        const typeColors: Record<string, string> = {};
+        const typeBorderColors: Record<string, string> = {};
+        const typeShapes: Record<string, string> = {};
+        const typeSizes: Record<string, number> = {};
+
+        const kinds = ["entity", "relation", "attribute", "entityType", "relationType",
+            "attributeType", "roleType", "value", "unavailable", "expression", "functionCall"] as const;
+        for (const kind of kinds) {
+            const style = service.getKindStyle(kind);
+            kindColors[kind] = style.color;
+            kindBorderColors[kind] = style.borderColor;
+            kindShapes[kind] = style.shape;
+        }
+
+        for (const [typeLabel, override] of Object.entries(service.typeStyles)) {
+            if (override.color) typeColors[typeLabel] = override.color;
+            if (override.borderColor) typeBorderColors[typeLabel] = override.borderColor;
+            if (override.shape) typeShapes[typeLabel] = override.shape;
+            if (override.size) typeSizes[typeLabel] = override.size;
+        }
+
+        this.styleParameters = {
+            ...this.styleParameters,
+            vertex_colors: kindColors as any,
+            vertex_border_colors: kindBorderColors as any,
+            vertex_shapes: kindShapes as any,
+            vertex_type_colors: Object.keys(typeColors).length ? typeColors : undefined,
+            vertex_type_border_colors: Object.keys(typeBorderColors).length ? typeBorderColors : undefined,
+            vertex_type_shapes: Object.keys(typeShapes).length ? typeShapes : undefined,
+            vertex_type_sizes: Object.keys(typeSizes).length ? typeSizes : undefined,
+        };
+    }
+
+    applyStyleUpdate(): void {
+        if (this.styleService) {
+            this.applyServiceStyles(this.styleService);
+        }
+        this.graph.nodes().forEach(nodeKey => {
+            const attrs = this.graph.getNodeAttributes(nodeKey);
+            const concept = attrs.metadata.concept;
+            const kind = concept.kind;
+            let typeLabel: string | undefined;
+            if ("type" in concept && concept.type && "label" in concept.type) {
+                typeLabel = concept.type.label;
+            } else if ("label" in concept && kind !== "unavailable") {
+                typeLabel = concept.label;
+            }
+
+            const style = this.styleService
+                ? this.styleService.getEffectiveStyle(kind, typeLabel)
+                : {
+                    color: this.styleParameters.vertex_colors[kind],
+                    borderColor: this.styleParameters.vertex_border_colors[kind],
+                    shape: this.styleParameters.vertex_shapes[kind],
+                    size: this.styleParameters.vertex_size,
+                };
+            this.graph.setNodeAttribute(nodeKey, "color", style.color);
+            this.graph.setNodeAttribute(nodeKey, "borderColor", style.borderColor);
+            this.graph.setNodeAttribute(nodeKey, "type", style.shape);
+            this.graph.setNodeAttribute(nodeKey, "size", style.size);
+        });
+        this.sigma.refresh();
+    }
+
+    reLayout(): void {
+        this.graph.nodes().forEach(node => {
+            this.graph.setNodeAttribute(node, "x", Math.random());
+            this.graph.setNodeAttribute(node, "y", Math.random());
+        });
+        this.layout.startOrRedraw();
+        this.centerCamera();
+    }
+
+    centerCamera(): void {
+        const nodes = this.graph.nodes();
+        if (nodes.length === 0) return;
+        let sumX = 0, sumY = 0;
+        nodes.forEach(node => {
+            sumX += this.graph.getNodeAttribute(node, "x");
+            sumY += this.graph.getNodeAttribute(node, "y");
+        });
+        this.sigma.getCamera().setState({
+            x: sumX / nodes.length,
+            y: sumY / nodes.length,
+            ratio: 1,
+            angle: 0,
+        });
     }
 
     handleQueryResponse(res: ApiResponse<QueryResponse>, database: string) {
@@ -47,6 +146,7 @@ export class GraphVisualiser {
             this.state.activeQueryDatabase = database;
             this.handleQueryResult(res);
             this.layout.startOrRedraw();
+            this.centerCamera();
         }
     }
 

@@ -112,6 +112,10 @@ class StaticLayoutWrapper<LayoutParams> implements LayoutWrapper {
     }
 
     redraw(): void {
+        this.graph.nodes().forEach(node => {
+            this.graph.setNodeAttribute(node, "x", Math.random());
+            this.graph.setNodeAttribute(node, "y", Math.random());
+        });
         this.layout.assign(this.graph, this.params);
     }
 
@@ -124,13 +128,15 @@ class ForceAtlasStaticWrapper implements StaticLayoutInner<ForceAtlas2Synchronou
     static DEFAULT_MAX_ITERATIONS: number = 500;
     assign(graph: MultiGraph, params: ForceAtlas2SynchronousLayoutParameters | undefined): void {
         if (params == undefined) {
+            const inferred = forceAtlas2.inferSettings(graph.nodes().length);
             params = {
                 iterations: ForceAtlasStaticWrapper.DEFAULT_MAX_ITERATIONS,
-                settings: forceAtlas2.inferSettings(graph.nodes().length),
+                settings: { ...inferred, adjustSizes: true },
             };
-
         }
         forceAtlas2.assign(graph, params);
+        // Push apart any remaining overlapping nodes
+        noverlap.assign(graph, { maxIterations: 200, settings: { ratio: 2, margin: 10 } });
     }
 }
 

@@ -3,7 +3,9 @@ import { drawDiscNodeLabel } from "sigma/rendering";
 import { Settings } from "sigma/settings";
 import { NodeDisplayData, PartialButFor } from "sigma/types";
 
-export function drawDiamondNodeLabel<
+const ASPECT = 1.5;
+
+export function drawEllipseNodeLabel<
     N extends Attributes = Attributes,
     E extends Attributes = Attributes,
     G extends Attributes = Attributes,
@@ -15,7 +17,7 @@ export function drawDiamondNodeLabel<
     return drawDiscNodeLabel<N, E, G>(context, data, settings);
 }
 
-export function drawDiamondNodeHover<
+export function drawEllipseNodeHover<
     N extends Attributes = Attributes,
     E extends Attributes = Attributes,
     G extends Attributes = Attributes,
@@ -42,28 +44,23 @@ export function drawDiamondNodeHover<
         const textWidth = context.measureText(data.label).width,
             boxWidth = Math.round(textWidth + 5),
             boxHeight = Math.round(size + 2 * PADDING),
-            radius = Math.max(data.size, size / 2) + PADDING;
+            radiusX = Math.max(data.size * ASPECT, size / 2) + PADDING,
+            radiusY = Math.max(data.size, size / 2) + PADDING;
+
+        const angleRadian = Math.asin(Math.min(1.0, boxHeight / 2 / radiusY));
+        const xDeltaCoord = radiusX * Math.cos(angleRadian);
 
         context.beginPath();
-        context.moveTo(data.x + radius, data.y + boxHeight / 2);
-        context.lineTo(data.x + radius + boxWidth, data.y + boxHeight / 2);
-        context.lineTo(data.x + radius + boxWidth, data.y - boxHeight / 2);
-        context.lineTo(data.x + radius, data.y - boxHeight / 2);
-        context.lineTo(data.x + radius, data.y - radius);
-        context.lineTo(data.x, data.y - radius * 1.2);
-        context.lineTo(data.x - radius, data.y);
-        context.lineTo(data.x, data.y + radius * 1.2);
-        context.lineTo(data.x + radius, data.y + radius);
-        context.lineTo(data.x + radius, data.y + boxHeight / 2);
+        context.moveTo(data.x + xDeltaCoord, data.y + boxHeight / 2);
+        context.lineTo(data.x + radiusX + boxWidth, data.y + boxHeight / 2);
+        context.lineTo(data.x + radiusX + boxWidth, data.y - boxHeight / 2);
+        context.lineTo(data.x + xDeltaCoord, data.y - boxHeight / 2);
+        context.ellipse(data.x, data.y, radiusX, radiusY, 0, -angleRadian, -2 * Math.PI + angleRadian, true);
         context.closePath();
         context.fill();
     } else {
-        const radius = data.size + PADDING;
         context.beginPath();
-        context.moveTo(data.x, data.y - radius);
-        context.lineTo(data.x + radius, data.y);
-        context.lineTo(data.x, data.y + radius);
-        context.lineTo(data.x - radius, data.y);
+        context.ellipse(data.x, data.y, data.size * ASPECT + PADDING, data.size + PADDING, 0, 0, Math.PI * 2);
         context.closePath();
         context.fill();
     }
@@ -72,5 +69,5 @@ export function drawDiamondNodeHover<
     context.shadowOffsetY = 0;
     context.shadowBlur = 0;
 
-    drawDiamondNodeLabel(context, data, settings);
+    drawEllipseNodeLabel(context, data, settings);
 }

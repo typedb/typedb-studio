@@ -5,23 +5,21 @@ import { floatColor } from "sigma/utils";
 
 import FRAGMENT_SHADER_SOURCE from "./shader-frag";
 import VERTEX_SHADER_SOURCE from "./shader-vert";
-import { drawDiamondNodeHover, drawDiamondNodeLabel } from "./utils";
+import { drawEllipseNodeHover, drawEllipseNodeLabel } from "./utils";
 
 const { UNSIGNED_BYTE, FLOAT } = WebGLRenderingContext;
 
 const UNIFORMS = ["u_sizeRatio", "u_correctionRatio", "u_cameraAngle", "u_matrix"] as const;
 
-// Bounding box needs to fully contain the diamond. The diamond tips touch at +/-1 on each axis,
-// so the bounding quad at +/-1 is just enough. We add a small margin for anti-aliasing.
-const MARGIN = 1.05;
+const ASPECT = 1.5;
 
-export class NodeDiamondProgram<
+export class NodeEllipseProgram<
     N extends Attributes = Attributes,
     E extends Attributes = Attributes,
     G extends Attributes = Attributes,
 > extends NodeProgram<(typeof UNIFORMS)[number], N, E, G> {
-    override drawHover = drawDiamondNodeHover;
-    override drawLabel = drawDiamondNodeLabel;
+    override drawHover = drawEllipseNodeHover;
+    override drawLabel = drawEllipseNodeLabel;
 
     getDefinition() {
         return {
@@ -39,8 +37,8 @@ export class NodeDiamondProgram<
             ],
             CONSTANT_ATTRIBUTES: [{ name: "a_offset", size: 2, type: FLOAT }],
             CONSTANT_DATA: [
-                [MARGIN, MARGIN],  [-MARGIN, MARGIN],  [MARGIN, -MARGIN],
-                [-MARGIN, MARGIN], [MARGIN, -MARGIN], [-MARGIN, -MARGIN],
+                [ASPECT, 1],  [-ASPECT, 1],  [ASPECT, -1],
+                [-ASPECT, 1], [ASPECT, -1], [-ASPECT, -1],
             ],
         };
     }

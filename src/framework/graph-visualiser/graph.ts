@@ -231,6 +231,7 @@ export interface VertexMetadata {
 export interface VertexAttributes {
     label: string;
     color: string;
+    borderColor: string;
     size: number;
     type: string;
     x: number;

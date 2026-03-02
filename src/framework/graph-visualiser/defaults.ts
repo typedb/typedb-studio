@@ -2,12 +2,13 @@ import { RoleType } from "@typedb/driver-http";
 import chroma from "chroma-js";
 import { vertexMapKey } from "./converter";
 import {DataVertex, VertexUnavailable} from "./graph";
-import {NodeSquareProgram} from "@sigma/node-square";
 import EdgeCurveProgram from "@sigma/edge-curve";
 import {ForceLayoutSettings} from "graphology-layout-force";
 import {Settings as SigmaSettings} from "sigma/settings";
 import {StudioConverterStructureParameters, StudioConverterStyleParameters} from "./config";
 import { NodeDiamondProgram } from "./node-diamond";
+import { NodeRoundedRectangleProgram } from "./node-rounded-rect";
+import { NodeEllipseProgram } from "./node-ellipse";
 
 const darkPalette = {
     black:    "#09022F",
@@ -42,20 +43,33 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
         expression: darkPalette.white2,
         functionCall: darkPalette.white2,
     },
-    vertex_shapes: {
-        entity: "square",
-        relation: "diamond",
-        attribute: "circle",
-        entityType: "square",
-        relationType: "diamond",
-        attributeType: "circle",
-        roleType: "circle",
-        value: "circle",
-        unavailable: "circle",
-        expression: "circle",
-        functionCall: "circle",
+    vertex_border_colors: {
+        entity: "#00000000",
+        relation: "#00000000",
+        attribute: "#00000000",
+        entityType: "#00000000",
+        relationType: "#00000000",
+        attributeType: "#00000000",
+        roleType: "#00000000",
+        value: "#00000000",
+        unavailable: "#00000000",
+        expression: "#00000000",
+        functionCall: "#00000000",
     },
-    vertex_size: 6,
+    vertex_shapes: {
+        entity: "rounded-rect",
+        relation: "diamond",
+        attribute: "ellipse",
+        entityType: "rounded-rect",
+        relationType: "diamond",
+        attributeType: "ellipse",
+        roleType: "circle",
+        value: "ellipse",
+        unavailable: "ellipse",
+        expression: "ellipse",
+        functionCall: "ellipse",
+    },
+    vertex_size: 20,
 
     edge_color: chroma("grey"),
     edge_highlight_color: chroma("cyan"),
@@ -129,6 +143,7 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
 
 export const defaultExplorationQueryStyleParameters: StudioConverterStyleParameters = {
     vertex_colors: defaultQueryStyleParameters.vertex_colors,
+    vertex_border_colors: defaultQueryStyleParameters.vertex_border_colors,
     vertex_shapes: defaultQueryStyleParameters.vertex_shapes,
     vertex_size: defaultQueryStyleParameters.vertex_size,
 
@@ -151,6 +166,8 @@ export const defaultStructureParameters: StudioConverterStructureParameters = {
 
 export const defaultSigmaSettings: Partial<SigmaSettings> = {
     allowInvalidContainer: true,
+    itemSizesReference: "positions",
+    autoRescale: false,
     zoomToSizeRatioFunction: (x) => x,
     minCameraRatio: 0.1,
     maxCameraRatio: 10,
@@ -159,14 +176,12 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
     },
     renderEdgeLabels: true,
     nodeProgramClasses: {
-        square: NodeSquareProgram,
+        "rounded-rect": NodeRoundedRectangleProgram,
         diamond: NodeDiamondProgram,
+        ellipse: NodeEllipseProgram,
     },
     edgeProgramClasses: {
         curved: EdgeCurveProgram,
-    },
-    cameraPanBoundaries: {
-        tolerance: 1,
     },
 };
 

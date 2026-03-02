@@ -25,6 +25,7 @@ import { SchemaState } from "../../service/schema-state.service";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaToolWindowComponent } from "./tool-window/schema-tool-window.component";
+import { GraphCustomisationPanelComponent } from "../../framework/graph-customisation-panel/graph-customisation-panel.component";
 
 @Component({
     selector: "ts-schema-page",
@@ -34,6 +35,7 @@ import { SchemaToolWindowComponent } from "./tool-window/schema-tool-window.comp
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule,
         MatSortModule, MatTooltipModule, MatButtonModule, ResizableDirective, SchemaToolWindowComponent,
+        GraphCustomisationPanelComponent,
     ]
 })
 export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
