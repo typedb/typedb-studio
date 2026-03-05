@@ -36,7 +36,6 @@ export const AVAILABLE_SHAPES = [
     { value: "rounded-rect", label: "Rectangle" },
     { value: "diamond", label: "Diamond" },
     { value: "ellipse", label: "Ellipse" },
-    { value: "circle", label: "Circle" },
 ];
 
 @Component({
@@ -102,8 +101,12 @@ export class GraphCustomisationPanelComponent {
         return this.styleService.getKindStyle(kind).shape;
     }
 
-    getKindSize(kind: DataVertexKind): number {
-        return this.styleService.getKindStyle(kind).size;
+    getKindWidth(kind: DataVertexKind): number {
+        return this.styleService.getKindStyle(kind).width;
+    }
+
+    getKindHeight(kind: DataVertexKind): number {
+        return this.styleService.getKindStyle(kind).height;
     }
 
     // -- Kind setters --
@@ -123,8 +126,13 @@ export class GraphCustomisationPanelComponent {
         this.applyStyles();
     }
 
-    setKindSize(kind: DataVertexKind, size: number): void {
-        this.styleService.setKindStyle(kind, { size });
+    setKindWidth(kind: DataVertexKind, width: number): void {
+        this.styleService.setKindStyle(kind, { width });
+        this.applyStyles();
+    }
+
+    setKindHeight(kind: DataVertexKind, height: number): void {
+        this.styleService.setKindStyle(kind, { height });
         this.applyStyles();
     }
 
@@ -142,8 +150,12 @@ export class GraphCustomisationPanelComponent {
         return this.styleService.getEffectiveStyle(kind, typeLabel).shape;
     }
 
-    getTypeSize(typeLabel: string, kind: DataVertexKind): number {
-        return this.styleService.getEffectiveStyle(kind, typeLabel).size;
+    getTypeWidth(typeLabel: string, kind: DataVertexKind): number {
+        return this.styleService.getEffectiveStyle(kind, typeLabel).width;
+    }
+
+    getTypeHeight(typeLabel: string, kind: DataVertexKind): number {
+        return this.styleService.getEffectiveStyle(kind, typeLabel).height;
     }
 
     hasTypeOverride(typeLabel: string): boolean {
@@ -167,8 +179,13 @@ export class GraphCustomisationPanelComponent {
         this.applyStyles();
     }
 
-    setTypeSize(typeLabel: string, size: number): void {
-        this.styleService.setTypeStyle(typeLabel, { size });
+    setTypeWidth(typeLabel: string, width: number): void {
+        this.styleService.setTypeStyle(typeLabel, { width });
+        this.applyStyles();
+    }
+
+    setTypeHeight(typeLabel: string, height: number): void {
+        this.styleService.setTypeStyle(typeLabel, { height });
         this.applyStyles();
     }
 

@@ -60,17 +60,32 @@
                   <mat-select [value]="getKindShape(row.kind)"
                               panelClass="graph-style-select-panel"
                               (selectionChange)="setKindShape(row.kind, $event.value)">
+                    <mat-select-trigger>
+                      <ng-container *ngTemplateOutlet="shapeIconTpl; context: {$implicit: getKindShape(row.kind)}"></ng-container>
+                    </mat-select-trigger>
                     @for (shape of shapes; track shape.value) {
-                      <mat-option [value]="shape.value">{{ shape.label }}</mat-option>
+                      <mat-option [value]="shape.value">
+                        <ng-container *ngTemplateOutlet="shapeIconTpl; context: {$implicit: shape.value}"></ng-container>
+                      </mat-option>
                     }
                   </mat-select>
                 </mat-form-field>
-                <mat-form-field class="size-field" subscriptSizing="dynamic">
-                  <input matInput type="number"
-                         [value]="getKindSize(row.kind)"
-                         (change)="setKindSize(row.kind, +$any($event.target).value)"
-                         min="2" max="20" step="1">
-                </mat-form-field>
+                <div class="size-fields">
+                  <span class="dim-label">W</span>
+                  <mat-form-field class="size-field" subscriptSizing="dynamic">
+                    <input matInput type="number"
+                           [value]="getKindWidth(row.kind)"
+                           (change)="setKindWidth(row.kind, +$any($event.target).value)"
+                           min="2" max="100" step="1">
+                  </mat-form-field>
+                  <span class="dim-label">H</span>
+                  <mat-form-field class="size-field" subscriptSizing="dynamic">
+                    <input matInput type="number"
+                           [value]="getKindHeight(row.kind)"
+                           (change)="setKindHeight(row.kind, +$any($event.target).value)"
+                           min="2" max="100" step="1">
+                  </mat-form-field>
+                </div>
               </div>
             </div>
           }
@@ -124,17 +139,32 @@
                   <mat-select [value]="getTypeShape(row.typeLabel, row.kind)"
                               panelClass="graph-style-select-panel"
                               (selectionChange)="setTypeShape(row.typeLabel, $event.value)">
+                    <mat-select-trigger>
+                      <ng-container *ngTemplateOutlet="shapeIconTpl; context: {$implicit: getTypeShape(row.typeLabel, row.kind)}"></ng-container>
+                    </mat-select-trigger>
                     @for (shape of shapes; track shape.value) {
-                      <mat-option [value]="shape.value">{{ shape.label }}</mat-option>
+                      <mat-option [value]="shape.value">
+                        <ng-container *ngTemplateOutlet="shapeIconTpl; context: {$implicit: shape.value}"></ng-container>
+                      </mat-option>
                     }
                   </mat-select>
                 </mat-form-field>
-                <mat-form-field class="size-field" subscriptSizing="dynamic">
-                  <input matInput type="number"
-                         [value]="getTypeSize(row.typeLabel, row.kind)"
-                         (change)="setTypeSize(row.typeLabel, +$any($event.target).value)"
-                         min="2" max="20" step="1">
-                </mat-form-field>
+                <div class="size-fields">
+                  <span class="dim-label">W</span>
+                  <mat-form-field class="size-field" subscriptSizing="dynamic">
+                    <input matInput type="number"
+                           [value]="getTypeWidth(row.typeLabel, row.kind)"
+                           (change)="setTypeWidth(row.typeLabel, +$any($event.target).value)"
+                           min="2" max="100" step="1">
+                  </mat-form-field>
+                  <span class="dim-label">H</span>
+                  <mat-form-field class="size-field" subscriptSizing="dynamic">
+                    <input matInput type="number"
+                           [value]="getTypeHeight(row.typeLabel, row.kind)"
+                           (change)="setTypeHeight(row.typeLabel, +$any($event.target).value)"
+                           min="2" max="100" step="1">
+                  </mat-form-field>
+                </div>
               </div>
             </div>
           }
@@ -153,3 +183,11 @@
     </div>
   </div>
 }
+
+<ng-template #shapeIconTpl let-shapeValue>
+  @switch (shapeValue) {
+    @case ('rounded-rect') { <svg class="shape-icon" viewBox="0 0 24 14"><rect x="1" y="2" width="22" height="10" rx="2.5" fill="currentColor"/></svg> }
+    @case ('diamond') { <svg class="shape-icon" viewBox="0 0 24 14"><polygon points="12,1 23,7 12,13 1,7" fill="currentColor"/></svg> }
+    @case ('ellipse') { <svg class="shape-icon" viewBox="0 0 24 14"><ellipse cx="12" cy="7" rx="10" ry="5.5" fill="currentColor"/></svg> }
+  }
+</ng-template>

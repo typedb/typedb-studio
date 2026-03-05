@@ -7,7 +7,8 @@ export interface NodeStyle {
     color: string;
     borderColor: string;
     shape: string;
-    size: number;
+    width: number;
+    height: number;
 }
 
 export type PartialNodeStyle = Partial<NodeStyle>;
@@ -37,7 +38,8 @@ export class GraphStyleService {
             color: defaultQueryStyleParameters.vertex_colors[kind],
             borderColor: defaultQueryStyleParameters.vertex_border_colors[kind],
             shape: defaultQueryStyleParameters.vertex_shapes[kind],
-            size: defaultQueryStyleParameters.vertex_size,
+            width: defaultQueryStyleParameters.vertex_widths[kind],
+            height: defaultQueryStyleParameters.vertex_heights[kind],
         };
     }
 
@@ -49,7 +51,8 @@ export class GraphStyleService {
             color: override.color ?? base.color,
             borderColor: override.borderColor ?? base.borderColor,
             shape: override.shape ?? base.shape,
-            size: override.size ?? base.size,
+            width: override.width ?? base.width,
+            height: override.height ?? base.height,
         };
     }
 
@@ -64,7 +67,8 @@ export class GraphStyleService {
             color: typeOverride.color ?? kindStyle.color,
             borderColor: typeOverride.borderColor ?? kindStyle.borderColor,
             shape: typeOverride.shape ?? kindStyle.shape,
-            size: typeOverride.size ?? kindStyle.size,
+            width: typeOverride.width ?? kindStyle.width,
+            height: typeOverride.height ?? kindStyle.height,
         };
     }
 

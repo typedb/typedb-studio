@@ -5,15 +5,15 @@ precision highp float;
 varying vec4 v_color;
 varying vec4 v_borderColor;
 varying vec2 v_uv;
+varying float v_aspect;
 
 uniform float u_correctionRatio;
 
-const float ASPECT = 1.5;
 const float BORDER_WIDTH = 0.06;
 const vec4 transparent = vec4(0.0, 0.0, 0.0, 0.0);
 
 void main(void) {
-  vec2 scaled = v_uv / vec2(ASPECT * 0.5, 0.5);
+  vec2 scaled = v_uv / vec2(v_aspect * 0.5, 0.5);
   float dist = (length(scaled) - 1.0) * 0.5;
 
   float aaWidth = u_correctionRatio * 2.0;

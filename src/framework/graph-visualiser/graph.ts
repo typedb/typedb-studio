@@ -232,7 +232,9 @@ export interface VertexAttributes {
     label: string;
     color: string;
     borderColor: string;
-    size: number;
+    width: number;
+    height: number;
+    size: number;  // max(width, height) — kept for sigma internals
     type: string;
     x: number;
     y: number;

@@ -235,8 +235,14 @@ export class QueryPageState {
             }
         }
         if (currentTab && this._graphCanvasEl) {
-            const curRun = currentRun(this.currentTabOutputState);
-            if (curRun) curRun.graph.attach(this._graphCanvasEl);
+            const tabState = this.currentTabOutputState;
+            const curRun = currentRun(tabState);
+            if (curRun) {
+                curRun.graph.attach(this._graphCanvasEl);
+                if (tabState.outputTypeControl.value === "graph") {
+                    requestAnimationFrame(() => curRun.graph.resize());
+                }
+            }
         }
     }
 

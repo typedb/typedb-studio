@@ -151,6 +151,12 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
             this.previousTabId = this.queryTabsState.currentTab?.id ?? null;
         });
 
+        this.state.outputTypeControl.valueChanges.subscribe((value) => {
+            if (value === "graph") {
+                requestAnimationFrame(() => this.state.graphOutput.resize());
+            }
+        });
+
         if (this.logTextarea) {
             this.logResizeObserver = new ResizeObserver(() => {
                 const el = this.logTextarea?.nativeElement;

@@ -5,10 +5,10 @@ precision highp float;
 varying vec4 v_color;
 varying vec4 v_borderColor;
 varying vec2 v_uv;
+varying float v_aspect;
 
 uniform float u_correctionRatio;
 
-const float ASPECT = 2.5;
 const float CORNER_RADIUS = 0.25;
 const float BORDER_WIDTH = 0.06;
 const vec4 transparent = vec4(0.0, 0.0, 0.0, 0.0);
@@ -19,7 +19,7 @@ float sdRoundedRect(vec2 p, vec2 halfSize, float r) {
 }
 
 void main(void) {
-  vec2 halfSize = vec2(ASPECT * 0.5, 0.5);
+  vec2 halfSize = vec2(v_aspect * 0.5, 0.5);
   float dist = sdRoundedRect(v_uv, halfSize, CORNER_RADIUS);
 
   float aaWidth = u_correctionRatio * 2.0;

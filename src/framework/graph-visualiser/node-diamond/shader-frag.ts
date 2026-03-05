@@ -5,10 +5,10 @@ precision highp float;
 varying vec4 v_color;
 varying vec4 v_borderColor;
 varying vec2 v_uv;
+varying float v_aspect;
 
 uniform float u_correctionRatio;
 
-const float ASPECT = 2.0;
 const float CORNER_RADIUS = 0.16;
 const float BORDER_WIDTH = 0.06;
 const vec4 transparent = vec4(0.0, 0.0, 0.0, 0.0);
@@ -23,7 +23,7 @@ float sdRhombus(vec2 p, vec2 b) {
 }
 
 void main(void) {
-  vec2 halfDiag = vec2(0.5 * ASPECT, 0.5);
+  vec2 halfDiag = vec2(0.5 * v_aspect, 0.5);
   float dist = sdRhombus(v_uv, halfDiag) - CORNER_RADIUS;
 
   float aaWidth = u_correctionRatio * 2.0;

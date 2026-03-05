@@ -5,6 +5,7 @@ attribute vec4 a_color;
 attribute vec4 a_borderColor;
 attribute vec2 a_position;
 attribute float a_size;
+attribute float a_aspect;
 attribute vec2 a_offset;
 
 uniform mat3 u_matrix;
@@ -15,16 +16,18 @@ uniform float u_cameraAngle;
 varying vec4 v_color;
 varying vec4 v_borderColor;
 varying vec2 v_uv;
+varying float v_aspect;
 
 const float bias = 255.0 / 254.0;
 
 void main() {
   float size = a_size * u_correctionRatio / u_sizeRatio * 4.0;
+  vec2 scaledOffset = vec2(a_offset.x * a_aspect, a_offset.y);
   float ca = cos(u_cameraAngle);
   float sa = sin(u_cameraAngle);
   vec2 rotatedOffset = vec2(
-    a_offset.x * ca - a_offset.y * sa,
-    a_offset.x * sa + a_offset.y * ca
+    scaledOffset.x * ca - scaledOffset.y * sa,
+    scaledOffset.x * sa + scaledOffset.y * ca
   );
   vec2 diffVector = size * rotatedOffset;
   vec2 position = a_position + diffVector;
@@ -34,7 +37,8 @@ void main() {
     1
   );
 
-  v_uv = a_offset;
+  v_uv = scaledOffset;
+  v_aspect = a_aspect;
 
   #ifdef PICKING_MODE
   v_color = a_id;

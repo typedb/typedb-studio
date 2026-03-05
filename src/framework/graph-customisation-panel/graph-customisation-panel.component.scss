@@ -244,16 +244,37 @@
   }
 }
 
+.shape-icon {
+  width: 20px;
+  height: 12px;
+  display: block;
+  color: #d5ccff;
+}
+
 .shape-field {
-  flex: 1;
+  flex: 0 0 auto;
+  width: 52px;
 
   ::ng-deep .mat-mdc-select-arrow-wrapper {
     transform: scale(0.75);
   }
 }
 
+.size-fields {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.dim-label {
+  font-size: 10px;
+  color: #958fa8;
+  flex: 0 0 auto;
+  margin: 0 2px;
+}
+
 .size-field {
-  width: 52px;
+  width: 48px;
   flex: 0 0 auto;
 
   ::ng-deep input {

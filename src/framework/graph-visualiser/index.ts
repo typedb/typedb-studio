@@ -50,11 +50,13 @@ export class GraphVisualiser {
         const kindColors: Record<string, string> = {} as any;
         const kindBorderColors: Record<string, string> = {} as any;
         const kindShapes: Record<string, string> = {} as any;
-        const kindSizes: Record<string, number> = {} as any;
+        const kindWidths: Record<string, number> = {} as any;
+        const kindHeights: Record<string, number> = {} as any;
         const typeColors: Record<string, string> = {};
         const typeBorderColors: Record<string, string> = {};
         const typeShapes: Record<string, string> = {};
-        const typeSizes: Record<string, number> = {};
+        const typeWidths: Record<string, number> = {};
+        const typeHeights: Record<string, number> = {};
 
         const kinds = ["entity", "relation", "attribute", "entityType", "relationType",
             "attributeType", "roleType", "value", "unavailable", "expression", "functionCall"] as const;
@@ -63,26 +65,30 @@ export class GraphVisualiser {
             kindColors[kind] = style.color;
             kindBorderColors[kind] = style.borderColor;
             kindShapes[kind] = style.shape;
-            kindSizes[kind] = style.size;
+            kindWidths[kind] = style.width;
+            kindHeights[kind] = style.height;
         }
 
         for (const [typeLabel, override] of Object.entries(service.typeStyles)) {
             if (override.color) typeColors[typeLabel] = override.color;
             if (override.borderColor) typeBorderColors[typeLabel] = override.borderColor;
             if (override.shape) typeShapes[typeLabel] = override.shape;
-            if (override.size) typeSizes[typeLabel] = override.size;
+            if (override.width) typeWidths[typeLabel] = override.width;
+            if (override.height) typeHeights[typeLabel] = override.height;
         }
 
         this.styleParameters = {
             ...this.styleParameters,
-            vertex_sizes: kindSizes as any,
+            vertex_widths: kindWidths as any,
+            vertex_heights: kindHeights as any,
             vertex_colors: kindColors as any,
             vertex_border_colors: kindBorderColors as any,
             vertex_shapes: kindShapes as any,
             vertex_type_colors: Object.keys(typeColors).length ? typeColors : undefined,
             vertex_type_border_colors: Object.keys(typeBorderColors).length ? typeBorderColors : undefined,
             vertex_type_shapes: Object.keys(typeShapes).length ? typeShapes : undefined,
-            vertex_type_sizes: Object.keys(typeSizes).length ? typeSizes : undefined,
+            vertex_type_widths: Object.keys(typeWidths).length ? typeWidths : undefined,
+            vertex_type_heights: Object.keys(typeHeights).length ? typeHeights : undefined,
         };
     }
 
@@ -107,12 +113,15 @@ export class GraphVisualiser {
                     color: this.styleParameters.vertex_colors[kind],
                     borderColor: this.styleParameters.vertex_border_colors[kind],
                     shape: this.styleParameters.vertex_shapes[kind],
-                    size: this.styleParameters.vertex_size,
+                    width: this.styleParameters.vertex_widths[kind],
+                    height: this.styleParameters.vertex_heights[kind],
                 };
             this.graph.setNodeAttribute(nodeKey, "color", style.color);
             this.graph.setNodeAttribute(nodeKey, "borderColor", style.borderColor);
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
-            this.graph.setNodeAttribute(nodeKey, "size", style.size);
+            this.graph.setNodeAttribute(nodeKey, "width", style.width);
+            this.graph.setNodeAttribute(nodeKey, "height", style.height);
+            this.graph.setNodeAttribute(nodeKey, "size", Math.max(style.width, style.height));
         });
         this.sigma.refresh();
     }
