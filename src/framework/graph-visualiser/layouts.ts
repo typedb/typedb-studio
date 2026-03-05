@@ -135,6 +135,34 @@ class ForceAtlasStaticWrapper implements StaticLayoutInner<ForceAtlas2Synchronou
             };
         }
         forceAtlas2.assign(graph, params);
+
+        // FA2 treats nodes as points. Scale positions proportionally to visual
+        // node sizes so there's enough room for noverlap to resolve overlaps
+        // without disrupting the topology.
+        // Visual half-width = size * 4.0 * SDF_extent (rect: 5, diamond: 5, ellipse/circle: 2).
+        const VISUAL_HALF_WIDTH: Record<string, number> = { "rounded-rect": 5, "diamond": 5, "ellipse": 2, "circle": 2 };
+        let maxVisualSize = 0;
+        graph.forEachNode((_, attrs) => {
+            const factor = VISUAL_HALF_WIDTH[attrs["type"]] ?? 2.0;
+            maxVisualSize = Math.max(maxVisualSize, attrs["size"] * factor);
+        });
+        const posScale = Math.max(1, maxVisualSize / 15);
+        graph.forEachNode((node) => {
+            graph.setNodeAttribute(node, "x", graph.getNodeAttribute(node, "x") * posScale);
+            graph.setNodeAttribute(node, "y", graph.getNodeAttribute(node, "y") * posScale);
+        });
+
+        // Inflate sizes to visual half-widths, then noverlap for fine-tuning.
+        const savedSizes = new Map<string, number>();
+        graph.forEachNode((node, attrs) => {
+            savedSizes.set(node, attrs["size"]);
+            const factor = VISUAL_HALF_WIDTH[attrs["type"]] ?? 2.0;
+            graph.setNodeAttribute(node, "size", attrs["size"] * factor);
+        });
+        noverlap.assign(graph, { maxIterations: 300, settings: { margin: 5 } });
+        savedSizes.forEach((size, node) => {
+            graph.setNodeAttribute(node, "size", size);
+        });
     }
 }
 
