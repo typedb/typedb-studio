@@ -121,7 +121,7 @@ export class GraphVisualiser {
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
             this.graph.setNodeAttribute(nodeKey, "width", style.width);
             this.graph.setNodeAttribute(nodeKey, "height", style.height);
-            this.graph.setNodeAttribute(nodeKey, "size", Math.max(style.width, style.height));
+            this.graph.setNodeAttribute(nodeKey, "size", Math.min(style.width, style.height));
         });
         this.sigma.refresh();
     }

@@ -73,7 +73,7 @@ export class StudioConverter implements ILogicalGraphConverter {
             borderColor: borderColor,
             width: width,
             height: height,
-            size: Math.max(width, height),
+            size: Math.min(width, height),
             type: shape,
             x: Math.random(),
             y: Math.random(),
@@ -97,7 +97,7 @@ export class StudioConverter implements ILogicalGraphConverter {
             label: label,
             color: color.hex(),
             size: this.styleParameters.edge_size,
-            type: "arrow",
+            type: "line",
             metadata: metadata,
         }
     }

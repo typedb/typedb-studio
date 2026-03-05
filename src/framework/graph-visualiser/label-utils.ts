@@ -25,7 +25,7 @@ export function drawCenteredNodeLabel<
 
     const rawW = (data as any).width ?? data.size;
     const rawH = (data as any).height ?? data.size;
-    const zoom = data.size / Math.max(rawW, rawH);
+    const zoom = data.size / Math.min(rawW, rawH);
     const screenHalfW = rawW * zoom;
 
     const fontSize = Math.min(settings.labelSize, LABEL_FONT_SIZE * zoom);
@@ -101,7 +101,7 @@ function truncateLine(context: CanvasRenderingContext2D, line: string, maxWidth:
 export function zoomScaledFontSize(nodeData: Record<string, any>, maxSize: number): number {
     const rawW = nodeData["width"] ?? nodeData["size"];
     const rawH = nodeData["height"] ?? nodeData["size"];
-    const zoom = nodeData["size"] / Math.max(rawW, rawH);
+    const zoom = nodeData["size"] / Math.min(rawW, rawH);
     return Math.min(maxSize, LABEL_FONT_SIZE * zoom);
 }
 
