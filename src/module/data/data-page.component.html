@@ -3,13 +3,14 @@
     <!-- Left sidebar: Schema tool window -->
     <ts-schema-tool-window
       resizable
-      [percent]="20"
+      [percent]="panelSizes[0]"
+      (percentChange)="onPanelResize(0, $event)"
       [mode]="'data'"
       [title]="'Data Explorer'"
     />
 
     <!-- Main area: Tabs and content -->
-    <div class="main-content" resizable [percent]="80">
+    <div class="main-content" resizable [percent]="panelSizes[1]" (percentChange)="onPanelResize(1, $event)">
       @if ((driver.status$ | async) === "disconnected") {
         <div class="placeholder-container">
           <button mat-flat-button routerLink="/connect">

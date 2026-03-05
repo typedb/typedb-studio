@@ -5,7 +5,7 @@ import { floatColor } from "sigma/utils";
 
 import FRAGMENT_SHADER_SOURCE from "./shader-frag";
 import VERTEX_SHADER_SOURCE from "./shader-vert";
-import { drawDiamondNodeLabel } from "./utils";
+import { drawRoundedRectNodeLabel } from "./utils";
 
 const { UNSIGNED_BYTE, FLOAT } = WebGLRenderingContext;
 
@@ -13,13 +13,13 @@ const UNIFORMS = ["u_sizeRatio", "u_correctionRatio", "u_cameraAngle", "u_matrix
 
 const MARGIN = 1.05;
 
-export class NodeDiamondProgram<
+export class NodeRoundedRectangleProgram<
     N extends Attributes = Attributes,
     E extends Attributes = Attributes,
     G extends Attributes = Attributes,
 > extends NodeProgram<(typeof UNIFORMS)[number], N, E, G> {
     override drawHover = () => {};
-    override drawLabel = drawDiamondNodeLabel;
+    override drawLabel = drawRoundedRectNodeLabel;
 
     getDefinition() {
         return {

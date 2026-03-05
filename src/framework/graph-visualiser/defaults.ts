@@ -2,12 +2,15 @@ import { RoleType } from "@typedb/driver-http";
 import chroma from "chroma-js";
 import { vertexMapKey } from "./converter";
 import {DataVertex, VertexUnavailable} from "./graph";
-import {NodeSquareProgram} from "@sigma/node-square";
-import EdgeCurveProgram from "@sigma/edge-curve";
+import { createEdgeCurveProgram, createDrawCurvedEdgeLabel, DEFAULT_EDGE_CURVE_PROGRAM_OPTIONS } from "@sigma/edge-curve";
 import {ForceLayoutSettings} from "graphology-layout-force";
+import { drawStraightEdgeLabel } from "sigma/rendering";
 import {Settings as SigmaSettings} from "sigma/settings";
 import {StudioConverterStructureParameters, StudioConverterStyleParameters} from "./config";
 import { NodeDiamondProgram } from "./node-diamond";
+import { NodeRoundedRectangleProgram } from "./node-rounded-rect";
+import { NodeEllipseProgram } from "./node-ellipse";
+import { zoomScaledFontSize } from "./label-utils";
 
 const darkPalette = {
     black:    "#09022F",
@@ -42,20 +45,59 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
         expression: darkPalette.white2,
         functionCall: darkPalette.white2,
     },
-    vertex_shapes: {
-        entity: "square",
-        relation: "diamond",
-        attribute: "circle",
-        entityType: "square",
-        relationType: "diamond",
-        attributeType: "circle",
-        roleType: "circle",
-        value: "circle",
-        unavailable: "circle",
-        expression: "circle",
-        functionCall: "circle",
+    vertex_border_colors: {
+        entity: "#00000000",
+        relation: "#00000000",
+        attribute: "#00000000",
+        entityType: "#00000000",
+        relationType: "#00000000",
+        attributeType: "#00000000",
+        roleType: "#00000000",
+        value: "#00000000",
+        unavailable: "#00000000",
+        expression: "#00000000",
+        functionCall: "#00000000",
     },
-    vertex_size: 6,
+    vertex_shapes: {
+        entity: "rounded-rect",
+        relation: "diamond",
+        attribute: "ellipse",
+        entityType: "rounded-rect",
+        relationType: "diamond",
+        attributeType: "ellipse",
+        roleType: "ellipse",
+        value: "ellipse",
+        unavailable: "ellipse",
+        expression: "ellipse",
+        functionCall: "ellipse",
+    },
+    vertex_widths: {
+        entity: 56,
+        relation: 52,
+        attribute: 70,
+        entityType: 56,
+        relationType: 52,
+        attributeType: 70,
+        roleType: 56,
+        value: 56,
+        unavailable: 56,
+        expression: 56,
+        functionCall: 56,
+    },
+    vertex_heights: {
+        entity: 24,
+        relation: 26,
+        attribute: 40,
+        entityType: 24,
+        relationType: 26,
+        attributeType: 40,
+        roleType: 24,
+        value: 24,
+        unavailable: 24,
+        expression: 24,
+        functionCall: 24,
+    },
+    vertex_height: 24,
 
     edge_color: chroma("grey"),
     edge_highlight_color: chroma("cyan"),
@@ -75,7 +117,7 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
                 return vertex.type.label;
             }
             case "attribute": {
-                return vertex.value;
+                return `${vertex.type.label}\n${vertex.value}`;
             }
             case "value": {
                 return vertex.value;
@@ -129,8 +171,11 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
 
 export const defaultExplorationQueryStyleParameters: StudioConverterStyleParameters = {
     vertex_colors: defaultQueryStyleParameters.vertex_colors,
+    vertex_border_colors: defaultQueryStyleParameters.vertex_border_colors,
     vertex_shapes: defaultQueryStyleParameters.vertex_shapes,
-    vertex_size: defaultQueryStyleParameters.vertex_size,
+    vertex_widths: defaultQueryStyleParameters.vertex_widths,
+    vertex_heights: defaultQueryStyleParameters.vertex_heights,
+    vertex_height: defaultQueryStyleParameters.vertex_height,
 
     // We only change this one:
     edge_color: chroma("darkblue"),
@@ -149,24 +194,49 @@ export const defaultStructureParameters: StudioConverterStructureParameters = {
     ignoreEdgesInvolvingLabels: ["isa", "sub", "relates", "plays"],
 };
 
+function edgeLabelSize(sourceData: any, targetData: any, maxSize: number): number {
+    return Math.max(zoomScaledFontSize(sourceData, maxSize), zoomScaledFontSize(targetData, maxSize));
+}
+
+function scaledDrawStraightEdgeLabel(context: CanvasRenderingContext2D, edgeData: any, sourceData: any, targetData: any, settings: any): void {
+    const scaledSize = edgeLabelSize(sourceData, targetData, settings.edgeLabelSize);
+    if (scaledSize < 3) return;
+    drawStraightEdgeLabel(context, edgeData, sourceData, targetData, { ...settings, edgeLabelSize: scaledSize });
+}
+
+const defaultDrawCurvedLabel = createDrawCurvedEdgeLabel(DEFAULT_EDGE_CURVE_PROGRAM_OPTIONS as any);
+const ScaledEdgeCurveProgram = createEdgeCurveProgram({
+    drawLabel(context, edgeData, sourceData, targetData, settings) {
+        const scaledSize = edgeLabelSize(sourceData, targetData, settings.edgeLabelSize);
+        if (scaledSize < 3) return;
+        defaultDrawCurvedLabel(
+            context, edgeData, sourceData, targetData,
+            { ...settings, edgeLabelSize: scaledSize },
+        );
+    },
+});
+
 export const defaultSigmaSettings: Partial<SigmaSettings> = {
     allowInvalidContainer: true,
+    itemSizesReference: "positions",
+    autoRescale: false,
     zoomToSizeRatioFunction: (x) => x,
     minCameraRatio: 0.1,
     maxCameraRatio: 10,
     labelColor: {
         color: `#958fa8`,
     },
+    labelRenderedSizeThreshold: 0,
+    labelDensity: Infinity,
+    defaultDrawEdgeLabel: scaledDrawStraightEdgeLabel as any,
     renderEdgeLabels: true,
     nodeProgramClasses: {
-        square: NodeSquareProgram,
+        "rounded-rect": NodeRoundedRectangleProgram,
         diamond: NodeDiamondProgram,
+        ellipse: NodeEllipseProgram,
     },
     edgeProgramClasses: {
-        curved: EdgeCurveProgram,
-    },
-    cameraPanBoundaries: {
-        tolerance: 1,
+        curved: ScaledEdgeCurveProgram,
     },
 };
 

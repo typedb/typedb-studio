@@ -29,7 +29,6 @@ import { DriverAction, QueryRunAction, TransactionOperationAction, isQueryRun, i
 import { basicDark } from "../../framework/code-editor/theme";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { ActionDurationPipe } from "../../framework/util/action-duration.pipe";
-import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
 import { ChatState } from "../../service/chat-state.service";
 import { DriverState } from "../../service/driver-state.service";
@@ -46,6 +45,8 @@ import { indentWithTab } from "@codemirror/commands";
 import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatSelectModule } from "@angular/material/select";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
+import { GraphCustomisationPanelComponent } from "../../framework/graph-customisation-panel/graph-customisation-panel.component";
+import { GraphZoomControlsComponent } from "../../framework/graph-zoom-controls/graph-zoom-controls.component";
 
 @Component({
     selector: "ts-query-page",
@@ -54,8 +55,10 @@ import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-win
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, ResizableDirective,
-        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
+        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule,
         MatMenuModule, MatSelectModule, SchemaToolWindowComponent, CodeEditorComponent, ActionDurationPipe,
+        GraphCustomisationPanelComponent,
+        GraphZoomControlsComponent,
     ]
 })
 export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -97,6 +100,9 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         indentWithTab,
     ]));
+    private static readonly DEFAULT_PANEL_SIZES = [20, 60, 20, 50, 50];
+    panelSizes = [...QueryPageComponent.DEFAULT_PANEL_SIZES];
+
     copiedLog = false;
     sentLogToAi = false;
     logHasScrollbar = false;
@@ -112,6 +118,10 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
+        const saved = this.appData.panelLayout.get("query");
+        if (saved && saved.length === QueryPageComponent.DEFAULT_PANEL_SIZES.length) {
+            this.panelSizes = saved;
+        }
         this.renderCodeEditorWithDelay();
     }
 
@@ -139,6 +149,12 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.queryTabsState.selectedTabIndex$.subscribe(() => {
             this.state.handleTabSwitch(this.previousTabId);
             this.previousTabId = this.queryTabsState.currentTab?.id ?? null;
+        });
+
+        this.state.outputTypeControl.valueChanges.subscribe((value) => {
+            if (value === "graph") {
+                requestAnimationFrame(() => this.state.graphOutput.resize());
+            }
         });
 
         if (this.logTextarea) {
@@ -412,6 +428,11 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         } catch (err) {
             console.error('Failed to copy results log:', err);
         }
+    }
+
+    onPanelResize(index: number, percent: number) {
+        this.panelSizes[index] = percent;
+        this.appData.panelLayout.set("query", [...this.panelSizes]);
     }
 
     readonly isQueryRun = isQueryRun;

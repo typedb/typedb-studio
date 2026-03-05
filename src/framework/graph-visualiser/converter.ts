@@ -46,14 +46,34 @@ export class StudioConverter implements ILogicalGraphConverter {
         };
     }
 
+    private getTypeLabel(vertex: DataVertex): string | undefined {
+        if ("type" in vertex && vertex.type && "label" in vertex.type) return vertex.type.label;
+        if ("label" in vertex && (vertex as DataVertex).kind !== "unavailable") return vertex.label;
+        return undefined;
+    }
+
     private vertexAttributes(vertex: DataVertex): VertexAttributes {
         // Extend as you please: https://www.sigmajs.org/docs/advanced/data/
-        const color = this.styleParameters.vertex_colors[vertex.kind];
-        const shape = this.styleParameters.vertex_shapes[vertex.kind];
+        const typeLabel = this.getTypeLabel(vertex);
+        const color = (typeLabel && this.styleParameters.vertex_type_colors?.[typeLabel])
+            ?? this.styleParameters.vertex_colors[vertex.kind];
+        const borderColor = (typeLabel && this.styleParameters.vertex_type_border_colors?.[typeLabel])
+            ?? this.styleParameters.vertex_border_colors[vertex.kind];
+        const shape = (typeLabel && this.styleParameters.vertex_type_shapes?.[typeLabel])
+            ?? this.styleParameters.vertex_shapes[vertex.kind];
+        const width = (typeLabel ? this.styleParameters.vertex_type_widths?.[typeLabel] : undefined)
+            ?? this.styleParameters.vertex_widths?.[vertex.kind]
+            ?? this.styleParameters.vertex_height;
+        const height = (typeLabel ? this.styleParameters.vertex_type_heights?.[typeLabel] : undefined)
+            ?? this.styleParameters.vertex_heights?.[vertex.kind]
+            ?? this.styleParameters.vertex_height;
         return {
             label: this.styleParameters.vertex_default_label(vertex),
             color: color,
-            size: vertex.kind === "roleType" ? 5 : this.styleParameters.vertex_size,
+            borderColor: borderColor,
+            width: width,
+            height: height,
+            size: Math.max(width, height),
             type: shape,
             x: Math.random(),
             y: Math.random(),

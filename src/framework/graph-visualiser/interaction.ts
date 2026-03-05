@@ -1,5 +1,6 @@
 import Sigma from "sigma";
 import MultiGraph from "graphology";
+import chroma from "chroma-js";
 import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "sigma/types";
 import {StudioConverterStyleParameters} from "./config";
 import {SpecialVertexKind} from "./graph";
@@ -47,22 +48,27 @@ export class InteractionHandler {
 
 
     onEnterNode(event: SigmaNodeEventPayload) {
-        let node = event.node;
-        this.graph.setNodeAttribute(node, "highlighted", true);
-        this.graph.setNodeAttribute(node, "label", this.graph.getNodeAttributes(node)["metadata"].hoverLabel)
+        const node = event.node;
+        const color = this.graph.getNodeAttribute(node, "color");
+        this.graph.setNodeAttribute(node, "_originalColor", color);
+        this.graph.setNodeAttribute(node, "color", chroma(color).darken(0.7).hex());
     }
 
     onLeaveNode(event: SigmaNodeEventPayload) {
-        let node = event.node;
-        this.graph.setNodeAttribute(node, "highlighted", false);
-        this.graph.setNodeAttribute(node, "label", this.graph.getNodeAttributes(node)["metadata"].defaultLabel);
+        const node = event.node;
+        const original = this.graph.getNodeAttribute(node, "_originalColor");
+        if (original) {
+            this.graph.setNodeAttribute(node, "color", original);
+            this.graph.removeNodeAttribute(node, "_originalColor");
+        }
     }
 
 
     onDownNode(event: SigmaNodeEventPayload) {
-        let node = event.node;
+        const node = event.node;
         this.state.draggedNode = node;
-        this.graph.setNodeAttribute(node, "highlighted", true);
+        const original = this.graph.getNodeAttribute(node, "_originalColor") ?? this.graph.getNodeAttribute(node, "color");
+        this.graph.setNodeAttribute(node, "color", chroma(original).darken(1.4).hex());
         if (!this.renderer.getCustomBBox()) {
             this.renderer.setCustomBBox(this.renderer.getBBox());
         }
@@ -84,16 +90,23 @@ export class InteractionHandler {
         mouseCoords.original.stopPropagation();
     }
 
-    onUpNode(event: SigmaNodeEventPayload) {
+    onUpNode(_event: SigmaNodeEventPayload) {
         if (this.state.draggedNode != null) {
-            this.graph.removeNodeAttribute(this.state.draggedNode, "highlighted");
+            const original = this.graph.getNodeAttribute(this.state.draggedNode, "_originalColor");
+            if (original) {
+                this.graph.setNodeAttribute(this.state.draggedNode, "color", chroma(original).darken(0.7).hex());
+            }
             this.state.draggedNode = null;
         }
     }
 
-    onUpStage(event: SigmaEventPayload) {
+    onUpStage(_event: SigmaEventPayload) {
         if (this.state.draggedNode != null) {
-            this.graph.removeNodeAttribute(this.state.draggedNode, "highlighted");
+            const original = this.graph.getNodeAttribute(this.state.draggedNode, "_originalColor");
+            if (original) {
+                this.graph.setNodeAttribute(this.state.draggedNode, "color", original);
+                this.graph.removeNodeAttribute(this.state.draggedNode, "_originalColor");
+            }
             this.state.draggedNode = null;
         }
     }

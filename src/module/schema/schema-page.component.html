@@ -1,7 +1,7 @@
 <ts-page-scaffold pageAvailability="ready">
   <article #articleRef class="schema-page" style="display: flex; flex-direction: row;">
-    <ts-schema-tool-window resizable [percent]="20" [title]="'Schema Explorer'"/>
-    <div class="visualiser-pane card" resizable [percent]="80">
+    <ts-schema-tool-window resizable [percent]="panelSizes[0]" (percentChange)="onPanelResize(0, $event)" [title]="'Schema Explorer'"/>
+    <div class="visualiser-pane card" resizable [percent]="panelSizes[1]" (percentChange)="onPanelResize(1, $event)">
       <div class="card-header">
         <h5>Visualiser</h5>
         <div class="flex-spacer"></div>
@@ -27,6 +27,8 @@
         <div class="answers-outer-container">
           <div class="answers-container answers-structure-container">
             <div id="structureView" #graphViewRef></div>
+            <ts-graph-customisation-panel [visualiser]="state.visualiser.visualiser"/>
+            <ts-graph-zoom-controls [visualiser]="state.visualiser.visualiser"/>
 
             @switch (state.visualiser.status) {
               @case ("error") {

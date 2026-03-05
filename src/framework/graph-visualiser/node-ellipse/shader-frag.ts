@@ -9,22 +9,12 @@ varying float v_aspect;
 
 uniform float u_correctionRatio;
 
-const float CORNER_RADIUS = 0.16;
 const float BORDER_WIDTH = 0.06;
 const vec4 transparent = vec4(0.0, 0.0, 0.0, 0.0);
 
-// Rhombus SDF (Inigo Quilez). b = half-diagonals.
-float ndot(vec2 a, vec2 b) { return a.x*b.x - a.y*b.y; }
-float sdRhombus(vec2 p, vec2 b) {
-  p = abs(p);
-  float h = clamp(ndot(b - 2.0*p, b) / dot(b, b), -1.0, 1.0);
-  float d = length(p - 0.5*b*vec2(1.0 - h, 1.0 + h));
-  return d * sign(p.x*b.y + p.y*b.x - b.x*b.y);
-}
-
 void main(void) {
-  vec2 halfDiag = vec2(0.5 * v_aspect, 0.5);
-  float dist = sdRhombus(v_uv, halfDiag) - CORNER_RADIUS;
+  vec2 scaled = v_uv / vec2(v_aspect * 0.5, 0.5);
+  float dist = (length(scaled) - 1.0) * 0.5;
 
   float aaWidth = u_correctionRatio * 2.0;
 

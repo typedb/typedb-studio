@@ -112,6 +112,10 @@ class StaticLayoutWrapper<LayoutParams> implements LayoutWrapper {
     }
 
     redraw(): void {
+        this.graph.nodes().forEach(node => {
+            this.graph.setNodeAttribute(node, "x", Math.random());
+            this.graph.setNodeAttribute(node, "y", Math.random());
+        });
         this.layout.assign(this.graph, this.params);
     }
 
@@ -124,13 +128,38 @@ class ForceAtlasStaticWrapper implements StaticLayoutInner<ForceAtlas2Synchronou
     static DEFAULT_MAX_ITERATIONS: number = 500;
     assign(graph: MultiGraph, params: ForceAtlas2SynchronousLayoutParameters | undefined): void {
         if (params == undefined) {
+            const inferred = forceAtlas2.inferSettings(graph.nodes().length);
             params = {
                 iterations: ForceAtlasStaticWrapper.DEFAULT_MAX_ITERATIONS,
-                settings: forceAtlas2.inferSettings(graph.nodes().length),
+                settings: { ...inferred },
             };
-
         }
         forceAtlas2.assign(graph, params);
+
+        // FA2 treats nodes as points. Scale positions proportionally to visual
+        // node sizes so there's enough room for noverlap to resolve overlaps
+        // without disrupting the topology.
+        let maxVisualSize = 0;
+        graph.forEachNode((_, attrs) => {
+            maxVisualSize = Math.max(maxVisualSize, Math.max(attrs["width"] ?? attrs["size"], attrs["height"] ?? attrs["size"]) * 2.0);
+        });
+        const posScale = Math.max(1, maxVisualSize / 20);
+        graph.forEachNode((node) => {
+            graph.setNodeAttribute(node, "x", graph.getNodeAttribute(node, "x") * posScale);
+            graph.setNodeAttribute(node, "y", graph.getNodeAttribute(node, "y") * posScale);
+        });
+
+        // Inflate sizes to visual half-widths for noverlap, then restore.
+        const savedSizes = new Map<string, number>();
+        graph.forEachNode((node, attrs) => {
+            savedSizes.set(node, attrs["size"]);
+            const visualSize = Math.max(attrs["width"] ?? attrs["size"], attrs["height"] ?? attrs["size"]) * 2.0;
+            graph.setNodeAttribute(node, "size", visualSize);
+        });
+        noverlap.assign(graph, { maxIterations: 300, settings: { margin: 5 } });
+        savedSizes.forEach((size, node) => {
+            graph.setNodeAttribute(node, "size", size);
+        });
     }
 }
 

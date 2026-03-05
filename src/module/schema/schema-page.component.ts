@@ -25,6 +25,8 @@ import { SchemaState } from "../../service/schema-state.service";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaToolWindowComponent } from "./tool-window/schema-tool-window.component";
+import { GraphCustomisationPanelComponent } from "../../framework/graph-customisation-panel/graph-customisation-panel.component";
+import { GraphZoomControlsComponent } from "../../framework/graph-zoom-controls/graph-zoom-controls.component";
 
 @Component({
     selector: "ts-schema-page",
@@ -34,6 +36,8 @@ import { SchemaToolWindowComponent } from "./tool-window/schema-tool-window.comp
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule,
         MatSortModule, MatTooltipModule, MatButtonModule, ResizableDirective, SchemaToolWindowComponent,
+        GraphCustomisationPanelComponent,
+        GraphZoomControlsComponent,
     ]
 })
 export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -42,6 +46,9 @@ export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     private canvasEl$!: Observable<HTMLElement>;
+
+    private static readonly DEFAULT_PANEL_SIZES = [20, 80];
+    panelSizes = [...SchemaPageComponent.DEFAULT_PANEL_SIZES];
 
     constructor(
         protected state: SchemaState, public driver: DriverState, private appData: AppData,
@@ -54,10 +61,19 @@ export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("schema");
+        const saved = this.appData.panelLayout.get("schema");
+        if (saved && saved.length === SchemaPageComponent.DEFAULT_PANEL_SIZES.length) {
+            this.panelSizes = saved;
+        }
+    }
+
+    onPanelResize(index: number, percent: number) {
+        this.panelSizes[index] = percent;
+        this.appData.panelLayout.set("schema", [...this.panelSizes]);
     }
 
     ngAfterViewInit() {
-        if (this.resizables.length) {
+        if (!this.appData.panelLayout.get("schema") && this.resizables.length) {
             const articleWidth = this.articleRef.nativeElement.clientWidth;
             this.resizables.first.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
         }

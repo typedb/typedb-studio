@@ -231,7 +231,10 @@ export interface VertexMetadata {
 export interface VertexAttributes {
     label: string;
     color: string;
-    size: number;
+    borderColor: string;
+    width: number;
+    height: number;
+    size: number;  // max(width, height) — kept for sigma internals
     type: string;
     x: number;
     y: number;
