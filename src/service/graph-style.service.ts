@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
 import { DataVertexKind } from "../framework/graph-visualiser/graph";
-import { defaultQueryStyleParameters } from "../framework/graph-visualiser/defaults";
+import { defaultEdgeLabelColors, defaultQueryStyleParameters } from "../framework/graph-visualiser/defaults";
 
 export interface NodeStyle {
     color: string;
@@ -26,6 +26,8 @@ export class GraphStyleService {
 
     private _kindStyles: Record<string, PartialNodeStyle> = {};
     private _typeStyles: Record<string, PartialNodeStyle> = {};
+    private _edgeLabelColors: Record<string, string> = {};
+    private _colorEdgesByConstraint = true;
 
     readonly styles$ = new BehaviorSubject<void>(undefined);
 
@@ -98,9 +100,47 @@ export class GraphStyleService {
         return this._typeStyles;
     }
 
+    get colorEdgesByConstraint(): boolean {
+        return this._colorEdgesByConstraint;
+    }
+
+    set colorEdgesByConstraint(value: boolean) {
+        this._colorEdgesByConstraint = value;
+        this.save();
+    }
+
+    // -- Edge label colors --
+
+    getEdgeLabelColor(tag: string): string {
+        return this._edgeLabelColors[tag]
+            ?? defaultEdgeLabelColors[tag]
+            ?? defaultQueryStyleParameters.edge_color.hex();
+    }
+
+    setEdgeLabelColor(tag: string, color: string): void {
+        this._edgeLabelColors[tag] = color;
+        this.save();
+        this.styles$.next();
+    }
+
+    removeEdgeLabelColor(tag: string): void {
+        delete this._edgeLabelColors[tag];
+        this.save();
+        this.styles$.next();
+    }
+
+    get edgeLabelColors(): Record<string, string> {
+        return this._edgeLabelColors;
+    }
+
+    getResolvedEdgeLabelColors(): Record<string, string> {
+        return { ...defaultEdgeLabelColors, ...this._edgeLabelColors };
+    }
+
     resetToDefaults(): void {
         this._kindStyles = {};
         this._typeStyles = {};
+        this._edgeLabelColors = {};
         this.save();
         this.styles$.next();
     }
@@ -110,6 +150,8 @@ export class GraphStyleService {
             const data = {
                 kindStyles: this._kindStyles,
                 typeStyles: this._typeStyles,
+                edgeLabelColors: this._edgeLabelColors,
+                colorEdgesByConstraint: this._colorEdgesByConstraint,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         } catch (e) {
@@ -124,6 +166,8 @@ export class GraphStyleService {
                 const data = JSON.parse(raw);
                 this._kindStyles = data.kindStyles ?? {};
                 this._typeStyles = data.typeStyles ?? {};
+                this._edgeLabelColors = data.edgeLabelColors ?? {};
+                this._colorEdgesByConstraint = data.colorEdgesByConstraint ?? true;
             }
         } catch (e) {
             console.warn("Failed to load graph styles from localStorage:", e);

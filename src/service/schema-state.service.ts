@@ -445,7 +445,7 @@ export class VisualiserState {
         switch (res.ok.answerType) {
             case "conceptRows": {
                 this.visualiser.handleQueryResponse(res, this.database!);
-                this.visualiser.colorEdgesByConstraintIndex(false);
+                this.visualiser.colorEdgesByConstraintIndex(!this.styleService?.colorEdgesByConstraint);
                 break;
             }
             default:

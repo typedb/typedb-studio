@@ -6,6 +6,7 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
+import { MatSlideToggleModule } from "@angular/material/slide-toggle";
 import { ColorPickerDirective } from "ngx-color-picker";
 import { GraphStyleService } from "../../service/graph-style.service";
 import { GraphVisualiser } from "../graph-visualiser";
@@ -20,6 +21,21 @@ interface TypeRow {
     typeLabel: string;
     kind: DataVertexKind;
 }
+
+interface EdgeLabelRow {
+    tag: string;
+    displayLabel: string;
+}
+
+const DISPLAY_EDGE_LABELS: EdgeLabelRow[] = [
+    { tag: "has", displayLabel: "has" },
+    { tag: "links", displayLabel: "links" },
+    { tag: "isa", displayLabel: "isa" },
+    { tag: "sub", displayLabel: "sub" },
+    { tag: "owns", displayLabel: "owns" },
+    { tag: "relates", displayLabel: "relates" },
+    { tag: "plays", displayLabel: "plays" },
+];
 
 const DISPLAY_KINDS: KindRow[] = [
     { kind: "entity", label: "Entity" },
@@ -45,7 +61,7 @@ export const AVAILABLE_SHAPES = [
     imports: [
         CommonModule, FormsModule,
         MatButtonModule, MatSelectModule, MatTooltipModule,
-        MatFormFieldModule, MatInputModule,
+        MatFormFieldModule, MatInputModule, MatSlideToggleModule,
         ColorPickerDirective,
     ],
 })
@@ -55,10 +71,11 @@ export class GraphCustomisationPanelComponent {
 
     styleService = inject(GraphStyleService);
     isOpen = false;
-    activeTab: "kind" | "type" = "kind";
+    activeTab: "kind" | "type" | "edge" = "kind";
 
     readonly displayKinds = DISPLAY_KINDS;
     readonly shapes = AVAILABLE_SHAPES;
+    readonly edgeLabels = DISPLAY_EDGE_LABELS;
 
     discoveredTypes: TypeRow[] = [];
 
@@ -194,9 +211,39 @@ export class GraphCustomisationPanelComponent {
         this.applyStyles();
     }
 
+    // -- Edge label colors --
+
+    getEdgeLabelColor(tag: string): string {
+        return this.styleService.getEdgeLabelColor(tag);
+    }
+
+    setEdgeLabelColor(tag: string, color: string): void {
+        this.styleService.setEdgeLabelColor(tag, normalizeColor(color));
+        this.visualiser?.applyEdgeStyleUpdate();
+    }
+
+    hasEdgeLabelOverride(tag: string): boolean {
+        return !!this.styleService.edgeLabelColors[tag];
+    }
+
+    clearEdgeLabelOverride(tag: string): void {
+        this.styleService.removeEdgeLabelColor(tag);
+        this.visualiser?.applyEdgeStyleUpdate();
+    }
+
     resetAll(): void {
         this.styleService.resetToDefaults();
         this.applyStyles();
+        this.visualiser?.applyEdgeStyleUpdate();
+    }
+
+    get colorEdgesByConstraint(): boolean {
+        return this.styleService.colorEdgesByConstraint;
+    }
+
+    toggleEdgeColoring(): void {
+        this.styleService.colorEdgesByConstraint = !this.styleService.colorEdgesByConstraint;
+        this.visualiser?.colorEdgesByConstraintIndex(!this.styleService.colorEdgesByConstraint);
     }
 
     reLayout(): void {

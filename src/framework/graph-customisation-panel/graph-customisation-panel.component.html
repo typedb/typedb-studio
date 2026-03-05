@@ -18,8 +18,9 @@
 
     <!-- Tab bar -->
     <div class="tab-bar">
-      <button class="tab" [class.active]="activeTab === 'kind'" (click)="activeTab = 'kind'">By Kind</button>
-      <button class="tab" [class.active]="activeTab === 'type'" (click)="activeTab = 'type'; refreshDiscoveredTypes()">By Type</button>
+      <button class="tab" [class.active]="activeTab === 'kind'" (click)="activeTab = 'kind'">Kinds</button>
+      <button class="tab" [class.active]="activeTab === 'type'" (click)="activeTab = 'type'; refreshDiscoveredTypes()">Types</button>
+      <button class="tab" [class.active]="activeTab === 'edge'" (click)="activeTab = 'edge'">Edges</button>
     </div>
 
     <div class="panel-body">
@@ -170,16 +171,56 @@
           }
         </div>
       }
+
+      <!-- Edge label colors -->
+      @if (activeTab === 'edge') {
+        <div class="style-list">
+          @for (row of edgeLabels; track row.tag) {
+            <div class="style-row">
+              <div class="type-label-row">
+                <span class="style-label">{{ row.displayLabel }}</span>
+                @if (hasEdgeLabelOverride(row.tag)) {
+                  <button class="clear-button" (click)="clearEdgeLabelOverride(row.tag)" matTooltip="Clear override" [matTooltipShowDelay]="300">
+                    <i class="fa-light fa-xmark"></i>
+                  </button>
+                }
+              </div>
+              <div class="style-controls">
+                <span matTooltip="Color" [matTooltipShowDelay]="500">
+                  <div class="color-swatch fill-swatch"
+                       [style.background]="getEdgeLabelColor(row.tag)"
+                       [colorPicker]="getEdgeLabelColor(row.tag)"
+                       cpAlphaChannel="forced"
+                       cpOutputFormat="hex"
+                       cpPosition="left"
+                       cpPositionOffset="-50"
+                       cpFallbackColor="#808080"
+                       [cpUseRootViewContainer]="true"
+                       (colorPickerChange)="setEdgeLabelColor(row.tag, $event)">
+                  </div>
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      }
     </div>
 
     <!-- Footer actions -->
     <div class="panel-footer">
-      <button class="action-button" (click)="reLayout()" matTooltip="Re-randomise positions and re-run layout" [matTooltipShowDelay]="500">
-        <i class="fa-light fa-refresh"></i> Re-layout
-      </button>
-      <button class="action-button reset" (click)="resetAll()" matTooltip="Reset all styles to defaults" [matTooltipShowDelay]="500">
-        Reset
-      </button>
+      <div class="footer-toggles">
+        <mat-slide-toggle color="primary" [checked]="colorEdgesByConstraint" (change)="toggleEdgeColoring()" labelPosition="before">
+          Color edges by constraint
+        </mat-slide-toggle>
+      </div>
+      <div class="footer-buttons">
+        <button class="action-button" (click)="reLayout()" matTooltip="Re-randomise positions and re-run layout" [matTooltipShowDelay]="500">
+          <i class="fa-light fa-refresh"></i> Re-layout
+        </button>
+        <button class="action-button reset" (click)="resetAll()" matTooltip="Reset all styles to defaults" [matTooltipShowDelay]="500">
+          Reset
+        </button>
+      </div>
     </div>
   </div>
 }

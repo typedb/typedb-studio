@@ -291,9 +291,31 @@
 
 .panel-footer {
   display: flex;
-  gap: 6px;
+  flex-direction: column;
+  gap: 8px;
   padding: 8px 12px;
   border-top: 1px solid colors.$secondary-dark-grey;
+}
+
+.footer-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  ::ng-deep mat-slide-toggle {
+    --mat-slide-toggle-label-text-size: 11px;
+    --mat-slide-toggle-label-text-color: #958fa8;
+
+    .mdc-switch {
+      transform: scale(0.75);
+      transform-origin: center;
+    }
+  }
+}
+
+.footer-buttons {
+  display: flex;
+  gap: 6px;
 }
 
 .action-button {

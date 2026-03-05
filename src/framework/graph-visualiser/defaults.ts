@@ -31,6 +31,14 @@ const darkPalette = {
     white2:   "#D5CCFF"
 };
 
+export const defaultEdgeLabelColors: Record<string, string> = {
+    "has": darkPalette.blue1,
+    "owns": darkPalette.blue1,
+    "links": darkPalette.yellow,
+    "relates": darkPalette.yellow,
+    "plays": darkPalette.yellow,
+};
+
 export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
     vertex_colors: {
         entity: darkPalette.pink,

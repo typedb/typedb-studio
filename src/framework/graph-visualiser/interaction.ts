@@ -204,8 +204,12 @@ export class InteractionHandler {
     removeHighlightFromAnswer(answerIndex: number) {
         // TODO: Maybe add indexing so I don't have to iterate
         this.graph.edges().forEach(edge => {
-            if (answerIndex == this.graph.getEdgeAttributes(edge)["metadata"].answerIndex) {
-                this.graph.setEdgeAttribute(edge, "color", this.styleParameters.edge_color.hex());
+            const metadata = this.graph.getEdgeAttributes(edge)["metadata"];
+            if (answerIndex == metadata.answerIndex) {
+                const tag = metadata.dataEdge.tag;
+                const color = this.styleParameters.edge_label_colors?.[tag]
+                    ?? this.styleParameters.edge_color.hex();
+                this.graph.setEdgeAttribute(edge, "color", color);
             }
         })
     }

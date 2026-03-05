@@ -89,6 +89,7 @@ export class GraphVisualiser {
             vertex_type_shapes: Object.keys(typeShapes).length ? typeShapes : undefined,
             vertex_type_widths: Object.keys(typeWidths).length ? typeWidths : undefined,
             vertex_type_heights: Object.keys(typeHeights).length ? typeHeights : undefined,
+            edge_label_colors: service.getResolvedEdgeLabelColors(),
         };
     }
 
@@ -123,6 +124,16 @@ export class GraphVisualiser {
             this.graph.setNodeAttribute(nodeKey, "height", style.height);
             this.graph.setNodeAttribute(nodeKey, "size", Math.min(style.width, style.height));
         });
+        this.sigma.refresh();
+    }
+
+    applyEdgeStyleUpdate(): void {
+        if (this.styleService) {
+            this.applyServiceStyles(this.styleService);
+        }
+        if (!this.styleService?.colorEdgesByConstraint) {
+            this.colorEdgesByConstraintIndex(true);
+        }
         this.sigma.refresh();
     }
 
@@ -203,12 +214,17 @@ export class GraphVisualiser {
     }
 
     colorEdgesByConstraintIndex(reset: boolean): void {
+        const params = this.interactionHandler.styleParameters;
         this.graph.edges().forEach(edgeKey => {
-            let color = reset ?
-                this.interactionHandler.styleParameters.edge_color :
-                this.getColorForEdge(this.graph, edgeKey);
-            this.graph.setEdgeAttribute(edgeKey, "color", color.hex());
-        })
+            if (reset) {
+                const tag = this.graph.getEdgeAttributes(edgeKey).metadata.dataEdge.tag;
+                const color = params.edge_label_colors?.[tag] ?? params.edge_color.hex();
+                this.graph.setEdgeAttribute(edgeKey, "color", color);
+            } else {
+                const color = this.getColorForEdge(this.graph, edgeKey);
+                this.graph.setEdgeAttribute(edgeKey, "color", color.hex());
+            }
+        });
     }
 
     private getColorForEdge(graph: VisualGraph, edgeKey: string): chroma.Color {

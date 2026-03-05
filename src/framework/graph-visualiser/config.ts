@@ -18,6 +18,7 @@ export interface StudioConverterStyleParameters {
     vertex_type_heights?: Record<string, number>,
 
     edge_color: Color,
+    edge_label_colors?: Record<string, string>,
     edge_highlight_color: Color;
     edge_size: number
 

@@ -92,10 +92,12 @@ export class StudioConverter implements ILogicalGraphConverter {
 
     private edgeAttributes(label: string, metadata: EdgeMetadata): EdgeAttributes {
         // Extend as you please: https://www.sigmajs.org/docs/advanced/data/
-        const color = this.styleParameters.edge_color;
+        const tag = metadata.dataEdge.tag;
+        const colorHex = this.styleParameters.edge_label_colors?.[tag]
+            ?? this.styleParameters.edge_color.hex();
         return {
             label: label,
-            color: color.hex(),
+            color: colorHex,
             size: this.styleParameters.edge_size,
             type: "line",
             metadata: metadata,

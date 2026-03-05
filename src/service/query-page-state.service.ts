@@ -757,7 +757,7 @@ export class GraphOutputState {
                         document.getElementById("query-highlight-div")!.innerHTML = highlightedQuery;
                     }
                 }
-                this.visualiser.colorEdgesByConstraintIndex(false);
+                this.visualiser.colorEdgesByConstraintIndex(!this._styleService?.colorEdgesByConstraint);
                 this.status = "ok";
                 break;
             }
