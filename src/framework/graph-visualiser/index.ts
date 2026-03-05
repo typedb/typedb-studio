@@ -50,6 +50,7 @@ export class GraphVisualiser {
         const kindColors: Record<string, string> = {} as any;
         const kindBorderColors: Record<string, string> = {} as any;
         const kindShapes: Record<string, string> = {} as any;
+        const kindSizes: Record<string, number> = {} as any;
         const typeColors: Record<string, string> = {};
         const typeBorderColors: Record<string, string> = {};
         const typeShapes: Record<string, string> = {};
@@ -62,6 +63,7 @@ export class GraphVisualiser {
             kindColors[kind] = style.color;
             kindBorderColors[kind] = style.borderColor;
             kindShapes[kind] = style.shape;
+            kindSizes[kind] = style.size;
         }
 
         for (const [typeLabel, override] of Object.entries(service.typeStyles)) {
@@ -73,6 +75,7 @@ export class GraphVisualiser {
 
         this.styleParameters = {
             ...this.styleParameters,
+            vertex_sizes: kindSizes as any,
             vertex_colors: kindColors as any,
             vertex_border_colors: kindBorderColors as any,
             vertex_shapes: kindShapes as any,

@@ -62,6 +62,7 @@ export class StudioConverter implements ILogicalGraphConverter {
         const shape = (typeLabel && this.styleParameters.vertex_type_shapes?.[typeLabel])
             ?? this.styleParameters.vertex_shapes[vertex.kind];
         const size = (typeLabel ? this.styleParameters.vertex_type_sizes?.[typeLabel] : undefined)
+            ?? this.styleParameters.vertex_sizes?.[vertex.kind]
             ?? this.styleParameters.vertex_size;
         return {
             label: this.styleParameters.vertex_default_label(vertex),

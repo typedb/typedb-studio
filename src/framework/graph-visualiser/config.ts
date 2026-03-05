@@ -6,6 +6,7 @@ export interface StudioConverterStyleParameters {
     vertex_colors: Record<DataVertexKind, string>,
     vertex_border_colors: Record<DataVertexKind, string>,
     vertex_shapes: Record<DataVertexKind, string>,
+    vertex_sizes: Record<DataVertexKind, number>,
     vertex_size: number,
 
     // Per-type overrides (keyed by type label, e.g. "person", "employment")

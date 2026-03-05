@@ -17,13 +17,13 @@ export class GraphZoomControlsComponent {
     zoomIn(): void {
         const camera = this.visualiser?.sigma.getCamera();
         if (!camera) return;
-        camera.animatedZoom({ duration: 150, factor: ZOOM_FACTOR });
+        camera.animatedUnzoom({ duration: 150, factor: ZOOM_FACTOR });
     }
 
     zoomOut(): void {
         const camera = this.visualiser?.sigma.getCamera();
         if (!camera) return;
-        camera.animatedUnzoom({ duration: 150, factor: ZOOM_FACTOR });
+        camera.animatedZoom({ duration: 150, factor: ZOOM_FACTOR });
     }
 
     resetZoom(): void {

@@ -69,6 +69,19 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
         expression: "ellipse",
         functionCall: "ellipse",
     },
+    vertex_sizes: {
+        entity: 20,
+        relation: 20,
+        attribute: 20,
+        entityType: 20,
+        relationType: 20,
+        attributeType: 20,
+        roleType: 20,
+        value: 20,
+        unavailable: 20,
+        expression: 20,
+        functionCall: 20,
+    },
     vertex_size: 20,
 
     edge_color: chroma("grey"),
@@ -145,6 +158,7 @@ export const defaultExplorationQueryStyleParameters: StudioConverterStyleParamet
     vertex_colors: defaultQueryStyleParameters.vertex_colors,
     vertex_border_colors: defaultQueryStyleParameters.vertex_border_colors,
     vertex_shapes: defaultQueryStyleParameters.vertex_shapes,
+    vertex_sizes: defaultQueryStyleParameters.vertex_sizes,
     vertex_size: defaultQueryStyleParameters.vertex_size,
 
     // We only change this one:

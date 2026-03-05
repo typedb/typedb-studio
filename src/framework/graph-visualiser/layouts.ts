@@ -131,26 +131,10 @@ class ForceAtlasStaticWrapper implements StaticLayoutInner<ForceAtlas2Synchronou
             const inferred = forceAtlas2.inferSettings(graph.nodes().length);
             params = {
                 iterations: ForceAtlasStaticWrapper.DEFAULT_MAX_ITERATIONS,
-                settings: { ...inferred, adjustSizes: true },
+                settings: { ...inferred },
             };
         }
-        // Inflate node sizes to match actual visual half-width in graph coords.
-        // Vertex shader: size_graph = a_size * 4.0 (correctionRatio/sizeRatio = 1 at default zoom).
-        // Visual half-extent = size_graph * SDF_extent_in_UV:
-        //   Circle/Ellipse: 4 * 0.5 = 2.  Rect(2.5:1): 4 * 1.25 = 5.  Diamond(2:1): 4 * 1.16 ≈ 5.
-        const VISUAL_HALF_WIDTH: Record<string, number> = { "rounded-rect": 5, "diamond": 5, "ellipse": 2, "circle": 2 };
-        const savedSizes = new Map<string, number>();
-        graph.forEachNode((node, attrs) => {
-            savedSizes.set(node, attrs["size"]);
-            const factor = VISUAL_HALF_WIDTH[attrs["type"]] ?? 2.0;
-            graph.setNodeAttribute(node, "size", attrs["size"] * factor);
-        });
         forceAtlas2.assign(graph, params);
-        noverlap.assign(graph, { maxIterations: 500, settings: { margin: 10 } });
-        // Restore original sizes
-        savedSizes.forEach((size, node) => {
-            graph.setNodeAttribute(node, "size", size);
-        });
     }
 }
 
