@@ -310,8 +310,10 @@ export class GraphVisualiser {
 }
 
 export function createSigmaRenderer(containerEl: HTMLElement, sigma_settings: SigmaSettings, graph: MultiGraph) : Sigma {
-    // Create the sigma
-    return new Sigma(graph, containerEl, sigma_settings);
+    const renderer = new Sigma(graph, containerEl, sigma_settings);
+    // Disable hover rendering (node re-draw on hover WebGL layer)
+    (renderer as any).renderHighlightedNodes = () => {};
+    return renderer;
 }
 
 export function backCompat_pipelineBlocks(pipeline : AnalyzedPipelineBackCompat): AnalyzedConjunction[] | QueryConjunctionLegacy[] {

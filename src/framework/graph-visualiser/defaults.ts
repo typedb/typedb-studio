@@ -2,13 +2,15 @@ import { RoleType } from "@typedb/driver-http";
 import chroma from "chroma-js";
 import { vertexMapKey } from "./converter";
 import {DataVertex, VertexUnavailable} from "./graph";
-import EdgeCurveProgram from "@sigma/edge-curve";
+import { createEdgeCurveProgram, createDrawCurvedEdgeLabel, DEFAULT_EDGE_CURVE_PROGRAM_OPTIONS } from "@sigma/edge-curve";
 import {ForceLayoutSettings} from "graphology-layout-force";
+import { drawStraightEdgeLabel } from "sigma/rendering";
 import {Settings as SigmaSettings} from "sigma/settings";
 import {StudioConverterStructureParameters, StudioConverterStyleParameters} from "./config";
 import { NodeDiamondProgram } from "./node-diamond";
 import { NodeRoundedRectangleProgram } from "./node-rounded-rect";
 import { NodeEllipseProgram } from "./node-ellipse";
+import { zoomScaledFontSize } from "./label-utils";
 
 const darkPalette = {
     black:    "#09022F",
@@ -72,10 +74,10 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
     vertex_widths: {
         entity: 56,
         relation: 52,
-        attribute: 56,
+        attribute: 70,
         entityType: 56,
         relationType: 52,
-        attributeType: 56,
+        attributeType: 70,
         roleType: 56,
         value: 56,
         unavailable: 56,
@@ -85,10 +87,10 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
     vertex_heights: {
         entity: 24,
         relation: 26,
-        attribute: 24,
+        attribute: 40,
         entityType: 24,
         relationType: 26,
-        attributeType: 24,
+        attributeType: 40,
         roleType: 24,
         value: 24,
         unavailable: 24,
@@ -115,7 +117,7 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
                 return vertex.type.label;
             }
             case "attribute": {
-                return vertex.value;
+                return `${vertex.type.label}\n${vertex.value}`;
             }
             case "value": {
                 return vertex.value;
@@ -192,6 +194,28 @@ export const defaultStructureParameters: StudioConverterStructureParameters = {
     ignoreEdgesInvolvingLabels: ["isa", "sub", "relates", "plays"],
 };
 
+function edgeLabelSize(sourceData: any, targetData: any, maxSize: number): number {
+    return Math.max(zoomScaledFontSize(sourceData, maxSize), zoomScaledFontSize(targetData, maxSize));
+}
+
+function scaledDrawStraightEdgeLabel(context: CanvasRenderingContext2D, edgeData: any, sourceData: any, targetData: any, settings: any): void {
+    const scaledSize = edgeLabelSize(sourceData, targetData, settings.edgeLabelSize);
+    if (scaledSize < 3) return;
+    drawStraightEdgeLabel(context, edgeData, sourceData, targetData, { ...settings, edgeLabelSize: scaledSize });
+}
+
+const defaultDrawCurvedLabel = createDrawCurvedEdgeLabel(DEFAULT_EDGE_CURVE_PROGRAM_OPTIONS as any);
+const ScaledEdgeCurveProgram = createEdgeCurveProgram({
+    drawLabel(context, edgeData, sourceData, targetData, settings) {
+        const scaledSize = edgeLabelSize(sourceData, targetData, settings.edgeLabelSize);
+        if (scaledSize < 3) return;
+        defaultDrawCurvedLabel(
+            context, edgeData, sourceData, targetData,
+            { ...settings, edgeLabelSize: scaledSize },
+        );
+    },
+});
+
 export const defaultSigmaSettings: Partial<SigmaSettings> = {
     allowInvalidContainer: true,
     itemSizesReference: "positions",
@@ -202,6 +226,9 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
     labelColor: {
         color: `#958fa8`,
     },
+    labelRenderedSizeThreshold: 0,
+    labelDensity: Infinity,
+    defaultDrawEdgeLabel: scaledDrawStraightEdgeLabel as any,
     renderEdgeLabels: true,
     nodeProgramClasses: {
         "rounded-rect": NodeRoundedRectangleProgram,
@@ -209,7 +236,7 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
         ellipse: NodeEllipseProgram,
     },
     edgeProgramClasses: {
-        curved: EdgeCurveProgram,
+        curved: ScaledEdgeCurveProgram,
     },
 };
 
