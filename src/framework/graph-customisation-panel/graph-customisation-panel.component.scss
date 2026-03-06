@@ -141,7 +141,12 @@
   color: #958fa8;
   cursor: pointer;
   padding: 0 2px;
-  font-size: 10px;
+
+  i {
+    font-size: 10px;
+    width: 10px;
+    height: 10px;
+  }
 
   &:hover {
     color: #ff8080;
@@ -339,7 +344,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
+
+  i {
+    font-size: 11px;
+    width: 11px;
+    height: 11px;
+  }
 
   &:hover {
     background: colors.$secondary-deep-grey;

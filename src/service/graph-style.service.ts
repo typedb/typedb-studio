@@ -15,6 +15,14 @@ export type PartialNodeStyle = Partial<NodeStyle>;
 
 const STORAGE_KEY = "typedb-studio-graph-styles";
 
+function deriveFillFromBorder(borderHex: string): string {
+    const hex = borderHex.startsWith("#") ? borderHex.slice(1) : borderHex;
+    const r = Math.round(parseInt(hex.substring(0, 2), 16) * 0.25);
+    const g = Math.round(parseInt(hex.substring(2, 4), 16) * 0.25);
+    const b = Math.round(parseInt(hex.substring(4, 6), 16) * 0.25);
+    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+}
+
 const ALL_KINDS: DataVertexKind[] = [
     "entity", "relation", "attribute",
     "entityType", "relationType", "attributeType", "roleType",
@@ -49,13 +57,13 @@ export class GraphStyleService {
     getKindStyle(kind: DataVertexKind): NodeStyle {
         const base = this.getKindDefault(kind);
         const override = this._kindStyles[kind];
-        if (!override) return base;
+        const borderColor = override?.borderColor ?? base.borderColor;
         return {
-            color: override.color ?? base.color,
-            borderColor: override.borderColor ?? base.borderColor,
-            shape: override.shape ?? base.shape,
-            width: override.width ?? base.width,
-            height: override.height ?? base.height,
+            color: override?.color ?? deriveFillFromBorder(borderColor),
+            borderColor,
+            shape: override?.shape ?? base.shape,
+            width: override?.width ?? base.width,
+            height: override?.height ?? base.height,
         };
     }
 
@@ -66,9 +74,10 @@ export class GraphStyleService {
         const typeOverride = this._typeStyles[typeLabel];
         if (!typeOverride) return kindStyle;
 
+        const borderColor = typeOverride.borderColor ?? kindStyle.borderColor;
         return {
-            color: typeOverride.color ?? kindStyle.color,
-            borderColor: typeOverride.borderColor ?? kindStyle.borderColor,
+            color: typeOverride.color ?? deriveFillFromBorder(borderColor),
+            borderColor,
             shape: typeOverride.shape ?? kindStyle.shape,
             width: typeOverride.width ?? kindStyle.width,
             height: typeOverride.height ?? kindStyle.height,
@@ -85,6 +94,17 @@ export class GraphStyleService {
         this._typeStyles[typeLabel] = { ...this._typeStyles[typeLabel], ...style };
         this.save();
         this.styles$.next();
+    }
+
+    removeKindStyle(kind: DataVertexKind): void {
+        delete this._kindStyles[kind];
+        this.save();
+        this.styles$.next();
+    }
+
+    hasKindOverride(kind: DataVertexKind): boolean {
+        const override = this._kindStyles[kind];
+        return !!override && Object.keys(override).length > 0;
     }
 
     removeTypeStyle(typeLabel: string): void {

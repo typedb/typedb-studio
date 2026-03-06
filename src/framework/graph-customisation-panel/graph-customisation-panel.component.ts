@@ -211,6 +211,15 @@ export class GraphCustomisationPanelComponent {
         this.applyStyles();
     }
 
+    hasKindOverride(kind: DataVertexKind): boolean {
+        return this.styleService.hasKindOverride(kind);
+    }
+
+    clearKindOverride(kind: DataVertexKind): void {
+        this.styleService.removeKindStyle(kind);
+        this.applyStyles();
+    }
+
     // -- Edge label colors --
 
     getEdgeLabelColor(tag: string): string {
