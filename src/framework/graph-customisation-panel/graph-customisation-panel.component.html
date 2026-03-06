@@ -209,6 +209,9 @@
     <!-- Footer actions -->
     <div class="panel-footer">
       <div class="footer-toggles">
+        <mat-slide-toggle color="primary" [checked]="labelUseBorderColor" (change)="toggleLabelUseBorderColor()" labelPosition="before">
+          Match text color to border
+        </mat-slide-toggle>
         <mat-slide-toggle color="primary" [checked]="colorEdgesByConstraint" (change)="toggleEdgeColoring()" labelPosition="before">
           Color edges by constraint
         </mat-slide-toggle>

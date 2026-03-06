@@ -235,6 +235,7 @@ export class GraphCustomisationPanelComponent {
         this.styleService.resetToDefaults();
         this.applyStyles();
         this.visualiser?.applyEdgeStyleUpdate();
+        this.visualiser?.colorEdgesByConstraintIndex(true);
     }
 
     get colorEdgesByConstraint(): boolean {
@@ -244,6 +245,15 @@ export class GraphCustomisationPanelComponent {
     toggleEdgeColoring(): void {
         this.styleService.colorEdgesByConstraint = !this.styleService.colorEdgesByConstraint;
         this.visualiser?.colorEdgesByConstraintIndex(!this.styleService.colorEdgesByConstraint);
+    }
+
+    get labelUseBorderColor(): boolean {
+        return this.styleService.labelUseBorderColor;
+    }
+
+    toggleLabelUseBorderColor(): void {
+        this.styleService.labelUseBorderColor = !this.styleService.labelUseBorderColor;
+        this.visualiser?.applyStyleUpdate();
     }
 
     reLayout(): void {

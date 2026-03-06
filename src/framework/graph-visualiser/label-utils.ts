@@ -7,6 +7,12 @@ const LINE_HEIGHT = 1.3;
 const PADDING_X = 6;
 const LABEL_FONT_SIZE = 12;
 
+let _useBorderColorForLabels = true;
+
+export function setUseBorderColorForLabels(value: boolean): void {
+    _useBorderColorForLabels = value;
+}
+
 /**
  * Draw a node label centered inside the node.
  * Supports multi-line wrapping (up to 3 lines), explicit \n breaks,
@@ -34,7 +40,10 @@ export function drawCenteredNodeLabel<
     context.font = `${settings.labelWeight} ${fontSize}px ${settings.labelFont}`;
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.fillStyle = contrastColor((data as any)._originalColor ?? data.color);
+    const borderColor = (data as any).borderColor;
+    context.fillStyle = (_useBorderColorForLabels && borderColor)
+        ? borderColor
+        : contrastColor((data as any)._originalColor ?? data.color);
 
     const maxWidth = screenHalfW * 2 - PADDING_X;
     const lines = wrapText(context, data.label, maxWidth);

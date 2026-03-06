@@ -19,6 +19,7 @@ import {LayoutWrapper} from "./layouts";
 import chroma from "chroma-js";
 import {shouldCreateEdge, shouldCreateNode, StudioConverter} from "./converter";
 import type { GraphStyleService } from "../../service/graph-style.service";
+import { setUseBorderColorForLabels } from "./label-utils";
 
 export interface StudioState {
     activeQueryDatabase: string | null;
@@ -47,6 +48,7 @@ export class GraphVisualiser {
     }
 
     private applyServiceStyles(service: GraphStyleService): void {
+        setUseBorderColorForLabels(service.labelUseBorderColor);
         const kindColors: Record<string, string> = {} as any;
         const kindBorderColors: Record<string, string> = {} as any;
         const kindShapes: Record<string, string> = {} as any;

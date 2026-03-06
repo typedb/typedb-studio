@@ -143,7 +143,7 @@ class ForceAtlasStaticWrapper implements StaticLayoutInner<ForceAtlas2Synchronou
         graph.forEachNode((_, attrs) => {
             maxVisualSize = Math.max(maxVisualSize, Math.max(attrs["width"] ?? attrs["size"], attrs["height"] ?? attrs["size"]) * 2.0);
         });
-        const posScale = Math.max(1, maxVisualSize / 20);
+        const posScale = Math.max(1, maxVisualSize / 25);
         graph.forEachNode((node) => {
             graph.setNodeAttribute(node, "x", graph.getNodeAttribute(node, "x") * posScale);
             graph.setNodeAttribute(node, "y", graph.getNodeAttribute(node, "y") * posScale);

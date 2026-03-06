@@ -6,11 +6,12 @@ varying vec4 v_color;
 varying vec4 v_borderColor;
 varying vec2 v_uv;
 varying float v_aspect;
+varying float v_size;
 
 uniform float u_correctionRatio;
 
 const float CORNER_RADIUS = 0.16;
-const float BORDER_WIDTH = 0.06;
+const float BORDER_ABSOLUTE = 1.2;
 const vec4 transparent = vec4(0.0, 0.0, 0.0, 0.0);
 
 // Rhombus SDF (Inigo Quilez). b = half-diagonals.
@@ -23,6 +24,7 @@ float sdRhombus(vec2 p, vec2 b) {
 }
 
 void main(void) {
+  float bw = BORDER_ABSOLUTE / v_size;
   vec2 halfDiag = vec2(0.5 * v_aspect, 0.5);
   float dist = sdRhombus(v_uv, halfDiag) - CORNER_RADIUS;
 
@@ -39,8 +41,8 @@ void main(void) {
   } else if (dist > 0.0) {
     float t = dist / aaWidth;
     gl_FragColor = mix(v_borderColor, transparent, t);
-  } else if (dist > -BORDER_WIDTH) {
-    float innerT = smoothstep(-BORDER_WIDTH, -BORDER_WIDTH + aaWidth, dist);
+  } else if (dist > -bw) {
+    float innerT = smoothstep(-bw, -bw + aaWidth, dist);
     gl_FragColor = mix(v_color, v_borderColor, innerT);
   } else {
     gl_FragColor = v_color;

@@ -17,6 +17,7 @@ varying vec4 v_color;
 varying vec4 v_borderColor;
 varying vec2 v_uv;
 varying float v_aspect;
+varying float v_size;
 
 const float bias = 255.0 / 254.0;
 
@@ -39,6 +40,7 @@ void main() {
 
   v_uv = scaledOffset;
   v_aspect = a_aspect;
+  v_size = a_size;
 
   #ifdef PICKING_MODE
   v_color = a_id;

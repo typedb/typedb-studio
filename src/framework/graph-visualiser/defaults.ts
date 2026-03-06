@@ -41,6 +41,19 @@ export const defaultEdgeLabelColors: Record<string, string> = {
 
 export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
     vertex_colors: {
+        entity: "#402237",
+        relation: "#3e3213",
+        attribute: "#1f2840",
+        entityType: "#402237",
+        relationType: "#3e3213",
+        attributeType: "#1f2840",
+        roleType: "#2c1d03",
+        value: "#262626",
+        unavailable: "#1a1a1a",
+        expression: "#353340",
+        functionCall: "#353340",
+    },
+    vertex_border_colors: {
         entity: darkPalette.pink,
         relation: darkPalette.yellow,
         attribute: darkPalette.blue1,
@@ -52,19 +65,6 @@ export const defaultQueryStyleParameters: StudioConverterStyleParameters = {
         unavailable: "#666",
         expression: darkPalette.white2,
         functionCall: darkPalette.white2,
-    },
-    vertex_border_colors: {
-        entity: "#00000000",
-        relation: "#00000000",
-        attribute: "#00000000",
-        entityType: "#00000000",
-        relationType: "#00000000",
-        attributeType: "#00000000",
-        roleType: "#00000000",
-        value: "#00000000",
-        unavailable: "#00000000",
-        expression: "#00000000",
-        functionCall: "#00000000",
     },
     vertex_shapes: {
         entity: "rounded-rect",

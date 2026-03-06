@@ -27,7 +27,8 @@ export class GraphStyleService {
     private _kindStyles: Record<string, PartialNodeStyle> = {};
     private _typeStyles: Record<string, PartialNodeStyle> = {};
     private _edgeLabelColors: Record<string, string> = {};
-    private _colorEdgesByConstraint = true;
+    private _colorEdgesByConstraint = false;
+    private _labelUseBorderColor = true;
 
     readonly styles$ = new BehaviorSubject<void>(undefined);
 
@@ -109,6 +110,16 @@ export class GraphStyleService {
         this.save();
     }
 
+    get labelUseBorderColor(): boolean {
+        return this._labelUseBorderColor;
+    }
+
+    set labelUseBorderColor(value: boolean) {
+        this._labelUseBorderColor = value;
+        this.save();
+        this.styles$.next();
+    }
+
     // -- Edge label colors --
 
     getEdgeLabelColor(tag: string): string {
@@ -141,6 +152,8 @@ export class GraphStyleService {
         this._kindStyles = {};
         this._typeStyles = {};
         this._edgeLabelColors = {};
+        this._labelUseBorderColor = true;
+        this._colorEdgesByConstraint = false;
         this.save();
         this.styles$.next();
     }
@@ -152,6 +165,7 @@ export class GraphStyleService {
                 typeStyles: this._typeStyles,
                 edgeLabelColors: this._edgeLabelColors,
                 colorEdgesByConstraint: this._colorEdgesByConstraint,
+                labelUseBorderColor: this._labelUseBorderColor,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         } catch (e) {
@@ -167,7 +181,8 @@ export class GraphStyleService {
                 this._kindStyles = data.kindStyles ?? {};
                 this._typeStyles = data.typeStyles ?? {};
                 this._edgeLabelColors = data.edgeLabelColors ?? {};
-                this._colorEdgesByConstraint = data.colorEdgesByConstraint ?? true;
+                this._colorEdgesByConstraint = data.colorEdgesByConstraint ?? false;
+                this._labelUseBorderColor = data.labelUseBorderColor ?? true;
             }
         } catch (e) {
             console.warn("Failed to load graph styles from localStorage:", e);
