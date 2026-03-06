@@ -226,6 +226,7 @@ const ScaledEdgeCurveProgram = createEdgeCurveProgram({
 
 export const defaultSigmaSettings: Partial<SigmaSettings> = {
     allowInvalidContainer: true,
+    labelFont: '"Darkmode", sans-serif',
     itemSizesReference: "positions",
     autoRescale: false,
     zoomToSizeRatioFunction: (x) => x,

@@ -93,6 +93,9 @@ export class GraphVisualiser {
             vertex_type_heights: Object.keys(typeHeights).length ? typeHeights : undefined,
             edge_label_colors: service.getResolvedEdgeLabelColors(),
         };
+        if (this.interactionHandler) {
+            this.interactionHandler.styleParameters = this.styleParameters;
+        }
     }
 
     applyStyleUpdate(): void {
