@@ -1,5 +1,4 @@
 import ForceSupervisor from "graphology-layout-force/worker";
-import * as studioDefaultSettings from "./defaults";
 import Graph from "graphology";
 import MultiGraph from "graphology";
 import {ForceLayoutSettings} from "graphology-layout-force";
@@ -27,7 +26,7 @@ export class Layouts {
     // This one is great at interaction, but it might need parameter tweaking depending on the graph rendered.
     static createForceLayoutSupervisor(graph: MultiGraph, settings: ForceLayoutSettings | undefined): LayoutWrapper {
         if (settings == undefined) {
-            settings = studioDefaultSettings.defaultForceSupervisorSettings;
+            settings = defaultForceSupervisorSettings;
         }
         let layout = new ForceSupervisor(graph, {
             isNodeFixed: (_, attr) => attr["highlighted"],
@@ -172,4 +171,12 @@ class NoverlapWrapper implements StaticLayoutInner<NoverlapLayoutParameters> {
         noverlap.assign(graph, params);
     }
 }
+
+export const defaultForceSupervisorSettings: ForceLayoutSettings = {
+    attraction: 0.00005,
+    repulsion: 0.5,
+    gravity: 0.00000005,
+    inertia: 0.2,
+    maxMove: 200,
+};
 

@@ -2,7 +2,7 @@ import Sigma from "sigma";
 import MultiGraph from "graphology";
 import chroma from "chroma-js";
 import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "sigma/types";
-import {StudioConverterStyleParameters} from "./config";
+import {StudioConverterStyleParameters} from "./style";
 import {SpecialVertexKind} from "./graph";
 import { StudioState } from "./index";
 

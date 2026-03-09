@@ -12,8 +12,8 @@ import {
 import Graph from "graphology";
 import { BehaviorSubject, combineLatest, distinctUntilChanged, finalize, first, map } from "rxjs";
 import Sigma, { Camera } from "sigma";
-import { createSigmaRenderer, GraphVisualiser } from "../framework/graph-visualiser";
-import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
+import { GraphVisualiser } from "../framework/graph-visualiser";
+import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/sigma-settings";
 import { newVisualGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layouts";
 import { DriverState } from "./driver-state.service";

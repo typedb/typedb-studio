@@ -6,18 +6,16 @@ import {
     ConstraintExpressionLegacy, ConstraintLinksLegacy,
     QueryStructureLegacy, QueryConjunctionLegacy, ConceptRowsQueryResponseLegacy
 } from "@typedb/driver-http";
-import MultiGraph from "graphology";
 import Sigma from "sigma";
-import { Settings as SigmaSettings } from "sigma/settings";
-import { StudioConverterStructureParameters, StudioConverterStyleParameters } from "./config";
-
-import * as studioDefaultSettings from "./defaults";
-import {constructGraphFromRowsResult, QueryCoordinates, VisualGraph} from "./graph";
+import {
+    StudioConverterStructureParameters, defaultStructureParameters,
+    constructGraphFromRowsResult, QueryCoordinates, VisualGraph,
+} from "./graph";
+import { StudioConverterStyleParameters, defaultQueryStyleParameters } from "./style";
 import {InteractionHandler} from "./interaction";
-import { convertLogicalGraphWith } from "./visualisation";
+import { convertLogicalGraphWith, shouldCreateEdge, shouldCreateNode, StudioConverter } from "./converter";
 import {LayoutWrapper} from "./layouts";
 import chroma from "chroma-js";
-import {shouldCreateEdge, shouldCreateNode, StudioConverter} from "./converter";
 import type { GraphStyleService } from "../../service/graph-style.service";
 import { setUseBorderColorForLabels } from "./label-utils";
 
@@ -32,8 +30,8 @@ export class GraphVisualiser {
     interactionHandler: InteractionHandler;
     state: StudioState;
     styleService: GraphStyleService | null = null;
-    private styleParameters: StudioConverterStyleParameters = studioDefaultSettings.defaultQueryStyleParameters;
-    private structureParameters: StudioConverterStructureParameters = studioDefaultSettings.defaultStructureParameters;
+    private styleParameters: StudioConverterStyleParameters = defaultQueryStyleParameters;
+    private structureParameters: StudioConverterStructureParameters = defaultStructureParameters;
 
     constructor(graph: VisualGraph, sigma: Sigma, layout: LayoutWrapper, styleService?: GraphStyleService) {
         this.graph = graph;
@@ -328,13 +326,6 @@ export class GraphVisualiser {
     destroy() {
         this.sigma.kill();
     }
-}
-
-export function createSigmaRenderer(containerEl: HTMLElement, sigma_settings: SigmaSettings, graph: MultiGraph) : Sigma {
-    const renderer = new Sigma(graph, containerEl, sigma_settings);
-    // Disable hover rendering (node re-draw on hover WebGL layer)
-    (renderer as any).renderHighlightedNodes = () => {};
-    return renderer;
 }
 
 export function backCompat_pipelineBlocks(pipeline : AnalyzedPipelineBackCompat): AnalyzedConjunction[] | QueryConjunctionLegacy[] {

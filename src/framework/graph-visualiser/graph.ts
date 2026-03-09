@@ -1,5 +1,5 @@
 import {
-    Attribute, AttributeType, Concept, ConceptRow, ConceptRowsQueryResponse, Entity, EntityType, InstantiableType,
+    Attribute, AttributeType, Concept, ConceptRow, ConceptRowsQueryResponse, EdgeKind, Entity, EntityType, InstantiableType,
     getVariableName, ConstraintComparison, ConstraintExpression, ConstraintFunction,
     ConstraintHas, ConstraintIid, ConstraintIs, ConstraintIsa, ConstraintIsaExact, ConstraintKind,
     ConstraintLabel, ConstraintLinks, ConstraintOwns, ConstraintPlays, ConstraintRelates,
@@ -261,6 +261,14 @@ export interface GraphAttributes {
 export type VisualGraph = MultiGraph<VertexAttributes, EdgeAttributes, GraphAttributes>;
 
 export const newVisualGraph: () => VisualGraph = () => new MultiGraph<VertexAttributes, EdgeAttributes, GraphAttributes>();
+
+export interface StudioConverterStructureParameters {
+    ignoreEdgesInvolvingLabels: Array<EdgeKind>,
+}
+
+export const defaultStructureParameters: StudioConverterStructureParameters = {
+    ignoreEdgesInvolvingLabels: ["isa", "sub", "relates", "plays"],
+};
 
 ///////////////////////////////////
 // TypeDB server -> logical graph

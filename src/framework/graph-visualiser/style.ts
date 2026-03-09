@@ -1,18 +1,35 @@
 import { RoleType } from "@typedb/driver-http";
+import { DataVertex, DataVertexKind, VertexUnavailable } from "./graph";
+import { Color } from "chroma-js";
 import chroma from "chroma-js";
 import { vertexMapKey } from "./converter";
-import {DataVertex, VertexUnavailable} from "./graph";
-import { createEdgeCurveProgram, createDrawCurvedEdgeLabel, DEFAULT_EDGE_CURVE_PROGRAM_OPTIONS } from "@sigma/edge-curve";
-import {ForceLayoutSettings} from "graphology-layout-force";
-import { drawStraightEdgeLabel } from "sigma/rendering";
-import {Settings as SigmaSettings} from "sigma/settings";
-import {StudioConverterStructureParameters, StudioConverterStyleParameters} from "./config";
-import { NodeDiamondProgram } from "./node-diamond";
-import { NodeRoundedRectangleProgram } from "./node-rounded-rect";
-import { NodeEllipseProgram } from "./node-ellipse";
-import { zoomScaledFontSize } from "./label-utils";
 
-const darkPalette = {
+export interface StudioConverterStyleParameters {
+    vertex_colors: Record<DataVertexKind, string>,
+    vertex_border_colors: Record<DataVertexKind, string>,
+    vertex_shapes: Record<DataVertexKind, string>,
+    vertex_widths: Record<DataVertexKind, number>,
+    vertex_heights: Record<DataVertexKind, number>,
+    vertex_height: number,
+
+    // Per-type overrides (keyed by type label, e.g. "person", "employment")
+    vertex_type_colors?: Record<string, string>,
+    vertex_type_border_colors?: Record<string, string>,
+    vertex_type_shapes?: Record<string, string>,
+    vertex_type_widths?: Record<string, number>,
+    vertex_type_heights?: Record<string, number>,
+
+    edge_color: Color,
+    edge_label_colors?: Record<string, string>,
+    edge_highlight_color: Color;
+    edge_size: number
+
+    vertex_default_label: (vertex: DataVertex) => string;
+    vertex_hover_label: (vertex: DataVertex) => string;
+    links_edge_label: (role: RoleType | VertexUnavailable) => string;
+}
+
+export const darkPalette = {
     black:    "#09022F",
     blue1:    "#7BA0FF",
     green:    "#02DAC9",
@@ -195,64 +212,4 @@ export const defaultExplorationQueryStyleParameters: StudioConverterStyleParamet
     vertex_default_label: defaultQueryStyleParameters.vertex_default_label,
     vertex_hover_label: defaultQueryStyleParameters.vertex_hover_label,
     links_edge_label: defaultQueryStyleParameters.links_edge_label,
-};
-
-
-export const defaultStructureParameters: StudioConverterStructureParameters = {
-    ignoreEdgesInvolvingLabels: ["isa", "sub", "relates", "plays"],
-};
-
-function edgeLabelSize(sourceData: any, targetData: any, maxSize: number): number {
-    return Math.max(zoomScaledFontSize(sourceData, maxSize), zoomScaledFontSize(targetData, maxSize));
-}
-
-function scaledDrawStraightEdgeLabel(context: CanvasRenderingContext2D, edgeData: any, sourceData: any, targetData: any, settings: any): void {
-    const scaledSize = edgeLabelSize(sourceData, targetData, settings.edgeLabelSize);
-    if (scaledSize < 3) return;
-    drawStraightEdgeLabel(context, edgeData, sourceData, targetData, { ...settings, edgeLabelSize: scaledSize });
-}
-
-const defaultDrawCurvedLabel = createDrawCurvedEdgeLabel(DEFAULT_EDGE_CURVE_PROGRAM_OPTIONS as any);
-const ScaledEdgeCurveProgram = createEdgeCurveProgram({
-    drawLabel(context, edgeData, sourceData, targetData, settings) {
-        const scaledSize = edgeLabelSize(sourceData, targetData, settings.edgeLabelSize);
-        if (scaledSize < 3) return;
-        defaultDrawCurvedLabel(
-            context, edgeData, sourceData, targetData,
-            { ...settings, edgeLabelSize: scaledSize },
-        );
-    },
-});
-
-export const defaultSigmaSettings: Partial<SigmaSettings> = {
-    allowInvalidContainer: true,
-    labelFont: '"Darkmode", sans-serif',
-    itemSizesReference: "positions",
-    autoRescale: false,
-    zoomToSizeRatioFunction: (x) => x,
-    minCameraRatio: 0.1,
-    maxCameraRatio: 10,
-    labelColor: {
-        color: `#958fa8`,
-    },
-    labelRenderedSizeThreshold: 0,
-    labelDensity: Infinity,
-    defaultDrawEdgeLabel: scaledDrawStraightEdgeLabel as any,
-    renderEdgeLabels: true,
-    nodeProgramClasses: {
-        "rounded-rect": NodeRoundedRectangleProgram,
-        diamond: NodeDiamondProgram,
-        ellipse: NodeEllipseProgram,
-    },
-    edgeProgramClasses: {
-        curved: ScaledEdgeCurveProgram,
-    },
-};
-
-export const defaultForceSupervisorSettings: ForceLayoutSettings = {
-    attraction: 0.00005,
-    repulsion: 0.5,
-    gravity: 0.00000005,
-    inertia: 0.2,
-    maxMove: 200,
 };
