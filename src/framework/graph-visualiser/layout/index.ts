@@ -179,4 +179,3 @@ export const defaultForceSupervisorSettings: ForceLayoutSettings = {
     inertia: 0.2,
     maxMove: 200,
 };
-

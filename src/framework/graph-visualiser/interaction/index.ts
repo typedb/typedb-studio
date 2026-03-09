@@ -2,12 +2,15 @@ import Sigma from "sigma";
 import MultiGraph from "graphology";
 import chroma from "chroma-js";
 import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "sigma/types";
-import {StudioConverterStyleParameters} from "./style";
-import {SpecialVertexKind} from "./graph";
-import { StudioState } from "./index";
+import {StudioConverterStyleParameters} from "../style/parameters";
+import {SpecialVertexKind} from "../data/types";
 
 // Ref: https://www.sigmajs.org/docs/advanced/events/
 // and: https://www.sigmajs.org/storybook/?path=/story/mouse-manipulations--story
+
+export interface StudioState {
+    activeQueryDatabase: string | null;
+}
 
 interface InteractionState {
     draggedNode: string | null;
@@ -112,79 +115,6 @@ export class InteractionHandler {
     }
 
     onDoubleClickNode(event: SigmaNodeEventPayload) {
-        // let node = event.node;
-        // let attributes = this.graph.getNodeAttributes(node) as { metadata: any };
-        // if (this.studioState.activeQueryDatabase == null) {
-        //     console.log("Could not dispatch explore query: Unknown active database") // unreachable
-        //     return;
-        // }
-        // let queries = null;
-        // switch(attributes.metadata.concept.kind) {
-        //     case TypeKind.entityType: {
-        //         queries = [
-        //             QUERY_EXPLORE_SUBTYPES.replace("<<label>>", attributes.metadata.concept.label),
-        //             QUERY_EXPLORE_SUPERTYPE.replace("<<label>>", attributes.metadata.concept.label),
-        //             QUERY_EXPLORE_OWNED.replace("<<label>>", attributes.metadata.concept.label),
-        //             QUERY_EXPLORE_PLAYS.replace("<<label>>", attributes.metadata.concept.label),
-        //         ];
-        //         break;
-        //     }
-        //     case TypeKind.relationType: {
-        //         queries = [
-        //             QUERY_EXPLORE_SUBTYPES.replace("<<label>>", attributes.metadata.concept.label),
-        //             QUERY_EXPLORE_SUPERTYPE.replace("<<label>>", attributes.metadata.concept.label),
-        //             QUERY_EXPLORE_RELATES.replace("<<label>>", attributes.metadata.concept.label),
-        //             QUERY_EXPLORE_OWNED.replace("<<label>>", attributes.metadata.concept.label),
-        //             QUERY_EXPLORE_PLAYS.replace("<<label>>", attributes.metadata.concept.label),
-        //         ];
-        //         break;
-        //     }
-        //     case TypeKind.attributeType:{
-        //         queries = [
-        //             QUERY_EXPLORE_SUBTYPES.replace("<<label>>", attributes.metadata.concept.label),
-        //             QUERY_EXPLORE_SUPERTYPE.replace("<<label>>", attributes.metadata.concept.label),
-        //             QUERY_EXPLORE_OWNERS.replace("<<label>>", attributes.metadata.concept.label),
-        //         ];
-        //         break;
-        //     }
-        //
-        //     case ThingKind.entity: {
-        //         queries = [
-        //             QUERY_EXPLORE_ATTRIBUTES.replace("<<iid>>", attributes.metadata.concept.iid),
-        //             QUERY_EXPLORE_RELATIONS.replace("<<iid>>", attributes.metadata.concept.iid),
-        //         ];
-        //         break;
-        //     }
-        //     case ThingKind.relation: {
-        //         queries = [
-        //             QUERY_EXPLORE_ATTRIBUTES.replace("<<iid>>", attributes.metadata.concept.iid),
-        //             QUERY_EXPLORE_RELATIONS.replace("<<iid>>", attributes.metadata.concept.iid),
-        //             QUERY_EXPLORE_PLAYERS.replace("<<iid>>", attributes.metadata.concept.iid),
-        //         ];
-        //         break;
-        //     }
-        //     case TypeKind.roleType:
-        //     case "attribute":
-        //     case "value":
-        //     case SpecialVertexKind.unavailable:
-        //     case SpecialVertexKind.func:
-        //     case SpecialVertexKind.expr:
-        //     {
-        //         console.log("Unexplorable kind: " + attributes.metadata.concept.kind);
-        //         return;
-        //     }
-        // }
-        // if (queries == null) {
-        //     throw new Error("unreachable: Expected queries to be non-null");
-        // }
-        // queries.forEach(query => {
-        //     this.driver.runExplorationQuery(this.studioState.activeQueryDatabase!, query, TypeDBQueryType.read)
-        //         .then(result => {
-        //             if ("err" in result) {
-        //                 console.log("Error encountered in exploration query: " + JSON.stringify(result.err));
-        //             }
-        //         });
-        // });
     }
 
     highlightAnswer(answerIndex: number) {
@@ -239,17 +169,3 @@ enum StudioSigmaEventType {
     // Remaining: downStage, clickStage, rightClickStage, doubleClickStage, wheelStage
     // Remaining: beforeRender, afterRender, resize, kill
 }
-
-
-const QUERY_EXPLORE_ATTRIBUTES = "match $x iid <<iid>>; $x has $other;";
-const QUERY_EXPLORE_RELATIONS = "match $x iid <<iid>>; $other links ($t: $x);";
-const QUERY_EXPLORE_PLAYERS = "match $x iid <<iid>>; $x links ($t: $other);";
-// const QUERY_EXPLORE_OWNERS = "match $x iid <<iid>>; $x links ($t: $other)";
-
-const QUERY_EXPLORE_OWNED = "match $x label <<label>>; $x owns $other;";
-const QUERY_EXPLORE_OWNERS = "match $x label <<label>>; $other owns $x;";
-const QUERY_EXPLORE_RELATES  = "match $x label <<label>>; $x relates $t; $other plays $t;";
-const QUERY_EXPLORE_PLAYS= "match $x label <<label>>; $x plays $t; $other relates $t;";
-
-const QUERY_EXPLORE_SUPERTYPE = "match $x label <<label>>; $x sub! $other;";
-const QUERY_EXPLORE_SUBTYPES = "match $x label <<label>>; $other sub! $x;";

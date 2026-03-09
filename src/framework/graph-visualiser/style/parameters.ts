@@ -1,8 +1,8 @@
 import { RoleType } from "@typedb/driver-http";
-import { DataVertex, DataVertexKind, VertexUnavailable } from "./graph";
+import { DataVertex, DataVertexKind, VertexUnavailable } from "../data/types";
 import { Color } from "chroma-js";
 import chroma from "chroma-js";
-import { vertexMapKey } from "./converter";
+import { vertexMapKey } from "../visual/converter";
 
 export interface StudioConverterStyleParameters {
     vertex_colors: Record<DataVertexKind, string>,

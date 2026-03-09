@@ -1,27 +1,39 @@
 import {
-    ApiResponse, ConceptRowsQueryResponse, AnalyzedConjunction, AnalyzedPipeline,
+    ApiResponse, ConceptRowsQueryResponse,
     isApiErrorResponse,
     QueryResponse,
-    ConstraintAny, ConstraintExpression, ConstraintSpan, ConstraintVertexVariable,
-    ConstraintExpressionLegacy, ConstraintLinksLegacy,
-    QueryStructureLegacy, QueryConjunctionLegacy, ConceptRowsQueryResponseLegacy
 } from "@typedb/driver-http";
 import Sigma from "sigma";
-import {
-    StudioConverterStructureParameters, defaultStructureParameters,
-    constructGraphFromRowsResult, QueryCoordinates, VisualGraph,
-} from "./graph";
-import { StudioConverterStyleParameters, defaultQueryStyleParameters } from "./style";
-import {InteractionHandler} from "./interaction";
-import { convertLogicalGraphWith, shouldCreateEdge, shouldCreateNode, StudioConverter } from "./converter";
-import {LayoutWrapper} from "./layouts";
-import chroma from "chroma-js";
 import type { GraphStyleService } from "../../service/graph-style.service";
-import { setUseBorderColorForLabels } from "./label-utils";
 
-export interface StudioState {
-    activeQueryDatabase: string | null;
-}
+// Domain imports
+import { constructGraphFromRowsResult } from "./data/builder";
+import { AnalyzedPipelineBackCompat } from "./data/back-compat";
+import { VisualGraph, StudioConverterStructureParameters, defaultStructureParameters } from "./visual/types";
+import { convertLogicalGraphWith, StudioConverter } from "./visual/converter";
+import { StudioConverterStyleParameters, defaultQueryStyleParameters } from "./style/parameters";
+import { colorEdgesByConstraintIndex as _colorEdgesByConstraintIndex, colorQuery as _colorQuery } from "./style/constraint-colors";
+import { setUseBorderColorForLabels } from "./rendering/label-utils";
+import { InteractionHandler, StudioState } from "./interaction";
+import { LayoutWrapper } from "./layout";
+
+// Re-export public API from domain modules
+export type { StudioState } from "./interaction";
+export type { VisualGraph } from "./visual/types";
+export { newVisualGraph, defaultStructureParameters } from "./visual/types";
+export type { StudioConverterStructureParameters } from "./visual/types";
+export { convertLogicalGraphWith, StudioConverter, shouldCreateEdge, shouldCreateNode, vertexMapKey } from "./visual/converter";
+export type { DataVertexKind, DataVertex, QueryCoordinates } from "./data/types";
+export { constructGraphFromRowsResult } from "./data/builder";
+export { backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./data/back-compat";
+export type { ConstraintBackCompat, ConceptRowsQueryResponseBackCompat, AnalyzedPipelineBackCompat } from "./data/back-compat";
+export { StudioConverterStyleParameters, defaultQueryStyleParameters, defaultExplorationQueryStyleParameters, defaultEdgeLabelColors, darkPalette } from "./style/parameters";
+export { colorEdgesByConstraintIndex, colorQuery } from "./style/constraint-colors";
+export { createSigmaRenderer, defaultSigmaSettings } from "./rendering/sigma-settings";
+export { setUseBorderColorForLabels } from "./rendering/label-utils";
+export { Layouts } from "./layout";
+export type { LayoutWrapper } from "./layout";
+export { InteractionHandler } from "./interaction";
 
 export class GraphVisualiser {
     graph: VisualGraph;
@@ -152,8 +164,6 @@ export class GraphVisualiser {
     centerCamera(): void {
         const nodes = this.graph.nodes();
         if (nodes.length === 0) return;
-        // With autoRescale off, sigma normalizes the extent to [0,1].
-        // The graph center always maps to (0.5, 0.5) in normalized space.
         this.sigma.getCamera().setState({
             x: 0.5,
             y: 0.5,
@@ -178,7 +188,7 @@ export class GraphVisualiser {
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
             (window as any)._lastQueryAnswers = res.ok.answers; // TODO: Remove once schema based autocomplete is stable.
             let converter = new StudioConverter(this.graph, res.ok.query, false, this.structureParameters, this.styleParameters);
-            let logicalGraph = constructGraphFromRowsResult(res.ok); // In memory, not visualised
+            let logicalGraph = constructGraphFromRowsResult(res.ok);
             convertLogicalGraphWith(logicalGraph, converter);
         }
     }
@@ -188,7 +198,7 @@ export class GraphVisualiser {
 
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
             let converter = new StudioConverter(this.graph, res.ok.query, true, this.structureParameters, this.styleParameters);
-            let logicalGraph = constructGraphFromRowsResult(res.ok as ConceptRowsQueryResponse); // In memory, not visualised
+            let logicalGraph = constructGraphFromRowsResult(res.ok as ConceptRowsQueryResponse);
             convertLogicalGraphWith(logicalGraph, converter);
         }
     }
@@ -203,7 +213,6 @@ export class GraphVisualiser {
         if (term !== "") {
             this.graph.nodes().forEach(node => {
                 const attributes = this.graph.getNodeAttributes(node);
-                // check concept.type.label if you want to match types of things.
                 if ("concept" in attributes.metadata) {
                     const concept = attributes.metadata.concept;
                     if (("iid" in concept && safe_str(concept.iid).indexOf(term) !== -1)
@@ -217,131 +226,14 @@ export class GraphVisualiser {
     }
 
     colorEdgesByConstraintIndex(reset: boolean): void {
-        const params = this.interactionHandler.styleParameters;
-        this.graph.edges().forEach(edgeKey => {
-            if (reset) {
-                const tag = this.graph.getEdgeAttributes(edgeKey).metadata.dataEdge.tag;
-                const color = params.edge_label_colors?.[tag] ?? params.edge_color.hex();
-                this.graph.setEdgeAttribute(edgeKey, "color", color);
-            } else {
-                const color = this.getColorForEdge(this.graph, edgeKey);
-                this.graph.setEdgeAttribute(edgeKey, "color", color.hex());
-            }
-        });
-    }
-
-    private getColorForEdge(graph: VisualGraph, edgeKey: string): chroma.Color {
-        let attributes = graph.getEdgeAttributes(edgeKey);
-        let constraintIndex = attributes.metadata.dataEdge.queryCoordinates.constraint;
-        let branchIndex = attributes.metadata.dataEdge.queryCoordinates.branch;
-        return this.getColorForConstraintIndex(branchIndex, constraintIndex);
+        _colorEdgesByConstraintIndex(this.graph, this.interactionHandler.styleParameters, reset);
     }
 
     colorQuery(queryString: string, queryStructure: AnalyzedPipelineBackCompat): string {
-        function shouldColourConstraint(constraint: ConstraintAny | ConstraintExpressionLegacy | ConstraintLinksLegacy): boolean {
-            switch (constraint.tag) {
-                case "isa": return shouldCreateEdge(queryStructure, constraint, constraint.instance, constraint.type);
-                case "isa!": return shouldCreateEdge(queryStructure, constraint, constraint.instance, constraint.type);
-                case "has":  return shouldCreateEdge(queryStructure, constraint, constraint.owner, constraint.attribute);
-                case "links":
-                    return shouldCreateEdge(queryStructure, constraint, constraint.relation, constraint.player);
-                case "sub":
-                    return shouldCreateEdge(queryStructure, constraint, constraint.subtype, constraint.supertype);
-                case "sub!":
-                    return shouldCreateEdge(queryStructure, constraint, constraint.subtype, constraint.supertype);
-                case "owns":
-                    return shouldCreateEdge(queryStructure, constraint, constraint.owner, constraint.attribute);
-                case "relates":
-                    return shouldCreateEdge(queryStructure, constraint, constraint.relation, constraint.role);
-                case "plays":
-                    return shouldCreateEdge(queryStructure, constraint, constraint.player, constraint.role);
-                case "expression":
-
-                    return (
-                        constraint.arguments.map(arg => shouldCreateNode(queryStructure, arg)).reduce((a,b) => a || b, false)
-                        || shouldCreateNode(queryStructure, backCompat_expressionAssigned(constraint))
-                    );
-                case "functionCall":
-                    return (
-                        constraint.arguments.map(arg => shouldCreateNode(queryStructure, arg)).reduce((a,b) => a || b, false)
-                        || constraint.assigned.map(assigned => shouldCreateNode(queryStructure, assigned)).reduce((a,b) => a || b, false)
-                    );
-                case "comparison": return false;
-                case "is": return false;
-                case "iid": return false;
-                case "kind": return false;
-                case "label": return false;
-                case "value": return false;
-                case "or":  return false;
-                case "not": return false;
-                case "try": return false;
-            }
-        }
-        let spans: { span: ConstraintSpan, coordinates: QueryCoordinates}[] = [];
-
-        backCompat_pipelineBlocks(queryStructure).forEach((branch, branchIndex) => {
-            branch.constraints.forEach((constraint, constraintIndex) => {
-                if (shouldColourConstraint(constraint)) {
-                    let span = "textSpan" in constraint ? constraint["textSpan"] : null;
-                    if (span != null) {
-                        spans.push({span, coordinates: { branch: branchIndex, constraint: constraintIndex}});
-                    }
-                }
-            })
-        });
-        // Add one to end-offset so we're AFTER the last character
-        let starts_ends_separate = spans.flatMap(span => [
-            { offset: span.span.begin, coordinatesIfStartElseNull: span.coordinates },
-            { offset: span.span.end + 1, coordinatesIfStartElseNull: null }
-    ]);
-        starts_ends_separate.sort((a,b) => a.offset - b.offset);
-        let se_index = 0;
-        let highlighted = "";
-        for(let i= 0; i<queryString.length; i++) {
-            while (se_index < starts_ends_separate.length && starts_ends_separate[se_index].offset == i) {
-                let coordinatesOrNullIfEnd = starts_ends_separate[se_index].coordinatesIfStartElseNull;
-                if (coordinatesOrNullIfEnd == null) {
-                    highlighted += "</span>"
-                } else {
-                    let color = this.getColorForConstraintIndex(coordinatesOrNullIfEnd.branch, coordinatesOrNullIfEnd.constraint)
-                    highlighted += "<span style=\"color: " + color.hex() + "\">";
-                }
-                se_index += 1;
-            }
-            highlighted += (queryString[i] == "\n") ? "<br/>": queryString[i];
-        }
-        return highlighted;
-    }
-
-    private getColorForConstraintIndex(branchIndex: number, constraintIndex: number): chroma.Color {
-        const OFFSET1 = 153;
-        const OFFSET2 = 173;
-        const OFFSET3 = 199;
-        let r = ((branchIndex + 1) * OFFSET3 + (constraintIndex+1) * OFFSET1) % 256;
-        let g = ((branchIndex + 1) * OFFSET2 + (constraintIndex+1) * OFFSET2) % 256;
-        let b = ((branchIndex + 1) * OFFSET1 + (constraintIndex+1) * OFFSET3) % 256;
-        return chroma([r,g,b]);
+        return _colorQuery(queryString, queryStructure);
     }
 
     destroy() {
         this.sigma.kill();
     }
 }
-
-export function backCompat_pipelineBlocks(pipeline : AnalyzedPipelineBackCompat): AnalyzedConjunction[] | QueryConjunctionLegacy[] {
-    if ("blocks" in pipeline) {
-        return pipeline["blocks"];
-    } else if ("conjunctions" in pipeline) {
-        return pipeline["conjunctions"];
-    } else {
-        throw new Error("Unreachable: pipeline neither had blocks nor conjunctions");
-    }
-}
-
-export function backCompat_expressionAssigned(expr: ConstraintExpression | ConstraintExpressionLegacy): ConstraintVertexVariable {
-    return (Array.isArray(expr.assigned) ? expr.assigned[0] : expr.assigned) as ConstraintVertexVariable;
-}
-
-export type ConstraintBackCompat = ConstraintAny | ConstraintLinksLegacy | ConstraintExpressionLegacy;
-export type ConceptRowsQueryResponseBackCompat = ConceptRowsQueryResponse | ConceptRowsQueryResponseLegacy;
-export type AnalyzedPipelineBackCompat = AnalyzedPipeline | QueryStructureLegacy;

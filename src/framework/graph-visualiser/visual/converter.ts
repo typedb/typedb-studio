@@ -1,12 +1,6 @@
 import { getVariableName, ConstraintVertexAny } from "@typedb/driver-http";
 import {
     DataGraph,
-    EdgeAttributes,
-    EdgeMetadata,
-    StudioConverterStructureParameters,
-    VertexAttributes,
-    VertexMetadata,
-    VisualGraph,
     DataConstraintExpression,
     DataConstraintFunction,
     DataConstraintAny,
@@ -20,13 +14,21 @@ import {
     VertexFunction,
     VertexExpression, DataConstraintSubExact, DataConstraintIsaExact, DataVertex,
     DataConstraintKind
-} from "./graph";
-import {StudioConverterStyleParameters} from "./style";
+} from "../data/types";
 import {
     AnalyzedPipelineBackCompat,
+    ConstraintBackCompat,
     backCompat_expressionAssigned,
-    ConstraintBackCompat
-} from "./index";
+} from "../data/back-compat";
+import {
+    EdgeAttributes,
+    EdgeMetadata,
+    StudioConverterStructureParameters,
+    VertexAttributes,
+    VertexMetadata,
+    VisualGraph,
+} from "./types";
+import { StudioConverterStyleParameters } from "../style/parameters";
 
 /////////////////////////////////
 // Logical Graph -> Graphology //

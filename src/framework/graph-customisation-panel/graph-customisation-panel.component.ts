@@ -10,7 +10,7 @@ import { MatSlideToggleModule } from "@angular/material/slide-toggle";
 import { ColorPickerDirective } from "ngx-color-picker";
 import { GraphStyleService } from "../../service/graph-style.service";
 import { GraphVisualiser } from "../graph-visualiser";
-import { DataVertex, DataVertexKind } from "../graph-visualiser/graph";
+import { DataVertex, DataVertexKind } from "../graph-visualiser/data/types";
 
 interface KindRow {
     kind: DataVertexKind;

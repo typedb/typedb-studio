@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
-import { DataVertexKind } from "../framework/graph-visualiser/graph";
-import { defaultEdgeLabelColors, defaultQueryStyleParameters } from "../framework/graph-visualiser/style";
+import { DataVertexKind } from "../framework/graph-visualiser/data/types";
+import { defaultEdgeLabelColors, defaultQueryStyleParameters } from "../framework/graph-visualiser/style/parameters";
 
 export interface NodeStyle {
     color: string;
