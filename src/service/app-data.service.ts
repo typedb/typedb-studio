@@ -192,6 +192,7 @@ export interface PersistedQueryTab {
     name: string;
     query: string;
     pinned?: boolean;
+    outputType?: string;
 }
 
 interface DataExplorerTabsData {

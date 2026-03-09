@@ -51,7 +51,7 @@ export class InteractionHandler {
         const node = event.node;
         const color = this.graph.getNodeAttribute(node, "color");
         this.graph.setNodeAttribute(node, "_originalColor", color);
-        this.graph.setNodeAttribute(node, "color", chroma(color).darken(0.7).hex());
+        this.graph.setNodeAttribute(node, "color", chroma(color).darken(0.3).hex());
     }
 
     onLeaveNode(event: SigmaNodeEventPayload) {
@@ -68,7 +68,7 @@ export class InteractionHandler {
         const node = event.node;
         this.state.draggedNode = node;
         const original = this.graph.getNodeAttribute(node, "_originalColor") ?? this.graph.getNodeAttribute(node, "color");
-        this.graph.setNodeAttribute(node, "color", chroma(original).darken(1.4).hex());
+        this.graph.setNodeAttribute(node, "color", chroma(original).darken(0.6).hex());
         if (!this.renderer.getCustomBBox()) {
             this.renderer.setCustomBBox(this.renderer.getBBox());
         }
@@ -94,7 +94,7 @@ export class InteractionHandler {
         if (this.state.draggedNode != null) {
             const original = this.graph.getNodeAttribute(this.state.draggedNode, "_originalColor");
             if (original) {
-                this.graph.setNodeAttribute(this.state.draggedNode, "color", chroma(original).darken(0.7).hex());
+                this.graph.setNodeAttribute(this.state.draggedNode, "color", chroma(original).darken(0.3).hex());
             }
             this.state.draggedNode = null;
         }

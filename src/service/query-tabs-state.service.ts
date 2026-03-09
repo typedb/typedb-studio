@@ -14,6 +14,7 @@ export interface QueryTab {
     name: string;
     query: string;
     pinned?: boolean;
+    outputType?: string;
 }
 
 @Injectable({
@@ -57,6 +58,7 @@ export class QueryTabsState {
             name: tab.name,
             query: tab.query,
             pinned: tab.pinned,
+            outputType: tab.outputType,
         }));
 
         this.appData.queryTabs.setTabs(
@@ -77,6 +79,7 @@ export class QueryTabsState {
             name: persistedTab.name,
             query: persistedTab.query,
             pinned: persistedTab.pinned,
+            outputType: persistedTab.outputType,
         }));
 
         this.openTabs$.next(restoredTabs);
@@ -250,6 +253,16 @@ export class QueryTabsState {
         this.openTabs$.next(newTabs);
         this.selectedTabIndex$.next(insertIndex);
         return newTab;
+    }
+
+    updateTabOutputType(tabId: string, outputType: string) {
+        const tabs = this.openTabs$.value;
+        const index = tabs.findIndex(t => t.id === tabId);
+        if (index === -1) return;
+
+        const newTabs = [...tabs];
+        newTabs[index] = { ...tabs[index], outputType };
+        this.openTabs$.next(newTabs);
     }
 
     updateTabQuery(tabId: string, query: string) {

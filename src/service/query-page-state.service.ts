@@ -56,12 +56,13 @@ export interface TabOutputState {
     outputTypeControl: FormControl<OutputType>;
 }
 
-function createTabOutputState(): TabOutputState {
+function createTabOutputState(initialOutputType?: string): TabOutputState {
+    const outputType = (initialOutputType as OutputType) || "log";
     return {
         runs: [],
         selectedRunIndex: -1,
         runCounter: 0,
-        outputTypeControl: new FormControl("log" as OutputType, { nonNullable: true }),
+        outputTypeControl: new FormControl(outputType, { nonNullable: true }),
     };
 }
 
@@ -116,8 +117,12 @@ export class QueryPageState {
     getOrCreateTabOutputState(tabId: string): TabOutputState {
         let state = this.tabOutputStates.get(tabId);
         if (!state) {
-            state = createTabOutputState();
+            const tab = this.queryTabs.openTabs$.value.find(t => t.id === tabId);
+            state = createTabOutputState(tab?.outputType);
             this.tabOutputStates.set(tabId, state);
+            state.outputTypeControl.valueChanges.subscribe(value => {
+                this.queryTabs.updateTabOutputType(tabId, value);
+            });
         }
         return state;
     }
