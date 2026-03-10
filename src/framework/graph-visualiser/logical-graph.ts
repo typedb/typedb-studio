@@ -18,10 +18,10 @@ export type SpecialVertexKind = "unavailable" | "expression" | "functionCall";
 export type VertexUnavailable = { kind: "unavailable", variable: string, answerIndex: number, vertex_map_key: string };
 export type VertexExpression = { tag: "expression", kind: "expression", repr: string, answerIndex: number, vertex_map_key: string };
 export type VertexFunction = { tag: "functionCall", kind: "functionCall", repr: string, answerIndex: number, vertex_map_key: string };
-export type DataVertexSpecial = VertexUnavailable | VertexFunction | VertexExpression;
+export type VertexSpecial = VertexUnavailable | VertexFunction | VertexExpression;
 
-export type DataVertexKind = ThingKind | TypeKind | ValueKind | SpecialVertexKind;
-export type DataVertex = Concept | DataVertexSpecial;
+export type VertexKind = ThingKind | TypeKind | ValueKind | SpecialVertexKind;
+export type DataVertex = Concept | VertexSpecial;
 
 export function getTypeLabel(vertex: DataVertex): string | undefined {
     if ("type" in vertex && vertex.type && "label" in vertex.type) return vertex.type.label;
@@ -31,7 +31,7 @@ export function getTypeLabel(vertex: DataVertex): string | undefined {
 
 export type QueryCoordinates = { branch: number, constraint: number };
 
-export type DataGraph = {
+export type LogicalGraph = {
     answers: DataConstraintAny[][];
 }
 
@@ -48,7 +48,6 @@ export interface DataConstraintIsa {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintIsa,
-
     instance: Entity | Relation | Attribute | VertexUnavailable,
     type: InstantiableType | VertexUnavailable,
 }
@@ -58,7 +57,6 @@ export interface DataConstraintIsaExact {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintIsaExact,
-
     instance: Entity | Relation | Attribute | VertexUnavailable,
     type: InstantiableType | VertexUnavailable,
 }
@@ -68,7 +66,6 @@ export interface DataConstraintHas {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintHas,
-
     owner: Entity | Relation | VertexUnavailable,
     attribute: Attribute | VertexUnavailable,
 }
@@ -79,7 +76,6 @@ export interface DataConstraintLinks {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintLinks | ConstraintLinksLegacy,
-
     relation: Relation | VertexUnavailable,
     player: Relation | Entity | VertexUnavailable,
     role: RoleType | VertexUnavailable,
@@ -91,7 +87,6 @@ export interface DataConstraintSub {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintSub,
-
     subtype: Type | VertexUnavailable,
     supertype: Type | VertexUnavailable,
 }
@@ -101,7 +96,6 @@ export interface DataConstraintSubExact {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintSubExact,
-
     subtype: Type | VertexUnavailable,
     supertype: Type | VertexUnavailable,
 }
@@ -111,7 +105,6 @@ export interface DataConstraintOwns {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintOwns,
-
     owner: EntityType | RelationType | VertexUnavailable,
     attribute: AttributeType | VertexUnavailable,
 }
@@ -121,7 +114,6 @@ export interface DataConstraintRelates {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintRelates,
-
     relation: RelationType | VertexUnavailable,
     role: RoleType | VertexUnavailable,
 }
@@ -131,7 +123,6 @@ export interface DataConstraintPlays {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintPlays,
-
     player: EntityType | RelationType | VertexUnavailable,
     role: RoleType | VertexUnavailable,
 }
@@ -142,7 +133,6 @@ export interface DataConstraintExpression {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintExpression | ConstraintExpressionLegacy,
-
     text: string,
     arguments: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
     assigned: (Entity | Relation | Attribute | Value | VertexUnavailable),
@@ -153,7 +143,6 @@ export interface DataConstraintFunction {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintFunction,
-
     name: string,
     arguments: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
     assigned: (Entity | Relation | Attribute | Value | VertexUnavailable)[],
@@ -164,7 +153,6 @@ export interface DataConstraintComparison {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintComparison,
-
     lhs: Value | Attribute | VertexUnavailable,
     rhs: Value | Attribute | VertexUnavailable,
     comparator: string,
@@ -175,7 +163,6 @@ export interface DataConstraintIs {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintIs,
-
     lhs: Concept | VertexUnavailable,
     rhs: Concept | VertexUnavailable,
 }
@@ -185,7 +172,6 @@ export interface DataConstraintIid {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintIid,
-
     concept: Concept | VertexUnavailable,
     iid: string,
 }
@@ -195,7 +181,6 @@ export interface DataConstraintLabel {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintLabel,
-
     type: Type | VertexUnavailable,
     label: string,
 }
@@ -205,7 +190,6 @@ export interface DataConstraintValue {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintValue,
-
     attributeType: AttributeType | VertexUnavailable,
     valueType: string,
 }
@@ -215,8 +199,6 @@ export interface DataConstraintKind {
     textSpan: DataConstraintSpan,
     queryCoordinates: QueryCoordinates,
     queryConstraint: ConstraintKind,
-
     kind: string,
     type: Type | VertexUnavailable,
-
 }

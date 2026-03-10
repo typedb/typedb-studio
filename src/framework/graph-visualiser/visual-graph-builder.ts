@@ -1,6 +1,6 @@
 import { getVariableName, ConstraintVertexAny } from "@typedb/driver-http";
 import {
-    DataGraph,
+    LogicalGraph,
     DataConstraintExpression,
     DataConstraintFunction,
     DataConstraintAny,
@@ -23,7 +23,7 @@ import {
 import {
     EdgeAttributes,
     EdgeMetadata,
-    StudioConverterStructureParameters,
+    VisualGraphBuilderStructureParams,
     VertexAttributes,
     VertexMetadata,
     VisualGraph,
@@ -72,7 +72,7 @@ export interface IVisualGraphBuilder {
   put_kind(answer_index: number, constraint: DataConstraintKind): void;
 }
 
-export function buildVisualGraph(dataGraph: DataGraph, builder: IVisualGraphBuilder) {
+export function buildVisualGraph(dataGraph: LogicalGraph, builder: IVisualGraphBuilder) {
     dataGraph.answers.forEach((edgeList, answerIndex) => {
         edgeList.forEach(edge => {
             putConstraint(builder, answerIndex, edge);
@@ -144,7 +144,7 @@ export class VisualGraphBuilder implements IVisualGraphBuilder {
 
     constructor(
         public readonly graph: VisualGraph, public readonly queryStructure: AnalyzedPipelineBackCompat,
-        public readonly isFollowupQuery: boolean, public readonly structureParameters: StudioConverterStructureParameters,
+        public readonly isFollowupQuery: boolean, public readonly structureParameters: VisualGraphBuilderStructureParams,
         public readonly styleParameters: GraphStyles
     ) {
     }

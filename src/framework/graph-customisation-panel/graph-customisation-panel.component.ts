@@ -10,16 +10,16 @@ import { MatSlideToggleModule } from "@angular/material/slide-toggle";
 import { ColorPickerDirective } from "ngx-color-picker";
 import { GraphStyleService } from "../../service/graph-style.service";
 import { GraphVisualiser } from "../graph-visualiser";
-import { DataVertex, DataVertexKind } from "../graph-visualiser/logical-graph";
+import { DataVertex, VertexKind } from "../graph-visualiser/logical-graph";
 
 interface KindRow {
-    kind: DataVertexKind;
+    kind: VertexKind;
     label: string;
 }
 
 interface TypeRow {
     typeLabel: string;
-    kind: DataVertexKind;
+    kind: VertexKind;
 }
 
 interface EdgeLabelRow {
@@ -88,7 +88,7 @@ export class GraphCustomisationPanelComponent {
 
     refreshDiscoveredTypes(): void {
         if (!this.visualiser) return;
-        const typeMap = new Map<string, DataVertexKind>();
+        const typeMap = new Map<string, VertexKind>();
         this.visualiser.graph.nodes().forEach(nodeKey => {
             const attrs = this.visualiser!.graph.getNodeAttributes(nodeKey);
             const concept = attrs.metadata.concept;
@@ -106,72 +106,72 @@ export class GraphCustomisationPanelComponent {
 
     // -- Kind getters --
 
-    getKindColor(kind: DataVertexKind): string {
+    getKindColor(kind: VertexKind): string {
         return this.styleService.getKindStyle(kind).color;
     }
 
-    getKindBorderColor(kind: DataVertexKind): string {
+    getKindBorderColor(kind: VertexKind): string {
         return this.styleService.getKindStyle(kind).borderColor;
     }
 
-    getKindShape(kind: DataVertexKind): string {
+    getKindShape(kind: VertexKind): string {
         return this.styleService.getKindStyle(kind).shape;
     }
 
-    getKindWidth(kind: DataVertexKind): number {
+    getKindWidth(kind: VertexKind): number {
         return this.styleService.getKindStyle(kind).width;
     }
 
-    getKindHeight(kind: DataVertexKind): number {
+    getKindHeight(kind: VertexKind): number {
         return this.styleService.getKindStyle(kind).height;
     }
 
     // -- Kind setters --
 
-    setKindColor(kind: DataVertexKind, color: string): void {
+    setKindColor(kind: VertexKind, color: string): void {
         this.styleService.setKindStyle(kind, { color: normalizeColor(color) });
         this.applyStyles();
     }
 
-    setKindBorderColor(kind: DataVertexKind, borderColor: string): void {
+    setKindBorderColor(kind: VertexKind, borderColor: string): void {
         this.styleService.setKindStyle(kind, { borderColor: normalizeColor(borderColor) });
         this.applyStyles();
     }
 
-    setKindShape(kind: DataVertexKind, shape: string): void {
+    setKindShape(kind: VertexKind, shape: string): void {
         this.styleService.setKindStyle(kind, { shape });
         this.applyStyles();
     }
 
-    setKindWidth(kind: DataVertexKind, width: number): void {
+    setKindWidth(kind: VertexKind, width: number): void {
         this.styleService.setKindStyle(kind, { width });
         this.applyStyles();
     }
 
-    setKindHeight(kind: DataVertexKind, height: number): void {
+    setKindHeight(kind: VertexKind, height: number): void {
         this.styleService.setKindStyle(kind, { height });
         this.applyStyles();
     }
 
     // -- Type getters --
 
-    getTypeColor(typeLabel: string, kind: DataVertexKind): string {
+    getTypeColor(typeLabel: string, kind: VertexKind): string {
         return this.styleService.resolveNodeStyle(kind, typeLabel).color;
     }
 
-    getTypeBorderColor(typeLabel: string, kind: DataVertexKind): string {
+    getTypeBorderColor(typeLabel: string, kind: VertexKind): string {
         return this.styleService.resolveNodeStyle(kind, typeLabel).borderColor;
     }
 
-    getTypeShape(typeLabel: string, kind: DataVertexKind): string {
+    getTypeShape(typeLabel: string, kind: VertexKind): string {
         return this.styleService.resolveNodeStyle(kind, typeLabel).shape;
     }
 
-    getTypeWidth(typeLabel: string, kind: DataVertexKind): number {
+    getTypeWidth(typeLabel: string, kind: VertexKind): number {
         return this.styleService.resolveNodeStyle(kind, typeLabel).width;
     }
 
-    getTypeHeight(typeLabel: string, kind: DataVertexKind): number {
+    getTypeHeight(typeLabel: string, kind: VertexKind): number {
         return this.styleService.resolveNodeStyle(kind, typeLabel).height;
     }
 
@@ -211,11 +211,11 @@ export class GraphCustomisationPanelComponent {
         this.applyStyles();
     }
 
-    hasKindOverride(kind: DataVertexKind): boolean {
+    hasKindOverride(kind: VertexKind): boolean {
         return this.styleService.hasKindOverride(kind);
     }
 
-    clearKindOverride(kind: DataVertexKind): void {
+    clearKindOverride(kind: VertexKind): void {
         this.styleService.removeKindStyle(kind);
         this.applyStyles();
     }

@@ -4,7 +4,7 @@ import {
     ConstraintExpressionLegacy, ConstraintLinksLegacy,
     AnalyzedPipeline,
 } from "@typedb/driver-http";
-import { DataVertex, DataVertexKind, QueryCoordinates, VertexUnavailable } from "./logical-graph";
+import { DataVertex, VertexKind, QueryCoordinates, VertexUnavailable } from "./logical-graph";
 import { AnalyzedPipelineBackCompat, backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./logical-graph-builder";
 import { Color } from "chroma-js";
 import chroma from "chroma-js";
@@ -12,11 +12,11 @@ import { vertexMapKey, shouldCreateEdge, shouldCreateNode } from "./visual-graph
 import { VisualGraph } from "./visual-graph";
 
 export interface GraphStyles {
-    vertexColors: Record<DataVertexKind, string>,
-    vertexBorderColors: Record<DataVertexKind, string>,
-    vertexShapes: Record<DataVertexKind, string>,
-    vertexWidths: Record<DataVertexKind, number>,
-    vertexHeights: Record<DataVertexKind, number>,
+    vertexColors: Record<VertexKind, string>,
+    vertexBorderColors: Record<VertexKind, string>,
+    vertexShapes: Record<VertexKind, string>,
+    vertexWidths: Record<VertexKind, number>,
+    vertexHeights: Record<VertexKind, number>,
     vertexHeight: number,
 
     // Per-type overrides (keyed by type label, e.g. "person", "employment")

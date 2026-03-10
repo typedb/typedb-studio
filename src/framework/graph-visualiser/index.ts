@@ -8,7 +8,7 @@ import type { GraphStyleService } from "../../service/graph-style.service";
 
 import { getTypeLabel } from "./logical-graph";
 import { buildLogicalGraph, AnalyzedPipelineBackCompat } from "./logical-graph-builder";
-import { VisualGraph, StudioConverterStructureParameters, defaultStructureParameters } from "./visual-graph";
+import { VisualGraph, VisualGraphBuilderStructureParams, defaultStructureParams } from "./visual-graph";
 import { buildVisualGraph, VisualGraphBuilder } from "./visual-graph-builder";
 import { GraphStyles, colorEdgesByConstraintIndex as _colorEdgesByConstraintIndex, colorQuery as _colorQuery } from "./styles";
 import { setUseBorderColorForLabels } from "./sigma-label-utils";
@@ -18,10 +18,10 @@ import { LayoutWrapper } from "./layout";
 // Re-export public API
 export type { StudioState } from "./interaction-handler";
 export type { VisualGraph } from "./visual-graph";
-export { newVisualGraph, defaultStructureParameters } from "./visual-graph";
-export type { StudioConverterStructureParameters } from "./visual-graph";
+export { newVisualGraph, defaultStructureParams as defaultStructureParameters } from "./visual-graph";
+export type { VisualGraphBuilderStructureParams as StudioConverterStructureParameters } from "./visual-graph";
 export { buildVisualGraph, VisualGraphBuilder, shouldCreateEdge, shouldCreateNode, vertexMapKey } from "./visual-graph-builder";
-export type { DataVertexKind, DataVertex, QueryCoordinates } from "./logical-graph";
+export type { VertexKind, DataVertex, QueryCoordinates } from "./logical-graph";
 export { getTypeLabel } from "./logical-graph";
 export { buildLogicalGraph } from "./logical-graph-builder";
 export { backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./logical-graph-builder";
@@ -37,7 +37,7 @@ export class GraphVisualiser {
     interactionHandler: InteractionHandler;
     state: StudioState;
     private styleParams: GraphStyles;
-    private structureParams: StudioConverterStructureParameters = defaultStructureParameters;
+    private structureParams: VisualGraphBuilderStructureParams = defaultStructureParams;
 
     constructor(public graph: VisualGraph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
         this.state = { activeQueryDatabase: null };

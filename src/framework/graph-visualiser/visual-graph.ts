@@ -42,10 +42,10 @@ export type VisualGraph = MultiGraph<VertexAttributes, EdgeAttributes, GraphAttr
 
 export const newVisualGraph: () => VisualGraph = () => new MultiGraph<VertexAttributes, EdgeAttributes, GraphAttributes>();
 
-export interface StudioConverterStructureParameters {
+export interface VisualGraphBuilderStructureParams {
     ignoreEdgesInvolvingLabels: Array<EdgeKind>,
 }
 
-export const defaultStructureParameters: StudioConverterStructureParameters = {
+export const defaultStructureParams: VisualGraphBuilderStructureParams = {
     ignoreEdgesInvolvingLabels: ["isa", "sub", "relates", "plays"],
 };

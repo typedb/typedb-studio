@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
-import { DataVertexKind } from "../framework/graph-visualiser/logical-graph";
+import { VertexKind } from "../framework/graph-visualiser/logical-graph";
 import { GraphStyles, defaultEdgeLabelColors, defaultQueryStyleParams } from "../framework/graph-visualiser/styles";
 
 export interface NodeStyle {
@@ -23,7 +23,7 @@ function deriveFillFromBorder(borderHex: string): string {
     return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 
-const ALL_KINDS: DataVertexKind[] = [
+const ALL_KINDS: VertexKind[] = [
     "entity", "relation", "attribute",
     "entityType", "relationType", "attributeType", "roleType",
     "value", "unavailable", "expression", "functionCall",
@@ -44,7 +44,7 @@ export class GraphStyleService {
         this.load();
     }
 
-    getKindDefault(kind: DataVertexKind): NodeStyle {
+    getKindDefault(kind: VertexKind): NodeStyle {
         return {
             color: defaultQueryStyleParams.vertexColors[kind],
             borderColor: defaultQueryStyleParams.vertexBorderColors[kind],
@@ -54,7 +54,7 @@ export class GraphStyleService {
         };
     }
 
-    getKindStyle(kind: DataVertexKind): NodeStyle {
+    getKindStyle(kind: VertexKind): NodeStyle {
         const base = this.getKindDefault(kind);
         const override = this._kindStyles[kind];
         const borderColor = override?.borderColor ?? base.borderColor;
@@ -67,7 +67,7 @@ export class GraphStyleService {
         };
     }
 
-    resolveNodeStyle(kind: DataVertexKind, typeLabel?: string): NodeStyle {
+    resolveNodeStyle(kind: VertexKind, typeLabel?: string): NodeStyle {
         const kindStyle = this.getKindStyle(kind);
         if (!typeLabel) return kindStyle;
 
@@ -84,7 +84,7 @@ export class GraphStyleService {
         };
     }
 
-    setKindStyle(kind: DataVertexKind, style: PartialNodeStyle): void {
+    setKindStyle(kind: VertexKind, style: PartialNodeStyle): void {
         this._kindStyles[kind] = { ...this._kindStyles[kind], ...style };
         this.save();
         this.styles$.next();
@@ -96,13 +96,13 @@ export class GraphStyleService {
         this.styles$.next();
     }
 
-    removeKindStyle(kind: DataVertexKind): void {
+    removeKindStyle(kind: VertexKind): void {
         delete this._kindStyles[kind];
         this.save();
         this.styles$.next();
     }
 
-    hasKindOverride(kind: DataVertexKind): boolean {
+    hasKindOverride(kind: VertexKind): boolean {
         const override = this._kindStyles[kind];
         return !!override && Object.keys(override).length > 0;
     }

@@ -10,7 +10,7 @@ import {
     Relation, RelationType, RoleType, Type, Value
 } from "@typedb/driver-http";
 import {
-    DataConstraintAny, DataGraph, DataVertex,
+    DataConstraintAny, LogicalGraph, DataVertex,
     VertexUnavailable, QueryCoordinates,
 } from "./logical-graph";
 
@@ -36,7 +36,7 @@ export function backCompat_expressionAssigned(expr: ConstraintExpression | Const
 
 // Logical graph builder
 
-export function buildLogicalGraph(rows_result: ConceptRowsQueryResponseBackCompat): DataGraph {
+export function buildLogicalGraph(rows_result: ConceptRowsQueryResponseBackCompat): LogicalGraph {
     return new LogicalGraphBuilder().build(rows_result);
 }
 
@@ -44,7 +44,7 @@ class LogicalGraphBuilder {
     constructor() {
     }
 
-    build(rows_result: ConceptRowsQueryResponseBackCompat): DataGraph {
+    build(rows_result: ConceptRowsQueryResponseBackCompat): LogicalGraph {
         let answers: DataConstraintAny[][] = [];
         rows_result.answers.forEach((row, answerIndex) => {
             let current_answer_edges = row.involvedBlocks!.flatMap(branchIndex => {
