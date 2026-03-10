@@ -4,11 +4,11 @@ import {
     ConstraintExpressionLegacy, ConstraintLinksLegacy,
     AnalyzedPipeline,
 } from "@typedb/driver-http";
-import { DataVertex, DataVertexKind, QueryCoordinates, VertexUnavailable } from "./data/types";
-import { AnalyzedPipelineBackCompat, backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./data/back-compat";
+import { DataVertex, DataVertexKind, QueryCoordinates, VertexUnavailable } from "./types";
+import { AnalyzedPipelineBackCompat, backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./logical-graph-builder";
 import { Color } from "chroma-js";
 import chroma from "chroma-js";
-import { vertexMapKey, shouldCreateEdge, shouldCreateNode } from "./logical-graph-converter";
+import { vertexMapKey, shouldCreateEdge, shouldCreateNode } from "./visual-graph-builder";
 import { VisualGraph } from "./visual-graph";
 
 export interface GraphStyles {

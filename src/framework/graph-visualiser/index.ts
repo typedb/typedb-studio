@@ -6,11 +6,10 @@ import {
 import Sigma from "sigma";
 import type { GraphStyleService } from "../../service/graph-style.service";
 
-import { getTypeLabel } from "./data/types";
-import { constructGraphFromRowsResult } from "./data/builder";
-import { AnalyzedPipelineBackCompat } from "./data/back-compat";
-import { VisualGraph, StudioConverterStructureParameters as StudioConverterStructureParams, defaultStructureParameters } from "./visual-graph";
-import { convertLogicalGraphWith, StudioConverter } from "./logical-graph-converter";
+import { getTypeLabel } from "./types";
+import { buildLogicalGraph, AnalyzedPipelineBackCompat } from "./logical-graph-builder";
+import { VisualGraph, StudioConverterStructureParameters, defaultStructureParameters } from "./visual-graph";
+import { buildVisualGraph, VisualGraphBuilder } from "./visual-graph-builder";
 import { GraphStyles, colorEdgesByConstraintIndex as _colorEdgesByConstraintIndex, colorQuery as _colorQuery } from "./styles";
 import { setUseBorderColorForLabels } from "./sigma-label-utils";
 import { InteractionHandler, StudioState } from "./interaction-handler";
@@ -21,12 +20,12 @@ export type { StudioState } from "./interaction-handler";
 export type { VisualGraph } from "./visual-graph";
 export { newVisualGraph, defaultStructureParameters } from "./visual-graph";
 export type { StudioConverterStructureParameters } from "./visual-graph";
-export { convertLogicalGraphWith, StudioConverter, shouldCreateEdge, shouldCreateNode, vertexMapKey } from "./logical-graph-converter";
-export type { DataVertexKind, DataVertex, QueryCoordinates } from "./data/types";
-export { getTypeLabel } from "./data/types";
-export { constructGraphFromRowsResult } from "./data/builder";
-export { backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./data/back-compat";
-export type { ConstraintBackCompat, ConceptRowsQueryResponseBackCompat, AnalyzedPipelineBackCompat } from "./data/back-compat";
+export { buildVisualGraph, VisualGraphBuilder, shouldCreateEdge, shouldCreateNode, vertexMapKey } from "./visual-graph-builder";
+export type { DataVertexKind, DataVertex, QueryCoordinates } from "./types";
+export { getTypeLabel } from "./types";
+export { buildLogicalGraph } from "./logical-graph-builder";
+export { backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./logical-graph-builder";
+export type { ConstraintBackCompat, ConceptRowsQueryResponseBackCompat, AnalyzedPipelineBackCompat } from "./logical-graph-builder";
 export { GraphStyles, defaultQueryStyleParams, defaultExplorationQueryStyleParams, defaultEdgeLabelColors, darkPalette, colorEdgesByConstraintIndex, colorQuery } from "./styles";
 export { createSigmaRenderer, defaultSigmaSettings } from "./sigma-settings";
 export { setUseBorderColorForLabels } from "./sigma-label-utils";
@@ -38,7 +37,7 @@ export class GraphVisualiser {
     interactionHandler: InteractionHandler;
     state: StudioState;
     private styleParams: GraphStyles;
-    private structureParams: StudioConverterStructureParams = defaultStructureParameters;
+    private structureParams: StudioConverterStructureParameters = defaultStructureParameters;
 
     constructor(public graph: VisualGraph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
         this.state = { activeQueryDatabase: null };
@@ -114,9 +113,9 @@ export class GraphVisualiser {
         if (isApiErrorResponse(res)) return;
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
             (window as any)._lastQueryAnswers = res.ok.answers; // TODO: Remove once schema based autocomplete is stable.
-            let converter = new StudioConverter(this.graph, res.ok.query, false, this.structureParams, this.styleParams);
-            let logicalGraph = constructGraphFromRowsResult(res.ok);
-            convertLogicalGraphWith(logicalGraph, converter);
+            let builder = new VisualGraphBuilder(this.graph, res.ok.query, false, this.structureParams, this.styleParams);
+            let logicalGraph = buildLogicalGraph(res.ok);
+            buildVisualGraph(logicalGraph, builder);
         }
     }
 
@@ -124,9 +123,9 @@ export class GraphVisualiser {
         if (isApiErrorResponse(res)) return;
 
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
-            let converter = new StudioConverter(this.graph, res.ok.query, true, this.structureParams, this.styleParams);
-            let logicalGraph = constructGraphFromRowsResult(res.ok as ConceptRowsQueryResponse);
-            convertLogicalGraphWith(logicalGraph, converter);
+            let builder = new VisualGraphBuilder(this.graph, res.ok.query, true, this.structureParams, this.styleParams);
+            let logicalGraph = buildLogicalGraph(res.ok as ConceptRowsQueryResponse);
+            buildVisualGraph(logicalGraph, builder);
         }
     }
 

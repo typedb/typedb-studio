@@ -3,7 +3,6 @@ import MultiGraph from "graphology";
 import chroma from "chroma-js";
 import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "sigma/types";
 import {GraphStyles} from "./styles";
-import {SpecialVertexKind} from "./data/types";
 
 // Ref: https://www.sigmajs.org/docs/advanced/events/
 // and: https://www.sigmajs.org/storybook/?path=/story/mouse-manipulations--story

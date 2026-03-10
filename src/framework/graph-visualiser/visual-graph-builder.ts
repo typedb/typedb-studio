@@ -14,12 +14,12 @@ import {
     VertexFunction,
     VertexExpression, DataConstraintSubExact, DataConstraintIsaExact, DataVertex,
     DataConstraintKind, getTypeLabel,
-} from "./data/types";
+} from "./types";
 import {
     AnalyzedPipelineBackCompat,
     ConstraintBackCompat,
     backCompat_expressionAssigned,
-} from "./data/back-compat";
+} from "./logical-graph-builder";
 import {
     EdgeAttributes,
     EdgeMetadata,
@@ -40,7 +40,7 @@ import { GraphStyles } from "./styles";
  *  graph.addNode(from, to,  attributes)
  * See: https://www.sigmajs.org/docs/advanced/data/ for attributes
  */
-export interface ILogicalGraphConverter {
+export interface IVisualGraphBuilder {
   // TODO: Functional vertices & edges like expressions, comparisons & function calls
 
   // Vertices
@@ -72,62 +72,62 @@ export interface ILogicalGraphConverter {
   put_kind(answer_index: number, constraint: DataConstraintKind): void;
 }
 
-export function convertLogicalGraphWith(dataGraph: DataGraph, converter: ILogicalGraphConverter) {
+export function buildVisualGraph(dataGraph: DataGraph, builder: IVisualGraphBuilder) {
     dataGraph.answers.forEach((edgeList, answerIndex) => {
         edgeList.forEach(edge => {
-            putConstraint(converter, answerIndex, edge);
+            putConstraint(builder, answerIndex, edge);
         });
     });
 }
 
-function putConstraint(converter: ILogicalGraphConverter, answer_index: number, constraint: DataConstraintAny) {
+function putConstraint(builder: IVisualGraphBuilder, answer_index: number, constraint: DataConstraintAny) {
   switch (constraint.tag) {
     case "isa":{
-      converter.put_isa(answer_index, constraint);
+      builder.put_isa(answer_index, constraint);
       break;
     }
     case "isa!":{
-      converter.put_isa_exact(answer_index, constraint);
+      builder.put_isa_exact(answer_index, constraint);
       break;
     }
     case "has": {
-      converter.put_has(answer_index, constraint);
+      builder.put_has(answer_index, constraint);
       break;
     }
     case "links": {
-      converter.put_links(answer_index, constraint);
+      builder.put_links(answer_index, constraint);
       break;
     }
     case "sub": {
-      converter.put_sub(answer_index, constraint);
+      builder.put_sub(answer_index, constraint);
       break;
     }
     case "sub!": {
-      converter.put_sub_exact(answer_index, constraint);
+      builder.put_sub_exact(answer_index, constraint);
       break;
     }
     case "owns": {
-      converter.put_owns(answer_index, constraint);
+      builder.put_owns(answer_index, constraint);
       break;
     }
     case "relates": {
-      converter.put_relates(answer_index, constraint);
+      builder.put_relates(answer_index, constraint);
       break;
     }
     case "plays": {
-      converter.put_plays(answer_index, constraint);
+      builder.put_plays(answer_index, constraint);
       break;
     }
     case "expression" : {
-      converter.put_expression(answer_index, constraint);
+      builder.put_expression(answer_index, constraint);
       break;
     }
     case "function" : {
-      converter.put_function(answer_index, constraint);
+      builder.put_function(answer_index, constraint);
       break;
     }
     case "kind": {
-      converter.put_kind(answer_index, constraint);
+      builder.put_kind(answer_index, constraint);
       break;
     }
     case "comparison": break;
@@ -140,7 +140,7 @@ function putConstraint(converter: ILogicalGraphConverter, answer_index: number, 
 
 type ConstraintVertexOrSpecial = ConstraintVertexAny | VertexFunction | VertexExpression;
 
-export class StudioConverter implements ILogicalGraphConverter {
+export class VisualGraphBuilder implements IVisualGraphBuilder {
 
     constructor(
         public readonly graph: VisualGraph, public readonly queryStructure: AnalyzedPipelineBackCompat,
@@ -259,7 +259,7 @@ export class StudioConverter implements ILogicalGraphConverter {
         }
     }
 
-    // ILogicalGraphConverter
+    // IVisualGraphBuilder
     // Vertices
     put_vertex(answerIndex: number, vertex: DataVertex, queryVertex: ConstraintVertexOrSpecial): string {
         const key = vertexMapKey(vertex);
