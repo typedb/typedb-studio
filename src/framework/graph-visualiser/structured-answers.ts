@@ -15,9 +15,9 @@ import {
 
 export type SpecialVertexKind = "unavailable" | "expression" | "functionCall";
 
-export type VertexUnavailable = { kind: "unavailable", variable: string, answerIndex: number, vertex_map_key: string };
-export type VertexExpression = { tag: "expression", kind: "expression", repr: string, answerIndex: number, vertex_map_key: string };
-export type VertexFunction = { tag: "functionCall", kind: "functionCall", repr: string, answerIndex: number, vertex_map_key: string };
+export type VertexUnavailable = { kind: "unavailable", variable: string, answerIndex: number, vertexMapKey: string };
+export type VertexExpression = { tag: "expression", kind: "expression", repr: string, answerIndex: number, vertexMapKey: string };
+export type VertexFunction = { tag: "functionCall", kind: "functionCall", repr: string, answerIndex: number, vertexMapKey: string };
 export type VertexSpecial = VertexUnavailable | VertexFunction | VertexExpression;
 
 export type VertexKind = ThingKind | TypeKind | ValueKind | SpecialVertexKind;
@@ -31,8 +31,8 @@ export function getTypeLabel(vertex: DataVertex): string | undefined {
 
 export type QueryCoordinates = { branch: number, constraint: number };
 
-export type LogicalGraph = {
-    answers: DataConstraintAny[][];
+export type StructuredAnswer = {
+    constraints: DataConstraintAny[];
 }
 
 export type DataConstraintAny = DataConstraintIsa | DataConstraintIsaExact | DataConstraintHas | DataConstraintLinks |

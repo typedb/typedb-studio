@@ -6,10 +6,10 @@ import {
 import Sigma from "sigma";
 import type { GraphStyleService } from "../../service/graph-style.service";
 
-import { getTypeLabel } from "./logical-graph";
-import { buildLogicalGraph, AnalyzedPipelineBackCompat } from "./logical-graph-builder";
-import { VisualGraph, VisualGraphBuilderStructureParams, defaultStructureParams } from "./visual-graph";
-import { buildVisualGraph, VisualGraphBuilder } from "./visual-graph-builder";
+import { getTypeLabel } from "./structured-answers";
+import { buildStructuredAnswers, AnalyzedPipelineBackCompat } from "./structured-answers-builder";
+import { Graph, GraphBuilderStructureParams, defaultStructureParams } from "./graph";
+import { buildGraph, GraphBuilder } from "./graph-builder";
 import { GraphStyles, colorEdgesByConstraintIndex as _colorEdgesByConstraintIndex, colorQuery as _colorQuery } from "./styles";
 import { setUseBorderColorForLabels } from "./sigma-label-utils";
 import { InteractionHandler, StudioState } from "./interaction-handler";
@@ -17,15 +17,15 @@ import { LayoutWrapper } from "./layout";
 
 // Re-export public API
 export type { StudioState } from "./interaction-handler";
-export type { VisualGraph } from "./visual-graph";
-export { newVisualGraph, defaultStructureParams as defaultStructureParameters } from "./visual-graph";
-export type { VisualGraphBuilderStructureParams as StudioConverterStructureParameters } from "./visual-graph";
-export { buildVisualGraph, VisualGraphBuilder, shouldCreateEdge, shouldCreateNode, vertexMapKey } from "./visual-graph-builder";
-export type { VertexKind, DataVertex, QueryCoordinates } from "./logical-graph";
-export { getTypeLabel } from "./logical-graph";
-export { buildLogicalGraph } from "./logical-graph-builder";
-export { backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./logical-graph-builder";
-export type { ConstraintBackCompat, ConceptRowsQueryResponseBackCompat, AnalyzedPipelineBackCompat } from "./logical-graph-builder";
+export type { Graph } from "./graph";
+export { newGraph, defaultStructureParams as defaultStructureParameters } from "./graph";
+export type { GraphBuilderStructureParams as StudioConverterStructureParameters } from "./graph";
+export { buildGraph, GraphBuilder, shouldCreateEdge, shouldCreateNode, vertexMapKey } from "./graph-builder";
+export type { VertexKind, DataVertex, QueryCoordinates, StructuredAnswer } from "./structured-answers";
+export { getTypeLabel } from "./structured-answers";
+export { buildStructuredAnswers } from "./structured-answers-builder";
+export { backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./structured-answers-builder";
+export type { ConstraintBackCompat, ConceptRowsQueryResponseBackCompat, AnalyzedPipelineBackCompat } from "./structured-answers-builder";
 export { GraphStyles, defaultQueryStyleParams, defaultExplorationQueryStyleParams, defaultEdgeLabelColors, darkPalette, colorEdgesByConstraintIndex, colorQuery } from "./styles";
 export { createSigmaRenderer, defaultSigmaSettings } from "./sigma-settings";
 export { setUseBorderColorForLabels } from "./sigma-label-utils";
@@ -37,9 +37,9 @@ export class GraphVisualiser {
     interactionHandler: InteractionHandler;
     state: StudioState;
     private styleParams: GraphStyles;
-    private structureParams: VisualGraphBuilderStructureParams = defaultStructureParams;
+    private structureParams: GraphBuilderStructureParams = defaultStructureParams;
 
-    constructor(public graph: VisualGraph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
+    constructor(public graph: Graph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
         this.state = { activeQueryDatabase: null };
         this.styleParams = this.syncStyles();
         this.interactionHandler = new InteractionHandler(graph, sigma, this.state, this.styleParams);
@@ -113,9 +113,9 @@ export class GraphVisualiser {
         if (isApiErrorResponse(res)) return;
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
             (window as any)._lastQueryAnswers = res.ok.answers; // TODO: Remove once schema based autocomplete is stable.
-            let builder = new VisualGraphBuilder(this.graph, res.ok.query, false, this.structureParams, this.styleParams);
-            let logicalGraph = buildLogicalGraph(res.ok);
-            buildVisualGraph(logicalGraph, builder);
+            let builder = new GraphBuilder(this.graph, res.ok.query, false, this.structureParams, this.styleParams);
+            let answers = buildStructuredAnswers(res.ok);
+            buildGraph(answers, builder);
         }
     }
 
@@ -123,9 +123,9 @@ export class GraphVisualiser {
         if (isApiErrorResponse(res)) return;
 
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
-            let builder = new VisualGraphBuilder(this.graph, res.ok.query, true, this.structureParams, this.styleParams);
-            let logicalGraph = buildLogicalGraph(res.ok as ConceptRowsQueryResponse);
-            buildVisualGraph(logicalGraph, builder);
+            let builder = new GraphBuilder(this.graph, res.ok.query, true, this.structureParams, this.styleParams);
+            let answers = buildStructuredAnswers(res.ok as ConceptRowsQueryResponse);
+            buildGraph(answers, builder);
         }
     }
 

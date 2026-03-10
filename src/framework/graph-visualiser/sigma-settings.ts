@@ -55,8 +55,8 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
     },
 };
 
-export function createSigmaRenderer(containerEl: HTMLElement, sigma_settings: SigmaSettings, graph: MultiGraph): Sigma {
-    const renderer = new Sigma(graph, containerEl, sigma_settings);
+export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: SigmaSettings, graph: MultiGraph): Sigma {
+    const renderer = new Sigma(graph, containerEl, sigmaSettings);
     // Disable hover rendering (node re-draw on hover WebGL layer)
     (renderer as any).renderHighlightedNodes = () => {};
     return renderer;

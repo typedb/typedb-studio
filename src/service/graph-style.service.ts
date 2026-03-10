@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
-import { VertexKind } from "../framework/graph-visualiser/logical-graph";
+import { VertexKind } from "../framework/graph-visualiser/structured-answers";
 import { GraphStyles, defaultEdgeLabelColors, defaultQueryStyleParams } from "../framework/graph-visualiser/styles";
 
 export interface NodeStyle {

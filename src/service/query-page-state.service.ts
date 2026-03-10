@@ -10,7 +10,7 @@ import { BehaviorSubject, combineLatest, map, Observable, pairwise, shareReplay,
 import { DriverAction } from "../concept/action";
 import { GraphVisualiser } from "../framework/graph-visualiser";
 import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/sigma-settings";
-import { newVisualGraph, VisualGraph } from "../framework/graph-visualiser/visual-graph";
+import { newGraph, Graph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layout";
 import { detectOS } from "../framework/util/os";
 import { INTERNAL_ERROR } from "../framework/util/strings";
@@ -702,7 +702,7 @@ export class GraphOutputState {
     query?: string;
     database?: string;
     private _canvasEl: HTMLElement | null = null;
-    private _preservedGraph: VisualGraph | null = null;
+    private _preservedGraph: Graph | null = null;
     private _pendingResponses: ApiResponse<QueryResponse>[] = [];
     private _styleService: GraphStyleService;
 
@@ -740,7 +740,7 @@ export class GraphOutputState {
         }
 
         if (!this.visualiser) {
-            const graph = this._preservedGraph ?? newVisualGraph();
+            const graph = this._preservedGraph ?? newGraph();
             this._preservedGraph = graph;
             const sigma = createSigmaRenderer(this._canvasEl!, defaultSigmaSettings as any, graph);
             const layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option

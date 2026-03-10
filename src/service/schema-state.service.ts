@@ -14,7 +14,7 @@ import { BehaviorSubject, combineLatest, distinctUntilChanged, finalize, first, 
 import Sigma, { Camera } from "sigma";
 import { GraphVisualiser } from "../framework/graph-visualiser";
 import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/sigma-settings";
-import { newVisualGraph } from "../framework/graph-visualiser/visual-graph";
+import { newGraph } from "../framework/graph-visualiser/graph";
 import { Layouts } from "../framework/graph-visualiser/layout";
 import { DriverState } from "./driver-state.service";
 import { GraphStyleService } from "./graph-style.service";
@@ -416,7 +416,7 @@ export class VisualiserState {
         this.canvasEl$.subscribe(el => {
             if (el && this.savedState && this.database) {
                 this._status = "ok";
-                const graph = newVisualGraph();
+                const graph = newGraph();
                 const sigma = createSigmaRenderer(el, defaultSigmaSettings as any, graph);
                 const layout = Layouts.createForceAtlasStatic(graph, undefined);
                 this.visualiser = new GraphVisualiser(graph, sigma, layout, this.styleService);
@@ -429,7 +429,7 @@ export class VisualiserState {
         if (!this.canvasEl$.value) throw `Missing canvas element`;
 
         if (!this.visualiser) {
-            const graph = newVisualGraph();
+            const graph = newGraph();
             const sigma = createSigmaRenderer(this.canvasEl$.value, defaultSigmaSettings as any, graph);
             const layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
             // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);

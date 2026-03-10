@@ -4,12 +4,12 @@ import {
     ConstraintExpressionLegacy, ConstraintLinksLegacy,
     AnalyzedPipeline,
 } from "@typedb/driver-http";
-import { DataVertex, VertexKind, QueryCoordinates, VertexUnavailable } from "./logical-graph";
-import { AnalyzedPipelineBackCompat, backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./logical-graph-builder";
+import { DataVertex, VertexKind, QueryCoordinates, VertexUnavailable } from "./structured-answers";
+import { AnalyzedPipelineBackCompat, backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./structured-answers-builder";
 import { Color } from "chroma-js";
 import chroma from "chroma-js";
-import { vertexMapKey, shouldCreateEdge, shouldCreateNode } from "./visual-graph-builder";
-import { VisualGraph } from "./visual-graph";
+import { vertexMapKey, shouldCreateEdge, shouldCreateNode } from "./graph-builder";
+import { Graph } from "./graph";
 
 export interface GraphStyles {
     vertexColors: Record<VertexKind, string>,
@@ -224,7 +224,7 @@ export const defaultExplorationQueryStyleParams: GraphStyles = {
 // Constraint colouring
 
 export function colorEdgesByConstraintIndex(
-    graph: VisualGraph,
+    graph: Graph,
     styleParams: GraphStyles,
     reset: boolean,
 ): void {

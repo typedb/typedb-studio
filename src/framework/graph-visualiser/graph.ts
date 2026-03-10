@@ -1,6 +1,6 @@
 import { EdgeKind } from "@typedb/driver-http";
 import { MultiGraph } from "graphology";
-import { DataConstraintAny, DataVertex } from "./logical-graph";
+import { DataConstraintAny, DataVertex } from "./structured-answers";
 
 export interface VertexMetadata {
     defaultLabel: string;
@@ -38,14 +38,14 @@ export interface EdgeAttributes {
 export interface GraphAttributes {
 }
 
-export type VisualGraph = MultiGraph<VertexAttributes, EdgeAttributes, GraphAttributes>;
+export type Graph = MultiGraph<VertexAttributes, EdgeAttributes, GraphAttributes>;
 
-export const newVisualGraph: () => VisualGraph = () => new MultiGraph<VertexAttributes, EdgeAttributes, GraphAttributes>();
+export const newGraph: () => Graph = () => new MultiGraph<VertexAttributes, EdgeAttributes, GraphAttributes>();
 
-export interface VisualGraphBuilderStructureParams {
+export interface GraphBuilderStructureParams {
     ignoreEdgesInvolvingLabels: Array<EdgeKind>,
 }
 
-export const defaultStructureParams: VisualGraphBuilderStructureParams = {
+export const defaultStructureParams: GraphBuilderStructureParams = {
     ignoreEdgesInvolvingLabels: ["isa", "sub", "relates", "plays"],
 };
