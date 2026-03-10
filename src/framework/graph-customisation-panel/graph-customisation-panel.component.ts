@@ -156,23 +156,23 @@ export class GraphCustomisationPanelComponent {
     // -- Type getters --
 
     getTypeColor(typeLabel: string, kind: DataVertexKind): string {
-        return this.styleService.getEffectiveStyle(kind, typeLabel).color;
+        return this.styleService.resolveNodeStyle(kind, typeLabel).color;
     }
 
     getTypeBorderColor(typeLabel: string, kind: DataVertexKind): string {
-        return this.styleService.getEffectiveStyle(kind, typeLabel).borderColor;
+        return this.styleService.resolveNodeStyle(kind, typeLabel).borderColor;
     }
 
     getTypeShape(typeLabel: string, kind: DataVertexKind): string {
-        return this.styleService.getEffectiveStyle(kind, typeLabel).shape;
+        return this.styleService.resolveNodeStyle(kind, typeLabel).shape;
     }
 
     getTypeWidth(typeLabel: string, kind: DataVertexKind): number {
-        return this.styleService.getEffectiveStyle(kind, typeLabel).width;
+        return this.styleService.resolveNodeStyle(kind, typeLabel).width;
     }
 
     getTypeHeight(typeLabel: string, kind: DataVertexKind): number {
-        return this.styleService.getEffectiveStyle(kind, typeLabel).height;
+        return this.styleService.resolveNodeStyle(kind, typeLabel).height;
     }
 
     hasTypeOverride(typeLabel: string): boolean {

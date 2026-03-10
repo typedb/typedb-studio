@@ -2,8 +2,8 @@ import Sigma from "sigma";
 import MultiGraph from "graphology";
 import chroma from "chroma-js";
 import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "sigma/types";
-import {StudioConverterStyleParameters} from "../style/parameters";
-import {SpecialVertexKind} from "../data/types";
+import {GraphStyles} from "./styles";
+import {SpecialVertexKind} from "./data/types";
 
 // Ref: https://www.sigmajs.org/docs/advanced/events/
 // and: https://www.sigmajs.org/storybook/?path=/story/mouse-manipulations--story
@@ -21,10 +21,10 @@ export class InteractionHandler {
     graph: MultiGraph;
     renderer: Sigma;
     state: InteractionState;
-    styleParameters: StudioConverterStyleParameters;
+    styleParams: GraphStyles;
     private studioState: StudioState;
 
-    constructor(graph: MultiGraph, renderer: Sigma, studioState: StudioState, styleParameters: StudioConverterStyleParameters) {
+    constructor(graph: MultiGraph, renderer: Sigma, studioState: StudioState, styleParams: GraphStyles) {
         this.graph = graph;
         this.renderer = renderer;
         this.state = {
@@ -32,7 +32,7 @@ export class InteractionHandler {
             highlightedAnswer: null,
         };
         this.studioState = studioState;
-        this.styleParameters = styleParameters;
+        this.styleParams = styleParams;
         this.registerAll(renderer);
     }
 
@@ -125,7 +125,7 @@ export class InteractionHandler {
         }
         this.graph.edges().forEach(edge => {
             if (answerIndex == this.graph.getEdgeAttributes(edge)["metadata"].answerIndex) {
-                this.graph.setEdgeAttribute(edge, "color", this.styleParameters.edge_highlight_color.hex());
+                this.graph.setEdgeAttribute(edge, "color", this.styleParams.edgeHighlightColor.hex());
             }
         })
         this.state.highlightedAnswer = answerIndex;
@@ -137,11 +137,32 @@ export class InteractionHandler {
             const metadata = this.graph.getEdgeAttributes(edge)["metadata"];
             if (answerIndex == metadata.answerIndex) {
                 const tag = metadata.dataEdge.tag;
-                const color = this.styleParameters.edge_label_colors?.[tag]
-                    ?? this.styleParameters.edge_color.hex();
+                const color = this.styleParams.edgeLabelColors?.[tag]
+                    ?? this.styleParams.edgeColor.hex();
                 this.graph.setEdgeAttribute(edge, "color", color);
             }
         })
+    }
+
+    searchGraph(term: string) {
+        function safeString(str: string | undefined): string {
+            return (str == undefined) ? "" : str.toLowerCase();
+        }
+
+        this.graph.nodes().forEach(node => this.graph.setNodeAttribute(node, "highlighted", false));
+        if (term !== "") {
+            this.graph.nodes().forEach(node => {
+                const attributes = this.graph.getNodeAttributes(node);
+                if ("concept" in attributes.metadata) {
+                    const concept = attributes.metadata.concept;
+                    if (("iid" in concept && safeString(concept.iid).indexOf(term) !== -1)
+                        || ("label" in concept && safeString(concept.label).indexOf(term) !== -1)
+                        || ("value" in concept && safeString(concept.value).indexOf(term) !== -1)) {
+                        this.graph.setNodeAttribute(node, "highlighted", true);
+                    }
+                }
+            });
+        }
     }
 }
 

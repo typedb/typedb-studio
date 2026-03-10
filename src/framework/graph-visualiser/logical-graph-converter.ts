@@ -13,13 +13,13 @@ import {
     DataConstraintPlays,
     VertexFunction,
     VertexExpression, DataConstraintSubExact, DataConstraintIsaExact, DataVertex,
-    DataConstraintKind
-} from "../data/types";
+    DataConstraintKind, getTypeLabel,
+} from "./data/types";
 import {
     AnalyzedPipelineBackCompat,
     ConstraintBackCompat,
     backCompat_expressionAssigned,
-} from "../data/back-compat";
+} from "./data/back-compat";
 import {
     EdgeAttributes,
     EdgeMetadata,
@@ -27,8 +27,8 @@ import {
     VertexAttributes,
     VertexMetadata,
     VisualGraph,
-} from "./types";
-import { StudioConverterStyleParameters } from "../style/parameters";
+} from "./visual-graph";
+import { GraphStyles } from "./styles";
 
 /////////////////////////////////
 // Logical Graph -> Graphology //
@@ -145,41 +145,35 @@ export class StudioConverter implements ILogicalGraphConverter {
     constructor(
         public readonly graph: VisualGraph, public readonly queryStructure: AnalyzedPipelineBackCompat,
         public readonly isFollowupQuery: boolean, public readonly structureParameters: StudioConverterStructureParameters,
-        public readonly styleParameters: StudioConverterStyleParameters
+        public readonly styleParameters: GraphStyles
     ) {
     }
 
     private vertexMetadata(vertex: DataVertex): VertexMetadata {
         return {
-            defaultLabel: this.styleParameters.vertex_default_label(vertex),
-            hoverLabel: this.styleParameters.vertex_hover_label(vertex),
+            defaultLabel: this.styleParameters.vertexDefaultLabel(vertex),
+            hoverLabel: this.styleParameters.vertexHoverLabel(vertex),
             concept: vertex,
         };
     }
 
-    private getTypeLabel(vertex: DataVertex): string | undefined {
-        if ("type" in vertex && vertex.type && "label" in vertex.type) return vertex.type.label;
-        if ("label" in vertex && (vertex as DataVertex).kind !== "unavailable") return vertex.label;
-        return undefined;
-    }
-
     private vertexAttributes(vertex: DataVertex): VertexAttributes {
         // Extend as you please: https://www.sigmajs.org/docs/advanced/data/
-        const typeLabel = this.getTypeLabel(vertex);
-        const color = (typeLabel && this.styleParameters.vertex_type_colors?.[typeLabel])
-            ?? this.styleParameters.vertex_colors[vertex.kind];
-        const borderColor = (typeLabel && this.styleParameters.vertex_type_border_colors?.[typeLabel])
-            ?? this.styleParameters.vertex_border_colors[vertex.kind];
-        const shape = (typeLabel && this.styleParameters.vertex_type_shapes?.[typeLabel])
-            ?? this.styleParameters.vertex_shapes[vertex.kind];
-        const width = (typeLabel ? this.styleParameters.vertex_type_widths?.[typeLabel] : undefined)
-            ?? this.styleParameters.vertex_widths?.[vertex.kind]
-            ?? this.styleParameters.vertex_height;
-        const height = (typeLabel ? this.styleParameters.vertex_type_heights?.[typeLabel] : undefined)
-            ?? this.styleParameters.vertex_heights?.[vertex.kind]
-            ?? this.styleParameters.vertex_height;
+        const typeLabel = getTypeLabel(vertex);
+        const color = (typeLabel && this.styleParameters.vertexTypeColors?.[typeLabel])
+            ?? this.styleParameters.vertexColors[vertex.kind];
+        const borderColor = (typeLabel && this.styleParameters.vertexTypeBorderColors?.[typeLabel])
+            ?? this.styleParameters.vertexBorderColors[vertex.kind];
+        const shape = (typeLabel && this.styleParameters.vertexTypeShapes?.[typeLabel])
+            ?? this.styleParameters.vertexShapes[vertex.kind];
+        const width = (typeLabel ? this.styleParameters.vertexTypeWidths?.[typeLabel] : undefined)
+            ?? this.styleParameters.vertexWidths?.[vertex.kind]
+            ?? this.styleParameters.vertexHeight;
+        const height = (typeLabel ? this.styleParameters.vertexTypeHeights?.[typeLabel] : undefined)
+            ?? this.styleParameters.vertexHeights?.[vertex.kind]
+            ?? this.styleParameters.vertexHeight;
         return {
-            label: this.styleParameters.vertex_default_label(vertex),
+            label: this.styleParameters.vertexDefaultLabel(vertex),
             color: color,
             borderColor: borderColor,
             width: width,
@@ -204,12 +198,12 @@ export class StudioConverter implements ILogicalGraphConverter {
     private edgeAttributes(label: string, metadata: EdgeMetadata): EdgeAttributes {
         // Extend as you please: https://www.sigmajs.org/docs/advanced/data/
         const tag = metadata.dataEdge.tag;
-        const colorHex = this.styleParameters.edge_label_colors?.[tag]
-            ?? this.styleParameters.edge_color.hex();
+        const colorHex = this.styleParameters.edgeLabelColors?.[tag]
+            ?? this.styleParameters.edgeColor.hex();
         return {
             label: label,
             color: colorHex,
-            size: this.styleParameters.edge_size,
+            size: this.styleParameters.edgeSize,
             type: "line",
             metadata: metadata,
         }

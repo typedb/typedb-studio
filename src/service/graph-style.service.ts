@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
 import { DataVertexKind } from "../framework/graph-visualiser/data/types";
-import { defaultEdgeLabelColors, defaultQueryStyleParameters } from "../framework/graph-visualiser/style/parameters";
+import { GraphStyles, defaultEdgeLabelColors, defaultQueryStyleParams } from "../framework/graph-visualiser/styles";
 
 export interface NodeStyle {
     color: string;
@@ -46,11 +46,11 @@ export class GraphStyleService {
 
     getKindDefault(kind: DataVertexKind): NodeStyle {
         return {
-            color: defaultQueryStyleParameters.vertex_colors[kind],
-            borderColor: defaultQueryStyleParameters.vertex_border_colors[kind],
-            shape: defaultQueryStyleParameters.vertex_shapes[kind],
-            width: defaultQueryStyleParameters.vertex_widths[kind],
-            height: defaultQueryStyleParameters.vertex_heights[kind],
+            color: defaultQueryStyleParams.vertexColors[kind],
+            borderColor: defaultQueryStyleParams.vertexBorderColors[kind],
+            shape: defaultQueryStyleParams.vertexShapes[kind],
+            width: defaultQueryStyleParams.vertexWidths[kind],
+            height: defaultQueryStyleParams.vertexHeights[kind],
         };
     }
 
@@ -67,7 +67,7 @@ export class GraphStyleService {
         };
     }
 
-    getEffectiveStyle(kind: DataVertexKind, typeLabel?: string): NodeStyle {
+    resolveNodeStyle(kind: DataVertexKind, typeLabel?: string): NodeStyle {
         const kindStyle = this.getKindStyle(kind);
         if (!typeLabel) return kindStyle;
 
@@ -145,7 +145,7 @@ export class GraphStyleService {
     getEdgeLabelColor(tag: string): string {
         return this._edgeLabelColors[tag]
             ?? defaultEdgeLabelColors[tag]
-            ?? defaultQueryStyleParameters.edge_color.hex();
+            ?? defaultQueryStyleParams.edgeColor.hex();
     }
 
     setEdgeLabelColor(tag: string, color: string): void {
@@ -166,6 +166,50 @@ export class GraphStyleService {
 
     getResolvedEdgeLabelColors(): Record<string, string> {
         return { ...defaultEdgeLabelColors, ...this._edgeLabelColors };
+    }
+
+    toGraphStyles(): GraphStyles {
+        const vertexColors: Record<string, string> = {} as any;
+        const vertexBorderColors: Record<string, string> = {} as any;
+        const vertexShapes: Record<string, string> = {} as any;
+        const vertexWidths: Record<string, number> = {} as any;
+        const vertexHeights: Record<string, number> = {} as any;
+        for (const kind of ALL_KINDS) {
+            const style = this.getKindStyle(kind);
+            vertexColors[kind] = style.color;
+            vertexBorderColors[kind] = style.borderColor;
+            vertexShapes[kind] = style.shape;
+            vertexWidths[kind] = style.width;
+            vertexHeights[kind] = style.height;
+        }
+
+        const vertexTypeColors: Record<string, string> = {};
+        const vertexTypeBorderColors: Record<string, string> = {};
+        const vertexTypeShapes: Record<string, string> = {};
+        const vertexTypeWidths: Record<string, number> = {};
+        const vertexTypeHeights: Record<string, number> = {};
+        for (const [typeLabel, override] of Object.entries(this._typeStyles)) {
+            if (override.color) vertexTypeColors[typeLabel] = override.color;
+            if (override.borderColor) vertexTypeBorderColors[typeLabel] = override.borderColor;
+            if (override.shape) vertexTypeShapes[typeLabel] = override.shape;
+            if (override.width) vertexTypeWidths[typeLabel] = override.width;
+            if (override.height) vertexTypeHeights[typeLabel] = override.height;
+        }
+
+        return {
+            ...defaultQueryStyleParams,
+            vertexColors: vertexColors as any,
+            vertexBorderColors: vertexBorderColors as any,
+            vertexShapes: vertexShapes as any,
+            vertexWidths: vertexWidths as any,
+            vertexHeights: vertexHeights as any,
+            vertexTypeColors: Object.keys(vertexTypeColors).length ? vertexTypeColors : undefined,
+            vertexTypeBorderColors: Object.keys(vertexTypeBorderColors).length ? vertexTypeBorderColors : undefined,
+            vertexTypeShapes: Object.keys(vertexTypeShapes).length ? vertexTypeShapes : undefined,
+            vertexTypeWidths: Object.keys(vertexTypeWidths).length ? vertexTypeWidths : undefined,
+            vertexTypeHeights: Object.keys(vertexTypeHeights).length ? vertexTypeHeights : undefined,
+            edgeLabelColors: this.getResolvedEdgeLabelColors(),
+        };
     }
 
     resetToDefaults(): void {

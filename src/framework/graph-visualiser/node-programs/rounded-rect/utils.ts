@@ -1,9 +1,9 @@
 import { Attributes } from "graphology-types";
 import { Settings } from "sigma/settings";
 import { NodeDisplayData, PartialButFor } from "sigma/types";
-import { drawCenteredNodeLabel } from "../label-utils";
+import { drawCenteredNodeLabel } from "../../sigma-label-utils";
 
-export function drawEllipseNodeLabel<
+export function drawRoundedRectNodeLabel<
     N extends Attributes = Attributes,
     E extends Attributes = Attributes,
     G extends Attributes = Attributes,
@@ -15,7 +15,7 @@ export function drawEllipseNodeLabel<
     return drawCenteredNodeLabel<N, E, G>(context, data, settings);
 }
 
-export function drawEllipseNodeHover<
+export function drawRoundedRectNodeHover<
     N extends Attributes = Attributes,
     E extends Attributes = Attributes,
     G extends Attributes = Attributes,
@@ -37,9 +37,17 @@ export function drawEllipseNodeHover<
     const scale = data.size / Math.max(rawW, rawH);
     const radiusX = rawW * scale + PADDING;
     const radiusY = rawH * scale + PADDING;
+    const cornerR = Math.min(radiusX, radiusY) * 0.25;
 
     context.beginPath();
-    context.ellipse(data.x, data.y, radiusX, radiusY, 0, 0, Math.PI * 2);
+    context.moveTo(data.x + radiusX - cornerR, data.y - radiusY);
+    context.arcTo(data.x + radiusX, data.y - radiusY, data.x + radiusX, data.y - radiusY + cornerR, cornerR);
+    context.lineTo(data.x + radiusX, data.y + radiusY - cornerR);
+    context.arcTo(data.x + radiusX, data.y + radiusY, data.x + radiusX - cornerR, data.y + radiusY, cornerR);
+    context.lineTo(data.x - radiusX + cornerR, data.y + radiusY);
+    context.arcTo(data.x - radiusX, data.y + radiusY, data.x - radiusX, data.y + radiusY - cornerR, cornerR);
+    context.lineTo(data.x - radiusX, data.y - radiusY + cornerR);
+    context.arcTo(data.x - radiusX, data.y - radiusY, data.x - radiusX + cornerR, data.y - radiusY, cornerR);
     context.closePath();
     context.fill();
 
@@ -47,5 +55,5 @@ export function drawEllipseNodeHover<
     context.shadowOffsetY = 0;
     context.shadowBlur = 0;
 
-    drawEllipseNodeLabel(context, data, settings);
+    drawRoundedRectNodeLabel(context, data, settings);
 }

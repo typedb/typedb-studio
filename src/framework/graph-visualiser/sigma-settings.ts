@@ -3,10 +3,10 @@ import Sigma from "sigma";
 import { drawStraightEdgeLabel } from "sigma/rendering";
 import { Settings as SigmaSettings } from "sigma/settings";
 import MultiGraph from "graphology";
-import { NodeDiamondProgram } from "./node-diamond";
-import { NodeRoundedRectangleProgram } from "./node-rounded-rect";
-import { NodeEllipseProgram } from "./node-ellipse";
-import { zoomScaledFontSize } from "./label-utils";
+import { NodeDiamondProgram } from "./node-programs/diamond";
+import { NodeRoundedRectangleProgram } from "./node-programs/rounded-rect";
+import { NodeEllipseProgram } from "./node-programs/ellipse";
+import { zoomScaledFontSize } from "./sigma-label-utils";
 
 function edgeLabelSize(sourceData: any, targetData: any, maxSize: number): number {
     return Math.max(zoomScaledFontSize(sourceData, maxSize), zoomScaledFontSize(targetData, maxSize));
