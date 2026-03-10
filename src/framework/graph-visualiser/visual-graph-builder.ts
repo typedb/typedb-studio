@@ -14,7 +14,7 @@ import {
     VertexFunction,
     VertexExpression, DataConstraintSubExact, DataConstraintIsaExact, DataVertex,
     DataConstraintKind, getTypeLabel,
-} from "./types";
+} from "./logical-graph";
 import {
     AnalyzedPipelineBackCompat,
     ConstraintBackCompat,

@@ -17,34 +17,23 @@ interface InteractionState {
 }
 
 export class InteractionHandler {
-    graph: MultiGraph;
-    renderer: Sigma;
     state: InteractionState;
-    styleParams: GraphStyles;
-    private studioState: StudioState;
 
-    constructor(graph: MultiGraph, renderer: Sigma, studioState: StudioState, styleParams: GraphStyles) {
-        this.graph = graph;
-        this.renderer = renderer;
+    constructor(public graph: MultiGraph, public renderer: Sigma, private studioState: StudioState, public styleParams: GraphStyles) {
         this.state = {
             draggedNode : null,
             highlightedAnswer: null,
         };
-        this.studioState = studioState;
-        this.styleParams = styleParams;
         this.registerAll(renderer);
     }
 
     registerAll(renderer: Sigma) {
         renderer.on(StudioSigmaEventType.enterNode, (e) => this.onEnterNode(e));
         renderer.on(StudioSigmaEventType.leaveNode, (e) => this.onLeaveNode(e));
-
         renderer.on(StudioSigmaEventType.moveBody, (e) => this.onMoveBody(e));
         renderer.on(StudioSigmaEventType.downNode, (e) => this.onDownNode(e));
-
         renderer.on(StudioSigmaEventType.upStage, (e) => this.onUpStage(e));
         renderer.on(StudioSigmaEventType.upNode, (e) => this.onUpNode(e));
-
         renderer.on(StudioSigmaEventType.doubleClickNode, (e) => this.onDoubleClickNode(e));
     }
 
@@ -64,7 +53,6 @@ export class InteractionHandler {
             this.graph.removeNodeAttribute(node, "_originalColor");
         }
     }
-
 
     onDownNode(event: SigmaNodeEventPayload) {
         const node = event.node;

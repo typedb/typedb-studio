@@ -12,7 +12,7 @@ import {
 import {
     DataConstraintAny, DataGraph, DataVertex,
     VertexUnavailable, QueryCoordinates,
-} from "./types";
+} from "./logical-graph";
 
 // Back-compat types & helpers
 

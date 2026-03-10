@@ -4,7 +4,7 @@ import {
     ConstraintExpressionLegacy, ConstraintLinksLegacy,
     AnalyzedPipeline,
 } from "@typedb/driver-http";
-import { DataVertex, DataVertexKind, QueryCoordinates, VertexUnavailable } from "./types";
+import { DataVertex, DataVertexKind, QueryCoordinates, VertexUnavailable } from "./logical-graph";
 import { AnalyzedPipelineBackCompat, backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./logical-graph-builder";
 import { Color } from "chroma-js";
 import chroma from "chroma-js";
@@ -299,23 +299,23 @@ export function colorQuery(
         })
     });
     // Add one to end-offset so we're AFTER the last character
-    let starts_ends_separate = spans.flatMap(span => [
+    let startsEndsSeparate = spans.flatMap(span => [
         { offset: span.span.begin, coordinatesIfStartElseNull: span.coordinates },
         { offset: span.span.end + 1, coordinatesIfStartElseNull: null }
-]);
-    starts_ends_separate.sort((a,b) => a.offset - b.offset);
-    let se_index = 0;
+    ]);
+    startsEndsSeparate.sort((a,b) => a.offset - b.offset);
+    let seIndex = 0;
     let highlighted = "";
     for(let i= 0; i<queryString.length; i++) {
-        while (se_index < starts_ends_separate.length && starts_ends_separate[se_index].offset == i) {
-            let coordinatesOrNullIfEnd = starts_ends_separate[se_index].coordinatesIfStartElseNull;
+        while (seIndex < startsEndsSeparate.length && startsEndsSeparate[seIndex].offset == i) {
+            let coordinatesOrNullIfEnd = startsEndsSeparate[seIndex].coordinatesIfStartElseNull;
             if (coordinatesOrNullIfEnd == null) {
                 highlighted += "</span>"
             } else {
                 let color = getColorForConstraintIndex(coordinatesOrNullIfEnd.branch, coordinatesOrNullIfEnd.constraint)
                 highlighted += "<span style=\"color: " + color.hex() + "\">";
             }
-            se_index += 1;
+            seIndex += 1;
         }
         highlighted += (queryString[i] == "\n") ? "<br/>": queryString[i];
     }

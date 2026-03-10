@@ -6,7 +6,7 @@ import {
 import Sigma from "sigma";
 import type { GraphStyleService } from "../../service/graph-style.service";
 
-import { getTypeLabel } from "./types";
+import { getTypeLabel } from "./logical-graph";
 import { buildLogicalGraph, AnalyzedPipelineBackCompat } from "./logical-graph-builder";
 import { VisualGraph, StudioConverterStructureParameters, defaultStructureParameters } from "./visual-graph";
 import { buildVisualGraph, VisualGraphBuilder } from "./visual-graph-builder";
@@ -21,8 +21,8 @@ export type { VisualGraph } from "./visual-graph";
 export { newVisualGraph, defaultStructureParameters } from "./visual-graph";
 export type { StudioConverterStructureParameters } from "./visual-graph";
 export { buildVisualGraph, VisualGraphBuilder, shouldCreateEdge, shouldCreateNode, vertexMapKey } from "./visual-graph-builder";
-export type { DataVertexKind, DataVertex, QueryCoordinates } from "./types";
-export { getTypeLabel } from "./types";
+export type { DataVertexKind, DataVertex, QueryCoordinates } from "./logical-graph";
+export { getTypeLabel } from "./logical-graph";
 export { buildLogicalGraph } from "./logical-graph-builder";
 export { backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./logical-graph-builder";
 export type { ConstraintBackCompat, ConceptRowsQueryResponseBackCompat, AnalyzedPipelineBackCompat } from "./logical-graph-builder";
