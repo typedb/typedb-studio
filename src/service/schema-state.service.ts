@@ -412,7 +412,7 @@ export class VisualiserState {
         this._status = value;
     }
 
-    constructor(private styleService?: GraphStyleService) {
+    constructor(private styleService: GraphStyleService) {
         this.canvasEl$.subscribe(el => {
             if (el && this.savedState && this.database) {
                 this._status = "ok";

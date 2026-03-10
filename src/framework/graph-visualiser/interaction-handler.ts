@@ -153,8 +153,8 @@ export class InteractionHandler {
         if (term !== "") {
             this.graph.nodes().forEach(node => {
                 const attributes = this.graph.getNodeAttributes(node);
-                if ("concept" in attributes.metadata) {
-                    const concept = attributes.metadata.concept;
+                if ("concept" in attributes["metadata"]) {
+                    const concept = attributes["metadata"].concept;
                     if (("iid" in concept && safeString(concept.iid).indexOf(term) !== -1)
                         || ("label" in concept && safeString(concept.label).indexOf(term) !== -1)
                         || ("value" in concept && safeString(concept.value).indexOf(term) !== -1)) {

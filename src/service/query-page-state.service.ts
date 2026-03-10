@@ -37,7 +37,7 @@ export interface RunOutputState {
     raw: RawOutputState;
 }
 
-export function createRunOutputState(label: string, query: string, styleService?: GraphStyleService): RunOutputState {
+export function createRunOutputState(label: string, query: string, styleService: GraphStyleService): RunOutputState {
     return {
         id: crypto.randomUUID(),
         label,
@@ -704,9 +704,9 @@ export class GraphOutputState {
     private _canvasEl: HTMLElement | null = null;
     private _preservedGraph: VisualGraph | null = null;
     private _pendingResponses: ApiResponse<QueryResponse>[] = [];
-    private _styleService?: GraphStyleService;
+    private _styleService: GraphStyleService;
 
-    constructor(styleService?: GraphStyleService) {
+    constructor(styleService: GraphStyleService) {
         this._styleService = styleService;
     }
 
@@ -762,7 +762,7 @@ export class GraphOutputState {
                         document.getElementById("query-highlight-div")!.innerHTML = highlightedQuery;
                     }
                 }
-                this.visualiser.colorEdgesByConstraintIndex(!this._styleService?.colorEdgesByConstraint);
+                this.visualiser.colorEdgesByConstraintIndex(!this._styleService.colorEdgesByConstraint);
                 this.status = "ok";
                 break;
             }

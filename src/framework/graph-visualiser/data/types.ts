@@ -25,7 +25,7 @@ export type DataVertex = Concept | DataVertexSpecial;
 
 export function getTypeLabel(vertex: DataVertex): string | undefined {
     if ("type" in vertex && vertex.type && "label" in vertex.type) return vertex.type.label;
-    if ("label" in vertex && vertex.kind !== "unavailable") return vertex.label;
+    if ("label" in vertex) return vertex.label;
     return undefined;
 }
 
