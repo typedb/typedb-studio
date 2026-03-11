@@ -14,6 +14,7 @@ import {
     VertexFunction,
     VertexExpression, DataConstraintSubExact, DataConstraintIsaExact, DataVertex,
     DataConstraintKind, getTypeLabel,
+    DataConstraintComparison, DataConstraintIs, DataConstraintIid, DataConstraintLabel, DataConstraintValue,
 } from "./structured-answers";
 import {
     AnalyzedPipelineBackCompat,
@@ -35,118 +36,148 @@ import { GraphStyles } from "./styles";
 /////////////////////////////////
 
 /**
+ * Abstract base class for building a graph from structured TypeDB answers.
+ * Extend this class and implement the abstract `on*` methods to handle each constraint type.
+ * Call `build(answers)` to process a set of structured answers.
+ *
  * You will majorly need:
  *  graph.addNode(id, attributes)
  *  graph.addNode(from, to,  attributes)
  * See: https://www.sigmajs.org/docs/advanced/data/ for attributes
  */
-export interface IGraphBuilder {
+export abstract class AbstractGraphBuilder {
   // TODO: Functional vertices & edges like expressions, comparisons & function calls
 
+  build(answers: StructuredAnswer[]) {
+      answers.forEach((answer, answerIndex) => {
+          answer.constraints.forEach(constraint => {
+              this.putConstraint(answerIndex, constraint);
+          });
+      });
+  }
+
+  private putConstraint(answerIndex: number, constraint: DataConstraintAny) {
+    switch (constraint.tag) {
+      case "isa":{
+        this.isa(answerIndex, constraint);
+        break;
+      }
+      case "isa!":{
+        this.isaExact(answerIndex, constraint);
+        break;
+      }
+      case "has": {
+        this.has(answerIndex, constraint);
+        break;
+      }
+      case "links": {
+        this.links(answerIndex, constraint);
+        break;
+      }
+      case "sub": {
+        this.sub(answerIndex, constraint);
+        break;
+      }
+      case "sub!": {
+        this.subExact(answerIndex, constraint);
+        break;
+      }
+      case "owns": {
+        this.owns(answerIndex, constraint);
+        break;
+      }
+      case "relates": {
+        this.relates(answerIndex, constraint);
+        break;
+      }
+      case "plays": {
+        this.plays(answerIndex, constraint);
+        break;
+      }
+      case "expression" : {
+        this.expression(answerIndex, constraint);
+        break;
+      }
+      case "function" : {
+        this.function(answerIndex, constraint);
+        break;
+      }
+      case "kind": {
+        this.kind(answerIndex, constraint);
+        break;
+      }
+      case "comparison": {
+        this.comparison(answerIndex, constraint);
+        break;
+      }
+      case "is": {
+        this.is(answerIndex, constraint);
+        break;
+      }
+      case "iid": {
+        this.iid(answerIndex, constraint);
+        break;
+      }
+      case "label": {
+        this.label(answerIndex, constraint);
+        break;
+      }
+      case "value": {
+        this.value(answerIndex, constraint);
+        break;
+      }
+    }
+  }
+
   // Vertices
-  putVertex(answerIndex: number, vertex: DataVertex, queryVertex: ConstraintVertexAny): void;
+  abstract vertex(answerIndex: number, vertex: DataVertex, queryVertex: ConstraintVertexAny): void;
 
   // Edges
-  putIsa(answerIndex: number, constraint: DataConstraintIsa): void;
+  abstract isa(answerIndex: number, constraint: DataConstraintIsa): void;
 
-  putIsaExact(answerIndex: number, constraint: DataConstraintIsaExact): void
+  abstract isaExact(answerIndex: number, constraint: DataConstraintIsaExact): void;
 
-  putHas(answerIndex: number, constraint: DataConstraintHas): void;
+  abstract has(answerIndex: number, constraint: DataConstraintHas): void;
 
-  putLinks(answerIndex: number, constraint: DataConstraintLinks): void;
+  abstract links(answerIndex: number, constraint: DataConstraintLinks): void;
 
-  putSub(answerIndex: number, constraint: DataConstraintSub): void;
+  abstract sub(answerIndex: number, constraint: DataConstraintSub): void;
 
-  putSubExact(answerIndex: number, constraint: DataConstraintSubExact): void;
+  abstract subExact(answerIndex: number, constraint: DataConstraintSubExact): void;
 
-  putOwns(answerIndex: number, constraint: DataConstraintOwns): void;
+  abstract owns(answerIndex: number, constraint: DataConstraintOwns): void;
 
-  putRelates(answerIndex: number, constraint: DataConstraintRelates): void;
+  abstract relates(answerIndex: number, constraint: DataConstraintRelates): void;
 
-  putPlays(answerIndex: number, constraint: DataConstraintPlays): void;
+  abstract plays(answerIndex: number, constraint: DataConstraintPlays): void;
 
-  putExpression(answerIndex: number, constraint: DataConstraintExpression): void;
+  abstract expression(answerIndex: number, constraint: DataConstraintExpression): void;
 
-  putFunction(answerIndex: number, constraint: DataConstraintFunction): void;
+  abstract function(answerIndex: number, constraint: DataConstraintFunction): void;
 
-  putKind(answerIndex: number, constraint: DataConstraintKind): void;
-}
+  abstract kind(answerIndex: number, constraint: DataConstraintKind): void;
 
-export function buildGraph(answers: StructuredAnswer[], builder: IGraphBuilder) {
-    answers.forEach((answer, answerIndex) => {
-        answer.constraints.forEach(constraint => {
-            putConstraint(builder, answerIndex, constraint);
-        });
-    });
-}
+  abstract comparison(answerIndex: number, constraint: DataConstraintComparison): void;
 
-function putConstraint(builder: IGraphBuilder, answerIndex: number, constraint: DataConstraintAny) {
-  switch (constraint.tag) {
-    case "isa":{
-      builder.putIsa(answerIndex, constraint);
-      break;
-    }
-    case "isa!":{
-      builder.putIsaExact(answerIndex, constraint);
-      break;
-    }
-    case "has": {
-      builder.putHas(answerIndex, constraint);
-      break;
-    }
-    case "links": {
-      builder.putLinks(answerIndex, constraint);
-      break;
-    }
-    case "sub": {
-      builder.putSub(answerIndex, constraint);
-      break;
-    }
-    case "sub!": {
-      builder.putSubExact(answerIndex, constraint);
-      break;
-    }
-    case "owns": {
-      builder.putOwns(answerIndex, constraint);
-      break;
-    }
-    case "relates": {
-      builder.putRelates(answerIndex, constraint);
-      break;
-    }
-    case "plays": {
-      builder.putPlays(answerIndex, constraint);
-      break;
-    }
-    case "expression" : {
-      builder.putExpression(answerIndex, constraint);
-      break;
-    }
-    case "function" : {
-      builder.putFunction(answerIndex, constraint);
-      break;
-    }
-    case "kind": {
-      builder.putKind(answerIndex, constraint);
-      break;
-    }
-    case "comparison": break;
-    case "is": break;
-    case "iid": break;
-    case "label": break;
-    case "value": break;
-  }
+  abstract is(answerIndex: number, constraint: DataConstraintIs): void;
+
+  abstract iid(answerIndex: number, constraint: DataConstraintIid): void;
+
+  abstract label(answerIndex: number, constraint: DataConstraintLabel): void;
+
+  abstract value(answerIndex: number, constraint: DataConstraintValue): void;
 }
 
 type ConstraintVertexOrSpecial = ConstraintVertexAny | VertexFunction | VertexExpression;
 
-export class GraphBuilder implements IGraphBuilder {
+export class GraphBuilder extends AbstractGraphBuilder {
 
     constructor(
         public readonly graph: Graph, public readonly queryStructure: AnalyzedPipelineBackCompat,
         public readonly isFollowupQuery: boolean, public readonly structureParameters: GraphBuilderStructureParams,
         public readonly styleParameters: GraphStyles
     ) {
+        super();
     }
 
     private vertexMetadata(vertex: DataVertex): VertexMetadata {
@@ -244,98 +275,80 @@ export class GraphBuilder implements IGraphBuilder {
         }
 
         if (this.shouldCreateEdge(edge, queryFrom, queryTo)) {
-            let fromKey = this.putVertex(answerIndex, from, queryFrom);
-            let toKey = this.putVertex(answerIndex, to, queryTo);
+            let fromKey = this.vertex(answerIndex, from, queryFrom);
+            let toKey = this.vertex(answerIndex, to, queryTo);
             let edgeKey = this.edgeKey(fromKey, toKey, label);
             const attributes = this.edgeAttributes(label, this.edgeMetadata(answerIndex, edge));
             this.createEdge(edgeKey, fromKey, toKey, attributes);
         } else {
             if (this.shouldCreateNode(queryFrom)) {
-                this.putVertex(answerIndex, from, queryFrom);
+                this.vertex(answerIndex, from, queryFrom);
             }
             if (this.shouldCreateNode(queryTo)) {
-                this.putVertex(answerIndex, to, queryTo);
+                this.vertex(answerIndex, to, queryTo);
             }
         }
     }
 
-    // IGraphBuilder
+    // AbstractGraphBuilder
     // Vertices
-    putVertex(answerIndex: number, vertex: DataVertex, queryVertex: ConstraintVertexOrSpecial): string {
+    vertex(_answerIndex: number, vertex: DataVertex, queryVertex: ConstraintVertexOrSpecial): string {
         const key = vertexMapKey(vertex);
         if (this.shouldCreateNode(queryVertex) && vertex.kind !== "unavailable") {
-            this.createVertex(key, this.vertexAttributes(vertex))
+            this.createVertex(key, this.vertexAttributes(vertex));
         }
         return key;
     }
 
     // Edges
-    putIsa(answerIndex: number, constraint: DataConstraintIsa): void {
-        let isa =  constraint;
-        let queryConstraint =  constraint.queryConstraint;
-        let label = constraint.tag;
-        this.maybeCreateEdge(answerIndex, constraint, label, isa.instance, isa.type, queryConstraint.instance, queryConstraint.type);
+    isa(answerIndex: number, constraint: DataConstraintIsa): void {
+        let queryConstraint = constraint.queryConstraint;
+        this.maybeCreateEdge(answerIndex, constraint, constraint.tag, constraint.instance, constraint.type, queryConstraint.instance, queryConstraint.type);
     }
 
-    putIsaExact(answerIndex: number, constraint: DataConstraintIsaExact): void {
-        let isa =  constraint;
-        let queryConstraint =  constraint.queryConstraint;
-        let label = constraint.tag;
-        this.maybeCreateEdge(answerIndex, constraint, label, isa.instance, isa.type, queryConstraint.instance, queryConstraint.type);
+    isaExact(answerIndex: number, constraint: DataConstraintIsaExact): void {
+        let queryConstraint = constraint.queryConstraint;
+        this.maybeCreateEdge(answerIndex, constraint, constraint.tag, constraint.instance, constraint.type, queryConstraint.instance, queryConstraint.type);
     }
 
-    putHas(answerIndex: number, constraint: DataConstraintHas): void {
-        let has =  constraint;
-        let queryConstraint =  constraint.queryConstraint;
-        let label = constraint.tag;
-        this.maybeCreateEdge(answerIndex, constraint, label, has.owner, has.attribute, queryConstraint.owner, queryConstraint.attribute);
+    has(answerIndex: number, constraint: DataConstraintHas): void {
+        let queryConstraint = constraint.queryConstraint;
+        this.maybeCreateEdge(answerIndex, constraint, constraint.tag, constraint.owner, constraint.attribute, queryConstraint.owner, queryConstraint.attribute);
     }
 
-    putLinks(answerIndex: number, constraint: DataConstraintLinks): void {
-        let links = constraint;
-        let queryConstraint =  constraint.queryConstraint;
-        const label = links.role.kind === "roleType" ? links.role.label.split(":").at(-1) : `?`;
-        if (!label) throw `${this.putLinks.name}: invalid role label '${JSON.stringify(links.role)}'`;
-        this.maybeCreateEdge(answerIndex, constraint, label, links.relation, links.player, queryConstraint.relation, queryConstraint.player);
+    links(answerIndex: number, constraint: DataConstraintLinks): void {
+        let queryConstraint = constraint.queryConstraint;
+        const label = constraint.role.kind === "roleType" ? constraint.role.label.split(":").at(-1) : `?`;
+        if (!label) throw `${this.links.name}: invalid role label '${JSON.stringify(constraint.role)}'`;
+        this.maybeCreateEdge(answerIndex, constraint, label, constraint.relation, constraint.player, queryConstraint.relation, queryConstraint.player);
     }
 
-    putSub(answerIndex: number, constraint: DataConstraintSub): void {
-        let sub = constraint;
-        let queryConstraint =  constraint.queryConstraint;
-        let label = constraint.tag;
-        this.maybeCreateEdge(answerIndex, constraint, label, sub.subtype, sub.supertype, queryConstraint.subtype, queryConstraint.supertype);
+    sub(answerIndex: number, constraint: DataConstraintSub): void {
+        let queryConstraint = constraint.queryConstraint;
+        this.maybeCreateEdge(answerIndex, constraint, constraint.tag, constraint.subtype, constraint.supertype, queryConstraint.subtype, queryConstraint.supertype);
     }
 
-    putSubExact(answerIndex: number, constraint: DataConstraintSubExact): void {
-        let sub = constraint;
-        let queryConstraint =  constraint.queryConstraint;
-        let label = constraint.tag;
-        this.maybeCreateEdge(answerIndex, constraint, label, sub.subtype, sub.supertype, queryConstraint.subtype, queryConstraint.supertype);
+    subExact(answerIndex: number, constraint: DataConstraintSubExact): void {
+        let queryConstraint = constraint.queryConstraint;
+        this.maybeCreateEdge(answerIndex, constraint, constraint.tag, constraint.subtype, constraint.supertype, queryConstraint.subtype, queryConstraint.supertype);
     }
 
-    putOwns(answerIndex: number, constraint: DataConstraintOwns): void {
-        let owns = constraint;
-        let queryConstraint =  constraint.queryConstraint;
-        let label = constraint.tag;
-        this.maybeCreateEdge(answerIndex, constraint, label, owns.owner, owns.attribute, queryConstraint.owner, queryConstraint.attribute);
+    owns(answerIndex: number, constraint: DataConstraintOwns): void {
+        let queryConstraint = constraint.queryConstraint;
+        this.maybeCreateEdge(answerIndex, constraint, constraint.tag, constraint.owner, constraint.attribute, queryConstraint.owner, queryConstraint.attribute);
     }
 
-    putRelates(answerIndex: number, constraint: DataConstraintRelates): void {
-        let relates = constraint;
-        let queryConstraint =  constraint.queryConstraint;
-        let label = constraint.tag;
-        this.maybeCreateEdge(answerIndex, constraint, label, relates.relation, relates.role, queryConstraint.relation, queryConstraint.role);
+    relates(answerIndex: number, constraint: DataConstraintRelates): void {
+        let queryConstraint = constraint.queryConstraint;
+        this.maybeCreateEdge(answerIndex, constraint, constraint.tag, constraint.relation, constraint.role, queryConstraint.relation, queryConstraint.role);
     }
 
-    putPlays(answerIndex: number, constraint: DataConstraintPlays): void {
-        let plays = constraint;
-        let queryConstraint =  constraint.queryConstraint;
-        let label = constraint.tag;
-        this.maybeCreateEdge(answerIndex, constraint, label, plays.player, plays.role, queryConstraint.player, queryConstraint.role);
+    plays(answerIndex: number, constraint: DataConstraintPlays): void {
+        let queryConstraint = constraint.queryConstraint;
+        this.maybeCreateEdge(answerIndex, constraint, constraint.tag, constraint.player, constraint.role, queryConstraint.player, queryConstraint.role);
     }
 
-    putExpression(answerIndex: number, constraint: DataConstraintExpression): void {
-        let expression = constraint;
+    expression(answerIndex: number, constraint: DataConstraintExpression): void {
         let expressionVertexKey = expressionVertexKeyFromArgsAndAssigned(constraint);
         let expressionVertex: VertexExpression = {
             tag: "expression",
@@ -348,8 +361,8 @@ export class GraphBuilder implements IGraphBuilder {
         let queryVertex = backCompat_expressionAssigned(constraint.queryConstraint);
         let varNameOrId = getVariableName(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
         let label = `assign[${varNameOrId}]`;
-        this.maybeCreateEdge(answerIndex, constraint, label, expressionVertex, expression.assigned, expressionVertex, queryVertex);
-        expression.arguments
+        this.maybeCreateEdge(answerIndex, constraint, label, expressionVertex, constraint.assigned, expressionVertex, queryVertex);
+        constraint.arguments
             .forEach((arg, i) => {
                 let queryVertex = constraint.queryConstraint.arguments[i];
                 let varNameOrId = getVariableName(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
@@ -358,8 +371,7 @@ export class GraphBuilder implements IGraphBuilder {
             });
     }
 
-    putFunction(answerIndex: number, constraint: DataConstraintFunction): void {
-        let functionCall = constraint;
+    function(answerIndex: number, constraint: DataConstraintFunction): void {
         let functionVertexKey = functionVertexKeyFromArgsAndAssigned(constraint);
         let functionVertex: VertexFunction = {
             tag: "functionCall",
@@ -367,14 +379,14 @@ export class GraphBuilder implements IGraphBuilder {
             repr: constraint.name,
             vertexMapKey: functionVertexKey
         }
-        functionCall.assigned
+        constraint.assigned
             .forEach((assigned, i) => {
                 let queryVertex = constraint.queryConstraint.assigned[i];
                 let varNameOrId = getVariableName(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
                 let label = `assign[${varNameOrId}]`;
                 this.maybeCreateEdge(answerIndex, constraint, label, functionVertex, assigned, functionVertex, queryVertex);
             });
-        functionCall.arguments
+        constraint.arguments
             .forEach((arg, i) => {
                 let queryVertex = constraint.queryConstraint.arguments[i];
                 let varNameOrId = getVariableName(this.queryStructure, queryVertex) ?? `$_${queryVertex.id}`;
@@ -383,9 +395,19 @@ export class GraphBuilder implements IGraphBuilder {
             });
     }
 
-    putKind(answerIndex: number, constraint: DataConstraintKind): void {
-        this.putVertex(answerIndex, constraint.type, constraint.queryConstraint.type);
+    kind(answerIndex: number, constraint: DataConstraintKind): void {
+        this.vertex(answerIndex, constraint.type, constraint.queryConstraint.type);
     }
+
+    comparison(_answerIndex: number, _constraint: DataConstraintComparison): void {}
+
+    is(_answerIndex: number, _constraint: DataConstraintIs): void {}
+
+    iid(_answerIndex: number, _constraint: DataConstraintIid): void {}
+
+    label(_answerIndex: number, _constraint: DataConstraintLabel): void {}
+
+    value(_answerIndex: number, _constraint: DataConstraintValue): void {}
 }
 
 export function shouldCreateNode(structure: AnalyzedPipelineBackCompat, vertex: ConstraintVertexOrSpecial) {

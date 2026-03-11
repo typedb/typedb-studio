@@ -9,7 +9,7 @@ import type { GraphStyleService } from "../../service/graph-style.service";
 import { getTypeLabel } from "./structured-answers";
 import { buildStructuredAnswers, AnalyzedPipelineBackCompat } from "./structured-answers-builder";
 import { Graph, GraphBuilderStructureParams, defaultStructureParams } from "./graph";
-import { buildGraph, GraphBuilder } from "./graph-builder";
+import { GraphBuilder } from "./graph-builder";
 import { GraphStyles, colorEdgesByConstraintIndex as _colorEdgesByConstraintIndex, colorQuery as _colorQuery } from "./styles";
 import { setUseBorderColorForLabels } from "./sigma-label-utils";
 import { InteractionHandler, StudioState } from "./interaction-handler";
@@ -20,7 +20,7 @@ export type { StudioState } from "./interaction-handler";
 export type { Graph } from "./graph";
 export { newGraph, defaultStructureParams as defaultStructureParameters } from "./graph";
 export type { GraphBuilderStructureParams as StudioConverterStructureParameters } from "./graph";
-export { buildGraph, GraphBuilder, shouldCreateEdge, shouldCreateNode, vertexMapKey } from "./graph-builder";
+export { AbstractGraphBuilder, GraphBuilder, shouldCreateEdge, shouldCreateNode, vertexMapKey } from "./graph-builder";
 export type { VertexKind, DataVertex, QueryCoordinates, StructuredAnswer } from "./structured-answers";
 export { getTypeLabel } from "./structured-answers";
 export { buildStructuredAnswers } from "./structured-answers-builder";
@@ -115,7 +115,7 @@ export class GraphVisualiser {
             (window as any)._lastQueryAnswers = res.ok.answers; // TODO: Remove once schema based autocomplete is stable.
             let builder = new GraphBuilder(this.graph, res.ok.query, false, this.structureParams, this.styleParams);
             let answers = buildStructuredAnswers(res.ok);
-            buildGraph(answers, builder);
+            builder.build(answers);
         }
     }
 
@@ -125,7 +125,7 @@ export class GraphVisualiser {
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
             let builder = new GraphBuilder(this.graph, res.ok.query, true, this.structureParams, this.styleParams);
             let answers = buildStructuredAnswers(res.ok as ConceptRowsQueryResponse);
-            buildGraph(answers, builder);
+            builder.build(answers);
         }
     }
 
