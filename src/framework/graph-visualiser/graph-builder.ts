@@ -31,10 +31,6 @@ import {
 } from "./graph";
 import { GraphStyles } from "./styles";
 
-/////////////////////////////////
-// Structured Answers -> Graphology //
-/////////////////////////////////
-
 /**
  * Abstract base class for building a graph from structured TypeDB answers.
  * Extend this class and implement the abstract `on*` methods to handle each constraint type.
@@ -46,7 +42,6 @@ import { GraphStyles } from "./styles";
  * See: https://www.sigmajs.org/docs/advanced/data/ for attributes
  */
 export abstract class AbstractGraphBuilder {
-  // TODO: Functional vertices & edges like expressions, comparisons & function calls
 
   build(answers: StructuredAnswer[]) {
       answers.forEach((answer, answerIndex) => {
@@ -398,6 +393,8 @@ export class GraphBuilder extends AbstractGraphBuilder {
     kind(answerIndex: number, constraint: DataConstraintKind): void {
         this.vertex(answerIndex, constraint.type, constraint.queryConstraint.type);
     }
+
+    // TODO
 
     comparison(_answerIndex: number, _constraint: DataConstraintComparison): void {}
 
