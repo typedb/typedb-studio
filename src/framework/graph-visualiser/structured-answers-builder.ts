@@ -9,10 +9,7 @@ import {
     Entity, EntityType, InstantiableType,
     Relation, RelationType, RoleType, Type, Value
 } from "@typedb/driver-http";
-import {
-    DataConstraintAny, StructuredAnswer, DataVertex,
-    VertexUnavailable, QueryCoordinates,
-} from "./structured-answers";
+import { DataConstraintAny, StructuredAnswer, DataVertex, VertexUnavailable, QueryCoordinates } from "@typedb/graph-utils";
 
 // Back-compat types & helpers
 

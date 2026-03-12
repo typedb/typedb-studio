@@ -43,6 +43,7 @@
     "@tauri-apps/api": "~2.10.0",
     "@tauri-apps/plugin-opener": "^2",
     "@typedb/driver-http": "3.7.0",
+    "@typedb/graph-utils": "workspace:*",
     "chroma-js": "3.1.2",
     "graphology": "0.26.0",
     "graphology-layout-force": "0.2.4",

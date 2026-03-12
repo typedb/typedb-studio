@@ -15,24 +15,6 @@ import { setUseBorderColorForLabels } from "./sigma-label-utils";
 import { InteractionHandler, StudioState } from "./interaction-handler";
 import { LayoutWrapper } from "./layout";
 
-// Re-export public API
-export type { StudioState } from "./interaction-handler";
-export type { Graph } from "./graph";
-export { newGraph, defaultStructureParams as defaultStructureParameters } from "./graph";
-export type { GraphBuilderStructureParams as StudioConverterStructureParameters } from "./graph";
-export { AbstractGraphBuilder, GraphBuilder, shouldCreateEdge, shouldCreateNode, vertexMapKey } from "./graph-builder";
-export type { VertexKind, DataVertex, QueryCoordinates, StructuredAnswer } from "./structured-answers";
-export { getTypeLabel } from "./structured-answers";
-export { buildStructuredAnswers } from "./structured-answers-builder";
-export { backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./structured-answers-builder";
-export type { ConstraintBackCompat, ConceptRowsQueryResponseBackCompat, AnalyzedPipelineBackCompat } from "./structured-answers-builder";
-export { GraphStyles, defaultQueryStyleParams, defaultExplorationQueryStyleParams, defaultEdgeLabelColors, darkPalette, colorEdgesByConstraintIndex, colorQuery } from "./styles";
-export { createSigmaRenderer, defaultSigmaSettings } from "./sigma-settings";
-export { setUseBorderColorForLabels } from "./sigma-label-utils";
-export { Layouts } from "./layout";
-export type { LayoutWrapper } from "./layout";
-export { InteractionHandler } from "./interaction-handler";
-
 export class GraphVisualiser {
     interactionHandler: InteractionHandler;
     state: StudioState;
