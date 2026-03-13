@@ -1,6 +1,6 @@
 import { EdgeKind } from "@typedb/driver-http";
 import { MultiGraph } from "graphology";
-import { DataConstraintAny, DataVertex } from "./structured-answers";
+import { DataConstraintAny, DataVertex } from "@typedb/graph-utils";
 
 export interface VertexMetadata {
     defaultLabel: string;

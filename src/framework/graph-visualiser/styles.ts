@@ -4,8 +4,8 @@ import {
     ConstraintExpressionLegacy, ConstraintLinksLegacy,
     AnalyzedPipeline,
 } from "@typedb/driver-http";
-import { DataVertex, VertexKind, QueryCoordinates, VertexUnavailable } from "./structured-answers";
-import { AnalyzedPipelineBackCompat, backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./structured-answers-builder";
+import { DataVertex, VertexKind, QueryCoordinates, VertexUnavailable } from "@typedb/graph-utils";
+import { AnalyzedPipelineBackCompat, backCompat_pipelineBlocks, backCompat_expressionAssigned } from "@typedb/graph-utils";
 import { Color } from "chroma-js";
 import chroma from "chroma-js";
 import { vertexMapKey, shouldCreateEdge, shouldCreateNode } from "./graph-builder";
@@ -288,8 +288,8 @@ export function colorQuery(
     }
     let spans: { span: ConstraintSpan, coordinates: QueryCoordinates}[] = [];
 
-    backCompat_pipelineBlocks(queryStructure).forEach((branch, branchIndex) => {
-        branch.constraints.forEach((constraint, constraintIndex) => {
+    backCompat_pipelineBlocks(queryStructure).forEach((branch: { constraints: any[] }, branchIndex: number) => {
+        branch.constraints.forEach((constraint: ConstraintAny | ConstraintExpressionLegacy | ConstraintLinksLegacy, constraintIndex: number) => {
             if (shouldColourConstraint(constraint)) {
                 let span = "textSpan" in constraint ? constraint["textSpan"] : null;
                 if (span != null) {

@@ -12,7 +12,7 @@ import {
     AnalyzedPipelineBackCompat,
     ConstraintBackCompat,
     backCompat_expressionAssigned,
-} from "./structured-answers-builder";
+} from "@typedb/graph-utils";
 import {
     EdgeAttributes,
     EdgeMetadata,

@@ -6,8 +6,8 @@ import {
 import Sigma from "sigma";
 import type { GraphStyleService } from "../../service/graph-style.service";
 
-import { getTypeLabel } from "./structured-answers";
-import { buildStructuredAnswers, AnalyzedPipelineBackCompat } from "./structured-answers-builder";
+import { getTypeLabel } from "@typedb/graph-utils";
+import { buildStructuredAnswers, AnalyzedPipelineBackCompat } from "@typedb/graph-utils";
 import { Graph, GraphBuilderStructureParams, defaultStructureParams } from "./graph";
 import { GraphBuilder } from "./graph-builder";
 import { GraphStyles, colorEdgesByConstraintIndex as _colorEdgesByConstraintIndex, colorQuery as _colorQuery } from "./styles";
