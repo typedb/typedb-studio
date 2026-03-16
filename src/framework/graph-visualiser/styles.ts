@@ -55,13 +55,7 @@ export const darkPalette = {
     white2:   "#D5CCFF"
 };
 
-export const defaultEdgeLabelColors: Record<string, string> = {
-    "has": darkPalette.blue1,
-    "owns": darkPalette.blue1,
-    "links": darkPalette.yellow,
-    "relates": darkPalette.yellow,
-    "plays": darkPalette.yellow,
-};
+export const defaultEdgeLabelColors: Record<string, string> = {};
 
 export const defaultQueryStyleParams: GraphStyles = {
     vertexColors: {
@@ -131,7 +125,7 @@ export const defaultQueryStyleParams: GraphStyles = {
     },
     vertexHeight: 24,
 
-    edgeColor: chroma("grey"),
+    edgeColor: chroma("#5a5670"),
     edgeHighlightColor: chroma("cyan"),
     edgeSize: 2,
 
