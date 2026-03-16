@@ -34,7 +34,7 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
     allowInvalidContainer: true,
     labelFont: '"Darkmode", sans-serif',
     itemSizesReference: "positions",
-    autoRescale: false,
+    autoRescale: true,
     zoomToSizeRatioFunction: (x) => x,
     minCameraRatio: 0.1,
     maxCameraRatio: 10,

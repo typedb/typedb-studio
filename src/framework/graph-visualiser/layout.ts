@@ -1,7 +1,7 @@
 import ForceSupervisor from "graphology-layout-force/worker";
 import Graph from "graphology";
 import MultiGraph from "graphology";
-import {ForceLayoutSettings} from "graphology-layout-force";
+import forceLayout, {ForceLayoutSettings, ForceLayoutParameters} from "graphology-layout-force";
 import FA2Layout from 'graphology-layout-forceatlas2/worker';
 import forceAtlas2, {
     ForceAtlas2LayoutParameters,
@@ -23,12 +23,27 @@ export class Layouts {
         return new LayoutSupervisorWrapper(graph, layout);
     }
 
+    static createForceLayoutStatic(graph: MultiGraph, settings: ForceLayoutSettings | undefined): LayoutWrapper {
+        if (settings == undefined) {
+            settings = defaultForceLayoutSettings;
+        }
+        const layout: StaticLayoutInner<ForceLayoutParameters> = {
+            assign: (graph: MultiGraph, params: ForceLayoutParameters | undefined) => {
+                if (params == undefined) {
+                    params = { maxIterations: 1000, settings: defaultForceLayoutSettings };
+                }
+                forceLayout.assign(graph, params);
+            }
+        };
+        return new StaticLayoutWrapper(graph, layout, { maxIterations: 1000, settings });
+    }
+
     // This one is great at interaction, but it might need parameter tweaking depending on the graph rendered.
     static createForceLayoutSupervisor(graph: MultiGraph, settings: ForceLayoutSettings | undefined): LayoutWrapper {
         if (settings == undefined) {
-            settings = defaultForceSupervisorSettings;
+            settings = defaultForceLayoutSettings;
         }
-        let layout = new ForceSupervisor(graph, {
+        const layout = new ForceSupervisor(graph, {
             isNodeFixed: (_, attr) => attr["highlighted"],
             settings: settings,
         });
@@ -111,9 +126,10 @@ class StaticLayoutWrapper<LayoutParams> implements LayoutWrapper {
     }
 
     redraw(): void {
+        const spread = Math.max(100, this.graph.order * 10);
         this.graph.nodes().forEach(node => {
-            this.graph.setNodeAttribute(node, "x", Math.random());
-            this.graph.setNodeAttribute(node, "y", Math.random());
+            this.graph.setNodeAttribute(node, "x", (Math.random() - 0.5) * spread);
+            this.graph.setNodeAttribute(node, "y", (Math.random() - 0.5) * spread);
         });
         this.layout.assign(this.graph, this.params);
     }
@@ -172,10 +188,10 @@ class NoverlapWrapper implements StaticLayoutInner<NoverlapLayoutParameters> {
     }
 }
 
-export const defaultForceSupervisorSettings: ForceLayoutSettings = {
-    attraction: 0.00005,
-    repulsion: 0.5,
-    gravity: 0.00000005,
-    inertia: 0.2,
+export const defaultForceLayoutSettings: ForceLayoutSettings = {
+    attraction: 0.0005,
+    repulsion: 1.0,
+    gravity: 0.00001,
+    inertia: 0.6,
     maxMove: 200,
 };

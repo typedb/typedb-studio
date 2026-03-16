@@ -11,7 +11,7 @@ import { DriverAction } from "../concept/action";
 import { GraphVisualiser } from "../framework/graph-visualiser";
 import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/sigma-settings";
 import { newGraph, Graph } from "../framework/graph-visualiser/graph";
-import { Layouts } from "../framework/graph-visualiser/layout";
+import { defaultForceLayoutSettings, Layouts } from "../framework/graph-visualiser/layout";
 import { detectOS } from "../framework/util/os";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
@@ -743,8 +743,8 @@ export class GraphOutputState {
             const graph = this._preservedGraph ?? newGraph();
             this._preservedGraph = graph;
             const sigma = createSigmaRenderer(this._canvasEl!, defaultSigmaSettings as any, graph);
-            const layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
-            // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
+            // const layout = Layouts.createForceLayoutStatic(graph, defaultForceLayoutSettings); // This is the safe option
+            const layout = Layouts.createForceLayoutSupervisor(graph, defaultForceLayoutSettings);
             this.visualiser = new GraphVisualiser(graph, sigma, layout, this._styleService);
         }
 
