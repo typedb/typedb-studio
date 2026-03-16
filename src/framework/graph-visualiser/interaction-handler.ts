@@ -14,6 +14,8 @@ export interface StudioState {
 interface InteractionState {
     draggedNode: string | null;
     highlightedAnswer: number | null; // demonstrative
+    selectedNode: string | null;
+    selectedNeighbors: Set<string> | null;
 }
 
 export class InteractionHandler {
@@ -23,6 +25,8 @@ export class InteractionHandler {
         this.state = {
             draggedNode : null,
             highlightedAnswer: null,
+            selectedNode: null,
+            selectedNeighbors: null,
         };
         this.registerAll(renderer);
     }
@@ -34,6 +38,8 @@ export class InteractionHandler {
         renderer.on(StudioSigmaEventType.downNode, (e) => this.onDownNode(e));
         renderer.on(StudioSigmaEventType.upStage, (e) => this.onUpStage(e));
         renderer.on(StudioSigmaEventType.upNode, (e) => this.onUpNode(e));
+        renderer.on(StudioSigmaEventType.clickNode, (e) => this.onClickNode(e));
+        renderer.on(StudioSigmaEventType.clickStage, () => this.onClickStage());
         renderer.on(StudioSigmaEventType.doubleClickNode, (e) => this.onDoubleClickNode(e));
     }
 
@@ -99,6 +105,29 @@ export class InteractionHandler {
             }
             this.state.draggedNode = null;
         }
+    }
+
+    onClickNode(event: SigmaNodeEventPayload) {
+        const node = event.node;
+        if (this.state.selectedNode === node) {
+            this.clearSelection();
+        } else {
+            this.state.selectedNode = node;
+            this.state.selectedNeighbors = new Set(this.graph.neighbors(node));
+            this.renderer.refresh();
+        }
+    }
+
+    onClickStage() {
+        if (this.state.selectedNode != null) {
+            this.clearSelection();
+        }
+    }
+
+    clearSelection() {
+        this.state.selectedNode = null;
+        this.state.selectedNeighbors = null;
+        this.renderer.refresh();
     }
 
     onDoubleClickNode(event: SigmaNodeEventPayload) {
@@ -173,7 +202,8 @@ enum StudioSigmaEventType {
 
     moveBody = "moveBody",
     upStage = "upStage",
+    clickStage = "clickStage",
 
-    // Remaining: downStage, clickStage, rightClickStage, doubleClickStage, wheelStage
+    // Remaining: downStage, rightClickStage, doubleClickStage, wheelStage
     // Remaining: beforeRender, afterRender, resize, kill
 }

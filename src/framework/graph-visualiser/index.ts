@@ -3,6 +3,7 @@ import {
     isApiErrorResponse,
     QueryResponse,
 } from "@typedb/driver-http";
+import chroma from "chroma-js";
 import Sigma from "sigma";
 import type { GraphStyleService } from "../../service/graph-style.service";
 
@@ -28,6 +29,7 @@ export class GraphVisualiser {
         this.state = { activeQueryDatabase: null };
         this.styleParams = this.syncStyles();
         this.interactionHandler = new InteractionHandler(graph, sigma, this.state, this.styleParams);
+        this.setupReducers();
         this.layout.onTick = () => {
             if (this.autoZoomEnabled) this.centerCamera();
         };
@@ -45,6 +47,37 @@ export class GraphVisualiser {
             this.interactionHandler.styleParams = this.styleParams;
         }
         return this.styleParams;
+    }
+
+    private setupReducers(): void {
+        const FADE_RATIO = 0.075; // mix 7.5% original color, 92.5% black
+
+        const fade = (color: string) => chroma.mix("#000000", color, FADE_RATIO).hex();
+
+        this.sigma.setSetting("nodeReducer", (node, data) => {
+            const state = this.interactionHandler.state;
+            if (state.selectedNode == null) return data;
+            if (node === state.selectedNode || state.selectedNeighbors?.has(node)) return data;
+            const res = { ...data };
+            res["color"] = fade(data["color"]);
+            if (data["borderColor"]) res["borderColor"] = fade(data["borderColor"]);
+            return res;
+        });
+
+        this.sigma.setSetting("edgeReducer", (edge, data) => {
+            const state = this.interactionHandler.state;
+            if (state.selectedNode == null) return data;
+            const source = this.graph.source(edge);
+            const target = this.graph.target(edge);
+            if ((source === state.selectedNode && state.selectedNeighbors?.has(target))
+                || (target === state.selectedNode && state.selectedNeighbors?.has(source))) {
+                return data;
+            }
+            const res = { ...data };
+            res["color"] = fade(data["color"] ?? "#ccc");
+            res["label"] = "";
+            return res;
+        });
     }
 
     applyStyleUpdate(): void {
