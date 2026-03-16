@@ -33,11 +33,11 @@ const ScaledEdgeCurveProgram = createEdgeCurveProgram({
 export const defaultSigmaSettings: Partial<SigmaSettings> = {
     allowInvalidContainer: true,
     labelFont: '"Darkmode", sans-serif',
-    itemSizesReference: "positions",
-    autoRescale: true,
+    itemSizesReference: "screen",
+    autoRescale: false,
     zoomToSizeRatioFunction: (x) => x,
     minCameraRatio: 0.1,
-    maxCameraRatio: 10,
+    maxCameraRatio: 100000,
     labelColor: {
         color: `#958fa8`,
     },

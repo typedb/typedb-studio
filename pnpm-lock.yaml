@@ -98,9 +98,15 @@ importers:
       '@typedb/graph-utils':
         specifier: workspace:*
         version: link:typedb-graph-utils/typescript
+      '@types/d3-force':
+        specifier: ^3.0.10
+        version: 3.0.10
       chroma-js:
         specifier: 3.1.2
         version: 3.1.2
+      d3-force:
+        specifier: ^3.0.0
+        version: 3.0.0
       graphology:
         specifier: 0.26.0
         version: 0.26.0(graphology-types@0.24.8)
@@ -9548,8 +9554,7 @@ snapshots:
       '@types/d3-dsv': 3.0.7
     optional: true
 
-  '@types/d3-force@3.0.10':
-    optional: true
+  '@types/d3-force@3.0.10': {}
 
   '@types/d3-format@3.0.4':
     optional: true
@@ -10373,8 +10378,7 @@ snapshots:
       delaunator: 5.0.1
     optional: true
 
-  d3-dispatch@3.0.1:
-    optional: true
+  d3-dispatch@3.0.1: {}
 
   d3-drag@3.0.0:
     dependencies:
@@ -10402,7 +10406,6 @@ snapshots:
       d3-dispatch: 3.0.1
       d3-quadtree: 3.0.1
       d3-timer: 3.0.1
-    optional: true
 
   d3-format@3.1.2:
     optional: true
@@ -10429,8 +10432,7 @@ snapshots:
   d3-polygon@3.0.1:
     optional: true
 
-  d3-quadtree@3.0.1:
-    optional: true
+  d3-quadtree@3.0.1: {}
 
   d3-random@3.0.1:
     optional: true
@@ -10479,8 +10481,7 @@ snapshots:
       d3-array: 3.2.4
     optional: true
 
-  d3-timer@3.0.1:
-    optional: true
+  d3-timer@3.0.1: {}
 
   d3-transition@3.0.1(d3-selection@3.0.0):
     dependencies:

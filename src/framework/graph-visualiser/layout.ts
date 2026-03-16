@@ -9,6 +9,7 @@ import forceAtlas2, {
 } from "graphology-layout-forceatlas2";
 import FA2LayoutSupervisor from "graphology-layout-forceatlas2/worker";
 import noverlap, {NoverlapLayoutParameters} from "graphology-layout-noverlap";
+import { forceSimulation, forceLink, forceManyBody, forceCollide, forceCenter, SimulationNodeDatum, SimulationLinkDatum } from "d3-force";
 
 export class Layouts {
 
@@ -19,6 +20,9 @@ export class Layouts {
 
     // This one seems quite versatile. It just needs to be frozen to be able to drag and drop stuff.
     static createForceAtlasSupervisor(graph: MultiGraph, settings: ForceAtlas2LayoutParameters | undefined): LayoutWrapper {
+        if (settings == undefined) {
+            settings = { settings: { slowDown: 20 } };
+        }
         let layout = new FA2Layout(graph, settings);
         return new LayoutSupervisorWrapper(graph, layout);
     }
@@ -56,7 +60,50 @@ export class Layouts {
         return new StaticLayoutWrapper(graph, layout, settings);
     }
 
-    // We can add our own layouts too. We just have to set the nodeAttributes "x" and "y".
+    static createD3ForceSupervisor(graph: MultiGraph): LayoutWrapper {
+        return new D3ForceSupervisorWrapper(graph);
+    }
+
+    static createD3ForceStatic(graph: MultiGraph): LayoutWrapper {
+        const layout: StaticLayoutInner<void> = {
+            assign: (graph: MultiGraph) => {
+                const nodes: D3Node[] = graph.nodes().map(key => {
+                    const attrs = graph.getNodeAttributes(key);
+                    return {
+                        id: key,
+                        x: attrs["x"],
+                        y: attrs["y"],
+                        radius: Math.max(attrs["width"] ?? attrs["size"] ?? 10, attrs["height"] ?? attrs["size"] ?? 10),
+                    };
+                });
+                const nodeIndex = new Map(nodes.map((n, i) => [n.id, i]));
+                const links: SimulationLinkDatum<D3Node>[] = graph.edges().map(edge => ({
+                    source: nodeIndex.get(graph.source(edge))!,
+                    target: nodeIndex.get(graph.target(edge))!,
+                }));
+
+                const vertexCount = nodes.length;
+                const edgeCount = links.length;
+                const maxRadius = nodes.reduce((max, n) => Math.max(max, n.radius), 0);
+                const chargeStrength = ((-500.0 - vertexCount / 3) * (1 + edgeCount / (vertexCount + 1))) * 10;
+
+                const sim = forceSimulation(nodes)
+                    .force("charge", forceManyBody().strength(chargeStrength))
+                    .force("link", forceLink(links).distance(maxRadius * 3).strength(1))
+                    .force("collide", forceCollide<D3Node>().radius(maxRadius * 1.2))
+                    .force("center", forceCenter(0, 0))
+                    .stop();
+
+                sim.tick(300);
+
+                nodes.forEach(n => {
+                    graph.setNodeAttribute(n.id, "x", n.x!);
+                    graph.setNodeAttribute(n.id, "y", n.y!);
+                });
+            }
+        };
+        return new StaticLayoutWrapper(graph, layout, undefined);
+    }
 }
 
 
@@ -71,22 +118,34 @@ export interface LayoutWrapper {
     // Call when you change the graph
     startOrRedraw(): void;
 
+    // Called on each tick of the layout (for animated layouts)
+    onTick: (() => void) | null;
 }
 
 class LayoutSupervisorWrapper implements LayoutWrapper {
+    onTick: (() => void) | null = null;
     private layout: ForceSupervisor | FA2LayoutSupervisor;
     private graph: MultiGraph;
+    private stopTimeout: ReturnType<typeof setTimeout> | null = null;
+    private runDurationMs: number;
 
-    constructor(graph: MultiGraph, layout: ForceSupervisor | FA2LayoutSupervisor) {
+    constructor(graph: MultiGraph, layout: ForceSupervisor | FA2LayoutSupervisor, runDurationMs: number = 5000) {
         this.graph = graph;
         this.layout = layout;
+        this.runDurationMs = runDurationMs;
     }
 
     start() {
+        if (this.stopTimeout) clearTimeout(this.stopTimeout);
         this.layout.start();
+        this.stopTimeout = setTimeout(() => this.layout.stop(), this.runDurationMs);
     }
 
     stop() {
+        if (this.stopTimeout) {
+            clearTimeout(this.stopTimeout);
+            this.stopTimeout = null;
+        }
         this.layout.stop();
     }
 
@@ -104,11 +163,94 @@ class LayoutSupervisorWrapper implements LayoutWrapper {
     }
 }
 
+interface D3Node extends SimulationNodeDatum {
+    id: string;
+    radius: number;
+}
+
+class D3ForceSupervisorWrapper implements LayoutWrapper {
+    onTick: (() => void) | null = null;
+    private graph: MultiGraph;
+    private animationFrame: number | null = null;
+    private simulation: ReturnType<typeof forceSimulation<D3Node>> | null = null;
+
+    constructor(graph: MultiGraph) {
+        this.graph = graph;
+    }
+
+    private buildSimulation(): ReturnType<typeof forceSimulation<D3Node>> {
+        const nodes: D3Node[] = this.graph.nodes().map(key => {
+            const attrs = this.graph.getNodeAttributes(key);
+            return {
+                id: key,
+                x: attrs["x"],
+                y: attrs["y"],
+                radius: Math.max(attrs["width"] ?? attrs["size"] ?? 10, attrs["height"] ?? attrs["size"] ?? 10),
+            };
+        });
+        const nodeIndex = new Map(nodes.map((n, i) => [n.id, i]));
+        const links: SimulationLinkDatum<D3Node>[] = this.graph.edges().map(edge => ({
+            source: nodeIndex.get(this.graph.source(edge))!,
+            target: nodeIndex.get(this.graph.target(edge))!,
+        }));
+
+        const vertexCount = nodes.length;
+        const edgeCount = links.length;
+        const maxRadius = nodes.reduce((max, n) => Math.max(max, n.radius), 0);
+        const chargeStrength = (-500.0 - vertexCount / 3) * (1 + edgeCount / (vertexCount + 1));
+
+        return forceSimulation(nodes)
+            .force("charge", forceManyBody().strength(chargeStrength))
+            .force("link", forceLink(links).distance(maxRadius * 2).strength(1))
+            .force("collide", forceCollide<D3Node>().radius(maxRadius * 1.5))
+            .force("center", forceCenter(0, 0))
+            .alphaDecay(0.01)
+            .stop();
+    }
+
+    start() {
+        this.stop();
+        this.simulation = this.buildSimulation();
+        const sim = this.simulation;
+        const tick = () => {
+            sim.tick();
+            sim.nodes().forEach(n => {
+                this.graph.setNodeAttribute(n.id, "x", n.x!);
+                this.graph.setNodeAttribute(n.id, "y", n.y!);
+            });
+            this.onTick?.();
+            if (sim.alpha() > sim.alphaMin()) {
+                this.animationFrame = requestAnimationFrame(tick);
+            } else {
+                this.animationFrame = null;
+            }
+        };
+        this.animationFrame = requestAnimationFrame(tick);
+    }
+
+    stop() {
+        if (this.animationFrame != null) {
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null;
+        }
+        this.simulation = null;
+    }
+
+    redraw() {
+        this.start();
+    }
+
+    startOrRedraw() {
+        this.start();
+    }
+}
+
 interface StaticLayoutInner<LayoutParams> {
     assign(graph: MultiGraph, params: LayoutParams | undefined): void;
 }
 
 class StaticLayoutWrapper<LayoutParams> implements LayoutWrapper {
+    onTick: (() => void) | null = null;
     private graph: Graph;
     private layout: StaticLayoutInner<LayoutParams>;
     private params: LayoutParams | undefined;
@@ -150,31 +292,6 @@ class ForceAtlasStaticWrapper implements StaticLayoutInner<ForceAtlas2Synchronou
             };
         }
         forceAtlas2.assign(graph, params);
-
-        // FA2 treats nodes as points. Scale positions proportionally to visual
-        // node sizes so there's enough room for noverlap to resolve overlaps
-        // without disrupting the topology.
-        let maxVisualSize = 0;
-        graph.forEachNode((_, attrs) => {
-            maxVisualSize = Math.max(maxVisualSize, Math.max(attrs["width"] ?? attrs["size"], attrs["height"] ?? attrs["size"]) * 2.0);
-        });
-        const posScale = Math.max(1, maxVisualSize / 25);
-        graph.forEachNode((node) => {
-            graph.setNodeAttribute(node, "x", graph.getNodeAttribute(node, "x") * posScale);
-            graph.setNodeAttribute(node, "y", graph.getNodeAttribute(node, "y") * posScale);
-        });
-
-        // Inflate sizes to visual half-widths for noverlap, then restore.
-        const savedSizes = new Map<string, number>();
-        graph.forEachNode((node, attrs) => {
-            savedSizes.set(node, attrs["size"]);
-            const visualSize = Math.max(attrs["width"] ?? attrs["size"], attrs["height"] ?? attrs["size"]) * 2.0;
-            graph.setNodeAttribute(node, "size", visualSize);
-        });
-        noverlap.assign(graph, { maxIterations: 300, settings: { margin: 5 } });
-        savedSizes.forEach((size, node) => {
-            graph.setNodeAttribute(node, "size", size);
-        });
     }
 }
 

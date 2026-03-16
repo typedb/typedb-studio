@@ -21,10 +21,21 @@ export class GraphVisualiser {
     private styleParams: GraphStyles;
     private structureParams: GraphBuilderStructureParams = defaultStructureParams;
 
+    private autoZoomEnabled = true;
+    private settingCameraProgrammatically = false;
+
     constructor(public graph: Graph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
         this.state = { activeQueryDatabase: null };
         this.styleParams = this.syncStyles();
         this.interactionHandler = new InteractionHandler(graph, sigma, this.state, this.styleParams);
+        this.layout.onTick = () => {
+            if (this.autoZoomEnabled) this.centerCamera();
+        };
+        this.sigma.getCamera().addListener("updated", () => {
+            if (!this.settingCameraProgrammatically) {
+                this.autoZoomEnabled = false;
+            }
+        });
     }
 
     private syncStyles(): GraphStyles {
@@ -61,6 +72,7 @@ export class GraphVisualiser {
     }
 
     reLayout(): void {
+        this.autoZoomEnabled = true;
         this.graph.nodes().forEach(node => {
             this.graph.setNodeAttribute(node, "x", Math.random());
             this.graph.setNodeAttribute(node, "y", Math.random());
@@ -72,12 +84,34 @@ export class GraphVisualiser {
     centerCamera(): void {
         const nodes = this.graph.nodes();
         if (nodes.length === 0) return;
-        this.sigma.getCamera().setState({
-            x: 0.5,
-            y: 0.5,
-            ratio: 1,
-            angle: 0,
+
+        const { width, height } = this.sigma.getDimensions();
+        if (width === 0 || height === 0) return;
+
+        // Compute graph bounding box in graph coordinates
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        nodes.forEach(node => {
+            const attrs = this.graph.getNodeAttributes(node);
+            minX = Math.min(minX, attrs.x);
+            maxX = Math.max(maxX, attrs.x);
+            minY = Math.min(minY, attrs.y);
+            maxY = Math.max(maxY, attrs.y);
         });
+
+        // With autoRescale off, sigma maps 1 graph unit ≈ 1 pixel (centered on graph center).
+        // Camera ratio = how much of the viewport-sized region to show.
+        // ratio=1 shows a viewport-sized window. We need ratio = graphExtent / viewportSize.
+        const graphWidth = maxX - minX || 1;
+        const graphHeight = maxY - minY || 1;
+        const padding = 1.1;
+        const ratio = Math.max(graphWidth / width, graphHeight / height, 1) * padding;
+
+        // Camera x,y are in normalized [0,1] space; 0.5 = center of the normalization bbox.
+        // Since sigma centers its bbox on the graph center each frame, (0.5, 0.5) is already
+        // the graph center. Just reset to center.
+        this.settingCameraProgrammatically = true;
+        this.sigma.getCamera().setState({ x: 0.5, y: 0.5, ratio, angle: 0 });
+        this.settingCameraProgrammatically = false;
     }
 
     handleQueryResponse(res: ApiResponse<QueryResponse>, database: string) {
@@ -85,6 +119,7 @@ export class GraphVisualiser {
 
         if (res.ok.answerType === "conceptRows") {
             this.state.activeQueryDatabase = database;
+            this.autoZoomEnabled = true;
             this.handleQueryResult(res);
             this.layout.startOrRedraw();
             this.centerCamera();

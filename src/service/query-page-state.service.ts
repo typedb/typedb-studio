@@ -11,7 +11,7 @@ import { DriverAction } from "../concept/action";
 import { GraphVisualiser } from "../framework/graph-visualiser";
 import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/sigma-settings";
 import { newGraph, Graph } from "../framework/graph-visualiser/graph";
-import { defaultForceLayoutSettings, Layouts } from "../framework/graph-visualiser/layout";
+import { Layouts } from "../framework/graph-visualiser/layout";
 import { detectOS } from "../framework/util/os";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
@@ -743,8 +743,7 @@ export class GraphOutputState {
             const graph = this._preservedGraph ?? newGraph();
             this._preservedGraph = graph;
             const sigma = createSigmaRenderer(this._canvasEl!, defaultSigmaSettings as any, graph);
-            // const layout = Layouts.createForceLayoutStatic(graph, defaultForceLayoutSettings); // This is the safe option
-            const layout = Layouts.createForceLayoutSupervisor(graph, defaultForceLayoutSettings);
+            const layout = Layouts.createD3ForceSupervisor(graph);
             this.visualiser = new GraphVisualiser(graph, sigma, layout, this._styleService);
         }
 
@@ -793,7 +792,7 @@ export class GraphOutputState {
         this.canvasEl = canvasEl;
         if (this._preservedGraph && this._preservedGraph.nodes().length > 0 && !this.visualiser) {
             const sigma = createSigmaRenderer(canvasEl, defaultSigmaSettings as any, this._preservedGraph);
-            const layout = Layouts.createForceAtlasStatic(this._preservedGraph, undefined);
+            const layout = Layouts.createD3ForceStatic(this._preservedGraph);
             this.visualiser = new GraphVisualiser(this._preservedGraph, sigma, layout, this._styleService);
         }
     }
