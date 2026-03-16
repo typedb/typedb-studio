@@ -13,6 +13,7 @@ export interface StudioState {
 
 interface InteractionState {
     draggedNode: string | null;
+    didDrag: boolean;
     highlightedAnswer: number | null; // demonstrative
     selectedNode: string | null;
     selectedNeighbors: Set<string> | null;
@@ -24,6 +25,7 @@ export class InteractionHandler {
     constructor(public graph: MultiGraph, public renderer: Sigma, private studioState: StudioState, public styleParams: GraphStyles) {
         this.state = {
             draggedNode : null,
+            didDrag: false,
             highlightedAnswer: null,
             selectedNode: null,
             selectedNeighbors: null,
@@ -79,6 +81,7 @@ export class InteractionHandler {
         const pos = this.renderer.viewportToGraph(mouseCoords);
         this.graph.setNodeAttribute(this.state.draggedNode, "x", pos.x);
         this.graph.setNodeAttribute(this.state.draggedNode, "y", pos.y);
+        this.state.didDrag = true;
 
         // Prevent sigma to move camera:
         mouseCoords.preventSigmaDefault();
@@ -108,6 +111,10 @@ export class InteractionHandler {
     }
 
     onClickNode(event: SigmaNodeEventPayload) {
+        if (this.state.didDrag) {
+            this.state.didDrag = false;
+            return;
+        }
         const node = event.node;
         if (this.state.selectedNode === node) {
             this.clearSelection();
