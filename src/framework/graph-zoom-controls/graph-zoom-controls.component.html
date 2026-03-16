@@ -1,4 +1,13 @@
 <div class="zoom-controls">
+  @if (queryRunning || visualiser?.isLayoutRunning) {
+    <button class="zoom-button stop-button" (click)="stopLayout()" [disabled]="queryRunning" matTooltip="Stop simulation" [matTooltipShowDelay]="500">
+      <i class="fa-light fa-stop"></i>
+    </button>
+  } @else {
+    <button class="zoom-button reset-button" (click)="reLayout()" matTooltip="Re-layout" [matTooltipShowDelay]="500">
+      <i class="fa-light fa-arrows-rotate"></i>
+    </button>
+  }
   <button class="zoom-button reset-button" (click)="resetZoom()" matTooltip="Reset view" [matTooltipShowDelay]="500">
     <i class="fa-light fa-crosshairs"></i>
   </button>

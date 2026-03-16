@@ -13,6 +13,7 @@ const ZOOM_FACTOR = 0.7;
 export class GraphZoomControlsComponent {
 
     @Input() visualiser: GraphVisualiser | null = null;
+    @Input() queryRunning = false;
 
     zoomIn(): void {
         const camera = this.visualiser?.sigma.getCamera();
@@ -28,5 +29,13 @@ export class GraphZoomControlsComponent {
 
     resetZoom(): void {
         this.visualiser?.centerCamera();
+    }
+
+    stopLayout(): void {
+        this.visualiser?.stopLayout();
+    }
+
+    reLayout(): void {
+        this.visualiser?.reLayout();
     }
 }

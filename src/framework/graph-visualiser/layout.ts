@@ -120,10 +120,18 @@ export interface LayoutWrapper {
 
     // Called on each tick of the layout (for animated layouts)
     onTick: (() => void) | null;
+
+    // Whether the layout simulation is currently running
+    readonly isRunning: boolean;
+
+    // Pin/unpin a node during drag (no-op for non-animated layouts)
+    fixNode(nodeKey: string, x: number, y: number): void;
+    unfixNode(nodeKey: string): void;
 }
 
 class LayoutSupervisorWrapper implements LayoutWrapper {
     onTick: (() => void) | null = null;
+    isRunning = false;
     private layout: ForceSupervisor | FA2LayoutSupervisor;
     private graph: MultiGraph;
     private stopTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -161,6 +169,9 @@ class LayoutSupervisorWrapper implements LayoutWrapper {
     startOrRedraw() {
         this.start();
     }
+
+    fixNode(_nodeKey: string, _x: number, _y: number): void {}
+    unfixNode(_nodeKey: string): void {}
 }
 
 interface D3Node extends SimulationNodeDatum {
@@ -170,6 +181,7 @@ interface D3Node extends SimulationNodeDatum {
 
 class D3ForceSupervisorWrapper implements LayoutWrapper {
     onTick: (() => void) | null = null;
+    isRunning = false;
     private graph: MultiGraph;
     private animationFrame: number | null = null;
     private simulation: ReturnType<typeof forceSimulation<D3Node>> | null = null;
@@ -210,6 +222,7 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
 
     start() {
         this.stop();
+        this.isRunning = true;
         this.simulation = this.buildSimulation();
         const sim = this.simulation;
         const tick = () => {
@@ -223,6 +236,7 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
                 this.animationFrame = requestAnimationFrame(tick);
             } else {
                 this.animationFrame = null;
+                this.isRunning = false;
             }
         };
         this.animationFrame = requestAnimationFrame(tick);
@@ -234,6 +248,7 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
             this.animationFrame = null;
         }
         this.simulation = null;
+        this.isRunning = false;
     }
 
     redraw() {
@@ -243,6 +258,22 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
     startOrRedraw() {
         this.start();
     }
+
+    fixNode(nodeKey: string, x: number, y: number): void {
+        const d3Node = this.simulation?.nodes().find(n => n.id === nodeKey);
+        if (d3Node) {
+            d3Node.fx = x;
+            d3Node.fy = y;
+        }
+    }
+
+    unfixNode(nodeKey: string): void {
+        const d3Node = this.simulation?.nodes().find(n => n.id === nodeKey);
+        if (d3Node) {
+            d3Node.fx = null;
+            d3Node.fy = null;
+        }
+    }
 }
 
 interface StaticLayoutInner<LayoutParams> {
@@ -251,6 +282,7 @@ interface StaticLayoutInner<LayoutParams> {
 
 class StaticLayoutWrapper<LayoutParams> implements LayoutWrapper {
     onTick: (() => void) | null = null;
+    isRunning = false;
     private graph: Graph;
     private layout: StaticLayoutInner<LayoutParams>;
     private params: LayoutParams | undefined;
@@ -279,6 +311,9 @@ class StaticLayoutWrapper<LayoutParams> implements LayoutWrapper {
     startOrRedraw() {
         this.redraw();
     }
+
+    fixNode(_nodeKey: string, _x: number, _y: number): void {}
+    unfixNode(_nodeKey: string): void {}
 }
 
 class ForceAtlasStaticWrapper implements StaticLayoutInner<ForceAtlas2SynchronousLayoutParameters> {

@@ -3,6 +3,7 @@ import MultiGraph from "graphology";
 import chroma from "chroma-js";
 import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "sigma/types";
 import {GraphStyles} from "./styles";
+import {LayoutWrapper} from "./layout";
 
 // Ref: https://www.sigmajs.org/docs/advanced/events/
 // and: https://www.sigmajs.org/storybook/?path=/story/mouse-manipulations--story
@@ -21,6 +22,7 @@ interface InteractionState {
 
 export class InteractionHandler {
     state: InteractionState;
+    layout: LayoutWrapper | null = null;
 
     constructor(public graph: MultiGraph, public renderer: Sigma, private studioState: StudioState, public styleParams: GraphStyles) {
         this.state = {
@@ -67,6 +69,8 @@ export class InteractionHandler {
         this.state.draggedNode = node;
         const original = this.graph.getNodeAttribute(node, "_originalColor") ?? this.graph.getNodeAttribute(node, "color");
         this.graph.setNodeAttribute(node, "color", chroma(original).darken(0.6).hex());
+        const attrs = this.graph.getNodeAttributes(node);
+        this.layout?.fixNode(node, attrs["x"], attrs["y"]);
         if (!this.renderer.getCustomBBox()) {
             this.renderer.setCustomBBox(this.renderer.getBBox());
         }
@@ -81,6 +85,7 @@ export class InteractionHandler {
         const pos = this.renderer.viewportToGraph(mouseCoords);
         this.graph.setNodeAttribute(this.state.draggedNode, "x", pos.x);
         this.graph.setNodeAttribute(this.state.draggedNode, "y", pos.y);
+        this.layout?.fixNode(this.state.draggedNode, pos.x, pos.y);
         this.state.didDrag = true;
 
         // Prevent sigma to move camera:
@@ -91,6 +96,7 @@ export class InteractionHandler {
 
     onUpNode(_event: SigmaNodeEventPayload) {
         if (this.state.draggedNode != null) {
+            this.layout?.unfixNode(this.state.draggedNode);
             const original = this.graph.getNodeAttribute(this.state.draggedNode, "_originalColor");
             if (original) {
                 this.graph.setNodeAttribute(this.state.draggedNode, "color", chroma(original).darken(0.3).hex());
@@ -101,6 +107,7 @@ export class InteractionHandler {
 
     onUpStage(_event: SigmaEventPayload) {
         if (this.state.draggedNode != null) {
+            this.layout?.unfixNode(this.state.draggedNode);
             const original = this.graph.getNodeAttribute(this.state.draggedNode, "_originalColor");
             if (original) {
                 this.graph.setNodeAttribute(this.state.draggedNode, "color", original);

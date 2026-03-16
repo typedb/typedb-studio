@@ -20,6 +20,22 @@
   background: colors.$secondary-purple;
 }
 
+.zoom-button.stop-button {
+  border-radius: 6px;
+  border: 1px solid colors.$secondary-deep-grey;
+  background: colors.$secondary-purple;
+  color: colors.$red;
+
+  &:disabled {
+    color: colors.$secondary-deep-grey;
+    cursor: default;
+
+    &:hover {
+      background: colors.$secondary-purple;
+    }
+  }
+}
+
 .zoom-pair {
   display: flex;
   flex-direction: column;

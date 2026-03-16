@@ -29,6 +29,7 @@ export class GraphVisualiser {
         this.state = { activeQueryDatabase: null };
         this.styleParams = this.syncStyles();
         this.interactionHandler = new InteractionHandler(graph, sigma, this.state, this.styleParams);
+        this.interactionHandler.layout = this.layout;
         this.setupReducers();
         this.layout.onTick = () => {
             if (this.autoZoomEnabled) this.centerCamera();
@@ -189,6 +190,14 @@ export class GraphVisualiser {
 
     colorQuery(queryString: string, queryStructure: AnalyzedPipelineBackCompat): string {
         return _colorQuery(queryString, queryStructure);
+    }
+
+    get isLayoutRunning(): boolean {
+        return this.layout.isRunning;
+    }
+
+    stopLayout(): void {
+        this.layout.stop();
     }
 
     destroy() {
