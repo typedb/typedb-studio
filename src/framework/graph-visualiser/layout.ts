@@ -21,7 +21,8 @@ export class Layouts {
     // This one seems quite versatile. It just needs to be frozen to be able to drag and drop stuff.
     static createForceAtlasSupervisor(graph: MultiGraph, settings: ForceAtlas2LayoutParameters | undefined): LayoutWrapper {
         if (settings == undefined) {
-            settings = { settings: { slowDown: 20 } };
+            const inferred = forceAtlas2.inferSettings(graph.nodes().length);
+            settings = { settings: { ...inferred, slowDown: 20 } };
         }
         let layout = new FA2Layout(graph, settings);
         return new LayoutSupervisorWrapper(graph, layout);
