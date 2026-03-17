@@ -38,19 +38,6 @@
                 }
               </div>
               <div class="style-controls">
-                <span matTooltip="Fill" [matTooltipShowDelay]="500">
-                  <div class="color-swatch fill-swatch"
-                       [style.background]="getKindColor(row.kind)"
-                       [colorPicker]="getKindColor(row.kind)"
-                       cpAlphaChannel="forced"
-                       cpOutputFormat="hex"
-                       cpPosition="left"
-                       cpPositionOffset="-50"
-                       cpFallbackColor="#000000"
-                       [cpUseRootViewContainer]="true"
-                       (colorPickerChange)="setKindColor(row.kind, $event)">
-                  </div>
-                </span>
                 <span matTooltip="Border" [matTooltipShowDelay]="500">
                   <div class="color-swatch border-swatch"
                        [style.border-color]="getKindBorderColor(row.kind)"
@@ -62,6 +49,19 @@
                        cpFallbackColor="#000000"
                        [cpUseRootViewContainer]="true"
                        (colorPickerChange)="setKindBorderColor(row.kind, $event)">
+                  </div>
+                </span>
+                <span matTooltip="Fill" [matTooltipShowDelay]="500">
+                  <div class="color-swatch fill-swatch"
+                       [style.background]="getKindColor(row.kind)"
+                       [colorPicker]="getKindColor(row.kind)"
+                       cpAlphaChannel="forced"
+                       cpOutputFormat="hex"
+                       cpPosition="left"
+                       cpPositionOffset="-50"
+                       cpFallbackColor="#000000"
+                       [cpUseRootViewContainer]="true"
+                       (colorPickerChange)="setKindColor(row.kind, $event)">
                   </div>
                 </span>
                 <mat-form-field class="shape-field" subscriptSizing="dynamic">
@@ -117,19 +117,6 @@
                 }
               </div>
               <div class="style-controls">
-                <span matTooltip="Fill" [matTooltipShowDelay]="500">
-                  <div class="color-swatch fill-swatch"
-                       [style.background]="getTypeColor(row.typeLabel, row.kind)"
-                       [colorPicker]="getTypeColor(row.typeLabel, row.kind)"
-                       cpAlphaChannel="forced"
-                       cpOutputFormat="hex"
-                       cpPosition="left"
-                       cpPositionOffset="-50"
-                       cpFallbackColor="#000000"
-                       [cpUseRootViewContainer]="true"
-                       (colorPickerChange)="setTypeColor(row.typeLabel, $event)">
-                  </div>
-                </span>
                 <span matTooltip="Border" [matTooltipShowDelay]="500">
                   <div class="color-swatch border-swatch"
                        [style.border-color]="getTypeBorderColor(row.typeLabel, row.kind)"
@@ -141,6 +128,19 @@
                        cpFallbackColor="#000000"
                        [cpUseRootViewContainer]="true"
                        (colorPickerChange)="setTypeBorderColor(row.typeLabel, $event)">
+                  </div>
+                </span>
+                <span matTooltip="Fill" [matTooltipShowDelay]="500">
+                  <div class="color-swatch fill-swatch"
+                       [style.background]="getTypeColor(row.typeLabel, row.kind)"
+                       [colorPicker]="getTypeColor(row.typeLabel, row.kind)"
+                       cpAlphaChannel="forced"
+                       cpOutputFormat="hex"
+                       cpPosition="left"
+                       cpPositionOffset="-50"
+                       cpFallbackColor="#000000"
+                       [cpUseRootViewContainer]="true"
+                       (colorPickerChange)="setTypeColor(row.typeLabel, $event)">
                   </div>
                 </span>
                 <mat-form-field class="shape-field" subscriptSizing="dynamic">
