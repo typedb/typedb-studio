@@ -293,6 +293,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     openQueryTabContextMenu(event: MouseEvent, tab: QueryTab, index: number) {
         event.preventDefault();
         event.stopPropagation();
+        if (this.queryTabContextMenuTrigger.menuOpen) return;
         this.queryTabContextMenuPosition = { x: event.clientX, y: event.clientY };
         this.queryTabContextMenuTab = tab;
         this.queryTabContextMenuTabIndex = index;
