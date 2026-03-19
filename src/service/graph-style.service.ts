@@ -26,7 +26,7 @@ function deriveFillFromBorder(borderHex: string): string {
 const ALL_KINDS: VertexKind[] = [
     "entity", "relation", "attribute",
     "entityType", "relationType", "attributeType", "roleType",
-    "value", "unavailable", "expression", "functionCall",
+    "value", "unavailable",
 ];
 
 @Injectable({ providedIn: "root" })

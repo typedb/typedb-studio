@@ -1,11 +1,12 @@
 import { EdgeKind } from "@typedb/driver-http";
 import { MultiGraph } from "graphology";
-import { DataConstraintAny, DataVertex } from "@typedb/graph-utils";
+import { DataConstraintAny } from "@typedb/graph-utils";
+import type { StudioDataVertex } from "./types";
 
 export interface VertexMetadata {
     defaultLabel: string;
     hoverLabel: string;
-    concept: DataVertex;
+    concept: StudioDataVertex;
 }
 
 export interface VertexAttributes {

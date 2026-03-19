@@ -10,7 +10,7 @@ import { MatSlideToggleModule } from "@angular/material/slide-toggle";
 import { ColorPickerDirective } from "ngx-color-picker";
 import { GraphStyleService } from "../../service/graph-style.service";
 import { GraphVisualiser } from "../graph-visualiser";
-import { DataVertex, VertexKind } from "@typedb/graph-utils";
+import { VertexKind } from "@typedb/graph-utils";
 
 interface KindRow {
     kind: VertexKind;
@@ -92,10 +92,9 @@ export class GraphCustomisationPanelComponent implements OnChanges {
             const attrs = this.visualiser!.graph.getNodeAttributes(nodeKey);
             const concept = attrs.metadata.concept;
             if ("type" in concept && concept.type && "label" in concept.type) {
-                typeMap.set(concept.type.label, concept.kind);
-            } else if ("label" in concept && (concept as DataVertex).kind !== "unavailable"
-                       && (concept as DataVertex).kind !== "expression" && (concept as DataVertex).kind !== "functionCall") {
-                typeMap.set(concept.label, concept.kind);
+                typeMap.set(concept.type.label, concept.kind as any);
+            } else if ("label" in concept && !["unavailable", "expression", "functionCall"].includes(concept.kind)) {
+                typeMap.set((concept as any).label, concept.kind as any);
             }
         });
         this.discoveredTypes = Array.from(typeMap.entries())

@@ -4,8 +4,9 @@ import {
     ConstraintExpressionLegacy, ConstraintLinksLegacy,
     AnalyzedPipeline,
 } from "@typedb/driver-http";
-import { DataVertex, VertexKind, QueryCoordinates, VertexUnavailable } from "@typedb/graph-utils";
-import { AnalyzedPipelineBackCompat, backCompat_pipelineBlocks, backCompat_expressionAssigned } from "@typedb/graph-utils";
+import { VertexKind, QueryCoordinates, VertexUnavailable } from "@typedb/graph-utils";
+import { AnalyzedPipelineBackCompat, backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./types";
+import type { StudioDataVertex } from "./types";
 import { Color } from "chroma-js";
 import chroma from "chroma-js";
 import { vertexMapKey, shouldCreateEdge, shouldCreateNode } from "./graph-builder";
@@ -31,8 +32,8 @@ export interface GraphStyles {
     edgeHighlightColor: Color;
     edgeSize: number
 
-    vertexDefaultLabel: (vertex: DataVertex) => string;
-    vertexHoverLabel: (vertex: DataVertex) => string;
+    vertexDefaultLabel: (vertex: StudioDataVertex) => string;
+    vertexHoverLabel: (vertex: StudioDataVertex) => string;
     linksEdgeLabel: (role: RoleType | VertexUnavailable) => string;
 }
 
@@ -68,8 +69,6 @@ export const defaultQueryStyleParams: GraphStyles = {
         roleType: "#2c1d03",
         value: "#262626",
         unavailable: "#1a1a1a",
-        expression: "#353340",
-        functionCall: "#353340",
     },
     vertexBorderColors: {
         entity: darkPalette.pink,
@@ -81,8 +80,6 @@ export const defaultQueryStyleParams: GraphStyles = {
         roleType: darkPalette.orange,
         value: "#999",
         unavailable: "#666",
-        expression: darkPalette.white2,
-        functionCall: darkPalette.white2,
     },
     vertexShapes: {
         entity: "rounded-rect",
@@ -94,8 +91,6 @@ export const defaultQueryStyleParams: GraphStyles = {
         roleType: "ellipse",
         value: "ellipse",
         unavailable: "ellipse",
-        expression: "ellipse",
-        functionCall: "ellipse",
     },
     vertexWidths: {
         entity: 56,
@@ -107,8 +102,6 @@ export const defaultQueryStyleParams: GraphStyles = {
         roleType: 56,
         value: 56,
         unavailable: 56,
-        expression: 56,
-        functionCall: 56,
     },
     vertexHeights: {
         entity: 24,
@@ -120,8 +113,6 @@ export const defaultQueryStyleParams: GraphStyles = {
         roleType: 24,
         value: 24,
         unavailable: 24,
-        expression: 24,
-        functionCall: 24,
     },
     vertexHeight: 24,
 
@@ -129,7 +120,7 @@ export const defaultQueryStyleParams: GraphStyles = {
     edgeHighlightColor: chroma("cyan"),
     edgeSize: 2,
 
-    vertexDefaultLabel(vertex: DataVertex): string {
+    vertexDefaultLabel(vertex: StudioDataVertex): string {
         switch (vertex.kind) {
             case "entityType":
             case "relationType":
@@ -162,7 +153,7 @@ export const defaultQueryStyleParams: GraphStyles = {
         }
     },
 
-    vertexHoverLabel(vertex: DataVertex): string {
+    vertexHoverLabel(vertex: StudioDataVertex): string {
         switch (vertex.kind) {
             case "entityType":
             case "relationType":

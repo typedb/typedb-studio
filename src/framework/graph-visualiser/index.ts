@@ -1,5 +1,5 @@
 import {
-    ApiResponse, ConceptRowsQueryResponse,
+    ApiResponse,
     isApiErrorResponse,
     QueryResponse,
 } from "@typedb/driver-http";
@@ -8,7 +8,8 @@ import Sigma from "sigma";
 import type { GraphStyleService } from "../../service/graph-style.service";
 
 import { getTypeLabel, DataVertex } from "@typedb/graph-utils";
-import { buildStructuredAnswers, AnalyzedPipelineBackCompat } from "@typedb/graph-utils";
+import { buildStructuredAnswers } from "@typedb/graph-utils";
+import { AnalyzedPipelineBackCompat } from "./types";
 import { Graph, GraphBuilderStructureParams, defaultStructureParams } from "./graph";
 import { GraphBuilder } from "./graph-builder";
 import { GraphStyles, colorEdgesByConstraintIndex as _colorEdgesByConstraintIndex, colorQuery as _colorQuery } from "./styles";
@@ -71,7 +72,7 @@ export class GraphVisualiser {
                 if (this.styleService.isHighlightActive()) {
                     const attrs = this.graph.getNodeAttributes(node);
                     const concept = attrs.metadata.concept;
-                    if (!this.styleService.shouldHighlightNode(concept.kind, getTypeLabel(concept))) {
+                    if (!this.styleService.shouldHighlightNode(concept.kind as any, getTypeLabel(concept as any))) {
                         shouldFade = true;
                     }
                 }
@@ -122,7 +123,7 @@ export class GraphVisualiser {
         this.graph.nodes().forEach(nodeKey => {
             const attrs = this.graph.getNodeAttributes(nodeKey);
             const concept = attrs.metadata.concept;
-            const style = this.styleService.resolveNodeStyle(concept.kind, getTypeLabel(concept));
+            const style = this.styleService.resolveNodeStyle(concept.kind as any, getTypeLabel(concept as any));
             this.graph.setNodeAttribute(nodeKey, "color", style.color);
             this.graph.setNodeAttribute(nodeKey, "borderColor", style.borderColor);
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
@@ -219,7 +220,7 @@ export class GraphVisualiser {
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
             (window as any)._lastQueryAnswers = res.ok.answers; // TODO: Remove once schema based autocomplete is stable.
             let builder = new GraphBuilder(this.graph, res.ok.query, false, this.structureParams, this.styleParams);
-            let answers = buildStructuredAnswers(res.ok);
+            let answers = buildStructuredAnswers(res.ok as any);
             builder.build(answers);
         }
     }
@@ -229,7 +230,7 @@ export class GraphVisualiser {
 
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
             let builder = new GraphBuilder(this.graph, res.ok.query, true, this.structureParams, this.styleParams);
-            let answers = buildStructuredAnswers(res.ok as ConceptRowsQueryResponse);
+            let answers = buildStructuredAnswers(res.ok as any);
             builder.build(answers);
         }
     }
@@ -243,7 +244,7 @@ export class GraphVisualiser {
         this.graph.nodes().forEach(nodeKey => {
             const attrs = this.graph.getNodeAttributes(nodeKey);
             const concept = attrs.metadata.concept;
-            const style = this.styleService.resolveNodeStyle(concept.kind, getTypeLabel(concept));
+            const style = this.styleService.resolveNodeStyle(concept.kind as any, getTypeLabel(concept as any));
             const degree = this.graph.degree(nodeKey);
             const sz = 6 + Math.min(degree * 4, 54);
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
@@ -261,7 +262,7 @@ export class GraphVisualiser {
         this.graph.nodes().forEach(nodeKey => {
             const attrs = this.graph.getNodeAttributes(nodeKey);
             const concept = attrs.metadata.concept as DataVertex;
-            const style = this.styleService.resolveNodeStyle(concept.kind, getTypeLabel(concept));
+            const style = this.styleService.resolveNodeStyle(concept.kind as any, getTypeLabel(concept as any));
             this.graph.setNodeAttribute(nodeKey, "label", this.styleParams.vertexDefaultLabel(concept));
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
             this.graph.setNodeAttribute(nodeKey, "color", style.color);
