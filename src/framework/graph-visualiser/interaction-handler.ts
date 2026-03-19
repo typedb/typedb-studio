@@ -4,6 +4,7 @@ import chroma from "chroma-js";
 import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "sigma/types";
 import {GraphStyles} from "./styles";
 import {LayoutWrapper} from "./layout";
+import type {GraphStyleService} from "../../service/graph-style.service";
 
 // Ref: https://www.sigmajs.org/docs/advanced/events/
 // and: https://www.sigmajs.org/storybook/?path=/story/mouse-manipulations--story
@@ -24,7 +25,7 @@ export class InteractionHandler {
     state: InteractionState;
     layout: LayoutWrapper | null = null;
 
-    constructor(public graph: MultiGraph, public renderer: Sigma, private studioState: StudioState, public styleParams: GraphStyles) {
+    constructor(public graph: MultiGraph, public renderer: Sigma, private studioState: StudioState, public styleParams: GraphStyles, public styleService?: GraphStyleService) {
         this.state = {
             draggedNode : null,
             didDrag: false,
@@ -53,6 +54,14 @@ export class InteractionHandler {
         const color = this.graph.getNodeAttribute(node, "color");
         this.graph.setNodeAttribute(node, "_originalColor", color);
         this.graph.setNodeAttribute(node, "color", chroma(color).darken(0.3).hex());
+
+        if (this.styleService?.structureMode) {
+            const attrs = this.graph.getNodeAttributes(node);
+            const concept = attrs["metadata"]?.concept;
+            if (concept) {
+                this.graph.setNodeAttribute(node, "label", this.styleParams.vertexDefaultLabel(concept));
+            }
+        }
     }
 
     onLeaveNode(event: SigmaNodeEventPayload) {
@@ -61,6 +70,10 @@ export class InteractionHandler {
         if (original) {
             this.graph.setNodeAttribute(node, "color", original);
             this.graph.removeNodeAttribute(node, "_originalColor");
+        }
+
+        if (this.styleService?.structureMode) {
+            this.graph.setNodeAttribute(node, "label", "");
         }
     }
 

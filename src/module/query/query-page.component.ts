@@ -100,7 +100,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         indentWithTab,
     ]));
-    private static readonly DEFAULT_PANEL_SIZES = [20, 60, 20, 50, 50];
+    private static readonly DEFAULT_PANEL_SIZES = [20, 60, 20, 50, 50, 75, 25];
     panelSizes = [...QueryPageComponent.DEFAULT_PANEL_SIZES];
 
     copiedLog = false;

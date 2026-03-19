@@ -26,21 +26,23 @@
       } @else {
         <div class="answers-outer-container">
           <div class="answers-container answers-structure-container">
-            <div id="structureView" #graphViewRef></div>
-            <ts-graph-customisation-panel [visualiser]="state.visualiser.visualiser"/>
-            <ts-graph-zoom-controls [visualiser]="state.visualiser.visualiser" [queryRunning]="state.visualiser.status === 'running'"/>
+            <div class="graph-split-left" resizable [percent]="panelSizes[2]" (percentChange)="onPanelResize(2, $event)">
+              <div id="structureView" #graphViewRef></div>
+              <ts-graph-zoom-controls [visualiser]="state.visualiser.visualiser" [queryRunning]="state.visualiser.status === 'running'"/>
 
-            @switch (state.visualiser.status) {
-              @case ("error") {
-                <p class="status-text">The schema tool encountered an error.</p>
+              @switch (state.visualiser.status) {
+                @case ("error") {
+                  <p class="status-text">The schema tool encountered an error.</p>
+                }
+                @case ("running") {
+                  <p class="status-text">Loading...</p>
+                }
+                @case ("noAnswers") {
+                  <p class="status-text">This is an empty database with no schema defined yet. <a routerLink="/query">Go to query tool</a> / <a href="https://typedb.com/docs/home/get-started/schema" target="_blank">learn about schemas</a></p>
+                }
               }
-              @case ("running") {
-                <p class="status-text">Loading...</p>
-              }
-              @case ("noAnswers") {
-                <p class="status-text">This is an empty database with no schema defined yet. <a routerLink="/query">Go to query tool</a> / <a href="https://typedb.com/docs/home/get-started/schema" target="_blank">learn about schemas</a></p>
-              }
-            }
+            </div>
+            <ts-graph-customisation-panel resizable [percent]="panelSizes[3]" (percentChange)="onPanelResize(3, $event)" [visualiser]="state.visualiser.visualiser"/>
           </div>
         </div>
       }

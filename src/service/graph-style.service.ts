@@ -37,6 +37,10 @@ export class GraphStyleService {
     private _edgeLabelColors: Record<string, string> = {};
     private _colorEdgesByConstraint = false;
     private _labelUseBorderColor = true;
+    private _highlightedKinds = new Set<VertexKind>();
+    private _highlightedTypes = new Set<string>();
+    private _highlightedEdges = new Set<string>();
+    private _activePreset: string | null = null;
 
     readonly styles$ = new BehaviorSubject<void>(undefined);
 
@@ -212,12 +216,79 @@ export class GraphStyleService {
         };
     }
 
+    // -- Highlights --
+
+    get highlightedKinds(): Set<VertexKind> { return this._highlightedKinds; }
+    get highlightedTypes(): Set<string> { return this._highlightedTypes; }
+    get highlightedEdges(): Set<string> { return this._highlightedEdges; }
+
+    isHighlightActive(): boolean {
+        return this._highlightedKinds.size > 0 || this._highlightedTypes.size > 0 || this._highlightedEdges.size > 0;
+    }
+
+    toggleHighlightKind(kind: VertexKind): void {
+        if (this._highlightedKinds.has(kind)) this._highlightedKinds.delete(kind);
+        else this._highlightedKinds.add(kind);
+        this.save();
+        this.styles$.next();
+    }
+
+    toggleHighlightType(typeLabel: string): void {
+        if (this._highlightedTypes.has(typeLabel)) this._highlightedTypes.delete(typeLabel);
+        else this._highlightedTypes.add(typeLabel);
+        this.save();
+        this.styles$.next();
+    }
+
+    toggleHighlightEdge(tag: string): void {
+        if (this._highlightedEdges.has(tag)) this._highlightedEdges.delete(tag);
+        else this._highlightedEdges.add(tag);
+        this.save();
+        this.styles$.next();
+    }
+
+    clearHighlights(): void {
+        this._highlightedKinds.clear();
+        this._highlightedTypes.clear();
+        this._highlightedEdges.clear();
+        this.save();
+        this.styles$.next();
+    }
+
+    shouldHighlightNode(kind: VertexKind, typeLabel?: string): boolean {
+        if (!this.isHighlightActive()) return true;
+        if (this._highlightedKinds.has(kind)) return true;
+        if (typeLabel && this._highlightedTypes.has(typeLabel)) return true;
+        return false;
+    }
+
+    shouldHighlightEdge(tag: string): boolean {
+        if (!this.isHighlightActive()) return true;
+        if (this._highlightedEdges.has(tag)) return true;
+        return false;
+    }
+
+    // -- Presets --
+
+    get activePreset(): string | null { return this._activePreset; }
+
+    set activePreset(value: string | null) {
+        this._activePreset = value;
+        this.save();
+    }
+
+    get structureMode(): boolean { return this._activePreset === "structure"; }
+
     resetToDefaults(): void {
         this._kindStyles = {};
         this._typeStyles = {};
         this._edgeLabelColors = {};
         this._labelUseBorderColor = true;
         this._colorEdgesByConstraint = false;
+        this._highlightedKinds.clear();
+        this._highlightedTypes.clear();
+        this._highlightedEdges.clear();
+        this._activePreset = null;
         this.save();
         this.styles$.next();
     }
@@ -230,6 +301,10 @@ export class GraphStyleService {
                 edgeLabelColors: this._edgeLabelColors,
                 colorEdgesByConstraint: this._colorEdgesByConstraint,
                 labelUseBorderColor: this._labelUseBorderColor,
+                highlightedKinds: Array.from(this._highlightedKinds),
+                highlightedTypes: Array.from(this._highlightedTypes),
+                highlightedEdges: Array.from(this._highlightedEdges),
+                activePreset: this._activePreset,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         } catch (e) {
@@ -247,6 +322,10 @@ export class GraphStyleService {
                 this._edgeLabelColors = data.edgeLabelColors ?? {};
                 this._colorEdgesByConstraint = data.colorEdgesByConstraint ?? false;
                 this._labelUseBorderColor = data.labelUseBorderColor ?? true;
+                this._highlightedKinds = new Set(data.highlightedKinds ?? []);
+                this._highlightedTypes = new Set(data.highlightedTypes ?? []);
+                this._highlightedEdges = new Set(data.highlightedEdges ?? []);
+                this._activePreset = data.activePreset ?? null;
             }
         } catch (e) {
             console.warn("Failed to load graph styles from localStorage:", e);

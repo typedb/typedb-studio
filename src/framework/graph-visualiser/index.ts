@@ -7,7 +7,7 @@ import chroma from "chroma-js";
 import Sigma from "sigma";
 import type { GraphStyleService } from "../../service/graph-style.service";
 
-import { getTypeLabel } from "@typedb/graph-utils";
+import { getTypeLabel, DataVertex } from "@typedb/graph-utils";
 import { buildStructuredAnswers, AnalyzedPipelineBackCompat } from "@typedb/graph-utils";
 import { Graph, GraphBuilderStructureParams, defaultStructureParams } from "./graph";
 import { GraphBuilder } from "./graph-builder";
@@ -24,15 +24,16 @@ export class GraphVisualiser {
 
     private autoZoomEnabled = true;
     private settingCameraProgrammatically = false;
+    private peakCameraRatio = 0;
 
     constructor(public graph: Graph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
         this.state = { activeQueryDatabase: null };
         this.styleParams = this.syncStyles();
-        this.interactionHandler = new InteractionHandler(graph, sigma, this.state, this.styleParams);
+        this.interactionHandler = new InteractionHandler(graph, sigma, this.state, this.styleParams, this.styleService);
         this.interactionHandler.layout = this.layout;
         this.setupReducers();
         this.layout.onTick = () => {
-            if (this.autoZoomEnabled) this.centerCamera();
+            if (this.autoZoomEnabled) this.centerCamera(true);
         };
         this.sigma.getCamera().addListener("updated", () => {
             if (!this.settingCameraProgrammatically) {
@@ -57,8 +58,25 @@ export class GraphVisualiser {
 
         this.sigma.setSetting("nodeReducer", (node, data) => {
             const state = this.interactionHandler.state;
-            if (state.selectedNode == null) return data;
-            if (node === state.selectedNode || state.selectedNeighbors?.has(node)) return data;
+            let shouldFade = false;
+
+            // Selection-based fading
+            if (state.selectedNode != null && node !== state.selectedNode && !state.selectedNeighbors?.has(node)) {
+                shouldFade = true;
+            }
+
+            // Highlight-based fading
+            try {
+                if (this.styleService.isHighlightActive()) {
+                    const attrs = this.graph.getNodeAttributes(node);
+                    const concept = attrs.metadata.concept;
+                    if (!this.styleService.shouldHighlightNode(concept.kind, getTypeLabel(concept))) {
+                        shouldFade = true;
+                    }
+                }
+            } catch (_) { /* guard against missing metadata during graph mutations */ }
+
+            if (!shouldFade) return data;
             const res = { ...data };
             res["color"] = fade(data["color"]);
             if (data["borderColor"]) res["borderColor"] = fade(data["borderColor"]);
@@ -67,13 +85,29 @@ export class GraphVisualiser {
 
         this.sigma.setSetting("edgeReducer", (edge, data) => {
             const state = this.interactionHandler.state;
-            if (state.selectedNode == null) return data;
-            const source = this.graph.source(edge);
-            const target = this.graph.target(edge);
-            if ((source === state.selectedNode && state.selectedNeighbors?.has(target))
-                || (target === state.selectedNode && state.selectedNeighbors?.has(source))) {
-                return data;
+            let shouldFade = false;
+
+            // Selection-based fading
+            if (state.selectedNode != null) {
+                const source = this.graph.source(edge);
+                const target = this.graph.target(edge);
+                if (!((source === state.selectedNode && state.selectedNeighbors?.has(target))
+                    || (target === state.selectedNode && state.selectedNeighbors?.has(source)))) {
+                    shouldFade = true;
+                }
             }
+
+            // Highlight-based fading
+            try {
+                if (this.styleService.isHighlightActive()) {
+                    const tag = this.graph.getEdgeAttributes(edge).metadata?.dataEdge?.tag;
+                    if (tag && !this.styleService.shouldHighlightEdge(tag)) {
+                        shouldFade = true;
+                    }
+                }
+            } catch (_) { /* guard against missing metadata during graph mutations */ }
+
+            if (!shouldFade) return data;
             const res = { ...data };
             res["color"] = fade(data["color"] ?? "#ccc");
             res["label"] = "";
@@ -107,6 +141,7 @@ export class GraphVisualiser {
 
     reLayout(): void {
         this.autoZoomEnabled = true;
+        this.peakCameraRatio = 0;
         this.graph.nodes().forEach(node => {
             this.graph.setNodeAttribute(node, "x", Math.random());
             this.graph.setNodeAttribute(node, "y", Math.random());
@@ -115,7 +150,7 @@ export class GraphVisualiser {
         this.centerCamera();
     }
 
-    centerCamera(): void {
+    centerCamera(zoomOutOnly = false): void {
         const nodes = this.graph.nodes();
         if (nodes.length === 0) return;
 
@@ -138,11 +173,19 @@ export class GraphVisualiser {
         const graphWidth = maxX - minX || 1;
         const graphHeight = maxY - minY || 1;
         const padding = 1.1;
-        const ratio = Math.max(graphWidth / width, graphHeight / height, 1) * padding;
+        const rawRatio = Math.max(graphWidth / width, graphHeight / height, 1) * padding;
+        // Cap ratio so nodes (rendered at fixed screen-pixel sizes) remain visible
+        const ratio = Math.min(rawRatio, 20);
 
-        // Camera x,y are in normalized [0,1] space; 0.5 = center of the normalization bbox.
-        // Since sigma centers its bbox on the graph center each frame, (0.5, 0.5) is already
-        // the graph center. Just reset to center.
+        // During simulation, only zoom out (grow ratio), never zoom back in
+        if (zoomOutOnly && ratio <= this.peakCameraRatio) {
+            this.settingCameraProgrammatically = true;
+            this.sigma.getCamera().setState({ x: 0.5, y: 0.5, ratio: this.peakCameraRatio, angle: 0 });
+            this.settingCameraProgrammatically = false;
+            return;
+        }
+        this.peakCameraRatio = ratio;
+
         this.settingCameraProgrammatically = true;
         this.sigma.getCamera().setState({ x: 0.5, y: 0.5, ratio, angle: 0 });
         this.settingCameraProgrammatically = false;
@@ -154,6 +197,7 @@ export class GraphVisualiser {
         if (res.ok.answerType === "conceptRows") {
             this.state.activeQueryDatabase = database;
             this.autoZoomEnabled = true;
+            this.peakCameraRatio = 0;
             this.handleQueryResult(res);
             this.layout.startOrRedraw();
             this.centerCamera();
@@ -182,6 +226,51 @@ export class GraphVisualiser {
 
     searchGraph(term: string) {
         this.interactionHandler.searchGraph(term);
+    }
+
+    applyStructureMode(): void {
+        this.graph.nodes().forEach(nodeKey => {
+            const degree = this.graph.degree(nodeKey);
+            const sz = 6 + Math.min(degree * 4, 54);
+            // Save original label for restoration
+            const currentLabel = this.graph.getNodeAttribute(nodeKey, "label");
+            if (currentLabel) (this.graph as any).setNodeAttribute(nodeKey, "_savedLabel", currentLabel);
+            this.graph.setNodeAttribute(nodeKey, "type", "ellipse");
+            this.graph.setNodeAttribute(nodeKey, "width", sz);
+            this.graph.setNodeAttribute(nodeKey, "height", sz);
+            this.graph.setNodeAttribute(nodeKey, "size", sz);
+            this.graph.setNodeAttribute(nodeKey, "label", "");
+        });
+        this.graph.edges().forEach(edgeKey => {
+            const currentLabel = this.graph.getEdgeAttribute(edgeKey, "label");
+            if (currentLabel) (this.graph as any).setEdgeAttribute(edgeKey, "_savedLabel", currentLabel);
+            this.graph.setEdgeAttribute(edgeKey, "label", "");
+        });
+        this.sigma.refresh();
+    }
+
+    restoreLabels(): void {
+        this.syncStyles();
+        this.graph.nodes().forEach(nodeKey => {
+            const attrs = this.graph.getNodeAttributes(nodeKey);
+            const concept = attrs.metadata.concept as DataVertex;
+            const style = this.styleService.resolveNodeStyle(concept.kind, getTypeLabel(concept));
+            const savedLabel = (attrs as any)._savedLabel ?? this.styleParams.vertexDefaultLabel(concept);
+            this.graph.setNodeAttribute(nodeKey, "label", savedLabel);
+            this.graph.setNodeAttribute(nodeKey, "type", style.shape);
+            this.graph.setNodeAttribute(nodeKey, "width", style.width);
+            this.graph.setNodeAttribute(nodeKey, "height", style.height);
+            this.graph.setNodeAttribute(nodeKey, "size", Math.min(style.width, style.height));
+            (this.graph as any).removeNodeAttribute(nodeKey, "_savedLabel");
+        });
+        this.graph.edges().forEach(edgeKey => {
+            const savedLabel = (this.graph as any).getEdgeAttribute(edgeKey, "_savedLabel");
+            if (savedLabel != null) {
+                this.graph.setEdgeAttribute(edgeKey, "label", savedLabel as string);
+                (this.graph as any).removeEdgeAttribute(edgeKey, "_savedLabel");
+            }
+        });
+        this.sigma.refresh();
     }
 
     colorEdgesByConstraintIndex(reset: boolean): void {

@@ -47,7 +47,7 @@ export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     private canvasEl$!: Observable<HTMLElement>;
 
-    private static readonly DEFAULT_PANEL_SIZES = [20, 80];
+    private static readonly DEFAULT_PANEL_SIZES = [20, 80, 75, 25];
     panelSizes = [...SchemaPageComponent.DEFAULT_PANEL_SIZES];
 
     constructor(

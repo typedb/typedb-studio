@@ -1,4 +1,4 @@
-import { Component, inject, Input } from "@angular/core";
+import { Component, inject, Input, OnChanges, SimpleChanges } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
@@ -65,13 +65,13 @@ export const AVAILABLE_SHAPES = [
         ColorPickerDirective,
     ],
 })
-export class GraphCustomisationPanelComponent {
+export class GraphCustomisationPanelComponent implements OnChanges {
 
     @Input() visualiser: GraphVisualiser | null = null;
 
     styleService = inject(GraphStyleService);
-    isOpen = false;
     activeTab: "kind" | "type" | "edge" = "kind";
+    advancedOpen = false;
 
     readonly displayKinds = DISPLAY_KINDS;
     readonly shapes = AVAILABLE_SHAPES;
@@ -79,9 +79,8 @@ export class GraphCustomisationPanelComponent {
 
     discoveredTypes: TypeRow[] = [];
 
-    toggle(): void {
-        this.isOpen = !this.isOpen;
-        if (this.isOpen) {
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes["visualiser"]) {
             this.refreshDiscoveredTypes();
         }
     }
@@ -267,6 +266,59 @@ export class GraphCustomisationPanelComponent {
 
     reLayout(): void {
         this.visualiser?.reLayout();
+    }
+
+    // -- Highlights --
+
+    isKindHighlighted(kind: VertexKind): boolean {
+        return this.styleService.highlightedKinds.has(kind);
+    }
+
+    isTypeHighlighted(typeLabel: string): boolean {
+        return this.styleService.highlightedTypes.has(typeLabel);
+    }
+
+    isEdgeHighlighted(tag: string): boolean {
+        return this.styleService.highlightedEdges.has(tag);
+    }
+
+    toggleHighlightKind(kind: VertexKind): void {
+        this.styleService.toggleHighlightKind(kind);
+        this.visualiser?.sigma.refresh();
+    }
+
+    toggleHighlightType(typeLabel: string): void {
+        this.styleService.toggleHighlightType(typeLabel);
+        this.visualiser?.sigma.refresh();
+    }
+
+    toggleHighlightEdge(tag: string): void {
+        this.styleService.toggleHighlightEdge(tag);
+        this.visualiser?.sigma.refresh();
+    }
+
+    clearHighlights(): void {
+        this.styleService.clearHighlights();
+        this.visualiser?.sigma.refresh();
+    }
+
+    // -- Presets --
+
+    get activePreset(): string | null {
+        return this.styleService.activePreset;
+    }
+
+    applyPreset(preset: "default" | "structure"): void {
+        if (preset === "default") {
+            this.styleService.activePreset = "default";
+            this.styleService.clearHighlights();
+            this.resetAll();
+            this.styleService.activePreset = "default";
+            this.visualiser?.restoreLabels();
+        } else if (preset === "structure") {
+            this.styleService.activePreset = "structure";
+            this.visualiser?.applyStructureMode();
+        }
     }
 
     private applyStyles(): void {
