@@ -70,8 +70,8 @@ export class GraphCustomisationPanelComponent implements OnChanges {
     @Input() visualiser: GraphVisualiser | null = null;
 
     styleService = inject(GraphStyleService);
+    topTab: "highlights" | "presets" | "advanced" = "highlights";
     activeTab: "kind" | "type" | "edge" = "kind";
-    advancedOpen = false;
 
     readonly displayKinds = DISPLAY_KINDS;
     readonly shapes = AVAILABLE_SHAPES;
@@ -294,6 +294,54 @@ export class GraphCustomisationPanelComponent implements OnChanges {
 
     toggleHighlightEdge(tag: string): void {
         this.styleService.toggleHighlightEdge(tag);
+        this.visualiser?.sigma.refresh();
+    }
+
+    selectAllKinds(): void {
+        for (const row of this.displayKinds) this.styleService.highlightedKinds.add(row.kind);
+        this.visualiser?.sigma.refresh();
+    }
+
+    unselectAllKinds(): void {
+        this.styleService.highlightedKinds.clear();
+        this.visualiser?.sigma.refresh();
+    }
+
+    selectAllTypes(): void {
+        for (const row of this.discoveredTypes) this.styleService.highlightedTypes.add(row.typeLabel);
+        this.visualiser?.sigma.refresh();
+    }
+
+    unselectAllTypes(): void {
+        this.styleService.highlightedTypes.clear();
+        this.visualiser?.sigma.refresh();
+    }
+
+    selectAllEdges(): void {
+        for (const row of this.edgeLabels) this.styleService.highlightedEdges.add(row.tag);
+        this.visualiser?.sigma.refresh();
+    }
+
+    unselectAllEdges(): void {
+        this.styleService.highlightedEdges.clear();
+        this.visualiser?.sigma.refresh();
+    }
+
+    soloHighlightKind(kind: VertexKind): void {
+        this.styleService.highlightedKinds.clear();
+        this.styleService.highlightedKinds.add(kind);
+        this.visualiser?.sigma.refresh();
+    }
+
+    soloHighlightType(typeLabel: string): void {
+        this.styleService.highlightedTypes.clear();
+        this.styleService.highlightedTypes.add(typeLabel);
+        this.visualiser?.sigma.refresh();
+    }
+
+    soloHighlightEdge(tag: string): void {
+        this.styleService.highlightedEdges.clear();
+        this.styleService.highlightedEdges.add(tag);
         this.visualiser?.sigma.refresh();
     }
 

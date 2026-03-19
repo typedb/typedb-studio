@@ -256,14 +256,14 @@ export class GraphStyleService {
     }
 
     shouldHighlightNode(kind: VertexKind, typeLabel?: string): boolean {
-        if (!this.isHighlightActive()) return true;
+        if (this._highlightedKinds.size === 0 && this._highlightedTypes.size === 0) return true;
         if (this._highlightedKinds.has(kind)) return true;
         if (typeLabel && this._highlightedTypes.has(typeLabel)) return true;
         return false;
     }
 
     shouldHighlightEdge(tag: string): boolean {
-        if (!this.isHighlightActive()) return true;
+        if (this._highlightedEdges.size === 0) return true;
         if (this._highlightedEdges.has(tag)) return true;
         return false;
     }
