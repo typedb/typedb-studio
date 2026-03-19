@@ -129,10 +129,11 @@ export class GraphVisualiser {
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
             if (useDegreeScaling) {
                 const degree = this.graph.degree(nodeKey);
-                const sz = 6 + Math.min(degree * 4, 54);
-                this.graph.setNodeAttribute(nodeKey, "width", sz);
-                this.graph.setNodeAttribute(nodeKey, "height", sz);
-                this.graph.setNodeAttribute(nodeKey, "size", sz);
+                const w = style.width + Math.min(degree * 2, style.width * 4);
+                const h = style.height + Math.min(degree * 2, style.height * 4);
+                this.graph.setNodeAttribute(nodeKey, "width", w);
+                this.graph.setNodeAttribute(nodeKey, "height", h);
+                this.graph.setNodeAttribute(nodeKey, "size", Math.max(w, h));
             } else {
                 this.graph.setNodeAttribute(nodeKey, "width", style.width);
                 this.graph.setNodeAttribute(nodeKey, "height", style.height);
@@ -210,6 +211,7 @@ export class GraphVisualiser {
             this.autoZoomEnabled = true;
             this.peakCameraRatio = 0;
             this.handleQueryResult(res);
+            if (this.styleService.degreeScaling) this.applyStyleUpdate();
             this.layout.startOrRedraw();
             this.centerCamera();
         }
@@ -232,6 +234,7 @@ export class GraphVisualiser {
             let builder = new GraphBuilder(this.graph, res.ok.query, true, this.structureParams, this.styleParams);
             let answers = buildStructuredAnswers(res.ok as any);
             builder.build(answers);
+            if (this.styleService.degreeScaling) this.applyStyleUpdate();
         }
     }
 
@@ -246,13 +249,14 @@ export class GraphVisualiser {
             const concept = attrs.metadata.concept;
             const style = this.styleService.resolveNodeStyle(concept.kind as any, getTypeLabel(concept as any));
             const degree = this.graph.degree(nodeKey);
-            const sz = 6 + Math.min(degree * 4, 54);
+            const w = style.width + Math.min(degree * 2, style.width * 4);
+            const h = style.height + Math.min(degree * 2, style.height * 4);
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
             this.graph.setNodeAttribute(nodeKey, "color", style.color);
             this.graph.setNodeAttribute(nodeKey, "borderColor", style.borderColor);
-            this.graph.setNodeAttribute(nodeKey, "width", sz);
-            this.graph.setNodeAttribute(nodeKey, "height", sz);
-            this.graph.setNodeAttribute(nodeKey, "size", sz);
+            this.graph.setNodeAttribute(nodeKey, "width", w);
+            this.graph.setNodeAttribute(nodeKey, "height", h);
+            this.graph.setNodeAttribute(nodeKey, "size", Math.max(w, h));
         });
         this.sigma.refresh();
     }

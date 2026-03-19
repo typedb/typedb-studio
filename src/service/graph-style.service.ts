@@ -298,6 +298,9 @@ export class GraphStyleService {
     }
 
     applyStructurePreset(): void {
+        for (const kind of ALL_KINDS) {
+            this._kindStyles[kind] = { ...this._kindStyles[kind], shape: "ellipse", width: 6, height: 6 };
+        }
         this._labelsVisible = false;
         this._degreeScaling = true;
         this._activePreset = "structure";
