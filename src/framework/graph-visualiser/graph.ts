@@ -451,7 +451,7 @@ class LogicalGraphBuilder {
                     queryConstraint: constraint,
 
                     lhs: this.translate_vertex(structure, constraint.lhs, answerIndex, data) as (Value | Attribute | VertexUnavailable),
-                    rhs: this.translate_vertex(structure, constraint.lhs, answerIndex, data) as (Value | Attribute | VertexUnavailable),
+                    rhs: this.translate_vertex(structure, constraint.rhs, answerIndex, data) as (Value | Attribute | VertexUnavailable),
                     comparator: constraint.comparator,
                 }
             }
@@ -463,7 +463,7 @@ class LogicalGraphBuilder {
                     queryConstraint: constraint,
 
                     lhs: this.translate_vertex(structure, constraint.lhs, answerIndex, data) as (Concept | VertexUnavailable),
-                    rhs: this.translate_vertex(structure, constraint.lhs, answerIndex, data) as (Concept | VertexUnavailable),
+                    rhs: this.translate_vertex(structure, constraint.rhs, answerIndex, data) as (Concept | VertexUnavailable),
                 }
             }
             case "iid" : {
