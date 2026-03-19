@@ -1,7 +1,7 @@
 import { Attributes } from "graphology-types";
 import { Settings } from "sigma/settings";
 import { NodeDisplayData, PartialButFor } from "sigma/types";
-import { drawCenteredNodeLabel } from "../../sigma-label-utils";
+import { drawCenteredNodeLabel, drawExternalNodeLabel, getLabelsVisible } from "../../sigma-label-utils";
 
 export function drawDiamondNodeLabel<
     N extends Attributes = Attributes,
@@ -24,20 +24,18 @@ export function drawDiamondNodeHover<
     data: PartialButFor<NodeDisplayData, "x" | "y" | "size" | "label" | "color">,
     settings: Settings<N, E, G>,
 ): void {
-    context.fillStyle = "#FFF";
-    context.shadowOffsetX = 0;
-    context.shadowOffsetY = 0;
-    context.shadowBlur = 8;
-    context.shadowColor = "#000";
-
-    const PADDING = 2;
+    if (getLabelsVisible()) {
+        drawCenteredNodeLabel(context, data, settings);
+        return;
+    }
 
     const rawW = (data as any).width ?? data.size;
     const rawH = (data as any).height ?? data.size;
     const scale = data.size / Math.max(rawW, rawH);
-    const rx = rawW * scale + PADDING;
-    const ry = rawH * scale + PADDING;
+    const rx = rawW * scale + 2;
+    const ry = rawH * scale + 2;
 
+    context.fillStyle = "rgba(255, 255, 255, 0.15)";
     context.beginPath();
     context.moveTo(data.x, data.y - ry);
     context.lineTo(data.x + rx, data.y);
@@ -46,9 +44,5 @@ export function drawDiamondNodeHover<
     context.closePath();
     context.fill();
 
-    context.shadowOffsetX = 0;
-    context.shadowOffsetY = 0;
-    context.shadowBlur = 0;
-
-    drawDiamondNodeLabel(context, data, settings);
+    drawExternalNodeLabel(context, data, settings);
 }

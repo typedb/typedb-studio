@@ -41,6 +41,8 @@ export class GraphStyleService {
     private _highlightedTypes = new Set<string>();
     private _highlightedEdges = new Set<string>();
     private _activePreset: string | null = null;
+    private _labelsVisible = true;
+    private _degreeScaling = false;
 
     readonly styles$ = new BehaviorSubject<void>(undefined);
 
@@ -277,7 +279,39 @@ export class GraphStyleService {
         this.save();
     }
 
+    get degreeScaling(): boolean { return this._degreeScaling; }
+
+    set degreeScaling(value: boolean) {
+        this._degreeScaling = value;
+        this.save();
+        this.styles$.next();
+    }
+
     get structureMode(): boolean { return this._activePreset === "structure"; }
+
+    get labelsVisible(): boolean { return this._labelsVisible; }
+
+    set labelsVisible(value: boolean) {
+        this._labelsVisible = value;
+        this.save();
+        this.styles$.next();
+    }
+
+    applyStructurePreset(): void {
+        this._labelsVisible = false;
+        this._degreeScaling = true;
+        this._activePreset = "structure";
+        this.save();
+        this.styles$.next();
+    }
+
+    applyDefaultPreset(): void {
+        this.resetToDefaults();
+        this._labelsVisible = true;
+        this._activePreset = "default";
+        this.save();
+        this.styles$.next();
+    }
 
     resetToDefaults(): void {
         this._kindStyles = {};
@@ -285,6 +319,8 @@ export class GraphStyleService {
         this._edgeLabelColors = {};
         this._labelUseBorderColor = true;
         this._colorEdgesByConstraint = false;
+        this._labelsVisible = true;
+        this._degreeScaling = false;
         this._highlightedKinds.clear();
         this._highlightedTypes.clear();
         this._highlightedEdges.clear();
@@ -305,6 +341,8 @@ export class GraphStyleService {
                 highlightedTypes: Array.from(this._highlightedTypes),
                 highlightedEdges: Array.from(this._highlightedEdges),
                 activePreset: this._activePreset,
+                labelsVisible: this._labelsVisible,
+                degreeScaling: this._degreeScaling,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         } catch (e) {
@@ -326,6 +364,8 @@ export class GraphStyleService {
                 this._highlightedTypes = new Set(data.highlightedTypes ?? []);
                 this._highlightedEdges = new Set(data.highlightedEdges ?? []);
                 this._activePreset = data.activePreset ?? null;
+                this._labelsVisible = data.labelsVisible ?? true;
+                this._degreeScaling = data.degreeScaling ?? false;
             }
         } catch (e) {
             console.warn("Failed to load graph styles from localStorage:", e);

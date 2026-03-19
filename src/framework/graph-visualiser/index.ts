@@ -12,7 +12,7 @@ import { buildStructuredAnswers, AnalyzedPipelineBackCompat } from "@typedb/grap
 import { Graph, GraphBuilderStructureParams, defaultStructureParams } from "./graph";
 import { GraphBuilder } from "./graph-builder";
 import { GraphStyles, colorEdgesByConstraintIndex as _colorEdgesByConstraintIndex, colorQuery as _colorQuery } from "./styles";
-import { setUseBorderColorForLabels } from "./sigma-label-utils";
+import { setUseBorderColorForLabels, setLabelsVisible } from "./sigma-label-utils";
 import { InteractionHandler, StudioState } from "./interaction-handler";
 import { LayoutWrapper } from "./layout";
 
@@ -44,6 +44,7 @@ export class GraphVisualiser {
 
     private syncStyles(): GraphStyles {
         setUseBorderColorForLabels(this.styleService.labelUseBorderColor);
+        setLabelsVisible(this.styleService.labelsVisible);
         this.styleParams = this.styleService.toGraphStyles();
         if (this.interactionHandler) {
             this.interactionHandler.styleParams = this.styleParams;
@@ -117,6 +118,7 @@ export class GraphVisualiser {
 
     applyStyleUpdate(): void {
         this.syncStyles();
+        const useDegreeScaling = this.styleService.degreeScaling;
         this.graph.nodes().forEach(nodeKey => {
             const attrs = this.graph.getNodeAttributes(nodeKey);
             const concept = attrs.metadata.concept;
@@ -124,9 +126,17 @@ export class GraphVisualiser {
             this.graph.setNodeAttribute(nodeKey, "color", style.color);
             this.graph.setNodeAttribute(nodeKey, "borderColor", style.borderColor);
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
-            this.graph.setNodeAttribute(nodeKey, "width", style.width);
-            this.graph.setNodeAttribute(nodeKey, "height", style.height);
-            this.graph.setNodeAttribute(nodeKey, "size", Math.max(style.width, style.height));
+            if (useDegreeScaling) {
+                const degree = this.graph.degree(nodeKey);
+                const sz = 6 + Math.min(degree * 4, 54);
+                this.graph.setNodeAttribute(nodeKey, "width", sz);
+                this.graph.setNodeAttribute(nodeKey, "height", sz);
+                this.graph.setNodeAttribute(nodeKey, "size", sz);
+            } else {
+                this.graph.setNodeAttribute(nodeKey, "width", style.width);
+                this.graph.setNodeAttribute(nodeKey, "height", style.height);
+                this.graph.setNodeAttribute(nodeKey, "size", Math.max(style.width, style.height));
+            }
         });
         this.sigma.refresh();
     }
@@ -229,22 +239,19 @@ export class GraphVisualiser {
     }
 
     applyStructureMode(): void {
+        this.syncStyles();
         this.graph.nodes().forEach(nodeKey => {
+            const attrs = this.graph.getNodeAttributes(nodeKey);
+            const concept = attrs.metadata.concept;
+            const style = this.styleService.resolveNodeStyle(concept.kind, getTypeLabel(concept));
             const degree = this.graph.degree(nodeKey);
             const sz = 6 + Math.min(degree * 4, 54);
-            // Save original label for restoration
-            const currentLabel = this.graph.getNodeAttribute(nodeKey, "label");
-            if (currentLabel) (this.graph as any).setNodeAttribute(nodeKey, "_savedLabel", currentLabel);
-            this.graph.setNodeAttribute(nodeKey, "type", "ellipse");
+            this.graph.setNodeAttribute(nodeKey, "type", style.shape);
+            this.graph.setNodeAttribute(nodeKey, "color", style.color);
+            this.graph.setNodeAttribute(nodeKey, "borderColor", style.borderColor);
             this.graph.setNodeAttribute(nodeKey, "width", sz);
             this.graph.setNodeAttribute(nodeKey, "height", sz);
             this.graph.setNodeAttribute(nodeKey, "size", sz);
-            this.graph.setNodeAttribute(nodeKey, "label", "");
-        });
-        this.graph.edges().forEach(edgeKey => {
-            const currentLabel = this.graph.getEdgeAttribute(edgeKey, "label");
-            if (currentLabel) (this.graph as any).setEdgeAttribute(edgeKey, "_savedLabel", currentLabel);
-            this.graph.setEdgeAttribute(edgeKey, "label", "");
         });
         this.sigma.refresh();
     }
@@ -255,20 +262,17 @@ export class GraphVisualiser {
             const attrs = this.graph.getNodeAttributes(nodeKey);
             const concept = attrs.metadata.concept as DataVertex;
             const style = this.styleService.resolveNodeStyle(concept.kind, getTypeLabel(concept));
-            const savedLabel = (attrs as any)._savedLabel ?? this.styleParams.vertexDefaultLabel(concept);
-            this.graph.setNodeAttribute(nodeKey, "label", savedLabel);
+            this.graph.setNodeAttribute(nodeKey, "label", this.styleParams.vertexDefaultLabel(concept));
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
+            this.graph.setNodeAttribute(nodeKey, "color", style.color);
+            this.graph.setNodeAttribute(nodeKey, "borderColor", style.borderColor);
             this.graph.setNodeAttribute(nodeKey, "width", style.width);
             this.graph.setNodeAttribute(nodeKey, "height", style.height);
             this.graph.setNodeAttribute(nodeKey, "size", Math.max(style.width, style.height));
-            (this.graph as any).removeNodeAttribute(nodeKey, "_savedLabel");
         });
         this.graph.edges().forEach(edgeKey => {
-            const savedLabel = (this.graph as any).getEdgeAttribute(edgeKey, "_savedLabel");
-            if (savedLabel != null) {
-                this.graph.setEdgeAttribute(edgeKey, "label", savedLabel as string);
-                (this.graph as any).removeEdgeAttribute(edgeKey, "_savedLabel");
-            }
+            const metadata = this.graph.getEdgeAttributes(edgeKey).metadata;
+            this.graph.setEdgeAttribute(edgeKey, "label", metadata?.dataEdge?.tag ?? "");
         });
         this.sigma.refresh();
     }

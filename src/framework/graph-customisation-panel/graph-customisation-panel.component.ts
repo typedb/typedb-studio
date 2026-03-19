@@ -255,13 +255,32 @@ export class GraphCustomisationPanelComponent implements OnChanges {
         this.visualiser?.colorEdgesByConstraintIndex(!this.styleService.colorEdgesByConstraint);
     }
 
-    get labelUseBorderColor(): boolean {
-        return this.styleService.labelUseBorderColor;
+    get labelMode(): "border" | "fixed" | "hidden" {
+        if (!this.styleService.labelsVisible) return "hidden";
+        return this.styleService.labelUseBorderColor ? "border" : "fixed";
     }
 
-    toggleLabelUseBorderColor(): void {
-        this.styleService.labelUseBorderColor = !this.styleService.labelUseBorderColor;
+    setLabelMode(mode: "border" | "fixed" | "hidden"): void {
+        if (mode === "hidden") {
+            this.styleService.labelsVisible = false;
+        } else {
+            this.styleService.labelsVisible = true;
+            this.styleService.labelUseBorderColor = mode === "border";
+        }
         this.visualiser?.applyStyleUpdate();
+    }
+
+    get degreeScaling(): boolean {
+        return this.styleService.degreeScaling;
+    }
+
+    toggleDegreeScaling(): void {
+        this.styleService.degreeScaling = !this.styleService.degreeScaling;
+        if (this.styleService.degreeScaling) {
+            this.visualiser?.applyStructureMode();
+        } else {
+            this.visualiser?.applyStyleUpdate();
+        }
     }
 
     reLayout(): void {
@@ -356,17 +375,22 @@ export class GraphCustomisationPanelComponent implements OnChanges {
         return this.styleService.activePreset;
     }
 
+    appliedPreset: string | null = null;
+    private appliedTimer: ReturnType<typeof setTimeout> | null = null;
+
     applyPreset(preset: "default" | "structure"): void {
         if (preset === "default") {
-            this.styleService.activePreset = "default";
-            this.styleService.clearHighlights();
-            this.resetAll();
-            this.styleService.activePreset = "default";
+            this.styleService.applyDefaultPreset();
             this.visualiser?.restoreLabels();
+            this.visualiser?.applyEdgeStyleUpdate();
+            this.visualiser?.colorEdgesByConstraintIndex(true);
         } else if (preset === "structure") {
-            this.styleService.activePreset = "structure";
+            this.styleService.applyStructurePreset();
             this.visualiser?.applyStructureMode();
         }
+        if (this.appliedTimer) clearTimeout(this.appliedTimer);
+        this.appliedPreset = preset;
+        this.appliedTimer = setTimeout(() => { this.appliedPreset = null; }, 2000);
     }
 
     private applyStyles(): void {

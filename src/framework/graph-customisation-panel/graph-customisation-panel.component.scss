@@ -265,6 +265,72 @@
   border-top: 1px solid colors.$secondary-dark-grey;
 }
 
+.footer-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-option-label {
+  font-size: 11px;
+  color: #958fa8;
+  flex: 1;
+}
+
+.footer-select-field {
+  flex: 0 0 auto;
+  width: 110px;
+
+  --mat-form-field-container-height: 24px;
+  --mat-form-field-container-vertical-padding: 0;
+  --mat-form-field-filled-with-label-container-padding-top: 0;
+  --mat-form-field-filled-with-label-container-padding-bottom: 0;
+  --mdc-filled-text-field-container-color: #{colors.$secondary-purple};
+
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper,
+    .mdc-text-field,
+    .mdc-text-field--filled {
+      padding: 0 8px !important;
+      background: colors.$secondary-purple !important;
+      border-radius: 3px;
+      height: 24px !important;
+      max-height: 24px !important;
+    }
+
+    .mat-mdc-form-field-flex {
+      height: 24px !important;
+      max-height: 24px !important;
+    }
+
+    .mat-mdc-form-field-infix {
+      min-height: 0 !important;
+      height: 24px !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      display: flex;
+      align-items: center;
+      width: auto;
+    }
+
+    .mat-mdc-form-field-subscript-wrapper { display: none; }
+    .mdc-line-ripple { display: none; }
+    .mdc-floating-label { display: none; }
+
+    .mat-mdc-select-trigger {
+      height: 24px !important;
+      font-size: 11px;
+      color: #d5ccff;
+    }
+
+    .mat-mdc-select-value { padding: 0; }
+
+    .mat-mdc-select-arrow-wrapper {
+      transform: scale(0.75);
+    }
+  }
+}
+
 .footer-toggles {
   display: flex;
   flex-direction: column;
@@ -470,6 +536,12 @@
   color: #d5ccff;
   cursor: pointer;
 
+  i {
+    font-size: 10px;
+    width: 10px;
+    height: 10px;
+  }
+
   &:hover:not(:disabled) {
     background: colors.$secondary-deep-grey;
   }
@@ -489,12 +561,16 @@
 ::ng-deep body div.mat-mdc-select-panel.graph-style-select-panel {
   .mat-mdc-option {
     min-height: 28px;
-    font-size: 12px;
-    padding: 0 12px;
+    font-size: 11px;
+    padding: 0 4px 0 8px;
   }
 
   mat-pseudo-checkbox {
     transform: scale(0.8);
+  }
+
+  .mat-mdc-option .mat-pseudo-checkbox-minimal {
+    margin-left: 4px;
   }
 }
 

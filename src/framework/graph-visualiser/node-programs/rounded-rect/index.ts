@@ -5,7 +5,7 @@ import { floatColor } from "sigma/utils";
 
 import FRAGMENT_SHADER_SOURCE from "./shader-frag";
 import VERTEX_SHADER_SOURCE from "./shader-vert";
-import { drawRoundedRectNodeLabel } from "./utils";
+import { drawRoundedRectNodeLabel, drawRoundedRectNodeHover } from "./utils";
 
 const { UNSIGNED_BYTE, FLOAT } = WebGLRenderingContext;
 
@@ -18,7 +18,7 @@ export class NodeRoundedRectangleProgram<
     E extends Attributes = Attributes,
     G extends Attributes = Attributes,
 > extends NodeProgram<(typeof UNIFORMS)[number], N, E, G> {
-    override drawHover = () => {};
+    override drawHover = drawRoundedRectNodeHover;
     override drawLabel = drawRoundedRectNodeLabel;
 
     getDefinition() {

@@ -88,14 +88,18 @@
               <span class="preset-name">Default</span>
               <span class="preset-description">Standard colors, shapes and sizes</span>
             </div>
-            <button class="preset-apply" (click)="applyPreset('default')" [disabled]="activePreset === 'default'">Apply</button>
+            <button class="preset-apply" (click)="applyPreset('default')">
+              @if (appliedPreset === 'default') { <i class="fa-light fa-check"></i> } @else { Apply }
+            </button>
           </div>
           <div class="preset-card" [class.active]="activePreset === 'structure'">
             <div class="preset-info">
               <span class="preset-name">Structure</span>
               <span class="preset-description">Minimal nodes sized by connections, labels hidden</span>
             </div>
-            <button class="preset-apply" (click)="applyPreset('structure')" [disabled]="activePreset === 'structure'">Apply</button>
+            <button class="preset-apply" (click)="applyPreset('structure')">
+              @if (appliedPreset === 'structure') { <i class="fa-light fa-check"></i> } @else { Apply }
+            </button>
           </div>
         </div>
       </div>
@@ -305,8 +309,18 @@
   <!-- Footer actions (always visible) -->
   <div class="panel-footer">
     <div class="footer-toggles">
-      <mat-slide-toggle color="primary" [checked]="labelUseBorderColor" (change)="toggleLabelUseBorderColor()" labelPosition="before">
-        Match text color to border
+      <div class="footer-option">
+        <span class="footer-option-label">Node labels</span>
+        <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
+          <mat-select [value]="labelMode" panelClass="graph-style-select-panel" (selectionChange)="setLabelMode($event.value)">
+            <mat-option value="border">Match border</mat-option>
+            <mat-option value="fixed">Fixed</mat-option>
+            <mat-option value="hidden">Hidden</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <mat-slide-toggle color="primary" [checked]="degreeScaling" (change)="toggleDegreeScaling()" labelPosition="before">
+        Scale nodes by connection count
       </mat-slide-toggle>
       <mat-slide-toggle color="primary" [checked]="colorEdgesByConstraint" (change)="toggleEdgeColoring()" labelPosition="before">
         Color edges by constraint

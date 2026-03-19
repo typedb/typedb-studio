@@ -173,7 +173,7 @@ export class GraphBuilder extends AbstractGraphBuilder {
 
     links(answerIndex: number, constraint: DataConstraintLinks): void {
         let queryConstraint = constraint.queryConstraint;
-        const label = constraint.role.kind === "roleType" ? constraint.role.label.split(":").at(-1) : `?`;
+        const label = constraint.role.kind === "roleType" ? constraint.role.label.split(":").at(-1) : constraint.tag;
         if (!label) throw `${this.links.name}: invalid role label '${JSON.stringify(constraint.role)}'`;
         this.maybeCreateEdge(answerIndex, constraint, label, constraint.relation, constraint.player, queryConstraint.relation, queryConstraint.player);
     }
