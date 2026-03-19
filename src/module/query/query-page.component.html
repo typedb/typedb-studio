@@ -155,10 +155,13 @@
                 }
               </div>
             }
-            <div class="answers-container answers-structure-container" [class]="state.outputTypeControl.value === 'graph' ? '' : 'invisible'">
+            <div class="answers-container answers-structure-container" [class.invisible]="state.outputTypeControl.value !== 'graph'" [class.maximised]="graphMaximised">
               <div class="graph-split-left" resizable [percent]="panelSizes[5]" (percentChange)="onPanelResize(5, $event)">
                 <div id="structureView" #graphViewRef></div>
                 <ts-graph-zoom-controls [visualiser]="state.graphOutput.visualiser" [queryRunning]="state.graphOutput.status === 'running'"/>
+                <button class="graph-maximise-button" (click)="toggleGraphMaximised()" [matTooltip]="graphMaximised ? 'Exit fullscreen' : 'Fullscreen'" [matTooltipShowDelay]="500">
+                  <i class="fa-light" [class.fa-expand]="!graphMaximised" [class.fa-compress]="graphMaximised"></i>
+                </button>
 
                 @switch (state.graphOutput.status) {
                   @case ("error") {

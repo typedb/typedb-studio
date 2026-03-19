@@ -86,6 +86,18 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     queryTabContextMenuTab: QueryTab | null = null;
     queryTabContextMenuTabIndex = 0;
 
+    graphMaximised = false;
+
+    toggleGraphMaximised(): void {
+        this.graphMaximised = !this.graphMaximised;
+        document.body.classList.toggle("graph-fullscreen", this.graphMaximised);
+        // Give the DOM a frame to update, then tell sigma to resize
+        setTimeout(() => {
+            this.state.graphOutput.visualiser?.sigma.resize();
+            this.state.graphOutput.visualiser?.sigma.refresh();
+        });
+    }
+
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
     private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();
