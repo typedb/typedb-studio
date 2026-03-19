@@ -20,12 +20,17 @@ export class Layouts {
 
     // This one seems quite versatile. It just needs to be frozen to be able to drag and drop stuff.
     static createForceAtlasSupervisor(graph: MultiGraph, settings: ForceAtlas2LayoutParameters | undefined): LayoutWrapper {
-        if (settings == undefined) {
-            const inferred = forceAtlas2.inferSettings(graph.nodes().length);
-            settings = { settings: { ...inferred, slowDown: 20 } };
-        }
-        let layout = new FA2Layout(graph, settings);
-        return new LayoutSupervisorWrapper(graph, layout);
+        const factory = () => {
+            const resolvedSettings = settings ?? {
+                settings: {
+                    ...forceAtlas2.inferSettings(Math.max(graph.nodes().length, 1)),
+                    adjustSizes: true,
+                    gravity: 0,
+                },
+            };
+            return new FA2Layout(graph, resolvedSettings);
+        };
+        return new LayoutSupervisorWrapper(graph, factory);
     }
 
     static createForceLayoutStatic(graph: MultiGraph, settings: ForceLayoutSettings | undefined): LayoutWrapper {
@@ -48,11 +53,12 @@ export class Layouts {
         if (settings == undefined) {
             settings = defaultForceLayoutSettings;
         }
-        const layout = new ForceSupervisor(graph, {
+        const resolvedSettings = settings;
+        const factory = () => new ForceSupervisor(graph, {
             isNodeFixed: (_, attr) => attr["highlighted"],
-            settings: settings,
+            settings: resolvedSettings,
         });
-        return new LayoutSupervisorWrapper(graph, layout);
+        return new LayoutSupervisorWrapper(graph, factory);
     }
 
     // This isn't great. I just used it as an example without a supervisor, though I could just have used the force ones.
@@ -132,24 +138,29 @@ export interface LayoutWrapper {
     unfixNode(nodeKey: string): void;
 }
 
+type LayoutSupervisor = ForceSupervisor | FA2LayoutSupervisor;
+
 class LayoutSupervisorWrapper implements LayoutWrapper {
     onTick: (() => void) | null = null;
     isRunning = false;
-    private layout: ForceSupervisor | FA2LayoutSupervisor;
+    private layout: LayoutSupervisor | null = null;
+    private factory: () => LayoutSupervisor;
     private graph: MultiGraph;
     private stopTimeout: ReturnType<typeof setTimeout> | null = null;
     private runDurationMs: number;
 
-    constructor(graph: MultiGraph, layout: ForceSupervisor | FA2LayoutSupervisor, runDurationMs: number = 5000) {
+    constructor(graph: MultiGraph, factory: () => LayoutSupervisor, runDurationMs: number = 5000) {
         this.graph = graph;
-        this.layout = layout;
+        this.factory = factory;
         this.runDurationMs = runDurationMs;
     }
 
     start() {
+        this.stop();
+        this.layout = this.factory();
         if (this.stopTimeout) clearTimeout(this.stopTimeout);
         this.layout.start();
-        this.stopTimeout = setTimeout(() => this.layout.stop(), this.runDurationMs);
+        this.stopTimeout = setTimeout(() => this.layout?.stop(), this.runDurationMs);
     }
 
     stop() {
@@ -157,7 +168,10 @@ class LayoutSupervisorWrapper implements LayoutWrapper {
             clearTimeout(this.stopTimeout);
             this.stopTimeout = null;
         }
-        this.layout.stop();
+        if (this.layout) {
+            this.layout.stop();
+            this.layout = null;
+        }
     }
 
     redraw() {
@@ -212,7 +226,7 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
         const vertexCount = nodes.length;
         const edgeCount = links.length;
         const maxRadius = nodes.reduce((max, n) => Math.max(max, n.radius), 0);
-        const baseCharge = -200 * (1 + Math.log(1 + edgeCount / (vertexCount + 1)));
+        const baseCharge = -1500 * (1 + Math.log(1 + edgeCount / (vertexCount + 1)));
 
         // Compute per-node degree so hubs (cluster centers) repel harder
         const degree: number[] = new Array(nodes.length).fill(0);
@@ -224,15 +238,40 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
         const n = nodes.length;
         const chargeStrength = -Math.max(50, Math.min(300, n * 2));
 
+        // Detect connected components (islands)
+        const componentOf = new Int32Array(nodes.length).fill(-1);
+        const adj: number[][] = nodes.map(() => []);
+        links.forEach(l => {
+            const s = l.source as number, t = l.target as number;
+            adj[s].push(t);
+            adj[t].push(s);
+        });
+        let componentCount = 0;
+        for (let i = 0; i < nodes.length; i++) {
+            if (componentOf[i] >= 0) continue;
+            const id = componentCount++;
+            const stack = [i];
+            while (stack.length > 0) {
+                const cur = stack.pop()!;
+                if (componentOf[cur] >= 0) continue;
+                componentOf[cur] = id;
+                for (const nb of adj[cur]) {
+                    if (componentOf[nb] < 0) stack.push(nb);
+                }
+            }
+        }
+
+        const gravityStrength = componentCount > 1 ? 0.06 : 0.02;
+
         return forceSimulation(nodes)
             .force("charge", forceManyBody()
                 .strength(baseCharge))
                 // .distanceMax(maxRadius * 20))
-            .force("link", forceLink(links).distance(maxRadius * 3).strength(0.5))
-            .force("collide", forceCollide<D3Node>().radius(maxRadius * 1.5))
+            .force("link", forceLink(links).distance(maxRadius).strength(1))
+            .force("collide", forceCollide<D3Node>().radius(maxRadius))
             .force("center", forceCenter(0, 0))
-            .force("x", forceX(0).strength(0.02))
-            .force("y", forceY(0).strength(0.02))
+            .force("x", forceX(0).strength(gravityStrength))
+            .force("y", forceY(0).strength(gravityStrength))
             .alphaDecay(0.01)
             .stop();
     }

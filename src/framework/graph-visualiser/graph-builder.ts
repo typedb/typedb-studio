@@ -64,7 +64,7 @@ export class GraphBuilder extends AbstractGraphBuilder {
             borderColor: borderColor,
             width: width,
             height: height,
-            size: Math.min(width, height),
+            size: Math.max(width, height),
             type: shape,
             x: Math.random(),
             y: Math.random(),

@@ -33,7 +33,7 @@ export class GraphVisualiser {
         this.interactionHandler.layout = this.layout;
         this.setupReducers();
         this.layout.onTick = () => {
-            if (this.autoZoomEnabled) this.centerCamera(true);
+            if (this.autoZoomEnabled) this.centerCamera();
         };
         this.sigma.getCamera().addListener("updated", () => {
             if (!this.settingCameraProgrammatically) {
@@ -126,7 +126,7 @@ export class GraphVisualiser {
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
             this.graph.setNodeAttribute(nodeKey, "width", style.width);
             this.graph.setNodeAttribute(nodeKey, "height", style.height);
-            this.graph.setNodeAttribute(nodeKey, "size", Math.min(style.width, style.height));
+            this.graph.setNodeAttribute(nodeKey, "size", Math.max(style.width, style.height));
         });
         this.sigma.refresh();
     }
@@ -260,7 +260,7 @@ export class GraphVisualiser {
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
             this.graph.setNodeAttribute(nodeKey, "width", style.width);
             this.graph.setNodeAttribute(nodeKey, "height", style.height);
-            this.graph.setNodeAttribute(nodeKey, "size", Math.min(style.width, style.height));
+            this.graph.setNodeAttribute(nodeKey, "size", Math.max(style.width, style.height));
             (this.graph as any).removeNodeAttribute(nodeKey, "_savedLabel");
         });
         this.graph.edges().forEach(edgeKey => {
