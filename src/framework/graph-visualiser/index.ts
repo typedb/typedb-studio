@@ -89,12 +89,12 @@ export class GraphVisualiser {
             const state = this.interactionHandler.state;
             let shouldFade = false;
 
-            // Selection-based fading
+            // Selection-based fading: keep edges where both endpoints are highlighted
             if (state.selectedNode != null) {
                 const source = this.graph.source(edge);
                 const target = this.graph.target(edge);
-                if (!((source === state.selectedNode && state.selectedNeighbors?.has(target))
-                    || (target === state.selectedNode && state.selectedNeighbors?.has(source)))) {
+                const isHighlighted = (n: string) => n === state.selectedNode || (state.selectedNeighbors?.has(n) ?? false);
+                if (!(isHighlighted(source) && isHighlighted(target))) {
                     shouldFade = true;
                 }
             }
