@@ -48,6 +48,9 @@ const DISPLAY_KINDS: KindRow[] = [
     { kind: "value", label: "Value" },
 ];
 
+const KIND_ORDER: Record<string, number> = Object.fromEntries(DISPLAY_KINDS.map((k, i) => [k.kind, i]));
+function kindOrder(kind: string): number { return KIND_ORDER[kind] ?? Infinity; }
+
 export const AVAILABLE_SHAPES = [
     { value: "rounded-rect", label: "Rectangle" },
     { value: "diamond", label: "Diamond" },
@@ -99,7 +102,7 @@ export class GraphCustomisationPanelComponent implements OnChanges {
         });
         this.discoveredTypes = Array.from(typeMap.entries())
             .map(([typeLabel, kind]) => ({ typeLabel, kind }))
-            .sort((a, b) => a.typeLabel.localeCompare(b.typeLabel));
+            .sort((a, b) => kindOrder(a.kind) - kindOrder(b.kind) || a.typeLabel.localeCompare(b.typeLabel));
     }
 
     // -- Kind getters --
