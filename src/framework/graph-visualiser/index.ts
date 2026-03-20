@@ -26,6 +26,7 @@ export class GraphVisualiser {
     private autoZoomEnabled = true;
     private settingCameraProgrammatically = false;
     private peakCameraRatio = 0;
+    private labelsAutoHidden = false;
 
     constructor(public graph: Graph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
         this.state = { activeQueryDatabase: null };
@@ -40,17 +41,50 @@ export class GraphVisualiser {
             if (!this.settingCameraProgrammatically) {
                 this.autoZoomEnabled = false;
             }
+            this.updateLabelVisibilityForZoom();
         });
     }
 
     private syncStyles(): GraphStyles {
         setUseBorderColorForLabels(this.styleService.labelUseBorderColor);
+        // User explicitly changed label visibility — reset auto-hide state
+        this.labelsAutoHidden = false;
         setLabelsVisible(this.styleService.labelsVisible);
+        this.sigma.setSetting("renderEdgeLabels", this.styleService.labelsVisible);
         this.styleParams = this.styleService.toGraphStyles();
         if (this.interactionHandler) {
             this.interactionHandler.styleParams = this.styleParams;
         }
         return this.styleParams;
+    }
+
+    /**
+     * When the graph has many elements and the camera is zoomed out, hide
+     * node and edge labels to avoid the rendering cost of measuring and
+     * drawing thousands of text strings every frame.
+     */
+    private updateLabelVisibilityForZoom(): void {
+        // Only auto-hide when the user hasn't explicitly turned labels off
+        if (!this.styleService.labelsVisible) return;
+
+        const elementCount = this.graph.order + this.graph.size; // nodes + edges
+        const ratio = this.sigma.getCamera().ratio;
+
+        // More elements → hide labels at a lower (closer) zoom level.
+        // At 200 elements, hide when ratio > 5; at 1000 elements, hide when ratio > 1.
+        const ELEMENT_THRESHOLD = 100;
+        const zoomThreshold = Math.max(2, ELEMENT_THRESHOLD * 10 / elementCount);
+        const shouldHide = elementCount > ELEMENT_THRESHOLD && ratio > zoomThreshold;
+
+        if (shouldHide && !this.labelsAutoHidden) {
+            this.labelsAutoHidden = true;
+            setLabelsVisible(false);
+            this.sigma.setSetting("renderEdgeLabels", false);
+        } else if (!shouldHide && this.labelsAutoHidden) {
+            this.labelsAutoHidden = false;
+            setLabelsVisible(true);
+            this.sigma.setSetting("renderEdgeLabels", true);
+        }
     }
 
     private setupReducers(): void {
