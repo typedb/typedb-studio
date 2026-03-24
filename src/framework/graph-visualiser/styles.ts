@@ -59,17 +59,17 @@ export const defaultEdgeLabelColors: Record<string, string> = {};
 
 export const defaultQueryStyleParams: GraphStyles = {
     vertexColors: {
-        entity: "#402237",
-        relation: "#3e3213",
-        attribute: "#1f2840",
-        entityType: "#402237",
-        relationType: "#3e3213",
-        attributeType: "#1f2840",
-        roleType: "#2c1d03",
-        value: "#262626",
-        unavailable: "#1a1a1a",
-        expression: "#353340",
-        functionCall: "#353340",
+        entity: "#34172b",
+        relation: "#322605",
+        attribute: "#131d34",
+        entityType: "#34172b",
+        relationType: "#322605",
+        attributeType: "#131d34",
+        roleType: "#231200",
+        value: "#1b1b1b",
+        unavailable: "#0e0e0e",
+        expression: "#292734",
+        functionCall: "#292734",
     },
     vertexBorderColors: {
         entity: darkPalette.pink,

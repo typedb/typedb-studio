@@ -68,7 +68,7 @@ export class InteractionHandler {
         const node = event.node;
         this.state.draggedNode = node;
         const original = this.graph.getNodeAttribute(node, "_originalColor") ?? this.graph.getNodeAttribute(node, "color");
-        this.graph.setNodeAttribute(node, "color", chroma(original).darken(0.6).hex());
+        this.graph.setNodeAttribute(node, "color", chroma(original).darken(0.9).hex());
         const attrs = this.graph.getNodeAttributes(node);
         this.layout?.fixNode(node, attrs["x"], attrs["y"]);
         if (!this.renderer.getCustomBBox()) {
