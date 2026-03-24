@@ -65,7 +65,7 @@
         mat-tree-node.link.sub {
             button::before {
                 content: "";
-                font-family: "Font Awesome 6 Pro";
+                font-family: "Font Awesome 7 Pro";
                 font-weight: 900;
                 position: absolute;
                 width: 8px;
@@ -96,7 +96,7 @@
 
         mat-tree-node.root.entities button::before {
             content: "";
-            font-family: "Font Awesome 6 Pro";
+            font-family: "Font Awesome 7 Pro";
             font-weight: 900;
             position: absolute;
             width: 8px;
@@ -107,7 +107,7 @@
 
         mat-tree-node.link.owns button::before, mat-tree-node.root.attributes button::before {
             content: "";
-            font-family: "Font Awesome 6 Pro";
+            font-family: "Font Awesome 7 Pro";
             font-weight: 900;
             position: absolute;
             width: 8px;
@@ -118,7 +118,7 @@
 
         mat-tree-node.link.plays button::before, mat-tree-node.root.relations button::before {
             content: "";
-            font-family: "Font Awesome 6 Pro";
+            font-family: "Font Awesome 7 Pro";
             font-weight: 900;
             position: absolute;
             width: 8px;
@@ -129,7 +129,7 @@
 
         mat-tree-node.link.relates button::before {
             content: "";
-            font-family: "Font Awesome 6 Pro";
+            font-family: "Font Awesome 7 Pro";
             font-weight: 900;
             position: absolute;
             width: 12px;

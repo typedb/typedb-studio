@@ -29,12 +29,12 @@ import { DriverAction, QueryRunAction, TransactionOperationAction, isQueryRun, i
 import { basicDark } from "../../framework/code-editor/theme";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { ActionDurationPipe } from "../../framework/util/action-duration.pipe";
-import { RichTooltipDirective } from "../../framework/tooltip/rich-tooltip.directive";
 import { AppData } from "../../service/app-data.service";
 import { ChatState } from "../../service/chat-state.service";
 import { DriverState } from "../../service/driver-state.service";
 import { QueryPageState } from "../../service/query-page-state.service";
 import { QueryTab, QueryTabsState } from "../../service/query-tabs-state.service";
+import { RunOutputState } from "../../service/query-page-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
 import { ErrorDetailsDialogComponent } from "../../framework/error-details-dialog/error-details-dialog.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
@@ -46,6 +46,8 @@ import { indentWithTab } from "@codemirror/commands";
 import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatSelectModule } from "@angular/material/select";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
+import { GraphCustomisationPanelComponent } from "../../framework/graph-customisation-panel/graph-customisation-panel.component";
+import { GraphZoomControlsComponent } from "../../framework/graph-zoom-controls/graph-zoom-controls.component";
 
 @Component({
     selector: "ts-query-page",
@@ -54,8 +56,10 @@ import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-win
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, ResizableDirective,
-        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule, RichTooltipDirective,
+        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule,
         MatMenuModule, MatSelectModule, SchemaToolWindowComponent, CodeEditorComponent, ActionDurationPipe,
+        GraphCustomisationPanelComponent,
+        GraphZoomControlsComponent,
     ]
 })
 export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -66,6 +70,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     @ViewChild("queryTabContextMenuTrigger") queryTabContextMenuTrigger!: MatMenuTrigger;
+    @ViewChild("runTabContextMenuTrigger") runTabContextMenuTrigger!: MatMenuTrigger;
     @ViewChild("tabsScrollContainer") tabsScrollContainer?: ElementRef<HTMLElement>;
     @ViewChild("runTabsScrollContainer") runTabsScrollContainer?: ElementRef<HTMLElement>;
 
@@ -83,6 +88,23 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     queryTabContextMenuTab: QueryTab | null = null;
     queryTabContextMenuTabIndex = 0;
 
+    // Run tab context menu state
+    runTabContextMenuPosition = { x: 0, y: 0 };
+    runTabContextMenuRun: RunOutputState | null = null;
+    runTabContextMenuTabIndex = 0;
+
+    graphMaximised = false;
+
+    toggleGraphMaximised(): void {
+        this.graphMaximised = !this.graphMaximised;
+        document.body.classList.toggle("graph-fullscreen", this.graphMaximised);
+        // Give the DOM a frame to update, then tell sigma to resize
+        setTimeout(() => {
+            this.state.graphOutput.visualiser?.sigma.resize();
+            this.state.graphOutput.visualiser?.sigma.refresh();
+        });
+    }
+
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
     private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();
@@ -97,6 +119,9 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         indentWithTab,
     ]));
+    private static readonly DEFAULT_PANEL_SIZES = [20, 60, 20, 50, 50, 75, 25];
+    panelSizes = [...QueryPageComponent.DEFAULT_PANEL_SIZES];
+
     copiedLog = false;
     sentLogToAi = false;
     logHasScrollbar = false;
@@ -112,6 +137,10 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("query");
+        const saved = this.appData.panelLayout.get("query");
+        if (saved && saved.length === QueryPageComponent.DEFAULT_PANEL_SIZES.length) {
+            this.panelSizes = saved;
+        }
         this.renderCodeEditorWithDelay();
     }
 
@@ -139,6 +168,12 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.queryTabsState.selectedTabIndex$.subscribe(() => {
             this.state.handleTabSwitch(this.previousTabId);
             this.previousTabId = this.queryTabsState.currentTab?.id ?? null;
+        });
+
+        this.state.outputTypeControl.valueChanges.subscribe((value) => {
+            if (value === "graph") {
+                requestAnimationFrame(() => this.state.graphOutput.resize());
+            }
         });
 
         if (this.logTextarea) {
@@ -277,6 +312,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     openQueryTabContextMenu(event: MouseEvent, tab: QueryTab, index: number) {
         event.preventDefault();
         event.stopPropagation();
+        if (this.queryTabContextMenuTrigger.menuOpen) return;
         this.queryTabContextMenuPosition = { x: event.clientX, y: event.clientY };
         this.queryTabContextMenuTab = tab;
         this.queryTabContextMenuTabIndex = index;
@@ -346,6 +382,36 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.state.closeRun(index);
     }
 
+    openRunTabContextMenu(event: MouseEvent, run: RunOutputState, index: number) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (this.runTabContextMenuTrigger.menuOpen) return;
+        this.runTabContextMenuPosition = { x: event.clientX, y: event.clientY };
+        this.runTabContextMenuRun = run;
+        this.runTabContextMenuTabIndex = index;
+        this.runTabContextMenuTrigger.menuData = { run, index };
+        this.runTabContextMenuTrigger.openMenu();
+
+        setTimeout(() => {
+            const activeElement = document.activeElement as HTMLElement;
+            if (activeElement?.classList.contains("mat-mdc-menu-item")) {
+                activeElement.blur();
+            }
+        });
+    }
+
+    openRenameRunDialog(run: RunOutputState) {
+        const dialogRef = this.dialog.open(RenameTabDialogComponent, {
+            data: { currentName: run.label } as RenameTabDialogData,
+            width: "400px",
+        });
+        dialogRef.afterClosed().subscribe((newName: string | undefined) => {
+            if (newName) {
+                this.state.renameRun(run, newName);
+            }
+        });
+    }
+
     getHistoryEntryControl(entry: QueryRunAction): FormControl<string> {
         let control = this.historyEntryControls.get(entry);
         if (!control) {
@@ -412,6 +478,11 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         } catch (err) {
             console.error('Failed to copy results log:', err);
         }
+    }
+
+    onPanelResize(index: number, percent: number) {
+        this.panelSizes[index] = percent;
+        this.appData.panelLayout.set("query", [...this.panelSizes]);
     }
 
     readonly isQueryRun = isQueryRun;

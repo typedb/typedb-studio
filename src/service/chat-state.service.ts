@@ -13,6 +13,7 @@ import { ChatMessage as CloudChatMessage, CloudService } from "./cloud.service";
 import { DriverState } from "./driver-state.service";
 import { AppData, PersistedChatMessage, PersistedConversation, RowLimit } from "./app-data.service";
 import { ROW_LIMIT_OPTIONS, RunOutputState, createRunOutputState } from "./query-page-state.service";
+import { GraphStyleService } from "./graph-style.service";
 
 
 interface MessagePartText {
@@ -154,6 +155,7 @@ export class ChatState {
     private driver = inject(DriverState);
     private formBuilder = inject(FormBuilder);
     private appData = inject(AppData);
+    private graphStyleService = inject(GraphStyleService);
 
 
     messages$ = new BehaviorSubject<ChatMessageData[]>([]);
@@ -471,7 +473,7 @@ export class ChatState {
 
         // Create new run
         outputState.runCounter++;
-        const newRun = createRunOutputState(`Run ${outputState.runCounter}`, query);
+        const newRun = createRunOutputState(`Run ${outputState.runCounter}`, query, this.graphStyleService);
         outputState.runs.push(newRun);
         outputState.selectedRunIndex = outputState.runs.length - 1;
 

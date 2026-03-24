@@ -147,7 +147,17 @@
 }
 
 .run-tab-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     user-select: none;
+
+    &.pinned .pin-icon {
+        font-size: 11px;
+        color: colors.$grey;
+        margin-right: 2px;
+        transform: rotate(-45deg);
+    }
 }
 
 .run-tab-close-button.mat-mdc-icon-button {
@@ -527,7 +537,8 @@ button {
     }
 }
 
-.query-tab-context-menu-trigger {
+.query-tab-context-menu-trigger,
+.run-tab-context-menu-trigger {
     position: fixed;
     visibility: hidden;
     width: 0;
@@ -563,6 +574,73 @@ button {
 
 .answers-structure-container {
     overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    gap: 0 !important;
+
+    ::ng-deep > app-drag-handle[direction="horizontal"] {
+        width: 5px;
+        margin-left: -2px;
+        margin-right: -3px;
+        z-index: 2;
+    }
+}
+
+.graph-split-left {
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+}
+
+.graph-maximise-button {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    z-index: 10;
+    width: 28px;
+    height: 28px;
+    border: 1px solid colors.$secondary-deep-grey;
+    background: colors.$secondary-purple;
+    border-radius: 6px;
+    color: colors.$secondary-light-grey;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 13px;
+    transition: background 0.15s;
+
+    &:hover {
+        background: colors.$secondary-dark-grey;
+    }
+
+    i {
+        font-size: 13px;
+        width: 13px;
+        height: 13px;
+    }
+}
+
+.answers-structure-container.maximised {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    border-radius: 0;
+    background: colors.$black;
+}
+
+:host-context(.graph-fullscreen) {
+    ::ng-deep mat-sidenav-container > mat-sidenav {
+        z-index: 0 !important;
+    }
+    ::ng-deep mat-sidenav-container > .mat-sidenav-content {
+        z-index: 1 !important;
+    }
 }
 
 .answers-text-container {
@@ -636,8 +714,8 @@ button {
 }
 
 #structureView {
-    width: 100%;
-    height: 100%;
+    position: absolute;
+    inset: 0;
     display: flex;
 }
 

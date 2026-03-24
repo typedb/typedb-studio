@@ -1,8 +1,8 @@
 <ts-page-scaffold pageAvailability="ready">
   <article #articleRef class="query-page" style="display: flex; flex-direction: row;">
-    <ts-schema-tool-window resizable [percent]="20" [title]="'Query Editor'"/>
-    <div class="main-panes" resizable [percent]="60">
-      <div resizable [percent]="50" class="query-pane card-top">
+    <ts-schema-tool-window resizable [percent]="panelSizes[0]" (percentChange)="onPanelResize(0, $event)" [title]="'Query Editor'"/>
+    <div class="main-panes" resizable [percent]="panelSizes[1]" (percentChange)="onPanelResize(1, $event)">
+      <div resizable [percent]="panelSizes[3]" (percentChange)="onPanelResize(3, $event)" class="query-pane card-top">
         <div class="query-tabs-container">
             @if ((queryTabsState.openTabs$ | async)!.length > 0) {
               <div class="query-tabs-header-row">
@@ -16,8 +16,7 @@
                          (click)="onQueryTabChange(i)"
                          (contextmenu)="openQueryTabContextMenu($event, tab, i)"
                          (mousedown)="onQueryTabMouseDown($event)"
-                         (mouseup)="onQueryTabMouseUp($event, i)"
-                         (dblclick)="openRenameTabDialog(tab)">
+                         (mouseup)="onQueryTabMouseUp($event, i)">
                       <span class="query-tab-label" [class.pinned]="tab.pinned">
                         @if (tab.pinned) {
                           <i class="fa-light fa-thumbtack pin-icon"></i>
@@ -69,7 +68,7 @@
             }
           </div>
         </div>
-      <div resizable [percent]="50" class="results-pane card-bottom">
+      <div resizable [percent]="panelSizes[4]" (percentChange)="onPanelResize(4, $event)" class="results-pane card-bottom">
         <div class="run-tabs-header-row">
           <button mat-icon-button class="tab-scroll-button left" [class.visible]="canScrollRunsLeft" (click)="scrollRunTabsLeft()">
             <i class="fa-light fa-chevron-left"></i>
@@ -86,8 +85,14 @@
             @for (run of state.currentTabRuns; track run.id; let i = $index) {
               <div class="run-tab"
                    [class.active]="state.selectedRunIndex === i"
-                   (click)="onRunTabChange(i)">
-                <span class="run-tab-label">{{ run.label }}</span>
+                   (click)="onRunTabChange(i)"
+                   (contextmenu)="openRunTabContextMenu($event, run, i)">
+                <span class="run-tab-label" [class.pinned]="run.pinned">
+                  @if (run.pinned) {
+                    <i class="fa-light fa-thumbtack pin-icon"></i>
+                  }
+                  {{ run.label }}
+                </span>
                 <button mat-icon-button class="run-tab-close-button" (click)="closeRunTab($event, i)">
                   <i class="fa-light fa-xmark"></i>
                 </button>
@@ -155,26 +160,33 @@
                 }
               </div>
             }
-            <div class="answers-container answers-structure-container" [class]="state.outputTypeControl.value === 'graph' ? '' : 'invisible'">
-              <div id="structureView" #graphViewRef></div>
+            <div class="answers-container answers-structure-container" [class.invisible]="state.outputTypeControl.value !== 'graph'" [class.maximised]="graphMaximised">
+              <div class="graph-split-left" resizable [percent]="panelSizes[5]" (percentChange)="onPanelResize(5, $event)">
+                <div id="structureView" #graphViewRef></div>
+                <ts-graph-zoom-controls [visualiser]="state.graphOutput.visualiser" [queryRunning]="state.graphOutput.status === 'running'"/>
+                <button class="graph-maximise-button" (click)="toggleGraphMaximised()" [matTooltip]="graphMaximised ? 'Exit fullscreen' : 'Fullscreen'" [matTooltipShowDelay]="500">
+                  <i class="fa-light" [class.fa-expand]="!graphMaximised" [class.fa-compress]="graphMaximised"></i>
+                </button>
 
-              @switch (state.graphOutput.status) {
-                @case ("error") {
-                  <p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p>
+                @switch (state.graphOutput.status) {
+                  @case ("error") {
+                    <p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p>
+                  }
+                  @case ("running") {
+                    <p class="status-text">Running query. Answers will be displayed here when they are ready.</p>
+                  }
+                  @case ("graphlessQueryType") {
+                    <p class="status-text">Query completed successfully. This query type does not return answers that can be presented as a graph.</p>
+                  }
+                  @case ("answerOutputDisabled") {
+                    <p class="status-text">Query completed successfully. Answer output is currently disabled.</p>
+                  }
+                  @case ("noAnswers") {
+                    <p class="status-text">Query completed successfully. No answers were returned.</p>
+                  }
                 }
-                @case ("running") {
-                  <p class="status-text">Running query. Answers will be displayed here when they are ready.</p>
-                }
-                @case ("graphlessQueryType") {
-                  <p class="status-text">Query completed successfully. This query type does not return answers that can be presented as a graph.</p>
-                }
-                @case ("answerOutputDisabled") {
-                  <p class="status-text">Query completed successfully. Answer output is currently disabled.</p>
-                }
-                @case ("noAnswers") {
-                  <p class="status-text">Query completed successfully. No answers were returned.</p>
-                }
-              }
+              </div>
+              <ts-graph-customisation-panel resizable [percent]="panelSizes[6]" (percentChange)="onPanelResize(6, $event)" [visualiser]="state.graphOutput.visualiser"/>
             </div>
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'raw'">
               <mat-form-field class="code-text-field">
@@ -197,7 +209,7 @@
         }
       </div>
     </div>
-    <div resizable [percent]="20" class="right-panes">
+    <div resizable [percent]="panelSizes[2]" (percentChange)="onPanelResize(2, $event)" class="right-panes">
       <div class="history-pane card">
         <div class="card-header">
           <h5>History</h5>
@@ -253,7 +265,7 @@
 <mat-menu #queryTabContextMenu="matMenu" [overlapTrigger]="false">
   <ng-template matMenuContent let-tab="tab" let-index="index">
     <span class="menu-content">
-      <button mat-menu-item (click)="closeQueryTab($event, index)">Close</button>
+      <button mat-menu-item (click)="queryTabsState.closeTab(tab)">Close</button>
       <button mat-menu-item (click)="closeOtherQueryTabs(tab)">Close Others</button>
       <button mat-menu-item (click)="closeQueryTabsToRight(tab)">Close to the Right</button>
       <button mat-menu-item (click)="closeAllQueryTabs()">Close All</button>
@@ -261,6 +273,28 @@
       <button mat-menu-item (click)="togglePinQueryTab(tab)">{{ tab?.pinned ? 'Unpin' : 'Pin' }}</button>
       <button mat-menu-item (click)="duplicateQueryTab(tab)">Duplicate</button>
       <button mat-menu-item (click)="openRenameTabDialog(tab)">Rename</button>
+    </span>
+  </ng-template>
+</mat-menu>
+
+<!-- Run tab context menu -->
+<div class="run-tab-context-menu-trigger"
+     [style.left.px]="runTabContextMenuPosition.x"
+     [style.top.px]="runTabContextMenuPosition.y"
+     [matMenuTriggerFor]="runTabContextMenu"
+     #runTabContextMenuTrigger="matMenuTrigger">
+</div>
+
+<mat-menu #runTabContextMenu="matMenu" [overlapTrigger]="false">
+  <ng-template matMenuContent let-run="run" let-index="index">
+    <span class="menu-content">
+      <button mat-menu-item (click)="closeRunTab($event, runTabContextMenuTabIndex)">Close</button>
+      <button mat-menu-item (click)="state.closeOtherRuns(runTabContextMenuRun!)">Close Others</button>
+      <button mat-menu-item (click)="state.closeRunsToRight(runTabContextMenuRun!)">Close to the Right</button>
+      <button mat-menu-item (click)="state.closeAllRuns()">Close All</button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="state.togglePinRun(runTabContextMenuRun!)">{{ runTabContextMenuRun?.pinned ? 'Unpin' : 'Pin' }}</button>
+      <button mat-menu-item (click)="openRenameRunDialog(runTabContextMenuRun!)">Rename</button>
     </span>
   </ng-template>
 </mat-menu>
