@@ -19,7 +19,7 @@ import {
     QueryStructureLegacy,
     QueryConjunctionLegacy,
 } from "@typedb/driver-http";
-import { DataVertex } from "@typedb/graph-utils";
+import { DataVertex, VertexKind } from "@typedb/graph-utils";
 
 // -- Back-compat types --
 
@@ -58,6 +58,9 @@ export interface VertexFunction {
     repr: string;
     vertexMapKey: string;
 }
+
+/** VertexKind extended with Studio-specific kinds for expressions and functions. */
+export type StudioVertexKind = VertexKind | "expression" | "functionCall";
 
 /** DataVertex extended with Studio-specific vertex types for expressions and functions. */
 export type StudioDataVertex = DataVertex | VertexExpression | VertexFunction;

@@ -1,23 +1,21 @@
 import {
-    RoleType,
-    ConstraintAny, ConstraintExpression, ConstraintSpan, ConstraintVertexVariable,
+    RoleType, ConstraintAny, ConstraintSpan,
     ConstraintExpressionLegacy, ConstraintLinksLegacy,
-    AnalyzedPipeline,
 } from "@typedb/driver-http";
-import { VertexKind, QueryCoordinates, VertexUnavailable } from "@typedb/graph-utils";
+import { QueryCoordinates, VertexUnavailable } from "@typedb/graph-utils";
 import { AnalyzedPipelineBackCompat, backCompat_pipelineBlocks, backCompat_expressionAssigned } from "./types";
-import type { StudioDataVertex } from "./types";
+import type { StudioDataVertex, StudioVertexKind } from "./types";
 import { Color } from "chroma-js";
 import chroma from "chroma-js";
 import { vertexMapKey, shouldCreateEdge, shouldCreateNode } from "./graph-builder";
 import { Graph } from "./graph";
 
 export interface GraphStyles {
-    vertexColors: Record<VertexKind, string>,
-    vertexBorderColors: Record<VertexKind, string>,
-    vertexShapes: Record<VertexKind, string>,
-    vertexWidths: Record<VertexKind, number>,
-    vertexHeights: Record<VertexKind, number>,
+    vertexColors: Record<StudioVertexKind, string>,
+    vertexBorderColors: Record<StudioVertexKind, string>,
+    vertexShapes: Record<StudioVertexKind, string>,
+    vertexWidths: Record<StudioVertexKind, number>,
+    vertexHeights: Record<StudioVertexKind, number>,
     vertexHeight: number,
 
     // Per-type overrides (keyed by type label, e.g. "person", "employment")
@@ -50,27 +48,38 @@ export const darkPalette = {
     purple4:  "#1A182A",
     purple5:  "#232135",
     purple6:  "#2D2A46",
+    purple7:  "#292734",
     red1:     "#CF4A55",
     red2:     "#FF8080",
     white:    "#FFFFFF",
-    white2:   "#D5CCFF"
+    white2:   "#D5CCFF",
+    lavender: "#c8c4d4",
+    grey1:    "#0e0e0e",
+    grey2:    "#1b1b1b",
+    grey3:    "#666666",
+    grey4:    "#999999",
+    pinkDark: "#34172b",
+    yellowDark: "#322605",
+    blueDark:   "#131d34",
+    orangeDark: "#231200",
+    purpleGrey: "#5a5670",
 };
 
 export const defaultEdgeLabelColors: Record<string, string> = {};
 
 export const defaultQueryStyleParams: GraphStyles = {
     vertexColors: {
-        entity: "#34172b",
-        relation: "#322605",
-        attribute: "#131d34",
-        entityType: "#34172b",
-        relationType: "#322605",
-        attributeType: "#131d34",
-        roleType: "#231200",
-        value: "#1b1b1b",
-        unavailable: "#0e0e0e",
-        expression: "#292734",
-        functionCall: "#292734",
+        entity: darkPalette.pinkDark,
+        relation: darkPalette.yellowDark,
+        attribute: darkPalette.blueDark,
+        entityType: darkPalette.pinkDark,
+        relationType: darkPalette.yellowDark,
+        attributeType: darkPalette.blueDark,
+        roleType: darkPalette.orangeDark,
+        value: darkPalette.grey2,
+        unavailable: darkPalette.grey1,
+        expression: darkPalette.purple7,
+        functionCall: darkPalette.purple7,
     },
     vertexBorderColors: {
         entity: darkPalette.pink,
@@ -80,8 +89,10 @@ export const defaultQueryStyleParams: GraphStyles = {
         relationType: darkPalette.yellow,
         attributeType: darkPalette.blue1,
         roleType: darkPalette.orange,
-        value: "#999",
-        unavailable: "#666",
+        value: darkPalette.grey4,
+        unavailable: darkPalette.grey3,
+        expression: darkPalette.lavender,
+        functionCall: darkPalette.lavender,
     },
     vertexShapes: {
         entity: "rounded-rect",
@@ -93,6 +104,8 @@ export const defaultQueryStyleParams: GraphStyles = {
         roleType: "ellipse",
         value: "ellipse",
         unavailable: "ellipse",
+        expression: "ellipse",
+        functionCall: "ellipse",
     },
     vertexWidths: {
         entity: 56,
@@ -104,6 +117,8 @@ export const defaultQueryStyleParams: GraphStyles = {
         roleType: 56,
         value: 56,
         unavailable: 56,
+        expression: 56,
+        functionCall: 56,
     },
     vertexHeights: {
         entity: 24,
@@ -115,10 +130,12 @@ export const defaultQueryStyleParams: GraphStyles = {
         roleType: 24,
         value: 24,
         unavailable: 24,
+        expression: 24,
+        functionCall: 24,
     },
     vertexHeight: 24,
 
-    edgeColor: chroma("#5a5670"),
+    edgeColor: chroma(darkPalette.purpleGrey),
     edgeHighlightColor: chroma("cyan"),
     edgeSize: 2,
 
