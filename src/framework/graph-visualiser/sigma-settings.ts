@@ -57,7 +57,31 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
 
 export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: SigmaSettings, graph: MultiGraph): Sigma {
     const renderer = new Sigma(graph, containerEl, sigmaSettings);
-    // Disable hover rendering (node re-draw on hover WebGL layer)
-    (renderer as any).renderHighlightedNodes = () => {};
+    // Override renderHighlightedNodes to only draw hover on the canvas layer,
+    // skipping the WebGL re-render which covers our canvas-drawn labels.
+    (renderer as any).renderHighlightedNodes = function () {
+        const context = (this as any).canvasContexts.hovers;
+        context.clearRect(0, 0, (this as any).width, (this as any).height);
+        // Clear the WebGL hover layer too
+        (this as any).webGLContexts.hoverNodes.clear(WebGLRenderingContext.COLOR_BUFFER_BIT);
+
+        const nodesToRender: string[] = [];
+        const hoveredNode = (this as any).hoveredNode;
+        if (hoveredNode && !(this as any).nodeDataCache[hoveredNode]?.hidden) {
+            nodesToRender.push(hoveredNode);
+        }
+        (this as any).highlightedNodes.forEach((node: string) => {
+            if (node !== hoveredNode) nodesToRender.push(node);
+        });
+
+        nodesToRender.forEach((node: string) => {
+            const data = (this as any).nodeDataCache[node];
+            const { x, y } = (this as any).framedGraphToViewport(data);
+            const size = (this as any).scaleSize(data.size);
+            const nodeProgram = (this as any).nodePrograms[data.type];
+            const drawHover = nodeProgram?.drawHover || (this as any).settings.defaultDrawNodeHover;
+            drawHover(context, { key: node, ...data, size, x, y }, (this as any).settings);
+        });
+    };
     return renderer;
 }

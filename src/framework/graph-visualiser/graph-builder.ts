@@ -6,13 +6,14 @@ import {
     DataConstraintSub, DataConstraintSubExact, DataConstraintOwns, DataConstraintRelates, DataConstraintPlays,
     DataConstraintExpression, DataConstraintFunction, DataConstraintKind,
     DataConstraintComparison, DataConstraintIs, DataConstraintIid, DataConstraintLabel, DataConstraintValue,
-    VertexExpression, VertexFunction,
 } from "@typedb/graph-utils";
 import {
     AnalyzedPipelineBackCompat,
     ConstraintBackCompat,
     backCompat_expressionAssigned,
-} from "@typedb/graph-utils";
+    VertexExpression, VertexFunction, StudioDataVertex,
+} from "./types";
+export { VertexExpression, VertexFunction, StudioDataVertex } from "./types";
 import {
     EdgeAttributes,
     EdgeMetadata,
@@ -35,7 +36,7 @@ export class GraphBuilder extends AbstractGraphBuilder {
         super();
     }
 
-    private vertexMetadata(vertex: DataVertex): VertexMetadata {
+    private vertexMetadata(vertex: StudioDataVertex): VertexMetadata {
         return {
             defaultLabel: this.styleParameters.vertexDefaultLabel(vertex),
             hoverLabel: this.styleParameters.vertexHoverLabel(vertex),
@@ -43,8 +44,24 @@ export class GraphBuilder extends AbstractGraphBuilder {
         };
     }
 
-    private vertexAttributes(vertex: DataVertex): VertexAttributes {
-        // Extend as you please: https://www.sigmajs.org/docs/advanced/data/
+    private vertexAttributes(vertex: StudioDataVertex): VertexAttributes {
+        // Expression and function vertices are Studio-specific, not part of VertexKind
+        if (vertex.kind === "expression" || vertex.kind === "functionCall") {
+            const color = "#353340";
+            const borderColor = "#c8c4d4";
+            const width = 56;
+            const height = 24;
+            return {
+                label: this.styleParameters.vertexDefaultLabel(vertex),
+                color, borderColor, width, height,
+                size: Math.max(width, height),
+                type: "ellipse",
+                x: Math.random(), y: Math.random(),
+                metadata: this.vertexMetadata(vertex),
+                highlighted: false,
+            };
+        }
+
         const typeLabel = getTypeLabel(vertex);
         const color = (typeLabel && this.styleParameters.vertexTypeColors?.[typeLabel])
             ?? this.styleParameters.vertexColors[vertex.kind];
@@ -64,7 +81,7 @@ export class GraphBuilder extends AbstractGraphBuilder {
             borderColor: borderColor,
             width: width,
             height: height,
-            size: Math.min(width, height),
+            size: Math.max(width, height),
             type: shape,
             x: Math.random(),
             y: Math.random(),
@@ -123,7 +140,7 @@ export class GraphBuilder extends AbstractGraphBuilder {
         }
     }
 
-    private maybeCreateEdge(answerIndex: number, edge: DataConstraintAny, label: string, from: DataVertex, to: DataVertex, queryFrom: ConstraintVertexOrSpecial, queryTo: ConstraintVertexOrSpecial) {
+    private maybeCreateEdge(answerIndex: number, edge: DataConstraintAny, label: string, from: StudioDataVertex, to: StudioDataVertex, queryFrom: ConstraintVertexOrSpecial, queryTo: ConstraintVertexOrSpecial) {
         // Don't create edges if either vertex is unavailable
         if (from.kind === "unavailable" || to.kind === "unavailable") {
             return;
@@ -147,10 +164,10 @@ export class GraphBuilder extends AbstractGraphBuilder {
 
     // AbstractGraphBuilder
     // Vertices
-    vertex(_answerIndex: number, vertex: DataVertex, queryVertex: ConstraintVertexOrSpecial): string {
-        const key = vertexMapKey(vertex);
+    vertex(_answerIndex: number, vertex: DataVertex | StudioDataVertex, queryVertex: ConstraintVertexOrSpecial): string {
+        const key = vertexMapKey(vertex as StudioDataVertex);
         if (this.shouldCreateNode(queryVertex) && vertex.kind !== "unavailable") {
-            this.createVertex(key, this.vertexAttributes(vertex));
+            this.createVertex(key, this.vertexAttributes(vertex as StudioDataVertex));
         }
         return key;
     }
@@ -173,7 +190,7 @@ export class GraphBuilder extends AbstractGraphBuilder {
 
     links(answerIndex: number, constraint: DataConstraintLinks): void {
         let queryConstraint = constraint.queryConstraint;
-        const label = constraint.role.kind === "roleType" ? constraint.role.label.split(":").at(-1) : `?`;
+        const label = constraint.role.kind === "roleType" ? constraint.role.label.split(":").at(-1) : constraint.tag;
         if (!label) throw `${this.links.name}: invalid role label '${JSON.stringify(constraint.role)}'`;
         this.maybeCreateEdge(answerIndex, constraint, label, constraint.relation, constraint.player, queryConstraint.relation, queryConstraint.player);
     }
@@ -293,7 +310,7 @@ export function shouldCreateEdge(structure: AnalyzedPipelineBackCompat, _edge: C
     return shouldCreateNode(structure, from) && shouldCreateNode(structure, to);
 }
 
-export function vertexMapKey(vertex: DataVertex): string {
+export function vertexMapKey(vertex: StudioDataVertex): string {
     switch (vertex.kind) {
         case "attribute":
             return `${vertex.type.label}:${vertex.value}`;

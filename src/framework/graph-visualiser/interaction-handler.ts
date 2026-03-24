@@ -4,6 +4,7 @@ import chroma from "chroma-js";
 import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "sigma/types";
 import {GraphStyles} from "./styles";
 import {LayoutWrapper} from "./layout";
+import type {GraphStyleService} from "../../service/graph-style.service";
 
 // Ref: https://www.sigmajs.org/docs/advanced/events/
 // and: https://www.sigmajs.org/storybook/?path=/story/mouse-manipulations--story
@@ -24,7 +25,7 @@ export class InteractionHandler {
     state: InteractionState;
     layout: LayoutWrapper | null = null;
 
-    constructor(public graph: MultiGraph, public renderer: Sigma, private studioState: StudioState, public styleParams: GraphStyles) {
+    constructor(public graph: MultiGraph, public renderer: Sigma, private studioState: StudioState, public styleParams: GraphStyles, public styleService?: GraphStyleService) {
         this.state = {
             draggedNode : null,
             didDrag: false,
@@ -53,6 +54,14 @@ export class InteractionHandler {
         const color = this.graph.getNodeAttribute(node, "color");
         this.graph.setNodeAttribute(node, "_originalColor", color);
         this.graph.setNodeAttribute(node, "color", chroma(color).darken(0.3).hex());
+
+        if (this.styleService?.structureMode) {
+            const attrs = this.graph.getNodeAttributes(node);
+            const concept = attrs["metadata"]?.concept;
+            if (concept) {
+                this.graph.setNodeAttribute(node, "label", this.styleParams.vertexDefaultLabel(concept));
+            }
+        }
     }
 
     onLeaveNode(event: SigmaNodeEventPayload) {
@@ -61,6 +70,10 @@ export class InteractionHandler {
         if (original) {
             this.graph.setNodeAttribute(node, "color", original);
             this.graph.removeNodeAttribute(node, "_originalColor");
+        }
+
+        if (this.styleService?.structureMode) {
+            this.graph.setNodeAttribute(node, "label", "");
         }
     }
 
@@ -127,8 +140,72 @@ export class InteractionHandler {
             this.clearSelection();
         } else {
             this.state.selectedNode = node;
-            this.state.selectedNeighbors = new Set(this.graph.neighbors(node));
+            this.state.selectedNeighbors = this.collectHighlightedNeighbors(node);
             this.renderer.refresh();
+        }
+    }
+
+    /**
+     * Recursively collects neighbors to highlight when a node is selected.
+     *
+     * Starting from the clicked node's direct neighbors:
+     * - Entity / entityType: also highlight its connected attributes / attributeTypes
+     * - Relation / relationType: also highlight all its connected concepts (entities, relations, attributes / their type equivalents)
+     * - Attribute / attributeType / value: no further expansion
+     *
+     * Recurses up to maxDepth (4) to follow relation chains without blowing up.
+     */
+    private collectHighlightedNeighbors(root: string, maxDepth = 4): Set<string> {
+        const highlighted = new Set<string>();
+
+        // Seed with direct neighbors of the root
+        const directNeighbors = this.graph.neighbors(root);
+        const queue: { node: string; depth: number }[] = [];
+        for (const neighbor of directNeighbors) {
+            if (!highlighted.has(neighbor)) {
+                highlighted.add(neighbor);
+                queue.push({ node: neighbor, depth: 1 });
+            }
+        }
+
+        while (queue.length > 0) {
+            const { node, depth } = queue.shift()!;
+            if (depth >= maxDepth) continue;
+
+            const kind = this.getNodeKind(node);
+            let shouldExpand = false;
+            let expandFilter: ((neighborKind: string | null) => boolean) | null = null;
+
+            if (kind === "entity" || kind === "entityType") {
+                // Expand to connected attributes/attributeTypes only
+                shouldExpand = true;
+                expandFilter = (nk) => nk === "attribute" || nk === "attributeType";
+            } else if (kind === "relation" || kind === "relationType") {
+                // Expand to all connected concepts
+                shouldExpand = true;
+                expandFilter = () => true;
+            }
+
+            if (shouldExpand) {
+                for (const neighbor of this.graph.neighbors(node)) {
+                    if (neighbor === root || highlighted.has(neighbor)) continue;
+                    const neighborKind = this.getNodeKind(neighbor);
+                    if (expandFilter!(neighborKind)) {
+                        highlighted.add(neighbor);
+                        queue.push({ node: neighbor, depth: depth + 1 });
+                    }
+                }
+            }
+        }
+
+        return highlighted;
+    }
+
+    private getNodeKind(node: string): string | null {
+        try {
+            return this.graph.getNodeAttributes(node)?.["metadata"]?.concept?.kind ?? null;
+        } catch {
+            return null;
         }
     }
 

@@ -129,7 +129,7 @@ export class QueryTabsState {
         const newTabs = tabs.filter(t => t !== tab);
 
         if (newTabs.length === 0) {
-            this.newTab();
+            this.resetTab(tab);
             return;
         }
 
@@ -180,21 +180,26 @@ export class QueryTabsState {
 
     closeAllTabs() {
         const tabs = this.openTabs$.value;
-        const newTabs = tabs.filter(t => t.pinned);
+        const unpinned = tabs.filter(t => !t.pinned);
+        const pinned = tabs.filter(t => t.pinned);
 
-        for (const t of tabs) {
-            if (!t.pinned) {
-                this.tabControls.delete(t.id);
-            }
+        for (const t of unpinned) {
+            this.tabControls.delete(t.id);
         }
 
-        if (newTabs.length === 0) {
-            this.openTabs$.next([]);
-            this.newTab();
+        if (pinned.length === 0) {
+            const lastTab = tabs[tabs.length - 1];
+            this.resetTab(lastTab);
             return;
         }
 
-        this.openTabs$.next(newTabs);
+        this.openTabs$.next(pinned);
+        this.selectedTabIndex$.next(0);
+    }
+
+    private resetTab(tab: QueryTab) {
+        const resetTab: QueryTab = { ...tab, name: "Query 1", query: "", pinned: false, outputType: undefined };
+        this.openTabs$.next([resetTab]);
         this.selectedTabIndex$.next(0);
     }
 

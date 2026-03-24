@@ -8,9 +8,18 @@ const PADDING_X = 6;
 const LABEL_FONT_SIZE = 12;
 
 let _useBorderColorForLabels = true;
+let _labelsVisible = true;
 
 export function setUseBorderColorForLabels(value: boolean): void {
     _useBorderColorForLabels = value;
+}
+
+export function setLabelsVisible(value: boolean): void {
+    _labelsVisible = value;
+}
+
+export function getLabelsVisible(): boolean {
+    return _labelsVisible;
 }
 
 /**
@@ -27,11 +36,11 @@ export function drawCenteredNodeLabel<
     data: PartialButFor<NodeDisplayData, "x" | "y" | "size" | "label" | "color">,
     settings: Settings<N, E, G>,
 ): void {
-    if (!data.label) return;
+    if (!data.label || !_labelsVisible) return;
 
     const rawW = (data as any).width ?? data.size;
     const rawH = (data as any).height ?? data.size;
-    const zoom = data.size / Math.min(rawW, rawH);
+    const zoom = data.size / Math.max(rawW, rawH);
     const screenHalfW = rawW * zoom;
 
     const fontSize = Math.min(settings.labelSize, LABEL_FONT_SIZE * zoom);
@@ -110,8 +119,56 @@ function truncateLine(context: CanvasRenderingContext2D, line: string, maxWidth:
 export function zoomScaledFontSize(nodeData: Record<string, any>, maxSize: number): number {
     const rawW = nodeData["width"] ?? nodeData["size"];
     const rawH = nodeData["height"] ?? nodeData["size"];
-    const zoom = nodeData["size"] / Math.min(rawW, rawH);
+    const zoom = nodeData["size"] / Math.max(rawW, rawH);
     return Math.min(maxSize, LABEL_FONT_SIZE * zoom);
+}
+
+/**
+ * Draw a label to the right of the node (for hover when labels are hidden).
+ * Draws a dark rounded background pill behind the text.
+ */
+export function drawExternalNodeLabel<
+    N extends Attributes = Attributes,
+    E extends Attributes = Attributes,
+    G extends Attributes = Attributes,
+>(
+    context: CanvasRenderingContext2D,
+    data: PartialButFor<NodeDisplayData, "x" | "y" | "size" | "label" | "color">,
+    settings: Settings<N, E, G>,
+): void {
+    if (!data.label) return;
+
+    const fontSize = settings.labelSize;
+    const font = `${settings.labelWeight} ${fontSize}px ${settings.labelFont}`;
+    context.font = font;
+
+    const labelWidth = context.measureText(data.label).width;
+    const x = data.x + data.size + 6;
+    const y = data.y;
+    const hPad = 5;
+    const vPad = 3;
+
+    // Background pill
+    const bgX = x - hPad;
+    const bgY = y - fontSize / 2 - vPad;
+    const bgW = labelWidth + hPad * 2;
+    const bgH = fontSize + vPad * 2;
+    const bgR = 4;
+    context.fillStyle = "rgba(0, 0, 0, 0.8)";
+    context.beginPath();
+    context.moveTo(bgX + bgR, bgY);
+    context.arcTo(bgX + bgW, bgY, bgX + bgW, bgY + bgH, bgR);
+    context.arcTo(bgX + bgW, bgY + bgH, bgX, bgY + bgH, bgR);
+    context.arcTo(bgX, bgY + bgH, bgX, bgY, bgR);
+    context.arcTo(bgX, bgY, bgX + bgW, bgY, bgR);
+    context.closePath();
+    context.fill();
+
+    // Text
+    context.fillStyle = "#d5ccff";
+    context.textAlign = "left";
+    context.textBaseline = "middle";
+    context.fillText(data.label, x, y);
 }
 
 /** Pick black or white text for maximum contrast against the node's fill color. */

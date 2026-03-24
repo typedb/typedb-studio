@@ -14,6 +14,8 @@ export class GraphZoomControlsComponent {
 
     @Input() visualiser: GraphVisualiser | null = null;
     @Input() queryRunning = false;
+    redrawCooldown = false;
+    private cooldownTimer: ReturnType<typeof setTimeout> | null = null;
 
     zoomIn(): void {
         const camera = this.visualiser?.sigma.getCamera();
@@ -33,6 +35,9 @@ export class GraphZoomControlsComponent {
 
     stopLayout(): void {
         this.visualiser?.stopLayout();
+        this.redrawCooldown = true;
+        if (this.cooldownTimer) clearTimeout(this.cooldownTimer);
+        this.cooldownTimer = setTimeout(() => { this.redrawCooldown = false; }, 1000);
     }
 
     reLayout(): void {

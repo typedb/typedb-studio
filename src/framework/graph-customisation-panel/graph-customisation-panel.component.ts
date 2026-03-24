@@ -1,4 +1,4 @@
-import { Component, inject, Input } from "@angular/core";
+import { Component, inject, Input, OnChanges, SimpleChanges } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
@@ -10,7 +10,7 @@ import { MatSlideToggleModule } from "@angular/material/slide-toggle";
 import { ColorPickerDirective } from "ngx-color-picker";
 import { GraphStyleService } from "../../service/graph-style.service";
 import { GraphVisualiser } from "../graph-visualiser";
-import { DataVertex, VertexKind } from "@typedb/graph-utils";
+import { VertexKind } from "@typedb/graph-utils";
 
 interface KindRow {
     kind: VertexKind;
@@ -65,12 +65,12 @@ export const AVAILABLE_SHAPES = [
         ColorPickerDirective,
     ],
 })
-export class GraphCustomisationPanelComponent {
+export class GraphCustomisationPanelComponent implements OnChanges {
 
     @Input() visualiser: GraphVisualiser | null = null;
 
     styleService = inject(GraphStyleService);
-    isOpen = false;
+    topTab: "highlights" | "presets" | "advanced" = "highlights";
     activeTab: "kind" | "type" | "edge" = "kind";
 
     readonly displayKinds = DISPLAY_KINDS;
@@ -79,9 +79,8 @@ export class GraphCustomisationPanelComponent {
 
     discoveredTypes: TypeRow[] = [];
 
-    toggle(): void {
-        this.isOpen = !this.isOpen;
-        if (this.isOpen) {
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes["visualiser"]) {
             this.refreshDiscoveredTypes();
         }
     }
@@ -93,10 +92,9 @@ export class GraphCustomisationPanelComponent {
             const attrs = this.visualiser!.graph.getNodeAttributes(nodeKey);
             const concept = attrs.metadata.concept;
             if ("type" in concept && concept.type && "label" in concept.type) {
-                typeMap.set(concept.type.label, concept.kind);
-            } else if ("label" in concept && (concept as DataVertex).kind !== "unavailable"
-                       && (concept as DataVertex).kind !== "expression" && (concept as DataVertex).kind !== "functionCall") {
-                typeMap.set(concept.label, concept.kind);
+                typeMap.set(concept.type.label, concept.kind as any);
+            } else if ("label" in concept && !["unavailable", "expression", "functionCall"].includes(concept.kind)) {
+                typeMap.set((concept as any).label, concept.kind as any);
             }
         });
         this.discoveredTypes = Array.from(typeMap.entries())
@@ -256,17 +254,142 @@ export class GraphCustomisationPanelComponent {
         this.visualiser?.colorEdgesByConstraintIndex(!this.styleService.colorEdgesByConstraint);
     }
 
-    get labelUseBorderColor(): boolean {
-        return this.styleService.labelUseBorderColor;
+    get labelMode(): "border" | "fixed" | "hidden" {
+        if (!this.styleService.labelsVisible) return "hidden";
+        return this.styleService.labelUseBorderColor ? "border" : "fixed";
     }
 
-    toggleLabelUseBorderColor(): void {
-        this.styleService.labelUseBorderColor = !this.styleService.labelUseBorderColor;
+    setLabelMode(mode: "border" | "fixed" | "hidden"): void {
+        if (mode === "hidden") {
+            this.styleService.labelsVisible = false;
+        } else {
+            this.styleService.labelsVisible = true;
+            this.styleService.labelUseBorderColor = mode === "border";
+        }
         this.visualiser?.applyStyleUpdate();
+    }
+
+    get degreeScaling(): boolean {
+        return this.styleService.degreeScaling;
+    }
+
+    toggleDegreeScaling(): void {
+        this.styleService.degreeScaling = !this.styleService.degreeScaling;
+        if (this.styleService.degreeScaling) {
+            this.visualiser?.applyStructureMode();
+        } else {
+            this.visualiser?.applyStyleUpdate();
+        }
     }
 
     reLayout(): void {
         this.visualiser?.reLayout();
+    }
+
+    // -- Highlights --
+
+    isKindHighlighted(kind: VertexKind): boolean {
+        return this.styleService.highlightedKinds.has(kind);
+    }
+
+    isTypeHighlighted(typeLabel: string): boolean {
+        return this.styleService.highlightedTypes.has(typeLabel);
+    }
+
+    isEdgeHighlighted(tag: string): boolean {
+        return this.styleService.highlightedEdges.has(tag);
+    }
+
+    toggleHighlightKind(kind: VertexKind): void {
+        this.styleService.toggleHighlightKind(kind);
+        this.visualiser?.sigma.refresh();
+    }
+
+    toggleHighlightType(typeLabel: string): void {
+        this.styleService.toggleHighlightType(typeLabel);
+        this.visualiser?.sigma.refresh();
+    }
+
+    toggleHighlightEdge(tag: string): void {
+        this.styleService.toggleHighlightEdge(tag);
+        this.visualiser?.sigma.refresh();
+    }
+
+    selectAllKinds(): void {
+        for (const row of this.displayKinds) this.styleService.highlightedKinds.add(row.kind);
+        this.visualiser?.sigma.refresh();
+    }
+
+    unselectAllKinds(): void {
+        this.styleService.highlightedKinds.clear();
+        this.visualiser?.sigma.refresh();
+    }
+
+    selectAllTypes(): void {
+        for (const row of this.discoveredTypes) this.styleService.highlightedTypes.add(row.typeLabel);
+        this.visualiser?.sigma.refresh();
+    }
+
+    unselectAllTypes(): void {
+        this.styleService.highlightedTypes.clear();
+        this.visualiser?.sigma.refresh();
+    }
+
+    selectAllEdges(): void {
+        for (const row of this.edgeLabels) this.styleService.highlightedEdges.add(row.tag);
+        this.visualiser?.sigma.refresh();
+    }
+
+    unselectAllEdges(): void {
+        this.styleService.highlightedEdges.clear();
+        this.visualiser?.sigma.refresh();
+    }
+
+    soloHighlightKind(kind: VertexKind): void {
+        this.styleService.highlightedKinds.clear();
+        this.styleService.highlightedKinds.add(kind);
+        this.visualiser?.sigma.refresh();
+    }
+
+    soloHighlightType(typeLabel: string): void {
+        this.styleService.highlightedTypes.clear();
+        this.styleService.highlightedTypes.add(typeLabel);
+        this.visualiser?.sigma.refresh();
+    }
+
+    soloHighlightEdge(tag: string): void {
+        this.styleService.highlightedEdges.clear();
+        this.styleService.highlightedEdges.add(tag);
+        this.visualiser?.sigma.refresh();
+    }
+
+    clearHighlights(): void {
+        this.styleService.clearHighlights();
+        this.visualiser?.sigma.refresh();
+    }
+
+    // -- Presets --
+
+    get activePreset(): string | null {
+        return this.styleService.activePreset;
+    }
+
+    appliedPreset: string | null = null;
+    private appliedTimer: ReturnType<typeof setTimeout> | null = null;
+
+    applyPreset(preset: "default" | "structure"): void {
+        if (preset === "default") {
+            this.styleService.applyDefaultPreset();
+            this.visualiser?.restoreLabels();
+            this.visualiser?.applyEdgeStyleUpdate();
+            this.visualiser?.colorEdgesByConstraintIndex(true);
+        } else if (preset === "structure") {
+            this.styleService.applyStructurePreset();
+            this.visualiser?.applyStructureMode();
+        }
+        if (this.appliedTimer) clearTimeout(this.appliedTimer);
+        this.appliedPreset = preset;
+        this.appliedTimer = setTimeout(() => { this.appliedPreset = null; }, 2000);
     }
 
     private applyStyles(): void {

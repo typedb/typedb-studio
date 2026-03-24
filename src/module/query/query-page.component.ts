@@ -86,6 +86,18 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     queryTabContextMenuTab: QueryTab | null = null;
     queryTabContextMenuTabIndex = 0;
 
+    graphMaximised = false;
+
+    toggleGraphMaximised(): void {
+        this.graphMaximised = !this.graphMaximised;
+        document.body.classList.toggle("graph-fullscreen", this.graphMaximised);
+        // Give the DOM a frame to update, then tell sigma to resize
+        setTimeout(() => {
+            this.state.graphOutput.visualiser?.sigma.resize();
+            this.state.graphOutput.visualiser?.sigma.refresh();
+        });
+    }
+
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
     private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();
@@ -100,7 +112,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         indentWithTab,
     ]));
-    private static readonly DEFAULT_PANEL_SIZES = [20, 60, 20, 50, 50];
+    private static readonly DEFAULT_PANEL_SIZES = [20, 60, 20, 50, 50, 75, 25];
     panelSizes = [...QueryPageComponent.DEFAULT_PANEL_SIZES];
 
     copiedLog = false;
@@ -293,6 +305,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     openQueryTabContextMenu(event: MouseEvent, tab: QueryTab, index: number) {
         event.preventDefault();
         event.stopPropagation();
+        if (this.queryTabContextMenuTrigger.menuOpen) return;
         this.queryTabContextMenuPosition = { x: event.clientX, y: event.clientY };
         this.queryTabContextMenuTab = tab;
         this.queryTabContextMenuTabIndex = index;

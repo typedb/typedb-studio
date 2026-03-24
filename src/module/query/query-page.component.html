@@ -155,28 +155,33 @@
                 }
               </div>
             }
-            <div class="answers-container answers-structure-container" [class]="state.outputTypeControl.value === 'graph' ? '' : 'invisible'">
-              <div id="structureView" #graphViewRef></div>
-              <ts-graph-customisation-panel [visualiser]="state.graphOutput.visualiser"/>
-              <ts-graph-zoom-controls [visualiser]="state.graphOutput.visualiser" [queryRunning]="state.graphOutput.status === 'running'"/>
+            <div class="answers-container answers-structure-container" [class.invisible]="state.outputTypeControl.value !== 'graph'" [class.maximised]="graphMaximised">
+              <div class="graph-split-left" resizable [percent]="panelSizes[5]" (percentChange)="onPanelResize(5, $event)">
+                <div id="structureView" #graphViewRef></div>
+                <ts-graph-zoom-controls [visualiser]="state.graphOutput.visualiser" [queryRunning]="state.graphOutput.status === 'running'"/>
+                <button class="graph-maximise-button" (click)="toggleGraphMaximised()" [matTooltip]="graphMaximised ? 'Exit fullscreen' : 'Fullscreen'" [matTooltipShowDelay]="500">
+                  <i class="fa-light" [class.fa-expand]="!graphMaximised" [class.fa-compress]="graphMaximised"></i>
+                </button>
 
-              @switch (state.graphOutput.status) {
-                @case ("error") {
-                  <p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p>
+                @switch (state.graphOutput.status) {
+                  @case ("error") {
+                    <p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p>
+                  }
+                  @case ("running") {
+                    <p class="status-text">Running query. Answers will be displayed here when they are ready.</p>
+                  }
+                  @case ("graphlessQueryType") {
+                    <p class="status-text">Query completed successfully. This query type does not return answers that can be presented as a graph.</p>
+                  }
+                  @case ("answerOutputDisabled") {
+                    <p class="status-text">Query completed successfully. Answer output is currently disabled.</p>
+                  }
+                  @case ("noAnswers") {
+                    <p class="status-text">Query completed successfully. No answers were returned.</p>
+                  }
                 }
-                @case ("running") {
-                  <p class="status-text">Running query. Answers will be displayed here when they are ready.</p>
-                }
-                @case ("graphlessQueryType") {
-                  <p class="status-text">Query completed successfully. This query type does not return answers that can be presented as a graph.</p>
-                }
-                @case ("answerOutputDisabled") {
-                  <p class="status-text">Query completed successfully. Answer output is currently disabled.</p>
-                }
-                @case ("noAnswers") {
-                  <p class="status-text">Query completed successfully. No answers were returned.</p>
-                }
-              }
+              </div>
+              <ts-graph-customisation-panel resizable [percent]="panelSizes[6]" (percentChange)="onPanelResize(6, $event)" [visualiser]="state.graphOutput.visualiser"/>
             </div>
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'raw'">
               <mat-form-field class="code-text-field">
@@ -255,7 +260,7 @@
 <mat-menu #queryTabContextMenu="matMenu" [overlapTrigger]="false">
   <ng-template matMenuContent let-tab="tab" let-index="index">
     <span class="menu-content">
-      <button mat-menu-item (click)="closeQueryTab($event, index)">Close</button>
+      <button mat-menu-item (click)="queryTabsState.closeTab(tab)">Close</button>
       <button mat-menu-item (click)="closeOtherQueryTabs(tab)">Close Others</button>
       <button mat-menu-item (click)="closeQueryTabsToRight(tab)">Close to the Right</button>
       <button mat-menu-item (click)="closeAllQueryTabs()">Close All</button>
