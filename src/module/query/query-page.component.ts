@@ -34,6 +34,7 @@ import { ChatState } from "../../service/chat-state.service";
 import { DriverState } from "../../service/driver-state.service";
 import { QueryPageState } from "../../service/query-page-state.service";
 import { QueryTab, QueryTabsState } from "../../service/query-tabs-state.service";
+import { RunOutputState } from "../../service/query-page-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
 import { ErrorDetailsDialogComponent } from "../../framework/error-details-dialog/error-details-dialog.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
@@ -69,6 +70,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     @ViewChild("queryTabContextMenuTrigger") queryTabContextMenuTrigger!: MatMenuTrigger;
+    @ViewChild("runTabContextMenuTrigger") runTabContextMenuTrigger!: MatMenuTrigger;
     @ViewChild("tabsScrollContainer") tabsScrollContainer?: ElementRef<HTMLElement>;
     @ViewChild("runTabsScrollContainer") runTabsScrollContainer?: ElementRef<HTMLElement>;
 
@@ -85,6 +87,11 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     queryTabContextMenuPosition = { x: 0, y: 0 };
     queryTabContextMenuTab: QueryTab | null = null;
     queryTabContextMenuTabIndex = 0;
+
+    // Run tab context menu state
+    runTabContextMenuPosition = { x: 0, y: 0 };
+    runTabContextMenuRun: RunOutputState | null = null;
+    runTabContextMenuTabIndex = 0;
 
     graphMaximised = false;
 
@@ -373,6 +380,36 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     closeRunTab(event: Event, index: number) {
         event.stopPropagation();
         this.state.closeRun(index);
+    }
+
+    openRunTabContextMenu(event: MouseEvent, run: RunOutputState, index: number) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (this.runTabContextMenuTrigger.menuOpen) return;
+        this.runTabContextMenuPosition = { x: event.clientX, y: event.clientY };
+        this.runTabContextMenuRun = run;
+        this.runTabContextMenuTabIndex = index;
+        this.runTabContextMenuTrigger.menuData = { run, index };
+        this.runTabContextMenuTrigger.openMenu();
+
+        setTimeout(() => {
+            const activeElement = document.activeElement as HTMLElement;
+            if (activeElement?.classList.contains("mat-mdc-menu-item")) {
+                activeElement.blur();
+            }
+        });
+    }
+
+    openRenameRunDialog(run: RunOutputState) {
+        const dialogRef = this.dialog.open(RenameTabDialogComponent, {
+            data: { currentName: run.label } as RenameTabDialogData,
+            width: "400px",
+        });
+        dialogRef.afterClosed().subscribe((newName: string | undefined) => {
+            if (newName) {
+                this.state.renameRun(run, newName);
+            }
+        });
     }
 
     getHistoryEntryControl(entry: QueryRunAction): FormControl<string> {

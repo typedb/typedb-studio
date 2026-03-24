@@ -147,7 +147,17 @@
 }
 
 .run-tab-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     user-select: none;
+
+    &.pinned .pin-icon {
+        font-size: 11px;
+        color: colors.$grey;
+        margin-right: 2px;
+        transform: rotate(-45deg);
+    }
 }
 
 .run-tab-close-button.mat-mdc-icon-button {
@@ -527,7 +537,8 @@ button {
     }
 }
 
-.query-tab-context-menu-trigger {
+.query-tab-context-menu-trigger,
+.run-tab-context-menu-trigger {
     position: fixed;
     visibility: hidden;
     width: 0;

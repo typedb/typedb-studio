@@ -31,6 +31,7 @@ export interface RunOutputState {
     id: string;
     label: string;
     query: string;
+    pinned: boolean;
     log: LogOutputState;
     table: TableOutputState;
     graph: GraphOutputState;
@@ -42,6 +43,7 @@ export function createRunOutputState(label: string, query: string, styleService:
         id: crypto.randomUUID(),
         label,
         query,
+        pinned: false,
         log: new LogOutputState(),
         table: new TableOutputState(),
         graph: new GraphOutputState(styleService),
@@ -301,6 +303,58 @@ export class QueryPageState {
         }
     }
 
+    closeOtherRuns(run: RunOutputState) {
+        const tabState = this.currentTabOutputState;
+        for (let i = tabState.runs.length - 1; i >= 0; i--) {
+            if (tabState.runs[i] !== run && !tabState.runs[i].pinned) {
+                this.closeRun(i);
+            }
+        }
+    }
+
+    closeRunsToRight(run: RunOutputState) {
+        const tabState = this.currentTabOutputState;
+        const index = tabState.runs.indexOf(run);
+        if (index < 0) return;
+        for (let i = tabState.runs.length - 1; i > index; i--) {
+            if (!tabState.runs[i].pinned) {
+                this.closeRun(i);
+            }
+        }
+    }
+
+    closeAllRuns() {
+        const tabState = this.currentTabOutputState;
+        for (let i = tabState.runs.length - 1; i >= 0; i--) {
+            if (!tabState.runs[i].pinned) {
+                this.closeRun(i);
+            }
+        }
+    }
+
+    togglePinRun(run: RunOutputState) {
+        run.pinned = !run.pinned;
+        if (run.pinned) {
+            // Move pinned run to be adjacent to other pinned runs
+            const tabState = this.currentTabOutputState;
+            const selectedRun = currentRun(tabState);
+            const currentIndex = tabState.runs.indexOf(run);
+            const lastPinnedIndex = tabState.runs.reduce((acc, r, i) => r.pinned && r !== run ? i : acc, -1);
+            const targetIndex = lastPinnedIndex + 1;
+            if (currentIndex !== targetIndex) {
+                tabState.runs.splice(currentIndex, 1);
+                tabState.runs.splice(targetIndex, 0, run);
+                if (selectedRun) {
+                    tabState.selectedRunIndex = tabState.runs.indexOf(selectedRun);
+                }
+            }
+        }
+    }
+
+    renameRun(run: RunOutputState, newName: string) {
+        run.label = newName;
+    }
+
     get currentQueryControl(): FormControl<string> | null {
         const currentTab = this.queryTabs.currentTab;
         if (!currentTab) return null;
@@ -320,11 +374,23 @@ export class QueryPageState {
         const oldRun = currentRun(tabState);
         if (oldRun) oldRun.graph.detach();
 
+        // If the current run is not pinned, replace it; otherwise append
+        const replaceIndex = oldRun && !oldRun.pinned ? tabState.selectedRunIndex : -1;
+        if (replaceIndex >= 0) {
+            oldRun!.graph.destroy();
+            tabState.runs.splice(replaceIndex, 1);
+        }
+
         // Create new run
         tabState.runCounter++;
         const newRun = createRunOutputState(`Run ${tabState.runCounter}`, query, this.graphStyleService);
-        tabState.runs.push(newRun);
-        tabState.selectedRunIndex = tabState.runs.length - 1;
+        if (replaceIndex >= 0) {
+            tabState.runs.splice(replaceIndex, 0, newRun);
+            tabState.selectedRunIndex = replaceIndex;
+        } else {
+            tabState.runs.push(newRun);
+            tabState.selectedRunIndex = tabState.runs.length - 1;
+        }
 
         // Initialise the new run's outputs
         newRun.log.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);

@@ -16,8 +16,7 @@
                          (click)="onQueryTabChange(i)"
                          (contextmenu)="openQueryTabContextMenu($event, tab, i)"
                          (mousedown)="onQueryTabMouseDown($event)"
-                         (mouseup)="onQueryTabMouseUp($event, i)"
-                         (dblclick)="openRenameTabDialog(tab)">
+                         (mouseup)="onQueryTabMouseUp($event, i)">
                       <span class="query-tab-label" [class.pinned]="tab.pinned">
                         @if (tab.pinned) {
                           <i class="fa-light fa-thumbtack pin-icon"></i>
@@ -86,8 +85,14 @@
             @for (run of state.currentTabRuns; track run.id; let i = $index) {
               <div class="run-tab"
                    [class.active]="state.selectedRunIndex === i"
-                   (click)="onRunTabChange(i)">
-                <span class="run-tab-label">{{ run.label }}</span>
+                   (click)="onRunTabChange(i)"
+                   (contextmenu)="openRunTabContextMenu($event, run, i)">
+                <span class="run-tab-label" [class.pinned]="run.pinned">
+                  @if (run.pinned) {
+                    <i class="fa-light fa-thumbtack pin-icon"></i>
+                  }
+                  {{ run.label }}
+                </span>
                 <button mat-icon-button class="run-tab-close-button" (click)="closeRunTab($event, i)">
                   <i class="fa-light fa-xmark"></i>
                 </button>
@@ -268,6 +273,28 @@
       <button mat-menu-item (click)="togglePinQueryTab(tab)">{{ tab?.pinned ? 'Unpin' : 'Pin' }}</button>
       <button mat-menu-item (click)="duplicateQueryTab(tab)">Duplicate</button>
       <button mat-menu-item (click)="openRenameTabDialog(tab)">Rename</button>
+    </span>
+  </ng-template>
+</mat-menu>
+
+<!-- Run tab context menu -->
+<div class="run-tab-context-menu-trigger"
+     [style.left.px]="runTabContextMenuPosition.x"
+     [style.top.px]="runTabContextMenuPosition.y"
+     [matMenuTriggerFor]="runTabContextMenu"
+     #runTabContextMenuTrigger="matMenuTrigger">
+</div>
+
+<mat-menu #runTabContextMenu="matMenu" [overlapTrigger]="false">
+  <ng-template matMenuContent let-run="run" let-index="index">
+    <span class="menu-content">
+      <button mat-menu-item (click)="closeRunTab($event, runTabContextMenuTabIndex)">Close</button>
+      <button mat-menu-item (click)="state.closeOtherRuns(runTabContextMenuRun!)">Close Others</button>
+      <button mat-menu-item (click)="state.closeRunsToRight(runTabContextMenuRun!)">Close to the Right</button>
+      <button mat-menu-item (click)="state.closeAllRuns()">Close All</button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="state.togglePinRun(runTabContextMenuRun!)">{{ runTabContextMenuRun?.pinned ? 'Unpin' : 'Pin' }}</button>
+      <button mat-menu-item (click)="openRenameRunDialog(runTabContextMenuRun!)">Rename</button>
     </span>
   </ng-template>
 </mat-menu>
