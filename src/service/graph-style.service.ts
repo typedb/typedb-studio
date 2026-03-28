@@ -287,8 +287,6 @@ export class GraphStyleService {
         this.styles$.next();
     }
 
-    get structureMode(): boolean { return this._activePreset === "structure"; }
-
     get labelsVisible(): boolean { return this._labelsVisible; }
 
     set labelsVisible(value: boolean) {

@@ -7,7 +7,7 @@
   <div class="tab-bar">
     <button class="tab" [class.active]="topTab === 'highlights'" (click)="topTab = 'highlights'">Highlights</button>
     <button class="tab" [class.active]="topTab === 'presets'" (click)="topTab = 'presets'">Presets</button>
-    <button class="tab" [class.active]="topTab === 'advanced'" (click)="topTab = 'advanced'">Advanced</button>
+    <button class="tab" [class.active]="topTab === 'customise'" (click)="topTab = 'customise'">Customise</button>
   </div>
 
   <div class="panel-scroll">
@@ -105,8 +105,8 @@
       </div>
     }
 
-    <!-- Advanced -->
-    @if (topTab === 'advanced') {
+    <!-- Customise -->
+    @if (topTab === 'customise') {
       <!-- Sub-tab bar -->
       <div class="tab-bar sub-tab-bar">
         <button class="tab" [class.active]="activeTab === 'kind'" (click)="activeTab = 'kind'">Kinds</button>

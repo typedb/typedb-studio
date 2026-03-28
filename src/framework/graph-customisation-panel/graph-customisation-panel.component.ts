@@ -73,7 +73,7 @@ export class GraphCustomisationPanelComponent implements OnChanges {
     @Input() visualiser: GraphVisualiser | null = null;
 
     styleService = inject(GraphStyleService);
-    topTab: "highlights" | "presets" | "advanced" = "highlights";
+    topTab: "highlights" | "presets" | "customise" = "highlights";
     activeTab: "kind" | "type" | "edge" = "kind";
 
     readonly displayKinds = DISPLAY_KINDS;
@@ -269,7 +269,7 @@ export class GraphCustomisationPanelComponent implements OnChanges {
             this.styleService.labelsVisible = true;
             this.styleService.labelUseBorderColor = mode === "border";
         }
-        this.visualiser?.applyStyleUpdate();
+        this.visualiser?.restoreLabels();
     }
 
     get degreeScaling(): boolean {
