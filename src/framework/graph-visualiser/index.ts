@@ -120,6 +120,7 @@ export class GraphVisualiser {
             const res = { ...data };
             res["color"] = fade(data["color"]);
             if (data["borderColor"]) res["borderColor"] = fade(data["borderColor"]);
+            res["labelColor"] = fade("#ffffff");
             return res;
         });
 

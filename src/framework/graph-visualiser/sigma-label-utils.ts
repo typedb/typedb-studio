@@ -50,9 +50,12 @@ export function drawCenteredNodeLabel<
     context.textAlign = "center";
     context.textBaseline = "middle";
     const borderColor = (data as any).borderColor;
-    context.fillStyle = (_useBorderColorForLabels && borderColor)
-        ? borderColor
-        : contrastColor((data as any)._originalColor ?? data.color);
+    const labelColor = (data as any).labelColor;
+    context.fillStyle = labelColor
+        ? labelColor
+        : (_useBorderColorForLabels && borderColor)
+            ? borderColor
+            : contrastColor((data as any)._originalColor ?? data.color);
 
     const maxWidth = screenHalfW * 2 - PADDING_X;
     const { lines, truncated } = wrapText(context, data.label, maxWidth);
@@ -183,13 +186,16 @@ export function drawExternalNodeLabel<
     context.fillText(data.label, x, y);
 }
 
-/** Pick black or white text for maximum contrast against the node's fill color. */
+const LABEL_LIGHT = "#f3f3f3";
+const LABEL_DARK = "#1A182A";
+
+/** Pick light or dark text for maximum contrast against the node's fill color. */
 function contrastColor(color: string): string {
-    if (!color || color.length < 7) return "#fff";
+    if (!color || color.length < 7) return LABEL_LIGHT;
     const hex = color.startsWith("#") ? color.slice(1) : color;
     const r = parseInt(hex.substring(0, 2), 16) / 255;
     const g = parseInt(hex.substring(2, 4), 16) / 255;
     const b = parseInt(hex.substring(4, 6), 16) / 255;
     const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-    return luminance > 0.5 ? "#000" : "#fff";
+    return luminance > 0.5 ? LABEL_DARK : LABEL_LIGHT;
 }
