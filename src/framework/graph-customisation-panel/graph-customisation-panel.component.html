@@ -313,9 +313,9 @@
         <span class="footer-option-label">Node labels</span>
         <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
           <mat-select [value]="labelMode" panelClass="graph-style-select-panel" (selectionChange)="setLabelMode($event.value)">
-            <mat-option value="border">Match border</mat-option>
-            <mat-option value="fixed">Fixed</mat-option>
-            <mat-option value="hidden">Hidden</mat-option>
+            <mat-option value="border">Inside node, border color</mat-option>
+            <mat-option value="fixed">Inside node, black/white</mat-option>
+            <mat-option value="hidden">Outside node on hover</mat-option>
           </mat-select>
         </mat-form-field>
       </div>

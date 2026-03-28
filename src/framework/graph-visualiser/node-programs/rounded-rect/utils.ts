@@ -12,7 +12,7 @@ export function drawRoundedRectNodeLabel<
     data: PartialButFor<NodeDisplayData, "x" | "y" | "size" | "label" | "color">,
     settings: Settings<N, E, G>,
 ): void {
-    return drawCenteredNodeLabel<N, E, G>(context, data, settings);
+    drawCenteredNodeLabel<N, E, G>(context, data, settings);
 }
 
 export function drawRoundedRectNodeHover<
@@ -25,7 +25,8 @@ export function drawRoundedRectNodeHover<
     settings: Settings<N, E, G>,
 ): void {
     if (getLabelsVisible()) {
-        drawCenteredNodeLabel(context, data, settings);
+        const truncated = drawCenteredNodeLabel(context, data, settings);
+        if (truncated) drawExternalNodeLabel(context, data, settings);
         return;
     }
 

@@ -35,8 +35,8 @@ export function drawCenteredNodeLabel<
     context: CanvasRenderingContext2D,
     data: PartialButFor<NodeDisplayData, "x" | "y" | "size" | "label" | "color">,
     settings: Settings<N, E, G>,
-): void {
-    if (!data.label || !_labelsVisible) return;
+): boolean {
+    if (!data.label || !_labelsVisible) return false;
 
     const rawW = (data as any).width ?? data.size;
     const rawH = (data as any).height ?? data.size;
@@ -44,7 +44,7 @@ export function drawCenteredNodeLabel<
     const screenHalfW = rawW * zoom;
 
     const fontSize = Math.min(settings.labelSize, LABEL_FONT_SIZE * zoom);
-    if (fontSize < 3) return;
+    if (fontSize < 3) return false;
 
     context.font = `${settings.labelWeight} ${fontSize}px ${settings.labelFont}`;
     context.textAlign = "center";
@@ -55,7 +55,7 @@ export function drawCenteredNodeLabel<
         : contrastColor((data as any)._originalColor ?? data.color);
 
     const maxWidth = screenHalfW * 2 - PADDING_X;
-    const lines = wrapText(context, data.label, maxWidth);
+    const { lines, truncated } = wrapText(context, data.label, maxWidth);
 
     const lineH = fontSize * LINE_HEIGHT;
     const totalH = lines.length * lineH;
@@ -64,15 +64,23 @@ export function drawCenteredNodeLabel<
     for (let i = 0; i < lines.length; i++) {
         context.fillText(lines[i], data.x, startY + i * lineH);
     }
+
+    return truncated;
+}
+
+interface WrapResult {
+    lines: string[];
+    truncated: boolean;
 }
 
 /** Wrap text into lines that fit within maxWidth, respecting \n and limiting to MAX_LINES. */
-function wrapText(context: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+function wrapText(context: CanvasRenderingContext2D, text: string, maxWidth: number): WrapResult {
     const paragraphs = text.split("\n");
     const lines: string[] = [];
+    let truncated = false;
 
     for (const para of paragraphs) {
-        if (lines.length >= MAX_LINES) break;
+        if (lines.length >= MAX_LINES) { truncated = true; break; }
 
         const words = para.split(/\s+/).filter(w => w.length > 0);
         if (words.length === 0) {
@@ -82,7 +90,7 @@ function wrapText(context: CanvasRenderingContext2D, text: string, maxWidth: num
 
         let currentLine = words[0];
         for (let i = 1; i < words.length; i++) {
-            if (lines.length >= MAX_LINES) break;
+            if (lines.length >= MAX_LINES) { truncated = true; break; }
 
             const test = currentLine + " " + words[i];
             if (context.measureText(test).width <= maxWidth) {
@@ -94,16 +102,20 @@ function wrapText(context: CanvasRenderingContext2D, text: string, maxWidth: num
         }
         if (lines.length < MAX_LINES) {
             lines.push(currentLine);
+        } else {
+            truncated = true;
         }
     }
 
     // Truncate last line if it overflows
     if (lines.length > 0) {
         const last = lines.length - 1;
-        lines[last] = truncateLine(context, lines[last], maxWidth);
+        const original = lines[last];
+        lines[last] = truncateLine(context, original, maxWidth);
+        if (lines[last] !== original) truncated = true;
     }
 
-    return lines;
+    return { lines, truncated };
 }
 
 /** Truncate a single line with "…" if it exceeds maxWidth. */
