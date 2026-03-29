@@ -101,6 +101,24 @@
               @if (appliedPreset === 'uniform') { <i class="fa-light fa-check"></i> } @else { Apply }
             </button>
           </div>
+          <div class="preset-card" [class.active]="activePreset === 'classic'">
+            <div class="preset-info">
+              <span class="preset-name">Classic</span>
+              <span class="preset-description">Solid fill colors with no visible borders</span>
+            </div>
+            <button class="preset-apply" (click)="applyPreset('classic')">
+              @if (appliedPreset === 'classic') { <i class="fa-light fa-check"></i> } @else { Apply }
+            </button>
+          </div>
+          <div class="preset-card" [class.active]="activePreset === 'grayscale'">
+            <div class="preset-info">
+              <span class="preset-name">Grayscale</span>
+              <span class="preset-description">Solid grey tones, default shapes</span>
+            </div>
+            <button class="preset-apply" (click)="applyPreset('grayscale')">
+              @if (appliedPreset === 'grayscale') { <i class="fa-light fa-check"></i> } @else { Apply }
+            </button>
+          </div>
           <div class="preset-card" [class.active]="activePreset === 'structure'">
             <div class="preset-info">
               <span class="preset-name">Structure</span>

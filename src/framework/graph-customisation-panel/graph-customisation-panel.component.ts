@@ -389,7 +389,7 @@ export class GraphCustomisationPanelComponent implements OnChanges {
     appliedPreset: string | null = null;
     private appliedTimer: ReturnType<typeof setTimeout> | null = null;
 
-    applyPreset(preset: "default" | "structure" | "uniform"): void {
+    applyPreset(preset: "default" | "structure" | "uniform" | "classic" | "grayscale"): void {
         if (preset === "default") {
             this.styleService.applyDefaultPreset();
             this.visualiser?.restoreLabels();
@@ -400,6 +400,12 @@ export class GraphCustomisationPanelComponent implements OnChanges {
             this.visualiser?.applyStructureMode();
         } else if (preset === "uniform") {
             this.styleService.applyUniformPreset();
+            this.visualiser?.restoreLabels();
+        } else if (preset === "classic") {
+            this.styleService.applyClassicPreset();
+            this.visualiser?.restoreLabels();
+        } else if (preset === "grayscale") {
+            this.styleService.applyGrayscalePreset();
             this.visualiser?.restoreLabels();
         }
         if (this.appliedTimer) clearTimeout(this.appliedTimer);

@@ -49,7 +49,7 @@ export function drawEllipseNodeHover<
 ): void {
     if (getLabelsVisible()) {
         const truncated = drawCenteredNodeLabel(context, data, settings);
-        const scaledDown = zoomScaledFontSize(data as any, settings.labelSize) < settings.labelSize;
+        const scaledDown = zoomScaledFontSize(data as any, settings.labelSize) < settings.labelSize * 0.75;
         if ((truncated || scaledDown) && getShowHoverLabel()) drawExternalNodeLabel(context, data, settings);
         return;
     }

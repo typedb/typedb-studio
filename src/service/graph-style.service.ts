@@ -324,6 +324,45 @@ export class GraphStyleService {
         this.styles$.next();
     }
 
+    applyClassicPreset(): void {
+        for (const kind of ALL_KINDS) {
+            const borderColor = defaultQueryStyleParams.vertexBorderColors[kind];
+            const shape = defaultQueryStyleParams.vertexShapes[kind];
+            const width = defaultQueryStyleParams.vertexWidths[kind];
+            const height = defaultQueryStyleParams.vertexHeights[kind];
+            this._kindStyles[kind] = { ...this._kindStyles[kind], color: borderColor, borderColor, shape, width, height };
+        }
+        this._labelUseBorderColor = false;
+        this._activePreset = "classic";
+        this.save();
+        this.styles$.next();
+    }
+
+    applyGrayscalePreset(): void {
+        const grays: Record<string, string> = {
+            entity: "#d6d6d6",
+            relation: "#b8b8b8",
+            attribute: "#8a8a8a",
+            entityType: "#d6d6d6",
+            relationType: "#b8b8b8",
+            attributeType: "#8a8a8a",
+            roleType: "#4a4a4a",
+            value: "#4a4a4a",
+            unavailable: "#404040",
+        };
+        for (const kind of ALL_KINDS) {
+            const color = grays[kind] ?? "#5e5e5e";
+            const shape = defaultQueryStyleParams.vertexShapes[kind];
+            const width = defaultQueryStyleParams.vertexWidths[kind];
+            const height = defaultQueryStyleParams.vertexHeights[kind];
+            this._kindStyles[kind] = { ...this._kindStyles[kind], color, borderColor: color, shape, width, height };
+        }
+        this._labelUseBorderColor = false;
+        this._activePreset = "grayscale";
+        this.save();
+        this.styles$.next();
+    }
+
     applyDefaultPreset(): void {
         this.resetToDefaults();
         this._labelsVisible = true;

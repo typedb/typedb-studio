@@ -5,7 +5,7 @@ import { NodeDisplayData, PartialButFor } from "sigma/types";
 const MAX_LINES = 3;
 const LINE_HEIGHT = 1.3;
 const PADDING_X = 6;
-const LABEL_FONT_SIZE = 12;
+const LABEL_FONT_SIZE = 14;
 
 let _useBorderColorForLabels = true;
 let _labelsVisible = true;
@@ -55,13 +55,15 @@ export function drawCenteredNodeLabel<
     const fontSize = Math.min(settings.labelSize, LABEL_FONT_SIZE * zoom);
     if (fontSize < 3) return false;
 
-    context.font = `${settings.labelWeight} ${fontSize}px ${settings.labelFont}`;
     context.textAlign = "center";
     context.textBaseline = "middle";
     const borderColor = (data as any).borderColor;
-    context.fillStyle = (_useBorderColorForLabels && borderColor)
+    const labelColor = (_useBorderColorForLabels && borderColor)
         ? borderColor
         : contrastColor((data as any)._originalColor ?? data.color);
+    const weight = labelColor === LABEL_DARK ? bumpWeight(settings.labelWeight) : settings.labelWeight;
+    context.font = `${weight} ${fontSize}px ${settings.labelFont}`;
+    context.fillStyle = labelColor;
 
     const maxWidth = screenHalfW * 2 - PADDING_X;
     const { lines, truncated } = wrapText(context, data.label, maxWidth);
@@ -194,6 +196,14 @@ export function drawExternalNodeLabel<
 
 const LABEL_LIGHT = "#f3f3f3";
 const LABEL_DARK = "#1A182A";
+
+const NAMED_WEIGHTS: Record<string, number> = { normal: 400, bold: 700 };
+
+/** Increase a CSS font-weight by 100 (e.g. "normal" → 500, "400" → 500). */
+function bumpWeight(w: string): string {
+    const n = NAMED_WEIGHTS[w] ?? parseInt(w, 10);
+    return isNaN(n) ? w : String(Math.min(n + 100, 900));
+}
 
 /** Pick light or dark text for maximum contrast against the node's fill color. */
 function contrastColor(color: string): string {
