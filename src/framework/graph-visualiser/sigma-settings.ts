@@ -41,6 +41,7 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
     labelColor: {
         color: `#958fa8`,
     },
+    zIndex: true,
     labelRenderedSizeThreshold: 0,
     labelDensity: Infinity,
     defaultDrawEdgeLabel: scaledDrawStraightEdgeLabel as any,
@@ -57,6 +58,50 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
 
 export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: SigmaSettings, graph: MultiGraph): Sigma {
     const renderer = new Sigma(graph, containerEl, sigmaSettings);
+    // Override renderLabels to sort by zIndex. Each drawLabel erases canvas
+    // content in its node's shape area before drawing its label, so front nodes
+    // (drawn last) erase back nodes' labels where they overlap.
+    const X_LABEL_MARGIN = 150;
+    const Y_LABEL_MARGIN = 50;
+    (renderer as any).renderLabels = function () {
+        if (!this.settings.renderLabels) return this;
+        const cameraState = this.camera.getState();
+
+        const labelsToDisplay: string[] = this.labelGrid.getLabelsToDisplay(cameraState.ratio, this.settings.labelDensity);
+        this.nodesWithForcedLabels.forEach((n: string) => {
+            if (!labelsToDisplay.includes(n)) labelsToDisplay.push(n);
+        });
+
+        // Sort by zIndex so higher-zIndex nodes erase and draw on top
+        labelsToDisplay.sort((a: string, b: string) => {
+            const zA = this.nodeDataCache[a]?.zIndex ?? 0;
+            const zB = this.nodeDataCache[b]?.zIndex ?? 0;
+            return zA - zB;
+        });
+
+        this.displayedNodeLabels = new Set();
+        const context = this.canvasContexts.labels;
+
+        for (let i = 0; i < labelsToDisplay.length; i++) {
+            const node = labelsToDisplay[i];
+            const data = this.nodeDataCache[node];
+            if (this.displayedNodeLabels.has(node)) continue;
+            if (data.hidden) continue;
+
+            const { x, y } = this.framedGraphToViewport(data);
+            const size = this.scaleSize(data.size);
+            if (!data.forceLabel && size < this.settings.labelRenderedSizeThreshold) continue;
+            if (x < -X_LABEL_MARGIN || x > this.width + X_LABEL_MARGIN ||
+                y < -Y_LABEL_MARGIN || y > this.height + Y_LABEL_MARGIN) continue;
+
+            this.displayedNodeLabels.add(node);
+            const nodeProgram = this.nodePrograms[data.type];
+            const drawLabel = nodeProgram?.drawLabel || this.settings.defaultDrawNodeLabel;
+            drawLabel(context, { key: node, ...data, size, x, y }, this.settings);
+        }
+        return this;
+    };
+
     // Override renderHighlightedNodes to only draw hover on the canvas layer,
     // skipping the WebGL re-render which covers our canvas-drawn labels.
     (renderer as any).renderHighlightedNodes = function () {

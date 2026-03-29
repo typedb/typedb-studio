@@ -13,7 +13,7 @@ import { AnalyzedPipelineBackCompat } from "./types";
 import { Graph, GraphBuilderStructureParams, defaultStructureParams } from "./graph";
 import { GraphBuilder } from "./graph-builder";
 import { GraphStyles, colorEdgesByConstraintIndex as _colorEdgesByConstraintIndex, colorQuery as _colorQuery } from "./styles";
-import { setUseBorderColorForLabels, setLabelsVisible } from "./sigma-label-utils";
+import { setUseBorderColorForLabels, setLabelsVisible, setShowHoverLabel } from "./sigma-label-utils";
 import { InteractionHandler, StudioState } from "./interaction-handler";
 import { LayoutWrapper } from "./layout";
 
@@ -50,6 +50,7 @@ export class GraphVisualiser {
         // User explicitly changed label visibility — reset auto-hide state
         this.labelsAutoHidden = false;
         setLabelsVisible(this.styleService.labelsVisible);
+        setShowHoverLabel(this.styleService.showHoverLabel);
         this.sigma.setSetting("renderEdgeLabels", this.styleService.labelsVisible);
         this.styleParams = this.styleService.toGraphStyles();
         if (this.interactionHandler) {
@@ -116,11 +117,12 @@ export class GraphVisualiser {
                 } catch (_) { /* guard against missing metadata during graph mutations */ }
             }
 
-            if (!shouldFade) return data;
+            if (!shouldFade) return { ...data, zIndex: 1 };
             const res = { ...data };
             res["color"] = fade(data["color"]);
             if (data["borderColor"]) res["borderColor"] = fade(data["borderColor"]);
-            res["labelColor"] = fade("#ffffff");
+            res["label"] = "";
+            res["zIndex"] = 0;
             return res;
         });
 

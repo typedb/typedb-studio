@@ -42,6 +42,7 @@ export class GraphStyleService {
     private _highlightedEdges = new Set<string>();
     private _activePreset: string | null = null;
     private _labelsVisible = true;
+    private _showHoverLabel = true;
     private _degreeScaling = false;
 
     readonly styles$ = new BehaviorSubject<void>(undefined);
@@ -295,6 +296,14 @@ export class GraphStyleService {
         this.styles$.next();
     }
 
+    get showHoverLabel(): boolean { return this._showHoverLabel; }
+
+    set showHoverLabel(value: boolean) {
+        this._showHoverLabel = value;
+        this.save();
+        this.styles$.next();
+    }
+
     applyStructurePreset(): void {
         for (const kind of ALL_KINDS) {
             this._kindStyles[kind] = { ...this._kindStyles[kind], shape: "ellipse", width: 6, height: 6 };
@@ -302,6 +311,15 @@ export class GraphStyleService {
         this._labelsVisible = false;
         this._degreeScaling = true;
         this._activePreset = "structure";
+        this.save();
+        this.styles$.next();
+    }
+
+    applyUniformPreset(): void {
+        for (const kind of ALL_KINDS) {
+            this._kindStyles[kind] = { ...this._kindStyles[kind], shape: "rounded-rect", width: 56, height: 24 };
+        }
+        this._activePreset = "uniform";
         this.save();
         this.styles$.next();
     }
@@ -321,6 +339,7 @@ export class GraphStyleService {
         this._labelUseBorderColor = true;
         this._colorEdgesByConstraint = false;
         this._labelsVisible = true;
+        this._showHoverLabel = true;
         this._degreeScaling = false;
         this._highlightedKinds.clear();
         this._highlightedTypes.clear();
@@ -343,6 +362,7 @@ export class GraphStyleService {
                 highlightedEdges: Array.from(this._highlightedEdges),
                 activePreset: this._activePreset,
                 labelsVisible: this._labelsVisible,
+                showHoverLabel: this._showHoverLabel,
                 degreeScaling: this._degreeScaling,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -366,6 +386,7 @@ export class GraphStyleService {
                 this._highlightedEdges = new Set(data.highlightedEdges ?? []);
                 this._activePreset = data.activePreset ?? null;
                 this._labelsVisible = data.labelsVisible ?? true;
+                this._showHoverLabel = data.showHoverLabel ?? true;
                 this._degreeScaling = data.degreeScaling ?? false;
             }
         } catch (e) {

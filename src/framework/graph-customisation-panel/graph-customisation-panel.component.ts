@@ -272,6 +272,15 @@ export class GraphCustomisationPanelComponent implements OnChanges {
         this.visualiser?.restoreLabels();
     }
 
+    get showHoverLabel(): boolean {
+        return this.styleService.showHoverLabel;
+    }
+
+    toggleShowHoverLabel(): void {
+        this.styleService.showHoverLabel = !this.styleService.showHoverLabel;
+        this.visualiser?.restoreLabels();
+    }
+
     get degreeScaling(): boolean {
         return this.styleService.degreeScaling;
     }
@@ -380,7 +389,7 @@ export class GraphCustomisationPanelComponent implements OnChanges {
     appliedPreset: string | null = null;
     private appliedTimer: ReturnType<typeof setTimeout> | null = null;
 
-    applyPreset(preset: "default" | "structure"): void {
+    applyPreset(preset: "default" | "structure" | "uniform"): void {
         if (preset === "default") {
             this.styleService.applyDefaultPreset();
             this.visualiser?.restoreLabels();
@@ -389,6 +398,9 @@ export class GraphCustomisationPanelComponent implements OnChanges {
         } else if (preset === "structure") {
             this.styleService.applyStructurePreset();
             this.visualiser?.applyStructureMode();
+        } else if (preset === "uniform") {
+            this.styleService.applyUniformPreset();
+            this.visualiser?.restoreLabels();
         }
         if (this.appliedTimer) clearTimeout(this.appliedTimer);
         this.appliedPreset = preset;

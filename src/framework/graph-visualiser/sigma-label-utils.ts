@@ -9,6 +9,7 @@ const LABEL_FONT_SIZE = 12;
 
 let _useBorderColorForLabels = true;
 let _labelsVisible = true;
+let _showHoverLabel = true;
 
 export function setUseBorderColorForLabels(value: boolean): void {
     _useBorderColorForLabels = value;
@@ -20,6 +21,14 @@ export function setLabelsVisible(value: boolean): void {
 
 export function getLabelsVisible(): boolean {
     return _labelsVisible;
+}
+
+export function setShowHoverLabel(value: boolean): void {
+    _showHoverLabel = value;
+}
+
+export function getShowHoverLabel(): boolean {
+    return _showHoverLabel;
 }
 
 /**
@@ -50,12 +59,9 @@ export function drawCenteredNodeLabel<
     context.textAlign = "center";
     context.textBaseline = "middle";
     const borderColor = (data as any).borderColor;
-    const labelColor = (data as any).labelColor;
-    context.fillStyle = labelColor
-        ? labelColor
-        : (_useBorderColorForLabels && borderColor)
-            ? borderColor
-            : contrastColor((data as any)._originalColor ?? data.color);
+    context.fillStyle = (_useBorderColorForLabels && borderColor)
+        ? borderColor
+        : contrastColor((data as any)._originalColor ?? data.color);
 
     const maxWidth = screenHalfW * 2 - PADDING_X;
     const { lines, truncated } = wrapText(context, data.label, maxWidth);

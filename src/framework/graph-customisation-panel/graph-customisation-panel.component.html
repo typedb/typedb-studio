@@ -92,6 +92,15 @@
               @if (appliedPreset === 'default') { <i class="fa-light fa-check"></i> } @else { Apply }
             </button>
           </div>
+          <div class="preset-card" [class.active]="activePreset === 'uniform'">
+            <div class="preset-info">
+              <span class="preset-name">Uniform</span>
+              <span class="preset-description">All nodes as rounded rectangles, differentiated by color</span>
+            </div>
+            <button class="preset-apply" (click)="applyPreset('uniform')">
+              @if (appliedPreset === 'uniform') { <i class="fa-light fa-check"></i> } @else { Apply }
+            </button>
+          </div>
           <div class="preset-card" [class.active]="activePreset === 'structure'">
             <div class="preset-info">
               <span class="preset-name">Structure</span>
@@ -310,15 +319,18 @@
   <div class="panel-footer">
     <div class="footer-toggles">
       <div class="footer-option">
-        <span class="footer-option-label">Node labels</span>
+        <span class="footer-option-label">Labels in nodes</span>
         <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
           <mat-select [value]="labelMode" panelClass="graph-style-select-panel" (selectionChange)="setLabelMode($event.value)">
-            <mat-option value="border">Inside node, border color</mat-option>
-            <mat-option value="fixed">Inside node, black/white</mat-option>
-            <mat-option value="hidden">Outside node on hover</mat-option>
+            <mat-option value="border">Visible, border color</mat-option>
+            <mat-option value="fixed">Visible, black/white</mat-option>
+            <mat-option value="hidden">Hidden</mat-option>
           </mat-select>
         </mat-form-field>
       </div>
+      <mat-slide-toggle color="primary" [checked]="showHoverLabel" (change)="toggleShowHoverLabel()" labelPosition="before">
+        Show label on hover
+      </mat-slide-toggle>
       <mat-slide-toggle color="primary" [checked]="degreeScaling" (change)="toggleDegreeScaling()" labelPosition="before">
         Scale nodes by connection count
       </mat-slide-toggle>

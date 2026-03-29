@@ -18,6 +18,15 @@
   border-radius: 6px;
   border: 1px solid colors.$secondary-deep-grey;
   background: colors.$secondary-purple;
+
+  &:disabled {
+    color: colors.$secondary-deep-grey;
+    cursor: default;
+
+    &:hover {
+      background: colors.$secondary-purple;
+    }
+  }
 }
 
 .zoom-button.stop-button {

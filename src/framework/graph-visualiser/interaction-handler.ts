@@ -55,7 +55,7 @@ export class InteractionHandler {
         this.graph.setNodeAttribute(node, "_originalColor", color);
         this.graph.setNodeAttribute(node, "color", chroma(color).darken(0.3).hex());
 
-        if (this.styleService && !this.styleService.labelsVisible) {
+        if (this.styleService?.showHoverLabel && !this.styleService.labelsVisible) {
             const attrs = this.graph.getNodeAttributes(node);
             const concept = attrs["metadata"]?.concept;
             if (concept) {
@@ -72,7 +72,7 @@ export class InteractionHandler {
             this.graph.removeNodeAttribute(node, "_originalColor");
         }
 
-        if (this.styleService && !this.styleService.labelsVisible) {
+        if (this.styleService?.showHoverLabel && !this.styleService.labelsVisible) {
             this.graph.setNodeAttribute(node, "label", "");
         }
     }
