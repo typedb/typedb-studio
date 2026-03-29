@@ -7,7 +7,7 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSlideToggleModule } from "@angular/material/slide-toggle";
-import { GraphStyleService, CustomPreset } from "../../service/graph-style.service";
+import { GraphStyleService, CustomPreset, GraphBackgroundType } from "../../service/graph-style.service";
 import { GraphVisualiser } from "../graph-visualiser";
 import { VertexKind } from "@typedb/graph-utils";
 
@@ -72,7 +72,7 @@ export class GraphCustomisationPanelComponent implements OnChanges {
 
     styleService = inject(GraphStyleService);
     topTab: "highlights" | "presets" | "customise" = "highlights";
-    activeTab: "kind" | "type" | "edge" = "kind";
+    activeTab: "kind" | "type" | "edge" | "background" = "kind";
 
     readonly displayKinds = DISPLAY_KINDS;
     readonly shapes = AVAILABLE_SHAPES;
@@ -488,6 +488,46 @@ export class GraphCustomisationPanelComponent implements OnChanges {
 
     deleteCustomPreset(name: string): void {
         this.styleService.deleteCustomPreset(name);
+    }
+
+    // -- Background --
+
+    get backgroundType(): GraphBackgroundType { return this.styleService.background.type; }
+    get backgroundColor1(): string { return this.styleService.background.color1; }
+    get backgroundColor2(): string { return this.styleService.background.color2; }
+    get backgroundAngle(): number { return this.styleService.background.gradientAngle; }
+
+    setBackgroundType(type: GraphBackgroundType): void {
+        if (type === "grid") {
+            this.styleService.updateBackground({ type, color1: "#232135", color2: "#0e0e0e" });
+        } else if (type === "dots") {
+            this.styleService.updateBackground({ type, color1: "#4e4b63", color2: "#0e0e0e" });
+        } else if (type === "party") {
+            this.styleService.updateBackground({ type, color1: "#cc3344", color2: "#1a2766" });
+        } else {
+            this.styleService.updateBackground({ type });
+        }
+    }
+
+    setBackgroundColor1(color1: string): void {
+        this.styleService.updateBackground({ color1 });
+    }
+
+    setBackgroundColor2(color2: string): void {
+        this.styleService.updateBackground({ color2 });
+    }
+
+    setBackgroundAngle(gradientAngle: number): void {
+        this.styleService.updateBackground({ gradientAngle });
+    }
+
+    get hasBackgroundOverride(): boolean {
+        const bg = this.styleService.background;
+        return bg.type !== "solid" || bg.color1 !== "#0e0e0e";
+    }
+
+    resetBackground(): void {
+        this.styleService.background = { type: "solid", color1: "#0e0e0e", color2: "#1A182A", gradientAngle: 180 };
     }
 
     private applyStyles(): void {

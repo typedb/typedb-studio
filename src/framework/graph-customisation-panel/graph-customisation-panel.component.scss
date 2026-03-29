@@ -252,6 +252,47 @@
   color: #d5ccff;
 }
 
+.angle-control {
+  gap: 8px;
+}
+
+.angle-slider {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: colors.$secondary-dark-grey;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #d5ccff;
+    cursor: pointer;
+  }
+
+  &::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #d5ccff;
+    border: none;
+    cursor: pointer;
+  }
+}
+
+.angle-value {
+  font-size: 10px;
+  color: #958fa8;
+  min-width: 28px;
+  text-align: right;
+}
+
 .shape-field {
   flex: 0 0 auto;
   width: 52px;

@@ -16,6 +16,51 @@ export type PartialNodeStyle = Partial<NodeStyle>;
 const STORAGE_KEY = "typedb-studio-graph-styles";
 const CUSTOM_PRESETS_KEY = "typedb-studio-custom-presets";
 
+export type GraphBackgroundType = "solid" | "gradient" | "grid" | "dots" | "party";
+
+export interface GraphBackground {
+    type: GraphBackgroundType;
+    color1: string;
+    color2: string;
+    gradientAngle: number;
+}
+
+export const DEFAULT_BACKGROUND: GraphBackground = {
+    type: "solid",
+    color1: "#0e0e0e",
+    color2: "#1A182A",
+    gradientAngle: 180,
+};
+
+export interface BackgroundCSS {
+    color: string;
+    image: string;
+    size: string;
+}
+
+export function buildBackgroundCSS(bg: GraphBackground): BackgroundCSS {
+    switch (bg.type) {
+        case "solid":
+            return { color: bg.color1, image: "none", size: "" };
+        case "gradient":
+            return { color: bg.color2, image: `linear-gradient(${bg.gradientAngle}deg, ${bg.color1}, ${bg.color2})`, size: "" };
+        case "grid": {
+            const line = bg.color1;
+            return {
+                color: bg.color2,
+                image: `repeating-linear-gradient(0deg, transparent, transparent 29px, ${line} 29px, ${line} 30px), repeating-linear-gradient(90deg, transparent, transparent 29px, ${line} 29px, ${line} 30px)`,
+                size: "",
+            };
+        }
+        case "dots":
+            return { color: bg.color2, image: `radial-gradient(${bg.color1} 1px, transparent 1px)`, size: "20px 20px" };
+        case "party":
+            return { color: bg.color2, image: "none", size: "" };
+        default:
+            return { color: bg.color1, image: "none", size: "" };
+    }
+}
+
 export interface CustomPreset {
     name: string;
     description: string;
@@ -27,6 +72,7 @@ export interface CustomPreset {
     labelsVisible: boolean;
     showHoverLabel: boolean;
     degreeScaling: boolean;
+    background: GraphBackground;
 }
 
 function deriveFillFromBorder(borderHex: string): string {
@@ -58,6 +104,7 @@ export class GraphStyleService {
     private _labelsVisible = true;
     private _showHoverLabel = true;
     private _degreeScaling = false;
+    private _background: GraphBackground = { ...DEFAULT_BACKGROUND };
 
     private _customPresets: CustomPreset[] = [];
 
@@ -297,6 +344,20 @@ export class GraphStyleService {
         this.save();
     }
 
+    get background(): GraphBackground { return this._background; }
+
+    set background(value: GraphBackground) {
+        this._background = value;
+        this.save();
+        this.styles$.next();
+    }
+
+    updateBackground(partial: Partial<GraphBackground>): void {
+        this._background = { ...this._background, ...partial };
+        this.save();
+        this.styles$.next();
+    }
+
     get degreeScaling(): boolean { return this._degreeScaling; }
 
     set degreeScaling(value: boolean) {
@@ -423,6 +484,7 @@ export class GraphStyleService {
             labelsVisible: this._labelsVisible,
             showHoverLabel: this._showHoverLabel,
             degreeScaling: this._degreeScaling,
+            background: { ...this._background },
         };
         const idx = this._customPresets.findIndex(p => p.name === name);
         if (idx >= 0) {
@@ -506,6 +568,7 @@ export class GraphStyleService {
                 labelsVisible: this._labelsVisible,
                 showHoverLabel: this._showHoverLabel,
                 degreeScaling: this._degreeScaling,
+                background: this._background,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         } catch (e) {
@@ -530,6 +593,7 @@ export class GraphStyleService {
                 this._labelsVisible = data.labelsVisible ?? true;
                 this._showHoverLabel = data.showHoverLabel ?? true;
                 this._degreeScaling = data.degreeScaling ?? false;
+                if (data.background) this._background = { ...DEFAULT_BACKGROUND, ...data.background };
             }
         } catch (e) {
             console.warn("Failed to load graph styles from localStorage:", e);

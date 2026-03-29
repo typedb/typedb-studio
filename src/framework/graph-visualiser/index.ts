@@ -6,6 +6,7 @@ import {
 import chroma from "chroma-js";
 import Sigma from "sigma";
 import { Subscription } from "rxjs";
+import { buildBackgroundCSS } from "../../service/graph-style.service";
 import type { GraphStyleService } from "../../service/graph-style.service";
 
 import { getTypeLabel, DataVertex } from "@typedb/graph-utils";
@@ -65,6 +66,7 @@ export class GraphVisualiser {
         if (this.interactionHandler) {
             this.interactionHandler.styleParams = this.styleParams;
         }
+        this.applyBackground();
         return this.styleParams;
     }
 
@@ -350,6 +352,24 @@ export class GraphVisualiser {
 
     stopLayout(): void {
         this.layout.stop();
+    }
+
+    private applyBackground(): void {
+        const container = this.sigma.getContainer();
+        const bg = this.styleService.background;
+        const css = buildBackgroundCSS(bg);
+        container.style.backgroundColor = css.color;
+        container.style.backgroundImage = css.image;
+        container.style.backgroundSize = css.size;
+        if (bg.type === "party") {
+            container.style.setProperty("--party-color1", bg.color1);
+            container.style.setProperty("--party-color2", bg.color2);
+            container.classList.add("party-background");
+        } else {
+            container.style.removeProperty("--party-color1");
+            container.style.removeProperty("--party-color2");
+            container.classList.remove("party-background");
+        }
     }
 
     destroy() {

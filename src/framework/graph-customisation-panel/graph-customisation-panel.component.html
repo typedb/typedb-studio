@@ -197,6 +197,7 @@
         <button class="tab" [class.active]="activeTab === 'kind'" (click)="activeTab = 'kind'">Kinds</button>
         <button class="tab" [class.active]="activeTab === 'type'" (click)="activeTab = 'type'; refreshDiscoveredTypes()">Types</button>
         <button class="tab" [class.active]="activeTab === 'edge'" (click)="activeTab = 'edge'">Edges</button>
+        <button class="tab" [class.active]="activeTab === 'background'" (click)="activeTab = 'background'">Background</button>
       </div>
 
       <div class="panel-body">
@@ -346,6 +347,65 @@
                            [value]="getEdgeLabelColor(row.tag)"
                            (input)="setEdgeLabelColor(row.tag, $any($event.target).value)">
                   </span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Background -->
+        @if (activeTab === 'background') {
+          <div class="style-list background-settings">
+            <div class="style-row">
+              <div class="type-label-row">
+                <span class="style-label">Background</span>
+                @if (hasBackgroundOverride) {
+                  <button class="clear-button" (click)="resetBackground()" matTooltip="Reset to default" [matTooltipShowDelay]="500">
+                    <i class="fa-light fa-arrow-u-turn-up-left"></i>
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="style-row">
+              <span class="style-label">Type</span>
+              <div class="style-controls">
+                <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
+                  <mat-select [value]="backgroundType" panelClass="graph-style-select-panel" (selectionChange)="setBackgroundType($event.value)">
+                    <mat-option value="solid">Solid</mat-option>
+                    <mat-option value="gradient">Gradient</mat-option>
+                    <mat-option value="grid">Grid</mat-option>
+                    <mat-option value="dots">Dots</mat-option>
+                    <mat-option value="party">Party mode</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+            <div class="style-row">
+              <span class="style-label">{{ backgroundType === 'solid' ? 'Color' : 'Color 1' }}</span>
+              <div class="style-controls">
+                <input type="color" class="color-input"
+                       [value]="backgroundColor1"
+                       (input)="setBackgroundColor1($any($event.target).value)">
+              </div>
+            </div>
+            @if (backgroundType !== 'solid') {
+              <div class="style-row">
+                <span class="style-label">Color 2</span>
+                <div class="style-controls">
+                  <input type="color" class="color-input"
+                         [value]="backgroundColor2"
+                         (input)="setBackgroundColor2($any($event.target).value)">
+                </div>
+              </div>
+            }
+            @if (backgroundType === 'gradient') {
+              <div class="style-row">
+                <span class="style-label">Angle</span>
+                <div class="style-controls angle-control">
+                  <input type="range" class="angle-slider" min="0" max="360" step="1"
+                         [value]="backgroundAngle"
+                         (input)="setBackgroundAngle(+$any($event.target).value)">
+                  <span class="angle-value">{{ backgroundAngle }}°</span>
                 </div>
               </div>
             }
