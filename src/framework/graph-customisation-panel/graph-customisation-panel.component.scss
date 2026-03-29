@@ -552,6 +552,79 @@
   }
 }
 
+.preset-icon-button {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  color: #958fa8;
+  cursor: pointer;
+  padding: 0 2px;
+
+  i {
+    font-size: 10px;
+    width: 10px;
+    height: 10px;
+  }
+
+  &:hover {
+    color: #d5ccff;
+  }
+
+  &.delete:hover {
+    color: #ff8080;
+  }
+}
+
+.custom-presets-header {
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+
+.save-preset-area {
+  margin-top: 8px;
+
+  .save-preset-button {
+    padding: 0 8px;
+  }
+}
+
+.save-preset-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.save-preset-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.save-preset-input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  border: 1px solid colors.$secondary-deep-grey;
+  background: colors.$secondary-purple;
+  color: #d5ccff;
+  outline: none;
+
+  &:focus {
+    border-color: colors.$secondary-light-grey;
+  }
+
+  &::placeholder {
+    color: #6b6580;
+  }
+}
+
 // -- Sub-tab bar (Advanced section) --
 
 .sub-tab-bar {

@@ -14,6 +14,20 @@ export interface NodeStyle {
 export type PartialNodeStyle = Partial<NodeStyle>;
 
 const STORAGE_KEY = "typedb-studio-graph-styles";
+const CUSTOM_PRESETS_KEY = "typedb-studio-custom-presets";
+
+export interface CustomPreset {
+    name: string;
+    description: string;
+    kindStyles: Record<string, PartialNodeStyle>;
+    typeStyles: Record<string, PartialNodeStyle>;
+    edgeLabelColors: Record<string, string>;
+    colorEdgesByConstraint: boolean;
+    labelUseBorderColor: boolean;
+    labelsVisible: boolean;
+    showHoverLabel: boolean;
+    degreeScaling: boolean;
+}
 
 function deriveFillFromBorder(borderHex: string): string {
     const hex = borderHex.startsWith("#") ? borderHex.slice(1) : borderHex;
@@ -45,10 +59,13 @@ export class GraphStyleService {
     private _showHoverLabel = true;
     private _degreeScaling = false;
 
+    private _customPresets: CustomPreset[] = [];
+
     readonly styles$ = new BehaviorSubject<void>(undefined);
 
     constructor() {
         this.load();
+        this.loadCustomPresets();
     }
 
     getKindDefault(kind: VertexKind): NodeStyle {
@@ -386,6 +403,92 @@ export class GraphStyleService {
         this._activePreset = null;
         this.save();
         this.styles$.next();
+    }
+
+    // -- Custom presets --
+
+    get customPresets(): readonly CustomPreset[] {
+        return this._customPresets;
+    }
+
+    saveCustomPreset(name: string, description: string): void {
+        const preset: CustomPreset = {
+            name,
+            description,
+            kindStyles: structuredClone(this._kindStyles),
+            typeStyles: structuredClone(this._typeStyles),
+            edgeLabelColors: { ...this._edgeLabelColors },
+            colorEdgesByConstraint: this._colorEdgesByConstraint,
+            labelUseBorderColor: this._labelUseBorderColor,
+            labelsVisible: this._labelsVisible,
+            showHoverLabel: this._showHoverLabel,
+            degreeScaling: this._degreeScaling,
+        };
+        const idx = this._customPresets.findIndex(p => p.name === name);
+        if (idx >= 0) {
+            this._customPresets[idx] = preset;
+        } else {
+            this._customPresets.push(preset);
+        }
+        this.saveCustomPresets();
+    }
+
+    applyCustomPreset(name: string): void {
+        const preset = this._customPresets.find(p => p.name === name);
+        if (!preset) return;
+        this._kindStyles = structuredClone(preset.kindStyles);
+        this._typeStyles = structuredClone(preset.typeStyles);
+        this._edgeLabelColors = { ...preset.edgeLabelColors };
+        this._colorEdgesByConstraint = preset.colorEdgesByConstraint;
+        this._labelUseBorderColor = preset.labelUseBorderColor;
+        this._labelsVisible = preset.labelsVisible;
+        this._showHoverLabel = preset.showHoverLabel;
+        this._degreeScaling = preset.degreeScaling;
+        this._activePreset = `custom:${name}`;
+        this.save();
+        this.styles$.next();
+    }
+
+    renameCustomPreset(oldName: string, newName: string, newDescription: string): void {
+        const preset = this._customPresets.find(p => p.name === oldName);
+        if (!preset) return;
+        preset.name = newName;
+        preset.description = newDescription;
+        if (this._activePreset === `custom:${oldName}`) {
+            this._activePreset = `custom:${newName}`;
+            this.save();
+        }
+        this.saveCustomPresets();
+        this.styles$.next();
+    }
+
+    deleteCustomPreset(name: string): void {
+        this._customPresets = this._customPresets.filter(p => p.name !== name);
+        if (this._activePreset === `custom:${name}`) {
+            this._activePreset = null;
+            this.save();
+        }
+        this.saveCustomPresets();
+        this.styles$.next();
+    }
+
+    private saveCustomPresets(): void {
+        try {
+            localStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(this._customPresets));
+        } catch (e) {
+            console.warn("Failed to save custom presets to localStorage:", e);
+        }
+    }
+
+    private loadCustomPresets(): void {
+        try {
+            const raw = localStorage.getItem(CUSTOM_PRESETS_KEY);
+            if (raw) {
+                this._customPresets = JSON.parse(raw) ?? [];
+            }
+        } catch (e) {
+            console.warn("Failed to load custom presets from localStorage:", e);
+        }
     }
 
     private save(): void {

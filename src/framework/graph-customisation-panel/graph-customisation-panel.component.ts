@@ -8,7 +8,7 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSlideToggleModule } from "@angular/material/slide-toggle";
 import { ColorPickerDirective } from "ngx-color-picker";
-import { GraphStyleService } from "../../service/graph-style.service";
+import { GraphStyleService, CustomPreset } from "../../service/graph-style.service";
 import { GraphVisualiser } from "../graph-visualiser";
 import { VertexKind } from "@typedb/graph-utils";
 
@@ -411,6 +411,85 @@ export class GraphCustomisationPanelComponent implements OnChanges {
         if (this.appliedTimer) clearTimeout(this.appliedTimer);
         this.appliedPreset = preset;
         this.appliedTimer = setTimeout(() => { this.appliedPreset = null; }, 2000);
+    }
+
+    // -- Custom presets --
+
+    get customPresets(): readonly CustomPreset[] {
+        return this.styleService.customPresets;
+    }
+
+    savingPreset = false;
+    newPresetName = "";
+    newPresetDescription = "";
+
+    startSavingPreset(): void {
+        this.savingPreset = true;
+        this.newPresetName = "";
+        this.newPresetDescription = "";
+    }
+
+    confirmSavePreset(): void {
+        const name = this.newPresetName.trim();
+        if (!name) return;
+        this.styleService.saveCustomPreset(name, this.newPresetDescription.trim());
+        this.savingPreset = false;
+        this.newPresetName = "";
+        this.newPresetDescription = "";
+    }
+
+    cancelSavePreset(): void {
+        this.savingPreset = false;
+        this.newPresetName = "";
+        this.newPresetDescription = "";
+    }
+
+    applyCustomPreset(name: string): void {
+        this.styleService.applyCustomPreset(name);
+        this.visualiser?.restoreLabels();
+        this.visualiser?.applyEdgeStyleUpdate();
+        if (this.appliedTimer) clearTimeout(this.appliedTimer);
+        this.appliedPreset = `custom:${name}`;
+        this.appliedTimer = setTimeout(() => { this.appliedPreset = null; }, 2000);
+    }
+
+    editingPreset: string | null = null;
+    editPresetName = "";
+    editPresetDescription = "";
+
+    startEditPreset(name: string): void {
+        const preset = this.customPresets.find(p => p.name === name);
+        if (!preset) return;
+        this.editingPreset = name;
+        this.editPresetName = preset.name;
+        this.editPresetDescription = preset.description;
+    }
+
+    confirmEditPreset(originalName: string): void {
+        const name = this.editPresetName.trim();
+        if (!name) return;
+        this.styleService.renameCustomPreset(originalName, name, this.editPresetDescription.trim());
+        this.editingPreset = null;
+    }
+
+    cancelEditPreset(): void {
+        this.editingPreset = null;
+    }
+
+    overwrittenPreset: string | null = null;
+    private overwrittenTimer: ReturnType<typeof setTimeout> | null = null;
+
+    overwriteCustomPreset(name: string): void {
+        const preset = this.customPresets.find(p => p.name === name);
+        if (!preset) return;
+        this.styleService.saveCustomPreset(name, preset.description);
+        if (this.overwrittenTimer) clearTimeout(this.overwrittenTimer);
+        this.overwrittenPreset = name;
+        this.overwrittenTimer = setTimeout(() => { this.overwrittenPreset = null; }, 2000);
+    }
+
+    deleteCustomPreset(name: string): void {
+        this.styleService.deleteCustomPreset(name);
     }
 
     private applyStyles(): void {
