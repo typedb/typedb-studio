@@ -85,8 +85,8 @@
         <div class="preset-cards">
           <div class="preset-card" [class.active]="activePreset === 'default'">
             <div class="preset-info">
-              <span class="preset-name">Default</span>
-              <span class="preset-description">Standard colors, shapes and sizes</span>
+              <span class="preset-name">Home Sweet Home</span>
+              <span class="preset-description">The one you know and love</span>
             </div>
             <button class="preset-apply" (click)="applyPreset('default')">
               @if (appliedPreset === 'default') { <i class="fa-light fa-check"></i> } @else { Apply }
@@ -94,8 +94,8 @@
           </div>
           <div class="preset-card" [class.active]="activePreset === 'uniform'">
             <div class="preset-info">
-              <span class="preset-name">Uniform</span>
-              <span class="preset-description">All nodes as rounded rectangles, differentiated by color</span>
+              <span class="preset-name">One Shape to Rule Them All</span>
+              <span class="preset-description">Rectangles everywhere, colors do the talking</span>
             </div>
             <button class="preset-apply" (click)="applyPreset('uniform')">
               @if (appliedPreset === 'uniform') { <i class="fa-light fa-check"></i> } @else { Apply }
@@ -103,8 +103,8 @@
           </div>
           <div class="preset-card" [class.active]="activePreset === 'classic'">
             <div class="preset-info">
-              <span class="preset-name">Classic</span>
-              <span class="preset-description">Solid fill colors with no visible borders</span>
+              <span class="preset-name">No Half Measures</span>
+              <span class="preset-description">Bold, solid colors all the way through</span>
             </div>
             <button class="preset-apply" (click)="applyPreset('classic')">
               @if (appliedPreset === 'classic') { <i class="fa-light fa-check"></i> } @else { Apply }
@@ -112,8 +112,8 @@
           </div>
           <div class="preset-card" [class.active]="activePreset === 'grayscale'">
             <div class="preset-info">
-              <span class="preset-name">Grayscale</span>
-              <span class="preset-description">Solid grey tones, default shapes</span>
+              <span class="preset-name">Fifty Shades of Data</span>
+              <span class="preset-description">Who needs color when you've got elegance?</span>
             </div>
             <button class="preset-apply" (click)="applyPreset('grayscale')">
               @if (appliedPreset === 'grayscale') { <i class="fa-light fa-check"></i> } @else { Apply }
@@ -121,8 +121,8 @@
           </div>
           <div class="preset-card" [class.active]="activePreset === 'structure'">
             <div class="preset-info">
-              <span class="preset-name">Structure</span>
-              <span class="preset-description">Minimal nodes sized by connections, labels hidden</span>
+              <span class="preset-name">Big Picture Energy</span>
+              <span class="preset-description">Tiny nodes, big connections, no distractions</span>
             </div>
             <button class="preset-apply" (click)="applyPreset('structure')">
               @if (appliedPreset === 'structure') { <i class="fa-light fa-check"></i> } @else { Apply }

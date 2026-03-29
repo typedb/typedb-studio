@@ -495,7 +495,7 @@
 
 .preset-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   padding: 6px 8px;
   background: colors.$secondary-purple;
