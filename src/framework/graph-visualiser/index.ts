@@ -5,6 +5,7 @@ import {
 } from "@typedb/driver-http";
 import chroma from "chroma-js";
 import Sigma from "sigma";
+import { Subscription } from "rxjs";
 import type { GraphStyleService } from "../../service/graph-style.service";
 
 import { getTypeLabel, DataVertex } from "@typedb/graph-utils";
@@ -27,6 +28,7 @@ export class GraphVisualiser {
     private settingCameraProgrammatically = false;
     private peakCameraRatio = 0;
     private labelsAutoHidden = false;
+    private stylesSub!: Subscription;
 
     constructor(public graph: Graph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
         this.state = { activeQueryDatabase: null };
@@ -42,6 +44,13 @@ export class GraphVisualiser {
                 this.autoZoomEnabled = false;
             }
             this.updateLabelVisibilityForZoom();
+        });
+        this.stylesSub = this.styleService.styles$.subscribe(() => {
+            this.syncStyles();
+            try {
+                this.applyStyleUpdate();
+                this.applyEdgeStyleUpdate();
+            } catch (_) { /* sigma not renderable (e.g. hidden tab, lost WebGL context) */ }
         });
     }
 
@@ -344,6 +353,7 @@ export class GraphVisualiser {
     }
 
     destroy() {
+        this.stylesSub.unsubscribe();
         this.sigma.kill();
     }
 }

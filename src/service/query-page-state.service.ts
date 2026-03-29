@@ -769,6 +769,7 @@ export class GraphOutputState {
     database?: string;
     private _canvasEl: HTMLElement | null = null;
     private _preservedGraph: Graph | null = null;
+    private _preservedCamera: { x: number; y: number; ratio: number; angle: number } | null = null;
     private _pendingResponses: ApiResponse<QueryResponse>[] = [];
     private _styleService: GraphStyleService;
 
@@ -848,7 +849,9 @@ export class GraphOutputState {
     detach(): void {
         if (this.visualiser) {
             this._preservedGraph = this.visualiser.graph;
-            this.visualiser.sigma.kill();
+            const cam = this.visualiser.sigma.getCamera().getState();
+            this._preservedCamera = { x: cam.x, y: cam.y, ratio: cam.ratio, angle: cam.angle };
+            this.visualiser.destroy();
             this.visualiser = null;
         }
         this._canvasEl = null;
@@ -860,6 +863,10 @@ export class GraphOutputState {
             const sigma = createSigmaRenderer(canvasEl, defaultSigmaSettings as any, this._preservedGraph);
             const layout = Layouts.createD3ForceStatic(this._preservedGraph);
             this.visualiser = new GraphVisualiser(this._preservedGraph, sigma, layout, this._styleService);
+            if (this._preservedCamera) {
+                this.visualiser.sigma.getCamera().setState(this._preservedCamera);
+                this._preservedCamera = null;
+            }
         }
     }
 
