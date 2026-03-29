@@ -7,7 +7,6 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSlideToggleModule } from "@angular/material/slide-toggle";
-import { ColorPickerDirective } from "ngx-color-picker";
 import { GraphStyleService, CustomPreset } from "../../service/graph-style.service";
 import { GraphVisualiser } from "../graph-visualiser";
 import { VertexKind } from "@typedb/graph-utils";
@@ -65,7 +64,6 @@ export const AVAILABLE_SHAPES = [
         CommonModule, FormsModule,
         MatButtonModule, MatSelectModule, MatTooltipModule,
         MatFormFieldModule, MatInputModule, MatSlideToggleModule,
-        ColorPickerDirective,
     ],
 })
 export class GraphCustomisationPanelComponent implements OnChanges {
@@ -130,12 +128,12 @@ export class GraphCustomisationPanelComponent implements OnChanges {
     // -- Kind setters --
 
     setKindColor(kind: VertexKind, color: string): void {
-        this.styleService.setKindStyle(kind, { color: normalizeColor(color) });
+        this.styleService.setKindStyle(kind, { color: color });
         this.applyStyles();
     }
 
     setKindBorderColor(kind: VertexKind, borderColor: string): void {
-        this.styleService.setKindStyle(kind, { borderColor: normalizeColor(borderColor) });
+        this.styleService.setKindStyle(kind, { borderColor: borderColor });
         this.applyStyles();
     }
 
@@ -183,12 +181,12 @@ export class GraphCustomisationPanelComponent implements OnChanges {
     // -- Type setters --
 
     setTypeColor(typeLabel: string, color: string): void {
-        this.styleService.setTypeStyle(typeLabel, { color: normalizeColor(color) });
+        this.styleService.setTypeStyle(typeLabel, { color: color });
         this.applyStyles();
     }
 
     setTypeBorderColor(typeLabel: string, borderColor: string): void {
-        this.styleService.setTypeStyle(typeLabel, { borderColor: normalizeColor(borderColor) });
+        this.styleService.setTypeStyle(typeLabel, { borderColor: borderColor });
         this.applyStyles();
     }
 
@@ -228,7 +226,7 @@ export class GraphCustomisationPanelComponent implements OnChanges {
     }
 
     setEdgeLabelColor(tag: string, color: string): void {
-        this.styleService.setEdgeLabelColor(tag, normalizeColor(color));
+        this.styleService.setEdgeLabelColor(tag, color);
         this.visualiser?.applyEdgeStyleUpdate();
     }
 
@@ -495,23 +493,4 @@ export class GraphCustomisationPanelComponent implements OnChanges {
     private applyStyles(): void {
         this.visualiser?.applyStyleUpdate();
     }
-}
-
-/** Normalize rgba() output from ngx-color-picker to #RRGGBBAA hex for the shader pipeline. */
-function normalizeColor(color: string): string {
-    if (!color) return "#00000000";
-    // Already hex
-    if (color.startsWith("#")) return color;
-    // rgba(r, g, b, a)
-    const rgbaMatch = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
-    if (rgbaMatch) {
-        const r = parseInt(rgbaMatch[1]).toString(16).padStart(2, "0");
-        const g = parseInt(rgbaMatch[2]).toString(16).padStart(2, "0");
-        const b = parseInt(rgbaMatch[3]).toString(16).padStart(2, "0");
-        const a = rgbaMatch[4] !== undefined
-            ? Math.round(parseFloat(rgbaMatch[4]) * 255).toString(16).padStart(2, "0")
-            : "ff";
-        return `#${r}${g}${b}${a}`;
-    }
-    return color;
 }

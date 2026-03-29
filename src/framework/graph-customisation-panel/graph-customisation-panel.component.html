@@ -215,30 +215,16 @@
                 </div>
                 <div class="style-controls">
                   <span matTooltip="Border" [matTooltipShowDelay]="500">
-                    <div class="color-swatch border-swatch"
-                         [style.border-color]="getKindBorderColor(row.kind)"
-                         [colorPicker]="getKindBorderColor(row.kind)"
-                         cpAlphaChannel="forced"
-                         cpOutputFormat="hex"
-                         cpPosition="left"
-                         cpPositionOffset="-50"
-                         cpFallbackColor="#000000"
-                         [cpUseRootViewContainer]="true"
-                         (colorPickerChange)="setKindBorderColor(row.kind, $event)">
+                    <div class="border-swatch" [style.border-color]="getKindBorderColor(row.kind)">
+                      <input type="color" class="color-input border-input"
+                             [value]="getKindBorderColor(row.kind)"
+                             (input)="setKindBorderColor(row.kind, $any($event.target).value)">
                     </div>
                   </span>
                   <span matTooltip="Fill" [matTooltipShowDelay]="500">
-                    <div class="color-swatch fill-swatch"
-                         [style.background]="getKindColor(row.kind)"
-                         [colorPicker]="getKindColor(row.kind)"
-                         cpAlphaChannel="forced"
-                         cpOutputFormat="hex"
-                         cpPosition="left"
-                         cpPositionOffset="-50"
-                         cpFallbackColor="#000000"
-                         [cpUseRootViewContainer]="true"
-                         (colorPickerChange)="setKindColor(row.kind, $event)">
-                    </div>
+                    <input type="color" class="color-input"
+                           [value]="getKindColor(row.kind)"
+                           (input)="setKindColor(row.kind, $any($event.target).value)">
                   </span>
                   <mat-form-field class="shape-field" subscriptSizing="dynamic">
                     <mat-select [value]="getKindShape(row.kind)"
@@ -294,30 +280,16 @@
                 </div>
                 <div class="style-controls">
                   <span matTooltip="Border" [matTooltipShowDelay]="500">
-                    <div class="color-swatch border-swatch"
-                         [style.border-color]="getTypeBorderColor(row.typeLabel, row.kind)"
-                         [colorPicker]="getTypeBorderColor(row.typeLabel, row.kind)"
-                         cpAlphaChannel="forced"
-                         cpOutputFormat="hex"
-                         cpPosition="left"
-                         cpPositionOffset="-50"
-                         cpFallbackColor="#000000"
-                         [cpUseRootViewContainer]="true"
-                         (colorPickerChange)="setTypeBorderColor(row.typeLabel, $event)">
+                    <div class="border-swatch" [style.border-color]="getTypeBorderColor(row.typeLabel, row.kind)">
+                      <input type="color" class="color-input border-input"
+                             [value]="getTypeBorderColor(row.typeLabel, row.kind)"
+                             (input)="setTypeBorderColor(row.typeLabel, $any($event.target).value)">
                     </div>
                   </span>
                   <span matTooltip="Fill" [matTooltipShowDelay]="500">
-                    <div class="color-swatch fill-swatch"
-                         [style.background]="getTypeColor(row.typeLabel, row.kind)"
-                         [colorPicker]="getTypeColor(row.typeLabel, row.kind)"
-                         cpAlphaChannel="forced"
-                         cpOutputFormat="hex"
-                         cpPosition="left"
-                         cpPositionOffset="-50"
-                         cpFallbackColor="#000000"
-                         [cpUseRootViewContainer]="true"
-                         (colorPickerChange)="setTypeColor(row.typeLabel, $event)">
-                    </div>
+                    <input type="color" class="color-input"
+                           [value]="getTypeColor(row.typeLabel, row.kind)"
+                           (input)="setTypeColor(row.typeLabel, $any($event.target).value)">
                   </span>
                   <mat-form-field class="shape-field" subscriptSizing="dynamic">
                     <mat-select [value]="getTypeShape(row.typeLabel, row.kind)"
@@ -370,17 +342,9 @@
                 </div>
                 <div class="style-controls">
                   <span matTooltip="Color" [matTooltipShowDelay]="500">
-                    <div class="color-swatch fill-swatch"
-                         [style.background]="getEdgeLabelColor(row.tag)"
-                         [colorPicker]="getEdgeLabelColor(row.tag)"
-                         cpAlphaChannel="forced"
-                         cpOutputFormat="hex"
-                         cpPosition="left"
-                         cpPositionOffset="-50"
-                         cpFallbackColor="#808080"
-                         [cpUseRootViewContainer]="true"
-                         (colorPickerChange)="setEdgeLabelColor(row.tag, $event)">
-                    </div>
+                    <input type="color" class="color-input"
+                           [value]="getEdgeLabelColor(row.tag)"
+                           (input)="setEdgeLabelColor(row.tag, $any($event.target).value)">
                   </span>
                 </div>
               </div>
