@@ -384,9 +384,12 @@ export class GraphStyleService {
 
     applyStructurePreset(): void {
         for (const kind of ALL_KINDS) {
-            this._kindStyles[kind] = { ...this._kindStyles[kind], shape: "ellipse", width: 6, height: 6 };
+            const borderColor = defaultQueryStyleParams.vertexBorderColors[kind];
+            this._kindStyles[kind] = { color: borderColor, borderColor, shape: "ellipse", width: 6, height: 6 };
         }
+        this._labelUseBorderColor = true;
         this._labelsVisible = false;
+        this._showHoverLabel = true;
         this._degreeScaling = true;
         this._activePreset = "structure";
         this.save();
@@ -395,8 +398,14 @@ export class GraphStyleService {
 
     applyUniformPreset(): void {
         for (const kind of ALL_KINDS) {
-            this._kindStyles[kind] = { ...this._kindStyles[kind], shape: "rounded-rect", width: 56, height: 24 };
+            const color = defaultQueryStyleParams.vertexColors[kind];
+            const borderColor = defaultQueryStyleParams.vertexBorderColors[kind];
+            this._kindStyles[kind] = { color, borderColor, shape: "rounded-rect", width: 56, height: 24 };
         }
+        this._labelUseBorderColor = true;
+        this._labelsVisible = true;
+        this._showHoverLabel = true;
+        this._degreeScaling = false;
         this._activePreset = "uniform";
         this.save();
         this.styles$.next();
@@ -408,9 +417,12 @@ export class GraphStyleService {
             const shape = defaultQueryStyleParams.vertexShapes[kind];
             const width = defaultQueryStyleParams.vertexWidths[kind];
             const height = defaultQueryStyleParams.vertexHeights[kind];
-            this._kindStyles[kind] = { ...this._kindStyles[kind], color: borderColor, borderColor, shape, width, height };
+            this._kindStyles[kind] = { color: borderColor, borderColor, shape, width, height };
         }
         this._labelUseBorderColor = false;
+        this._labelsVisible = true;
+        this._showHoverLabel = true;
+        this._degreeScaling = false;
         this._activePreset = "classic";
         this.save();
         this.styles$.next();
@@ -433,9 +445,12 @@ export class GraphStyleService {
             const shape = defaultQueryStyleParams.vertexShapes[kind];
             const width = defaultQueryStyleParams.vertexWidths[kind];
             const height = defaultQueryStyleParams.vertexHeights[kind];
-            this._kindStyles[kind] = { ...this._kindStyles[kind], color, borderColor: color, shape, width, height };
+            this._kindStyles[kind] = { color, borderColor: color, shape, width, height };
         }
         this._labelUseBorderColor = false;
+        this._labelsVisible = true;
+        this._showHoverLabel = true;
+        this._degreeScaling = false;
         this._activePreset = "grayscale";
         this.save();
         this.styles$.next();
