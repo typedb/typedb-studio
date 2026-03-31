@@ -102,6 +102,20 @@ export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: Sig
         return this;
     };
 
+    // Convert wheel/trackpad scroll from zoom to pan
+    const container = renderer.getContainer();
+    container.addEventListener("wheel", (e: WheelEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const camera = renderer.getCamera();
+        const { ratio } = camera.getState();
+        const { width, height } = renderer.getDimensions();
+        // Convert pixel deltas to graph-coordinate deltas
+        const dx = (e.deltaX * ratio) / width;
+        const dy = (e.deltaY * ratio) / height;
+        camera.setState({ x: camera.getState().x + dx, y: camera.getState().y - dy });
+    }, { capture: true });
+
     // Override renderHighlightedNodes to only draw hover on the canvas layer,
     // skipping the WebGL re-render which covers our canvas-drawn labels.
     (renderer as any).renderHighlightedNodes = function () {
