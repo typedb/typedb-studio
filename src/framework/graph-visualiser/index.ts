@@ -108,24 +108,29 @@ export class GraphVisualiser {
             const state = this.interactionHandler.state;
             let shouldFade = false;
 
-            // Selection-based fading
-            const isSelectedOrNeighbor = state.selectedNode != null
-                && (node === state.selectedNode || (state.selectedNeighbors?.has(node) ?? false));
-            if (state.selectedNode != null && !isSelectedOrNeighbor) {
-                shouldFade = true;
-            }
+            // Search takes priority over everything
+            if (state.searchMatches != null) {
+                shouldFade = !state.searchMatches.has(node);
+            } else {
+                // Selection-based fading
+                const isSelectedOrNeighbor = state.selectedNode != null
+                    && (node === state.selectedNode || (state.selectedNeighbors?.has(node) ?? false));
+                if (state.selectedNode != null && !isSelectedOrNeighbor) {
+                    shouldFade = true;
+                }
 
-            // Highlight-based fading (skipped for nodes in the active selection)
-            if (!isSelectedOrNeighbor) {
-                try {
-                    if (this.styleService.isHighlightActive()) {
-                        const attrs = this.graph.getNodeAttributes(node);
-                        const concept = attrs.metadata.concept;
-                        if (!this.styleService.shouldHighlightNode(concept.kind as any, getTypeLabel(concept as any))) {
-                            shouldFade = true;
+                // Highlight-based fading (skipped for nodes in the active selection)
+                if (!isSelectedOrNeighbor) {
+                    try {
+                        if (this.styleService.isHighlightActive()) {
+                            const attrs = this.graph.getNodeAttributes(node);
+                            const concept = attrs.metadata.concept;
+                            if (!this.styleService.shouldHighlightNode(concept.kind as any, getTypeLabel(concept as any))) {
+                                shouldFade = true;
+                            }
                         }
-                    }
-                } catch (_) { /* guard against missing metadata during graph mutations */ }
+                    } catch (_) { /* guard against missing metadata during graph mutations */ }
+                }
             }
 
             if (!shouldFade) return { ...data, zIndex: 1 };
@@ -141,28 +146,35 @@ export class GraphVisualiser {
             const state = this.interactionHandler.state;
             let shouldFade = false;
 
-            // Selection-based fading: keep edges where both endpoints are highlighted
-            let edgeInSelection = false;
-            if (state.selectedNode != null) {
+            // Search takes priority over everything
+            if (state.searchMatches != null) {
                 const source = this.graph.source(edge);
                 const target = this.graph.target(edge);
-                const isNodeHighlighted = (n: string) => n === state.selectedNode || (state.selectedNeighbors?.has(n) ?? false);
-                edgeInSelection = isNodeHighlighted(source) && isNodeHighlighted(target);
-                if (!edgeInSelection) {
-                    shouldFade = true;
-                }
-            }
-
-            // Highlight-based fading (skipped for edges in the active selection)
-            if (!edgeInSelection) {
-                try {
-                    if (this.styleService.isHighlightActive()) {
-                        const tag = this.graph.getEdgeAttributes(edge).metadata?.dataEdge?.tag;
-                        if (tag && !this.styleService.shouldHighlightEdge(tag)) {
-                            shouldFade = true;
-                        }
+                shouldFade = !state.searchMatches.has(source) || !state.searchMatches.has(target);
+            } else {
+                // Selection-based fading: keep edges where both endpoints are highlighted
+                let edgeInSelection = false;
+                if (state.selectedNode != null) {
+                    const source = this.graph.source(edge);
+                    const target = this.graph.target(edge);
+                    const isNodeHighlighted = (n: string) => n === state.selectedNode || (state.selectedNeighbors?.has(n) ?? false);
+                    edgeInSelection = isNodeHighlighted(source) && isNodeHighlighted(target);
+                    if (!edgeInSelection) {
+                        shouldFade = true;
                     }
-                } catch (_) { /* guard against missing metadata during graph mutations */ }
+                }
+
+                // Highlight-based fading (skipped for edges in the active selection)
+                if (!edgeInSelection) {
+                    try {
+                        if (this.styleService.isHighlightActive()) {
+                            const tag = this.graph.getEdgeAttributes(edge).metadata?.dataEdge?.tag;
+                            if (tag && !this.styleService.shouldHighlightEdge(tag)) {
+                                shouldFade = true;
+                            }
+                        }
+                    } catch (_) { /* guard against missing metadata during graph mutations */ }
+                }
             }
 
             if (!shouldFade) return data;

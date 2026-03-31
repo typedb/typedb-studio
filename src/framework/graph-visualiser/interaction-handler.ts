@@ -19,6 +19,7 @@ interface InteractionState {
     highlightedAnswer: number | null; // demonstrative
     selectedNode: string | null;
     selectedNeighbors: Set<string> | null;
+    searchMatches: Set<string> | null;
 }
 
 export class InteractionHandler {
@@ -32,6 +33,7 @@ export class InteractionHandler {
             highlightedAnswer: null,
             selectedNode: null,
             selectedNeighbors: null,
+            searchMatches: null,
         };
         this.registerAll(renderer);
     }
@@ -252,24 +254,29 @@ export class InteractionHandler {
     }
 
     searchGraph(term: string) {
-        function safeString(str: string | undefined): string {
-            return (str == undefined) ? "" : str.toLowerCase();
+        if (term === "") {
+            this.state.searchMatches = null;
+            this.renderer.refresh();
+            return;
         }
 
-        this.graph.nodes().forEach(node => this.graph.setNodeAttribute(node, "highlighted", false));
-        if (term !== "") {
-            this.graph.nodes().forEach(node => {
-                const attributes = this.graph.getNodeAttributes(node);
-                if ("concept" in attributes["metadata"]) {
-                    const concept = attributes["metadata"].concept;
-                    if (("iid" in concept && safeString(concept.iid).indexOf(term) !== -1)
-                        || ("label" in concept && safeString(concept.label).indexOf(term) !== -1)
-                        || ("value" in concept && safeString(concept.value).indexOf(term) !== -1)) {
-                        this.graph.setNodeAttribute(node, "highlighted", true);
-                    }
+        const safeString = (str: string | undefined): string =>
+            str == undefined ? "" : str.toLowerCase();
+
+        const matches = new Set<string>();
+        this.graph.nodes().forEach(node => {
+            const attributes = this.graph.getNodeAttributes(node);
+            if ("concept" in attributes["metadata"]) {
+                const concept = attributes["metadata"].concept;
+                if (("iid" in concept && safeString(concept.iid).indexOf(term) !== -1)
+                    || ("label" in concept && safeString(concept.label).indexOf(term) !== -1)
+                    || ("value" in concept && safeString(concept.value).indexOf(term) !== -1)) {
+                    matches.add(node);
                 }
-            });
-        }
+            }
+        });
+        this.state.searchMatches = matches;
+        this.renderer.refresh();
     }
 }
 
