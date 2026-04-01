@@ -648,17 +648,14 @@ button {
         height: 12px;
     }
 
-    &:hover:not(:disabled) {
+    &:hover {
         color: #d5ccff;
-    }
-
-    &:disabled {
-        opacity: 0.3;
-        cursor: default;
     }
 }
 
 .graph-search-clear {
+    position: absolute;
+    right: 29px;
     background: none;
     border: none;
     padding: 0 4px;

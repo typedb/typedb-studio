@@ -778,7 +778,6 @@ export class GraphOutputState {
 
     status: GraphOutputStatus = "ok";
     visualiser: GraphVisualiser | null = null;
-    onSearchCleared: (() => void) | null = null;
     query?: string;
     database?: string;
     private _canvasEl: HTMLElement | null = null;
@@ -826,7 +825,6 @@ export class GraphOutputState {
             const sigma = createSigmaRenderer(this._canvasEl!, defaultSigmaSettings as any, graph);
             const layout = Layouts.createD3ForceSupervisor(graph);
             this.visualiser = new GraphVisualiser(graph, sigma, layout, this._styleService);
-            this.visualiser.interactionHandler.onSearchCleared = () => this.onSearchCleared?.();
         }
 
         switch (res.ok.answerType) {
@@ -878,7 +876,6 @@ export class GraphOutputState {
             const sigma = createSigmaRenderer(canvasEl, defaultSigmaSettings as any, this._preservedGraph);
             const layout = Layouts.createD3ForceStatic(this._preservedGraph);
             this.visualiser = new GraphVisualiser(this._preservedGraph, sigma, layout, this._styleService);
-            this.visualiser.interactionHandler.onSearchCleared = () => this.onSearchCleared?.();
             if (this._preservedCamera) {
                 this.visualiser.sigma.getCamera().setState(this._preservedCamera);
                 this._preservedCamera = null;

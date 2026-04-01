@@ -73,7 +73,6 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild("runTabContextMenuTrigger") runTabContextMenuTrigger!: MatMenuTrigger;
     @ViewChild("tabsScrollContainer") tabsScrollContainer?: ElementRef<HTMLElement>;
     @ViewChild("runTabsScrollContainer") runTabsScrollContainer?: ElementRef<HTMLElement>;
-    @ViewChild("graphSearchInput") graphSearchInput?: ElementRef<HTMLInputElement>;
 
     state = inject(QueryPageState);
     driver = inject(DriverState);

@@ -22,6 +22,8 @@ import { LayoutWrapper } from "./layout";
 export class GraphVisualiser {
     interactionHandler: InteractionHandler;
     state: StudioState;
+    searchTerm = "";
+    searchMatches: Set<string> | null = null;
     private styleParams: GraphStyles;
     private structureParams: GraphBuilderStructureParams = defaultStructureParams;
 
@@ -35,6 +37,7 @@ export class GraphVisualiser {
         this.state = { activeQueryDatabase: null };
         this.styleParams = this.syncStyles();
         this.interactionHandler = new InteractionHandler(graph, sigma, this.state, this.styleParams, this.styleService);
+        this.interactionHandler.visualiser = this;
         this.interactionHandler.layout = this.layout;
         this.setupReducers();
         this.layout.onTick = () => {
@@ -109,8 +112,8 @@ export class GraphVisualiser {
             let shouldFade = false;
 
             // Search takes priority over everything
-            if (state.searchMatches != null) {
-                shouldFade = !state.searchMatches.has(node);
+            if (this.searchMatches != null) {
+                shouldFade = !this.searchMatches.has(node);
             } else {
                 // Selection-based fading
                 const isSelectedOrNeighbor = state.selectedNode != null
@@ -147,10 +150,10 @@ export class GraphVisualiser {
             let shouldFade = false;
 
             // Search takes priority over everything
-            if (state.searchMatches != null) {
+            if (this.searchMatches != null) {
                 const source = this.graph.source(edge);
                 const target = this.graph.target(edge);
-                shouldFade = !state.searchMatches.has(source) || !state.searchMatches.has(target);
+                shouldFade = !this.searchMatches.has(source) || !this.searchMatches.has(target);
             } else {
                 // Selection-based fading: keep edges where both endpoints are highlighted
                 let edgeInSelection = false;
@@ -307,10 +310,10 @@ export class GraphVisualiser {
     }
 
     searchGraph(term: string) {
+        this.searchTerm = term;
         if (term === "") {
-            this.interactionHandler.state.searchMatches = null;
+            this.searchMatches = null;
             this.sigma.refresh();
-            this.interactionHandler.onSearchCleared?.();
             return;
         }
 
@@ -330,12 +333,17 @@ export class GraphVisualiser {
                 }
             }
         });
-        this.interactionHandler.state.searchMatches = matches;
+        this.searchMatches = matches;
         this.sigma.refresh();
     }
 
+    clearSearch() {
+        if (this.searchMatches == null) return;
+        this.searchGraph("");
+    }
+
     focusSearchMatches(): void {
-        const matches = this.interactionHandler.state.searchMatches;
+        const matches = this.searchMatches;
         if (!matches || matches.size === 0) return;
 
         const { width, height } = this.sigma.getDimensions();

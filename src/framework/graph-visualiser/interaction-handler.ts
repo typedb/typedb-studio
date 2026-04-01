@@ -1,3 +1,4 @@
+import type { GraphVisualiser } from "./index";
 import Sigma from "sigma";
 import MultiGraph from "graphology";
 import chroma from "chroma-js";
@@ -19,13 +20,12 @@ interface InteractionState {
     highlightedAnswer: number | null; // demonstrative
     selectedNode: string | null;
     selectedNeighbors: Set<string> | null;
-    searchMatches: Set<string> | null;
 }
 
 export class InteractionHandler {
     state: InteractionState;
     layout: LayoutWrapper | null = null;
-    onSearchCleared: (() => void) | null = null;
+    visualiser: GraphVisualiser | null = null;
 
     constructor(public graph: MultiGraph, public renderer: Sigma, private studioState: StudioState, public styleParams: GraphStyles, public styleService?: GraphStyleService) {
         this.state = {
@@ -34,7 +34,6 @@ export class InteractionHandler {
             highlightedAnswer: null,
             selectedNode: null,
             selectedNeighbors: null,
-            searchMatches: null,
         };
         this.registerAll(renderer);
     }
@@ -138,10 +137,7 @@ export class InteractionHandler {
             this.state.didDrag = false;
             return;
         }
-        if (this.state.searchMatches != null) {
-            this.state.searchMatches = null;
-            this.onSearchCleared?.();
-        }
+        this.visualiser?.clearSearch();
         const node = event.node;
         if (this.state.selectedNode === node) {
             this.clearSelection();
