@@ -22,7 +22,7 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { Router, RouterLink } from "@angular/router";
 import { Prec } from "@codemirror/state";
 import { ResizableDirective } from "@hhangular/resizable";
-import { map, startWith } from "rxjs";
+import { map, skip, startWith } from "rxjs";
 import { CodeEditorComponent } from "../../framework/code-editor/code-editor.component";
 import { otherExampleLinter, TypeQL, typeqlAutocompleteExtension } from "../../framework/codemirror-lang-typeql";
 import { DriverAction, QueryRunAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
@@ -73,6 +73,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild("runTabContextMenuTrigger") runTabContextMenuTrigger!: MatMenuTrigger;
     @ViewChild("tabsScrollContainer") tabsScrollContainer?: ElementRef<HTMLElement>;
     @ViewChild("runTabsScrollContainer") runTabsScrollContainer?: ElementRef<HTMLElement>;
+    @ViewChild("graphSearchInput") graphSearchInput?: ElementRef<HTMLInputElement>;
 
     state = inject(QueryPageState);
     driver = inject(DriverState);
@@ -157,7 +158,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
             startWith(this.graphViewRef),
         ).subscribe((queryList) => {
             if (queryList.length === 0) {
-                console.warn("[QueryPage] Graph canvas element not found in DOM. QueryList is empty.");
+                this.state.setGraphCanvasEl(null);
                 return;
             }
             this.canvasEl = queryList.first.nativeElement;
@@ -165,7 +166,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         });
 
         this.previousTabId = this.queryTabsState.currentTab?.id ?? null;
-        this.queryTabsState.selectedTabIndex$.subscribe(() => {
+        this.queryTabsState.selectedTabIndex$.pipe(skip(1)).subscribe(() => {
             this.state.handleTabSwitch(this.previousTabId);
             this.previousTabId = this.queryTabsState.currentTab?.id ?? null;
         });
@@ -202,7 +203,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.state.destroyAllGraphOutputs();
+        this.state.detachAllGraphOutputs();
         this.logResizeObserver?.disconnect();
         this.tabsScrollObserver?.disconnect();
         this.runTabsScrollObserver?.disconnect();

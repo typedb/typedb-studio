@@ -163,6 +163,18 @@
             <div class="answers-container answers-structure-container" [class.invisible]="state.outputTypeControl.value !== 'graph'" [class.maximised]="graphMaximised">
               <div class="graph-split-left" resizable [percent]="panelSizes[5]" (percentChange)="onPanelResize(5, $event)">
                 <div id="structureView" #graphViewRef></div>
+                <div class="graph-search-bar">
+                  <i class="fa-light fa-magnifying-glass"></i>
+                  <input type="text" placeholder="Search" #graphSearchInput (input)="state.graphOutput.visualiser?.searchGraph($any($event.target).value.toLowerCase())">
+                  @if (graphSearchInput.value) {
+                    <button class="graph-search-clear" (click)="graphSearchInput.value = ''; state.graphOutput.visualiser?.searchGraph('')">
+                      <i class="fa-light fa-xmark"></i>
+                    </button>
+                  }
+                  <button class="graph-search-focus" [disabled]="!graphSearchInput.value" (click)="state.graphOutput.visualiser?.focusSearchMatches()">
+                    <i class="fa-light fa-crosshairs"></i>
+                  </button>
+                </div>
                 <ts-graph-zoom-controls [visualiser]="state.graphOutput.visualiser" [queryRunning]="state.graphOutput.status === 'running'"/>
                 <button class="graph-maximise-button" (click)="toggleGraphMaximised()" [matTooltip]="graphMaximised ? 'Exit fullscreen' : 'Fullscreen'" [matTooltipShowDelay]="500">
                   <i class="fa-light" [class.fa-expand]="!graphMaximised" [class.fa-compress]="graphMaximised"></i>

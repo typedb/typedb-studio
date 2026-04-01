@@ -310,6 +310,43 @@ export class GraphVisualiser {
         this.interactionHandler.searchGraph(term);
     }
 
+    focusSearchMatches(): void {
+        const matches = this.interactionHandler.state.searchMatches;
+        if (!matches || matches.size === 0) return;
+
+        const { width, height } = this.sigma.getDimensions();
+        if (width === 0 || height === 0) return;
+
+        // Compute bounding box of matched nodes in graph coordinates
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        matches.forEach(node => {
+            const attrs = this.graph.getNodeAttributes(node);
+            minX = Math.min(minX, attrs.x);
+            maxX = Math.max(maxX, attrs.x);
+            minY = Math.min(minY, attrs.y);
+            maxY = Math.max(maxY, attrs.y);
+        });
+
+        // Compute needed ratio to fit matched nodes, capped at 1 (100% zoom)
+        const graphWidth = maxX - minX || 1;
+        const graphHeight = maxY - minY || 1;
+        const padding = 1.3;
+        const rawRatio = Math.max(graphWidth / width, graphHeight / height) * padding;
+        const ratio = Math.max(Math.min(rawRatio, 20), 1);
+
+        // Convert graph-coordinate center to sigma's normalized camera coordinates
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const bbox = this.sigma.getCustomBBox() || this.sigma.getBBox();
+        const x = (centerX - bbox.x[0]) / (bbox.x[1] - bbox.x[0]) || 0.5;
+        const y = (centerY - bbox.y[0]) / (bbox.y[1] - bbox.y[0]) || 0.5;
+
+        this.autoZoomEnabled = false;
+        this.settingCameraProgrammatically = true;
+        this.sigma.getCamera().setState({ x, y, ratio, angle: 0 });
+        this.settingCameraProgrammatically = false;
+    }
+
     applyStructureMode(): void {
         this.syncStyles();
         this.graph.nodes().forEach(nodeKey => {
@@ -386,6 +423,13 @@ export class GraphVisualiser {
 
     destroy() {
         this.stylesSub.unsubscribe();
+        // Force-lose WebGL contexts before killing sigma so the browser
+        // reclaims context slots immediately instead of waiting for GC.
+        const container = this.sigma.getContainer();
+        container.querySelectorAll("canvas").forEach(canvas => {
+            const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+            if (gl) gl.getExtension("WEBGL_lose_context")?.loseContext();
+        });
         this.sigma.kill();
     }
 }

@@ -102,9 +102,11 @@ export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: Sig
         return this;
     };
 
-    // Convert wheel/trackpad scroll from zoom to pan
+    // Convert wheel/trackpad scroll from zoom to pan, but let pinch-to-zoom
+    // through (browsers fire pinch gestures as wheel events with ctrlKey set)
     const container = renderer.getContainer();
     container.addEventListener("wheel", (e: WheelEvent) => {
+        if (e.ctrlKey) return;
         e.preventDefault();
         e.stopPropagation();
         const camera = renderer.getCamera();

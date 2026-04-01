@@ -25,6 +25,7 @@ interface InteractionState {
 export class InteractionHandler {
     state: InteractionState;
     layout: LayoutWrapper | null = null;
+    onSearchCleared: (() => void) | null = null;
 
     constructor(public graph: MultiGraph, public renderer: Sigma, private studioState: StudioState, public styleParams: GraphStyles, public styleService?: GraphStyleService) {
         this.state = {
@@ -137,6 +138,7 @@ export class InteractionHandler {
             this.state.didDrag = false;
             return;
         }
+        this.searchGraph("");
         const node = event.node;
         if (this.state.selectedNode === node) {
             this.clearSelection();
@@ -257,6 +259,7 @@ export class InteractionHandler {
         if (term === "") {
             this.state.searchMatches = null;
             this.renderer.refresh();
+            this.onSearchCleared?.();
             return;
         }
 

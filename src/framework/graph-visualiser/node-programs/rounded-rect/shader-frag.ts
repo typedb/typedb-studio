@@ -9,6 +9,7 @@ varying float v_aspect;
 varying float v_size;
 
 uniform float u_correctionRatio;
+uniform float u_sizeRatio;
 
 const float CORNER_RADIUS = 0.25;
 const float BORDER_ABSOLUTE = 1.2;
@@ -20,7 +21,9 @@ float sdRoundedRect(vec2 p, vec2 halfSize, float r) {
 }
 
 void main(void) {
-  float bw = BORDER_ABSOLUTE / v_size;
+  float u = log2(max(u_sizeRatio, 1.0));
+  float borderScale = clamp(1.0 + u * (0.96 + u * (-0.75 + 0.29 * u)), 1.0, 5.0);
+  float bw = BORDER_ABSOLUTE * borderScale / v_size;
   vec2 halfSize = vec2(v_aspect * 0.5, 0.5);
   float dist = sdRoundedRect(v_uv, halfSize, CORNER_RADIUS);
 
