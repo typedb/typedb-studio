@@ -307,7 +307,31 @@ export class GraphVisualiser {
     }
 
     searchGraph(term: string) {
-        this.interactionHandler.searchGraph(term);
+        if (term === "") {
+            this.interactionHandler.state.searchMatches = null;
+            this.sigma.refresh();
+            this.interactionHandler.onSearchCleared?.();
+            return;
+        }
+
+        const safeString = (str: string | undefined): string =>
+            str == undefined ? "" : str.toLowerCase();
+
+        const matches = new Set<string>();
+        this.graph.nodes().forEach(node => {
+            const attributes = this.graph.getNodeAttributes(node);
+            if ("concept" in attributes["metadata"]) {
+                const concept = attributes["metadata"].concept;
+                if (("iid" in concept && safeString(concept.iid).indexOf(term) !== -1)
+                    || ("value" in concept && safeString(concept.value).indexOf(term) !== -1)
+                    || ("type" in concept && safeString(concept.type.label).indexOf(term) !== -1)
+                    || ("label" in concept && safeString(concept.label).indexOf(term) !== -1)) {
+                    matches.add(node);
+                }
+            }
+        });
+        this.interactionHandler.state.searchMatches = matches;
+        this.sigma.refresh();
     }
 
     focusSearchMatches(): void {

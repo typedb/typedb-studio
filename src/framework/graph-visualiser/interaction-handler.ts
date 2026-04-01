@@ -138,7 +138,10 @@ export class InteractionHandler {
             this.state.didDrag = false;
             return;
         }
-        this.searchGraph("");
+        if (this.state.searchMatches != null) {
+            this.state.searchMatches = null;
+            this.onSearchCleared?.();
+        }
         const node = event.node;
         if (this.state.selectedNode === node) {
             this.clearSelection();
@@ -255,32 +258,6 @@ export class InteractionHandler {
         })
     }
 
-    searchGraph(term: string) {
-        if (term === "") {
-            this.state.searchMatches = null;
-            this.renderer.refresh();
-            this.onSearchCleared?.();
-            return;
-        }
-
-        const safeString = (str: string | undefined): string =>
-            str == undefined ? "" : str.toLowerCase();
-
-        const matches = new Set<string>();
-        this.graph.nodes().forEach(node => {
-            const attributes = this.graph.getNodeAttributes(node);
-            if ("concept" in attributes["metadata"]) {
-                const concept = attributes["metadata"].concept;
-                if (("iid" in concept && safeString(concept.iid).indexOf(term) !== -1)
-                    || ("label" in concept && safeString(concept.label).indexOf(term) !== -1)
-                    || ("value" in concept && safeString(concept.value).indexOf(term) !== -1)) {
-                    matches.add(node);
-                }
-            }
-        });
-        this.state.searchMatches = matches;
-        this.renderer.refresh();
-    }
 }
 
 enum StudioSigmaEventType {
