@@ -198,7 +198,7 @@
                   }
                 }
               </div>
-              <ts-graph-customisation-panel resizable [percent]="panelSizes[6]" (percentChange)="onPanelResize(6, $event)" [visualiser]="state.graphOutput.visualiser"/>
+              <ts-graph-styles-pane resizable [percent]="panelSizes[6]" (percentChange)="onPanelResize(6, $event)" [visualiser]="state.graphOutput.visualiser"/>
             </div>
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'raw'">
               <mat-form-field class="code-text-field">

@@ -1,0 +1,124 @@
+<div class="panel-section presets-section">
+  <div class="preset-cards">
+    <div class="preset-card" [class.active]="activePreset === 'default'">
+      <div class="preset-info">
+        <span class="preset-name">The Classic</span>
+        <span class="preset-description">The one you know and love</span>
+      </div>
+      <div class="preset-actions">
+        <button class="preset-apply" (click)="applyPreset('default')">
+          @if (appliedPreset === 'default') { <i class="fa-light fa-check"></i> } @else { Apply }
+        </button>
+      </div>
+    </div>
+    <div class="preset-card" [class.active]="activePreset === 'uniform'">
+      <div class="preset-info">
+        <span class="preset-name">Fair and Square</span>
+        <span class="preset-description">Rectangles everywhere, colors do the talking</span>
+      </div>
+      <div class="preset-actions">
+        <button class="preset-apply" (click)="applyPreset('uniform')">
+          @if (appliedPreset === 'uniform') { <i class="fa-light fa-check"></i> } @else { Apply }
+        </button>
+      </div>
+    </div>
+    <div class="preset-card" [class.active]="activePreset === 'classic'">
+      <div class="preset-info">
+        <span class="preset-name">Filled with Love</span>
+        <span class="preset-description">Bold, solid colors all the way through</span>
+      </div>
+      <div class="preset-actions">
+        <button class="preset-apply" (click)="applyPreset('classic')">
+          @if (appliedPreset === 'classic') { <i class="fa-light fa-check"></i> } @else { Apply }
+        </button>
+      </div>
+    </div>
+    <div class="preset-card" [class.active]="activePreset === 'grayscale'">
+      <div class="preset-info">
+        <span class="preset-name">Fifty Shades of Data</span>
+        <span class="preset-description">Who needs color when you've got elegance?</span>
+      </div>
+      <div class="preset-actions">
+        <button class="preset-apply" (click)="applyPreset('grayscale')">
+          @if (appliedPreset === 'grayscale') { <i class="fa-light fa-check"></i> } @else { Apply }
+        </button>
+      </div>
+    </div>
+    <div class="preset-card" [class.active]="activePreset === 'structure'">
+      <div class="preset-info">
+        <span class="preset-name">Size over Substance</span>
+        <span class="preset-description">Tiny nodes, big connections, no distractions</span>
+      </div>
+      <div class="preset-actions">
+        <button class="preset-apply" (click)="applyPreset('structure')">
+          @if (appliedPreset === 'structure') { <i class="fa-light fa-check"></i> } @else { Apply }
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @if (customPresets.length > 0) {
+    <div class="custom-presets-header">
+      <span class="highlight-group-label">Saved presets</span>
+    </div>
+    <div class="preset-cards">
+      @for (preset of customPresets; track preset.name) {
+        @if (editingPreset === preset.name) {
+          <div class="preset-card editing">
+            <div class="save-preset-inputs">
+              <input class="save-preset-input" [(ngModel)]="editPresetName" placeholder="Name" (keydown.enter)="confirmEditPreset(preset.name)" (keydown.escape)="cancelEditPreset()" autofocus>
+              <input class="save-preset-input" [(ngModel)]="editPresetDescription" placeholder="Description (optional)" (keydown.enter)="confirmEditPreset(preset.name)" (keydown.escape)="cancelEditPreset()">
+            </div>
+            <button class="preset-apply" (click)="confirmEditPreset(preset.name)" [disabled]="!editPresetName.trim()">Save</button>
+            <button class="preset-icon-button delete" (click)="cancelEditPreset()"><i class="fa-light fa-xmark"></i></button>
+          </div>
+        } @else {
+          <div class="preset-card">
+            <div class="preset-info">
+              <span class="preset-name">{{ preset.name }}</span>
+              @if (preset.description) {
+                <span class="preset-description">{{ preset.description }}</span>
+              }
+            </div>
+            <div class="preset-actions">
+              <button class="preset-apply" (click)="applyCustomPreset(preset.name)">
+                @if (appliedPreset === 'custom:' + preset.name) { <i class="fa-light fa-check"></i> } @else { Apply }
+              </button>
+              <button class="preset-kebab" [matMenuTriggerFor]="presetMenu">
+                <i class="fa-light fa-ellipsis-vertical"></i>
+              </button>
+              <mat-menu #presetMenu="matMenu" class="preset-menu">
+                <button mat-menu-item (click)="overwriteCustomPreset(preset.name)">
+                  <i class="fa-light fa-floppy-disk"></i> Overwrite with current styles
+                </button>
+                <button mat-menu-item (click)="startEditPreset(preset.name)">
+                  <i class="fa-light fa-pen"></i> Edit details
+                </button>
+                <button mat-menu-item class="delete" (click)="deleteCustomPreset(preset.name)">
+                  <i class="fa-light fa-xmark"></i> Delete
+                </button>
+              </mat-menu>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <div class="save-preset-area">
+    @if (savingPreset) {
+      <div class="save-preset-inputs">
+        <input class="save-preset-input" [(ngModel)]="newPresetName" placeholder="Name" (keydown.enter)="confirmSavePreset()" (keydown.escape)="cancelSavePreset()" autofocus>
+        <input class="save-preset-input" [(ngModel)]="newPresetDescription" placeholder="Description (optional)" (keydown.enter)="confirmSavePreset()" (keydown.escape)="cancelSavePreset()">
+        <div class="save-preset-actions">
+          <button class="preset-apply" (click)="confirmSavePreset()" [disabled]="!newPresetName.trim()">Save</button>
+          <button class="preset-icon-button delete" (click)="cancelSavePreset()"><i class="fa-light fa-xmark"></i></button>
+        </div>
+      </div>
+    } @else {
+      <button class="action-button save-preset-button" (click)="startSavingPreset()">
+        <i class="fa-light fa-plus"></i> Save current configuration
+      </button>
+    }
+  </div>
+</div>
