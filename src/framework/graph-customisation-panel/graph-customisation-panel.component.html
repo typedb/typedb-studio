@@ -5,7 +5,7 @@
 
   <!-- Top-level tabs -->
   <div class="tab-bar">
-    <button class="tab" [class.active]="topTab === 'highlights'" (click)="topTab = 'highlights'">Highlights</button>
+    <button class="tab" [class.active]="topTab === 'highlights'" (click)="topTab = 'highlights'">Highlights @if (isHighlightActive) { <span class="highlight-indicator"></span> }</button>
     <button class="tab" [class.active]="topTab === 'presets'" (click)="topTab = 'presets'">Presets</button>
     <button class="tab" [class.active]="topTab === 'customise'" (click)="topTab = 'customise'">Customise</button>
   </div>

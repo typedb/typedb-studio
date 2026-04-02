@@ -66,6 +66,16 @@
   }
 }
 
+.highlight-indicator {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff6b9d;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
 .panel-body {
   padding: 8px 0;
 }

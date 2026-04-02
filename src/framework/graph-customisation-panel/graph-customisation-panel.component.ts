@@ -299,6 +299,10 @@ export class GraphCustomisationPanelComponent implements OnChanges {
 
     // -- Highlights --
 
+    get isHighlightActive(): boolean {
+        return this.styleService.isHighlightActive();
+    }
+
     isKindHighlighted(kind: VertexKind): boolean {
         return this.styleService.highlightedKinds.has(kind);
     }
