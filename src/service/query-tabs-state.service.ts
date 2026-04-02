@@ -14,6 +14,7 @@ export interface QueryTab {
     name: string;
     query: string;
     pinned?: boolean;
+    outputType?: string;
 }
 
 @Injectable({
@@ -57,6 +58,7 @@ export class QueryTabsState {
             name: tab.name,
             query: tab.query,
             pinned: tab.pinned,
+            outputType: tab.outputType,
         }));
 
         this.appData.queryTabs.setTabs(
@@ -77,6 +79,7 @@ export class QueryTabsState {
             name: persistedTab.name,
             query: persistedTab.query,
             pinned: persistedTab.pinned,
+            outputType: persistedTab.outputType,
         }));
 
         this.openTabs$.next(restoredTabs);
@@ -126,7 +129,7 @@ export class QueryTabsState {
         const newTabs = tabs.filter(t => t !== tab);
 
         if (newTabs.length === 0) {
-            this.newTab();
+            this.resetTab(tab);
             return;
         }
 
@@ -177,21 +180,26 @@ export class QueryTabsState {
 
     closeAllTabs() {
         const tabs = this.openTabs$.value;
-        const newTabs = tabs.filter(t => t.pinned);
+        const unpinned = tabs.filter(t => !t.pinned);
+        const pinned = tabs.filter(t => t.pinned);
 
-        for (const t of tabs) {
-            if (!t.pinned) {
-                this.tabControls.delete(t.id);
-            }
+        for (const t of unpinned) {
+            this.tabControls.delete(t.id);
         }
 
-        if (newTabs.length === 0) {
-            this.openTabs$.next([]);
-            this.newTab();
+        if (pinned.length === 0) {
+            const lastTab = tabs[tabs.length - 1];
+            this.resetTab(lastTab);
             return;
         }
 
-        this.openTabs$.next(newTabs);
+        this.openTabs$.next(pinned);
+        this.selectedTabIndex$.next(0);
+    }
+
+    private resetTab(tab: QueryTab) {
+        const resetTab: QueryTab = { ...tab, name: "Query 1", query: "", pinned: false, outputType: undefined };
+        this.openTabs$.next([resetTab]);
         this.selectedTabIndex$.next(0);
     }
 
@@ -250,6 +258,16 @@ export class QueryTabsState {
         this.openTabs$.next(newTabs);
         this.selectedTabIndex$.next(insertIndex);
         return newTab;
+    }
+
+    updateTabOutputType(tabId: string, outputType: string) {
+        const tabs = this.openTabs$.value;
+        const index = tabs.findIndex(t => t.id === tabId);
+        if (index === -1) return;
+
+        const newTabs = [...tabs];
+        newTabs[index] = { ...tabs[index], outputType };
+        this.openTabs$.next(newTabs);
     }
 
     updateTabQuery(tabId: string, query: string) {

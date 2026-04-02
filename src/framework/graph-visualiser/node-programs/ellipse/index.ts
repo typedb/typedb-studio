@@ -5,21 +5,21 @@ import { floatColor } from "sigma/utils";
 
 import FRAGMENT_SHADER_SOURCE from "./shader-frag";
 import VERTEX_SHADER_SOURCE from "./shader-vert";
-import { drawSquareNodeHover, drawSquareNodeLabel } from "./utils";
+import { drawEllipseNodeLabel, drawEllipseNodeHover } from "./utils";
 
 const { UNSIGNED_BYTE, FLOAT } = WebGLRenderingContext;
 
 const UNIFORMS = ["u_sizeRatio", "u_correctionRatio", "u_cameraAngle", "u_matrix"] as const;
 
-const PI = Math.PI;
+const MARGIN = 1.05;
 
-export class NodeDiamondProgram<
+export class NodeEllipseProgram<
     N extends Attributes = Attributes,
     E extends Attributes = Attributes,
     G extends Attributes = Attributes,
 > extends NodeProgram<(typeof UNIFORMS)[number], N, E, G> {
-    override drawHover = drawSquareNodeHover;
-    override drawLabel = drawSquareNodeLabel;
+    override drawHover = drawEllipseNodeHover;
+    override drawLabel = drawEllipseNodeLabel;
 
     getDefinition() {
         return {
@@ -31,22 +31,32 @@ export class NodeDiamondProgram<
             ATTRIBUTES: [
                 { name: "a_position", size: 2, type: FLOAT },
                 { name: "a_size", size: 1, type: FLOAT },
+                { name: "a_aspect", size: 1, type: FLOAT },
                 { name: "a_color", size: 4, type: UNSIGNED_BYTE, normalized: true },
+                { name: "a_borderColor", size: 4, type: UNSIGNED_BYTE, normalized: true },
                 { name: "a_id", size: 4, type: UNSIGNED_BYTE, normalized: true },
             ],
-            CONSTANT_ATTRIBUTES: [{ name: "a_angle", size: 1, type: FLOAT }],
-            CONSTANT_DATA: [[PI / 4], [(3 * PI) / 4], [-PI / 4], [(3 * PI) / 4], [-PI / 4], [(-3 * PI) / 4]],
+            CONSTANT_ATTRIBUTES: [{ name: "a_offset", size: 2, type: FLOAT }],
+            CONSTANT_DATA: [
+                [MARGIN, MARGIN],  [-MARGIN, MARGIN],  [MARGIN, -MARGIN],
+                [-MARGIN, MARGIN], [MARGIN, -MARGIN], [-MARGIN, -MARGIN],
+            ],
         };
     }
 
     processVisibleItem(nodeIndex: number, startIndex: number, data: NodeDisplayData) {
         const array = this.array;
         const color = floatColor(data.color);
+        const borderColor = floatColor((data as any).borderColor || "#00000000");
+        const w = (data as any).width ?? data.size;
+        const h = (data as any).height ?? data.size;
 
         array[startIndex++] = data.x;
         array[startIndex++] = data.y;
-        array[startIndex++] = data.size;
+        array[startIndex++] = h;
+        array[startIndex++] = w / h;
         array[startIndex++] = color;
+        array[startIndex++] = borderColor;
         array[startIndex++] = nodeIndex;
     }
 

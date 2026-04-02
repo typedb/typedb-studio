@@ -73,6 +73,22 @@ button {
 
 .answers-structure-container {
     overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    gap: 0 !important;
+
+    ::ng-deep > app-drag-handle[direction="horizontal"] {
+        width: 5px;
+        margin-left: -2px;
+        margin-right: -3px;
+        z-index: 2;
+    }
+}
+
+.graph-split-left {
+    position: relative;
+    overflow: hidden;
+    height: 100%;
 }
 
 .status-text-container {
@@ -109,7 +125,7 @@ button {
 }
 
 #structureView {
-    width: 100%;
-    height: 100%;
+    position: absolute;
+    inset: 0;
     display: flex;
 }

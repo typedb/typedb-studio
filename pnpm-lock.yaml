@@ -95,9 +95,18 @@ importers:
       '@typedb/driver-http':
         specifier: 3.7.0
         version: 3.7.0
+      '@typedb/graph-utils':
+        specifier: workspace:*
+        version: link:typedb-graph-utils/typescript
+      '@types/d3-force':
+        specifier: ^3.0.10
+        version: 3.0.10
       chroma-js:
         specifier: 3.1.2
         version: 3.1.2
+      d3-force:
+        specifier: ^3.0.0
+        version: 3.0.0
       graphology:
         specifier: 0.26.0
         version: 0.26.0(graphology-types@0.24.8)
@@ -201,6 +210,16 @@ importers:
       unplugin-lezer:
         specifier: 1.0.1
         version: 1.0.1(esbuild@0.25.5)(rollup@4.40.2)(vite@6.3.5(@types/node@25.3.0)(jiti@1.21.7)(less@4.3.0)(sass@1.88.0)(terser@5.39.1))(webpack@5.99.8(esbuild@0.25.5))
+
+  typedb-graph-utils/typescript:
+    dependencies:
+      '@typedb/driver-http':
+        specifier: ^3.8.0
+        version: 3.8.1
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.8.3
 
   typedb-web/common:
     dependencies:
@@ -3008,6 +3027,9 @@ packages:
 
   '@typedb/driver-http@3.7.0':
     resolution: {integrity: sha512-vFdyq7K/0MCU1QezoL3cJ6BrowG883d9Hvh6rtdgos4yN4qsQFTtLG0pnkA3H+1IENA5YWVq+YKuMfb9gq+Amg==}
+
+  '@typedb/driver-http@3.8.1':
+    resolution: {integrity: sha512-XDxabZO1wWQLovcAgRojeO1Cs2o7MNwhxmW+v3k//XgdsmzF7lEANG8Wyw2U9w65579M5KLn5AEYxfzl5fnh8g==}
 
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
@@ -9449,6 +9471,8 @@ snapshots:
 
   '@typedb/driver-http@3.7.0': {}
 
+  '@typedb/driver-http@3.8.1': {}
+
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
@@ -9520,8 +9544,7 @@ snapshots:
       '@types/d3-dsv': 3.0.7
     optional: true
 
-  '@types/d3-force@3.0.10':
-    optional: true
+  '@types/d3-force@3.0.10': {}
 
   '@types/d3-format@3.0.4':
     optional: true
@@ -10345,8 +10368,7 @@ snapshots:
       delaunator: 5.0.1
     optional: true
 
-  d3-dispatch@3.0.1:
-    optional: true
+  d3-dispatch@3.0.1: {}
 
   d3-drag@3.0.0:
     dependencies:
@@ -10374,7 +10396,6 @@ snapshots:
       d3-dispatch: 3.0.1
       d3-quadtree: 3.0.1
       d3-timer: 3.0.1
-    optional: true
 
   d3-format@3.1.2:
     optional: true
@@ -10401,8 +10422,7 @@ snapshots:
   d3-polygon@3.0.1:
     optional: true
 
-  d3-quadtree@3.0.1:
-    optional: true
+  d3-quadtree@3.0.1: {}
 
   d3-random@3.0.1:
     optional: true
@@ -10451,8 +10471,7 @@ snapshots:
       d3-array: 3.2.4
     optional: true
 
-  d3-timer@3.0.1:
-    optional: true
+  d3-timer@3.0.1: {}
 
   d3-transition@3.0.1(d3-selection@3.0.0):
     dependencies:

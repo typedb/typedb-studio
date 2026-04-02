@@ -8,10 +8,10 @@ import { inject, Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { BehaviorSubject, combineLatest, map, Observable, pairwise, shareReplay, startWith, switchMap } from "rxjs";
 import { DriverAction } from "../concept/action";
-import {createSigmaRenderer, GraphVisualiser} from "../framework/graph-visualiser";
-import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
-import { newVisualGraph, VisualGraph } from "../framework/graph-visualiser/graph";
-import { Layouts } from "../framework/graph-visualiser/layouts";
+import { GraphVisualiser } from "../framework/graph-visualiser";
+import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/sigma-settings";
+import { newGraph, Graph } from "../framework/graph-visualiser/graph";
+import { Layouts } from "../framework/graph-visualiser/layout";
 import { detectOS } from "../framework/util/os";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
@@ -22,6 +22,7 @@ import {
     ApiResponse, Attribute, Concept, ConceptDocument, ConceptRow, isApiErrorResponse, QueryResponse, Value
 } from "@typedb/driver-http";
 import { AppData, RowLimit } from "./app-data.service";
+import { GraphStyleService } from "./graph-style.service";
 
 export type OutputType = "raw" | "log" | "table" | "graph";
 export { RowLimit } from "./app-data.service";
@@ -30,20 +31,22 @@ export interface RunOutputState {
     id: string;
     label: string;
     query: string;
+    pinned: boolean;
     log: LogOutputState;
     table: TableOutputState;
     graph: GraphOutputState;
     raw: RawOutputState;
 }
 
-export function createRunOutputState(label: string, query: string): RunOutputState {
+export function createRunOutputState(label: string, query: string, styleService: GraphStyleService): RunOutputState {
     return {
         id: crypto.randomUUID(),
         label,
         query,
+        pinned: false,
         log: new LogOutputState(),
         table: new TableOutputState(),
-        graph: new GraphOutputState(),
+        graph: new GraphOutputState(styleService),
         raw: new RawOutputState(),
     };
 }
@@ -55,12 +58,13 @@ export interface TabOutputState {
     outputTypeControl: FormControl<OutputType>;
 }
 
-function createTabOutputState(): TabOutputState {
+function createTabOutputState(initialOutputType?: string): TabOutputState {
+    const outputType = (initialOutputType as OutputType) || "log";
     return {
         runs: [],
         selectedRunIndex: -1,
         runCounter: 0,
-        outputTypeControl: new FormControl("log" as OutputType, { nonNullable: true }),
+        outputTypeControl: new FormControl(outputType, { nonNullable: true }),
     };
 }
 
@@ -99,6 +103,7 @@ export class QueryPageState {
     schema = inject(SchemaState);
     private snackbar = inject(SnackbarService);
     queryTabs = inject(QueryTabsState);
+    private graphStyleService = inject(GraphStyleService);
 
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
     rowLimitControl = new FormControl(this.appData.preferences.queryRowLimit(), { nonNullable: true });
@@ -108,14 +113,18 @@ export class QueryPageState {
 
     private tabOutputStates = new Map<string, TabOutputState>();
     private _fallbackOutputState = createTabOutputState();
-    private _fallbackRunState = createRunOutputState("", "");
+    private _fallbackRunState = createRunOutputState("", "", this.graphStyleService);
     private _graphCanvasEl: HTMLElement | null = null;
 
     getOrCreateTabOutputState(tabId: string): TabOutputState {
         let state = this.tabOutputStates.get(tabId);
         if (!state) {
-            state = createTabOutputState();
+            const tab = this.queryTabs.openTabs$.value.find(t => t.id === tabId);
+            state = createTabOutputState(tab?.outputType);
             this.tabOutputStates.set(tabId, state);
+            state.outputTypeControl.valueChanges.subscribe(value => {
+                this.queryTabs.updateTabOutputType(tabId, value);
+            });
         }
         return state;
     }
@@ -215,11 +224,16 @@ export class QueryPageState {
         }
     }
 
-    setGraphCanvasEl(el: HTMLElement): void {
+    setGraphCanvasEl(el: HTMLElement | null): void {
         this._graphCanvasEl = el;
+        if (!el) return;
         const run = currentRun(this.currentTabOutputState);
         if (run) {
-            run.graph.canvasEl = el;
+            requestAnimationFrame(() => {
+                run.graph.detach();
+                run.graph.attach(el);
+                run.graph.resize();
+            });
         }
     }
 
@@ -233,8 +247,22 @@ export class QueryPageState {
             }
         }
         if (currentTab && this._graphCanvasEl) {
-            const curRun = currentRun(this.currentTabOutputState);
-            if (curRun) curRun.graph.attach(this._graphCanvasEl);
+            const tabState = this.currentTabOutputState;
+            const curRun = currentRun(tabState);
+            if (curRun) {
+                curRun.graph.attach(this._graphCanvasEl);
+                if (tabState.outputTypeControl.value === "graph") {
+                    requestAnimationFrame(() => curRun.graph.resize());
+                }
+            }
+        }
+    }
+
+    detachAllGraphOutputs(): void {
+        for (const tabState of this.tabOutputStates.values()) {
+            for (const run of tabState.runs) {
+                run.graph.detach();
+            }
         }
     }
 
@@ -288,6 +316,58 @@ export class QueryPageState {
         }
     }
 
+    closeOtherRuns(run: RunOutputState) {
+        const tabState = this.currentTabOutputState;
+        for (let i = tabState.runs.length - 1; i >= 0; i--) {
+            if (tabState.runs[i] !== run && !tabState.runs[i].pinned) {
+                this.closeRun(i);
+            }
+        }
+    }
+
+    closeRunsToRight(run: RunOutputState) {
+        const tabState = this.currentTabOutputState;
+        const index = tabState.runs.indexOf(run);
+        if (index < 0) return;
+        for (let i = tabState.runs.length - 1; i > index; i--) {
+            if (!tabState.runs[i].pinned) {
+                this.closeRun(i);
+            }
+        }
+    }
+
+    closeAllRuns() {
+        const tabState = this.currentTabOutputState;
+        for (let i = tabState.runs.length - 1; i >= 0; i--) {
+            if (!tabState.runs[i].pinned) {
+                this.closeRun(i);
+            }
+        }
+    }
+
+    togglePinRun(run: RunOutputState) {
+        run.pinned = !run.pinned;
+        if (run.pinned) {
+            // Move pinned run to be adjacent to other pinned runs
+            const tabState = this.currentTabOutputState;
+            const selectedRun = currentRun(tabState);
+            const currentIndex = tabState.runs.indexOf(run);
+            const lastPinnedIndex = tabState.runs.reduce((acc, r, i) => r.pinned && r !== run ? i : acc, -1);
+            const targetIndex = lastPinnedIndex + 1;
+            if (currentIndex !== targetIndex) {
+                tabState.runs.splice(currentIndex, 1);
+                tabState.runs.splice(targetIndex, 0, run);
+                if (selectedRun) {
+                    tabState.selectedRunIndex = tabState.runs.indexOf(selectedRun);
+                }
+            }
+        }
+    }
+
+    renameRun(run: RunOutputState, newName: string) {
+        run.label = newName;
+    }
+
     get currentQueryControl(): FormControl<string> | null {
         const currentTab = this.queryTabs.currentTab;
         if (!currentTab) return null;
@@ -307,11 +387,23 @@ export class QueryPageState {
         const oldRun = currentRun(tabState);
         if (oldRun) oldRun.graph.detach();
 
+        // If the current run is not pinned, replace it; otherwise append
+        const replaceIndex = oldRun && !oldRun.pinned ? tabState.selectedRunIndex : -1;
+        if (replaceIndex >= 0) {
+            oldRun!.graph.destroy();
+            tabState.runs.splice(replaceIndex, 1);
+        }
+
         // Create new run
         tabState.runCounter++;
-        const newRun = createRunOutputState(`Run ${tabState.runCounter}`, query);
-        tabState.runs.push(newRun);
-        tabState.selectedRunIndex = tabState.runs.length - 1;
+        const newRun = createRunOutputState(`Run ${tabState.runCounter}`, query, this.graphStyleService);
+        if (replaceIndex >= 0) {
+            tabState.runs.splice(replaceIndex, 0, newRun);
+            tabState.selectedRunIndex = replaceIndex;
+        } else {
+            tabState.runs.push(newRun);
+            tabState.selectedRunIndex = tabState.runs.length - 1;
+        }
 
         // Initialise the new run's outputs
         newRun.log.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);
@@ -689,10 +781,13 @@ export class GraphOutputState {
     query?: string;
     database?: string;
     private _canvasEl: HTMLElement | null = null;
-    private _preservedGraph: VisualGraph | null = null;
+    private _preservedGraph: Graph | null = null;
+    private _preservedCamera: { x: number; y: number; ratio: number; angle: number } | null = null;
     private _pendingResponses: ApiResponse<QueryResponse>[] = [];
+    private _styleService: GraphStyleService;
 
-    constructor() {
+    constructor(styleService: GraphStyleService) {
+        this._styleService = styleService;
     }
 
     get canvasEl(): HTMLElement | null {
@@ -725,12 +820,11 @@ export class GraphOutputState {
         }
 
         if (!this.visualiser) {
-            const graph = this._preservedGraph ?? newVisualGraph();
+            const graph = this._preservedGraph ?? newGraph();
             this._preservedGraph = graph;
             const sigma = createSigmaRenderer(this._canvasEl!, defaultSigmaSettings as any, graph);
-            const layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
-            // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
-            this.visualiser = new GraphVisualiser(graph, sigma, layout);
+            const layout = Layouts.createD3ForceSupervisor(graph);
+            this.visualiser = new GraphVisualiser(graph, sigma, layout, this._styleService);
         }
 
         switch (res.ok.answerType) {
@@ -747,7 +841,7 @@ export class GraphOutputState {
                         document.getElementById("query-highlight-div")!.innerHTML = highlightedQuery;
                     }
                 }
-                this.visualiser.colorEdgesByConstraintIndex(false);
+                this.visualiser.colorEdgesByConstraintIndex(!this._styleService.colorEdgesByConstraint);
                 this.status = "ok";
                 break;
             }
@@ -768,7 +862,9 @@ export class GraphOutputState {
     detach(): void {
         if (this.visualiser) {
             this._preservedGraph = this.visualiser.graph;
-            this.visualiser.sigma.kill();
+            const cam = this.visualiser.sigma.getCamera().getState();
+            this._preservedCamera = { x: cam.x, y: cam.y, ratio: cam.ratio, angle: cam.angle };
+            this.visualiser.destroy();
             this.visualiser = null;
         }
         this._canvasEl = null;
@@ -778,8 +874,12 @@ export class GraphOutputState {
         this.canvasEl = canvasEl;
         if (this._preservedGraph && this._preservedGraph.nodes().length > 0 && !this.visualiser) {
             const sigma = createSigmaRenderer(canvasEl, defaultSigmaSettings as any, this._preservedGraph);
-            const layout = Layouts.createForceAtlasStatic(this._preservedGraph, undefined);
-            this.visualiser = new GraphVisualiser(this._preservedGraph, sigma, layout);
+            const layout = Layouts.createD3ForceStatic(this._preservedGraph);
+            this.visualiser = new GraphVisualiser(this._preservedGraph, sigma, layout, this._styleService);
+            if (this._preservedCamera) {
+                this.visualiser.sigma.getCamera().setState(this._preservedCamera);
+                this._preservedCamera = null;
+            }
         }
     }
 

@@ -1,0 +1,475 @@
+<div class="panel">
+  <div class="panel-header">
+    <span class="panel-title">Graph Style</span>
+  </div>
+
+  <!-- Top-level tabs -->
+  <div class="tab-bar">
+    <button class="tab" [class.active]="topTab === 'highlights'" (click)="topTab = 'highlights'">Highlights</button>
+    <button class="tab" [class.active]="topTab === 'presets'" (click)="topTab = 'presets'">Presets</button>
+    <button class="tab" [class.active]="topTab === 'customise'" (click)="topTab = 'customise'">Customise</button>
+  </div>
+
+  <div class="panel-scroll">
+    <!-- Highlights -->
+    @if (topTab === 'highlights') {
+      <div class="panel-section highlights-section">
+        <div class="highlight-group">
+          <div class="highlight-group-header">
+            <span class="highlight-group-label">Kinds</span>
+            <div class="highlight-group-actions">
+              <button class="highlight-action-button" (click)="selectAllKinds()">All</button>
+              <button class="highlight-action-button" (click)="unselectAllKinds()">None</button>
+            </div>
+          </div>
+          <div class="highlight-chips">
+            @for (row of displayKinds; track row.kind) {
+              <button class="highlight-chip"
+                      [class.active]="isKindHighlighted(row.kind)"
+                      [style.--chip-color]="getKindBorderColor(row.kind)"
+                      (click)="toggleHighlightKind(row.kind)"
+                      (dblclick)="soloHighlightKind(row.kind)">
+                {{ row.label }}
+              </button>
+            }
+          </div>
+        </div>
+        @if (discoveredTypes.length > 0) {
+          <div class="highlight-group">
+            <div class="highlight-group-header">
+              <span class="highlight-group-label">Types</span>
+              <div class="highlight-group-actions">
+                <button class="highlight-action-button" (click)="selectAllTypes()">All</button>
+                <button class="highlight-action-button" (click)="unselectAllTypes()">None</button>
+              </div>
+            </div>
+            <div class="highlight-chips">
+              @for (row of discoveredTypes; track row.typeLabel) {
+                <button class="highlight-chip"
+                        [class.active]="isTypeHighlighted(row.typeLabel)"
+                        [style.--chip-color]="getTypeBorderColor(row.typeLabel, row.kind)"
+                        (click)="toggleHighlightType(row.typeLabel)"
+                        (dblclick)="soloHighlightType(row.typeLabel)">
+                  {{ row.typeLabel }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+        <div class="highlight-group">
+          <div class="highlight-group-header">
+            <span class="highlight-group-label">Edges</span>
+            <div class="highlight-group-actions">
+              <button class="highlight-action-button" (click)="selectAllEdges()">All</button>
+              <button class="highlight-action-button" (click)="unselectAllEdges()">None</button>
+            </div>
+          </div>
+          <div class="highlight-chips">
+            @for (row of edgeLabels; track row.tag) {
+              <button class="highlight-chip"
+                      [class.active]="isEdgeHighlighted(row.tag)"
+                      [style.--chip-color]="getEdgeLabelColor(row.tag)"
+                      (click)="toggleHighlightEdge(row.tag)"
+                      (dblclick)="soloHighlightEdge(row.tag)">
+                {{ row.displayLabel }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Presets -->
+    @if (topTab === 'presets') {
+      <div class="panel-section presets-section">
+        <div class="preset-cards">
+          <div class="preset-card" [class.active]="activePreset === 'default'">
+            <div class="preset-info">
+              <span class="preset-name">Home Sweet Home</span>
+              <span class="preset-description">The one you know and love</span>
+            </div>
+            <div class="preset-actions">
+              <button class="preset-apply" (click)="applyPreset('default')">
+                @if (appliedPreset === 'default') { <i class="fa-light fa-check"></i> } @else { Apply }
+              </button>
+            </div>
+          </div>
+          <div class="preset-card" [class.active]="activePreset === 'uniform'">
+            <div class="preset-info">
+              <span class="preset-name">One Shape to Rule Them All</span>
+              <span class="preset-description">Rectangles everywhere, colors do the talking</span>
+            </div>
+            <div class="preset-actions">
+              <button class="preset-apply" (click)="applyPreset('uniform')">
+                @if (appliedPreset === 'uniform') { <i class="fa-light fa-check"></i> } @else { Apply }
+              </button>
+            </div>
+          </div>
+          <div class="preset-card" [class.active]="activePreset === 'classic'">
+            <div class="preset-info">
+              <span class="preset-name">No Half Measures</span>
+              <span class="preset-description">Bold, solid colors all the way through</span>
+            </div>
+            <div class="preset-actions">
+              <button class="preset-apply" (click)="applyPreset('classic')">
+                @if (appliedPreset === 'classic') { <i class="fa-light fa-check"></i> } @else { Apply }
+              </button>
+            </div>
+          </div>
+          <div class="preset-card" [class.active]="activePreset === 'grayscale'">
+            <div class="preset-info">
+              <span class="preset-name">Fifty Shades of Data</span>
+              <span class="preset-description">Who needs color when you've got elegance?</span>
+            </div>
+            <div class="preset-actions">
+              <button class="preset-apply" (click)="applyPreset('grayscale')">
+                @if (appliedPreset === 'grayscale') { <i class="fa-light fa-check"></i> } @else { Apply }
+              </button>
+            </div>
+          </div>
+          <div class="preset-card" [class.active]="activePreset === 'structure'">
+            <div class="preset-info">
+              <span class="preset-name">Big Picture Energy</span>
+              <span class="preset-description">Tiny nodes, big connections, no distractions</span>
+            </div>
+            <div class="preset-actions">
+              <button class="preset-apply" (click)="applyPreset('structure')">
+                @if (appliedPreset === 'structure') { <i class="fa-light fa-check"></i> } @else { Apply }
+              </button>
+            </div>
+          </div>
+        </div>
+
+        @if (customPresets.length > 0) {
+          <div class="custom-presets-header">
+            <span class="highlight-group-label">Saved presets</span>
+          </div>
+          <div class="preset-cards">
+            @for (preset of customPresets; track preset.name) {
+              @if (editingPreset === preset.name) {
+                <div class="preset-card editing">
+                  <div class="save-preset-inputs">
+                    <input class="save-preset-input" [(ngModel)]="editPresetName" placeholder="Name" (keydown.enter)="confirmEditPreset(preset.name)" (keydown.escape)="cancelEditPreset()" autofocus>
+                    <input class="save-preset-input" [(ngModel)]="editPresetDescription" placeholder="Description (optional)" (keydown.enter)="confirmEditPreset(preset.name)" (keydown.escape)="cancelEditPreset()">
+                  </div>
+                  <button class="preset-apply" (click)="confirmEditPreset(preset.name)" [disabled]="!editPresetName.trim()">Save</button>
+                  <button class="preset-icon-button delete" (click)="cancelEditPreset()"><i class="fa-light fa-xmark"></i></button>
+                </div>
+              } @else {
+                <div class="preset-card">
+                  <div class="preset-info">
+                    <span class="preset-name">{{ preset.name }}</span>
+                    @if (preset.description) {
+                      <span class="preset-description">{{ preset.description }}</span>
+                    }
+                  </div>
+                  <div class="preset-actions">
+                    <button class="preset-apply" (click)="applyCustomPreset(preset.name)">
+                      @if (appliedPreset === 'custom:' + preset.name) { <i class="fa-light fa-check"></i> } @else { Apply }
+                    </button>
+                    <button class="preset-kebab" [matMenuTriggerFor]="presetMenu">
+                      <i class="fa-light fa-ellipsis-vertical"></i>
+                    </button>
+                    <mat-menu #presetMenu="matMenu" class="preset-menu">
+                      <button mat-menu-item (click)="overwriteCustomPreset(preset.name)">
+                        <i class="fa-light fa-floppy-disk"></i> Overwrite with current styles
+                      </button>
+                      <button mat-menu-item (click)="startEditPreset(preset.name)">
+                        <i class="fa-light fa-pen"></i> Edit details
+                      </button>
+                      <button mat-menu-item class="delete" (click)="deleteCustomPreset(preset.name)">
+                        <i class="fa-light fa-xmark"></i> Delete
+                      </button>
+                    </mat-menu>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        }
+
+        <div class="save-preset-area">
+          @if (savingPreset) {
+            <div class="save-preset-inputs">
+              <input class="save-preset-input" [(ngModel)]="newPresetName" placeholder="Name" (keydown.enter)="confirmSavePreset()" (keydown.escape)="cancelSavePreset()" autofocus>
+              <input class="save-preset-input" [(ngModel)]="newPresetDescription" placeholder="Description (optional)" (keydown.enter)="confirmSavePreset()" (keydown.escape)="cancelSavePreset()">
+              <div class="save-preset-actions">
+                <button class="preset-apply" (click)="confirmSavePreset()" [disabled]="!newPresetName.trim()">Save</button>
+                <button class="preset-icon-button delete" (click)="cancelSavePreset()"><i class="fa-light fa-xmark"></i></button>
+              </div>
+            </div>
+          } @else {
+            <button class="action-button save-preset-button" (click)="startSavingPreset()">
+              <i class="fa-light fa-plus"></i> Save current configuration
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Customise -->
+    @if (topTab === 'customise') {
+      <!-- Sub-tab bar -->
+      <div class="tab-bar sub-tab-bar">
+        <button class="tab" [class.active]="activeTab === 'kind'" (click)="activeTab = 'kind'">Kinds</button>
+        <button class="tab" [class.active]="activeTab === 'type'" (click)="activeTab = 'type'; refreshDiscoveredTypes()">Types</button>
+        <button class="tab" [class.active]="activeTab === 'edge'" (click)="activeTab = 'edge'">Edges</button>
+        <button class="tab" [class.active]="activeTab === 'background'" (click)="activeTab = 'background'">Background</button>
+      </div>
+
+      <div class="panel-body">
+        <!-- Kind-based styles -->
+        @if (activeTab === 'kind') {
+          <div class="style-list">
+            @for (row of displayKinds; track row.kind) {
+              <div class="style-row">
+                <div class="type-label-row">
+                  <span class="style-label">{{ row.label }}</span>
+                  @if (hasKindOverride(row.kind)) {
+                    <button class="clear-button" (click)="clearKindOverride(row.kind)" matTooltip="Reset to default" [matTooltipShowDelay]="500">
+                      <i class="fa-light fa-arrow-u-turn-up-left"></i>
+                    </button>
+                  }
+                </div>
+                <div class="style-controls">
+                  <span matTooltip="Border" [matTooltipShowDelay]="500">
+                    <div class="border-swatch" [style.border-color]="getKindBorderColor(row.kind)">
+                      <input type="color" class="color-input border-input"
+                             [value]="getKindBorderColor(row.kind)"
+                             (input)="setKindBorderColor(row.kind, $any($event.target).value)">
+                    </div>
+                  </span>
+                  <span matTooltip="Fill" [matTooltipShowDelay]="500">
+                    <input type="color" class="color-input"
+                           [value]="getKindColor(row.kind)"
+                           (input)="setKindColor(row.kind, $any($event.target).value)">
+                  </span>
+                  <mat-form-field class="shape-field" subscriptSizing="dynamic">
+                    <mat-select [value]="getKindShape(row.kind)"
+                                panelClass="graph-style-select-panel"
+                                (selectionChange)="setKindShape(row.kind, $event.value)">
+                      <mat-select-trigger>
+                        <ng-container *ngTemplateOutlet="shapeIconTpl; context: {$implicit: getKindShape(row.kind)}"></ng-container>
+                      </mat-select-trigger>
+                      @for (shape of shapes; track shape.value) {
+                        <mat-option [value]="shape.value">
+                          <ng-container *ngTemplateOutlet="shapeIconTpl; context: {$implicit: shape.value}"></ng-container>
+                        </mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                  <div class="size-fields">
+                    <span class="dim-label">W</span>
+                    <mat-form-field class="size-field" subscriptSizing="dynamic">
+                      <input matInput type="number"
+                             [value]="getKindWidth(row.kind)"
+                             (change)="setKindWidth(row.kind, +$any($event.target).value)"
+                             min="2" max="100" step="1">
+                    </mat-form-field>
+                    <span class="dim-label">H</span>
+                    <mat-form-field class="size-field" subscriptSizing="dynamic">
+                      <input matInput type="number"
+                             [value]="getKindHeight(row.kind)"
+                             (change)="setKindHeight(row.kind, +$any($event.target).value)"
+                             min="2" max="100" step="1">
+                    </mat-form-field>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Type-based overrides -->
+        @if (activeTab === 'type') {
+          <div class="style-list">
+            @if (discoveredTypes.length === 0) {
+              <p class="empty-message">No types found. Run a query first to discover types.</p>
+            }
+            @for (row of discoveredTypes; track row.typeLabel) {
+              <div class="style-row">
+                <div class="type-label-row">
+                  <span class="style-label">{{ row.typeLabel }}</span>
+                  @if (hasTypeOverride(row.typeLabel)) {
+                    <button class="clear-button" (click)="clearTypeOverride(row.typeLabel)" matTooltip="Reset to default" [matTooltipShowDelay]="500">
+                      <i class="fa-light fa-arrow-u-turn-up-left"></i>
+                    </button>
+                  }
+                </div>
+                <div class="style-controls">
+                  <span matTooltip="Border" [matTooltipShowDelay]="500">
+                    <div class="border-swatch" [style.border-color]="getTypeBorderColor(row.typeLabel, row.kind)">
+                      <input type="color" class="color-input border-input"
+                             [value]="getTypeBorderColor(row.typeLabel, row.kind)"
+                             (input)="setTypeBorderColor(row.typeLabel, $any($event.target).value)">
+                    </div>
+                  </span>
+                  <span matTooltip="Fill" [matTooltipShowDelay]="500">
+                    <input type="color" class="color-input"
+                           [value]="getTypeColor(row.typeLabel, row.kind)"
+                           (input)="setTypeColor(row.typeLabel, $any($event.target).value)">
+                  </span>
+                  <mat-form-field class="shape-field" subscriptSizing="dynamic">
+                    <mat-select [value]="getTypeShape(row.typeLabel, row.kind)"
+                                panelClass="graph-style-select-panel"
+                                (selectionChange)="setTypeShape(row.typeLabel, $event.value)">
+                      <mat-select-trigger>
+                        <ng-container *ngTemplateOutlet="shapeIconTpl; context: {$implicit: getTypeShape(row.typeLabel, row.kind)}"></ng-container>
+                      </mat-select-trigger>
+                      @for (shape of shapes; track shape.value) {
+                        <mat-option [value]="shape.value">
+                          <ng-container *ngTemplateOutlet="shapeIconTpl; context: {$implicit: shape.value}"></ng-container>
+                        </mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                  <div class="size-fields">
+                    <span class="dim-label">W</span>
+                    <mat-form-field class="size-field" subscriptSizing="dynamic">
+                      <input matInput type="number"
+                             [value]="getTypeWidth(row.typeLabel, row.kind)"
+                             (change)="setTypeWidth(row.typeLabel, +$any($event.target).value)"
+                             min="2" max="100" step="1">
+                    </mat-form-field>
+                    <span class="dim-label">H</span>
+                    <mat-form-field class="size-field" subscriptSizing="dynamic">
+                      <input matInput type="number"
+                             [value]="getTypeHeight(row.typeLabel, row.kind)"
+                             (change)="setTypeHeight(row.typeLabel, +$any($event.target).value)"
+                             min="2" max="100" step="1">
+                    </mat-form-field>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Edge label colors -->
+        @if (activeTab === 'edge') {
+          <div class="style-list">
+            @for (row of edgeLabels; track row.tag) {
+              <div class="style-row">
+                <div class="type-label-row">
+                  <span class="style-label">{{ row.displayLabel }}</span>
+                  @if (hasEdgeLabelOverride(row.tag)) {
+                    <button class="clear-button" (click)="clearEdgeLabelOverride(row.tag)" matTooltip="Reset to default" [matTooltipShowDelay]="500">
+                      <i class="fa-light fa-arrow-u-turn-up-left"></i>
+                    </button>
+                  }
+                </div>
+                <div class="style-controls">
+                  <span matTooltip="Color" [matTooltipShowDelay]="500">
+                    <input type="color" class="color-input"
+                           [value]="getEdgeLabelColor(row.tag)"
+                           (input)="setEdgeLabelColor(row.tag, $any($event.target).value)">
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Background -->
+        @if (activeTab === 'background') {
+          <div class="style-list background-settings">
+            <div class="style-row">
+              <div class="type-label-row">
+                <span class="style-label">Background</span>
+                @if (hasBackgroundOverride) {
+                  <button class="clear-button" (click)="resetBackground()" matTooltip="Reset to default" [matTooltipShowDelay]="500">
+                    <i class="fa-light fa-arrow-u-turn-up-left"></i>
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="style-row">
+              <span class="style-label">Type</span>
+              <div class="style-controls">
+                <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
+                  <mat-select [value]="backgroundType" panelClass="graph-style-select-panel" (selectionChange)="setBackgroundType($event.value)">
+                    <mat-option value="solid">Solid</mat-option>
+                    <mat-option value="gradient">Gradient</mat-option>
+                    <mat-option value="grid">Grid</mat-option>
+                    <mat-option value="dots">Dots</mat-option>
+                    <mat-option value="party">Party mode</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+            <div class="style-row">
+              <span class="style-label">{{ backgroundType === 'solid' ? 'Color' : 'Color 1' }}</span>
+              <div class="style-controls">
+                <input type="color" class="color-input"
+                       [value]="backgroundColor1"
+                       (input)="setBackgroundColor1($any($event.target).value)">
+              </div>
+            </div>
+            @if (backgroundType !== 'solid') {
+              <div class="style-row">
+                <span class="style-label">Color 2</span>
+                <div class="style-controls">
+                  <input type="color" class="color-input"
+                         [value]="backgroundColor2"
+                         (input)="setBackgroundColor2($any($event.target).value)">
+                </div>
+              </div>
+            }
+            @if (backgroundType === 'gradient') {
+              <div class="style-row">
+                <span class="style-label">Angle</span>
+                <div class="style-controls angle-control">
+                  <input type="range" class="angle-slider" min="0" max="360" step="1"
+                         [value]="backgroundAngle"
+                         (input)="setBackgroundAngle(+$any($event.target).value)">
+                  <span class="angle-value">{{ backgroundAngle }}°</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Footer actions (always visible) -->
+  <div class="panel-footer">
+    <div class="footer-toggles">
+      <div class="footer-option">
+        <span class="footer-option-label">Labels in nodes</span>
+        <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
+          <mat-select [value]="labelMode" panelClass="graph-style-select-panel" (selectionChange)="setLabelMode($event.value)">
+            <mat-option value="border">Visible, border color</mat-option>
+            <mat-option value="fixed">Visible, black/white</mat-option>
+            <mat-option value="hidden">Hidden</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <mat-slide-toggle color="primary" [checked]="showHoverLabel" (change)="toggleShowHoverLabel()" labelPosition="before">
+        Show label on hover
+      </mat-slide-toggle>
+      <mat-slide-toggle color="primary" [checked]="degreeScaling" (change)="toggleDegreeScaling()" labelPosition="before">
+        Scale nodes by connection count
+      </mat-slide-toggle>
+      <mat-slide-toggle color="primary" [checked]="colorEdgesByConstraint" (change)="toggleEdgeColoring()" labelPosition="before">
+        Color edges by constraint
+      </mat-slide-toggle>
+    </div>
+    <div class="footer-buttons">
+      <button class="action-button" (click)="reLayout()" matTooltip="Re-randomise positions and re-run layout" [matTooltipShowDelay]="500">
+        <i class="fa-light fa-refresh"></i> Redraw graph
+      </button>
+      <button class="action-button reset" (click)="resetAll()" matTooltip="Reset all styles to defaults" [matTooltipShowDelay]="500">
+        <i class="fa-light fa-arrow-u-turn-up-left"></i> Reset all styles
+      </button>
+    </div>
+  </div>
+</div>
+
+<ng-template #shapeIconTpl let-shapeValue>
+  @switch (shapeValue) {
+    @case ('rounded-rect') { <svg class="shape-icon" viewBox="0 0 24 14"><rect x="1" y="2" width="22" height="10" rx="2.5" fill="currentColor"/></svg> }
+    @case ('diamond') { <svg class="shape-icon" viewBox="0 0 24 14"><polygon points="12,1 23,7 12,13 1,7" fill="currentColor"/></svg> }
+    @case ('ellipse') { <svg class="shape-icon" viewBox="0 0 24 14"><ellipse cx="12" cy="7" rx="10" ry="5.5" fill="currentColor"/></svg> }
+  }
+</ng-template>

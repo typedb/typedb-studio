@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Injectable } from "@angular/core";
+import { inject, Injectable } from "@angular/core";
 import {
     ApiOkResponse, ApiResponse, AttributeType, ConceptRowsQueryResponse, EntityType,
     isApiErrorResponse, QueryResponse, RelationType, RoleType, Type
@@ -12,11 +12,12 @@ import {
 import Graph from "graphology";
 import { BehaviorSubject, combineLatest, distinctUntilChanged, finalize, first, map } from "rxjs";
 import Sigma, { Camera } from "sigma";
-import { createSigmaRenderer, GraphVisualiser } from "../framework/graph-visualiser";
-import { defaultSigmaSettings } from "../framework/graph-visualiser/defaults";
-import { newVisualGraph } from "../framework/graph-visualiser/graph";
-import { Layouts } from "../framework/graph-visualiser/layouts";
+import { GraphVisualiser } from "../framework/graph-visualiser";
+import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/sigma-settings";
+import { newGraph } from "../framework/graph-visualiser/graph";
+import { Layouts } from "../framework/graph-visualiser/layout";
 import { DriverState } from "./driver-state.service";
+import { GraphStyleService } from "./graph-style.service";
 import { SnackbarService } from "./snackbar.service";
 import {updateAutocomleteSchemaFromDB} from "../framework/codemirror-lang-typeql";
 
@@ -68,7 +69,8 @@ export interface Schema {
 })
 export class SchemaState {
 
-    readonly visualiser = new VisualiserState();
+    private graphStyleService = inject(GraphStyleService);
+    readonly visualiser = new VisualiserState(this.graphStyleService);
     queryResponses$ = new BehaviorSubject<ApiOkResponse<ConceptRowsQueryResponse>[] | null>(null);
     readonly value$ = new BehaviorSubject<Schema | null>(null);
     isRefreshing = false;
@@ -410,14 +412,14 @@ export class VisualiserState {
         this._status = value;
     }
 
-    constructor() {
+    constructor(private styleService: GraphStyleService) {
         this.canvasEl$.subscribe(el => {
             if (el && this.savedState && this.database) {
                 this._status = "ok";
-                const graph = newVisualGraph();
+                const graph = newGraph();
                 const sigma = createSigmaRenderer(el, defaultSigmaSettings as any, graph);
                 const layout = Layouts.createForceAtlasStatic(graph, undefined);
-                this.visualiser = new GraphVisualiser(graph, sigma, layout);
+                this.visualiser = new GraphVisualiser(graph, sigma, layout, this.styleService);
                 this.restoreState(this.savedState, sigma);
             }
         });
@@ -427,11 +429,11 @@ export class VisualiserState {
         if (!this.canvasEl$.value) throw `Missing canvas element`;
 
         if (!this.visualiser) {
-            const graph = newVisualGraph();
+            const graph = newGraph();
             const sigma = createSigmaRenderer(this.canvasEl$.value, defaultSigmaSettings as any, graph);
             const layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
             // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
-            this.visualiser = new GraphVisualiser(graph, sigma, layout);
+            this.visualiser = new GraphVisualiser(graph, sigma, layout, this.styleService);
         }
 
         if (isApiErrorResponse(res)) {
@@ -443,7 +445,7 @@ export class VisualiserState {
         switch (res.ok.answerType) {
             case "conceptRows": {
                 this.visualiser.handleQueryResponse(res, this.database!);
-                this.visualiser.colorEdgesByConstraintIndex(false);
+                this.visualiser.colorEdgesByConstraintIndex(!this.styleService?.colorEdgesByConstraint);
                 break;
             }
             default:

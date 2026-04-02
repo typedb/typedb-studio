@@ -715,3 +715,41 @@ app-drag-handle span {
         white-space: nowrap;
     }
 }
+
+// Graph background: party mode
+@property --party-angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 0deg;
+}
+
+@keyframes party-spin {
+    0%     { --party-angle: 270deg; filter: hue-rotate(  0deg); }
+    12.5%  { --party-angle: 297deg; filter: hue-rotate( 45deg); }
+    25%    { --party-angle: 335deg; filter: hue-rotate( 90deg); }
+    37.5%  { --party-angle: 387deg; filter: hue-rotate(135deg); }
+    50%    { --party-angle: 450deg; filter: hue-rotate(180deg); }
+    62.5%  { --party-angle: 513deg; filter: hue-rotate(225deg); }
+    75%    { --party-angle: 565deg; filter: hue-rotate(270deg); }
+    87.5%  { --party-angle: 603deg; filter: hue-rotate(315deg); }
+    100%   { --party-angle: 630deg; filter: hue-rotate(360deg); }
+}
+
+.party-background {
+    position: relative;
+    background-image: none !important;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background-image: radial-gradient(
+            circle at calc(50% + 50% * cos(var(--party-angle))) calc(50% + 50% * sin(var(--party-angle))),
+            var(--party-color1, #cc3344),
+            var(--party-color2, #1a2766)
+        );
+        animation: party-spin 3s linear infinite;
+        pointer-events: none;
+    }
+}

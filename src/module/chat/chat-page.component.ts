@@ -63,6 +63,9 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     @ViewChild("messagesContainer") messagesContainer?: ElementRef<HTMLElement>;
     @ViewChild("promptInput") promptInput?: ElementRef<HTMLTextAreaElement>;
 
+    private static readonly DEFAULT_PANEL_SIZES = [20, 60, 20];
+    panelSizes = [...ChatPageComponent.DEFAULT_PANEL_SIZES];
+
     conversationGroups: { label: string; conversations: ConversationSummary[] }[] = [];
     conversationRelativeTimes = new Map<string, string>();
     history: HistoryWindowState;
@@ -85,6 +88,10 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("chat");
+        const saved = this.appData.panelLayout.get("chat");
+        if (saved && saved.length === ChatPageComponent.DEFAULT_PANEL_SIZES.length) {
+            this.panelSizes = saved;
+        }
 
         this.state.conversations$.subscribe(convs => {
             this.conversationGroups = this.groupConversations(convs);
@@ -321,6 +328,11 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
         } catch (e) {
             console.error('Failed to copy error text:', e);
         }
+    }
+
+    onPanelResize(index: number, percent: number) {
+        this.panelSizes[index] = percent;
+        this.appData.panelLayout.set("chat", [...this.panelSizes]);
     }
 
     readonly isQueryRun = isQueryRun;
