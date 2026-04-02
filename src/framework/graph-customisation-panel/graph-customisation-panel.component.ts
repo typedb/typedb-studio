@@ -2,6 +2,7 @@ import { Component, inject, Input, OnChanges, SimpleChanges } from "@angular/cor
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
+import { MatMenuModule } from "@angular/material/menu";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatFormFieldModule } from "@angular/material/form-field";
@@ -62,7 +63,7 @@ export const AVAILABLE_SHAPES = [
     styleUrls: ["graph-customisation-panel.component.scss"],
     imports: [
         CommonModule, FormsModule,
-        MatButtonModule, MatSelectModule, MatTooltipModule,
+        MatButtonModule, MatMenuModule, MatSelectModule, MatTooltipModule,
         MatFormFieldModule, MatInputModule, MatSlideToggleModule,
     ],
 })
