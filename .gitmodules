@@ -3,4 +3,4 @@
 	url = https://github.com/typedb/typedb-web.git
 [submodule "typedb-graph-utils"]
 	path = typedb-graph-utils
-	url = https://github.com/alexjpwalker/typedb-graph-utils.git
+	url = https://github.com/typedb-osi/typedb-graph-utils.git
