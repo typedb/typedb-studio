@@ -1,43 +1,277 @@
 import {
-    ApiResponse, ConceptRowsQueryResponse, AnalyzedConjunction, AnalyzedPipeline,
+    ApiResponse,
     isApiErrorResponse,
     QueryResponse,
-    ConstraintAny, ConstraintExpression, ConstraintSpan, ConstraintVertexVariable,
-    ConstraintExpressionLegacy, ConstraintLinksLegacy,
-    QueryStructureLegacy, QueryConjunctionLegacy, ConceptRowsQueryResponseLegacy
 } from "@typedb/driver-http";
-import MultiGraph from "graphology";
-import Sigma from "sigma";
-import { Settings as SigmaSettings } from "sigma/settings";
-import { StudioConverterStructureParameters, StudioConverterStyleParameters } from "./config";
-
-import * as studioDefaultSettings from "./defaults";
-import {constructGraphFromRowsResult, QueryCoordinates, VisualGraph} from "./graph";
-import {InteractionHandler} from "./interaction";
-import { convertLogicalGraphWith } from "./visualisation";
-import {LayoutWrapper} from "./layouts";
 import chroma from "chroma-js";
-import {shouldCreateEdge, shouldCreateNode, StudioConverter} from "./converter";
+import Sigma from "sigma";
+import { Subscription } from "rxjs";
+import { buildBackgroundCSS } from "../../service/graph-style.service";
+import type { GraphStyleService } from "../../service/graph-style.service";
 
-export interface StudioState {
-    activeQueryDatabase: string | null;
-}
+import { getTypeLabel, DataVertex } from "@typedb/graph-utils";
+import { buildStructuredAnswers } from "@typedb/graph-utils";
+import { AnalyzedPipelineBackCompat } from "./types";
+import { Graph, GraphBuilderStructureParams, defaultStructureParams } from "./graph";
+import { GraphBuilder } from "./graph-builder";
+import { GraphStyles, colorEdgesByConstraintIndex as _colorEdgesByConstraintIndex, colorQuery as _colorQuery } from "./styles";
+import { setUseBorderColorForLabels, setLabelsVisible, setShowHoverLabel } from "./sigma-label-utils";
+import { InteractionHandler, StudioState } from "./interaction-handler";
+import { LayoutWrapper } from "./layout";
 
 export class GraphVisualiser {
-    graph: VisualGraph;
-    sigma: Sigma;
-    layout: LayoutWrapper;
     interactionHandler: InteractionHandler;
     state: StudioState;
-    private styleParameters: StudioConverterStyleParameters = studioDefaultSettings.defaultQueryStyleParameters;
-    private structureParameters: StudioConverterStructureParameters = studioDefaultSettings.defaultStructureParameters;
+    searchTerm = "";
+    searchMatches: Set<string> | null = null;
+    private styleParams: GraphStyles;
+    private structureParams: GraphBuilderStructureParams = defaultStructureParams;
 
-    constructor(graph: VisualGraph, sigma: Sigma, layout: LayoutWrapper) {
-        this.graph = graph;
-        this.sigma = sigma;
-        this.layout = layout;
+    private autoZoomEnabled = true;
+    private settingCameraProgrammatically = false;
+    private peakCameraRatio = 0;
+    private labelsAutoHidden = false;
+    private stylesSub!: Subscription;
+
+    constructor(public graph: Graph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
         this.state = { activeQueryDatabase: null };
-        this.interactionHandler = new InteractionHandler(graph, sigma, this.state, studioDefaultSettings.defaultQueryStyleParameters);
+        this.styleParams = this.syncStyles();
+        this.interactionHandler = new InteractionHandler(graph, sigma, this.state, this.styleParams, this.styleService);
+        this.interactionHandler.visualiser = this;
+        this.interactionHandler.layout = this.layout;
+        this.setupReducers();
+        this.layout.onTick = () => {
+            if (this.autoZoomEnabled) this.centerCamera();
+        };
+        this.sigma.getCamera().addListener("updated", () => {
+            if (!this.settingCameraProgrammatically) {
+                this.autoZoomEnabled = false;
+            }
+            this.updateLabelVisibilityForZoom();
+        });
+        this.stylesSub = this.styleService.styles$.subscribe(() => {
+            this.syncStyles();
+            try {
+                this.applyStyleUpdate();
+                this.applyEdgeStyleUpdate();
+            } catch (_) { /* sigma not renderable (e.g. hidden tab, lost WebGL context) */ }
+        });
+    }
+
+    private syncStyles(): GraphStyles {
+        setUseBorderColorForLabels(this.styleService.labelUseBorderColor);
+        // User explicitly changed label visibility — reset auto-hide state
+        this.labelsAutoHidden = false;
+        setLabelsVisible(this.styleService.labelsVisible);
+        setShowHoverLabel(this.styleService.showHoverLabel);
+        this.sigma.setSetting("renderEdgeLabels", this.styleService.labelsVisible);
+        this.styleParams = this.styleService.toGraphStyles();
+        if (this.interactionHandler) {
+            this.interactionHandler.styleParams = this.styleParams;
+        }
+        this.applyBackground();
+        return this.styleParams;
+    }
+
+    /**
+     * When the graph has many elements and the camera is zoomed out, hide
+     * node and edge labels to avoid the rendering cost of measuring and
+     * drawing thousands of text strings every frame.
+     */
+    private updateLabelVisibilityForZoom(): void {
+        // Only auto-hide when the user hasn't explicitly turned labels off
+        if (!this.styleService.labelsVisible) return;
+
+        const elementCount = this.graph.order + this.graph.size; // nodes + edges
+        const ratio = this.sigma.getCamera().ratio;
+
+        // More elements → hide labels at a lower (closer) zoom level.
+        // At 200 elements, hide when ratio > 5; at 1000 elements, hide when ratio > 1.
+        const ELEMENT_THRESHOLD = 100;
+        const zoomThreshold = Math.max(2, ELEMENT_THRESHOLD * 10 / elementCount);
+        const shouldHide = elementCount > ELEMENT_THRESHOLD && ratio > zoomThreshold;
+
+        if (shouldHide && !this.labelsAutoHidden) {
+            this.labelsAutoHidden = true;
+            setLabelsVisible(false);
+            this.sigma.setSetting("renderEdgeLabels", false);
+        } else if (!shouldHide && this.labelsAutoHidden) {
+            this.labelsAutoHidden = false;
+            setLabelsVisible(true);
+            this.sigma.setSetting("renderEdgeLabels", true);
+        }
+    }
+
+    private setupReducers(): void {
+        const FADE_RATIO = 0.075; // mix 7.5% original color, 92.5% black
+
+        const fade = (color: string) => chroma.mix("#000000", color, FADE_RATIO).hex();
+
+        this.sigma.setSetting("nodeReducer", (node, data) => {
+            const state = this.interactionHandler.state;
+            let shouldFade = false;
+
+            // Search takes priority over everything
+            if (this.searchMatches != null) {
+                shouldFade = !this.searchMatches.has(node);
+            } else {
+                // Selection-based fading
+                const isSelectedOrNeighbor = state.selectedNode != null
+                    && (node === state.selectedNode || (state.selectedNeighbors?.has(node) ?? false));
+                if (state.selectedNode != null && !isSelectedOrNeighbor) {
+                    shouldFade = true;
+                }
+
+                // Highlight-based fading (skipped for nodes in the active selection)
+                if (!isSelectedOrNeighbor) {
+                    try {
+                        if (this.styleService.isHighlightActive()) {
+                            const attrs = this.graph.getNodeAttributes(node);
+                            const concept = attrs.metadata.concept;
+                            if (!this.styleService.shouldHighlightNode(concept.kind as any, getTypeLabel(concept as any))) {
+                                shouldFade = true;
+                            }
+                        }
+                    } catch (_) { /* guard against missing metadata during graph mutations */ }
+                }
+            }
+
+            if (!shouldFade) return { ...data, zIndex: 1 };
+            const res = { ...data };
+            res["color"] = fade(data["color"]);
+            if (data["borderColor"]) res["borderColor"] = fade(data["borderColor"]);
+            res["label"] = "";
+            res["zIndex"] = 0;
+            return res;
+        });
+
+        this.sigma.setSetting("edgeReducer", (edge, data) => {
+            const state = this.interactionHandler.state;
+            let shouldFade = false;
+
+            // Search takes priority over everything
+            if (this.searchMatches != null) {
+                const source = this.graph.source(edge);
+                const target = this.graph.target(edge);
+                shouldFade = !this.searchMatches.has(source) || !this.searchMatches.has(target);
+            } else {
+                // Selection-based fading: keep edges where both endpoints are highlighted
+                let edgeInSelection = false;
+                if (state.selectedNode != null) {
+                    const source = this.graph.source(edge);
+                    const target = this.graph.target(edge);
+                    const isNodeHighlighted = (n: string) => n === state.selectedNode || (state.selectedNeighbors?.has(n) ?? false);
+                    edgeInSelection = isNodeHighlighted(source) && isNodeHighlighted(target);
+                    if (!edgeInSelection) {
+                        shouldFade = true;
+                    }
+                }
+
+                // Highlight-based fading (skipped for edges in the active selection)
+                if (!edgeInSelection) {
+                    try {
+                        if (this.styleService.isHighlightActive()) {
+                            const tag = this.graph.getEdgeAttributes(edge).metadata?.dataEdge?.tag;
+                            if (tag && !this.styleService.shouldHighlightEdge(tag)) {
+                                shouldFade = true;
+                            }
+                        }
+                    } catch (_) { /* guard against missing metadata during graph mutations */ }
+                }
+            }
+
+            if (!shouldFade) return data;
+            const res = { ...data };
+            res["color"] = fade(data["color"] ?? "#ccc");
+            res["label"] = "";
+            return res;
+        });
+    }
+
+    applyStyleUpdate(): void {
+        this.syncStyles();
+        const useDegreeScaling = this.styleService.degreeScaling;
+        this.graph.nodes().forEach(nodeKey => {
+            const attrs = this.graph.getNodeAttributes(nodeKey);
+            const concept = attrs.metadata.concept;
+            const style = this.styleService.resolveNodeStyle(concept.kind as any, getTypeLabel(concept as any));
+            this.graph.setNodeAttribute(nodeKey, "color", style.color);
+            this.graph.setNodeAttribute(nodeKey, "borderColor", style.borderColor);
+            this.graph.setNodeAttribute(nodeKey, "type", style.shape);
+            if (useDegreeScaling) {
+                const degree = this.graph.degree(nodeKey);
+                const w = style.width + Math.min(degree * 2, style.width * 4);
+                const h = style.height + Math.min(degree * 2, style.height * 4);
+                this.graph.setNodeAttribute(nodeKey, "width", w);
+                this.graph.setNodeAttribute(nodeKey, "height", h);
+                this.graph.setNodeAttribute(nodeKey, "size", Math.max(w, h));
+            } else {
+                this.graph.setNodeAttribute(nodeKey, "width", style.width);
+                this.graph.setNodeAttribute(nodeKey, "height", style.height);
+                this.graph.setNodeAttribute(nodeKey, "size", Math.max(style.width, style.height));
+            }
+        });
+        this.sigma.refresh();
+    }
+
+    applyEdgeStyleUpdate(): void {
+        this.syncStyles();
+        if (!this.styleService.colorEdgesByConstraint) {
+            this.colorEdgesByConstraintIndex(true);
+        }
+        this.sigma.refresh();
+    }
+
+    reLayout(): void {
+        this.autoZoomEnabled = true;
+        this.peakCameraRatio = 0;
+        this.graph.nodes().forEach(node => {
+            this.graph.setNodeAttribute(node, "x", Math.random());
+            this.graph.setNodeAttribute(node, "y", Math.random());
+        });
+        this.layout.startOrRedraw();
+        this.centerCamera();
+    }
+
+    centerCamera(zoomOutOnly = false): void {
+        const nodes = this.graph.nodes();
+        if (nodes.length === 0) return;
+
+        const { width, height } = this.sigma.getDimensions();
+        if (width === 0 || height === 0) return;
+
+        // Compute graph bounding box in graph coordinates
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        nodes.forEach(node => {
+            const attrs = this.graph.getNodeAttributes(node);
+            minX = Math.min(minX, attrs.x);
+            maxX = Math.max(maxX, attrs.x);
+            minY = Math.min(minY, attrs.y);
+            maxY = Math.max(maxY, attrs.y);
+        });
+
+        // With autoRescale off, sigma maps 1 graph unit ≈ 1 pixel (centered on graph center).
+        // Camera ratio = how much of the viewport-sized region to show.
+        // ratio=1 shows a viewport-sized window. We need ratio = graphExtent / viewportSize.
+        const graphWidth = maxX - minX || 1;
+        const graphHeight = maxY - minY || 1;
+        const padding = 1.1;
+        const rawRatio = Math.max(graphWidth / width, graphHeight / height, 1) * padding;
+        // Cap ratio so nodes (rendered at fixed screen-pixel sizes) remain visible
+        const ratio = Math.min(rawRatio, 20);
+
+        // During simulation, only zoom out (grow ratio), never zoom back in
+        if (zoomOutOnly && ratio <= this.peakCameraRatio) {
+            this.settingCameraProgrammatically = true;
+            this.sigma.getCamera().setState({ x: 0.5, y: 0.5, ratio: this.peakCameraRatio, angle: 0 });
+            this.settingCameraProgrammatically = false;
+            return;
+        }
+        this.peakCameraRatio = ratio;
+
+        this.settingCameraProgrammatically = true;
+        this.sigma.getCamera().setState({ x: 0.5, y: 0.5, ratio, angle: 0 });
+        this.settingCameraProgrammatically = false;
     }
 
     handleQueryResponse(res: ApiResponse<QueryResponse>, database: string) {
@@ -45,8 +279,12 @@ export class GraphVisualiser {
 
         if (res.ok.answerType === "conceptRows") {
             this.state.activeQueryDatabase = database;
+            this.autoZoomEnabled = true;
+            this.peakCameraRatio = 0;
             this.handleQueryResult(res);
+            if (this.styleService.degreeScaling) this.applyStyleUpdate();
             this.layout.startOrRedraw();
+            this.centerCamera();
         }
     }
 
@@ -54,9 +292,9 @@ export class GraphVisualiser {
         if (isApiErrorResponse(res)) return;
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
             (window as any)._lastQueryAnswers = res.ok.answers; // TODO: Remove once schema based autocomplete is stable.
-            let converter = new StudioConverter(this.graph, res.ok.query, false, this.structureParameters, this.styleParameters);
-            let logicalGraph = constructGraphFromRowsResult(res.ok); // In memory, not visualised
-            convertLogicalGraphWith(logicalGraph, converter);
+            let builder = new GraphBuilder(this.graph, res.ok.query, false, this.structureParams, this.styleParams);
+            let answers = buildStructuredAnswers(res.ok as any);
+            builder.build(answers);
         }
     }
 
@@ -64,161 +302,176 @@ export class GraphVisualiser {
         if (isApiErrorResponse(res)) return;
 
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
-            let converter = new StudioConverter(this.graph, res.ok.query, true, this.structureParameters, this.styleParameters);
-            let logicalGraph = constructGraphFromRowsResult(res.ok as ConceptRowsQueryResponse); // In memory, not visualised
-            convertLogicalGraphWith(logicalGraph, converter);
+            let builder = new GraphBuilder(this.graph, res.ok.query, true, this.structureParams, this.styleParams);
+            let answers = buildStructuredAnswers(res.ok as any);
+            builder.build(answers);
+            if (this.styleService.degreeScaling) this.applyStyleUpdate();
         }
     }
 
     searchGraph(term: string) {
-
-        function safe_str(str: string | undefined): string {
-            return (str == undefined) ? "" : str.toLowerCase();
+        this.searchTerm = term;
+        if (term === "") {
+            this.searchMatches = null;
+            this.sigma.refresh();
+            return;
         }
 
-        this.graph.nodes().forEach(node => this.graph.setNodeAttribute(node, "highlighted", false));
-        if (term !== "") {
-            this.graph.nodes().forEach(node => {
-                const attributes = this.graph.getNodeAttributes(node);
-                // check concept.type.label if you want to match types of things.
-                if ("concept" in attributes.metadata) {
-                    const concept = attributes.metadata.concept;
-                    if (("iid" in concept && safe_str(concept.iid).indexOf(term) !== -1)
-                        || ("label" in concept && safe_str(concept.label).indexOf(term) !== -1)
-                        || ("value" in concept && safe_str(concept.value).indexOf(term) !== -1)) {
-                        this.graph.setNodeAttribute(node, "highlighted", true);
-                    }
+        const safeString = (str: string | undefined): string =>
+            str == undefined ? "" : str.toLowerCase();
+
+        const matches = new Set<string>();
+        this.graph.nodes().forEach(node => {
+            const attributes = this.graph.getNodeAttributes(node);
+            if ("concept" in attributes["metadata"]) {
+                const concept = attributes["metadata"].concept;
+                if (("iid" in concept && safeString(concept.iid).indexOf(term) !== -1)
+                    || ("value" in concept && safeString(concept.value).indexOf(term) !== -1)
+                    || ("type" in concept && safeString(concept.type.label).indexOf(term) !== -1)
+                    || ("label" in concept && safeString(concept.label).indexOf(term) !== -1)) {
+                    matches.add(node);
                 }
-            });
-        }
+            }
+        });
+        this.searchMatches = matches;
+        this.sigma.refresh();
+    }
+
+    clearSearch() {
+        if (this.searchMatches == null) return;
+        this.searchGraph("");
+    }
+
+    focusSearchMatches(): void {
+        const matches = this.searchMatches;
+        if (!matches || matches.size === 0) return;
+
+        const { width, height } = this.sigma.getDimensions();
+        if (width === 0 || height === 0) return;
+
+        // Compute bounding box of matched nodes in graph coordinates
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        matches.forEach(node => {
+            const attrs = this.graph.getNodeAttributes(node);
+            minX = Math.min(minX, attrs.x);
+            maxX = Math.max(maxX, attrs.x);
+            minY = Math.min(minY, attrs.y);
+            maxY = Math.max(maxY, attrs.y);
+        });
+
+        // Compute needed ratio to fit matched nodes, capped at 1 (100% zoom)
+        const graphWidth = maxX - minX || 1;
+        const graphHeight = maxY - minY || 1;
+        const padding = 1.3;
+        const rawRatio = Math.max(graphWidth / width, graphHeight / height) * padding;
+        const ratio = Math.max(Math.min(rawRatio, 20), 1);
+
+        // Convert graph-coordinate center to sigma's normalized camera coordinates
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const bbox = this.sigma.getCustomBBox() || this.sigma.getBBox();
+        const x = (centerX - bbox.x[0]) / (bbox.x[1] - bbox.x[0]) || 0.5;
+        const y = (centerY - bbox.y[0]) / (bbox.y[1] - bbox.y[0]) || 0.5;
+
+        this.autoZoomEnabled = false;
+        this.settingCameraProgrammatically = true;
+        this.sigma.getCamera().setState({ x, y, ratio, angle: 0 });
+        this.settingCameraProgrammatically = false;
+    }
+
+    applyStructureMode(): void {
+        this.syncStyles();
+        this.graph.nodes().forEach(nodeKey => {
+            const attrs = this.graph.getNodeAttributes(nodeKey);
+            const concept = attrs.metadata.concept;
+            const style = this.styleService.resolveNodeStyle(concept.kind as any, getTypeLabel(concept as any));
+            const degree = this.graph.degree(nodeKey);
+            const w = style.width + Math.min(degree * 2, style.width * 4);
+            const h = style.height + Math.min(degree * 2, style.height * 4);
+            this.graph.setNodeAttribute(nodeKey, "type", style.shape);
+            this.graph.setNodeAttribute(nodeKey, "color", style.color);
+            this.graph.setNodeAttribute(nodeKey, "borderColor", style.borderColor);
+            this.graph.setNodeAttribute(nodeKey, "width", w);
+            this.graph.setNodeAttribute(nodeKey, "height", h);
+            this.graph.setNodeAttribute(nodeKey, "size", Math.max(w, h));
+        });
+        this.sigma.refresh();
+    }
+
+    restoreLabels(): void {
+        this.syncStyles();
+        const useDegreeScaling = this.styleService.degreeScaling;
+        this.graph.nodes().forEach(nodeKey => {
+            const attrs = this.graph.getNodeAttributes(nodeKey);
+            const concept = attrs.metadata.concept as DataVertex;
+            const style = this.styleService.resolveNodeStyle(concept.kind as any, getTypeLabel(concept as any));
+            this.graph.setNodeAttribute(nodeKey, "label", this.styleParams.vertexDefaultLabel(concept));
+            this.graph.setNodeAttribute(nodeKey, "type", style.shape);
+            this.graph.setNodeAttribute(nodeKey, "color", style.color);
+            this.graph.setNodeAttribute(nodeKey, "borderColor", style.borderColor);
+            if (useDegreeScaling) {
+                const degree = this.graph.degree(nodeKey);
+                const w = style.width + Math.min(degree * 2, style.width * 4);
+                const h = style.height + Math.min(degree * 2, style.height * 4);
+                this.graph.setNodeAttribute(nodeKey, "width", w);
+                this.graph.setNodeAttribute(nodeKey, "height", h);
+                this.graph.setNodeAttribute(nodeKey, "size", Math.max(w, h));
+            } else {
+                this.graph.setNodeAttribute(nodeKey, "width", style.width);
+                this.graph.setNodeAttribute(nodeKey, "height", style.height);
+                this.graph.setNodeAttribute(nodeKey, "size", Math.max(style.width, style.height));
+            }
+        });
+        this.graph.edges().forEach(edgeKey => {
+            const metadata = this.graph.getEdgeAttributes(edgeKey).metadata;
+            this.graph.setEdgeAttribute(edgeKey, "label", metadata?.dataEdge?.tag ?? "");
+        });
+        this.sigma.refresh();
     }
 
     colorEdgesByConstraintIndex(reset: boolean): void {
-        this.graph.edges().forEach(edgeKey => {
-            let color = reset ?
-                this.interactionHandler.styleParameters.edge_color :
-                this.getColorForEdge(this.graph, edgeKey);
-            this.graph.setEdgeAttribute(edgeKey, "color", color.hex());
-        })
-    }
-
-    private getColorForEdge(graph: VisualGraph, edgeKey: string): chroma.Color {
-        let attributes = graph.getEdgeAttributes(edgeKey);
-        let constraintIndex = attributes.metadata.dataEdge.queryCoordinates.constraint;
-        let branchIndex = attributes.metadata.dataEdge.queryCoordinates.branch;
-        return this.getColorForConstraintIndex(branchIndex, constraintIndex);
+        _colorEdgesByConstraintIndex(this.graph, this.interactionHandler.styleParams, reset);
     }
 
     colorQuery(queryString: string, queryStructure: AnalyzedPipelineBackCompat): string {
-        function shouldColourConstraint(constraint: ConstraintAny | ConstraintExpressionLegacy | ConstraintLinksLegacy): boolean {
-            switch (constraint.tag) {
-                case "isa": return shouldCreateEdge(queryStructure, constraint, constraint.instance, constraint.type);
-                case "isa!": return shouldCreateEdge(queryStructure, constraint, constraint.instance, constraint.type);
-                case "has":  return shouldCreateEdge(queryStructure, constraint, constraint.owner, constraint.attribute);
-                case "links":
-                    return shouldCreateEdge(queryStructure, constraint, constraint.relation, constraint.player);
-                case "sub":
-                    return shouldCreateEdge(queryStructure, constraint, constraint.subtype, constraint.supertype);
-                case "sub!":
-                    return shouldCreateEdge(queryStructure, constraint, constraint.subtype, constraint.supertype);
-                case "owns":
-                    return shouldCreateEdge(queryStructure, constraint, constraint.owner, constraint.attribute);
-                case "relates":
-                    return shouldCreateEdge(queryStructure, constraint, constraint.relation, constraint.role);
-                case "plays":
-                    return shouldCreateEdge(queryStructure, constraint, constraint.player, constraint.role);
-                case "expression":
-
-                    return (
-                        constraint.arguments.map(arg => shouldCreateNode(queryStructure, arg)).reduce((a,b) => a || b, false)
-                        || shouldCreateNode(queryStructure, backCompat_expressionAssigned(constraint))
-                    );
-                case "functionCall":
-                    return (
-                        constraint.arguments.map(arg => shouldCreateNode(queryStructure, arg)).reduce((a,b) => a || b, false)
-                        || constraint.assigned.map(assigned => shouldCreateNode(queryStructure, assigned)).reduce((a,b) => a || b, false)
-                    );
-                case "comparison": return false;
-                case "is": return false;
-                case "iid": return false;
-                case "kind": return false;
-                case "label": return false;
-                case "value": return false;
-                case "or":  return false;
-                case "not": return false;
-                case "try": return false;
-            }
-        }
-        let spans: { span: ConstraintSpan, coordinates: QueryCoordinates}[] = [];
-
-        backCompat_pipelineBlocks(queryStructure).forEach((branch, branchIndex) => {
-            branch.constraints.forEach((constraint, constraintIndex) => {
-                if (shouldColourConstraint(constraint)) {
-                    let span = "textSpan" in constraint ? constraint["textSpan"] : null;
-                    if (span != null) {
-                        spans.push({span, coordinates: { branch: branchIndex, constraint: constraintIndex}});
-                    }
-                }
-            })
-        });
-        // Add one to end-offset so we're AFTER the last character
-        let starts_ends_separate = spans.flatMap(span => [
-            { offset: span.span.begin, coordinatesIfStartElseNull: span.coordinates },
-            { offset: span.span.end + 1, coordinatesIfStartElseNull: null }
-    ]);
-        starts_ends_separate.sort((a,b) => a.offset - b.offset);
-        let se_index = 0;
-        let highlighted = "";
-        for(let i= 0; i<queryString.length; i++) {
-            while (se_index < starts_ends_separate.length && starts_ends_separate[se_index].offset == i) {
-                let coordinatesOrNullIfEnd = starts_ends_separate[se_index].coordinatesIfStartElseNull;
-                if (coordinatesOrNullIfEnd == null) {
-                    highlighted += "</span>"
-                } else {
-                    let color = this.getColorForConstraintIndex(coordinatesOrNullIfEnd.branch, coordinatesOrNullIfEnd.constraint)
-                    highlighted += "<span style=\"color: " + color.hex() + "\">";
-                }
-                se_index += 1;
-            }
-            highlighted += (queryString[i] == "\n") ? "<br/>": queryString[i];
-        }
-        return highlighted;
+        return _colorQuery(queryString, queryStructure);
     }
 
-    private getColorForConstraintIndex(branchIndex: number, constraintIndex: number): chroma.Color {
-        const OFFSET1 = 153;
-        const OFFSET2 = 173;
-        const OFFSET3 = 199;
-        let r = ((branchIndex + 1) * OFFSET3 + (constraintIndex+1) * OFFSET1) % 256;
-        let g = ((branchIndex + 1) * OFFSET2 + (constraintIndex+1) * OFFSET2) % 256;
-        let b = ((branchIndex + 1) * OFFSET1 + (constraintIndex+1) * OFFSET3) % 256;
-        return chroma([r,g,b]);
+    get isLayoutRunning(): boolean {
+        return this.layout.isRunning;
+    }
+
+    stopLayout(): void {
+        this.layout.stop();
+    }
+
+    private applyBackground(): void {
+        const container = this.sigma.getContainer();
+        const bg = this.styleService.background;
+        const css = buildBackgroundCSS(bg);
+        container.style.backgroundColor = css.color;
+        container.style.backgroundImage = css.image;
+        container.style.backgroundSize = css.size;
+        if (bg.type === "party") {
+            container.style.setProperty("--party-color1", bg.color1);
+            container.style.setProperty("--party-color2", bg.color2);
+            container.classList.add("party-background");
+        } else {
+            container.style.removeProperty("--party-color1");
+            container.style.removeProperty("--party-color2");
+            container.classList.remove("party-background");
+        }
     }
 
     destroy() {
+        this.stylesSub.unsubscribe();
+        // Force-lose WebGL contexts before killing sigma so the browser
+        // reclaims context slots immediately instead of waiting for GC.
+        const container = this.sigma.getContainer();
+        container.querySelectorAll("canvas").forEach(canvas => {
+            const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+            if (gl) gl.getExtension("WEBGL_lose_context")?.loseContext();
+        });
         this.sigma.kill();
     }
 }
-
-export function createSigmaRenderer(containerEl: HTMLElement, sigma_settings: SigmaSettings, graph: MultiGraph) : Sigma {
-    // Create the sigma
-    return new Sigma(graph, containerEl, sigma_settings);
-}
-
-export function backCompat_pipelineBlocks(pipeline : AnalyzedPipelineBackCompat): AnalyzedConjunction[] | QueryConjunctionLegacy[] {
-    if ("blocks" in pipeline) {
-        return pipeline["blocks"];
-    } else if ("conjunctions" in pipeline) {
-        return pipeline["conjunctions"];
-    } else {
-        throw new Error("Unreachable: pipeline neither had blocks nor conjunctions");
-    }
-}
-
-export function backCompat_expressionAssigned(expr: ConstraintExpression | ConstraintExpressionLegacy): ConstraintVertexVariable {
-    return (Array.isArray(expr.assigned) ? expr.assigned[0] : expr.assigned) as ConstraintVertexVariable;
-}
-
-export type ConstraintBackCompat = ConstraintAny | ConstraintLinksLegacy | ConstraintExpressionLegacy;
-export type ConceptRowsQueryResponseBackCompat = ConceptRowsQueryResponse | ConceptRowsQueryResponseLegacy;
-export type AnalyzedPipelineBackCompat = AnalyzedPipeline | QueryStructureLegacy;

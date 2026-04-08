@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, ViewContainerRef } from "@angular/core";
 import { SpinnerComponent } from "./framework/spinner/spinner.component";
 import { AnalyticsService } from "./service/analytics.service";
 import { GuardsCheckEnd, GuardsCheckStart, NavigationCancel, Router, RouterOutlet, Event as RouterEvent, NavigationEnd } from "@angular/router";
@@ -34,7 +34,7 @@ export class RootComponent implements OnInit {
     );
     initialised = false;
 
-    constructor(private analytics: AnalyticsService, private router: Router, private appData: AppData, private driver: DriverState, private snackbar: SnackbarService) {
+    constructor(public vcRef: ViewContainerRef, private analytics: AnalyticsService, private router: Router, private appData: AppData, private driver: DriverState, private snackbar: SnackbarService) {
         this.informAnalyticsOnPageView(router, analytics);
     }
 
