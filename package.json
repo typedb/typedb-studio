@@ -31,7 +31,7 @@
     "@codemirror/language": "6.12.1",
     "@codemirror/lint": "6.9.4",
     "@codemirror/state": "6.5.3",
-    "@codemirror/view": "6.38.8",
+    "@codemirror/view": "6.39.16",
     "@customerio/cdp-analytics-browser": "0.2.0",
     "@hhangular/resizable": "1.18.1",
     "@intercom/messenger-js-sdk": "0.0.14",
