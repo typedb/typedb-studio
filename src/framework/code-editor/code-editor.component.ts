@@ -37,8 +37,8 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
     protected readonly TypeQL = TypeQL;
     protected readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
 
-    // Workaround for WebKit IME input issues (Safari on macOS, Tauri WKWebView on macOS/Linux)
-    private readonly webKitInputFix = EditorView.domEventHandlers({
+    // Workaround for IME input issues across browsers/platforms
+    private readonly imeInputFix = EditorView.domEventHandlers({
         keydown: (event, view) => {
             // Only handle printable characters that WebKit fails to input
             if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
@@ -51,15 +51,8 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
         }
     });
 
-    private readonly isSafari = /safari/i.test(navigator.userAgent) && !/chrome/i.test(navigator.userAgent);
-    private readonly isTauri = !!(window as any).__TAURI_INTERNALS__;
-    private readonly needsWebKitInputFix =
-        (navigator.platform.startsWith('Mac') && (this.isSafari || this.isTauri))
-        || (navigator.platform.startsWith('Linux') && this.isTauri);
-
     get extensions(): Extension[] {
-        const baseExtensions = [this.codeEditorTheme, TypeQL(), typeqlAutocompleteExtension(), this.keymap];
-        return this.needsWebKitInputFix ? [...baseExtensions, this.webKitInputFix] : baseExtensions;
+        return [this.codeEditorTheme, TypeQL(), typeqlAutocompleteExtension(), this.keymap, this.imeInputFix];
     }
 
     ran = false;
