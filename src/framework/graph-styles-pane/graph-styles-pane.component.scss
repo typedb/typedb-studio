@@ -1,4 +1,5 @@
 @use "colors";
+@use "typography";
 
 :host {
   display: flex;
@@ -64,6 +65,16 @@
   &:hover:not(.active) {
     color: #bbb;
   }
+}
+
+.highlight-indicator {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff6b9d;
+  margin-left: 4px;
+  vertical-align: middle;
 }
 
 .panel-body {
@@ -352,6 +363,7 @@
   font-size: 13px;
   color: #958fa8;
   flex: 1;
+  font-weight: typography.$light;
 }
 
 .footer-select-field {
@@ -419,7 +431,7 @@
     --mat-slide-toggle-label-text-color: #958fa8;
     --mat-slide-toggle-label-text-weight: inherit;
     --mat-slide-toggle-label-text-font: inherit;
-    --mat-slide-toggle-label-text-tracking: inherit;
+    --mat-slide-toggle-label-text-tracking: var(--body-letter-spacing);
 
     .mdc-form-field {
       width: 100%;

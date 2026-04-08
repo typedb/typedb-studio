@@ -1,0 +1,64 @@
+<div class="panel-section highlights-section">
+  <div class="highlight-group">
+    <div class="highlight-group-header">
+      <span class="highlight-group-label">Kinds</span>
+      <div class="highlight-group-actions">
+        <button class="highlight-action-button" (click)="selectAllKinds()">All</button>
+        <button class="highlight-action-button" (click)="unselectAllKinds()">None</button>
+      </div>
+    </div>
+    <div class="highlight-chips">
+      @for (row of displayKinds; track row.kind) {
+        <button class="highlight-chip"
+                [class.active]="isKindHighlighted(row.kind)"
+                [style.--chip-color]="getKindBorderColor(row.kind)"
+                (click)="toggleHighlightKind(row.kind)"
+                (dblclick)="soloHighlightKind(row.kind)">
+          {{ row.label }}
+        </button>
+      }
+    </div>
+  </div>
+  @if (discoveredTypes.length > 0) {
+    <div class="highlight-group">
+      <div class="highlight-group-header">
+        <span class="highlight-group-label">Types</span>
+        <div class="highlight-group-actions">
+          <button class="highlight-action-button" (click)="selectAllTypes()">All</button>
+          <button class="highlight-action-button" (click)="unselectAllTypes()">None</button>
+        </div>
+      </div>
+      <div class="highlight-chips">
+        @for (row of discoveredTypes; track row.typeLabel) {
+          <button class="highlight-chip"
+                  [class.active]="isTypeHighlighted(row.typeLabel)"
+                  [style.--chip-color]="getTypeBorderColor(row.typeLabel, row.kind)"
+                  (click)="toggleHighlightType(row.typeLabel)"
+                  (dblclick)="soloHighlightType(row.typeLabel)">
+            {{ row.typeLabel }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+  <div class="highlight-group">
+    <div class="highlight-group-header">
+      <span class="highlight-group-label">Edges</span>
+      <div class="highlight-group-actions">
+        <button class="highlight-action-button" (click)="selectAllEdges()">All</button>
+        <button class="highlight-action-button" (click)="unselectAllEdges()">None</button>
+      </div>
+    </div>
+    <div class="highlight-chips">
+      @for (row of edgeLabels; track row.tag) {
+        <button class="highlight-chip"
+                [class.active]="isEdgeHighlighted(row.tag)"
+                [style.--chip-color]="getEdgeLabelColor(row.tag)"
+                (click)="toggleHighlightEdge(row.tag)"
+                (dblclick)="soloHighlightEdge(row.tag)">
+          {{ row.displayLabel }}
+        </button>
+      }
+    </div>
+  </div>
+</div>

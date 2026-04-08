@@ -296,21 +296,18 @@ export class GraphStyleService {
     toggleHighlightKind(kind: VertexKind): void {
         if (this._highlightedKinds.has(kind)) this._highlightedKinds.delete(kind);
         else this._highlightedKinds.add(kind);
-        this.save();
         this.styles$.next();
     }
 
     toggleHighlightType(typeLabel: string): void {
         if (this._highlightedTypes.has(typeLabel)) this._highlightedTypes.delete(typeLabel);
         else this._highlightedTypes.add(typeLabel);
-        this.save();
         this.styles$.next();
     }
 
     toggleHighlightEdge(tag: string): void {
         if (this._highlightedEdges.has(tag)) this._highlightedEdges.delete(tag);
         else this._highlightedEdges.add(tag);
-        this.save();
         this.styles$.next();
     }
 
@@ -318,7 +315,6 @@ export class GraphStyleService {
         this._highlightedKinds.clear();
         this._highlightedTypes.clear();
         this._highlightedEdges.clear();
-        this.save();
         this.styles$.next();
     }
 
@@ -473,9 +469,6 @@ export class GraphStyleService {
         this._labelsVisible = true;
         this._showHoverLabel = true;
         this._degreeScaling = false;
-        this._highlightedKinds.clear();
-        this._highlightedTypes.clear();
-        this._highlightedEdges.clear();
         this._activePreset = null;
         this.save();
         this.styles$.next();
@@ -576,9 +569,6 @@ export class GraphStyleService {
                 edgeLabelColors: this._edgeLabelColors,
                 colorEdgesByConstraint: this._colorEdgesByConstraint,
                 labelUseBorderColor: this._labelUseBorderColor,
-                highlightedKinds: Array.from(this._highlightedKinds),
-                highlightedTypes: Array.from(this._highlightedTypes),
-                highlightedEdges: Array.from(this._highlightedEdges),
                 activePreset: this._activePreset,
                 labelsVisible: this._labelsVisible,
                 showHoverLabel: this._showHoverLabel,
@@ -601,9 +591,6 @@ export class GraphStyleService {
                 this._edgeLabelColors = data.edgeLabelColors ?? {};
                 this._colorEdgesByConstraint = data.colorEdgesByConstraint ?? false;
                 this._labelUseBorderColor = data.labelUseBorderColor ?? true;
-                this._highlightedKinds = new Set(data.highlightedKinds ?? []);
-                this._highlightedTypes = new Set(data.highlightedTypes ?? []);
-                this._highlightedEdges = new Set(data.highlightedEdges ?? []);
                 this._activePreset = data.activePreset ?? null;
                 this._labelsVisible = data.labelsVisible ?? true;
                 this._showHoverLabel = data.showHoverLabel ?? true;

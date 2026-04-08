@@ -25,7 +25,7 @@ import { SchemaState } from "../../service/schema-state.service";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaToolWindowComponent } from "./tool-window/schema-tool-window.component";
-import { GraphCustomisationPanelComponent } from "../../framework/graph-customisation-panel/graph-customisation-panel.component";
+import { GraphStylesPaneComponent } from "../../framework/graph-styles-pane/graph-styles-pane.component";
 import { GraphZoomControlsComponent } from "../../framework/graph-zoom-controls/graph-zoom-controls.component";
 
 @Component({
@@ -36,7 +36,7 @@ import { GraphZoomControlsComponent } from "../../framework/graph-zoom-controls/
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule,
         MatSortModule, MatTooltipModule, MatButtonModule, ResizableDirective, SchemaToolWindowComponent,
-        GraphCustomisationPanelComponent,
+        GraphStylesPaneComponent,
         GraphZoomControlsComponent,
     ]
 })

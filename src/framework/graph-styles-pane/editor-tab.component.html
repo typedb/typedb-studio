@@ -1,0 +1,228 @@
+<!-- Sub-tab bar -->
+<div class="tab-bar sub-tab-bar">
+  <button class="tab" [class.active]="activeTab === 'kind'" (click)="activeTab = 'kind'">Kinds</button>
+  <button class="tab" [class.active]="activeTab === 'type'" (click)="activeTab = 'type'; refreshDiscoveredTypes()">Types</button>
+  <button class="tab" [class.active]="activeTab === 'edge'" (click)="activeTab = 'edge'">Edges</button>
+  <button class="tab" [class.active]="activeTab === 'background'" (click)="activeTab = 'background'">Background</button>
+</div>
+
+<div class="panel-body">
+  <!-- Kind-based styles -->
+  @if (activeTab === 'kind') {
+    <div class="style-list">
+      @for (row of displayKinds; track row.kind) {
+        <div class="style-row">
+          <div class="type-label-row">
+            <span class="style-label">{{ row.label }}</span>
+            @if (hasKindOverride(row.kind)) {
+              <button class="clear-button" (click)="clearKindOverride(row.kind)" matTooltip="Reset to default" [matTooltipShowDelay]="500">
+                <i class="fa-light fa-arrow-u-turn-up-left"></i>
+              </button>
+            }
+          </div>
+          <div class="style-controls">
+            <span matTooltip="Border" [matTooltipShowDelay]="500">
+              <div class="border-swatch" [style.border-color]="getKindBorderColor(row.kind)">
+                <input type="color" class="color-input border-input"
+                       [value]="getKindBorderColor(row.kind)"
+                       (input)="setKindBorderColor(row.kind, $any($event.target).value)">
+              </div>
+            </span>
+            <span matTooltip="Fill" [matTooltipShowDelay]="500">
+              <input type="color" class="color-input"
+                     [value]="getKindColor(row.kind)"
+                     (input)="setKindColor(row.kind, $any($event.target).value)">
+            </span>
+            <mat-form-field class="shape-field" subscriptSizing="dynamic">
+              <mat-select [value]="getKindShape(row.kind)"
+                          panelClass="graph-style-select-panel"
+                          (selectionChange)="setKindShape(row.kind, $event.value)">
+                <mat-select-trigger>
+                  <ng-container *ngTemplateOutlet="shapeIconTpl; context: {$implicit: getKindShape(row.kind)}"></ng-container>
+                </mat-select-trigger>
+                @for (shape of shapes; track shape.value) {
+                  <mat-option [value]="shape.value">
+                    <ng-container *ngTemplateOutlet="shapeIconTpl; context: {$implicit: shape.value}"></ng-container>
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <div class="size-fields">
+              <span class="dim-label">W</span>
+              <mat-form-field class="size-field" subscriptSizing="dynamic">
+                <input matInput type="number"
+                       [value]="getKindWidth(row.kind)"
+                       (change)="setKindWidth(row.kind, +$any($event.target).value)"
+                       min="2" max="100" step="1">
+              </mat-form-field>
+              <span class="dim-label">H</span>
+              <mat-form-field class="size-field" subscriptSizing="dynamic">
+                <input matInput type="number"
+                       [value]="getKindHeight(row.kind)"
+                       (change)="setKindHeight(row.kind, +$any($event.target).value)"
+                       min="2" max="100" step="1">
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Type-based overrides -->
+  @if (activeTab === 'type') {
+    <div class="style-list">
+      @if (discoveredTypes.length === 0) {
+        <p class="empty-message">No types found. Run a query first to discover types.</p>
+      }
+      @for (row of discoveredTypes; track row.typeLabel) {
+        <div class="style-row">
+          <div class="type-label-row">
+            <span class="style-label">{{ row.typeLabel }}</span>
+            @if (hasTypeOverride(row.typeLabel)) {
+              <button class="clear-button" (click)="clearTypeOverride(row.typeLabel)" matTooltip="Reset to default" [matTooltipShowDelay]="500">
+                <i class="fa-light fa-arrow-u-turn-up-left"></i>
+              </button>
+            }
+          </div>
+          <div class="style-controls">
+            <span matTooltip="Border" [matTooltipShowDelay]="500">
+              <div class="border-swatch" [style.border-color]="getTypeBorderColor(row.typeLabel, row.kind)">
+                <input type="color" class="color-input border-input"
+                       [value]="getTypeBorderColor(row.typeLabel, row.kind)"
+                       (input)="setTypeBorderColor(row.typeLabel, $any($event.target).value)">
+              </div>
+            </span>
+            <span matTooltip="Fill" [matTooltipShowDelay]="500">
+              <input type="color" class="color-input"
+                     [value]="getTypeColor(row.typeLabel, row.kind)"
+                     (input)="setTypeColor(row.typeLabel, $any($event.target).value)">
+            </span>
+            <mat-form-field class="shape-field" subscriptSizing="dynamic">
+              <mat-select [value]="getTypeShape(row.typeLabel, row.kind)"
+                          panelClass="graph-style-select-panel"
+                          (selectionChange)="setTypeShape(row.typeLabel, $event.value)">
+                <mat-select-trigger>
+                  <ng-container *ngTemplateOutlet="shapeIconTpl; context: {$implicit: getTypeShape(row.typeLabel, row.kind)}"></ng-container>
+                </mat-select-trigger>
+                @for (shape of shapes; track shape.value) {
+                  <mat-option [value]="shape.value">
+                    <ng-container *ngTemplateOutlet="shapeIconTpl; context: {$implicit: shape.value}"></ng-container>
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <div class="size-fields">
+              <span class="dim-label">W</span>
+              <mat-form-field class="size-field" subscriptSizing="dynamic">
+                <input matInput type="number"
+                       [value]="getTypeWidth(row.typeLabel, row.kind)"
+                       (change)="setTypeWidth(row.typeLabel, +$any($event.target).value)"
+                       min="2" max="100" step="1">
+              </mat-form-field>
+              <span class="dim-label">H</span>
+              <mat-form-field class="size-field" subscriptSizing="dynamic">
+                <input matInput type="number"
+                       [value]="getTypeHeight(row.typeLabel, row.kind)"
+                       (change)="setTypeHeight(row.typeLabel, +$any($event.target).value)"
+                       min="2" max="100" step="1">
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Edge label colors -->
+  @if (activeTab === 'edge') {
+    <div class="style-list">
+      @for (row of edgeLabels; track row.tag) {
+        <div class="style-row">
+          <div class="type-label-row">
+            <span class="style-label">{{ row.displayLabel }}</span>
+            @if (hasEdgeLabelOverride(row.tag)) {
+              <button class="clear-button" (click)="clearEdgeLabelOverride(row.tag)" matTooltip="Reset to default" [matTooltipShowDelay]="500">
+                <i class="fa-light fa-arrow-u-turn-up-left"></i>
+              </button>
+            }
+          </div>
+          <div class="style-controls">
+            <span matTooltip="Color" [matTooltipShowDelay]="500">
+              <input type="color" class="color-input"
+                     [value]="getEdgeLabelColor(row.tag)"
+                     (input)="setEdgeLabelColor(row.tag, $any($event.target).value)">
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Background -->
+  @if (activeTab === 'background') {
+    <div class="style-list background-settings">
+      <div class="style-row">
+        <div class="type-label-row">
+          <span class="style-label">Background</span>
+          @if (hasBackgroundOverride) {
+            <button class="clear-button" (click)="resetBackground()" matTooltip="Reset to default" [matTooltipShowDelay]="500">
+              <i class="fa-light fa-arrow-u-turn-up-left"></i>
+            </button>
+          }
+        </div>
+      </div>
+      <div class="style-row">
+        <span class="style-label">Type</span>
+        <div class="style-controls">
+          <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
+            <mat-select [value]="backgroundType" panelClass="graph-style-select-panel" (selectionChange)="setBackgroundType($event.value)">
+              <mat-option value="solid">Solid</mat-option>
+              <mat-option value="gradient">Gradient</mat-option>
+              <mat-option value="grid">Grid</mat-option>
+              <mat-option value="dots">Dots</mat-option>
+              <mat-option value="party">Party mode</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="style-row">
+        <span class="style-label">{{ backgroundType === 'solid' ? 'Color' : 'Color 1' }}</span>
+        <div class="style-controls">
+          <input type="color" class="color-input"
+                 [value]="backgroundColor1"
+                 (input)="setBackgroundColor1($any($event.target).value)">
+        </div>
+      </div>
+      @if (backgroundType !== 'solid') {
+        <div class="style-row">
+          <span class="style-label">Color 2</span>
+          <div class="style-controls">
+            <input type="color" class="color-input"
+                   [value]="backgroundColor2"
+                   (input)="setBackgroundColor2($any($event.target).value)">
+          </div>
+        </div>
+      }
+      @if (backgroundType === 'gradient') {
+        <div class="style-row">
+          <span class="style-label">Angle</span>
+          <div class="style-controls angle-control">
+            <input type="range" class="angle-slider" min="0" max="360" step="1"
+                   [value]="backgroundAngle"
+                   (input)="setBackgroundAngle(+$any($event.target).value)">
+            <span class="angle-value">{{ backgroundAngle }}°</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<ng-template #shapeIconTpl let-shapeValue>
+  @switch (shapeValue) {
+    @case ('rounded-rect') { <svg class="shape-icon" viewBox="0 0 24 14"><rect x="1" y="2" width="22" height="10" rx="2.5" fill="currentColor"/></svg> }
+    @case ('diamond') { <svg class="shape-icon" viewBox="0 0 24 14"><polygon points="12,1 23,7 12,13 1,7" fill="currentColor"/></svg> }
+    @case ('ellipse') { <svg class="shape-icon" viewBox="0 0 24 14"><ellipse cx="12" cy="7" rx="10" ry="5.5" fill="currentColor"/></svg> }
+  }
+</ng-template>

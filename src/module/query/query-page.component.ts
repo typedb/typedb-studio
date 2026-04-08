@@ -46,7 +46,7 @@ import { indentWithTab } from "@codemirror/commands";
 import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatSelectModule } from "@angular/material/select";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
-import { GraphCustomisationPanelComponent } from "../../framework/graph-customisation-panel/graph-customisation-panel.component";
+import { GraphStylesPaneComponent } from "../../framework/graph-styles-pane/graph-styles-pane.component";
 import { GraphZoomControlsComponent } from "../../framework/graph-zoom-controls/graph-zoom-controls.component";
 
 @Component({
@@ -58,7 +58,7 @@ import { GraphZoomControlsComponent } from "../../framework/graph-zoom-controls/
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, ResizableDirective,
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule,
         MatMenuModule, MatSelectModule, SchemaToolWindowComponent, CodeEditorComponent, ActionDurationPipe,
-        GraphCustomisationPanelComponent,
+        GraphStylesPaneComponent,
         GraphZoomControlsComponent,
     ]
 })
