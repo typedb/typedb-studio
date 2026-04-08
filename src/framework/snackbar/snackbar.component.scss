@@ -4,15 +4,15 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "sass:color";
+
 @use "shapes";
-@use "colors";
+
 
 
 @mixin host-color-style($class, $base-color) {
     &.#{$class} {
         border-color: $base-color;
-        background: color.mix($base-color, colors.$black, 15%);
+        background: var(--theme-black);
         box-shadow: inset 0 0 0 1px $base-color;
 
         .sb-text i {
@@ -30,10 +30,10 @@
     align-items: center;
     gap: 16px;
 
-    @include host-color-style(ok, colors.$green);
-    @include host-color-style(info, colors.$secondary-blue);
-    @include host-color-style(warn, colors.$secondary-yellow);
-    @include host-color-style(error, colors.$red);
+    @include host-color-style(ok, var(--theme-green));
+    @include host-color-style(info, var(--theme-secondary-blue));
+    @include host-color-style(warn, var(--theme-secondary-yellow));
+    @include host-color-style(error, var(--theme-red));
 
     p + p {
         margin-top: 0.5em;
@@ -56,7 +56,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    color: colors.$white;
+    color: var(--theme-white);
 
     i {
         flex-shrink: 0;
@@ -68,10 +68,10 @@
 }
 
 .truncated-indicator {
-    color: colors.$grey;
+    color: var(--theme-grey);
     font-style: italic;
 }
 
 .sb-button i {
-    color: rgba(colors.$white, 0.8);
+    color: var(--theme-white-08);
 }

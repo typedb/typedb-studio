@@ -1,4 +1,4 @@
-@use "colors";
+
 @use "typography";
 
 :host {
@@ -7,8 +7,8 @@
   height: 100%;
   min-width: 0;
   white-space: normal !important;
-  background: colors.$deep-purple;
-  border-left: 1px solid colors.$secondary-deep-grey;
+  background: var(--theme-deep-purple);
+  border-left: 1px solid var(--theme-secondary-deep-grey);
 }
 
 .panel {
@@ -25,7 +25,7 @@
   overflow-y: auto;
   min-height: 0;
   scrollbar-width: thin;
-  scrollbar-color: colors.$secondary-dark-grey transparent;
+  scrollbar-color: var(--theme-secondary-dark-grey) transparent;
 }
 
 .panel-header {
@@ -33,7 +33,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  border-bottom: 1px solid colors.$secondary-dark-grey;
+  border-bottom: 1px solid var(--theme-secondary-dark-grey);
 }
 
 .panel-title {
@@ -44,7 +44,7 @@
 
 .tab-bar {
   display: flex;
-  border-bottom: 1px solid colors.$secondary-dark-grey;
+  border-bottom: 1px solid var(--theme-secondary-dark-grey);
 }
 
 .tab {
@@ -59,7 +59,7 @@
 
   &.active {
     color: #d5ccff;
-    border-bottom-color: colors.$secondary-light-grey;
+    border-bottom-color: var(--theme-secondary-light-grey);
   }
 
   &:hover:not(.active) {
@@ -91,7 +91,7 @@
   padding: 4px 12px;
 
   &:hover {
-    background: colors.$purple;
+    background: var(--theme-purple);
   }
 }
 
@@ -164,7 +164,7 @@
   }
 
   &:hover {
-    border-color: colors.$secondary-light-grey;
+    border-color: var(--theme-secondary-light-grey);
   }
 
   &.border-input {
@@ -184,11 +184,11 @@
   box-sizing: border-box;
   border-radius: 3px;
   border: 3px solid #5a5772;
-  background: colors.$deep-purple;
+  background: var(--theme-deep-purple);
   cursor: pointer;
 
   &:hover {
-    border-color: colors.$secondary-light-grey;
+    border-color: var(--theme-secondary-light-grey);
   }
 }
 
@@ -198,14 +198,14 @@
   --mat-form-field-container-vertical-padding: 0;
   --mat-form-field-filled-with-label-container-padding-top: 0;
   --mat-form-field-filled-with-label-container-padding-bottom: 0;
-  --mdc-filled-text-field-container-color: #{colors.$secondary-purple};
+  --mdc-filled-text-field-container-color: #{var(--theme-secondary-purple)};
 
   ::ng-deep {
     .mat-mdc-text-field-wrapper,
     .mdc-text-field,
     .mdc-text-field--filled {
       padding: 0 8px !important;
-      background: colors.$secondary-purple !important;
+      background: var(--theme-secondary-purple) !important;
       border-radius: 3px;
       height: 30px !important;
       max-height: 30px !important;
@@ -276,7 +276,7 @@
   height: 4px;
   -webkit-appearance: none;
   appearance: none;
-  background: colors.$secondary-dark-grey;
+  background: var(--theme-secondary-dark-grey);
   border-radius: 2px;
   outline: none;
   cursor: pointer;
@@ -350,7 +350,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 8px 12px;
-  border-top: 1px solid colors.$secondary-dark-grey;
+  border-top: 1px solid var(--theme-secondary-dark-grey);
 }
 
 .footer-option {
@@ -374,14 +374,14 @@
   --mat-form-field-container-vertical-padding: 0;
   --mat-form-field-filled-with-label-container-padding-top: 0;
   --mat-form-field-filled-with-label-container-padding-bottom: 0;
-  --mdc-filled-text-field-container-color: #{colors.$secondary-purple};
+  --mdc-filled-text-field-container-color: #{var(--theme-secondary-purple)};
 
   ::ng-deep {
     .mat-mdc-text-field-wrapper,
     .mdc-text-field,
     .mdc-text-field--filled {
       padding: 0 8px !important;
-      background: colors.$secondary-purple !important;
+      background: var(--theme-secondary-purple) !important;
       border-radius: 3px;
       height: 28px !important;
       max-height: 28px !important;
@@ -457,9 +457,9 @@
   flex: 1;
   height: 30px;
   font-size: 12px;
-  background: colors.$secondary-dark-grey;
+  background: var(--theme-secondary-dark-grey);
   color: #d5ccff;
-  border: 1px solid colors.$secondary-deep-grey;
+  border: 1px solid var(--theme-secondary-deep-grey);
   border-radius: 4px;
   cursor: pointer;
   display: flex;
@@ -474,7 +474,7 @@
   }
 
   &:hover {
-    background: colors.$secondary-deep-grey;
+    background: var(--theme-secondary-deep-grey);
   }
 
   &.reset {
@@ -558,7 +558,7 @@
   font-size: 12px;
   padding: 3px 10px;
   border-radius: 12px;
-  border: 1px solid colors.$secondary-deep-grey;
+  border: 1px solid var(--theme-secondary-deep-grey);
   background: transparent;
   color: #958fa8;
   cursor: pointer;
@@ -590,12 +590,12 @@
   align-items: flex-start;
   gap: 10px;
   padding: 8px 10px;
-  background: colors.$secondary-purple;
-  border: 1px solid colors.$secondary-deep-grey;
+  background: var(--theme-secondary-purple);
+  border: 1px solid var(--theme-secondary-deep-grey);
   border-radius: 4px;
 
   &.active {
-    border-color: colors.$secondary-light-grey;
+    border-color: var(--theme-secondary-light-grey);
   }
 }
 
@@ -624,8 +624,8 @@
   font-size: 12px;
   padding: 4px 12px;
   border-radius: 3px;
-  border: 1px solid colors.$secondary-deep-grey;
-  background: colors.$secondary-dark-grey;
+  border: 1px solid var(--theme-secondary-deep-grey);
+  background: var(--theme-secondary-dark-grey);
   color: #d5ccff;
   cursor: pointer;
 
@@ -636,7 +636,7 @@
   }
 
   &:hover:not(:disabled) {
-    background: colors.$secondary-deep-grey;
+    background: var(--theme-secondary-deep-grey);
   }
 
   &:disabled {
@@ -755,13 +755,13 @@
   font-size: 13px;
   padding: 4px 8px;
   border-radius: 3px;
-  border: 1px solid colors.$secondary-deep-grey;
-  background: colors.$secondary-purple;
+  border: 1px solid var(--theme-secondary-deep-grey);
+  background: var(--theme-secondary-purple);
   color: #d5ccff;
   outline: none;
 
   &:focus {
-    border-color: colors.$secondary-light-grey;
+    border-color: var(--theme-secondary-light-grey);
   }
 
   &::placeholder {

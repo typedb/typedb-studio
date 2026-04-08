@@ -1,4 +1,4 @@
-@use "colors";
+
 
 :host {
   position: absolute;
@@ -16,31 +16,31 @@
 
 .zoom-button.reset-button {
   border-radius: 6px;
-  border: 1px solid colors.$secondary-deep-grey;
-  background: colors.$secondary-purple;
+  border: 1px solid var(--theme-secondary-deep-grey);
+  background: var(--theme-secondary-purple);
 
   &:disabled {
-    color: colors.$secondary-deep-grey;
+    color: var(--theme-secondary-deep-grey);
     cursor: default;
 
     &:hover {
-      background: colors.$secondary-purple;
+      background: var(--theme-secondary-purple);
     }
   }
 }
 
 .zoom-button.stop-button {
   border-radius: 6px;
-  border: 1px solid colors.$secondary-deep-grey;
-  background: colors.$secondary-purple;
-  color: colors.$red;
+  border: 1px solid var(--theme-secondary-deep-grey);
+  background: var(--theme-secondary-purple);
+  color: var(--theme-red);
 
   &:disabled {
-    color: colors.$secondary-deep-grey;
+    color: var(--theme-secondary-deep-grey);
     cursor: default;
 
     &:hover {
-      background: colors.$secondary-purple;
+      background: var(--theme-secondary-purple);
     }
   }
 }
@@ -49,8 +49,8 @@
   display: flex;
   flex-direction: column;
   border-radius: 6px;
-  border: 1px solid colors.$secondary-deep-grey;
-  background: colors.$secondary-purple;
+  border: 1px solid var(--theme-secondary-deep-grey);
+  background: var(--theme-secondary-purple);
   overflow: hidden;
 }
 
@@ -59,7 +59,7 @@
   height: 28px;
   border: none;
   background: transparent;
-  color: colors.$secondary-light-grey;
+  color: var(--theme-secondary-light-grey);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -69,11 +69,11 @@
   transition: background 0.15s;
 
   &:hover {
-    background: colors.$secondary-dark-grey;
+    background: var(--theme-secondary-dark-grey);
   }
 }
 
 .divider {
   height: 1px;
-  background: colors.$secondary-deep-grey;
+  background: var(--theme-secondary-deep-grey);
 }

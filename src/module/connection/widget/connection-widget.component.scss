@@ -5,7 +5,7 @@
  */
 
 @use "shapes";
-@use "colors";
+
 
 @use "typography";
 
@@ -24,7 +24,7 @@
         padding: 5px 8px;
         display: flex;
         align-items: center;
-        color: colors.$grey;
+        color: var(--theme-grey);
         @include typography.p2;
 
         i.fa-database {
@@ -37,7 +37,7 @@
     }
 
     button:hover {
-        color: colors.$green;
+        color: var(--theme-green);
     }
 
     .connection-area {
@@ -65,21 +65,21 @@ i.ts-beacon {
     margin-right: 8px;
 
     &.ok {
-        color: colors.$green;
+        color: var(--theme-green);
         //animation: shimmer 3s ease-in-out 0s infinite;
     }
 
     &.warn {
-        color: colors.$secondary-yellow;
+        color: var(--theme-secondary-yellow);
         animation: beacon 1.5s ease-in-out 0s infinite;
     }
 
     &.error {
-        color: colors.$red;
+        color: var(--theme-red);
     }
 
     &.inactive {
-        color: colors.$secondary-light-grey;
+        color: var(--theme-secondary-light-grey);
     }
 }
 
@@ -97,7 +97,7 @@ i.ts-beacon {
     font-size: 14px;
     margin-left: 8px;
     margin-right: 4px;
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
 }
 
 .divider-vertical {
@@ -111,7 +111,7 @@ i.ts-beacon {
         @include typography.aside;
 
         .server-version {
-            color: colors.$secondary-light-grey;
+            color: var(--theme-secondary-light-grey);
         }
     }
 
@@ -169,10 +169,10 @@ i.ts-beacon {
     }
 
     button.selected {
-        color: colors.$green;
+        color: var(--theme-green);
 
         i.fa-trash-can {
-            color: colors.$grey;
+            color: var(--theme-grey);
         }
     }
 }

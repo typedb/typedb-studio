@@ -5,7 +5,7 @@
  */
 
 @use "shapes";
-@use "colors";
+
 
 @use "typography";
 
@@ -26,23 +26,23 @@
 }
 
 .title {
-    color: colors.$white;
+    color: var(--theme-white);
     background-color: tp.$purple;
     @include typography.h2;
 }
 
 :host.dark {
     .title {
-        background-color: colors.$black-purple;
+        background-color: var(--theme-black-purple);
     }
 
     ::ng-deep tp-properties-table-row {
         &:nth-child(even) {
-            background-color: colors.$deep-purple;
+            background-color: var(--theme-deep-purple);
         }
 
         &:nth-child(odd) {
-            background-color: colors.$black-purple;
+            background-color: var(--theme-black-purple);
         }
     }
 }

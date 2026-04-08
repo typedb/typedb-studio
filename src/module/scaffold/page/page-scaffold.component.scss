@@ -46,7 +46,7 @@ mat-sidenav {
         padding-right: 16px;
 
         .tp-sidenav-container {
-            @include colors.light-source-gradient(rgba(colors.$green, 0.08), colors.$purple, $left: 30%, $top: 20%);
+            @include colors.light-source-gradient(var(--theme-green-008), var(--theme-purple), $left: 30%, $top: 20%);
         }
     }
 
@@ -54,7 +54,7 @@ mat-sidenav {
         padding: 0;
 
         .tp-sidenav-container {
-            @include colors.light-source-gradient(rgba(colors.$green, 0.08), colors.$purple, $left: 70%, $top: 80%);
+            @include colors.light-source-gradient(var(--theme-green-008), var(--theme-purple), $left: 70%, $top: 80%);
         }
     }
 }

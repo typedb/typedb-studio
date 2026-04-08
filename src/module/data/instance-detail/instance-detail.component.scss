@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "colors";
+
 
 :host {
     display: block;
@@ -28,7 +28,7 @@
     align-items: center;
     gap: 12px;
     padding: 8px 16px;
-    background: colors.$secondary-dark-yellow;
+    background: var(--theme-secondary-dark-yellow);
     font-size: 13px;
     flex-shrink: 0;
 
@@ -59,8 +59,8 @@
     align-items: center;
     gap: 6px;
     padding: 10px 16px;
-    background: colors.$light-purple;
-    border-bottom: 1px solid colors.$secondary-deep-grey;
+    background: var(--theme-light-purple);
+    border-bottom: 1px solid var(--theme-secondary-deep-grey);
     flex-shrink: 0;
 }
 
@@ -71,9 +71,9 @@
     padding: 4px 10px;
     font-size: 13px;
     font-weight: 500;
-    color: colors.$grey;
-    background: colors.$secondary-purple;
-    border: 1px solid colors.$secondary-deep-grey;
+    color: var(--theme-grey);
+    background: var(--theme-secondary-purple);
+    border: 1px solid var(--theme-secondary-deep-grey);
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -86,15 +86,15 @@
     }
 
     &:hover {
-        color: colors.$white;
-        background: colors.$secondary-mid-deep-grey;
-        border-color: colors.$secondary-grey;
+        color: var(--theme-white);
+        background: var(--theme-secondary-mid-deep-grey);
+        border-color: var(--theme-secondary-grey);
     }
 }
 
 .breadcrumb-separator {
     font-size: 10px;
-    color: colors.$secondary-grey;
+    color: var(--theme-secondary-grey);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -106,7 +106,7 @@
     gap: 6px;
     font-size: 13px;
     font-weight: 500;
-    color: colors.$white;
+    color: var(--theme-white);
 
     i {
         font-size: 11px;
@@ -122,15 +122,15 @@
     top: 1px;
 
     &.entity {
-        color: colors.$entity-pink;
+        color: var(--theme-entity-pink);
     }
 
     &.relation {
-        color: colors.$relation-yellow;
+        color: var(--theme-relation-yellow);
     }
 
     &.attribute {
-        color: colors.$attribute-blue;
+        color: var(--theme-attribute-blue);
     }
 }
 
@@ -154,7 +154,7 @@
     align-items: center;
     justify-content: center;
     height: 200px;
-    color: colors.$grey;
+    color: var(--theme-grey);
 
     > i {
         font-size: 48px;
@@ -180,7 +180,7 @@
     margin-bottom: 24px;
 
     .text-muted {
-        color: colors.$grey;
+        color: var(--theme-grey);
         font-size: 14px;
     }
 }
@@ -201,27 +201,27 @@
         font-weight: 600;
 
         &.entity {
-            color: colors.$entity-pink;
+            color: var(--theme-entity-pink);
         }
 
         &.relation {
-            color: colors.$relation-yellow;
+            color: var(--theme-relation-yellow);
         }
 
         &.attribute {
-            color: colors.$attribute-blue;
+            color: var(--theme-attribute-blue);
         }
     }
 
     .type-muted {
         font-size: 14px;
         font-style: italic;
-        color: colors.$grey;
+        color: var(--theme-grey);
     }
 
     .value-type {
         font-size: 14px;
-        color: colors.$grey;
+        color: var(--theme-grey);
     }
 
     .open-details-button {
@@ -233,13 +233,13 @@
 .links-list {
     display: flex;
     flex-direction: column;
-    border: 1px solid colors.$secondary-deep-grey;
+    border: 1px solid var(--theme-secondary-deep-grey);
     border-radius: 6px;
     overflow: hidden;
 
     > .link-card {
-        border-bottom: 1px solid colors.$secondary-deep-grey;
-        background: colors.$secondary-purple;
+        border-bottom: 1px solid var(--theme-secondary-deep-grey);
+        background: var(--theme-secondary-purple);
 
         &:last-child {
             border-bottom: none;
@@ -256,12 +256,12 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: colors.$white;
+    color: var(--theme-white);
 
     i {
         font-size: 10px;
         width: 10px;
-        color: colors.$grey;
+        color: var(--theme-grey);
         position: relative;
         top: -1px;
     }
@@ -273,7 +273,7 @@
     }
 
     &:hover i {
-        color: colors.$white;
+        color: var(--theme-white);
     }
 }
 
@@ -286,15 +286,15 @@
         width: 1%;
         padding: 6px 10px;
         font-size: 13px;
-        color: colors.$attribute-blue;
+        color: var(--theme-attribute-blue);
         font-weight: 500;
-        background: colors.$light-purple;
+        background: var(--theme-light-purple);
         border-radius: 4px 0 0 4px;
         white-space: nowrap;
         vertical-align: top;
 
         .value-type {
-            color: colors.$grey;
+            color: var(--theme-grey);
             font-weight: 400;
         }
     }
@@ -302,8 +302,8 @@
     .attr-value {
         padding: 6px 4px 6px 10px;
         font-size: 13px;
-        color: colors.$grey;
-        background: rgba(colors.$light-purple, 0.3);
+        color: var(--theme-grey);
+        background: var(--theme-light-purple-03);
         border-radius: 0 4px 4px 0;
         vertical-align: top;
         white-space: normal;
@@ -345,7 +345,7 @@
 
         &:hover {
             opacity: 1 !important;
-            background-color: colors.$light-purple;
+            background-color: var(--theme-light-purple);
         }
     }
 }
@@ -372,33 +372,33 @@
     padding: 6px 12px;
     font-size: 13px;
     font-weight: 500;
-    color: colors.$grey;
-    background: colors.$secondary-purple;
-    border: 1px solid colors.$secondary-deep-grey;
+    color: var(--theme-grey);
+    background: var(--theme-secondary-purple);
+    border: 1px solid var(--theme-secondary-deep-grey);
     border-radius: 16px;
     cursor: pointer;
     transition: all 0.15s ease;
 
     &:hover {
-        background: colors.$secondary-dark-grey;
-        border-color: colors.$secondary-grey;
+        background: var(--theme-secondary-dark-grey);
+        border-color: var(--theme-secondary-grey);
     }
 
     &.active {
-        color: colors.$purple;
-        background: colors.$relation-yellow;
-        border-color: colors.$relation-yellow;
+        color: var(--theme-purple);
+        background: var(--theme-relation-yellow);
+        border-color: var(--theme-relation-yellow);
 
         .chip-count {
-            background: rgba(colors.$purple, 0.2);
-            color: colors.$purple;
+            background: var(--theme-purple-02);
+            color: var(--theme-purple);
         }
     }
 
     .chip-count {
         font-size: 11px;
-        background: rgba(colors.$relation-yellow, 0.25);
-        color: colors.$relation-yellow;
+        background: var(--theme-relation-yellow-025);
+        color: var(--theme-relation-yellow);
         padding: 1px 6px;
         border-radius: 8px;
     }
@@ -413,7 +413,7 @@
 
 // Relation card - outer container with border
 .relation-card {
-    border: 1px solid colors.$secondary-deep-grey;
+    border: 1px solid var(--theme-secondary-deep-grey);
     border-radius: 6px;
     overflow: hidden;
 }
@@ -424,19 +424,19 @@
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
-    background: colors.$secondary-dark-grey;
-    border-left: 3px solid colors.$relation-yellow;
+    background: var(--theme-secondary-dark-grey);
+    border-left: 3px solid var(--theme-relation-yellow);
 
     .relation-type-label {
         font-size: 14px;
         font-weight: 600;
-        color: colors.$relation-yellow;
+        color: var(--theme-relation-yellow);
     }
 
     .relation-iid {
         font-family: monospace;
         font-size: 11px;
-        color: colors.$secondary-grey;
+        color: var(--theme-secondary-grey);
     }
 
     .header-explore {
@@ -449,14 +449,14 @@
 .relation-card-body {
     display: flex;
     flex-direction: column;
-    background: colors.$secondary-purple;
+    background: var(--theme-secondary-purple);
 }
 
 // Relation attributes section - at bottom of card
 .relation-card-attrs {
     padding: 10px 12px;
-    background: colors.$secondary-dark-grey;
-    border-top: 1px solid colors.$secondary-deep-grey;
+    background: var(--theme-secondary-dark-grey);
+    border-top: 1px solid var(--theme-secondary-deep-grey);
 
     .attributes-table {
         border-spacing: 0 8px;
@@ -469,7 +469,7 @@
     align-items: flex-start;
     gap: 12px;
     padding: 10px 12px;
-    border-bottom: 1px solid colors.$secondary-deep-grey;
+    border-bottom: 1px solid var(--theme-secondary-deep-grey);
 
     &:last-child {
         border-bottom: none;
@@ -491,7 +491,7 @@
     .role-label {
         font-size: 13px;
         font-weight: 600;
-        color: colors.$prism-purple;
+        color: var(--theme-prism-purple);
     }
 
     .player-details {
@@ -502,19 +502,19 @@
         .player-type {
             font-size: 13px;
             font-weight: 500;
-            color: colors.$entity-pink;
+            color: var(--theme-entity-pink);
         }
 
         .player-iid {
             font-family: monospace;
             font-size: 11px;
-            color: colors.$secondary-light-grey;
+            color: var(--theme-secondary-light-grey);
         }
 
         .self-tag {
             font-size: 11px;
-            color: colors.$secondary-light-grey;
-            background: colors.$secondary-mid-deep-grey;
+            color: var(--theme-secondary-light-grey);
+            background: var(--theme-secondary-mid-deep-grey);
             padding: 1px 6px;
             border-radius: 3px;
             font-style: italic;
@@ -533,9 +533,9 @@
     overflow-y: auto;
 
     padding: 8px;
-    border: 1px solid colors.$secondary-deep-grey;
+    border: 1px solid var(--theme-secondary-deep-grey);
     border-radius: 4px;
-    background: colors.$purple;
+    background: var(--theme-purple);
 }
 
 .attr-row {
@@ -545,12 +545,12 @@
     font-size: 12px;
 
     .attr-key {
-        color: colors.$attribute-blue;
+        color: var(--theme-attribute-blue);
         flex-shrink: 0;
     }
 
     .attr-val {
-        color: colors.$grey;
+        color: var(--theme-grey);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -565,9 +565,9 @@
     margin-top: 4px;
     font-size: 12px;
     font-weight: 500;
-    color: colors.$grey;
-    background: colors.$secondary-dark-grey;
-    border: 1px solid colors.$secondary-deep-grey;
+    color: var(--theme-grey);
+    background: var(--theme-secondary-dark-grey);
+    border: 1px solid var(--theme-secondary-deep-grey);
     border-radius: 4px;
     cursor: pointer;
     align-self: flex-start;
@@ -581,8 +581,8 @@
     }
 
     &:hover {
-        background: colors.$secondary-mid-deep-grey;
-        border-color: colors.$secondary-grey;
+        background: var(--theme-secondary-mid-deep-grey);
+        border-color: var(--theme-secondary-grey);
     }
 
     &:active {

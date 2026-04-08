@@ -18,6 +18,7 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { ModalComponent } from "../../../framework/modal";
 import { MatDialog } from "@angular/material/dialog";
 import { AppInfoDialogComponent } from "../../about/app-info-dialog.component";
+import { ThemeService, ThemePreference } from "../../../service/theme.service";
 
 @Component({
     selector: "ts-sidebar",
@@ -32,7 +33,7 @@ export class SidebarComponent {
 
     constructor(
         public app: AppData, private route: ActivatedRoute,
-        private dialog: MatDialog,
+        private dialog: MatDialog, public theme: ThemeService,
     ) {}
 
     get collapsed(): boolean {
@@ -47,5 +48,19 @@ export class SidebarComponent {
 
     showAppInfoDialog() {
         this.dialog.open(AppInfoDialogComponent, { width: "360px", panelClass: "app-info-dialog-panel" });
+    }
+
+    get themeIcon(): string {
+        const pref = this.theme.preference$.value;
+        if (pref === "light") return "fa-light fa-sun-bright";
+        if (pref === "dark") return "fa-light fa-moon";
+        return "fa-light fa-circle-half-stroke";
+    }
+
+    get themeLabel(): string {
+        const pref = this.theme.preference$.value;
+        if (pref === "light") return "Light";
+        if (pref === "dark") return "Dark";
+        return "System";
     }
 }

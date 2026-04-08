@@ -1,4 +1,4 @@
-@use "colors";
+
 @use "shapes";
 
 :host {
@@ -11,7 +11,7 @@
     padding: 4px 8px;
     font-size: 14px;
     line-height: 20px;
-    background: colors.$secondary-mid-deep-grey;
+    background: var(--theme-secondary-mid-deep-grey);
     max-width: 400px;
     word-wrap: break-word;
 

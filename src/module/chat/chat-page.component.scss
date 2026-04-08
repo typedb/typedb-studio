@@ -30,9 +30,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 3px dashed colors.$light-purple;
+    border: 3px dashed var(--theme-light-purple);
     border-radius: shapes.$border-radius;
-    background: colors.$black;
+    background: var(--theme-black);
 }
 
 
@@ -45,11 +45,11 @@
 
     // Code editors get a lighter background
     ::ng-deep tp-code-editor .cm-editor {
-        background-color: colors.$deep-purple;
+        background-color: var(--theme-deep-purple);
     }
 
     ::ng-deep tp-code-editor .cm-gutters {
-        background-color: colors.$deep-purple;
+        background-color: var(--theme-deep-purple);
     }
 
     // Always show code editor overlay buttons
@@ -97,7 +97,7 @@
 
     &:hover {
         background: rgba(255, 255, 255, 0.15);
-        border-color: colors.$secondary-mid-deep-grey;
+        border-color: var(--theme-secondary-mid-deep-grey);
         color: rgba(255, 255, 255, 1);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
@@ -228,8 +228,8 @@
 .input-box {
     width: 100%;
     max-width: 720px;
-    background: rgba(colors.$light-purple, 0.4);
-    border: 1px solid colors.$light-purple;
+    background: var(--theme-light-purple-04);
+    border: 1px solid var(--theme-light-purple);
     border-radius: shapes.$border-radius;
     overflow: hidden;
     transition: border-color 150ms;
@@ -256,7 +256,7 @@
         min-height: 21px;
 
         &::placeholder {
-            color: rgba(colors.$secondary-light-grey, 0.8);
+            color: var(--theme-secondary-light-grey-08);
             font-style: italic;
         }
 
@@ -288,7 +288,7 @@
     align-items: center;
     padding: 0 8px;
     border-radius: shapes.$border-radius-small;
-    color: colors.$grey;
+    color: var(--theme-grey);
     font-size: 14px;
     line-height: 32px;
     transition: background 100ms, color 100ms;
@@ -310,8 +310,8 @@
     }
 
     &:hover {
-        color: colors.$green;
-        background: colors.$secondary-purple;
+        color: var(--theme-green);
+        background: var(--theme-secondary-purple);
     }
 }
 
@@ -367,7 +367,7 @@
 }
 
 .command-slash {
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
 }
 
 ::ng-deep .destructive-menu-item:not([disabled]):hover {
@@ -448,7 +448,7 @@
                 font-size: 12px;
 
                 &.fa-xmark {
-                    color: #{colors.$red};
+                    color: #{var(--theme-red)};
                     cursor: pointer;
                 }
             }
@@ -461,7 +461,7 @@
 
     .history-code-editor {
         margin-top: 4px;
-        border: 1px solid colors.$light-purple;
+        border: 1px solid var(--theme-light-purple);
         border-radius: 4px;
         overflow: hidden;
         position: relative;
@@ -511,7 +511,7 @@
     .history-group-label {
         padding: 10px 16px 4px;
         font-size: 12px;
-        color: colors.$secondary-light-grey;
+        color: var(--theme-secondary-light-grey);
         font-weight: 500;
     }
 
@@ -546,18 +546,18 @@
     .history-item-meta {
         font-size: 11px;
         line-height: 1.7;
-        color: colors.$secondary-light-grey;
+        color: var(--theme-secondary-light-grey);
     }
 
     .history-item-time {
         font-size: 12px;
-        color: colors.$secondary-light-grey;
+        color: var(--theme-secondary-light-grey);
         flex-shrink: 0;
     }
 
     .history-delete-btn {
         font-size: 12px;
-        color: colors.$secondary-light-grey;
+        color: var(--theme-secondary-light-grey);
         opacity: 0;
         flex-shrink: 0;
         padding: 4px;
@@ -565,7 +565,7 @@
         transition: opacity 150ms, color 150ms;
 
         &:hover {
-            color: colors.$red;
+            color: var(--theme-red);
         }
     }
 
@@ -576,6 +576,6 @@
     .history-empty {
         padding: 8px 16px;
         font-size: 13px;
-        color: colors.$secondary-grey;
+        color: var(--theme-secondary-grey);
     }
 }

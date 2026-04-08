@@ -65,6 +65,36 @@ export const darkPalette = {
     purpleGrey: "#5a5670",
 };
 
+export const lightPalette = {
+    black:    "#fafafa",
+    blue1:    "#4070DD",
+    green:    "#00A896",
+    orange:   "#A06800",
+    yellow:   "#B89A30",
+    pink:     "#C050A0",
+    purple1:  "#f5f3fa",
+    purple2:  "#f0eef6",
+    purple3:  "#f0eef6",
+    purple4:  "#e8e6f2",
+    purple5:  "#e8e5f0",
+    purple6:  "#d0cde4",
+    purple7:  "#dddae8",
+    red1:     "#D14545",
+    red2:     "#CC3333",
+    white:    "#1a1a2e",
+    white2:   "#2a2040",
+    lavender: "#4a4a5a",
+    grey1:    "#fafafa",
+    grey2:    "#f0f0f0",
+    grey3:    "#999999",
+    grey4:    "#666666",
+    pinkDark: "#fce8f4",
+    yellowDark: "#faf0d0",
+    blueDark:   "#e0eaff",
+    orangeDark: "#fae8d0",
+    purpleGrey: "#8a86a0",
+};
+
 export const defaultEdgeLabelColors: Record<string, string> = {};
 
 export const defaultQueryStyleParams: GraphStyles = {

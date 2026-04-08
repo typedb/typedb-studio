@@ -154,7 +154,7 @@ $card-header-height: 44px;
         flex: 1;
         z-index: 10;
 
-        //box-shadow: 0 0 6px 3px rgba(colors.$secondary-blue, 0.35);
+        //box-shadow: 0 0 6px 3px var(--theme-secondary-blue-035);
         //animation-play-state: running !important;
         //@include colors.border-gradient(#AC79EE, #03D0BF, var(--body-background));
 

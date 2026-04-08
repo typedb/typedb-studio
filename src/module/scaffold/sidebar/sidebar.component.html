@@ -53,9 +53,9 @@
 
   <div class="flex-spacer"></div>
 
-<!--  <ts-sidebar-link [matTooltip]="collapsed ? 'Settings' : ''" matTooltipPosition="right" link="/settings" domain="settings" idSuffix="settings">-->
-<!--    <i class="fa-light fa-gear"></i>@if (!collapsed) { <span>Settings</span> }-->
-<!--  </ts-sidebar-link>-->
+  <ts-sidebar-link [matTooltip]="collapsed ? themeLabel : ''" matTooltipPosition="right" (click)="theme.cycleTheme()" domain="theme" idSuffix="theme">
+    <i [class]="themeIcon"></i>@if (!collapsed) { <span>{{ themeLabel }}</span> }
+  </ts-sidebar-link>
   <ts-sidebar-link [external]="true" [matTooltip]="collapsed ? 'TypeDB Cloud' : ''" matTooltipPosition="right" link="https://cloud.typedb.com" domain="admin" idSuffix="admin">
     <i class="fa-light fa-clouds"></i>@if (!collapsed) { <span>TypeDB Cloud</span> }
   </ts-sidebar-link>

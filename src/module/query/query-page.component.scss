@@ -66,7 +66,7 @@
 .card {
     @include shapes.standard-border;
     border-radius: shapes.$border-radius;
-    @include colors.light-source-gradient(colors.$purple, colors.$deep-purple);
+    @include colors.light-source-gradient(var(--theme-purple), var(--theme-deep-purple));
     padding: 16px;
     position: relative;
     overflow: hidden;
@@ -89,7 +89,7 @@
             right: 0;
             bottom: 0;
             height: 1px;
-            background: colors.$light-purple;
+            background: var(--theme-light-purple);
         }
     }
 }
@@ -104,8 +104,8 @@
 .run-tabs-header-row {
     display: flex;
     align-items: stretch;
-    background: rgba(colors.$black, 0.5);
-    border-bottom: 1px solid colors.$light-purple;
+    background: var(--theme-black-05);
+    border-bottom: 1px solid var(--theme-light-purple);
 }
 
 .run-tabs-scroll {
@@ -126,19 +126,19 @@
     align-items: center;
     padding: 0 16px;
     cursor: pointer;
-    border-right: 1px solid colors.$light-purple;
+    border-right: 1px solid var(--theme-light-purple);
     white-space: nowrap;
-    color: colors.$grey;
+    color: var(--theme-grey);
     transition: background-color 100ms, color 100ms;
     font-size: 14px;
 
     &:hover:not(.active) {
-        background-color: rgba(colors.$light-purple, 0.2);
+        background-color: var(--theme-light-purple-02);
     }
 
     &.active, &.active:hover {
-        color: colors.$white;
-        background-color: rgba(colors.$light-purple, 0.3);
+        color: var(--theme-white);
+        background-color: var(--theme-light-purple-03);
     }
 
     &.placeholder {
@@ -154,7 +154,7 @@
 
     &.pinned .pin-icon {
         font-size: 11px;
-        color: colors.$grey;
+        color: var(--theme-grey);
         margin-right: 2px;
         transform: rotate(-45deg);
     }
@@ -184,7 +184,7 @@
     }
 
     &:hover {
-        background-color: colors.$light-purple;
+        background-color: var(--theme-light-purple);
     }
 }
 
@@ -245,16 +245,16 @@ i.fa-xmark {
     label {
         font-size: 14px;
         white-space: nowrap;
-        color: colors.$grey;
+        color: var(--theme-grey);
     }
 
     mat-select {
         width: 80px;
         height: 32px;
         padding: 0 10px;
-        border: 1px solid colors.$light-purple;
+        border: 1px solid var(--theme-light-purple);
         border-radius: shapes.$border-radius-small;
-        background: colors.$deep-purple;
+        background: var(--theme-deep-purple);
         --mat-select-trigger-text-size: 14px;
 
         ::ng-deep {
@@ -302,7 +302,7 @@ button {
     }
 
     &:enabled i.fa-play {
-        color: colors.$secondary-deep-green;
+        color: var(--theme-secondary-deep-green);
     }
 }
 
@@ -319,8 +319,8 @@ button {
     height: 100%;
     overflow: auto;
 
-    border: 1px solid colors.$light-purple;
-    background: colors.$black;
+    border: 1px solid var(--theme-light-purple);
+    background: var(--theme-black);
     z-index: 10;
 
     code-editor {
@@ -337,14 +337,14 @@ button {
     z-index: 10;
     border: none;
     border-radius: shapes.$border-radius-small shapes.$border-radius-small 0 0;
-    background: colors.$black;
+    background: var(--theme-black);
 }
 
 .query-tabs-header-row {
     display: flex;
     align-items: stretch;
-    background: rgba(colors.$black, 0.5);
-    border-bottom: 1px solid colors.$light-purple;
+    background: var(--theme-black-05);
+    border-bottom: 1px solid var(--theme-light-purple);
 }
 
 .tab-scroll-button.mat-mdc-icon-button {
@@ -373,11 +373,11 @@ button {
     }
 
     &.left {
-        border-right: 1px solid colors.$light-purple;
+        border-right: 1px solid var(--theme-light-purple);
     }
 
     &.right {
-        border-left: 1px solid colors.$light-purple;
+        border-left: 1px solid var(--theme-light-purple);
     }
 
     i {
@@ -391,7 +391,7 @@ button {
     }
 
     &:hover {
-        background-color: rgba(colors.$light-purple, 0.3);
+        background-color: var(--theme-light-purple-03);
     }
 }
 
@@ -413,19 +413,19 @@ button {
     align-items: center;
     padding: 0 16px;
     cursor: pointer;
-    border-right: 1px solid colors.$light-purple;
+    border-right: 1px solid var(--theme-light-purple);
     white-space: nowrap;
-    color: colors.$grey;
+    color: var(--theme-grey);
     transition: background-color 100ms, color 100ms;
     font-size: 14px;
 
     &:hover:not(.active) {
-        background-color: rgba(colors.$light-purple, 0.2);
+        background-color: var(--theme-light-purple-02);
     }
 
     &.active, &.active:hover {
-        color: colors.$white;
-        background-color: rgba(colors.$light-purple, 0.3);
+        color: var(--theme-white);
+        background-color: var(--theme-light-purple-03);
     }
 }
 
@@ -436,7 +436,7 @@ button {
 
     &.pinned .pin-icon {
         font-size: 11px;
-        color: colors.$grey;
+        color: var(--theme-grey);
         margin-right: 2px;
         transform: rotate(-45deg);
     }
@@ -466,7 +466,7 @@ button {
     }
 
     &:hover {
-        background-color: colors.$light-purple;
+        background-color: var(--theme-light-purple);
     }
 }
 
@@ -496,7 +496,7 @@ button {
     }
 
     &:hover {
-        background-color: rgba(colors.$light-purple, 0.3);
+        background-color: var(--theme-light-purple-03);
     }
 }
 
@@ -548,7 +548,7 @@ button {
 .answers-outer-container {
     height: 100%;
     width: 100%;
-    background: colors.$black;
+    background: var(--theme-black);
     position: relative;
 }
 
@@ -603,15 +603,15 @@ button {
     gap: 6px;
     height: 28px;
     padding: 0 4px 0 10px;
-    background: colors.$secondary-purple;
-    border: 1px solid colors.$secondary-deep-grey;
+    background: var(--theme-secondary-purple);
+    border: 1px solid var(--theme-secondary-deep-grey);
     border-radius: 6px;
 
     > i {
         font-size: 11px;
         width: 11px;
         height: 11px;
-        color: colors.$secondary-light-grey;
+        color: var(--theme-secondary-light-grey);
     }
 
     input {
@@ -625,7 +625,7 @@ button {
         flex: 0 0 140px;
 
         &::placeholder {
-            color: colors.$secondary-light-grey;
+            color: var(--theme-secondary-light-grey);
         }
     }
 }
@@ -633,10 +633,10 @@ button {
 .graph-search-focus {
     background: none;
     border: none;
-    border-left: 1px solid colors.$secondary-deep-grey;
+    border-left: 1px solid var(--theme-secondary-deep-grey);
     padding: 0 4px 0 8px;
     cursor: pointer;
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -660,7 +660,7 @@ button {
     border: none;
     padding: 0 4px;
     cursor: pointer;
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -683,10 +683,10 @@ button {
     z-index: 10;
     width: 28px;
     height: 28px;
-    border: 1px solid colors.$secondary-deep-grey;
-    background: colors.$secondary-purple;
+    border: 1px solid var(--theme-secondary-deep-grey);
+    background: var(--theme-secondary-purple);
     border-radius: 6px;
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -696,7 +696,7 @@ button {
     transition: background 0.15s;
 
     &:hover {
-        background: colors.$secondary-dark-grey;
+        background: var(--theme-secondary-dark-grey);
     }
 
     i {
@@ -714,7 +714,7 @@ button {
     bottom: 0;
     z-index: 10000;
     border-radius: 0;
-    background: colors.$black;
+    background: var(--theme-black);
 }
 
 :host-context(.graph-fullscreen) {
@@ -747,7 +747,7 @@ button {
     }
 
     ::ng-deep .mdc-text-field {
-        --mdc-outlined-text-field-input-text-color: #{colors.$secondary-pink};
+        --mdc-outlined-text-field-input-text-color: #{var(--theme-secondary-pink)};
         padding: 0;
 
         textarea {
@@ -787,12 +787,12 @@ button {
 .answers-placeholder-container {
     height: 100%;
     overflow: auto;
-    border: 3px dashed colors.$light-purple;
+    border: 3px dashed var(--theme-light-purple);
     border-radius: shapes.$border-radius;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: colors.$black;
+    background: var(--theme-black);
     --mat-button-filled-container-height: 40px;
 }
 
@@ -841,7 +841,7 @@ button {
                 font-size: 12px;
 
                 &.fa-xmark {
-                    color: #{colors.$red};
+                    color: #{var(--theme-red)};
                     cursor: pointer;
                 }
             }
@@ -854,7 +854,7 @@ button {
 
     .history-code-editor {
         margin-top: 4px;
-        border: 1px solid colors.$light-purple;
+        border: 1px solid var(--theme-light-purple);
         border-radius: 4px;
         overflow: hidden;
         position: relative;
@@ -929,10 +929,10 @@ button {
     }
 
     button.selected {
-        color: colors.$green;
+        color: var(--theme-green);
 
         i.fa-trash-can {
-            color: colors.$grey;
+            color: var(--theme-grey);
         }
     }
 }
