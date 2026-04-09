@@ -579,3 +579,16 @@
         color: colors.$secondary-grey;
     }
 }
+
+:host-context(.graph-fullscreen) {
+    ::ng-deep mat-sidenav-container > mat-sidenav {
+        z-index: 0 !important;
+    }
+    ::ng-deep mat-sidenav-container > .mat-sidenav-content {
+        z-index: 1 !important;
+    }
+
+    .scroll-to-bottom-btn {
+        display: none;
+    }
+}
