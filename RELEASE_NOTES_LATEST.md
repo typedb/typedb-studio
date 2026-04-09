@@ -53,6 +53,7 @@ The styles are heavily customisable. Choose from an array of prebuilt themes, op
 - Fresh query runs no longer open in a new Run tab unless the current Run tab is explicitly pinned
 - Query Run tabs now remember what output type they had selected
 - Fix a bug where some icons failed to render
+- Agent Mode's **clear conversation** action is now marked as a destructive action
 
 ## Other improvements
 
