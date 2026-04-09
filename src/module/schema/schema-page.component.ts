@@ -49,6 +49,7 @@ export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     private static readonly DEFAULT_PANEL_SIZES = [20, 80, 75, 25];
     panelSizes = [...SchemaPageComponent.DEFAULT_PANEL_SIZES];
+    graphMaximised = false;
 
     constructor(
         protected state: SchemaState, public driver: DriverState, private appData: AppData,
@@ -65,6 +66,15 @@ export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
         if (saved && saved.length === SchemaPageComponent.DEFAULT_PANEL_SIZES.length) {
             this.panelSizes = saved;
         }
+    }
+
+    toggleGraphMaximised(): void {
+        this.graphMaximised = !this.graphMaximised;
+        document.body.classList.toggle("graph-fullscreen", this.graphMaximised);
+        setTimeout(() => {
+            this.state.visualiser.visualiser?.sigma.resize();
+            this.state.visualiser.visualiser?.sigma.refresh();
+        });
     }
 
     onPanelResize(index: number, percent: number) {
