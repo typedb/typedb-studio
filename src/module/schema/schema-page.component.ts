@@ -5,7 +5,7 @@
  */
 
 import { AsyncPipe } from "@angular/common";
-import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
@@ -52,7 +52,7 @@ export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     constructor(
         protected state: SchemaState, public driver: DriverState, private appData: AppData,
-        private destroyRef: DestroyRef, private dialog: MatDialog) {
+        private destroyRef: DestroyRef, private dialog: MatDialog, private cdr: ChangeDetectorRef) {
     }
 
     openSelectDatabaseDialog() {
@@ -95,7 +95,10 @@ export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
             filter(x => !!x),
             map(x => x!)
         ).subscribe((queryResponses) => {
-            queryResponses.forEach(x => this.state.visualiser.push(x));
+            if (!this.state.visualiser.visualiser) {
+                queryResponses.forEach(x => this.state.visualiser.push(x));
+            }
+            this.cdr.detectChanges();
         });
     }
 
