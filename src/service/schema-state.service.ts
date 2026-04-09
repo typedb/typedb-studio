@@ -418,7 +418,7 @@ export class VisualiserState {
                 this._status = "ok";
                 const graph = newGraph();
                 const sigma = createSigmaRenderer(el, defaultSigmaSettings as any, graph);
-                const layout = Layouts.createForceAtlasStatic(graph, undefined);
+                const layout = Layouts.createD3ForceSupervisor(graph);
                 this.visualiser = new GraphVisualiser(graph, sigma, layout, this.styleService);
                 this.restoreState(this.savedState, sigma);
             }
@@ -431,8 +431,7 @@ export class VisualiserState {
         if (!this.visualiser) {
             const graph = newGraph();
             const sigma = createSigmaRenderer(this.canvasEl$.value, defaultSigmaSettings as any, graph);
-            const layout = Layouts.createForceAtlasStatic(graph, undefined); // This is the safe option
-            // const layout = Layouts.createForceLayoutSupervisor(graph, studioDefaults.defaultForceSupervisorSettings);
+            const layout = Layouts.createD3ForceSupervisor(graph);
             this.visualiser = new GraphVisualiser(graph, sigma, layout, this.styleService);
         }
 

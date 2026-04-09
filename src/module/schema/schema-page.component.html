@@ -25,9 +25,24 @@
         </div>
       } @else {
         <div class="answers-outer-container">
-          <div class="answers-container answers-structure-container">
+          <div class="answers-container answers-structure-container" [class.maximised]="graphMaximised">
             <div class="graph-split-left" resizable [percent]="panelSizes[2]" (percentChange)="onPanelResize(2, $event)">
               <div id="structureView" #graphViewRef></div>
+              <div class="graph-search-bar">
+                <i class="fa-light fa-magnifying-glass"></i>
+                <input type="text" placeholder="Search" [value]="state.visualiser.visualiser?.searchTerm ?? ''" (input)="state.visualiser.visualiser?.searchGraph($any($event.target).value.toLowerCase())">
+                @if (state.visualiser.visualiser?.searchTerm) {
+                  <button class="graph-search-clear" (click)="state.visualiser.visualiser?.clearSearch()">
+                    <i class="fa-light fa-xmark"></i>
+                  </button>
+                }
+                <button class="graph-search-focus" (click)="state.visualiser.visualiser?.searchTerm ? state.visualiser.visualiser?.focusSearchMatches() : state.visualiser.visualiser?.centerCamera()">
+                  <i class="fa-light fa-crosshairs"></i>
+                </button>
+              </div>
+              <button class="graph-maximise-button" (click)="toggleGraphMaximised()" [matTooltip]="graphMaximised ? 'Exit fullscreen' : 'Fullscreen'" [matTooltipShowDelay]="500">
+                <i class="fa-light" [class.fa-expand]="!graphMaximised" [class.fa-compress]="graphMaximised"></i>
+              </button>
               <ts-graph-zoom-controls [visualiser]="state.visualiser.visualiser" [queryRunning]="state.visualiser.status === 'running'"/>
 
               @switch (state.visualiser.status) {
