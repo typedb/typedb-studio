@@ -1,6 +1,6 @@
 {
   "name": "typedb-studio",
-  "version": "3.9.0",
+  "version": "3.10.0",
   "scripts": {
     "ng": "ng",
     "generate-grammar": "lezer-generator --typeScript src/framework/codemirror-lang-typeql/typeql.grammar -o src/framework/codemirror-lang-typeql/generated/typeql.grammar.generated",
@@ -10,7 +10,8 @@
     "build:prod": "ng build -c production",
     "watch": "ng build --watch --configuration development",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev"
+    "tauri:dev": "tauri dev",
+    "set-version": "node scripts/set-version.js"
   },
   "private": true,
   "dependencies": {
@@ -29,9 +30,9 @@
     "@codemirror/autocomplete": "6.20.0",
     "@codemirror/commands": "6.10.1",
     "@codemirror/language": "6.12.1",
-    "@codemirror/state": "6.5.3",
-    "@codemirror/view": "6.38.8",
     "@codemirror/lint": "6.9.4",
+    "@codemirror/state": "6.5.3",
+    "@codemirror/view": "6.39.16",
     "@customerio/cdp-analytics-browser": "0.2.0",
     "@hhangular/resizable": "1.18.1",
     "@intercom/messenger-js-sdk": "0.0.14",
@@ -40,7 +41,13 @@
     "@lezer/lr": "1.4.2",
     "@sigma/edge-curve": "3.1.0",
     "@sigma/node-square": "3.0.0",
+    "@tauri-apps/api": "~2.10.0",
+    "@tauri-apps/plugin-opener": "^2",
+    "@typedb/driver-http": "3.7.0",
+    "@typedb/graph-utils": "workspace:*",
+    "@types/d3-force": "^3.0.10",
     "chroma-js": "3.1.2",
+    "d3-force": "^3.0.0",
     "graphology": "0.26.0",
     "graphology-layout-force": "0.2.4",
     "graphology-layout-forceatlas2": "0.10.1",
@@ -51,12 +58,9 @@
     "rxjs": "~7.8.0",
     "sigma": "3.0.1",
     "tslib": "^2.3.0",
-    "@typedb/driver-http": "3.7.0",
     "typedb-web-common": "workspace:*",
     "uuid": "11.1.0",
-    "zone.js": "~0.15.1",
-    "@tauri-apps/api": "~2.10.0",
-    "@tauri-apps/plugin-opener": "^2"
+    "zone.js": "~0.15.1"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "20.0.2",
@@ -66,6 +70,7 @@
     "@sanity/asset-utils": "1.3.0",
     "@sanity/icons": "3.4.0",
     "@sanity/types": "3.14.4",
+    "@tauri-apps/cli": "~2.10.0",
     "@types/chroma-js": "3.1.1",
     "@types/jasmine": "~5.1.0",
     "@types/prismjs": "1.26.5",
@@ -78,8 +83,7 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "netlify-plugin-discord": "0.0.2",
     "typescript": "5.8.3",
-    "unplugin-lezer": "1.0.1",
-    "@tauri-apps/cli": "~2.10.0"
+    "unplugin-lezer": "1.0.1"
   },
   "browserslist": [
     "defaults and fully supports es6-module"

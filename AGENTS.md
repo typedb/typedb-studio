@@ -28,6 +28,16 @@ When writing TypeQL, refer to https://typedb.com/docs/llms-short.txt. Refer to h
 
 When setting up TypeDB tooling (driver SDKs, etc.) ensure that the installed drivers are NOT for TypeDB 2.x.
 
+## Versioning
+
+To bump the Studio version, run:
+
+```
+pnpm set-version <semver>
+```
+
+This propagates the version to all required files.
+
 ## General Development Guidelines
 
 - Prefer extending existing components over creating new ones
@@ -38,6 +48,7 @@ When setting up TypeDB tooling (driver SDKs, etc.) ensure that the installed dri
 These are common CSS pitfalls. Whenever a CSS issue takes at least a couple of iterations to fix, do add debug logs for the user to test in the browser, and on getting the fix right, please add a bullet point here so we can do better in the future.
 
 - **Flex overflow scroll room**: When a flex child's content overflows its shrunk box, `scrollHeight` is set by the overflow — sibling elements after it fall *within* the overflow and don't extend it. To add scroll room, insert elements *inside* the overflowing child.
+- **Icon sizing in buttons**: `styles/base.scss` sets a global `i { width: 16px; height: 16px; font-size: 16px; }`. When overriding icon size inside a component, you **must** set all three properties (`font-size`, `width`, `height`) on the `i` element — setting only `font-size` leaves the 16px box dimensions, causing vertical misalignment. Setting `font-size` on the parent button has no effect since the global `i` rule wins by specificity.
 
 ## General Agent Guidelines
 

@@ -52,6 +52,9 @@ import { AppData } from "../../service/app-data.service";
 export class DataPageComponent implements OnInit, OnDestroy {
     @ViewChild(MatMenuTrigger) contextMenuTrigger!: MatMenuTrigger;
 
+    private static readonly DEFAULT_PANEL_SIZES = [20, 80];
+    panelSizes = [...DataPageComponent.DEFAULT_PANEL_SIZES];
+
     contextMenuPosition = { x: 0, y: 0 };
     contextMenuTab: DataTab | null = null;
     contextMenuTabIndex = 0;
@@ -70,6 +73,10 @@ export class DataPageComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.appData.viewState.setLastUsedTool("data");
+        const saved = this.appData.panelLayout.get("data");
+        if (saved && saved.length === DataPageComponent.DEFAULT_PANEL_SIZES.length) {
+            this.panelSizes = saved;
+        }
 
         // Show spinner only after 500ms of restoring tabs
         this.restoringTabsSubscription = this.state.restoringTabs$.subscribe(restoring => {
@@ -94,6 +101,11 @@ export class DataPageComponent implements OnInit, OnDestroy {
         if (this.spinnerTimeout) {
             clearTimeout(this.spinnerTimeout);
         }
+    }
+
+    onPanelResize(index: number, percent: number) {
+        this.panelSizes[index] = percent;
+        this.appData.panelLayout.set("data", [...this.panelSizes]);
     }
 
     openSelectDatabaseDialog() {

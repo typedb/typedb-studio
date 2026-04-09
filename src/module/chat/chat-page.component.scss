@@ -370,6 +370,10 @@
     color: colors.$secondary-light-grey;
 }
 
+::ng-deep .destructive-menu-item:not([disabled]):hover {
+    color: #ff8080 !important;
+}
+
 .send-button {
     display: flex;
     align-items: center;

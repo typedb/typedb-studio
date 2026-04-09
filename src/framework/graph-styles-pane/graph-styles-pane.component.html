@@ -1,0 +1,57 @@
+<div class="panel">
+  <div class="panel-header">
+    <span class="panel-title">Graph Style</span>
+  </div>
+
+  <!-- Top-level tabs -->
+  <div class="tab-bar">
+    <button class="tab" [class.active]="topTab === 'highlights'" (click)="topTab = 'highlights'">Highlights @if (isHighlightActive) { <span class="highlight-indicator"></span> }</button>
+    <button class="tab" [class.active]="topTab === 'presets'" (click)="topTab = 'presets'">Themes</button>
+    <button class="tab" [class.active]="topTab === 'customise'" (click)="topTab = 'customise'">Editor</button>
+  </div>
+
+  <div class="panel-scroll">
+    @if (topTab === 'highlights') {
+      <ts-graph-styles-highlights-tab [visualiser]="visualiser"></ts-graph-styles-highlights-tab>
+    }
+    @if (topTab === 'presets') {
+      <ts-graph-styles-themes-tab [visualiser]="visualiser"></ts-graph-styles-themes-tab>
+    }
+    @if (topTab === 'customise') {
+      <ts-graph-styles-editor-tab [visualiser]="visualiser"></ts-graph-styles-editor-tab>
+    }
+  </div>
+
+  <!-- Footer actions (always visible) -->
+  <div class="panel-footer">
+    <div class="footer-toggles">
+      <div class="footer-option">
+        <span class="footer-option-label">Labels in nodes</span>
+        <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
+          <mat-select [value]="labelMode" panelClass="graph-style-select-panel" (selectionChange)="setLabelMode($event.value)">
+            <mat-option value="border">Visible, border color</mat-option>
+            <mat-option value="fixed">Visible, black/white</mat-option>
+            <mat-option value="hidden">Hidden</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <mat-slide-toggle color="primary" [checked]="showHoverLabel" (change)="toggleShowHoverLabel()" labelPosition="before">
+        Show label on hover
+      </mat-slide-toggle>
+      <mat-slide-toggle color="primary" [checked]="degreeScaling" (change)="toggleDegreeScaling()" labelPosition="before">
+        Scale nodes by connection count
+      </mat-slide-toggle>
+      <mat-slide-toggle color="primary" [checked]="colorEdgesByConstraint" (change)="toggleEdgeColoring()" labelPosition="before">
+        Color edges by constraint
+      </mat-slide-toggle>
+    </div>
+    <div class="footer-buttons">
+      <button class="action-button" (click)="reLayout()" matTooltip="Re-randomise positions and re-run layout" [matTooltipShowDelay]="500">
+        <i class="fa-light fa-refresh"></i> Redraw graph
+      </button>
+      <button class="action-button reset" (click)="resetAll()" matTooltip="Reset all styles to defaults" [matTooltipShowDelay]="500">
+        <i class="fa-light fa-arrow-u-turn-up-left"></i> Reset all styles
+      </button>
+    </div>
+  </div>
+</div>
