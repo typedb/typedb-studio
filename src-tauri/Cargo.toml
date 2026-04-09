@@ -1,6 +1,6 @@
 [package]
 name = "typedb-studio"
-version = "3.9.0"
+version = "3.10.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"

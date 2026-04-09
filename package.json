@@ -1,6 +1,6 @@
 {
   "name": "typedb-studio",
-  "version": "3.9.0",
+  "version": "3.10.0",
   "scripts": {
     "ng": "ng",
     "generate-grammar": "lezer-generator --typeScript src/framework/codemirror-lang-typeql/typeql.grammar -o src/framework/codemirror-lang-typeql/generated/typeql.grammar.generated",
@@ -10,7 +10,8 @@
     "build:prod": "ng build -c production",
     "watch": "ng build --watch --configuration development",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev"
+    "tauri:dev": "tauri dev",
+    "set-version": "node scripts/set-version.js"
   },
   "private": true,
   "dependencies": {
