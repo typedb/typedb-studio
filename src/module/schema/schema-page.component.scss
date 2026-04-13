@@ -140,29 +140,29 @@ button {
     gap: 6px;
     height: 28px;
     padding: 0 4px 0 10px;
-    background: colors.$secondary-purple;
-    border: 1px solid colors.$secondary-deep-grey;
+    background: var(--theme-secondary-purple);
+    border: 1px solid var(--theme-secondary-deep-grey);
     border-radius: 6px;
 
     > i {
         font-size: 11px;
         width: 11px;
         height: 11px;
-        color: colors.$secondary-light-grey;
+        color: var(--theme-secondary-light-grey);
     }
 
     input {
         background: none;
         border: none;
         outline: none;
-        color: #d5ccff;
+        color: var(--theme-white);
         font-family: inherit;
         font-size: 12px;
         width: 140px;
         flex: 0 0 140px;
 
         &::placeholder {
-            color: colors.$secondary-light-grey;
+            color: var(--theme-secondary-light-grey);
         }
     }
 }
@@ -174,7 +174,7 @@ button {
     border: none;
     padding: 0 4px;
     cursor: pointer;
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -186,17 +186,17 @@ button {
     }
 
     &:hover {
-        color: #ff8080;
+        color: var(--theme-red);
     }
 }
 
 .graph-search-focus {
     background: none;
     border: none;
-    border-left: 1px solid colors.$secondary-deep-grey;
+    border-left: 1px solid var(--theme-secondary-deep-grey);
     padding: 0 4px 0 8px;
     cursor: pointer;
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -209,7 +209,7 @@ button {
     }
 
     &:hover {
-        color: #d5ccff;
+        color: var(--theme-white);
     }
 }
 
@@ -220,10 +220,10 @@ button {
     z-index: 10;
     width: 28px;
     height: 28px;
-    border: 1px solid colors.$secondary-deep-grey;
-    background: colors.$secondary-purple;
+    border: 1px solid var(--theme-secondary-deep-grey);
+    background: var(--theme-secondary-purple);
     border-radius: 6px;
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -233,7 +233,7 @@ button {
     transition: background 0.15s;
 
     &:hover {
-        background: colors.$secondary-dark-grey;
+        background: var(--theme-secondary-dark-grey);
     }
 
     i {
