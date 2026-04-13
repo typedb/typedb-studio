@@ -5,6 +5,7 @@
  */
 
 import { AfterViewChecked, AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from "@angular/core";
+import { MatTooltipModule } from "@angular/material/tooltip";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -15,6 +16,7 @@ import { MatSortModule } from "@angular/material/sort";
 import { Subscription } from "rxjs";
 import { OutputState, OutputType } from "../../../service/chat-state.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
+import { GraphZoomControlsComponent } from "../../../framework/graph-zoom-controls/graph-zoom-controls.component";
 
 @Component({
     selector: "ts-chat-output",
@@ -29,6 +31,8 @@ import { RunOutputState } from "../../../service/query-page-state.service";
         MatInputModule,
         MatTableModule,
         MatSortModule,
+        MatTooltipModule,
+        GraphZoomControlsComponent,
     ],
 })
 export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnDestroy {
@@ -39,6 +43,7 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
     copied = false;
     aiSent = false;
+    graphMaximised = false;
     private outputTypeSub?: Subscription;
     private lastAttachedRun: RunOutputState | null = null;
 
@@ -111,6 +116,14 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
                 newRun.graph.attach(this.graphViewRef.nativeElement);
             }
         }
+    }
+
+    toggleGraphMaximised(): void {
+        this.graphMaximised = !this.graphMaximised;
+        document.body.classList.toggle("graph-fullscreen", this.graphMaximised);
+        setTimeout(() => {
+            this.currentRun?.graph.resize();
+        });
     }
 
     onCopyLogClick() {

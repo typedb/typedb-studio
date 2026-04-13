@@ -28,6 +28,16 @@ When writing TypeQL, refer to https://typedb.com/docs/llms-short.txt. Refer to h
 
 When setting up TypeDB tooling (driver SDKs, etc.) ensure that the installed drivers are NOT for TypeDB 2.x.
 
+## Versioning
+
+To bump the Studio version, run:
+
+```
+pnpm set-version <semver>
+```
+
+This propagates the version to all required files.
+
 ## General Development Guidelines
 
 - Prefer extending existing components over creating new ones

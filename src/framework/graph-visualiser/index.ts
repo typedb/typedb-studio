@@ -88,7 +88,7 @@ export class GraphVisualiser {
         // More elements → hide labels at a lower (closer) zoom level.
         // At 200 elements, hide when ratio > 5; at 1000 elements, hide when ratio > 1.
         const ELEMENT_THRESHOLD = 100;
-        const zoomThreshold = Math.max(2, ELEMENT_THRESHOLD * 10 / elementCount);
+        const zoomThreshold = Math.max(4, ELEMENT_THRESHOLD * 10 / elementCount);
         const shouldHide = elementCount > ELEMENT_THRESHOLD && ratio > zoomThreshold;
 
         if (shouldHide && !this.labelsAutoHidden) {
