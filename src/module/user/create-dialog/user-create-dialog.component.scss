@@ -32,6 +32,6 @@ tp-button {
 }
 
 .admonition-header {
-    font-weight: typography.$bold;
+    font-weight: var(--font-weight-bold);
     margin-left: 8px;
 }

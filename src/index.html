@@ -30,10 +30,10 @@
       (function() {
         try {
           var pref = JSON.parse(localStorage.getItem("typeDBStudio.theme.preference"));
-          var theme = pref === "light" ? "light" : pref === "dark" ? "dark"
-            : (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+          var theme = pref === "light" ? "theme-light" : pref === "dark" ? "theme-dark"
+            : (window.matchMedia("(prefers-color-scheme: light)").matches ? "theme-light" : "theme-dark");
           document.documentElement.classList.add(theme);
-        } catch(e) { document.documentElement.classList.add("dark"); }
+        } catch(e) { document.documentElement.classList.add("theme-dark"); }
       })();
     </script>
   </head>

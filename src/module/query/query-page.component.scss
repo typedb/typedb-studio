@@ -162,6 +162,9 @@
 
 .run-tab-close-button.mat-mdc-icon-button {
     --mdc-icon-button-state-layer-size: 20px;
+    --mat-icon-button-state-layer-size: 20px;
+    --mat-icon-button-icon-color: var(--theme-secondary-light-grey);
+    --mat-icon-button-disabled-icon-color: var(--theme-secondary-mid-deep-grey);
     margin-left: 4px;
     width: 20px;
     height: 20px;
@@ -181,6 +184,7 @@
         transform: translate(-50%, -50%);
         line-height: 1;
         height: 12px;
+        color: inherit;
     }
 
     &:hover {
@@ -509,7 +513,14 @@ button {
 
     button[mat-stroked-button] {
         --mdc-outlined-button-container-height: 32px;
+        --mat-button-outlined-container-height: 32px;
+        --mdc-outlined-button-outline-color: var(--theme-light-purple);
+        --mat-button-outlined-outline-color: var(--theme-light-purple);
+        --mdc-outlined-button-label-text-color: var(--theme-white);
+        --mat-button-outlined-label-text-color: var(--theme-white);
+        background: var(--theme-deep-purple);
         font-size: 14px;
+        border-radius: shapes.$border-radius-small;
     }
 }
 
@@ -618,7 +629,7 @@ button {
         background: none;
         border: none;
         outline: none;
-        color: #d5ccff;
+        color: var(--theme-white);
         font-family: inherit;
         font-size: 12px;
         width: 140px;
@@ -649,7 +660,7 @@ button {
     }
 
     &:hover {
-        color: #d5ccff;
+        color: var(--theme-white);
     }
 }
 
@@ -747,7 +758,8 @@ button {
     }
 
     ::ng-deep .mdc-text-field {
-        --mdc-outlined-text-field-input-text-color: #{var(--theme-secondary-pink)};
+        --mdc-outlined-text-field-input-text-color: #{var(--theme-white)};
+        --mat-form-field-outlined-input-text-color: var(--theme-white);
         padding: 0;
 
         textarea {

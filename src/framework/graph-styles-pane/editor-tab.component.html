@@ -177,6 +177,7 @@
         <div class="style-controls">
           <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
             <mat-select [value]="backgroundType" panelClass="graph-style-select-panel" (selectionChange)="setBackgroundType($event.value)">
+              <mat-option value="default">Default</mat-option>
               <mat-option value="solid">Solid</mat-option>
               <mat-option value="gradient">Gradient</mat-option>
               <mat-option value="grid">Grid</mat-option>
@@ -186,6 +187,7 @@
           </mat-form-field>
         </div>
       </div>
+      @if (backgroundType !== 'default') {
       <div class="style-row">
         <span class="style-label">{{ backgroundType === 'solid' ? 'Color' : 'Color 1' }}</span>
         <div class="style-controls">
@@ -194,7 +196,8 @@
                  (input)="setBackgroundColor1($any($event.target).value)">
         </div>
       </div>
-      @if (backgroundType !== 'solid') {
+      }
+      @if (backgroundType !== 'solid' && backgroundType !== 'default') {
         <div class="style-row">
           <span class="style-label">Color 2</span>
           <div class="style-controls">

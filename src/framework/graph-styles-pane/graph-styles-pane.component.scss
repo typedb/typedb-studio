@@ -39,7 +39,7 @@
 .panel-title {
   font-size: 14px;
   font-weight: 500;
-  color: #d5ccff;
+  color: var(--theme-white);
 }
 
 .tab-bar {
@@ -53,12 +53,12 @@
   border: none;
   padding: 8px 0;
   font-size: 13px;
-  color: #958fa8;
+  color: var(--theme-secondary-light-grey);
   cursor: pointer;
   border-bottom: 2px solid transparent;
 
   &.active {
-    color: #d5ccff;
+    color: var(--theme-white);
     border-bottom-color: var(--theme-secondary-light-grey);
   }
 
@@ -98,7 +98,7 @@
 .style-label {
   display: block;
   font-size: 13px;
-  color: #958fa8;
+  color: var(--theme-secondary-light-grey);
   margin-bottom: 4px;
 }
 
@@ -115,7 +115,7 @@
 .clear-button {
   background: none;
   border: none;
-  color: #958fa8;
+  color: var(--theme-secondary-light-grey);
   cursor: pointer;
   padding: 0 2px;
 
@@ -245,7 +245,7 @@
     .mat-mdc-select-trigger {
       height: 30px !important;
       font-size: 13px;
-      color: #d5ccff;
+      color: var(--theme-white);
     }
 
     .mat-mdc-select-value {
@@ -254,7 +254,7 @@
 
     input.mat-mdc-input-element {
       font-size: 13px;
-      color: #d5ccff;
+      color: var(--theme-white);
     }
   }
 }
@@ -263,7 +263,7 @@
   width: 20px;
   height: 12px;
   display: block;
-  color: #d5ccff;
+  color: var(--theme-white);
 }
 
 .angle-control {
@@ -286,7 +286,7 @@
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: #d5ccff;
+    background: var(--theme-white);
     cursor: pointer;
   }
 
@@ -294,7 +294,7 @@
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: #d5ccff;
+    background: var(--theme-white);
     border: none;
     cursor: pointer;
   }
@@ -302,7 +302,7 @@
 
 .angle-value {
   font-size: 12px;
-  color: #958fa8;
+  color: var(--theme-secondary-light-grey);
   min-width: 28px;
   text-align: right;
 }
@@ -324,7 +324,7 @@
 
 .dim-label {
   font-size: 12px;
-  color: #958fa8;
+  color: var(--theme-secondary-light-grey);
   flex: 0 0 auto;
   margin: 0 2px;
 }
@@ -340,7 +340,7 @@
 
 .empty-message {
   font-size: 13px;
-  color: #958fa8;
+  color: var(--theme-secondary-light-grey);
   padding: 12px;
   text-align: center;
 }
@@ -361,9 +361,9 @@
 
 .footer-option-label {
   font-size: 13px;
-  color: #958fa8;
+  color: var(--theme-secondary-light-grey);
   flex: 1;
-  font-weight: typography.$light;
+  font-weight: var(--font-weight-light);
 }
 
 .footer-select-field {
@@ -409,7 +409,7 @@
     .mat-mdc-select-trigger {
       height: 28px !important;
       font-size: 13px;
-      color: #d5ccff;
+      color: var(--theme-white);
     }
 
     .mat-mdc-select-value { padding: 0; }
@@ -428,7 +428,7 @@
   ::ng-deep mat-slide-toggle {
     width: 100%;
     --mat-slide-toggle-label-text-size: 13px;
-    --mat-slide-toggle-label-text-color: #958fa8;
+    --mat-slide-toggle-label-text-color: var(--theme-secondary-light-grey);
     --mat-slide-toggle-label-text-weight: inherit;
     --mat-slide-toggle-label-text-font: inherit;
     --mat-slide-toggle-label-text-tracking: var(--body-letter-spacing);
@@ -458,7 +458,7 @@
   height: 30px;
   font-size: 12px;
   background: var(--theme-secondary-dark-grey);
-  color: #d5ccff;
+  color: var(--theme-white);
   border: 1px solid var(--theme-secondary-deep-grey);
   border-radius: 4px;
   cursor: pointer;
@@ -500,7 +500,7 @@
 .section-title {
   font-size: 12px;
   font-weight: 600;
-  color: #958fa8;
+  color: var(--theme-secondary-light-grey);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -525,7 +525,7 @@
 .highlight-group-label {
   display: block;
   font-size: 12px;
-  color: #6b6580;
+  color: var(--theme-secondary-grey);
 }
 
 .highlight-group-actions {
@@ -537,13 +537,13 @@
 .highlight-action-button {
   background: none;
   border: none;
-  color: #6b6580;
+  color: var(--theme-secondary-grey);
   cursor: pointer;
   padding: 0 4px;
   font-size: 11px;
 
   &:hover {
-    color: #d5ccff;
+    color: var(--theme-white);
   }
 }
 
@@ -554,19 +554,19 @@
 }
 
 .highlight-chip {
-  --chip-color: #958fa8;
+  --chip-color: var(--theme-secondary-light-grey);
   font-size: 12px;
   padding: 3px 10px;
   border-radius: 12px;
   border: 1px solid var(--theme-secondary-deep-grey);
   background: transparent;
-  color: #958fa8;
+  color: var(--theme-secondary-light-grey);
   cursor: pointer;
   transition: all 0.15s;
 
   &:hover {
     border-color: var(--chip-color);
-    color: #d5ccff;
+    color: var(--theme-white);
   }
 
   &.active {
@@ -609,13 +609,13 @@
   display: block;
   font-size: 13px;
   font-weight: 500;
-  color: #d5ccff;
+  color: var(--theme-white);
 }
 
 .preset-description {
   display: block;
   font-size: 12px;
-  color: #6b6580;
+  color: var(--theme-secondary-grey);
   line-height: 1.3;
 }
 
@@ -626,7 +626,7 @@
   border-radius: 3px;
   border: 1px solid var(--theme-secondary-deep-grey);
   background: var(--theme-secondary-dark-grey);
-  color: #d5ccff;
+  color: var(--theme-white);
   cursor: pointer;
 
   i {
@@ -656,7 +656,7 @@
   flex: 0 0 auto;
   background: none;
   border: none;
-  color: #958fa8;
+  color: var(--theme-secondary-light-grey);
   cursor: pointer;
   padding: 0 4px;
   display: flex;
@@ -669,7 +669,7 @@
   }
 
   &:hover {
-    color: #d5ccff;
+    color: var(--theme-white);
   }
 
   &.delete:hover {
@@ -683,7 +683,7 @@
   justify-content: center;
   background: none;
   border: none;
-  color: #958fa8;
+  color: var(--theme-secondary-light-grey);
   cursor: pointer;
   padding: 0 4px;
 
@@ -694,7 +694,7 @@
   }
 
   &:hover {
-    color: #d5ccff;
+    color: var(--theme-white);
   }
 }
 
@@ -757,7 +757,7 @@
   border-radius: 3px;
   border: 1px solid var(--theme-secondary-deep-grey);
   background: var(--theme-secondary-purple);
-  color: #d5ccff;
+  color: var(--theme-white);
   outline: none;
 
   &:focus {
@@ -765,7 +765,7 @@
   }
 
   &::placeholder {
-    color: #6b6580;
+    color: var(--theme-secondary-grey);
   }
 }
 

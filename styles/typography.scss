@@ -25,83 +25,83 @@ $letter-spacing: 0.02em;
 }
 
 @mixin h1 {
-    @include font-style(24px, $medium, normal, $letter-spacing);
+    @include font-style(24px, var(--font-weight-medium), normal, $letter-spacing);
 }
 
 @mixin h2 {
-    @include font-style(20px, $semi-bold, normal, $letter-spacing);
+    @include font-style(20px, var(--font-weight-semi-bold), normal, $letter-spacing);
 }
 
 @mixin h3 {
-    @include font-style(16px, $semi-bold, 24px, $letter-spacing);
+    @include font-style(16px, var(--font-weight-semi-bold), 24px, $letter-spacing);
 }
 
 @mixin h4 {
-    @include font-style(16px, $medium, 22px, $letter-spacing);
+    @include font-style(16px, var(--font-weight-medium), 22px, $letter-spacing);
 }
 
 @mixin h5 {
-    @include font-style(14px, $regular, 20px, $letter-spacing);
+    @include font-style(14px, var(--font-weight-regular), 20px, $letter-spacing);
 }
 
 @mixin light-banner {
-    @include font-style(150px, $thin, 150px, $letter-spacing);
+    @include font-style(150px, var(--font-weight-thin), 150px, $letter-spacing);
 }
 
 @mixin subtitle {
-    @include font-style(22px, $semi-bold, 33px, $letter-spacing);
+    @include font-style(22px, var(--font-weight-semi-bold), 33px, $letter-spacing);
 }
 
 @mixin subtitle1 {
     font-style: italic;
-    @include font-style(14px, $italic, normal, $letter-spacing);
+    @include font-style(14px, var(--font-weight-regular), normal, $letter-spacing);
 }
 
 @mixin subtitle2 {
-    @include font-style(14px, $semi-bold, 24px, $letter-spacing);
+    @include font-style(14px, var(--font-weight-semi-bold), 24px, $letter-spacing);
 }
 
 @mixin p1 {
-    @include font-style(14px, $regular, 22px, $letter-spacing);
+    @include font-style(14px, var(--font-weight-regular), 22px, $letter-spacing);
 }
 
 @mixin p2 {
-    @include font-style(14px, $regular, 22px, $letter-spacing);
+    @include font-style(14px, var(--font-weight-regular), 22px, $letter-spacing);
 }
 
 @mixin p3 {
-    @include font-style(14px, $regular, 22px, $letter-spacing);
+    @include font-style(14px, var(--font-weight-regular), 22px, $letter-spacing);
 }
 
 @mixin aside {
-    @include font-style(12px, $regular, normal, $letter-spacing);
+    @include font-style(12px, var(--font-weight-regular), normal, $letter-spacing);
 }
 
 @mixin button-large {
     font-style: italic;
-    @include font-style(14px, $italic, 16px, $letter-spacing);
+    @include font-style(14px, var(--font-weight-regular), 16px, $letter-spacing);
 }
 
 @mixin button-small {
-    @include font-style(14px, $regular, 20px, $letter-spacing);
+    @include font-style(14px, var(--font-weight-regular), 20px, $letter-spacing);
 }
 
 @mixin caption1 {
-    @include font-style(12px, $semi-bold, 16px, $letter-spacing);
+    @include font-style(12px, var(--font-weight-semi-bold), 16px, $letter-spacing);
 }
 
 @mixin code {
     font-family: Monaco, monospace;
-    @include font-style(14px, $regular, 22px, $letter-spacing);
+    @include font-style(14px, var(--font-weight-regular), 22px, $letter-spacing);
 }
 
 /* TODO: delete */
 @mixin modal-title {
-    @include font-style(22px, $semi-bold, normal, $letter-spacing);
+    @include font-style(22px, var(--font-weight-semi-bold), normal, $letter-spacing);
 }
 
 @mixin info-text {
-    @include font-style(14px, $regular, normal, $letter-spacing);
+    @include font-style(14px, var(--font-weight-regular), normal, $letter-spacing);
 }
 
 @mixin line-clamp($lines) {

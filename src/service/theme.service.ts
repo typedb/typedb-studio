@@ -58,8 +58,8 @@ export class ThemeService implements OnDestroy {
 
     private applyTheme(theme: EffectiveTheme) {
         const html = document.documentElement;
-        html.classList.remove("dark", "light");
-        html.classList.add(theme);
+        html.classList.remove("theme-dark", "theme-light");
+        html.classList.add(theme === "light" ? "theme-light" : "theme-dark");
         this.effectiveTheme$.next(theme);
     }
 

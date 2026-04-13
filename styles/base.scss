@@ -24,6 +24,7 @@ html {
     padding: 0;
     background: var(--theme-black);
     font-size: 14px;
+    font-weight: var(--font-weight-regular);
     line-height: 22px;
 
     --mat-form-field-subscript-text-size: 14px;
@@ -192,7 +193,7 @@ h5 {
 }
 
 strong {
-    font-weight: typography.$semi-bold;
+    font-weight: var(--font-weight-semi-bold);
 }
 
 .text-muted {
@@ -252,7 +253,7 @@ code, .text-code {
 }
 
 em {
-    font-weight: typography.$regular;
+    font-weight: var(--font-weight-regular);
     color: var(--theme-secondary-extra-light-grey);
 }
 
@@ -370,12 +371,12 @@ form, .form {
 input, select, textarea {
     &::placeholder {
         color: var(--theme-secondary-light-grey-08);
-        font-weight: typography.$regular;
+        font-weight: var(--font-weight-regular);
     }
 }
 
 th {
-    font-weight: typography.$semi-bold;
+    font-weight: var(--font-weight-semi-bold);
 }
 
 .flex-spacer {
@@ -595,7 +596,7 @@ button.dangerous {
 }
 
 .tp-sidenav-container.collapsed ts-sidebar-link i.fa-arrow-up-right-from-square {
-    transform: translate(-20px,-10px) scale(0.5);
+    transform: none;
 }
 
 tp-setup, tp-setup-marketplace, tp-setup-project,

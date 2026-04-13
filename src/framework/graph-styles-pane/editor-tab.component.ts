@@ -4,7 +4,7 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
-import { GraphStyleService, GraphBackgroundType } from "../../service/graph-style.service";
+import { GraphStyleService, GraphBackgroundType, DEFAULT_BACKGROUND } from "../../service/graph-style.service";
 import { GraphVisualiser } from "../graph-visualiser";
 import { VertexKind } from "@typedb/graph-utils";
 
@@ -243,7 +243,9 @@ export class EditorTabComponent implements OnChanges {
     get backgroundAngle(): number { return this.styleService.background.gradientAngle; }
 
     setBackgroundType(type: GraphBackgroundType): void {
-        if (type === "grid") {
+        if (type === "default") {
+            this.styleService.updateBackground({ type });
+        } else if (type === "grid") {
             this.styleService.updateBackground({ type, color1: "#232135", color2: "#0e0e0e" });
         } else if (type === "dots") {
             this.styleService.updateBackground({ type, color1: "#4e4b63", color2: "#0e0e0e" });
@@ -267,12 +269,11 @@ export class EditorTabComponent implements OnChanges {
     }
 
     get hasBackgroundOverride(): boolean {
-        const bg = this.styleService.background;
-        return bg.type !== "solid" || bg.color1 !== "#0e0e0e";
+        return this.styleService.background.type !== "default";
     }
 
     resetBackground(): void {
-        this.styleService.background = { type: "solid", color1: "#0e0e0e", color2: "#1A182A", gradientAngle: 180 };
+        this.styleService.background = { ...DEFAULT_BACKGROUND };
     }
 
     private applyStyles(): void {

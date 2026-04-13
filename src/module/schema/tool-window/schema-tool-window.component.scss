@@ -147,7 +147,7 @@
                 border-bottom: 1px solid var(--theme-light-purple);
                 border-left: 1px solid var(--theme-light-purple);
                 border-right: 1px solid var(--theme-light-purple);
-                font-weight: typography.$light;
+                font-weight: var(--font-weight-light);
 
                 button {
                     margin-right: 2px;

@@ -17,10 +17,22 @@
     box-sizing: border-box;
     height: 100%;
 
+    .logo-row {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+        padding: 0 16px;
+    }
+
+    > button {
+        display: flex;
+        justify-content: center;
+    }
+
     .links {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
         height: 100%;
 
         mat-divider {
@@ -108,4 +120,11 @@ i {
 
 ::ng-deep mat-form-field.tp-org-selector  .mdc-text-field {
     background: transparent;
+}
+
+.theme-menu {
+    border-radius: shapes.$border-radius-small;
+    border: 1px solid var(--theme-secondary-deep-grey);
+    background-color: var(--theme-secondary-purple);
+    padding: 8px 0;
 }

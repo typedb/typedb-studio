@@ -16,7 +16,7 @@ export type PartialNodeStyle = Partial<NodeStyle>;
 const STORAGE_KEY = "typedb-studio-graph-styles";
 const CUSTOM_PRESETS_KEY = "typedb-studio-custom-presets";
 
-export type GraphBackgroundType = "solid" | "gradient" | "grid" | "dots" | "party";
+export type GraphBackgroundType = "default" | "solid" | "gradient" | "grid" | "dots" | "party";
 
 export interface GraphBackground {
     type: GraphBackgroundType;
@@ -26,7 +26,7 @@ export interface GraphBackground {
 }
 
 export const DEFAULT_BACKGROUND: GraphBackground = {
-    type: "solid",
+    type: "default",
     color1: "#0e0e0e",
     color2: "#1A182A",
     gradientAngle: 180,
@@ -40,6 +40,8 @@ export interface BackgroundCSS {
 
 export function buildBackgroundCSS(bg: GraphBackground): BackgroundCSS {
     switch (bg.type) {
+        case "default":
+            return { color: "var(--theme-black)", image: "none", size: "" };
         case "solid":
             return { color: bg.color1, image: "none", size: "" };
         case "gradient":

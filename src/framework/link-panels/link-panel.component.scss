@@ -63,7 +63,7 @@ a {
     }
 
     .link-tertiary {
-        font-weight: typography.$semi-bold;
+        font-weight: var(--font-weight-semi-bold);
     }
 
     @media (min-width: 1161px) {

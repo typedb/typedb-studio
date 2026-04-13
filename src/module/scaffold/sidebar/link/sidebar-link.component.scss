@@ -11,6 +11,7 @@
 @use "typography";
 
 :host {
+    display: block;
     width: 100%;
 }
 
@@ -20,6 +21,7 @@ a {
     width: 100%;
     display: flex;
     align-items: center;
+    justify-content: center;
     cursor: pointer;
     @include typography.h5;
 }
@@ -34,7 +36,29 @@ a:hover, a.selected {
     width: 100%;
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     white-space: nowrap;
+    padding: 0 16px;
+    box-sizing: border-box;
+
+    :host-context(.collapsed) & {
+        justify-content: center;
+        position: relative;
+
+        .external-only.flex-spacer {
+            display: none;
+        }
+
+        i.external-only {
+            position: absolute;
+            right: 11px;
+            top: 6px;
+            font-size: 8px;
+            width: 8px;
+            height: 8px;
+            min-width: unset;
+        }
+    }
 }
 
 a.selected .linkspan {

@@ -5,7 +5,7 @@
  */
 
 import { CodeEditor } from "@acrodata/code-editor";
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from "@angular/core";
 import { TypeQL, typeqlAutocompleteExtension } from "../codemirror-lang-typeql";
 import { basicDark, basicLight } from "./theme";
 import { Compartment, Extension, Prec } from "@codemirror/state";
@@ -34,6 +34,8 @@ import { Subscription } from "rxjs";
     @Input({ required: true }) formControlProp!: FormControl<string>;
     @Input() runOverlayVisible = false;
     @Output() runButtonClick = new EventEmitter<void>();
+
+    @ViewChild(CodeEditor) private codeEditor?: CodeEditor;
 
     private themeCompartment = new Compartment();
     protected readonly TypeQL = TypeQL;
@@ -87,9 +89,8 @@ import { Subscription } from "rxjs";
 
         // React to theme changes at runtime
         this.themeSubscription = this.themeService.effectiveTheme$.subscribe(theme => {
-            const editorView = this.elementRef.nativeElement.querySelector('.cm-editor') as any;
-            if (editorView?.cmView?.view) {
-                const view: EditorView = editorView.cmView.view;
+            const view = this.codeEditor?.view;
+            if (view) {
                 view.dispatch({
                     effects: this.themeCompartment.reconfigure(theme === "light" ? basicLight : basicDark)
                 });
