@@ -4,14 +4,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Component, ElementRef, EventEmitter, HostBinding, Input, OnDestroy, Output, ViewChild } from "@angular/core";
+import { Component, ElementRef, EventEmitter, HostBinding, Input, OnDestroy, Output, ViewChild, AfterViewInit } from "@angular/core";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { ResizableDirective } from "@hhangular/resizable";
 import { Subscription } from "rxjs";
 import { GraphVisualiser } from "../engine";
 import { GraphZoomControlsComponent } from "./zoom-controls/graph-zoom-controls.component";
 import { GraphStylesPaneComponent } from "../style-editor/graph-styles-pane.component";
-import { GraphStyleService } from "../../../service/graph-style.service";
+import { GraphStyleService, buildBackgroundCSS } from "../../../service/graph-style.service";
 
 @Component({
     selector: "ts-graph-canvas",
@@ -19,7 +19,7 @@ import { GraphStyleService } from "../../../service/graph-style.service";
     styleUrls: ["graph-canvas.component.scss"],
     imports: [MatTooltipModule, ResizableDirective, GraphZoomControlsComponent, GraphStylesPaneComponent],
 })
-export class GraphCanvasComponent implements OnDestroy {
+export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
     @Input() visualiser: GraphVisualiser | null = null;
     @Input() queryRunning = false;
     @Input() graphPercent = 75;
@@ -38,12 +38,28 @@ export class GraphCanvasComponent implements OnDestroy {
     private stylesSub: Subscription;
 
     constructor(private styleService: GraphStyleService) {
-        this.stylesSub = this.styleService.styles$.subscribe(() => this.updateControlTheme());
+        this.stylesSub = this.styleService.styles$.subscribe(() => {
+            this.updateControlTheme();
+            this.applyBackground();
+        });
         this.updateControlTheme();
+    }
+
+    ngAfterViewInit() {
+        this.applyBackground();
     }
 
     ngOnDestroy() {
         this.stylesSub.unsubscribe();
+    }
+
+    private applyBackground() {
+        const el = this.canvasElRef?.nativeElement;
+        if (!el) return;
+        const css = buildBackgroundCSS(this.styleService.background);
+        el.style.backgroundColor = css.color;
+        el.style.backgroundImage = css.image;
+        el.style.backgroundSize = css.size;
     }
 
     private updateControlTheme() {

@@ -7,6 +7,7 @@
 @use "shapes";
 @use "colors" as dark;
 @use "colors-light" as light;
+@use "typography";
 
 :host {
     display: block;
@@ -20,6 +21,8 @@
     --gc-fg-muted: #{dark.$secondary-light-grey};
     --gc-fg-strong: #{dark.$white};
     --gc-hover-bg: #{dark.$secondary-dark-grey};
+    --gc-green: #{dark.$green};
+    --gc-font-weight: #{typography.$regular};
 
     &.graph-light {
         --gc-bg: #{light.$secondary-purple};
@@ -28,6 +31,8 @@
         --gc-fg-muted: #{light.$secondary-light-grey};
         --gc-fg-strong: #{light.$white};
         --gc-hover-bg: #{light.$secondary-dark-grey};
+        --gc-green: #{light.$green};
+        --gc-font-weight: #{typography.$medium};
     }
 }
 
@@ -195,4 +200,11 @@
     overflow-wrap: break-word;
     padding: 10px;
     margin: 0;
+    color: var(--gc-fg-strong);
+    font-weight: var(--gc-font-weight);
+
+    a {
+        color: var(--gc-green);
+        cursor: pointer;
+    }
 }
