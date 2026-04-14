@@ -29,8 +29,8 @@
         <span class="footer-option-label">Labels in nodes</span>
         <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
           <mat-select [value]="labelMode" panelClass="graph-style-select-panel" (selectionChange)="setLabelMode($event.value)">
-            <mat-option value="border">Visible, border color</mat-option>
-            <mat-option value="fixed">Visible, black/white</mat-option>
+            <mat-option value="border">Visible (node color)</mat-option>
+            <mat-option value="fixed">Visible (black/white)</mat-option>
             <mat-option value="hidden">Hidden</mat-option>
           </mat-select>
         </mat-form-field>

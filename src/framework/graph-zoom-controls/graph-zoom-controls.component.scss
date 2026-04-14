@@ -16,31 +16,31 @@
 
 .zoom-button.reset-button {
   border-radius: 6px;
-  border: 1px solid var(--theme-secondary-deep-grey);
-  background: var(--theme-secondary-purple);
+  border: 1px solid var(--gc-border);
+  background: var(--gc-bg);
 
   &:disabled {
-    color: var(--theme-secondary-deep-grey);
+    color: var(--gc-border);
     cursor: default;
 
     &:hover {
-      background: var(--theme-secondary-purple);
+      background: var(--gc-bg);
     }
   }
 }
 
 .zoom-button.stop-button {
   border-radius: 6px;
-  border: 1px solid var(--theme-secondary-deep-grey);
-  background: var(--theme-secondary-purple);
+  border: 1px solid var(--gc-border);
+  background: var(--gc-bg);
   color: var(--theme-red);
 
   &:disabled {
-    color: var(--theme-secondary-deep-grey);
+    color: var(--gc-border);
     cursor: default;
 
     &:hover {
-      background: var(--theme-secondary-purple);
+      background: var(--gc-bg);
     }
   }
 }
@@ -49,8 +49,8 @@
   display: flex;
   flex-direction: column;
   border-radius: 6px;
-  border: 1px solid var(--theme-secondary-deep-grey);
-  background: var(--theme-secondary-purple);
+  border: 1px solid var(--gc-border);
+  background: var(--gc-bg);
   overflow: hidden;
 }
 
@@ -59,7 +59,7 @@
   height: 32px;
   border: none;
   background: transparent;
-  color: var(--theme-grey);
+  color: var(--gc-fg);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -69,11 +69,11 @@
   transition: background 0.15s;
 
   &:hover {
-    background: var(--theme-secondary-dark-grey);
+    background: var(--gc-hover-bg);
   }
 }
 
 .divider {
   height: 1px;
-  background: var(--theme-secondary-deep-grey);
+  background: var(--gc-border);
 }

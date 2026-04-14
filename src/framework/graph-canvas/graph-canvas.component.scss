@@ -5,12 +5,30 @@
  */
 
 @use "shapes";
+@use "colors" as dark;
+@use "colors-light" as light;
 
 :host {
     display: block;
     height: 100%;
     width: 100%;
     position: relative;
+
+    --gc-bg: #{dark.$secondary-purple};
+    --gc-border: #{dark.$secondary-deep-grey};
+    --gc-fg: #{dark.$grey};
+    --gc-fg-muted: #{dark.$secondary-light-grey};
+    --gc-fg-strong: #{dark.$white};
+    --gc-hover-bg: #{dark.$secondary-dark-grey};
+
+    &.graph-light {
+        --gc-bg: #{light.$secondary-purple};
+        --gc-border: #{light.$secondary-deep-grey};
+        --gc-fg: #{light.$grey};
+        --gc-fg-muted: #{light.$secondary-light-grey};
+        --gc-fg-strong: #{light.$white};
+        --gc-hover-bg: #{light.$secondary-dark-grey};
+    }
 }
 
 .graph-canvas-container {
@@ -62,29 +80,29 @@
     gap: 6px;
     height: 32px;
     padding: 0 4px 0 10px;
-    background: var(--theme-secondary-purple);
-    border: 1px solid var(--theme-secondary-deep-grey);
+    background: var(--gc-bg);
+    border: 1px solid var(--gc-border);
     border-radius: 6px;
 
     > i {
         font-size: 14px;
         width: 14px;
         height: 14px;
-        color: var(--theme-grey);
+        color: var(--gc-fg);
     }
 
     input {
         background: none;
         border: none;
         outline: none;
-        color: var(--theme-white);
+        color: var(--gc-fg-strong);
         font-family: inherit;
         font-size: 13px;
         width: 140px;
         flex: 0 0 140px;
 
         &::placeholder {
-            color: var(--theme-secondary-light-grey);
+            color: var(--gc-fg-muted);
         }
     }
 }
@@ -96,7 +114,7 @@
     border: none;
     padding: 0 4px;
     cursor: pointer;
-    color: var(--theme-grey);
+    color: var(--gc-fg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -115,10 +133,10 @@
 .graph-search-focus {
     background: none;
     border: none;
-    border-left: 1px solid var(--theme-secondary-deep-grey);
+    border-left: 1px solid var(--gc-border);
     padding: 0 4px 0 8px;
     cursor: pointer;
-    color: var(--theme-grey);
+    color: var(--gc-fg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -131,7 +149,7 @@
     }
 
     &:hover {
-        color: var(--theme-white);
+        color: var(--gc-fg-strong);
     }
 }
 
@@ -142,10 +160,10 @@
     z-index: 10;
     width: 32px;
     height: 32px;
-    border: 1px solid var(--theme-secondary-deep-grey);
-    background: var(--theme-secondary-purple);
+    border: 1px solid var(--gc-border);
+    background: var(--gc-bg);
     border-radius: 6px;
-    color: var(--theme-grey);
+    color: var(--gc-fg);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -155,7 +173,7 @@
     transition: background 0.15s;
 
     &:hover {
-        background: var(--theme-secondary-dark-grey);
+        background: var(--gc-hover-bg);
     }
 
     i {
