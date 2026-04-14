@@ -195,8 +195,8 @@ export class GraphVisualiser {
             const attrs = this.graph.getNodeAttributes(nodeKey);
             const concept = attrs.metadata.concept;
             const style = this.styleService.resolveNodeStyle(concept.kind as any, getTypeLabel(concept as any));
-            this.graph.setNodeAttribute(nodeKey, "color", style.color);
-            this.graph.setNodeAttribute(nodeKey, "borderColor", style.borderColor);
+            this.graph.setNodeAttribute(nodeKey, "color", style.fillColor);
+            this.graph.setNodeAttribute(nodeKey, "borderColor", style.color);
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
             if (useDegreeScaling) {
                 const degree = this.graph.degree(nodeKey);
@@ -389,8 +389,8 @@ export class GraphVisualiser {
             const w = style.width + Math.min(degree * 2, style.width * 4);
             const h = style.height + Math.min(degree * 2, style.height * 4);
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
-            this.graph.setNodeAttribute(nodeKey, "color", style.color);
-            this.graph.setNodeAttribute(nodeKey, "borderColor", style.borderColor);
+            this.graph.setNodeAttribute(nodeKey, "color", style.fillColor);
+            this.graph.setNodeAttribute(nodeKey, "borderColor", style.color);
             this.graph.setNodeAttribute(nodeKey, "width", w);
             this.graph.setNodeAttribute(nodeKey, "height", h);
             this.graph.setNodeAttribute(nodeKey, "size", Math.max(w, h));
@@ -407,8 +407,8 @@ export class GraphVisualiser {
             const style = this.styleService.resolveNodeStyle(concept.kind as any, getTypeLabel(concept as any));
             this.graph.setNodeAttribute(nodeKey, "label", this.styleParams.vertexDefaultLabel(concept));
             this.graph.setNodeAttribute(nodeKey, "type", style.shape);
-            this.graph.setNodeAttribute(nodeKey, "color", style.color);
-            this.graph.setNodeAttribute(nodeKey, "borderColor", style.borderColor);
+            this.graph.setNodeAttribute(nodeKey, "color", style.fillColor);
+            this.graph.setNodeAttribute(nodeKey, "borderColor", style.color);
             if (useDegreeScaling) {
                 const degree = this.graph.degree(nodeKey);
                 const w = style.width + Math.min(degree * 2, style.width * 4);

@@ -68,7 +68,12 @@ export class EditorTabComponent implements OnChanges {
     @Input() visualiser: GraphVisualiser | null = null;
 
     styleService = inject(GraphStyleService);
-    activeTab: "kind" | "type" | "edge" | "background" = "kind";
+    activeTab: "graph" | "background" = "graph";
+
+    settingsCollapsed = false;
+    kindsCollapsed = false;
+    typesCollapsed = false;
+    edgesCollapsed = false;
 
     readonly displayKinds = DISPLAY_KINDS;
     readonly shapes = AVAILABLE_SHAPES;
@@ -105,10 +110,6 @@ export class EditorTabComponent implements OnChanges {
         return this.styleService.getKindStyle(kind).color;
     }
 
-    getKindBorderColor(kind: VertexKind): string {
-        return this.styleService.getKindStyle(kind).borderColor;
-    }
-
     getKindShape(kind: VertexKind): string {
         return this.styleService.getKindStyle(kind).shape;
     }
@@ -125,11 +126,6 @@ export class EditorTabComponent implements OnChanges {
 
     setKindColor(kind: VertexKind, color: string): void {
         this.styleService.setKindStyle(kind, { color });
-        this.applyStyles();
-    }
-
-    setKindBorderColor(kind: VertexKind, borderColor: string): void {
-        this.styleService.setKindStyle(kind, { borderColor });
         this.applyStyles();
     }
 
@@ -163,10 +159,6 @@ export class EditorTabComponent implements OnChanges {
         return this.styleService.resolveNodeStyle(kind, typeLabel).color;
     }
 
-    getTypeBorderColor(typeLabel: string, kind: VertexKind): string {
-        return this.styleService.resolveNodeStyle(kind, typeLabel).borderColor;
-    }
-
     getTypeShape(typeLabel: string, kind: VertexKind): string {
         return this.styleService.resolveNodeStyle(kind, typeLabel).shape;
     }
@@ -187,11 +179,6 @@ export class EditorTabComponent implements OnChanges {
 
     setTypeColor(typeLabel: string, color: string): void {
         this.styleService.setTypeStyle(typeLabel, { color });
-        this.applyStyles();
-    }
-
-    setTypeBorderColor(typeLabel: string, borderColor: string): void {
-        this.styleService.setTypeStyle(typeLabel, { borderColor });
         this.applyStyles();
     }
 
@@ -254,6 +241,15 @@ export class EditorTabComponent implements OnChanges {
         } else {
             this.styleService.updateBackground({ type });
         }
+    }
+
+    get fillOpacityPercent(): number {
+        return Math.round(this.styleService.fillOpacity * 100);
+    }
+
+    setFillOpacityPercent(percent: number): void {
+        this.styleService.fillOpacity = percent / 100;
+        this.applyStyles();
     }
 
     setBackgroundColor1(color1: string): void {

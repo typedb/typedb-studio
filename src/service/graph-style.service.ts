@@ -6,13 +6,13 @@ import { ThemeService } from "./theme.service";
 
 export interface NodeStyle {
     color: string;
-    borderColor: string;
+    fillColor: string;
     shape: string;
     width: number;
     height: number;
 }
 
-export type PartialNodeStyle = Partial<NodeStyle>;
+export type PartialNodeStyle = Partial<Pick<NodeStyle, "color" | "shape" | "width" | "height">>;
 
 const STORAGE_KEY = "typedb-studio-graph-styles";
 const CUSTOM_PRESETS_KEY = "typedb-studio-custom-presets";
@@ -81,14 +81,23 @@ function parseHex(hex: string): [number, number, number] {
     return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
 }
 
-function deriveFillFromBorder(borderHex: string, bgHex: string): string {
-    const [br, bg, bb] = parseHex(borderHex);
-    const [gr, gg, gb] = parseHex(bgHex);
-    const t = 0.25;
-    const r = Math.round(br * t + gr * (1 - t));
-    const g = Math.round(bg * t + gg * (1 - t));
-    const b = Math.round(bb * t + gb * (1 - t));
+function blendColors(foreHex: string, bgHex: string, amount: number): string {
+    const [fr, fg, fb] = parseHex(foreHex);
+    const [br, bg, bb] = parseHex(bgHex);
+    const r = Math.round(fr * amount + br * (1 - amount));
+    const g = Math.round(fg * amount + bg * (1 - amount));
+    const b = Math.round(fb * amount + bb * (1 - amount));
     return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+}
+
+/** Migrate saved styles from the old borderColor+color model to the single color model. */
+function migrateStyles(styles: Record<string, any>): Record<string, PartialNodeStyle> {
+    const result: Record<string, PartialNodeStyle> = {};
+    for (const [key, val] of Object.entries(styles)) {
+        const { borderColor, color, ...rest } = val as any;
+        result[key] = { ...rest, color: borderColor ?? color };
+    }
+    return result;
 }
 
 const ALL_KINDS: VertexKind[] = [
@@ -112,6 +121,7 @@ export class GraphStyleService implements OnDestroy {
     private _labelsVisible = true;
     private _showHoverLabel = true;
     private _degreeScaling = false;
+    private _fillOpacity = 0.25;
     private _background: GraphBackground = { ...DEFAULT_BACKGROUND };
 
     private _customPresets: CustomPreset[] = [];
@@ -141,10 +151,15 @@ export class GraphStyleService implements OnDestroy {
         return bg.color1; // solid, gradient, grid, dots, party — color1 is always the base
     }
 
+    private deriveFill(color: string): string {
+        return blendColors(color, this.effectiveBackgroundHex, this._fillOpacity);
+    }
+
     getKindDefault(kind: VertexKind): NodeStyle {
+        const color = defaultQueryStyleParams.vertexBorderColors[kind];
         return {
-            color: defaultQueryStyleParams.vertexColors[kind],
-            borderColor: defaultQueryStyleParams.vertexBorderColors[kind],
+            color,
+            fillColor: this.deriveFill(color),
             shape: defaultQueryStyleParams.vertexShapes[kind],
             width: defaultQueryStyleParams.vertexWidths[kind],
             height: defaultQueryStyleParams.vertexHeights[kind],
@@ -154,10 +169,10 @@ export class GraphStyleService implements OnDestroy {
     getKindStyle(kind: VertexKind): NodeStyle {
         const base = this.getKindDefault(kind);
         const override = this._kindStyles[kind];
-        const borderColor = override?.borderColor ?? base.borderColor;
+        const color = override?.color ?? base.color;
         return {
-            color: override?.color ?? deriveFillFromBorder(borderColor, this.effectiveBackgroundHex),
-            borderColor,
+            color,
+            fillColor: this.deriveFill(color),
             shape: override?.shape ?? base.shape,
             width: override?.width ?? base.width,
             height: override?.height ?? base.height,
@@ -171,10 +186,10 @@ export class GraphStyleService implements OnDestroy {
         const typeOverride = this._typeStyles[typeLabel];
         if (!typeOverride) return kindStyle;
 
-        const borderColor = typeOverride.borderColor ?? kindStyle.borderColor;
+        const color = typeOverride.color ?? kindStyle.color;
         return {
-            color: typeOverride.color ?? deriveFillFromBorder(borderColor, this.effectiveBackgroundHex),
-            borderColor,
+            color,
+            fillColor: this.deriveFill(color),
             shape: typeOverride.shape ?? kindStyle.shape,
             width: typeOverride.width ?? kindStyle.width,
             height: typeOverride.height ?? kindStyle.height,
@@ -273,8 +288,8 @@ export class GraphStyleService implements OnDestroy {
         const vertexHeights: Record<string, number> = {} as any;
         for (const kind of ALL_KINDS) {
             const style = this.getKindStyle(kind);
-            vertexColors[kind] = style.color;
-            vertexBorderColors[kind] = style.borderColor;
+            vertexColors[kind] = style.fillColor;
+            vertexBorderColors[kind] = style.color;
             vertexShapes[kind] = style.shape;
             vertexWidths[kind] = style.width;
             vertexHeights[kind] = style.height;
@@ -286,8 +301,11 @@ export class GraphStyleService implements OnDestroy {
         const vertexTypeWidths: Record<string, number> = {};
         const vertexTypeHeights: Record<string, number> = {};
         for (const [typeLabel, override] of Object.entries(this._typeStyles)) {
-            if (override.color) vertexTypeColors[typeLabel] = override.color;
-            if (override.borderColor) vertexTypeBorderColors[typeLabel] = override.borderColor;
+            const color = override.color;
+            if (color) {
+                vertexTypeBorderColors[typeLabel] = color;
+                vertexTypeColors[typeLabel] = this.deriveFill(color);
+            }
             if (override.shape) vertexTypeShapes[typeLabel] = override.shape;
             if (override.width) vertexTypeWidths[typeLabel] = override.width;
             if (override.height) vertexTypeHeights[typeLabel] = override.height;
@@ -380,6 +398,14 @@ export class GraphStyleService implements OnDestroy {
         this.styles$.next();
     }
 
+    get fillOpacity(): number { return this._fillOpacity; }
+
+    set fillOpacity(value: number) {
+        this._fillOpacity = Math.max(0, Math.min(1, value));
+        this.save();
+        this.styles$.next();
+    }
+
     get degreeScaling(): boolean { return this._degreeScaling; }
 
     set degreeScaling(value: boolean) {
@@ -406,8 +432,8 @@ export class GraphStyleService implements OnDestroy {
 
     applyStructurePreset(): void {
         for (const kind of ALL_KINDS) {
-            const borderColor = defaultQueryStyleParams.vertexBorderColors[kind];
-            this._kindStyles[kind] = { color: borderColor, borderColor, shape: "ellipse", width: 6, height: 6 };
+            const color = defaultQueryStyleParams.vertexBorderColors[kind];
+            this._kindStyles[kind] = { color, shape: "ellipse", width: 6, height: 6 };
         }
         this._labelUseBorderColor = true;
         this._labelsVisible = false;
@@ -420,9 +446,8 @@ export class GraphStyleService implements OnDestroy {
 
     applyUniformPreset(): void {
         for (const kind of ALL_KINDS) {
-            const color = defaultQueryStyleParams.vertexColors[kind];
-            const borderColor = defaultQueryStyleParams.vertexBorderColors[kind];
-            this._kindStyles[kind] = { color, borderColor, shape: "rounded-rect", width: 56, height: 24 };
+            const color = defaultQueryStyleParams.vertexBorderColors[kind];
+            this._kindStyles[kind] = { color, shape: "rounded-rect", width: 56, height: 24 };
         }
         this._labelUseBorderColor = true;
         this._labelsVisible = true;
@@ -435,11 +460,11 @@ export class GraphStyleService implements OnDestroy {
 
     applyClassicPreset(): void {
         for (const kind of ALL_KINDS) {
-            const borderColor = defaultQueryStyleParams.vertexBorderColors[kind];
+            const color = defaultQueryStyleParams.vertexBorderColors[kind];
             const shape = defaultQueryStyleParams.vertexShapes[kind];
             const width = defaultQueryStyleParams.vertexWidths[kind];
             const height = defaultQueryStyleParams.vertexHeights[kind];
-            this._kindStyles[kind] = { color: borderColor, borderColor, shape, width, height };
+            this._kindStyles[kind] = { color, shape, width, height };
         }
         this._labelUseBorderColor = false;
         this._labelsVisible = true;
@@ -467,7 +492,7 @@ export class GraphStyleService implements OnDestroy {
             const shape = defaultQueryStyleParams.vertexShapes[kind];
             const width = defaultQueryStyleParams.vertexWidths[kind];
             const height = defaultQueryStyleParams.vertexHeights[kind];
-            this._kindStyles[kind] = { color, borderColor: color, shape, width, height };
+            this._kindStyles[kind] = { color, shape, width, height };
         }
         this._labelUseBorderColor = false;
         this._labelsVisible = true;
@@ -599,6 +624,7 @@ export class GraphStyleService implements OnDestroy {
                 labelsVisible: this._labelsVisible,
                 showHoverLabel: this._showHoverLabel,
                 degreeScaling: this._degreeScaling,
+                fillOpacity: this._fillOpacity,
                 background: this._background,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -612,8 +638,8 @@ export class GraphStyleService implements OnDestroy {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (raw) {
                 const data = JSON.parse(raw);
-                this._kindStyles = data.kindStyles ?? {};
-                this._typeStyles = data.typeStyles ?? {};
+                this._kindStyles = migrateStyles(data.kindStyles ?? {});
+                this._typeStyles = migrateStyles(data.typeStyles ?? {});
                 this._edgeLabelColors = data.edgeLabelColors ?? {};
                 this._colorEdgesByConstraint = data.colorEdgesByConstraint ?? false;
                 this._labelUseBorderColor = data.labelUseBorderColor ?? true;
@@ -621,6 +647,7 @@ export class GraphStyleService implements OnDestroy {
                 this._labelsVisible = data.labelsVisible ?? true;
                 this._showHoverLabel = data.showHoverLabel ?? true;
                 this._degreeScaling = data.degreeScaling ?? false;
+                this._fillOpacity = data.fillOpacity ?? 0.25;
                 if (data.background) this._background = { ...DEFAULT_BACKGROUND, ...data.background };
             }
         } catch (e) {
