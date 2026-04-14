@@ -25,8 +25,7 @@ import { SchemaState } from "../../service/schema-state.service";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaToolWindowComponent } from "./tool-window/schema-tool-window.component";
-import { GraphStylesPaneComponent } from "../../framework/graph-styles-pane/graph-styles-pane.component";
-import { GraphZoomControlsComponent } from "../../framework/graph-zoom-controls/graph-zoom-controls.component";
+import { GraphCanvasComponent } from "../../framework/graph-canvas/graph-canvas.component";
 
 @Component({
     selector: "ts-schema-page",
@@ -36,14 +35,13 @@ import { GraphZoomControlsComponent } from "../../framework/graph-zoom-controls/
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule,
         MatSortModule, MatTooltipModule, MatButtonModule, ResizableDirective, SchemaToolWindowComponent,
-        GraphStylesPaneComponent,
-        GraphZoomControlsComponent,
+        GraphCanvasComponent,
     ]
 })
 export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
-    @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
+    @ViewChildren(GraphCanvasComponent) graphCanvasComponents!: QueryList<GraphCanvasComponent>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     private canvasEl$!: Observable<HTMLElement>;
 
@@ -68,15 +66,6 @@ export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
         }
     }
 
-    toggleGraphMaximised(): void {
-        this.graphMaximised = !this.graphMaximised;
-        document.body.classList.toggle("graph-fullscreen", this.graphMaximised);
-        setTimeout(() => {
-            this.state.visualiser.visualiser?.sigma.resize();
-            this.state.visualiser.visualiser?.sigma.refresh();
-        });
-    }
-
     onPanelResize(index: number, percent: number) {
         this.panelSizes[index] = percent;
         this.appData.panelLayout.set("schema", [...this.panelSizes]);
@@ -88,11 +77,11 @@ export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
             this.resizables.first.percent = (articleWidth * 0.15 + 100) / articleWidth * 100;
         }
 
-        this.canvasEl$ = this.graphViewRef.changes.pipe(
-            map(x => x as QueryList<ElementRef<HTMLElement>>),
-            startWith(this.graphViewRef),
-            filter(queryList => queryList.length > 0),
-            map(x => x.first.nativeElement),
+        this.canvasEl$ = this.graphCanvasComponents.changes.pipe(
+            map(x => x as QueryList<GraphCanvasComponent>),
+            startWith(this.graphCanvasComponents),
+            filter(queryList => queryList.length > 0 && !!queryList.first.canvasEl),
+            map(x => x.first.canvasEl!),
         );
         this.canvasEl$.subscribe(canvasEl => {
             this.state.visualiser.canvasEl$.next(canvasEl);

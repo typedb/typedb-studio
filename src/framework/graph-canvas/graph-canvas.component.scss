@@ -1,0 +1,180 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "shapes";
+
+:host {
+    display: block;
+    height: 100%;
+    width: 100%;
+    position: relative;
+}
+
+.graph-canvas-container {
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    gap: 0 !important;
+
+    ::ng-deep > app-drag-handle[direction="horizontal"] {
+        width: 5px;
+        margin-left: -2px;
+        margin-right: -3px;
+        z-index: 2;
+    }
+
+    &.maximised {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10000;
+        border-radius: 0;
+        background: var(--theme-black);
+    }
+}
+
+.graph-split-left {
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+    flex: 1;
+}
+
+.canvas-element {
+    position: absolute;
+    inset: 0;
+    display: flex;
+}
+
+.graph-search-bar {
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 4px 0 10px;
+    background: var(--theme-secondary-purple);
+    border: 1px solid var(--theme-secondary-deep-grey);
+    border-radius: 6px;
+
+    > i {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+        color: var(--theme-grey);
+    }
+
+    input {
+        background: none;
+        border: none;
+        outline: none;
+        color: var(--theme-white);
+        font-family: inherit;
+        font-size: 13px;
+        width: 140px;
+        flex: 0 0 140px;
+
+        &::placeholder {
+            color: var(--theme-secondary-light-grey);
+        }
+    }
+}
+
+.graph-search-clear {
+    position: absolute;
+    right: 29px;
+    background: none;
+    border: none;
+    padding: 0 4px;
+    cursor: pointer;
+    color: var(--theme-grey);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+        font-size: 10px;
+        width: 10px;
+        height: 10px;
+    }
+
+    &:hover {
+        color: var(--theme-red);
+    }
+}
+
+.graph-search-focus {
+    background: none;
+    border: none;
+    border-left: 1px solid var(--theme-secondary-deep-grey);
+    padding: 0 4px 0 8px;
+    cursor: pointer;
+    color: var(--theme-grey);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+
+    i {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+    }
+
+    &:hover {
+        color: var(--theme-white);
+    }
+}
+
+.graph-maximise-button {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    z-index: 10;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--theme-secondary-deep-grey);
+    background: var(--theme-secondary-purple);
+    border-radius: 6px;
+    color: var(--theme-grey);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 16px;
+    transition: background 0.15s;
+
+    &:hover {
+        background: var(--theme-secondary-dark-grey);
+    }
+
+    i {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+    }
+}
+
+::ng-deep .status-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    text-align: center;
+    z-index: 10;
+    white-space: normal !important;
+    overflow-wrap: break-word;
+    padding: 10px;
+    margin: 0;
+}

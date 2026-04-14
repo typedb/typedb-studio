@@ -82,25 +82,12 @@
       }
 
       <!-- Graph View -->
-      <div class="output-view graph-view" [class]="outputState.outputTypeControl.value === 'graph' ? '' : 'invisible'" [class.maximised]="graphMaximised">
-        <div class="graph-container" #graphViewRef></div>
-        <div class="graph-search-bar">
-          <i class="fa-light fa-magnifying-glass"></i>
-          <input type="text" placeholder="Search" [value]="currentRun!.graph.visualiser?.searchTerm ?? ''" (input)="currentRun!.graph.visualiser?.searchGraph($any($event.target).value.toLowerCase())">
-          @if (currentRun!.graph.visualiser?.searchTerm) {
-            <button class="graph-search-clear" (click)="currentRun!.graph.visualiser?.clearSearch()">
-              <i class="fa-light fa-xmark"></i>
-            </button>
-          }
-          <button class="graph-search-focus" (click)="currentRun!.graph.visualiser?.searchTerm ? currentRun!.graph.visualiser?.focusSearchMatches() : currentRun!.graph.visualiser?.centerCamera()">
-            <i class="fa-light fa-crosshairs"></i>
-          </button>
-        </div>
-        <button class="graph-maximise-button" (click)="toggleGraphMaximised()" [matTooltip]="graphMaximised ? 'Exit fullscreen' : 'Fullscreen'" [matTooltipShowDelay]="500">
-          <i class="fa-light" [class.fa-expand]="!graphMaximised" [class.fa-compress]="graphMaximised"></i>
-        </button>
-        <ts-graph-zoom-controls [visualiser]="currentRun!.graph.visualiser ?? null" [queryRunning]="currentRun!.graph.status === 'running'"/>
-
+      <ts-graph-canvas #graphCanvas
+                       [class.invisible]="outputState.outputTypeControl.value !== 'graph'"
+                       class="output-view"
+                       [visualiser]="currentRun!.graph.visualiser ?? null"
+                       [queryRunning]="currentRun!.graph.status === 'running'"
+                       [(maximised)]="graphMaximised">
         @switch (currentRun.graph.status) {
           @case ("error") {
             <p class="status-text">This query returned an error. <a (click)="outputState.outputTypeControl.patchValue('log')">View in log</a></p>
@@ -125,7 +112,7 @@
             <p class="status-text">Query completed. No answers were returned.</p>
           }
         }
-      </div>
+      </ts-graph-canvas>
 
       <!-- Raw View -->
       <div class="output-view raw-view" [hidden]="outputState.outputTypeControl.value !== 'raw'">

@@ -160,46 +160,31 @@
                 }
               </div>
             }
-            <div class="answers-container answers-structure-container" [class.invisible]="state.outputTypeControl.value !== 'graph'" [class.maximised]="graphMaximised">
-              <div class="graph-split-left" resizable [percent]="panelSizes[5]" (percentChange)="onPanelResize(5, $event)">
-                <div id="structureView" #graphViewRef></div>
-                <div class="graph-search-bar">
-                  <i class="fa-light fa-magnifying-glass"></i>
-                  <input type="text" placeholder="Search" [value]="state.graphOutput.visualiser?.searchTerm ?? ''" (input)="state.graphOutput.visualiser?.searchGraph($any($event.target).value.toLowerCase())">
-                  @if (state.graphOutput.visualiser?.searchTerm) {
-                    <button class="graph-search-clear" (click)="state.graphOutput.visualiser?.clearSearch()">
-                      <i class="fa-light fa-xmark"></i>
-                    </button>
-                  }
-                  <button class="graph-search-focus" (click)="state.graphOutput.visualiser?.searchTerm ? state.graphOutput.visualiser?.focusSearchMatches() : state.graphOutput.visualiser?.centerCamera()">
-                    <i class="fa-light fa-crosshairs"></i>
-                  </button>
-                </div>
-                <ts-graph-zoom-controls [visualiser]="state.graphOutput.visualiser" [queryRunning]="state.graphOutput.status === 'running'"/>
-                <button class="graph-maximise-button" (click)="toggleGraphMaximised()" [matTooltip]="graphMaximised ? 'Exit fullscreen' : 'Fullscreen'" [matTooltipShowDelay]="500">
-                  <i class="fa-light" [class.fa-expand]="!graphMaximised" [class.fa-compress]="graphMaximised"></i>
-                </button>
-
-                @switch (state.graphOutput.status) {
-                  @case ("error") {
-                    <p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p>
-                  }
-                  @case ("running") {
-                    <p class="status-text">Running query. Answers will be displayed here when they are ready.</p>
-                  }
-                  @case ("graphlessQueryType") {
-                    <p class="status-text">Query completed successfully. This query type does not return answers that can be presented as a graph.</p>
-                  }
-                  @case ("answerOutputDisabled") {
-                    <p class="status-text">Query completed successfully. Answer output is currently disabled.</p>
-                  }
-                  @case ("noAnswers") {
-                    <p class="status-text">Query completed successfully. No answers were returned.</p>
-                  }
+            <ts-graph-canvas #graphCanvas
+                            [class.invisible]="state.outputTypeControl.value !== 'graph'"
+                            [visualiser]="state.graphOutput.visualiser"
+                            [queryRunning]="state.graphOutput.status === 'running'"
+                            [graphPercent]="panelSizes[5]" (graphPercentChange)="onPanelResize(5, $event)"
+                            [stylesPanePercent]="panelSizes[6]" (stylesPanePercentChange)="onPanelResize(6, $event)"
+                            [(maximised)]="graphMaximised">
+              @switch (state.graphOutput.status) {
+                @case ("error") {
+                  <p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p>
                 }
-              </div>
-              <ts-graph-styles-pane resizable [percent]="panelSizes[6]" (percentChange)="onPanelResize(6, $event)" [visualiser]="state.graphOutput.visualiser"/>
-            </div>
+                @case ("running") {
+                  <p class="status-text">Running query. Answers will be displayed here when they are ready.</p>
+                }
+                @case ("graphlessQueryType") {
+                  <p class="status-text">Query completed successfully. This query type does not return answers that can be presented as a graph.</p>
+                }
+                @case ("answerOutputDisabled") {
+                  <p class="status-text">Query completed successfully. Answer output is currently disabled.</p>
+                }
+                @case ("noAnswers") {
+                  <p class="status-text">Query completed successfully. No answers were returned.</p>
+                }
+              }
+            </ts-graph-canvas>
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'raw'">
               <mat-form-field class="code-text-field">
                 <textarea class="answers-text-box" [formControl]="state.rawOutput.control" readonly matInput></textarea>

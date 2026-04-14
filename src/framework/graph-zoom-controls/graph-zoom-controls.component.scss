@@ -55,17 +55,17 @@
 }
 
 .zoom-button {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: transparent;
-  color: var(--theme-secondary-light-grey);
+  color: var(--theme-grey);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  font-size: 13px;
+  font-size: 14px;
   transition: background 0.15s;
 
   &:hover {

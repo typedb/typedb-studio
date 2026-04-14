@@ -16,7 +16,7 @@ import { MatSortModule } from "@angular/material/sort";
 import { Subscription } from "rxjs";
 import { OutputState, OutputType } from "../../../service/chat-state.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
-import { GraphZoomControlsComponent } from "../../../framework/graph-zoom-controls/graph-zoom-controls.component";
+import { GraphCanvasComponent } from "../../../framework/graph-canvas/graph-canvas.component";
 
 @Component({
     selector: "ts-chat-output",
@@ -32,13 +32,13 @@ import { GraphZoomControlsComponent } from "../../../framework/graph-zoom-contro
         MatTableModule,
         MatSortModule,
         MatTooltipModule,
-        GraphZoomControlsComponent,
+        GraphCanvasComponent,
     ],
 })
 export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnDestroy {
     @Input({ required: true }) outputState!: OutputState;
     @Output() sendLogToAi = new EventEmitter<string>();
-    @ViewChild("graphViewRef") graphViewRef?: ElementRef<HTMLElement>;
+    @ViewChild(GraphCanvasComponent) graphCanvas?: GraphCanvasComponent;
 
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
     copied = false;
@@ -68,8 +68,9 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
 
     private attachCanvasIfNeeded() {
         const run = this.currentRun;
-        if (run && run !== this.lastAttachedRun && this.graphViewRef) {
-            run.graph.attach(this.graphViewRef.nativeElement);
+        const canvasEl = this.graphCanvas?.canvasEl;
+        if (run && run !== this.lastAttachedRun && canvasEl) {
+            run.graph.attach(canvasEl);
             this.lastAttachedRun = run;
             requestAnimationFrame(() => run.graph.resize());
         }
@@ -86,8 +87,8 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
         this.outputState.selectedRunIndex = index;
 
         const newRun = this.currentRun;
-        if (newRun && this.graphViewRef) {
-            newRun.graph.attach(this.graphViewRef.nativeElement);
+        if (newRun && this.graphCanvas?.canvasEl) {
+            newRun.graph.attach(this.graphCanvas.canvasEl);
         }
     }
 
@@ -112,19 +113,12 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
         } else if (index === this.outputState.selectedRunIndex) {
             this.outputState.selectedRunIndex = Math.min(index, runs.length - 1);
             const newRun = this.currentRun;
-            if (newRun && this.graphViewRef) {
-                newRun.graph.attach(this.graphViewRef.nativeElement);
+            if (newRun && this.graphCanvas?.canvasEl) {
+                newRun.graph.attach(this.graphCanvas.canvasEl);
             }
         }
     }
 
-    toggleGraphMaximised(): void {
-        this.graphMaximised = !this.graphMaximised;
-        document.body.classList.toggle("graph-fullscreen", this.graphMaximised);
-        setTimeout(() => {
-            this.currentRun?.graph.resize();
-        });
-    }
 
     onCopyLogClick() {
         const run = this.currentRun;

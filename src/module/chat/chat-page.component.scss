@@ -156,7 +156,7 @@
     .welcome-content,
     .spacer {
         width: 100%;
-        max-width: 720px;
+        max-width: 1080px;
     }
 
     .spacer {
@@ -166,7 +166,7 @@
 
     .streaming-pair {
         width: 100%;
-        max-width: 720px;
+        max-width: 1080px;
         min-height: 100%;
         display: flex;
         flex-direction: column;
@@ -227,7 +227,7 @@
 
 .input-box {
     width: 100%;
-    max-width: 720px;
+    max-width: 1080px;
     background: var(--theme-light-purple-04);
     border: 1px solid var(--theme-light-purple);
     border-radius: shapes.$border-radius;

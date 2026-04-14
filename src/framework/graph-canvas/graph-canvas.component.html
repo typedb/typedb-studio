@@ -1,0 +1,33 @@
+<div class="graph-canvas-container" [class.maximised]="maximised">
+  <div class="graph-split-left" resizable [percent]="graphPercent" (percentChange)="graphPercentChange.emit($event)">
+    <div class="canvas-element" #canvasEl></div>
+
+    <div class="graph-search-bar">
+      <i class="fa-light fa-magnifying-glass"></i>
+      <input type="text" placeholder="Search"
+             [value]="visualiser?.searchTerm ?? ''"
+             (input)="visualiser?.searchGraph($any($event.target).value.toLowerCase())">
+      @if (visualiser?.searchTerm) {
+        <button class="graph-search-clear" (click)="visualiser?.clearSearch()">
+          <i class="fa-light fa-xmark"></i>
+        </button>
+      }
+      <button class="graph-search-focus"
+              (click)="visualiser?.searchTerm ? visualiser?.focusSearchMatches() : visualiser?.centerCamera()">
+        <i class="fa-light fa-crosshairs"></i>
+      </button>
+    </div>
+
+    <button class="graph-maximise-button" (click)="toggleMaximised()"
+            [matTooltip]="maximised ? 'Exit fullscreen' : 'Fullscreen'" [matTooltipShowDelay]="500">
+      <i class="fa-light" [class.fa-expand]="!maximised" [class.fa-compress]="maximised"></i>
+    </button>
+
+    <ts-graph-zoom-controls [visualiser]="visualiser" [queryRunning]="queryRunning"/>
+
+    <ng-content></ng-content>
+  </div>
+  <ts-graph-styles-pane resizable [percent]="stylesPanePercent"
+                        (percentChange)="stylesPanePercentChange.emit($event)"
+                        [visualiser]="visualiser"/>
+</div>
