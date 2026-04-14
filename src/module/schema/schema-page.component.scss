@@ -75,6 +75,7 @@ button {
     overflow: hidden;
     display: flex;
     flex-direction: row;
+    height: 100%;
     gap: 0 !important;
 
     ::ng-deep > app-drag-handle[direction="horizontal"] {
