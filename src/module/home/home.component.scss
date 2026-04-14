@@ -76,7 +76,25 @@ tp-button {
 
 article {
     height: 100%;
-    background: url("/assets/typedb-bot.png") 0 0 / 1400px no-repeat;
+    position: relative;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: url("/assets/typedb-bot.png") 0 0 / 1400px no-repeat;
+        pointer-events: none;
+        z-index: 0;
+
+        :host-context(html.theme-light) & {
+            opacity: 0.02;
+        }
+    }
+
+    > * {
+        position: relative;
+        z-index: 1;
+    }
 }
 
 .tp-deploy-cluster {
