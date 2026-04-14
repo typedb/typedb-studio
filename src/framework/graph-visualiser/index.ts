@@ -106,6 +106,16 @@ export class GraphVisualiser {
         const FADE_RATIO = 0.075; // mix 7.5% original color, 92.5% black
 
         const fade = (color: string) => chroma.mix("#000000", color, FADE_RATIO).hex();
+        const fadeSoft = (color: string) => {
+            // Output premultiplied-alpha hex for Sigma's gl.blendFunc(ONE, ONE_MINUS_SRC_ALPHA)
+            const alpha = 0.15;
+            const [r, g, b] = chroma(color).rgb();
+            const pr = Math.round(r * alpha);
+            const pg = Math.round(g * alpha);
+            const pb = Math.round(b * alpha);
+            const pa = Math.round(alpha * 255);
+            return `#${pr.toString(16).padStart(2, "0")}${pg.toString(16).padStart(2, "0")}${pb.toString(16).padStart(2, "0")}${pa.toString(16).padStart(2, "0")}`;
+        };
 
         this.sigma.setSetting("nodeReducer", (node, data) => {
             const state = this.interactionHandler.state;
@@ -138,8 +148,8 @@ export class GraphVisualiser {
 
             if (!shouldFade) return { ...data, zIndex: 1 };
             const res = { ...data };
-            res["color"] = fade(data["color"]);
-            if (data["borderColor"]) res["borderColor"] = fade(data["borderColor"]);
+            res["color"] = fadeSoft(data["color"]);
+            if (data["borderColor"]) res["borderColor"] = fadeSoft(data["borderColor"]);
             res["label"] = "";
             res["zIndex"] = 0;
             return res;
@@ -171,6 +181,17 @@ export class GraphVisualiser {
                 if (!edgeInSelection) {
                     try {
                         if (this.styleService.isHighlightActive()) {
+                            const source = this.graph.source(edge);
+                            const target = this.graph.target(edge);
+                            const sourceAttrs = this.graph.getNodeAttributes(source);
+                            const targetAttrs = this.graph.getNodeAttributes(target);
+                            const sourceConcept = sourceAttrs.metadata.concept;
+                            const targetConcept = targetAttrs.metadata.concept;
+                            const sourceHighlighted = this.styleService.shouldHighlightNode(sourceConcept.kind as any, getTypeLabel(sourceConcept as any));
+                            const targetHighlighted = this.styleService.shouldHighlightNode(targetConcept.kind as any, getTypeLabel(targetConcept as any));
+                            if (!sourceHighlighted || !targetHighlighted) {
+                                shouldFade = true;
+                            }
                             const tag = this.graph.getEdgeAttributes(edge).metadata?.dataEdge?.tag;
                             if (tag && !this.styleService.shouldHighlightEdge(tag)) {
                                 shouldFade = true;
@@ -180,10 +201,11 @@ export class GraphVisualiser {
                 }
             }
 
-            if (!shouldFade) return data;
+            if (!shouldFade) return { ...data, zIndex: 1 };
             const res = { ...data };
             res["color"] = fade(data["color"] ?? "#ccc");
             res["label"] = "";
+            res["zIndex"] = 0;
             return res;
         });
     }
