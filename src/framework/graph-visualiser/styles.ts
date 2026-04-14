@@ -138,7 +138,7 @@ export const defaultQueryStyleParams: GraphStyles = {
         functionCall: "ellipse",
     },
     vertexWidths: {
-        entity: 56,
+        entity: 64,
         relation: 52,
         attribute: 70,
         entityType: 56,
@@ -151,7 +151,7 @@ export const defaultQueryStyleParams: GraphStyles = {
         functionCall: 56,
     },
     vertexHeights: {
-        entity: 24,
+        entity: 30,
         relation: 26,
         attribute: 40,
         entityType: 24,
