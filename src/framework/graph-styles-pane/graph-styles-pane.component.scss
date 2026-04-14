@@ -7,8 +7,14 @@
   height: 100%;
   min-width: 0;
   white-space: normal !important;
+  font-weight: var(--font-weight-regular);
   background: var(--theme-deep-purple);
   border-left: 1px solid var(--theme-secondary-deep-grey);
+}
+
+:host ::ng-deep .highlight-chip,
+:host ::ng-deep .highlight-action-button {
+  font-weight: var(--font-weight-regular);
 }
 
 .panel {
@@ -38,7 +44,7 @@
 
 .panel-title {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--theme-white);
 }
 
@@ -53,6 +59,7 @@
   border: none;
   padding: 8px 0;
   font-size: 13px;
+  font-weight: var(--font-weight-regular);
   color: var(--theme-secondary-light-grey);
   cursor: pointer;
   border-bottom: 2px solid transparent;
@@ -98,6 +105,7 @@
 .style-label {
   display: block;
   font-size: 13px;
+  font-weight: var(--font-weight-regular);
   color: var(--theme-secondary-light-grey);
   margin-bottom: 4px;
 }
@@ -139,8 +147,8 @@
 
 .color-input {
   display: block;
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: 1px solid #5a5772;
   border-radius: 3px;
@@ -199,6 +207,9 @@
   --mat-form-field-filled-with-label-container-padding-top: 0;
   --mat-form-field-filled-with-label-container-padding-bottom: 0;
   --mdc-filled-text-field-container-color: #{var(--theme-secondary-purple)};
+  --mat-form-field-outlined-outline-color: var(--theme-light-purple);
+  --mat-form-field-outlined-hover-outline-color: var(--theme-light-purple);
+  --mat-form-field-outlined-focus-outline-color: var(--theme-light-purple);
 
   ::ng-deep {
     .mat-mdc-text-field-wrapper,
@@ -227,10 +238,6 @@
     }
 
     .mat-mdc-form-field-subscript-wrapper {
-      display: none;
-    }
-
-    .mdc-line-ripple {
       display: none;
     }
 
@@ -302,6 +309,7 @@
 
 .angle-value {
   font-size: 12px;
+  font-weight: var(--font-weight-regular);
   color: var(--theme-secondary-light-grey);
   min-width: 28px;
   text-align: right;
@@ -324,6 +332,7 @@
 
 .dim-label {
   font-size: 12px;
+  font-weight: var(--font-weight-regular);
   color: var(--theme-secondary-light-grey);
   flex: 0 0 auto;
   margin: 0 2px;
@@ -340,6 +349,7 @@
 
 .empty-message {
   font-size: 13px;
+  font-weight: var(--font-weight-regular);
   color: var(--theme-secondary-light-grey);
   padding: 12px;
   text-align: center;
@@ -361,9 +371,9 @@
 
 .footer-option-label {
   font-size: 13px;
+  font-weight: var(--font-weight-regular);
   color: var(--theme-secondary-light-grey);
   flex: 1;
-  font-weight: var(--font-weight-light);
 }
 
 .footer-select-field {
@@ -375,6 +385,9 @@
   --mat-form-field-filled-with-label-container-padding-top: 0;
   --mat-form-field-filled-with-label-container-padding-bottom: 0;
   --mdc-filled-text-field-container-color: #{var(--theme-secondary-purple)};
+  --mat-form-field-outlined-outline-color: var(--theme-light-purple);
+  --mat-form-field-outlined-hover-outline-color: var(--theme-light-purple);
+  --mat-form-field-outlined-focus-outline-color: var(--theme-light-purple);
 
   ::ng-deep {
     .mat-mdc-text-field-wrapper,
@@ -403,7 +416,6 @@
     }
 
     .mat-mdc-form-field-subscript-wrapper { display: none; }
-    .mdc-line-ripple { display: none; }
     .mdc-floating-label { display: none; }
 
     .mat-mdc-select-trigger {
@@ -429,7 +441,7 @@
     width: 100%;
     --mat-slide-toggle-label-text-size: 13px;
     --mat-slide-toggle-label-text-color: var(--theme-secondary-light-grey);
-    --mat-slide-toggle-label-text-weight: inherit;
+    --mat-slide-toggle-label-text-weight: var(--font-weight-regular);
     --mat-slide-toggle-label-text-font: inherit;
     --mat-slide-toggle-label-text-tracking: var(--body-letter-spacing);
 
@@ -457,6 +469,7 @@
   flex: 1;
   height: 30px;
   font-size: 12px;
+  font-weight: var(--font-weight-regular);
   background: var(--theme-secondary-dark-grey);
   color: var(--theme-white);
   border: 1px solid var(--theme-secondary-deep-grey);
@@ -534,7 +547,7 @@
 
 .section-title {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semi-bold);
   color: var(--theme-secondary-light-grey);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -560,7 +573,8 @@
 .highlight-group-label {
   display: block;
   font-size: 12px;
-  color: var(--theme-secondary-grey);
+  font-weight: var(--font-weight-regular);
+  color: var(--theme-secondary-light-grey);
 }
 
 .highlight-group-actions {
@@ -572,10 +586,11 @@
 .highlight-action-button {
   background: none;
   border: none;
-  color: var(--theme-secondary-grey);
+  color: var(--theme-secondary-light-grey);
   cursor: pointer;
   padding: 0 4px;
   font-size: 11px;
+  font-weight: var(--font-weight-regular);
 
   &:hover {
     color: var(--theme-white);
@@ -591,6 +606,7 @@
 .highlight-chip {
   --chip-color: var(--theme-secondary-light-grey);
   font-size: 12px;
+  font-weight: var(--font-weight-regular);
   padding: 3px 10px;
   border-radius: 12px;
   border: 1px solid var(--theme-secondary-deep-grey);
@@ -643,20 +659,22 @@
 .preset-name {
   display: block;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--theme-white);
 }
 
 .preset-description {
   display: block;
   font-size: 12px;
-  color: var(--theme-secondary-grey);
+  font-weight: var(--font-weight-regular);
+  color: var(--theme-secondary-light-grey);
   line-height: 1.3;
 }
 
 .preset-apply {
   flex: 0 0 auto;
   font-size: 12px;
+  font-weight: var(--font-weight-regular);
   padding: 4px 12px;
   border-radius: 3px;
   border: 1px solid var(--theme-secondary-deep-grey);
