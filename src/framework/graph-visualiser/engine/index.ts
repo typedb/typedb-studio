@@ -105,7 +105,7 @@ export class GraphVisualiser {
     private setupReducers(): void {
         const FADE_RATIO = 0.075; // mix 7.5% original color, 92.5% black
 
-        const fade = (color: string) => chroma.mix("#000000", color, FADE_RATIO).hex();
+        const fade = (color: string) => chroma.mix(this.styleService.effectiveBackgroundHex, color, FADE_RATIO).hex();
         const fadeSoft = (color: string) => {
             // Output premultiplied-alpha hex for Sigma's gl.blendFunc(ONE, ONE_MINUS_SRC_ALPHA)
             const alpha = 0.15;
