@@ -4,8 +4,8 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
-import { GraphStyleService, GraphBackgroundType, DEFAULT_BACKGROUND } from "../../service/graph-style.service";
-import { GraphVisualiser } from "../graph-visualiser";
+import { GraphStyleService, GraphBackgroundType, DEFAULT_BACKGROUND } from "../../../service/graph-style.service";
+import { GraphVisualiser } from "../engine";
 import { VertexKind } from "@typedb/graph-utils";
 
 interface KindRow {

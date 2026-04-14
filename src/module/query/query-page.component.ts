@@ -46,7 +46,7 @@ import { indentWithTab } from "@codemirror/commands";
 import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatSelectModule } from "@angular/material/select";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
-import { GraphCanvasComponent } from "../../framework/graph-canvas/graph-canvas.component";
+import { GraphCanvasComponent } from "../../framework/graph-visualiser/canvas/graph-canvas.component";
 
 @Component({
     selector: "ts-query-page",

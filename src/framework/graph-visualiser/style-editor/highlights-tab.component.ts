@@ -1,6 +1,6 @@
 import { Component, inject, Input, OnChanges, SimpleChanges } from "@angular/core";
-import { GraphStyleService } from "../../service/graph-style.service";
-import { GraphVisualiser } from "../graph-visualiser";
+import { GraphStyleService } from "../../../service/graph-style.service";
+import { GraphVisualiser } from "../engine";
 import { VertexKind } from "@typedb/graph-utils";
 
 interface KindRow {

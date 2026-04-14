@@ -16,7 +16,7 @@ import { MatSortModule } from "@angular/material/sort";
 import { Subscription } from "rxjs";
 import { OutputState, OutputType } from "../../../service/chat-state.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
-import { GraphCanvasComponent } from "../../../framework/graph-canvas/graph-canvas.component";
+import { GraphCanvasComponent } from "../../../framework/graph-visualiser/canvas/graph-canvas.component";
 
 @Component({
     selector: "ts-chat-output",

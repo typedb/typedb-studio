@@ -12,10 +12,10 @@ import {
 import Graph from "graphology";
 import { BehaviorSubject, combineLatest, distinctUntilChanged, finalize, first, map } from "rxjs";
 import Sigma, { Camera } from "sigma";
-import { GraphVisualiser } from "../framework/graph-visualiser";
-import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/sigma-settings";
-import { newGraph } from "../framework/graph-visualiser/graph";
-import { Layouts } from "../framework/graph-visualiser/layout";
+import { GraphVisualiser } from "../framework/graph-visualiser/engine";
+import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/engine/sigma-settings";
+import { newGraph } from "../framework/graph-visualiser/engine/graph";
+import { Layouts } from "../framework/graph-visualiser/engine/layout";
 import { DriverState } from "./driver-state.service";
 import { GraphStyleService } from "./graph-style.service";
 import { SnackbarService } from "./snackbar.service";

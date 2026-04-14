@@ -8,10 +8,10 @@ import { Component, ElementRef, EventEmitter, HostBinding, Input, OnDestroy, Out
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { ResizableDirective } from "@hhangular/resizable";
 import { Subscription } from "rxjs";
-import { GraphVisualiser } from "../graph-visualiser";
-import { GraphZoomControlsComponent } from "../graph-zoom-controls/graph-zoom-controls.component";
-import { GraphStylesPaneComponent } from "../graph-styles-pane/graph-styles-pane.component";
-import { GraphStyleService } from "../../service/graph-style.service";
+import { GraphVisualiser } from "../engine";
+import { GraphZoomControlsComponent } from "./zoom-controls/graph-zoom-controls.component";
+import { GraphStylesPaneComponent } from "../style-editor/graph-styles-pane.component";
+import { GraphStyleService } from "../../../service/graph-style.service";
 
 @Component({
     selector: "ts-graph-canvas",

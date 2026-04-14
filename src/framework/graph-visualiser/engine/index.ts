@@ -6,8 +6,8 @@ import {
 import chroma from "chroma-js";
 import Sigma from "sigma";
 import { Subscription } from "rxjs";
-import { buildBackgroundCSS } from "../../service/graph-style.service";
-import type { GraphStyleService } from "../../service/graph-style.service";
+import { buildBackgroundCSS } from "../../../service/graph-style.service";
+import type { GraphStyleService } from "../../../service/graph-style.service";
 
 import { getTypeLabel, DataVertex } from "@typedb/graph-utils";
 import { buildStructuredAnswers } from "@typedb/graph-utils";

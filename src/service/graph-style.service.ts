@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy } from "@angular/core";
 import { BehaviorSubject, Subscription } from "rxjs";
 import { VertexKind } from "@typedb/graph-utils";
-import { GraphStyles, defaultEdgeLabelColors, defaultQueryStyleParams } from "../framework/graph-visualiser/styles";
+import { GraphStyles, defaultEdgeLabelColors, defaultQueryStyleParams } from "../framework/graph-visualiser/engine/styles";
 import { ThemeService } from "./theme.service";
 
 export interface NodeStyle {

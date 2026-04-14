@@ -5,7 +5,7 @@ import chroma from "chroma-js";
 import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "sigma/types";
 import {GraphStyles} from "./styles";
 import {LayoutWrapper} from "./layout";
-import type {GraphStyleService} from "../../service/graph-style.service";
+import type {GraphStyleService} from "../../../service/graph-style.service";
 
 // Ref: https://www.sigmajs.org/docs/advanced/events/
 // and: https://www.sigmajs.org/storybook/?path=/story/mouse-manipulations--story

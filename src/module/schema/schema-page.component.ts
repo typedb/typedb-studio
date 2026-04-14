@@ -25,7 +25,7 @@ import { SchemaState } from "../../service/schema-state.service";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaToolWindowComponent } from "./tool-window/schema-tool-window.component";
-import { GraphCanvasComponent } from "../../framework/graph-canvas/graph-canvas.component";
+import { GraphCanvasComponent } from "../../framework/graph-visualiser/canvas/graph-canvas.component";
 
 @Component({
     selector: "ts-schema-page",
