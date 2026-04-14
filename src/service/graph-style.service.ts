@@ -69,7 +69,8 @@ export interface CustomPreset {
     typeStyles: Record<string, PartialNodeStyle>;
     edgeLabelColors: Record<string, string>;
     colorEdgesByConstraint: boolean;
-    labelUseBorderColor: boolean;
+    labelColorMode?: "auto" | "border" | "fixed";
+    labelUseBorderColor?: boolean; // legacy, for backwards compat
     labelsVisible: boolean;
     showHoverLabel: boolean;
     degreeScaling: boolean;
@@ -113,7 +114,7 @@ export class GraphStyleService implements OnDestroy {
     private _typeStyles: Record<string, PartialNodeStyle> = {};
     private _edgeLabelColors: Record<string, string> = {};
     private _colorEdgesByConstraint = false;
-    private _labelUseBorderColor = true;
+    private _labelColorMode: "auto" | "border" | "fixed" = "auto";
     private _highlightedKinds = new Set<VertexKind>();
     private _highlightedTypes = new Set<string>();
     private _highlightedEdges = new Set<string>();
@@ -242,14 +243,28 @@ export class GraphStyleService implements OnDestroy {
         this.save();
     }
 
-    get labelUseBorderColor(): boolean {
-        return this._labelUseBorderColor;
+    get labelColorMode(): "auto" | "border" | "fixed" {
+        return this._labelColorMode;
     }
 
-    set labelUseBorderColor(value: boolean) {
-        this._labelUseBorderColor = value;
+    set labelColorMode(value: "auto" | "border" | "fixed") {
+        this._labelColorMode = value;
         this.save();
         this.styles$.next();
+    }
+
+    /** Resolves "auto" to the effective mode based on background luminance. */
+    get labelUseBorderColor(): boolean {
+        if (this._labelColorMode === "auto") {
+            const hex = this.effectiveBackgroundHex;
+            const h = hex.startsWith("#") ? hex.slice(1) : hex;
+            const r = parseInt(h.substring(0, 2), 16);
+            const g = parseInt(h.substring(2, 4), 16);
+            const b = parseInt(h.substring(4, 6), 16);
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return luminance < 0.5; // dark bg → border color; light bg → fixed
+        }
+        return this._labelColorMode === "border";
     }
 
     // -- Edge label colors --
@@ -435,7 +450,7 @@ export class GraphStyleService implements OnDestroy {
             const color = defaultQueryStyleParams.vertexBorderColors[kind];
             this._kindStyles[kind] = { color, shape: "ellipse", width: 6, height: 6 };
         }
-        this._labelUseBorderColor = true;
+        this._labelColorMode = "auto";
         this._labelsVisible = false;
         this._showHoverLabel = true;
         this._degreeScaling = true;
@@ -449,7 +464,7 @@ export class GraphStyleService implements OnDestroy {
             const color = defaultQueryStyleParams.vertexBorderColors[kind];
             this._kindStyles[kind] = { color, shape: "rounded-rect", width: 56, height: 24 };
         }
-        this._labelUseBorderColor = true;
+        this._labelColorMode = "auto";
         this._labelsVisible = true;
         this._showHoverLabel = true;
         this._degreeScaling = false;
@@ -466,7 +481,7 @@ export class GraphStyleService implements OnDestroy {
             const height = defaultQueryStyleParams.vertexHeights[kind];
             this._kindStyles[kind] = { color, shape, width, height };
         }
-        this._labelUseBorderColor = false;
+        this._labelColorMode = "fixed";
         this._labelsVisible = true;
         this._showHoverLabel = true;
         this._degreeScaling = false;
@@ -494,7 +509,7 @@ export class GraphStyleService implements OnDestroy {
             const height = defaultQueryStyleParams.vertexHeights[kind];
             this._kindStyles[kind] = { color, shape, width, height };
         }
-        this._labelUseBorderColor = false;
+        this._labelColorMode = "fixed";
         this._labelsVisible = true;
         this._showHoverLabel = true;
         this._degreeScaling = false;
@@ -515,7 +530,7 @@ export class GraphStyleService implements OnDestroy {
         this._kindStyles = {};
         this._typeStyles = {};
         this._edgeLabelColors = {};
-        this._labelUseBorderColor = true;
+        this._labelColorMode = "auto";
         this._colorEdgesByConstraint = false;
         this._labelsVisible = true;
         this._showHoverLabel = true;
@@ -539,7 +554,7 @@ export class GraphStyleService implements OnDestroy {
             typeStyles: structuredClone(this._typeStyles),
             edgeLabelColors: { ...this._edgeLabelColors },
             colorEdgesByConstraint: this._colorEdgesByConstraint,
-            labelUseBorderColor: this._labelUseBorderColor,
+            labelColorMode: this._labelColorMode,
             labelsVisible: this._labelsVisible,
             showHoverLabel: this._showHoverLabel,
             degreeScaling: this._degreeScaling,
@@ -561,7 +576,7 @@ export class GraphStyleService implements OnDestroy {
         this._typeStyles = structuredClone(preset.typeStyles);
         this._edgeLabelColors = { ...preset.edgeLabelColors };
         this._colorEdgesByConstraint = preset.colorEdgesByConstraint;
-        this._labelUseBorderColor = preset.labelUseBorderColor;
+        this._labelColorMode = preset.labelColorMode ?? (preset.labelUseBorderColor ? "auto" : "fixed");
         this._labelsVisible = preset.labelsVisible;
         this._showHoverLabel = preset.showHoverLabel;
         this._degreeScaling = preset.degreeScaling;
@@ -619,7 +634,7 @@ export class GraphStyleService implements OnDestroy {
                 typeStyles: this._typeStyles,
                 edgeLabelColors: this._edgeLabelColors,
                 colorEdgesByConstraint: this._colorEdgesByConstraint,
-                labelUseBorderColor: this._labelUseBorderColor,
+                labelColorMode: this._labelColorMode,
                 activePreset: this._activePreset,
                 labelsVisible: this._labelsVisible,
                 showHoverLabel: this._showHoverLabel,
@@ -642,7 +657,7 @@ export class GraphStyleService implements OnDestroy {
                 this._typeStyles = migrateStyles(data.typeStyles ?? {});
                 this._edgeLabelColors = data.edgeLabelColors ?? {};
                 this._colorEdgesByConstraint = data.colorEdgesByConstraint ?? false;
-                this._labelUseBorderColor = data.labelUseBorderColor ?? true;
+                this._labelColorMode = data.labelColorMode ?? (data.labelUseBorderColor === false ? "fixed" : "auto");
                 this._activePreset = data.activePreset ?? null;
                 this._labelsVisible = data.labelsVisible ?? true;
                 this._showHoverLabel = data.showHoverLabel ?? true;
