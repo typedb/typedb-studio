@@ -1,7 +1,8 @@
-import { Injectable } from "@angular/core";
-import { BehaviorSubject } from "rxjs";
+import { Injectable, OnDestroy } from "@angular/core";
+import { BehaviorSubject, Subscription } from "rxjs";
 import { VertexKind } from "@typedb/graph-utils";
 import { GraphStyles, defaultEdgeLabelColors, defaultQueryStyleParams } from "../framework/graph-visualiser/styles";
+import { ThemeService } from "./theme.service";
 
 export interface NodeStyle {
     color: string;
@@ -45,19 +46,17 @@ export function buildBackgroundCSS(bg: GraphBackground): BackgroundCSS {
         case "solid":
             return { color: bg.color1, image: "none", size: "" };
         case "gradient":
-            return { color: bg.color2, image: `linear-gradient(${bg.gradientAngle}deg, ${bg.color1}, ${bg.color2})`, size: "" };
-        case "grid": {
-            const line = bg.color1;
+            return { color: bg.color1, image: `linear-gradient(${bg.gradientAngle}deg, ${bg.color1}, ${bg.color2})`, size: "" };
+        case "grid":
             return {
-                color: bg.color2,
-                image: `repeating-linear-gradient(0deg, transparent, transparent 29px, ${line} 29px, ${line} 30px), repeating-linear-gradient(90deg, transparent, transparent 29px, ${line} 29px, ${line} 30px)`,
+                color: bg.color1,
+                image: `repeating-linear-gradient(0deg, transparent, transparent 29px, ${bg.color2} 29px, ${bg.color2} 30px), repeating-linear-gradient(90deg, transparent, transparent 29px, ${bg.color2} 29px, ${bg.color2} 30px)`,
                 size: "",
             };
-        }
         case "dots":
-            return { color: bg.color2, image: `radial-gradient(${bg.color1} 1px, transparent 1px)`, size: "20px 20px" };
+            return { color: bg.color1, image: `radial-gradient(${bg.color2} 1px, transparent 1px)`, size: "20px 20px" };
         case "party":
-            return { color: bg.color2, image: "none", size: "" };
+            return { color: bg.color1, image: "none", size: "" };
         default:
             return { color: bg.color1, image: "none", size: "" };
     }
@@ -77,11 +76,18 @@ export interface CustomPreset {
     background: GraphBackground;
 }
 
-function deriveFillFromBorder(borderHex: string): string {
-    const hex = borderHex.startsWith("#") ? borderHex.slice(1) : borderHex;
-    const r = Math.round(parseInt(hex.substring(0, 2), 16) * 0.25);
-    const g = Math.round(parseInt(hex.substring(2, 4), 16) * 0.25);
-    const b = Math.round(parseInt(hex.substring(4, 6), 16) * 0.25);
+function parseHex(hex: string): [number, number, number] {
+    const h = hex.startsWith("#") ? hex.slice(1) : hex;
+    return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
+}
+
+function deriveFillFromBorder(borderHex: string, bgHex: string): string {
+    const [br, bg, bb] = parseHex(borderHex);
+    const [gr, gg, gb] = parseHex(bgHex);
+    const t = 0.25;
+    const r = Math.round(br * t + gr * (1 - t));
+    const g = Math.round(bg * t + gg * (1 - t));
+    const b = Math.round(bb * t + gb * (1 - t));
     return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 
@@ -92,7 +98,7 @@ const ALL_KINDS: VertexKind[] = [
 ];
 
 @Injectable({ providedIn: "root" })
-export class GraphStyleService {
+export class GraphStyleService implements OnDestroy {
 
     private _kindStyles: Record<string, PartialNodeStyle> = {};
     private _typeStyles: Record<string, PartialNodeStyle> = {};
@@ -111,10 +117,28 @@ export class GraphStyleService {
     private _customPresets: CustomPreset[] = [];
 
     readonly styles$ = new BehaviorSubject<void>(undefined);
+    private themeSubscription: Subscription;
 
-    constructor() {
+    constructor(private themeService: ThemeService) {
         this.load();
         this.loadCustomPresets();
+        this.themeSubscription = this.themeService.effectiveTheme$.subscribe(() => {
+            if (this._background.type === "default") {
+                this.styles$.next();
+            }
+        });
+    }
+
+    ngOnDestroy() {
+        this.themeSubscription.unsubscribe();
+    }
+
+    get effectiveBackgroundHex(): string {
+        const bg = this._background;
+        if (bg.type === "default") {
+            return getComputedStyle(document.documentElement).getPropertyValue("--theme-black").trim();
+        }
+        return bg.color1; // solid, gradient, grid, dots, party — color1 is always the base
     }
 
     getKindDefault(kind: VertexKind): NodeStyle {
@@ -132,7 +156,7 @@ export class GraphStyleService {
         const override = this._kindStyles[kind];
         const borderColor = override?.borderColor ?? base.borderColor;
         return {
-            color: override?.color ?? deriveFillFromBorder(borderColor),
+            color: override?.color ?? deriveFillFromBorder(borderColor, this.effectiveBackgroundHex),
             borderColor,
             shape: override?.shape ?? base.shape,
             width: override?.width ?? base.width,
@@ -149,7 +173,7 @@ export class GraphStyleService {
 
         const borderColor = typeOverride.borderColor ?? kindStyle.borderColor;
         return {
-            color: typeOverride.color ?? deriveFillFromBorder(borderColor),
+            color: typeOverride.color ?? deriveFillFromBorder(borderColor, this.effectiveBackgroundHex),
             borderColor,
             shape: typeOverride.shape ?? kindStyle.shape,
             width: typeOverride.width ?? kindStyle.width,

@@ -246,11 +246,11 @@ export class EditorTabComponent implements OnChanges {
         if (type === "default") {
             this.styleService.updateBackground({ type });
         } else if (type === "grid") {
-            this.styleService.updateBackground({ type, color1: "#232135", color2: "#0e0e0e" });
+            this.styleService.updateBackground({ type, color1: "#0e0e0e", color2: "#232135" });
         } else if (type === "dots") {
-            this.styleService.updateBackground({ type, color1: "#4e4b63", color2: "#0e0e0e" });
+            this.styleService.updateBackground({ type, color1: "#0e0e0e", color2: "#4e4b63" });
         } else if (type === "party") {
-            this.styleService.updateBackground({ type, color1: "#cc3344", color2: "#1a2766" });
+            this.styleService.updateBackground({ type, color1: "#1a2766", color2: "#cc3344" });
         } else {
             this.styleService.updateBackground({ type });
         }
