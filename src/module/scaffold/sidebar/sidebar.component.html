@@ -68,14 +68,14 @@
                (detach)="themeMenuOpen = false">
     <div class="theme-menu mat-mdc-menu-panel" (click)="themeMenuOpen = false">
       <div class="mat-mdc-menu-content">
-        <button mat-menu-item (click)="theme.setPreference('system')">
-          <i class="fa-light fa-display"></i> <span>Sync with system</span>
+        <button mat-menu-item (click)="theme.setPreference('dark')">
+          <i class="fa-light fa-moon"></i> <span>Dark mode</span>
         </button>
         <button mat-menu-item (click)="theme.setPreference('light')">
           <i class="fa-light fa-sun-bright"></i> <span>Light mode</span>
         </button>
-        <button mat-menu-item (click)="theme.setPreference('dark')">
-          <i class="fa-light fa-moon"></i> <span>Dark mode</span>
+        <button mat-menu-item (click)="theme.setPreference('system')">
+          <i class="fa-light fa-display"></i> <span>Sync with system</span>
         </button>
       </div>
     </div>
