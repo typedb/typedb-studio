@@ -98,6 +98,9 @@
     border: shapes.$border;
     border-top: none;
     border-radius: 0 0 shapes.$border-radius shapes.$border-radius;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 // Run tabs styles
@@ -561,7 +564,8 @@ button {
 }
 
 .answers-outer-container {
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     width: 100%;
     background: var(--theme-black);
     position: relative;
