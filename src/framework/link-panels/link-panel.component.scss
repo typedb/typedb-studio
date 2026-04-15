@@ -43,7 +43,7 @@ a {
         right: 0;
         width: 98px;
         height: 32px;
-        background-color: var(--color-secondary-purple);
+        background-color: var(--theme-secondary-purple);
         border-left: 1px solid var(--content-border-color);
         border-bottom: 1px solid var(--content-border-color);
         border-bottom-left-radius: var(--border-radius);
@@ -58,8 +58,8 @@ a {
     }
 
     &:hover ::ng-deep .button-secondary {
-        background: var(--color-green);
-        color: var(--color-purple);
+        background: var(--theme-green);
+        color: var(--theme-purple);
     }
 
     .link-tertiary {
