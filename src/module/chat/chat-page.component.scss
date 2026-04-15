@@ -83,10 +83,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--theme-white) 10%, transparent);
     backdrop-filter: blur(8px);
     border: shapes.$border;
-    color: rgba(255, 255, 255, 0.8);
+    color: color-mix(in srgb, var(--theme-white) 80%, transparent);
     cursor: pointer;
     z-index: 20;
     transition: background 150ms, border-color 150ms, color 150ms, box-shadow 150ms;
@@ -96,10 +96,10 @@
     }
 
     &:hover {
-        background: rgba(255, 255, 255, 0.15);
+        background: color-mix(in srgb, var(--theme-white) 15%, transparent);
         border-color: var(--theme-secondary-mid-deep-grey);
-        color: rgba(255, 255, 255, 1);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        color: var(--theme-white);
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--theme-black) 15%, transparent);
     }
 }
 
@@ -124,18 +124,34 @@
         gap: 8px;
 
         label {
-            font-size: 13px;
-            color: var(--fg2);
+            @include typography.p1;
+            white-space: nowrap;
+            color: var(--theme-grey);
         }
 
         mat-select {
-            width: 80px;
-            border: shapes.$border;
+            width: 86px;
+            height: 32px;
+            padding: 0 8px;
+            border: 1px solid var(--theme-light-purple);
             border-radius: shapes.$border-radius-small;
-            padding: 6px 12px;
+            background: var(--theme-deep-purple);
+            --mat-select-trigger-text-size: 14px;
 
-            ::ng-deep .mat-mdc-select-trigger {
-                font-size: 13px;
+            ::ng-deep {
+                .mat-mdc-select-trigger {
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                }
+
+                .mat-mdc-select-value,
+                .mat-mdc-select-value-text,
+                .mat-mdc-select-min-line {
+                    white-space: nowrap !important;
+                    overflow: visible !important;
+                    text-overflow: clip !important;
+                }
             }
         }
     }
@@ -243,13 +259,13 @@
     padding: 12px;
 
     textarea {
+        @include typography.p1;
         width: 100%;
         background: transparent;
         border: none;
         outline: none;
         resize: none;
         font-family: inherit;
-        font-size: 14px;
         line-height: 1.5;
         color: var(--fg1);
         scrollbar-width: none;
@@ -284,12 +300,12 @@
 }
 
 .conversation-trigger {
+    @include typography.p1;
     display: flex;
     align-items: center;
     padding: 0 8px;
     border-radius: shapes.$border-radius-small;
     color: var(--theme-grey);
-    font-size: 14px;
     line-height: 32px;
     transition: background 100ms, color 100ms;
 
@@ -315,9 +331,24 @@
     }
 }
 
-.new-chat-btn {
+button[mat-stroked-button].new-chat-btn {
     --mdc-outlined-button-container-height: 32px;
+    --mat-button-outlined-container-height: 32px;
+    --mdc-outlined-button-outline-color: var(--theme-light-purple);
+    --mat-button-outlined-outline-color: var(--theme-light-purple);
+    --mdc-outlined-button-label-text-color: var(--theme-white);
+    --mat-button-outlined-label-text-color: var(--theme-white);
+    --mdc-outlined-button-disabled-outline-color: color-mix(in srgb, var(--theme-light-purple) 38%, transparent);
+    --mat-button-outlined-disabled-outline-color: color-mix(in srgb, var(--theme-light-purple) 38%, transparent);
+    --mdc-outlined-button-disabled-label-text-color: color-mix(in srgb, var(--theme-grey) 38%, transparent);
+    --mat-button-outlined-disabled-label-text-color: color-mix(in srgb, var(--theme-grey) 38%, transparent);
+    background: var(--theme-deep-purple);
     font-size: 14px;
+    border-radius: shapes.$border-radius-small;
+
+    &:disabled {
+        background: var(--theme-deep-purple);
+    }
 }
 
 .header-btn {
@@ -411,6 +442,7 @@
 
 .history-pane {
     flex: 1;
+    padding: 16px;
 
     @media (max-width: media.$max-width-mobile) {
         display: none;
@@ -420,7 +452,6 @@
         height: 100%;
         width: 100%;
         overflow: auto;
-    
     }
 
     ol li {

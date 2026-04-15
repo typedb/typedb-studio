@@ -239,10 +239,6 @@ i.fa-xmark {
 }
 
 .card-header {
-    margin-left: 16px;
-    margin-top: 8px;
-    margin-right: 16px;
-
     h5, mat-button-toggle-group, button, .row-limit-control {
         z-index: 10;
     }
@@ -260,9 +256,9 @@ i.fa-xmark {
     }
 
     mat-select {
-        width: 80px;
+        width: 86px;
         height: 32px;
-        padding: 0 10px;
+        padding: 0 8px;
         border: 1px solid var(--theme-light-purple);
         border-radius: shapes.$border-radius-small;
         background: var(--theme-deep-purple);

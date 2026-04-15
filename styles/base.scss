@@ -314,8 +314,8 @@ button {
 @mixin button-primary {
     & {
         border-color: transparent;
-        background: var(--color-green);
-        color: var(--color-purple);
+        background: var(--theme-green);
+        color: var(--theme-purple);
     }
 
     &:not(.td-button-disabled) {
@@ -331,15 +331,15 @@ button {
 }
 
 @mixin button-secondary {
-    border-color: var(--color-green);
+    border-color: var(--theme-green);
     background: transparent;
-    color: var(--color-green);
+    color: var(--theme-green);
 
     &:not(.td-button-disabled) {
         &:hover,
         &.container-hover {
-            background-color: var(--color-green);
-            color: var(--color-purple);
+            background-color: var(--theme-green);
+            color: var(--theme-purple);
         }
     }
 }
