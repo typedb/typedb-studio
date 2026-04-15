@@ -12,7 +12,7 @@
 :host {
     @include shapes.standard-border;
     border-radius: shapes.$border-radius;
-    @include colors.light-source-gradient(colors.$purple, colors.$deep-purple);
+    @include colors.light-source-gradient(var(--theme-purple), var(--theme-deep-purple));
     transition: background 0.1s linear;
     padding: 16px;
     
@@ -45,7 +45,7 @@
     }
 
     &.scrolled {
-        border-top: 1px solid colors.$black;
+        border-top: 1px solid var(--theme-black);
     }
 
     mat-tree {
@@ -74,15 +74,15 @@
             }
 
             &.entityType button::before {
-                color: colors.$entity-pink;
+                color: var(--theme-entity-pink);
             }
 
             &.attributeType button::before {
-                color: colors.$attribute-blue;
+                color: var(--theme-attribute-blue);
             }
 
             &.relationType button::before {
-                color: colors.$relation-yellow;
+                color: var(--theme-relation-yellow);
             }
         }
 
@@ -102,7 +102,7 @@
             width: 8px;
             height: 8px;
             font-size: 8px;
-            color: colors.$entity-pink;
+            color: var(--theme-entity-pink);
         }
 
         mat-tree-node.link.owns button::before, mat-tree-node.root.attributes button::before {
@@ -113,7 +113,7 @@
             width: 8px;
             height: 8px;
             font-size: 8px;
-            color: colors.$attribute-blue;
+            color: var(--theme-attribute-blue);
         }
 
         mat-tree-node.link.plays button::before, mat-tree-node.root.relations button::before {
@@ -124,7 +124,7 @@
             width: 8px;
             height: 8px;
             font-size: 8px;
-            color: colors.$relation-yellow;
+            color: var(--theme-relation-yellow);
         }
 
         mat-tree-node.link.relates button::before {
@@ -135,7 +135,7 @@
             width: 12px;
             height: 12px;
             font-size: 12px;
-            color: colors.$role-orange;
+            color: var(--theme-role-orange);
         }
 
         &.flat {
@@ -144,26 +144,26 @@
                 padding-left: 16px !important; /* overrides Angular Material's default padding */
                 padding-right: 8px;
                 align-items: stretch;
-                border-bottom: 1px solid colors.$light-purple;
-                border-left: 1px solid colors.$light-purple;
-                border-right: 1px solid colors.$light-purple;
-                font-weight: typography.$light;
+                border-bottom: 1px solid var(--theme-light-purple);
+                border-left: 1px solid var(--theme-light-purple);
+                border-right: 1px solid var(--theme-light-purple);
+                font-weight: var(--font-weight-light);
 
                 button {
                     margin-right: 2px;
                 }
 
                 &:nth-child(odd) {
-                    background: colors.$black;
+                    background: var(--theme-black);
                 }
 
                 &:nth-child(even) {
-                    background: colors.$purple;
+                    background: var(--theme-purple);
                 }
             }
 
             mat-tree-node:not(.link) + mat-tree-node.link {
-                border-top: 1px solid colors.$light-purple;
+                border-top: 1px solid var(--theme-light-purple);
             }
         }
 
@@ -171,12 +171,12 @@
             cursor: pointer;
 
             &:hover {
-                background-color: colors.$light-purple;
+                background-color: var(--theme-light-purple);
             }
         }
 
         mat-tree-node.highlighted {
-            background-color: colors.$light-purple;
+            background-color: var(--theme-light-purple);
         }
 
         .tree-node-content {
@@ -223,10 +223,10 @@
     }
 
     button.selected {
-        color: colors.$green;
+        color: var(--theme-green);
 
         i.fa-trash-can {
-            color: colors.$grey;
+            color: var(--theme-grey);
         }
     }
 }

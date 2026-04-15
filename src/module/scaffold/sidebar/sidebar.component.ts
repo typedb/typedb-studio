@@ -13,17 +13,19 @@ import { ConnectionWidgetComponent } from "../../connection/widget/connection-wi
 import { SidebarLinkComponent } from "./link/sidebar-link.component";
 import { MatSelect, MatSelectModule } from "@angular/material/select";
 import { MatDividerModule } from "@angular/material/divider";
-import { MatMenuModule } from "@angular/material/menu";
+import { MatMenuModule, MatMenuItem } from "@angular/material/menu";
+import { OverlayModule, ConnectedPosition } from "@angular/cdk/overlay";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { ModalComponent } from "../../../framework/modal";
 import { MatDialog } from "@angular/material/dialog";
 import { AppInfoDialogComponent } from "../../about/app-info-dialog.component";
+import { ThemeService, ThemePreference } from "../../../service/theme.service";
 
 @Component({
     selector: "ts-sidebar",
     templateUrl: "./sidebar.component.html",
     styleUrls: ["./sidebar.component.scss"],
-    imports: [SidebarLinkComponent, MatSelectModule, MatDividerModule, MatMenuModule, MatTooltipModule]
+    imports: [SidebarLinkComponent, MatSelectModule, MatDividerModule, MatMenuModule, MatTooltipModule, OverlayModule, MatMenuItem]
 })
 export class SidebarComponent {
     @ViewChild(MatSelect) orgSelector!: MatSelect;
@@ -32,7 +34,7 @@ export class SidebarComponent {
 
     constructor(
         public app: AppData, private route: ActivatedRoute,
-        private dialog: MatDialog,
+        private dialog: MatDialog, public theme: ThemeService,
     ) {}
 
     get collapsed(): boolean {
@@ -47,5 +49,18 @@ export class SidebarComponent {
 
     showAppInfoDialog() {
         this.dialog.open(AppInfoDialogComponent, { width: "360px", panelClass: "app-info-dialog-panel" });
+    }
+
+    themeMenuOpen = false;
+
+    readonly themeMenuPositions: ConnectedPosition[] = [
+        { originX: "end", originY: "bottom", overlayX: "start", overlayY: "bottom" },
+    ];
+
+    get themeIcon(): string {
+        const pref = this.theme.preference$.value;
+        if (pref === "light") return "fa-light fa-sun-bright";
+        if (pref === "dark") return "fa-light fa-moon";
+        return "fa-light fa-display";
     }
 }

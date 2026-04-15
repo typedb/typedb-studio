@@ -13,6 +13,7 @@ import { AsyncPipe } from "@angular/common";
 import { AppData } from "./service/app-data.service";
 import { DriverState } from "./service/driver-state.service";
 import { SnackbarService } from "./service/snackbar.service";
+import { ThemeService } from "./service/theme.service";
 
 @Component({
     selector: "ts-root", // eslint-disable-line @angular-eslint/component-selector
@@ -34,7 +35,7 @@ export class RootComponent implements OnInit {
     );
     initialised = false;
 
-    constructor(public vcRef: ViewContainerRef, private analytics: AnalyticsService, private router: Router, private appData: AppData, private driver: DriverState, private snackbar: SnackbarService) {
+    constructor(public vcRef: ViewContainerRef, private analytics: AnalyticsService, private router: Router, private appData: AppData, private driver: DriverState, private snackbar: SnackbarService, private theme: ThemeService) {
         this.informAnalyticsOnPageView(router, analytics);
     }
 

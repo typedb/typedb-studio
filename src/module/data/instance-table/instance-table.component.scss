@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "colors";
+
 @use "shapes";
 
 .instance-table-container {
@@ -19,7 +19,7 @@
     align-items: center;
     gap: 12px;
     padding: 8px 16px;
-    background: colors.$secondary-dark-yellow;
+    background: var(--theme-secondary-dark-yellow);
     font-size: 13px;
     flex-shrink: 0;
 
@@ -50,7 +50,7 @@
     align-items: center;
     gap: 12px;
     padding: 6px 16px;
-    border-bottom: 1px solid colors.$light-purple;
+    border-bottom: 1px solid var(--theme-light-purple);
     height: auto;
     min-height: auto;
     margin-bottom: 0;
@@ -66,7 +66,7 @@
     .search-icon {
         position: absolute;
         left: 10px;
-        color: colors.$grey;
+        color: var(--theme-grey);
         font-size: 14px;
         pointer-events: none;
     }
@@ -74,20 +74,20 @@
     .filter-input {
         width: 100%;
         padding: 6px 40px 6px 32px;
-        border: 1px solid colors.$light-purple;
+        border: 1px solid var(--theme-light-purple);
         border-radius: shapes.$border-radius;
-        background: colors.$black;
-        color: colors.$white;
+        background: var(--theme-black);
+        color: var(--theme-white);
         font-family: var(--font-family-default);
         font-size: 14px;
 
         &::placeholder {
-            color: colors.$grey;
+            color: var(--theme-grey);
         }
 
         &:focus {
             outline: none;
-            border-color: colors.$purple;
+            border-color: var(--theme-purple);
         }
     }
 
@@ -101,10 +101,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        color: colors.$grey;
+        color: var(--theme-grey);
 
         &:hover {
-            color: colors.$white;
+            color: var(--theme-white);
         }
 
         i {
@@ -119,8 +119,8 @@
     gap: 6px;
     font-size: 12px;
     padding: 4px 12px;
-    border-color: colors.$purple;
-    color: colors.$purple;
+    border-color: var(--theme-purple);
+    color: var(--theme-purple);
 
     i {
         font-size: 12px;
@@ -132,10 +132,10 @@
     height: 28px;
     min-width: 28px;
     padding: 0;
-    color: colors.$grey;
+    color: var(--theme-grey);
 
     &:hover {
-        color: colors.$white;
+        color: var(--theme-white);
     }
 
     i {
@@ -181,19 +181,19 @@
     th {
         font-size: 14px;
         font-weight: 500;
-        background: colors.$purple;
-        border-bottom: 1px solid colors.$light-purple;
+        background: var(--theme-purple);
+        border-bottom: 1px solid var(--theme-light-purple);
     }
 
     td {
         font-size: 14px;
-        border-bottom: 1px solid colors.$light-purple;
+        border-bottom: 1px solid var(--theme-light-purple);
     }
 
     .iid-cell {
         font-family: "Roboto Mono", monospace;
         font-size: 12px;
-        color: colors.$grey;
+        color: var(--theme-grey);
         min-width: 280px;
 
         > span {
@@ -205,15 +205,15 @@
         font-size: 13px;
 
         &.entity {
-            color: colors.$entity-pink;
+            color: var(--theme-entity-pink);
         }
 
         &.relation {
-            color: colors.$relation-yellow;
+            color: var(--theme-relation-yellow);
         }
 
         &.attribute {
-            color: colors.$attribute-blue;
+            color: var(--theme-attribute-blue);
         }
     }
 
@@ -257,7 +257,7 @@
         cursor: pointer;
 
         &:hover {
-            background: colors.$light-purple;
+            background: var(--theme-light-purple);
         }
     }
 }
@@ -274,7 +274,7 @@
         display: flex;
         gap: 4px;
         padding: 4px 8px;
-        border-bottom: 1px solid colors.$secondary-deep-grey;
+        border-bottom: 1px solid var(--theme-secondary-deep-grey);
 
         button {
             font-size: 12px;
@@ -313,7 +313,7 @@
     align-items: center;
     justify-content: center;
     height: 200px;
-    color: colors.$grey;
+    color: var(--theme-grey);
 
     i {
         font-size: 48px;

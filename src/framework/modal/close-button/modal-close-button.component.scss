@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "colors";
+
 
 @use "shapes";
 
@@ -13,18 +13,18 @@
 }
 
 button i {
-    color: colors.$secondary-grey;
+    color: var(--theme-secondary-grey);
     transition: color 100ms ease;
     width: 24px;
     height: 24px;
     font-size: 24px;
 
     &:hover, &:active, &:focus {
-        color: colors.$white;
+        color: var(--theme-white);
     }
 
     &:active, &:focus {
-        background: colors.$light-purple;
+        background: var(--theme-light-purple);
     }
 }
 

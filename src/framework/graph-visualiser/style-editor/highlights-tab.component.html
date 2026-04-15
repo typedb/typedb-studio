@@ -11,7 +11,7 @@
       @for (row of displayKinds; track row.kind) {
         <button class="highlight-chip"
                 [class.active]="isKindHighlighted(row.kind)"
-                [style.--chip-color]="getKindBorderColor(row.kind)"
+                [style.--chip-color]="getKindColor(row.kind)"
                 (click)="toggleHighlightKind(row.kind)"
                 (dblclick)="soloHighlightKind(row.kind)">
           {{ row.label }}
@@ -32,7 +32,7 @@
         @for (row of discoveredTypes; track row.typeLabel) {
           <button class="highlight-chip"
                   [class.active]="isTypeHighlighted(row.typeLabel)"
-                  [style.--chip-color]="getTypeBorderColor(row.typeLabel, row.kind)"
+                  [style.--chip-color]="getTypeColor(row.typeLabel, row.kind)"
                   (click)="toggleHighlightType(row.typeLabel)"
                   (dblclick)="soloHighlightType(row.typeLabel)">
             {{ row.typeLabel }}

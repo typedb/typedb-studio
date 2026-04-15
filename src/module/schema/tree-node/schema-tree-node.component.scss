@@ -4,9 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "colors";
+
 @use "typography";
 
 .root-node {
-    font-weight: typography.$regular;
+    font-weight: var(--font-weight-regular);
 }

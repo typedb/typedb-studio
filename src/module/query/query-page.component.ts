@@ -46,8 +46,7 @@ import { indentWithTab } from "@codemirror/commands";
 import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatSelectModule } from "@angular/material/select";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
-import { GraphStylesPaneComponent } from "../../framework/graph-styles-pane/graph-styles-pane.component";
-import { GraphZoomControlsComponent } from "../../framework/graph-zoom-controls/graph-zoom-controls.component";
+import { GraphCanvasComponent } from "../../framework/graph-visualiser/canvas/graph-canvas.component";
 
 @Component({
     selector: "ts-query-page",
@@ -58,8 +57,7 @@ import { GraphZoomControlsComponent } from "../../framework/graph-zoom-controls/
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, ResizableDirective,
         DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule,
         MatMenuModule, MatSelectModule, SchemaToolWindowComponent, CodeEditorComponent, ActionDurationPipe,
-        GraphStylesPaneComponent,
-        GraphZoomControlsComponent,
+        GraphCanvasComponent,
     ]
 })
 export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -67,7 +65,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild(CodeEditor) codeEditor!: CodeEditor;
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
     @ViewChild("logTextarea") logTextarea?: ElementRef<HTMLTextAreaElement>;
-    @ViewChildren("graphViewRef") graphViewRef!: QueryList<ElementRef<HTMLElement>>;
+    @ViewChildren(GraphCanvasComponent) graphCanvasComponents!: QueryList<GraphCanvasComponent>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     @ViewChild("queryTabContextMenuTrigger") queryTabContextMenuTrigger!: MatMenuTrigger;
     @ViewChild("runTabContextMenuTrigger") runTabContextMenuTrigger!: MatMenuTrigger;
@@ -94,16 +92,6 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     runTabContextMenuTabIndex = 0;
 
     graphMaximised = false;
-
-    toggleGraphMaximised(): void {
-        this.graphMaximised = !this.graphMaximised;
-        document.body.classList.toggle("graph-fullscreen", this.graphMaximised);
-        // Give the DOM a frame to update, then tell sigma to resize
-        setTimeout(() => {
-            this.state.graphOutput.visualiser?.sigma.resize();
-            this.state.graphOutput.visualiser?.sigma.refresh();
-        });
-    }
 
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
@@ -152,15 +140,15 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     ngAfterViewInit() {
-        this.graphViewRef.changes.pipe(
-            map(x => x as QueryList<ElementRef<HTMLElement>>),
-            startWith(this.graphViewRef),
+        this.graphCanvasComponents.changes.pipe(
+            map(x => x as QueryList<GraphCanvasComponent>),
+            startWith(this.graphCanvasComponents),
         ).subscribe((queryList) => {
-            if (queryList.length === 0) {
+            if (queryList.length === 0 || !queryList.first.canvasEl) {
                 this.state.setGraphCanvasEl(null);
                 return;
             }
-            this.canvasEl = queryList.first.nativeElement;
+            this.canvasEl = queryList.first.canvasEl;
             this.state.setGraphCanvasEl(this.canvasEl);
         });
 

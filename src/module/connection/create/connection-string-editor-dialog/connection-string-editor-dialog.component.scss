@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "colors";
+
 @use "shapes";
 
 tp-form {
@@ -18,7 +18,7 @@ mat-form-field {
 .preview-section {
     margin-top: 16px;
     padding: 16px;
-    background: colors.$secondary-purple;
+    background: var(--theme-secondary-purple);
     border-radius: shapes.$border-radius;
     border: shapes.$border;
 }
@@ -26,7 +26,7 @@ mat-form-field {
 .preview-label {
     display: block;
     margin-bottom: 8px;
-    color: colors.$grey;
+    color: var(--theme-grey);
     font-size: 12px;
     line-height: 12px;
     font-style: italic;
@@ -40,7 +40,7 @@ mat-form-field {
 
 .preview-text {
     flex: 1;
-    color: colors.$white;
+    color: var(--theme-white);
     font-family: monospace;
     font-size: 14px;
     padding: 8px 0;

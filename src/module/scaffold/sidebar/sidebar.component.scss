@@ -5,7 +5,7 @@
  */
 
 @use "@angular/material" as mat;
-@use "colors";
+
 
 @use "shapes";
 @use "typography";
@@ -17,15 +17,27 @@
     box-sizing: border-box;
     height: 100%;
 
+    .logo-row {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+        padding: 0 16px;
+    }
+
+    > button {
+        display: flex;
+        justify-content: center;
+    }
+
     .links {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
         height: 100%;
 
         mat-divider {
             width: 100%;
-            --mat-divider-color: #{colors.$secondary-deep-grey};
+            --mat-divider-color: #{var(--theme-secondary-deep-grey)};
             margin: 8px 0;
         }
     }
@@ -81,10 +93,10 @@ i {
     padding-top: 8px;
 
     &:hover {
-        color: colors.$green;
+        color: var(--theme-green);
 
         tp-user-avatar {
-            outline: 1px solid colors.$green;
+            outline: 1px solid var(--theme-green);
         }
     }
 
@@ -108,4 +120,10 @@ i {
 
 ::ng-deep mat-form-field.tp-org-selector  .mdc-text-field {
     background: transparent;
+}
+
+.theme-menu {
+    border-radius: shapes.$border-radius-small;
+    border: 1px solid var(--theme-secondary-deep-grey);
+    background-color: var(--theme-secondary-purple);
 }

@@ -1,8 +1,8 @@
 import { Component, inject, Input } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { MatMenuModule } from "@angular/material/menu";
-import { GraphStyleService, CustomPreset } from "../../service/graph-style.service";
-import { GraphVisualiser } from "../graph-visualiser";
+import { GraphStyleService, CustomPreset } from "../../../service/graph-style.service";
+import { GraphVisualiser } from "../engine";
 
 @Component({
     selector: "ts-graph-styles-themes-tab",

@@ -1,6 +1,6 @@
 import { Component, Input } from "@angular/core";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { GraphVisualiser } from "../graph-visualiser";
+import { GraphVisualiser } from "../../engine";
 
 const ZOOM_FACTOR = 0.7;
 

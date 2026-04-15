@@ -5,7 +5,7 @@
  */
 
 @use "shapes";
-@use "colors";
+
 
 
 @use "typography";
@@ -22,7 +22,7 @@ mat-select {
     padding: 0 8px;
     display: flex;
     align-items: center;
-    color: colors.$grey;
+    color: var(--theme-grey);
     font-size: 14px;
     line-height: 32px;
 
@@ -32,7 +32,7 @@ mat-select {
 
     &:not(.mat-mdc-select-disabled) {
         &:hover, &:active, &[aria-expanded='true'] {
-            background: colors.$secondary-purple;
+            background: var(--theme-secondary-purple);
         }
     }
 
@@ -51,21 +51,21 @@ mat-select {
         margin-left: 8px;
 
         &.ok {
-            color: colors.$green;
+            color: var(--theme-green);
             //animation: shimmer 3s ease-in-out 0s infinite;
         }
 
         &.warn {
-            color: colors.$secondary-yellow;
+            color: var(--theme-secondary-yellow);
             animation: beacon 1.5s ease-in-out 0s infinite;
         }
 
         &.error {
-            color: colors.$red;
+            color: var(--theme-red);
         }
 
         &.inactive {
-            color: colors.$secondary-light-grey;
+            color: var(--theme-secondary-light-grey);
         }
     }
 }
@@ -96,7 +96,7 @@ mat-select-trigger {
         margin-right: 10px;
 
         &.active {
-            color: colors.$green;
+            color: var(--theme-green);
             animation: beacon 3s ease-in-out 0s infinite;
         }
     }
@@ -109,26 +109,26 @@ mat-select-trigger {
     }
 
     &:hover {
-        color: colors.$green;
+        color: var(--theme-green);
     }
 }
 
 .mdc-fab.mat-accent {
     &.open-btn:enabled {
-        color: colors.$secondary-deep-green;
+        color: var(--theme-secondary-deep-green);
 
         &.active {
-            color: colors.$black;
-            background: colors.$secondary-deep-green;
+            color: var(--theme-black);
+            background: var(--theme-secondary-deep-green);
         }
     }
 
     &.commit-btn:enabled {
-        color: colors.$secondary-deep-green;
+        color: var(--theme-secondary-deep-green);
     }
 
     &.close-btn:enabled {
-        background: colors.$red;
+        background: var(--theme-red);
     }
 }
 

@@ -4,8 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "sass:color";
-
 @use "colors";
 @use "media";
 @use "mixins";
@@ -24,8 +22,9 @@ html {
     height: 100%;
     margin: 0;
     padding: 0;
-    background: colors.$black;
+    background: var(--theme-black);
     font-size: 14px;
+    font-weight: var(--font-weight-regular);
     line-height: 22px;
 
     --mat-form-field-subscript-text-size: 14px;
@@ -43,7 +42,6 @@ body {
 }
 
 html, body {
-    color-scheme: dark;
     height: 100%;
 }
 
@@ -76,7 +74,7 @@ article {
 .tp-bento-box {
     @include shapes.standard-border;
     border-radius: shapes.$border-radius;
-    @include colors.light-source-gradient(colors.$purple, colors.$deep-purple);
+    @include colors.light-source-gradient(var(--theme-purple), var(--theme-deep-purple));
     transition: background 0.1s linear;
     padding: shapes.$card-padding;
 
@@ -84,22 +82,21 @@ article {
     flex-direction: column;
     gap: 12px;
 
-    $subtle-opacity: 0.45;
     &.subtle {
         @include colors.light-source-gradient(
-                rgba(colors.$purple, $subtle-opacity),
-                rgba(colors.$deep-purple, $subtle-opacity),
+                var(--theme-purple-04),
+                var(--theme-deep-purple-045),
         );
-        border-color: rgba(colors.$light-purple, $subtle-opacity);
+        border-color: var(--theme-light-purple-045);
     }
 
     &.hoverable:hover:not(:disabled) {
-        @include colors.light-source-gradient(rgba(colors.$light-purple, 0.6), colors.$purple);
+        @include colors.light-source-gradient(var(--theme-light-purple-06), var(--theme-purple));
 
         &.subtle {
             @include colors.light-source-gradient(
-                    rgba(rgba(colors.$light-purple, 0.6), $subtle-opacity),
-                    rgba(colors.$purple, $subtle-opacity)
+                    var(--theme-light-purple-027),
+                    var(--theme-purple-04)
             );
         }
     }
@@ -124,8 +121,8 @@ article {
     }
 
     a.tp-bento-bottom-bar:hover {
-        color: colors.$green;
-        background: colors.$purple;
+        color: var(--theme-green);
+        background: var(--theme-purple);
     }
 }
 
@@ -196,15 +193,15 @@ h5 {
 }
 
 strong {
-    font-weight: typography.$semi-bold;
+    font-weight: var(--font-weight-semi-bold);
 }
 
 .text-muted {
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
 }
 
 a {
-    color: colors.$white;
+    color: var(--theme-white);
     text-decoration: none;
     &.disabled {
         pointer-events: none;
@@ -214,7 +211,7 @@ a {
 
 @mixin text-link {
     text-decoration: underline;
-    color: colors.$green;
+    color: var(--theme-green);
     cursor: pointer;
 }
 
@@ -223,22 +220,22 @@ p a, aside a, th a, td a {
 }
 
 a.link-quiet {
-    color: colors.$grey;
+    color: var(--theme-grey);
     font-size: 14px;
     text-decoration: none;
 
     &:hover, &:focus {
-        color: colors.$green;
+        color: var(--theme-green);
         text-decoration: none;
     }
 }
 
 a.tos-privacy-link {
-    color: colors.$white;
+    color: var(--theme-white);
     text-decoration: underline;
 
     &:hover, &:focus {
-        color: colors.$green;
+        color: var(--theme-green);
     }
 }
 
@@ -256,8 +253,8 @@ code, .text-code {
 }
 
 em {
-    font-weight: typography.$regular;
-    color: colors.$secondary-extra-light-grey;
+    font-weight: var(--font-weight-regular);
+    color: var(--theme-secondary-extra-light-grey);
 }
 
 button {
@@ -274,7 +271,7 @@ button {
 
     &:disabled {
         cursor: not-allowed;
-        color: colors.$secondary-mid-deep-grey;
+        color: var(--theme-secondary-mid-deep-grey);
     }
 }
 
@@ -317,32 +314,32 @@ button {
 @mixin button-primary {
     & {
         border-color: transparent;
-        background: var(--color-green);
-        color: var(--color-purple);
+        background: var(--theme-green);
+        color: var(--theme-purple);
     }
 
     &:not(.td-button-disabled) {
         &:hover,
         &.container-hover {
-            box-shadow: 0 3px 26px 0 rgba(colors.$green, 0.4);
+            box-shadow: 0 3px 26px 0 var(--theme-green-04);
         }
 
         &:active {
-            background-color: color.mix(colors.$green, colors.$purple);
+            background-color: var(--theme-green-mix-purple);
         }
     }
 }
 
 @mixin button-secondary {
-    border-color: var(--color-green);
+    border-color: var(--theme-green);
     background: transparent;
-    color: var(--color-green);
+    color: var(--theme-green);
 
     &:not(.td-button-disabled) {
         &:hover,
         &.container-hover {
-            background-color: var(--color-green);
-            color: var(--color-purple);
+            background-color: var(--theme-green);
+            color: var(--theme-purple);
         }
     }
 }
@@ -365,7 +362,7 @@ form, .form {
 }
 
 .form-input-row-description {
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
     font-size: 14px;
     text-align: start;
     margin: 11px 0;
@@ -373,13 +370,13 @@ form, .form {
 
 input, select, textarea {
     &::placeholder {
-        color: rgba(colors.$secondary-light-grey, 0.8);
-        font-weight: typography.$regular;
+        color: var(--theme-secondary-light-grey-08);
+        font-weight: var(--font-weight-regular);
     }
 }
 
 th {
-    font-weight: typography.$semi-bold;
+    font-weight: var(--font-weight-semi-bold);
 }
 
 .flex-spacer {
@@ -415,23 +412,23 @@ i {
     justify-content: center;
 
     &.ok {
-        color: colors.$green;
+        color: var(--theme-green);
     }
 
     &.info {
-        color: colors.$secondary-blue;
+        color: var(--theme-secondary-blue);
     }
 
     &.warn {
-        color: colors.$secondary-yellow;
+        color: var(--theme-secondary-yellow);
     }
 
     &.error {
-        color: colors.$red;
+        color: var(--theme-red);
     }
 
     &.inactive {
-        color: colors.$secondary-light-grey;
+        color: var(--theme-secondary-light-grey);
     }
 }
 
@@ -440,7 +437,7 @@ button i + span, button span + i {
 }
 
 .tp-green {
-    color: colors.$green;
+    color: var(--theme-green);
 }
 
 .card {
@@ -448,10 +445,10 @@ button i + span, button span + i {
     @include mixins.card-padding;
 
     &.hoverable:hover:not(:disabled) {
-        border-color: colors.$green;
+        border-color: var(--theme-green);
 
         .link-tertiary {
-            color: colors.$green;
+            color: var(--theme-green);
             text-decoration: underline;
         }
     }
@@ -530,7 +527,7 @@ tp-form-actions, .tp-form-actions {
 
 .terms-privacy-additional-info {
     @include typography.p3;
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
 }
 
 tp-properties-table + tp-properties-table {
@@ -553,7 +550,7 @@ tp-form-input.capitalized-field {
 
 .modal-content-wrapper {
     @include typography.p3;
-    color: colors.$grey;
+    color: var(--theme-grey);
     width: 100%;
 
     display: flex;
@@ -568,7 +565,7 @@ tp-form-input.capitalized-field {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: colors.$secondary-pink;
+    color: var(--theme-secondary-pink);
     cursor: pointer;
 }
 
@@ -579,7 +576,7 @@ tp-form-input.capitalized-field {
 }
 
 button.dangerous {
-    color: colors.$red;
+    color: var(--theme-red);
 }
 
 .app-info-dialog-panel {
@@ -594,12 +591,12 @@ button.dangerous {
 }
 
 .tp-sidebar-team-selection-panel.mat-mdc-select-panel {
-    background: rgba(colors.$light-purple, 0.3);
+    background: var(--theme-light-purple-03);
     backdrop-filter: blur(10px);
 }
 
 .tp-sidenav-container.collapsed ts-sidebar-link i.fa-arrow-up-right-from-square {
-    transform: translate(-20px,-10px) scale(0.5);
+    transform: none;
 }
 
 tp-setup, tp-setup-marketplace, tp-setup-project,
@@ -635,22 +632,22 @@ tp-gcp-marketplace-integration, tp-aws-marketplace-integration, tp-azure-marketp
     }
 
     p {
-        color: colors.$grey;
+        color: var(--theme-grey);
 
         &.ok {
-            color: colors.$green;
+            color: var(--theme-green);
         }
 
         &.loading {
-            color: colors.$grey;
+            color: var(--theme-grey);
         }
 
         &.error {
-            color: colors.$red;
+            color: var(--theme-red);
         }
 
         &.inactive {
-            color: colors.$secondary-light-grey;
+            color: var(--theme-secondary-light-grey);
         }
     }
 }
@@ -664,10 +661,10 @@ tp-gcp-marketplace-integration, tp-aws-marketplace-integration, tp-azure-marketp
     justify-content: center;
     width: 32px;
     height: 32px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--theme-overlay-bg);
     backdrop-filter: blur(8px);
     border: shapes.$border;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--theme-overlay-text);
     border-radius: 8px;
     cursor: pointer;
     opacity: 0;
@@ -697,10 +694,10 @@ tp-gcp-marketplace-integration, tp-aws-marketplace-integration, tp-azure-marketp
 }
 
 .copy-overlay:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: colors.$secondary-mid-deep-grey;
-    color: rgba(255, 255, 255, 1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: var(--theme-overlay-bg);
+    border-color: var(--theme-secondary-mid-deep-grey);
+    color: var(--theme-overlay-text-hover);
+    box-shadow: 0 4px 12px var(--theme-overlay-shadow);
 }
 
 app-drag-handle span {

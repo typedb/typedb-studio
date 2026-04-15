@@ -5,7 +5,7 @@
  */
 
 @use "shapes";
-@use "colors";
+
 
 @use "typography";
 
@@ -27,10 +27,10 @@ tp-filter-group {
     display: flex;
     align-items: center;
     box-sizing: border-box;
-    color: colors.$white;
+    color: var(--theme-white);
     padding: 7px 11px;
     height: 40px;
-    background-color: colors.$secondary-purple;
+    background-color: var(--theme-secondary-purple);
     width: min-content;
     transition: border-color 30ms ease;
 
@@ -41,7 +41,7 @@ tp-filter-group {
 
 .arrow-icon {
     display: flex;
-    color: colors.$grey;
+    color: var(--theme-grey);
     padding-left: 6px;
     margin-right: -6px;
 }

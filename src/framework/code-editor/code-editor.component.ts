@@ -5,14 +5,16 @@
  */
 
 import { CodeEditor } from "@acrodata/code-editor";
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from "@angular/core";
 import { TypeQL, typeqlAutocompleteExtension } from "../codemirror-lang-typeql";
-import { basicDark } from "./theme";
-import { Extension, Prec } from "@codemirror/state";
+import { basicDark, basicLight } from "./theme";
+import { Compartment, Extension, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { startCompletion } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
 import { FormControl, ReactiveFormsModule } from "@angular/forms";
+import { ThemeService } from "../../service/theme.service";
+import { Subscription } from "rxjs";
 
 @Component({
     selector: "tp-code-editor",
@@ -33,9 +35,12 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
     @Input() runOverlayVisible = false;
     @Output() runButtonClick = new EventEmitter<void>();
 
-    readonly codeEditorTheme = basicDark;
+    @ViewChild(CodeEditor) private codeEditor?: CodeEditor;
+
+    private themeCompartment = new Compartment();
     protected readonly TypeQL = TypeQL;
     protected readonly typeqlAutocompleteExtension = typeqlAutocompleteExtension;
+    private themeSubscription?: Subscription;
 
     // Workaround for WebKit IME input issues (Safari on macOS, Tauri WKWebView on macOS/Linux)
     private readonly webKitInputFix = EditorView.domEventHandlers({
@@ -57,8 +62,12 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
         (navigator.platform.startsWith('Mac') && (this.isSafari || this.isTauri))
         || (navigator.platform.startsWith('Linux') && this.isTauri);
 
+    private get currentThemeExtension(): Extension {
+        return this.themeService.effectiveTheme$.value === "light" ? basicLight : basicDark;
+    }
+
     get extensions(): Extension[] {
-        const baseExtensions = [this.codeEditorTheme, TypeQL(), typeqlAutocompleteExtension(), this.keymap];
+        const baseExtensions = [this.themeCompartment.of(this.currentThemeExtension), TypeQL(), typeqlAutocompleteExtension(), this.keymap];
         return this.needsWebKitInputFix ? [...baseExtensions, this.webKitInputFix] : baseExtensions;
     }
 
@@ -67,7 +76,7 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
     hasScrollbar = false;
     private resizeObserver?: ResizeObserver;
 
-    constructor(private elementRef: ElementRef<HTMLElement>) {}
+    constructor(private elementRef: ElementRef<HTMLElement>, private themeService: ThemeService) {}
 
     ngAfterViewInit() {
         const scroller = this.elementRef.nativeElement.querySelector('.cm-scroller');
@@ -77,10 +86,21 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
             });
             this.resizeObserver.observe(scroller);
         }
+
+        // React to theme changes at runtime
+        this.themeSubscription = this.themeService.effectiveTheme$.subscribe(theme => {
+            const view = this.codeEditor?.view;
+            if (view) {
+                view.dispatch({
+                    effects: this.themeCompartment.reconfigure(theme === "light" ? basicLight : basicDark)
+                });
+            }
+        });
     }
 
     ngOnDestroy() {
         this.resizeObserver?.disconnect();
+        this.themeSubscription?.unsubscribe();
     }
 
     async onRunButtonClick() {

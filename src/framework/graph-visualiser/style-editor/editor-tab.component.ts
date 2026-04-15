@@ -4,8 +4,8 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
-import { GraphStyleService, GraphBackgroundType } from "../../service/graph-style.service";
-import { GraphVisualiser } from "../graph-visualiser";
+import { GraphStyleService, GraphBackgroundType, DEFAULT_BACKGROUND } from "../../../service/graph-style.service";
+import { GraphVisualiser } from "../engine";
 import { VertexKind } from "@typedb/graph-utils";
 
 interface KindRow {
@@ -68,7 +68,12 @@ export class EditorTabComponent implements OnChanges {
     @Input() visualiser: GraphVisualiser | null = null;
 
     styleService = inject(GraphStyleService);
-    activeTab: "kind" | "type" | "edge" | "background" = "kind";
+    activeTab: "graph" | "background" = "graph";
+
+    settingsCollapsed = false;
+    kindsCollapsed = false;
+    typesCollapsed = false;
+    edgesCollapsed = false;
 
     readonly displayKinds = DISPLAY_KINDS;
     readonly shapes = AVAILABLE_SHAPES;
@@ -105,10 +110,6 @@ export class EditorTabComponent implements OnChanges {
         return this.styleService.getKindStyle(kind).color;
     }
 
-    getKindBorderColor(kind: VertexKind): string {
-        return this.styleService.getKindStyle(kind).borderColor;
-    }
-
     getKindShape(kind: VertexKind): string {
         return this.styleService.getKindStyle(kind).shape;
     }
@@ -125,11 +126,6 @@ export class EditorTabComponent implements OnChanges {
 
     setKindColor(kind: VertexKind, color: string): void {
         this.styleService.setKindStyle(kind, { color });
-        this.applyStyles();
-    }
-
-    setKindBorderColor(kind: VertexKind, borderColor: string): void {
-        this.styleService.setKindStyle(kind, { borderColor });
         this.applyStyles();
     }
 
@@ -163,10 +159,6 @@ export class EditorTabComponent implements OnChanges {
         return this.styleService.resolveNodeStyle(kind, typeLabel).color;
     }
 
-    getTypeBorderColor(typeLabel: string, kind: VertexKind): string {
-        return this.styleService.resolveNodeStyle(kind, typeLabel).borderColor;
-    }
-
     getTypeShape(typeLabel: string, kind: VertexKind): string {
         return this.styleService.resolveNodeStyle(kind, typeLabel).shape;
     }
@@ -187,11 +179,6 @@ export class EditorTabComponent implements OnChanges {
 
     setTypeColor(typeLabel: string, color: string): void {
         this.styleService.setTypeStyle(typeLabel, { color });
-        this.applyStyles();
-    }
-
-    setTypeBorderColor(typeLabel: string, borderColor: string): void {
-        this.styleService.setTypeStyle(typeLabel, { borderColor });
         this.applyStyles();
     }
 
@@ -243,15 +230,26 @@ export class EditorTabComponent implements OnChanges {
     get backgroundAngle(): number { return this.styleService.background.gradientAngle; }
 
     setBackgroundType(type: GraphBackgroundType): void {
-        if (type === "grid") {
-            this.styleService.updateBackground({ type, color1: "#232135", color2: "#0e0e0e" });
+        if (type === "default") {
+            this.styleService.updateBackground({ type });
+        } else if (type === "grid") {
+            this.styleService.updateBackground({ type, color1: "#0e0e0e", color2: "#232135" });
         } else if (type === "dots") {
-            this.styleService.updateBackground({ type, color1: "#4e4b63", color2: "#0e0e0e" });
+            this.styleService.updateBackground({ type, color1: "#0e0e0e", color2: "#4e4b63" });
         } else if (type === "party") {
-            this.styleService.updateBackground({ type, color1: "#cc3344", color2: "#1a2766" });
+            this.styleService.updateBackground({ type, color1: "#1a2766", color2: "#cc3344" });
         } else {
             this.styleService.updateBackground({ type });
         }
+    }
+
+    get fillOpacityPercent(): number {
+        return Math.round(this.styleService.fillOpacity * 100);
+    }
+
+    setFillOpacityPercent(percent: number): void {
+        this.styleService.fillOpacity = percent / 100;
+        this.applyStyles();
     }
 
     setBackgroundColor1(color1: string): void {
@@ -267,12 +265,11 @@ export class EditorTabComponent implements OnChanges {
     }
 
     get hasBackgroundOverride(): boolean {
-        const bg = this.styleService.background;
-        return bg.type !== "solid" || bg.color1 !== "#0e0e0e";
+        return this.styleService.background.type !== "default";
     }
 
     resetBackground(): void {
-        this.styleService.background = { type: "solid", color1: "#0e0e0e", color2: "#1A182A", gradientAngle: 180 };
+        this.styleService.background = { ...DEFAULT_BACKGROUND };
     }
 
     private applyStyles(): void {

@@ -5,7 +5,7 @@
  */
 
 @use "shapes";
-@use "colors";
+
 @use "typography";
 
 :host {
@@ -18,22 +18,22 @@
     font-weight: var(--font-weight-medium);
 
     &.white {
-        color: colors.$white;
+        color: var(--theme-white);
     }
     &.green {
-        color: colors.$green;
+        color: var(--theme-green);
     }
     &.red {
-        color: colors.$red;
+        color: var(--theme-red);
     }
     &.white:hover:enabled {
-        background-color: rgba(colors.$white, 0.15);
+        background-color: var(--theme-white-015);
     }
     &.red:hover:enabled {
-        background-color: colors.$translucent-red;
+        background-color: var(--theme-red-015);
     }
     &.green:hover:enabled {
-        background-color: rgba(colors.$green, 0.15);
+        background-color: var(--theme-green-015);
     }
     &.white:active,
     &.red:active,
@@ -50,11 +50,11 @@
 }
 
 .secondary.stroke {
-    color: colors.$grey;
+    color: var(--theme-grey);
 }
 
 .secondary:not(.stroke) {
-    color: colors.$grey;
+    color: var(--theme-grey);
     font-weight: var(--font-weight-regular);
     padding: 6px 8px;
     border-radius: shapes.$border-radius-small;
@@ -64,18 +64,18 @@
 
     &:enabled {
         &:hover {
-            background: colors.$secondary-purple;
+            background: var(--theme-secondary-purple);
         }
         &:active, &.active {
-            background: colors.$light-purple;
+            background: var(--theme-light-purple);
         }
     }
 
     &:disabled {
-        color: colors.$secondary-deep-grey;
+        color: var(--theme-secondary-deep-grey);
 
         ::ng-deep i {
-            color: colors.$secondary-mid-deep-grey;
+            color: var(--theme-secondary-mid-deep-grey);
         }
     }
 }
@@ -97,9 +97,9 @@ button {
     }
 
     &.grey-stroke {
-        border-color: colors.$secondary-mid-deep-grey;
+        border-color: var(--theme-secondary-mid-deep-grey);
         &:hover:not(:disabled) {
-            border-color: colors.$secondary-light-grey;
+            border-color: var(--theme-secondary-light-grey);
         }
     }
 }

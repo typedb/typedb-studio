@@ -1,4 +1,4 @@
-@use "colors";
+
 @use "shapes";
 
 :host {
@@ -9,9 +9,10 @@
 .tooltip-container {
     border-radius: shapes.$border-radius-small;
     padding: 4px 8px;
-    font-size: 14px;
-    line-height: 20px;
-    background: colors.$secondary-mid-deep-grey;
+    font-size: 13px;
+    line-height: 18px;
+    background: #4e4b63;
+    color: #f3f3f3;
     max-width: 400px;
     word-wrap: break-word;
 
