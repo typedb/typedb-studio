@@ -1,6 +1,6 @@
 import { Component, inject, Input, OnChanges, SimpleChanges } from "@angular/core";
-import { GraphStyleService } from "../../service/graph-style.service";
-import { GraphVisualiser } from "../graph-visualiser";
+import { GraphStyleService } from "../../../service/graph-style.service";
+import { GraphVisualiser } from "../engine";
 import { VertexKind } from "@typedb/graph-utils";
 
 interface KindRow {
@@ -81,12 +81,12 @@ export class HighlightsTabComponent implements OnChanges {
             .sort((a, b) => kindOrder(a.kind) - kindOrder(b.kind) || a.typeLabel.localeCompare(b.typeLabel));
     }
 
-    getKindBorderColor(kind: VertexKind): string {
-        return this.styleService.getKindStyle(kind).borderColor;
+    getKindColor(kind: VertexKind): string {
+        return this.styleService.getKindStyle(kind).color;
     }
 
-    getTypeBorderColor(typeLabel: string, kind: VertexKind): string {
-        return this.styleService.resolveNodeStyle(kind, typeLabel).borderColor;
+    getTypeColor(typeLabel: string, kind: VertexKind): string {
+        return this.styleService.resolveNodeStyle(kind, typeLabel).color;
     }
 
     getEdgeLabelColor(tag: string): string {

@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "colors";
+
 
 @use "shapes";
 @use "typography";
@@ -58,11 +58,11 @@ tp-form,
     justify-content: flex-start;
     align-items: center;
     gap: 8px;
-    color: colors.$grey;
+    color: var(--theme-grey);
     cursor: pointer;
 
     &:hover {
-        color: colors.$white;
+        color: var(--theme-white);
     }
 }
 
@@ -87,7 +87,7 @@ tp-form.form {
 
     > .help-tooltip-button {
         cursor: pointer;
-        color: colors.$grey;
+        color: var(--theme-secondary-pink);
         font-size: 18px;
         padding: 8px;
         height: 44px;
@@ -96,8 +96,8 @@ tp-form.form {
         border-radius: shapes.$border-radius-small;
 
         &:hover {
-            background: colors.$secondary-purple;
-            color: colors.$white;
+            background: var(--theme-secondary-purple);
+            color: var(--theme-white);
         }
     }
 }
@@ -118,5 +118,5 @@ tp-form.form {
 }
 
 .port-warning {
-    color: colors.$secondary-yellow;
+    color: var(--theme-secondary-yellow);
 }

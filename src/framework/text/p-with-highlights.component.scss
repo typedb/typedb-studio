@@ -7,5 +7,5 @@
 @use "typography";
 
 p {
-    font-weight: typography.$light;
+    font-weight: var(--font-weight-light);
 }

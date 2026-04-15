@@ -5,7 +5,7 @@
  */
 
 @use "shapes";
-@use "colors";
+
 
 
 @use "typography";
@@ -16,11 +16,11 @@
     width: 100%;
 
     &:nth-child(even) {
-        background-color: colors.$purple;
+        background-color: var(--theme-purple);
     }
 
     &:nth-child(odd) {
-        background-color: colors.$deep-purple;
+        background-color: var(--theme-deep-purple);
     }
 }
 
@@ -34,11 +34,11 @@
     flex: 1 1 0;
 
     &.key {
-        color: colors.$secondary-light-grey;
+        color: var(--theme-secondary-light-grey);
     }
 
     &.value {
-        color: colors.$white;
+        color: var(--theme-white);
         border-left: shapes.$border;
     }
 }

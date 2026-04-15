@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "colors";
+
 
 :host {
     display: block;
@@ -17,8 +17,8 @@
         max-height: 400px;
         overflow: auto;
         padding: 12px 16px;
-        background: colors.$black;
-        border: 1px solid colors.$secondary-deep-grey;
+        background: var(--theme-black);
+        border: 1px solid var(--theme-secondary-deep-grey);
         border-radius: 4px;
 
     }
@@ -30,7 +30,7 @@
         font-family: "Roboto Mono", monospace;
         font-size: 13px;
         line-height: 1.5;
-        color: colors.$grey;
+        color: var(--theme-grey);
     }
 }
 

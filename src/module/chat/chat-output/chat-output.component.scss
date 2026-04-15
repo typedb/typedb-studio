@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "colors";
+
 @use "shapes";
 
 .chat-output-container {
@@ -68,7 +68,7 @@
     padding: 0 10px;
     cursor: pointer;
     white-space: nowrap;
-    color: colors.$grey;
+    color: var(--theme-grey);
     transition: background-color 100ms, color 100ms;
     font-size: 12px;
     border: shapes.$border;
@@ -86,12 +86,12 @@
     }
 
     &:hover:not(.active) {
-        background-color: rgba(colors.$light-purple, 0.2);
+        background-color: var(--theme-light-purple-02);
     }
 
     &.active, &.active:hover {
-        color: colors.$white;
-        background-color: colors.$deep-purple;
+        color: var(--theme-white);
+        background-color: var(--theme-deep-purple);
     }
 
     &.placeholder {
@@ -127,7 +127,7 @@
     }
 
     &:hover {
-        background-color: colors.$light-purple;
+        background-color: var(--theme-light-purple);
     }
 }
 
@@ -140,7 +140,7 @@
     border-top-right-radius: 0;
     border-bottom-right-radius: shapes.$border-radius-small;
     border-bottom-left-radius: shapes.$border-radius-small;
-    background-color: colors.$deep-purple;
+    background-color: var(--theme-deep-purple);
 }
 
 .output-view {
@@ -261,7 +261,7 @@
         bottom: 0;
         z-index: 10000;
         border-radius: 0;
-        background: colors.$black;
+        background: var(--theme-black);
     }
 }
 
@@ -275,15 +275,15 @@
     gap: 6px;
     height: 28px;
     padding: 0 4px 0 10px;
-    background: colors.$secondary-purple;
-    border: 1px solid colors.$secondary-deep-grey;
+    background: var(--theme-secondary-purple);
+    border: 1px solid var(--theme-secondary-deep-grey);
     border-radius: 6px;
 
     > i {
         font-size: 11px;
         width: 11px;
         height: 11px;
-        color: colors.$secondary-light-grey;
+        color: var(--theme-secondary-light-grey);
     }
 
     input {
@@ -297,7 +297,7 @@
         flex: 0 0 140px;
 
         &::placeholder {
-            color: colors.$secondary-light-grey;
+            color: var(--theme-secondary-light-grey);
         }
     }
 }
@@ -309,7 +309,7 @@
     border: none;
     padding: 0 4px;
     cursor: pointer;
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -328,10 +328,10 @@
 .graph-search-focus {
     background: none;
     border: none;
-    border-left: 1px solid colors.$secondary-deep-grey;
+    border-left: 1px solid var(--theme-secondary-deep-grey);
     padding: 0 4px 0 8px;
     cursor: pointer;
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -355,10 +355,10 @@
     z-index: 10;
     width: 28px;
     height: 28px;
-    border: 1px solid colors.$secondary-deep-grey;
-    background: colors.$secondary-purple;
+    border: 1px solid var(--theme-secondary-deep-grey);
+    background: var(--theme-secondary-purple);
     border-radius: 6px;
-    color: colors.$secondary-light-grey;
+    color: var(--theme-secondary-light-grey);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -368,7 +368,7 @@
     transition: background 0.15s;
 
     &:hover {
-        background: colors.$secondary-dark-grey;
+        background: var(--theme-secondary-dark-grey);
     }
 
     i {

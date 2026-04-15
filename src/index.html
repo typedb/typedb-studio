@@ -25,6 +25,17 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
     <script src="https://kit.fontawesome.com/f7ba4755e0.js" crossorigin="anonymous"></script>
+    <script>
+      // Apply theme class before Angular bootstraps to prevent flash of wrong theme
+      (function() {
+        try {
+          var pref = JSON.parse(localStorage.getItem("typeDBStudio.theme.preference"));
+          var theme = pref === "light" ? "theme-light" : pref === "dark" ? "theme-dark"
+            : (window.matchMedia("(prefers-color-scheme: light)").matches ? "theme-light" : "theme-dark");
+          document.documentElement.classList.add(theme);
+        } catch(e) { document.documentElement.classList.add("theme-dark"); }
+      })();
+    </script>
   </head>
   <body class="mat-typography">
     <ts-root></ts-root>

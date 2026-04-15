@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-@use "colors";
+
 @use "shapes";
 @use "typography";
 
@@ -62,7 +62,7 @@
         code {
             font-family: var(--font-family-code);
             font-size: 0.9em;
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: color-mix(in srgb, var(--theme-white) 10%, transparent);
             padding: 0.15em 0.4em;
             border-radius: shapes.$border-radius-small;
         }
@@ -70,7 +70,7 @@
         pre {
             margin: 0.5rem 0;
             padding: 0.75rem;
-            background-color: rgba(0, 0, 0, 0.2);
+            background-color: color-mix(in srgb, var(--theme-black) 20%, transparent);
             border-radius: shapes.$border-radius-small;
             overflow-x: auto;
 
@@ -114,7 +114,7 @@
     // Faded bullet markers - separate selector for better specificity
     ::ng-deep markdown ul li::marker,
     ::ng-deep markdown ol li::marker {
-        color: rgba(255, 255, 255, 0.5);
+        color: color-mix(in srgb, var(--theme-white) 50%, transparent);
     }
 
     tp-code-editor {
@@ -139,8 +139,8 @@
         justify-content: flex-end;
 
         .message-content {
-            background-color: var(--color-secondary-purple);
-            color: white;
+            background-color: var(--theme-secondary-purple);
+            color: var(--theme-white);
             border-radius: shapes.$border-radius-small;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
             padding: 0.75rem 1rem;
@@ -182,10 +182,10 @@
 }
 
 .error-message {
-    color: var(--color-grey);
+    color: var(--theme-grey);
     font-size: 0.9rem;
     padding: 0.5rem 0.75rem;
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: color-mix(in srgb, var(--theme-black) 20%, transparent);
     border-radius: shapes.$border-radius-small;
     display: flex;
     align-items: center;
@@ -194,7 +194,7 @@
 
     i {
         font-size: 1rem;
-        color: var(--color-red);
+        color: var(--theme-red);
     }
 }
 

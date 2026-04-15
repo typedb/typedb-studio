@@ -1,22 +1,23 @@
-import { Injectable } from "@angular/core";
-import { BehaviorSubject } from "rxjs";
+import { Injectable, OnDestroy } from "@angular/core";
+import { BehaviorSubject, Subscription } from "rxjs";
 import { VertexKind } from "@typedb/graph-utils";
-import { GraphStyles, defaultEdgeLabelColors, defaultQueryStyleParams } from "../framework/graph-visualiser/styles";
+import { GraphStyles, defaultEdgeLabelColors, defaultQueryStyleParams } from "../framework/graph-visualiser/engine/styles";
+import { ThemeService } from "./theme.service";
 
 export interface NodeStyle {
     color: string;
-    borderColor: string;
+    fillColor: string;
     shape: string;
     width: number;
     height: number;
 }
 
-export type PartialNodeStyle = Partial<NodeStyle>;
+export type PartialNodeStyle = Partial<Pick<NodeStyle, "color" | "shape" | "width" | "height">>;
 
 const STORAGE_KEY = "typedb-studio-graph-styles";
 const CUSTOM_PRESETS_KEY = "typedb-studio-custom-presets";
 
-export type GraphBackgroundType = "solid" | "gradient" | "grid" | "dots" | "party";
+export type GraphBackgroundType = "default" | "solid" | "gradient" | "grid" | "dots" | "party";
 
 export interface GraphBackground {
     type: GraphBackgroundType;
@@ -26,7 +27,7 @@ export interface GraphBackground {
 }
 
 export const DEFAULT_BACKGROUND: GraphBackground = {
-    type: "solid",
+    type: "default",
     color1: "#0e0e0e",
     color2: "#1A182A",
     gradientAngle: 180,
@@ -40,22 +41,22 @@ export interface BackgroundCSS {
 
 export function buildBackgroundCSS(bg: GraphBackground): BackgroundCSS {
     switch (bg.type) {
+        case "default":
+            return { color: "var(--theme-black)", image: "none", size: "" };
         case "solid":
             return { color: bg.color1, image: "none", size: "" };
         case "gradient":
-            return { color: bg.color2, image: `linear-gradient(${bg.gradientAngle}deg, ${bg.color1}, ${bg.color2})`, size: "" };
-        case "grid": {
-            const line = bg.color1;
+            return { color: bg.color1, image: `linear-gradient(${bg.gradientAngle}deg, ${bg.color1}, ${bg.color2})`, size: "" };
+        case "grid":
             return {
-                color: bg.color2,
-                image: `repeating-linear-gradient(0deg, transparent, transparent 29px, ${line} 29px, ${line} 30px), repeating-linear-gradient(90deg, transparent, transparent 29px, ${line} 29px, ${line} 30px)`,
+                color: bg.color1,
+                image: `repeating-linear-gradient(0deg, transparent, transparent 29px, ${bg.color2} 29px, ${bg.color2} 30px), repeating-linear-gradient(90deg, transparent, transparent 29px, ${bg.color2} 29px, ${bg.color2} 30px)`,
                 size: "",
             };
-        }
         case "dots":
-            return { color: bg.color2, image: `radial-gradient(${bg.color1} 1px, transparent 1px)`, size: "20px 20px" };
+            return { color: bg.color1, image: `radial-gradient(${bg.color2} 1px, transparent 1px)`, size: "20px 20px" };
         case "party":
-            return { color: bg.color2, image: "none", size: "" };
+            return { color: bg.color1, image: "none", size: "" };
         default:
             return { color: bg.color1, image: "none", size: "" };
     }
@@ -68,19 +69,36 @@ export interface CustomPreset {
     typeStyles: Record<string, PartialNodeStyle>;
     edgeLabelColors: Record<string, string>;
     colorEdgesByConstraint: boolean;
-    labelUseBorderColor: boolean;
+    labelColorMode?: "auto" | "border" | "fixed";
+    labelUseBorderColor?: boolean; // legacy, for backwards compat
     labelsVisible: boolean;
     showHoverLabel: boolean;
     degreeScaling: boolean;
     background: GraphBackground;
 }
 
-function deriveFillFromBorder(borderHex: string): string {
-    const hex = borderHex.startsWith("#") ? borderHex.slice(1) : borderHex;
-    const r = Math.round(parseInt(hex.substring(0, 2), 16) * 0.25);
-    const g = Math.round(parseInt(hex.substring(2, 4), 16) * 0.25);
-    const b = Math.round(parseInt(hex.substring(4, 6), 16) * 0.25);
+function parseHex(hex: string): [number, number, number] {
+    const h = hex.startsWith("#") ? hex.slice(1) : hex;
+    return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
+}
+
+function blendColors(foreHex: string, bgHex: string, amount: number): string {
+    const [fr, fg, fb] = parseHex(foreHex);
+    const [br, bg, bb] = parseHex(bgHex);
+    const r = Math.round(fr * amount + br * (1 - amount));
+    const g = Math.round(fg * amount + bg * (1 - amount));
+    const b = Math.round(fb * amount + bb * (1 - amount));
     return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+}
+
+/** Migrate saved styles from the old borderColor+color model to the single color model. */
+function migrateStyles(styles: Record<string, any>): Record<string, PartialNodeStyle> {
+    const result: Record<string, PartialNodeStyle> = {};
+    for (const [key, val] of Object.entries(styles)) {
+        const { borderColor, color, ...rest } = val as any;
+        result[key] = { ...rest, color: borderColor ?? color };
+    }
+    return result;
 }
 
 const ALL_KINDS: VertexKind[] = [
@@ -90,13 +108,13 @@ const ALL_KINDS: VertexKind[] = [
 ];
 
 @Injectable({ providedIn: "root" })
-export class GraphStyleService {
+export class GraphStyleService implements OnDestroy {
 
     private _kindStyles: Record<string, PartialNodeStyle> = {};
     private _typeStyles: Record<string, PartialNodeStyle> = {};
     private _edgeLabelColors: Record<string, string> = {};
     private _colorEdgesByConstraint = false;
-    private _labelUseBorderColor = true;
+    private _labelColorMode: "auto" | "border" | "fixed" = "auto";
     private _highlightedKinds = new Set<VertexKind>();
     private _highlightedTypes = new Set<string>();
     private _highlightedEdges = new Set<string>();
@@ -104,21 +122,45 @@ export class GraphStyleService {
     private _labelsVisible = true;
     private _showHoverLabel = true;
     private _degreeScaling = false;
+    private _fillOpacity = 0.25;
     private _background: GraphBackground = { ...DEFAULT_BACKGROUND };
 
     private _customPresets: CustomPreset[] = [];
 
     readonly styles$ = new BehaviorSubject<void>(undefined);
+    private themeSubscription: Subscription;
 
-    constructor() {
+    constructor(private themeService: ThemeService) {
         this.load();
         this.loadCustomPresets();
+        this.themeSubscription = this.themeService.effectiveTheme$.subscribe(() => {
+            if (this._background.type === "default") {
+                this.styles$.next();
+            }
+        });
+    }
+
+    ngOnDestroy() {
+        this.themeSubscription.unsubscribe();
+    }
+
+    get effectiveBackgroundHex(): string {
+        const bg = this._background;
+        if (bg.type === "default") {
+            return getComputedStyle(document.documentElement).getPropertyValue("--theme-black").trim();
+        }
+        return bg.color1; // solid, gradient, grid, dots, party — color1 is always the base
+    }
+
+    private deriveFill(color: string): string {
+        return blendColors(color, this.effectiveBackgroundHex, this._fillOpacity);
     }
 
     getKindDefault(kind: VertexKind): NodeStyle {
+        const color = defaultQueryStyleParams.vertexBorderColors[kind];
         return {
-            color: defaultQueryStyleParams.vertexColors[kind],
-            borderColor: defaultQueryStyleParams.vertexBorderColors[kind],
+            color,
+            fillColor: this.deriveFill(color),
             shape: defaultQueryStyleParams.vertexShapes[kind],
             width: defaultQueryStyleParams.vertexWidths[kind],
             height: defaultQueryStyleParams.vertexHeights[kind],
@@ -128,10 +170,10 @@ export class GraphStyleService {
     getKindStyle(kind: VertexKind): NodeStyle {
         const base = this.getKindDefault(kind);
         const override = this._kindStyles[kind];
-        const borderColor = override?.borderColor ?? base.borderColor;
+        const color = override?.color ?? base.color;
         return {
-            color: override?.color ?? deriveFillFromBorder(borderColor),
-            borderColor,
+            color,
+            fillColor: this.deriveFill(color),
             shape: override?.shape ?? base.shape,
             width: override?.width ?? base.width,
             height: override?.height ?? base.height,
@@ -145,10 +187,10 @@ export class GraphStyleService {
         const typeOverride = this._typeStyles[typeLabel];
         if (!typeOverride) return kindStyle;
 
-        const borderColor = typeOverride.borderColor ?? kindStyle.borderColor;
+        const color = typeOverride.color ?? kindStyle.color;
         return {
-            color: typeOverride.color ?? deriveFillFromBorder(borderColor),
-            borderColor,
+            color,
+            fillColor: this.deriveFill(color),
             shape: typeOverride.shape ?? kindStyle.shape,
             width: typeOverride.width ?? kindStyle.width,
             height: typeOverride.height ?? kindStyle.height,
@@ -201,14 +243,28 @@ export class GraphStyleService {
         this.save();
     }
 
-    get labelUseBorderColor(): boolean {
-        return this._labelUseBorderColor;
+    get labelColorMode(): "auto" | "border" | "fixed" {
+        return this._labelColorMode;
     }
 
-    set labelUseBorderColor(value: boolean) {
-        this._labelUseBorderColor = value;
+    set labelColorMode(value: "auto" | "border" | "fixed") {
+        this._labelColorMode = value;
         this.save();
         this.styles$.next();
+    }
+
+    /** Resolves "auto" to the effective mode based on background luminance. */
+    get labelUseBorderColor(): boolean {
+        if (this._labelColorMode === "auto") {
+            const hex = this.effectiveBackgroundHex;
+            const h = hex.startsWith("#") ? hex.slice(1) : hex;
+            const r = parseInt(h.substring(0, 2), 16);
+            const g = parseInt(h.substring(2, 4), 16);
+            const b = parseInt(h.substring(4, 6), 16);
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return luminance < 0.5; // dark bg → border color; light bg → fixed
+        }
+        return this._labelColorMode === "border";
     }
 
     // -- Edge label colors --
@@ -247,8 +303,8 @@ export class GraphStyleService {
         const vertexHeights: Record<string, number> = {} as any;
         for (const kind of ALL_KINDS) {
             const style = this.getKindStyle(kind);
-            vertexColors[kind] = style.color;
-            vertexBorderColors[kind] = style.borderColor;
+            vertexColors[kind] = style.fillColor;
+            vertexBorderColors[kind] = style.color;
             vertexShapes[kind] = style.shape;
             vertexWidths[kind] = style.width;
             vertexHeights[kind] = style.height;
@@ -260,8 +316,11 @@ export class GraphStyleService {
         const vertexTypeWidths: Record<string, number> = {};
         const vertexTypeHeights: Record<string, number> = {};
         for (const [typeLabel, override] of Object.entries(this._typeStyles)) {
-            if (override.color) vertexTypeColors[typeLabel] = override.color;
-            if (override.borderColor) vertexTypeBorderColors[typeLabel] = override.borderColor;
+            const color = override.color;
+            if (color) {
+                vertexTypeBorderColors[typeLabel] = color;
+                vertexTypeColors[typeLabel] = this.deriveFill(color);
+            }
             if (override.shape) vertexTypeShapes[typeLabel] = override.shape;
             if (override.width) vertexTypeWidths[typeLabel] = override.width;
             if (override.height) vertexTypeHeights[typeLabel] = override.height;
@@ -354,6 +413,14 @@ export class GraphStyleService {
         this.styles$.next();
     }
 
+    get fillOpacity(): number { return this._fillOpacity; }
+
+    set fillOpacity(value: number) {
+        this._fillOpacity = Math.max(0, Math.min(1, value));
+        this.save();
+        this.styles$.next();
+    }
+
     get degreeScaling(): boolean { return this._degreeScaling; }
 
     set degreeScaling(value: boolean) {
@@ -380,10 +447,10 @@ export class GraphStyleService {
 
     applyStructurePreset(): void {
         for (const kind of ALL_KINDS) {
-            const borderColor = defaultQueryStyleParams.vertexBorderColors[kind];
-            this._kindStyles[kind] = { color: borderColor, borderColor, shape: "ellipse", width: 6, height: 6 };
+            const color = defaultQueryStyleParams.vertexBorderColors[kind];
+            this._kindStyles[kind] = { color, shape: "ellipse", width: 6, height: 6 };
         }
-        this._labelUseBorderColor = true;
+        this._labelColorMode = "auto";
         this._labelsVisible = false;
         this._showHoverLabel = true;
         this._degreeScaling = true;
@@ -394,11 +461,10 @@ export class GraphStyleService {
 
     applyUniformPreset(): void {
         for (const kind of ALL_KINDS) {
-            const color = defaultQueryStyleParams.vertexColors[kind];
-            const borderColor = defaultQueryStyleParams.vertexBorderColors[kind];
-            this._kindStyles[kind] = { color, borderColor, shape: "rounded-rect", width: 56, height: 24 };
+            const color = defaultQueryStyleParams.vertexBorderColors[kind];
+            this._kindStyles[kind] = { color, shape: "rounded-rect", width: 56, height: 24 };
         }
-        this._labelUseBorderColor = true;
+        this._labelColorMode = "auto";
         this._labelsVisible = true;
         this._showHoverLabel = true;
         this._degreeScaling = false;
@@ -409,13 +475,13 @@ export class GraphStyleService {
 
     applyClassicPreset(): void {
         for (const kind of ALL_KINDS) {
-            const borderColor = defaultQueryStyleParams.vertexBorderColors[kind];
+            const color = defaultQueryStyleParams.vertexBorderColors[kind];
             const shape = defaultQueryStyleParams.vertexShapes[kind];
             const width = defaultQueryStyleParams.vertexWidths[kind];
             const height = defaultQueryStyleParams.vertexHeights[kind];
-            this._kindStyles[kind] = { color: borderColor, borderColor, shape, width, height };
+            this._kindStyles[kind] = { color, shape, width, height };
         }
-        this._labelUseBorderColor = false;
+        this._labelColorMode = "fixed";
         this._labelsVisible = true;
         this._showHoverLabel = true;
         this._degreeScaling = false;
@@ -441,9 +507,9 @@ export class GraphStyleService {
             const shape = defaultQueryStyleParams.vertexShapes[kind];
             const width = defaultQueryStyleParams.vertexWidths[kind];
             const height = defaultQueryStyleParams.vertexHeights[kind];
-            this._kindStyles[kind] = { color, borderColor: color, shape, width, height };
+            this._kindStyles[kind] = { color, shape, width, height };
         }
-        this._labelUseBorderColor = false;
+        this._labelColorMode = "fixed";
         this._labelsVisible = true;
         this._showHoverLabel = true;
         this._degreeScaling = false;
@@ -464,7 +530,7 @@ export class GraphStyleService {
         this._kindStyles = {};
         this._typeStyles = {};
         this._edgeLabelColors = {};
-        this._labelUseBorderColor = true;
+        this._labelColorMode = "auto";
         this._colorEdgesByConstraint = false;
         this._labelsVisible = true;
         this._showHoverLabel = true;
@@ -488,7 +554,7 @@ export class GraphStyleService {
             typeStyles: structuredClone(this._typeStyles),
             edgeLabelColors: { ...this._edgeLabelColors },
             colorEdgesByConstraint: this._colorEdgesByConstraint,
-            labelUseBorderColor: this._labelUseBorderColor,
+            labelColorMode: this._labelColorMode,
             labelsVisible: this._labelsVisible,
             showHoverLabel: this._showHoverLabel,
             degreeScaling: this._degreeScaling,
@@ -510,7 +576,7 @@ export class GraphStyleService {
         this._typeStyles = structuredClone(preset.typeStyles);
         this._edgeLabelColors = { ...preset.edgeLabelColors };
         this._colorEdgesByConstraint = preset.colorEdgesByConstraint;
-        this._labelUseBorderColor = preset.labelUseBorderColor;
+        this._labelColorMode = preset.labelColorMode ?? (preset.labelUseBorderColor ? "auto" : "fixed");
         this._labelsVisible = preset.labelsVisible;
         this._showHoverLabel = preset.showHoverLabel;
         this._degreeScaling = preset.degreeScaling;
@@ -568,11 +634,12 @@ export class GraphStyleService {
                 typeStyles: this._typeStyles,
                 edgeLabelColors: this._edgeLabelColors,
                 colorEdgesByConstraint: this._colorEdgesByConstraint,
-                labelUseBorderColor: this._labelUseBorderColor,
+                labelColorMode: this._labelColorMode,
                 activePreset: this._activePreset,
                 labelsVisible: this._labelsVisible,
                 showHoverLabel: this._showHoverLabel,
                 degreeScaling: this._degreeScaling,
+                fillOpacity: this._fillOpacity,
                 background: this._background,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -586,15 +653,16 @@ export class GraphStyleService {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (raw) {
                 const data = JSON.parse(raw);
-                this._kindStyles = data.kindStyles ?? {};
-                this._typeStyles = data.typeStyles ?? {};
+                this._kindStyles = migrateStyles(data.kindStyles ?? {});
+                this._typeStyles = migrateStyles(data.typeStyles ?? {});
                 this._edgeLabelColors = data.edgeLabelColors ?? {};
                 this._colorEdgesByConstraint = data.colorEdgesByConstraint ?? false;
-                this._labelUseBorderColor = data.labelUseBorderColor ?? true;
+                this._labelColorMode = data.labelColorMode ?? (data.labelUseBorderColor === false ? "fixed" : "auto");
                 this._activePreset = data.activePreset ?? null;
                 this._labelsVisible = data.labelsVisible ?? true;
                 this._showHoverLabel = data.showHoverLabel ?? true;
                 this._degreeScaling = data.degreeScaling ?? false;
+                this._fillOpacity = data.fillOpacity ?? 0.25;
                 if (data.background) this._background = { ...DEFAULT_BACKGROUND, ...data.background };
             }
         } catch (e) {

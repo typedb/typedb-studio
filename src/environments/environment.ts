@@ -12,7 +12,7 @@ import { Environment } from "./typings";
 
 export const environment: Environment = {
     env: "local",
-    cloudUrl: "http://localhost:8080",
+    cloudUrl: "https://cloud.typedb.dev",
 };
 
 /*

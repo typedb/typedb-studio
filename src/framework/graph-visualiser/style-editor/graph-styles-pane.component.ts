@@ -3,8 +3,8 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatSlideToggleModule } from "@angular/material/slide-toggle";
-import { GraphStyleService } from "../../service/graph-style.service";
-import { GraphVisualiser } from "../graph-visualiser";
+import { GraphStyleService } from "../../../service/graph-style.service";
+import { GraphVisualiser } from "../engine";
 import { HighlightsTabComponent } from "./highlights-tab.component";
 import { ThemesTabComponent } from "./themes-tab.component";
 import { EditorTabComponent } from "./editor-tab.component";
@@ -40,17 +40,17 @@ export class GraphStylesPaneComponent {
         this.visualiser?.colorEdgesByConstraintIndex(!this.styleService.colorEdgesByConstraint);
     }
 
-    get labelMode(): "border" | "fixed" | "hidden" {
+    get labelMode(): "auto" | "fixed" | "hidden" {
         if (!this.styleService.labelsVisible) return "hidden";
-        return this.styleService.labelUseBorderColor ? "border" : "fixed";
+        return this.styleService.labelColorMode === "fixed" ? "fixed" : "auto";
     }
 
-    setLabelMode(mode: "border" | "fixed" | "hidden"): void {
+    setLabelMode(mode: "auto" | "fixed" | "hidden"): void {
         if (mode === "hidden") {
             this.styleService.labelsVisible = false;
         } else {
             this.styleService.labelsVisible = true;
-            this.styleService.labelUseBorderColor = mode === "border";
+            this.styleService.labelColorMode = mode === "fixed" ? "fixed" : "auto";
         }
         this.visualiser?.restoreLabels();
     }
