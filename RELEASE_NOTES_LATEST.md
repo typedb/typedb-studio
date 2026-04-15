@@ -5,7 +5,7 @@ TypeDB Studio is hosted on the Web at https://studio.typedb.com.
 Alternatively:
 
 - Install: https://typedb.com/docs/home/install/studio
-- Direct download: https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:3.10.1
+- Direct download: https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:3.10.2
 
 Desktop builds of TypeDB Studio run in the following environments:
 
@@ -20,11 +20,15 @@ Desktop builds of TypeDB Studio run in the following environments:
 
 ### TypeDB server compatibility
 
-TypeDB Studio 3.10.1 is compatible with TypeDB >= 3.3. For older TypeDB versions, enquire on the TypeDB Discord chat server (https://typedb.com/discord).
+TypeDB Studio 3.10.2 is compatible with TypeDB >= 3.3. For older TypeDB versions, enquire on the TypeDB Discord chat server (https://typedb.com/discord).
 
 ---
 
+## New features
+
+- Added light mode theme and the ability to toggle between light or dark mode (or follow the system theme)
+
 ## Bugs fixed
 
-- Schema visualiser now correctly runs force graph simulation
-- Agent mode and schema visualiser graphs now correctly support Search and Maximise
+- When highlights are active in graph visualisation, always bring foreground edges to the front
+- Color 1 is now always the "primary" color of any graph visualiser background configuration
