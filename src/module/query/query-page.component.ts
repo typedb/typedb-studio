@@ -93,6 +93,12 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     graphMaximised = false;
 
+    get currentRun(): RunOutputState | null {
+        const runs = this.state.currentTabRuns;
+        const idx = this.state.selectedRunIndex;
+        return idx >= 0 && idx < runs.length ? runs[idx] : null;
+    }
+
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
     private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();

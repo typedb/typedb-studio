@@ -6,7 +6,7 @@
 
 import { inject, Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { BehaviorSubject, combineLatest, map, Observable, pairwise, shareReplay, startWith, switchMap } from "rxjs";
+import { BehaviorSubject, combineLatest, concatMap, from, map, Observable, pairwise, shareReplay, startWith, switchMap } from "rxjs";
 import { DriverAction } from "../concept/action";
 import { GraphVisualiser } from "../framework/graph-visualiser/engine";
 import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/engine/sigma-settings";
@@ -23,15 +23,25 @@ import {
 } from "@typedb/driver-http";
 import { AppData, RowLimit } from "./app-data.service";
 import { GraphStyleService } from "./graph-style.service";
+import { splitTypeQLQueries } from "../framework/util/typeql-split";
 
 export type OutputType = "raw" | "log" | "table" | "graph";
 export { RowLimit } from "./app-data.service";
+
+export interface SubQueryResult {
+    index: number;
+    label: string;
+    queryText: string;
+    table: TableOutputState;
+}
 
 export interface RunOutputState {
     id: string;
     label: string;
     query: string;
     pinned: boolean;
+    multiQuery: boolean;
+    subResults: SubQueryResult[];
     log: LogOutputState;
     table: TableOutputState;
     graph: GraphOutputState;
@@ -44,6 +54,8 @@ export function createRunOutputState(label: string, query: string, styleService:
         label,
         query,
         pinned: false,
+        multiQuery: false,
+        subResults: [],
         log: new LogOutputState(),
         table: new TableOutputState(),
         graph: new GraphOutputState(styleService),
@@ -381,6 +393,15 @@ export class QueryPageState {
     }
 
     runQuery(query: string) {
+        const queries = splitTypeQLQueries(query);
+        if (queries.length <= 1) {
+            this._runSingleQuery(queries[0] || query);
+        } else {
+            this._runMultiQuery(queries);
+        }
+    }
+
+    private _runSingleQuery(query: string) {
         const tabState = this.currentTabOutputState;
 
         // Detach current run's graph before creating new run
@@ -424,24 +445,113 @@ export class QueryPageState {
             error: (err) => {
                 newRun.table.status = "error";
                 newRun.graph.status = "error";
-                this.driver.checkHealth().subscribe({
-                    next: () => {
-                        let msg = ``;
-                        if (isApiErrorResponse(err)) {
-                            msg = err.err.message;
-                        } else {
-                            msg = err?.message ?? err?.toString() ?? `Unknown error`;
-                        }
-                        newRun.log.appendBlankLine();
-                        newRun.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
-                    },
-                    error: () => {
-                        const msg = `Unable to connect to TypeDB server.`;
-                        newRun.log.appendBlankLine();
-                        newRun.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
-                    }
-                });
+                this._handleQueryError(newRun, err);
             },
+        });
+    }
+
+    private _runMultiQuery(queries: string[]) {
+        const tabState = this.currentTabOutputState;
+
+        // Detach current run's graph before creating new run
+        const oldRun = currentRun(tabState);
+        if (oldRun) oldRun.graph.detach();
+
+        const replaceIndex = oldRun && !oldRun.pinned ? tabState.selectedRunIndex : -1;
+        if (replaceIndex >= 0) {
+            oldRun!.graph.destroy();
+            tabState.runs.splice(replaceIndex, 1);
+        }
+
+        tabState.runCounter++;
+        const joinedQuery = queries.join(' end; ');
+        const newRun = createRunOutputState(`Run ${tabState.runCounter}`, joinedQuery, this.graphStyleService);
+        newRun.multiQuery = true;
+
+        if (replaceIndex >= 0) {
+            tabState.runs.splice(replaceIndex, 0, newRun);
+            tabState.selectedRunIndex = replaceIndex;
+        } else {
+            tabState.runs.push(newRun);
+            tabState.selectedRunIndex = tabState.runs.length - 1;
+        }
+
+        // Initialise outputs
+        newRun.log.appendLines(RUNNING, `${queries.length} queries`, ``, `${TIMESTAMP}${new Date().toISOString()}`);
+        newRun.table.status = "running";
+        newRun.graph.status = "multiQuery";
+
+        // Create sub-results
+        for (let i = 0; i < queries.length; i++) {
+            const sub: SubQueryResult = {
+                index: i,
+                label: `Query ${i + 1}`,
+                queryText: queries[i],
+                table: new TableOutputState(),
+            };
+            sub.table.status = "running";
+            newRun.subResults.push(sub);
+        }
+
+        const rowLimit = this.rowLimitControl.value;
+        const queryOptions = rowLimit !== "none" ? { answerCountLimit: rowLimit } : undefined;
+        const rawResults: string[] = [];
+
+        from(queries.map((q, i) => ({ query: q, index: i }))).pipe(
+            concatMap(({ query, index }) => {
+                newRun.log.appendBlankLine();
+                newRun.log.appendLines(`${MULTI_QUERY_HEADER}Query ${index + 1}`, query);
+                return this.driver.query(query, queryOptions).pipe(
+                    map(res => ({ index, res }))
+                );
+            })
+        ).subscribe({
+            next: ({ index, res }) => {
+                const sub = newRun.subResults[index];
+                const autoCommitted = this.driver.autoTransactionEnabled$.value && !isApiErrorResponse(res) && res.ok.queryType !== "read";
+
+                // Log output
+                newRun.log.appendBlankLine();
+                newRun.log.appendQueryResult(res, autoCommitted);
+
+                // Table output per sub-result
+                sub.table.push(res);
+
+                // Raw accumulation
+                rawResults[index] = JSON.stringify(res, null, 2);
+            },
+            error: (err) => {
+                // Mark remaining sub-results as error
+                for (const sub of newRun.subResults) {
+                    if (sub.table.status === "running") sub.table.status = "error";
+                }
+                newRun.table.status = "error";
+                this._handleQueryError(newRun, err);
+            },
+            complete: () => {
+                newRun.table.status = "ok";
+                newRun.raw.push(`[\n${rawResults.filter(Boolean).join(',\n')}\n]`);
+            }
+        });
+    }
+
+    private _handleQueryError(run: RunOutputState, err: any) {
+        this.driver.checkHealth().subscribe({
+            next: () => {
+                let msg = ``;
+                if (isApiErrorResponse(err)) {
+                    msg = err.err.message;
+                } else {
+                    msg = err?.message ?? err?.toString() ?? `Unknown error`;
+                }
+                run.log.appendBlankLine();
+                run.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
+            },
+            error: () => {
+                const msg = `Unable to connect to TypeDB server.`;
+                run.log.appendBlankLine();
+                run.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
+            }
         });
     }
 
@@ -492,6 +602,7 @@ const RESULT = `## Result> `;
 const SUCCESS = `Success`;
 const SUCCESS_RAW = `success`;
 const ERROR = `Error`;
+const MULTI_QUERY_HEADER = `## `;
 const TABLE_INDENT = "   ";
 const CONTENT_INDENT = "    ";
 const TABLE_DASHES = 7;
@@ -772,7 +883,7 @@ export class TableOutputState {
     }
 }
 
-type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noAnswers" | "error";
+type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noAnswers" | "error" | "multiQuery";
 
 export class GraphOutputState {
 
