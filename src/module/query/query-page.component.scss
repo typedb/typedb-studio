@@ -52,6 +52,8 @@
     display: flex;
     flex-direction: column;
     gap: 4px !important;
+    @include shapes.standard-border;
+    border-radius: shapes.$border-radius;
 }
 
 .history-pane, .query-pane, .results-pane {
@@ -723,6 +725,8 @@ button {
 
 .history-pane {
     flex: 1;
+    border: none;
+    border-radius: 0;
 
     @media (max-width: media.$max-width-mobile) {
         display: none;

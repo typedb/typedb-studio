@@ -15,7 +15,7 @@
     @include colors.light-source-gradient(var(--theme-purple), var(--theme-deep-purple));
     transition: background 0.1s linear;
     padding: 16px;
-    
+
     display: flex;
     flex-direction: column;
 
