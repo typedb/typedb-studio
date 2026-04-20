@@ -277,6 +277,10 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.dialog.open(DatabaseCreateDialogComponent);
     }
 
+    onGraphStatusAction(action: string) {
+        if (action === "viewLog") this.state.outputTypeControl.patchValue("log");
+    }
+
     runQuery() {
         this.state.runCurrentTabQuery();
     }

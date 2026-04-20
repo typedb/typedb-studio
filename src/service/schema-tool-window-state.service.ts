@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { BehaviorSubject, Subject } from "rxjs";
+import { BehaviorSubject, map, Subject } from "rxjs";
 import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from "./schema-state.service";
 import { Injectable } from "@angular/core";
 import { AppData } from "./app-data.service";
@@ -67,6 +67,7 @@ export type SchemaTreeChildNode = SchemaTreeConceptNode | SchemaTreeLinkNode;
 })
 export class SchemaToolWindowState {
     dataSource$ = new BehaviorSubject<SchemaTreeRootNode[]>([]);
+    isEmpty$ = this.dataSource$.pipe(map(data => data.length > 0 && data.every(root => !root.children.length)));
     viewMode$ = new BehaviorSubject<"flat" | "hierarchical">(this.appData.viewState.schemaToolWindowState().viewMode);
     linksVisibility$ = new BehaviorSubject<Record<SchemaTreeLinkKind, boolean>>(this.appData.viewState.schemaToolWindowState().linksVisibility);
     rootNodesCollapsed: Record<SchemaTreeRootNode["label"], boolean> = this.appData.viewState.schemaToolWindowState().rootNodesCollapsed;

@@ -188,7 +188,7 @@
     }
 }
 
-::ng-deep .status-text {
+.status-text {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -206,5 +206,19 @@
     a {
         color: var(--gc-green);
         cursor: pointer;
+    }
+
+    &.status-text-left {
+        text-align: left;
+        width: auto;
+        max-width: 80%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        ul {
+            margin: 0;
+            padding-left: 1.25rem;
+        }
     }
 }

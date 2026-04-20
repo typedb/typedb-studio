@@ -86,32 +86,9 @@
                        [class.invisible]="outputState.outputTypeControl.value !== 'graph'"
                        class="output-view"
                        [visualiser]="currentRun!.graph.visualiser ?? null"
-                       [queryRunning]="currentRun!.graph.status === 'running'"
-                       [(maximised)]="graphMaximised">
-        @switch (currentRun.graph.status) {
-          @case ("error") {
-            <p class="status-text">This query returned an error. <a (click)="outputState.outputTypeControl.patchValue('log')">View in log</a></p>
-          }
-          @case ("running") {
-            <p class="status-text">Running query...</p>
-          }
-          @case ("graphlessQueryType") {
-            <div class="status-text status-text-left">
-              <p>Query completed. This query type cannot be displayed as a graph.</p>
-              <p>Graph output is available for the following query types:</p>
-              <ul>
-                <li>Match queries without Fetch</li>
-                <li>Insert queries</li>
-              </ul>
-            </div>
-          }
-          @case ("answerOutputDisabled") {
-            <p class="status-text">Query completed. Answer output is disabled.</p>
-          }
-          @case ("noAnswers") {
-            <p class="status-text">Query completed. No answers were returned.</p>
-          }
-        }
+                       [status]="currentRun!.graph.status"
+                       [(maximised)]="graphMaximised"
+                       (statusAction)="onGraphStatusAction($event)">
       </ts-graph-canvas>
 
       <!-- Raw View -->

@@ -24,6 +24,30 @@
     }
 }
 
+.empty-schema-placeholder {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    white-space: normal;
+
+    .empty-schema-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    ul {
+        margin: 0;
+        padding-left: 1.25rem;
+    }
+
+    a {
+        color: var(--theme-green);
+    }
+}
+
 .card-header-wrapper {
     padding: 16px;
 
