@@ -163,6 +163,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.queryTabsState.selectedTabIndex$.pipe(skip(1)).subscribe(() => {
             this.state.handleTabSwitch(this.previousTabId);
             this.previousTabId = this.queryTabsState.currentTab?.id ?? null;
+            this.scrollActiveTabIntoView();
         });
 
         this.state.outputTypeControl.valueChanges.subscribe((value) => {
