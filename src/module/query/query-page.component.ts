@@ -186,6 +186,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
                 this.updateTabsScrollState();
             });
             this.tabsScrollObserver.observe(this.tabsScrollContainer.nativeElement);
+            this.scrollActiveTabIntoView();
         }
 
         if (this.runTabsScrollContainer) {
@@ -222,6 +223,17 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
             event.preventDefault();
             el.scrollLeft += event.deltaY;
         }
+    }
+
+    private scrollActiveTabIntoView() {
+        setTimeout(() => {
+            const container = this.tabsScrollContainer?.nativeElement;
+            if (!container) return;
+            const activeTab = container.querySelector('.query-tab.active') as HTMLElement;
+            if (!activeTab) return;
+            activeTab.scrollIntoView({ inline: "nearest", block: "nearest" });
+            this.updateTabsScrollState();
+        });
     }
 
     scrollTabsLeft() {
