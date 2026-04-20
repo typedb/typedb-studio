@@ -168,6 +168,10 @@ i.ts-beacon {
         margin-left: 8px;
     }
 
+    button.no-databases {
+        color: var(--theme-secondary-light-grey);
+    }
+
     button.selected {
         color: var(--theme-green);
 

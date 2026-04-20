@@ -47,6 +47,11 @@ export class DatabaseCreateDialogComponent {
         private dialogRef: MatDialogRef<DatabaseCreateDialogComponent>,
         private formBuilder: FormBuilder, private snackbar: SnackbarService, private driver: DriverState,
     ) {
+        this.driver.databaseList$.pipe(first()).subscribe(databases => {
+            if (!databases?.length) {
+                this.form.controls.name.setValue("default");
+            }
+        });
     }
 
     submit() {
