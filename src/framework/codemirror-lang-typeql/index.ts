@@ -47,6 +47,7 @@ export const TypeQLLanguage = LRLanguage.define({
 
         // Keywords
         ISA: t.keyword,
+        SUB: t.keyword,
         HAS: t.keyword,
         LINKS: t.keyword,
         OWNS: t.keyword,
