@@ -30,6 +30,7 @@ import { DriverState } from "../../service/driver-state.service";
 import { HistoryWindowState } from "../../service/query-page-state.service";
 import { AppData } from "../../service/app-data.service";
 import { SnackbarService } from "../../service/snackbar.service";
+import { DatabaseCreateDialogComponent } from "../database/create-dialog/database-create-dialog.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 
 @Component({
@@ -191,6 +192,10 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
 
     openSelectDatabaseDialog() {
         this.dialog.open(DatabaseSelectDialogComponent);
+    }
+
+    openCreateDatabaseDialog() {
+        this.dialog.open(DatabaseCreateDialogComponent);
     }
 
     onSubmit(event: Event): void {

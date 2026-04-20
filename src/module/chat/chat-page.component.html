@@ -28,9 +28,15 @@
             <i class="fa-thin fa-sparkles"></i>
             <h3>Build with AI agent</h3>
             <aside class="text-muted">Powered by OpenAI. Chat data is shared for model training purposes. Rate limits apply.<br/>AI code generation can make mistakes, so double-check it.</aside>
-            <button mat-flat-button (click)="openSelectDatabaseDialog()">
-              <i class="fa-light fa-database"></i><span>Select database</span>
-            </button>
+            @if ((driver.databaseList$ | async)?.length) {
+              <button mat-flat-button (click)="openSelectDatabaseDialog()">
+                <i class="fa-light fa-database"></i><span>Select database</span>
+              </button>
+            } @else {
+              <button mat-flat-button (click)="openCreateDatabaseDialog()">
+                <i class="fa-light fa-database"></i><span>Create new database</span>
+              </button>
+            }
           </div>
         </div>
       } @else {

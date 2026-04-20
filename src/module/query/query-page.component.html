@@ -244,9 +244,15 @@
           </div>
         } @else if (!(driver.database$ | async)) {
           <div class="answers-placeholder-container">
-            <button mat-flat-button id="answersPlaceholderSelectDatabase" (click)="openSelectDatabaseDialog()">
-              <i class="fa-light fa-database"></i><span>Select database</span>
-            </button>
+            @if ((driver.databaseList$ | async)?.length) {
+              <button mat-flat-button id="answersPlaceholderSelectDatabase" (click)="openSelectDatabaseDialog()">
+                <i class="fa-light fa-database"></i><span>Select database</span>
+              </button>
+            } @else {
+              <button mat-flat-button id="answersPlaceholderSelectDatabase" (click)="openCreateDatabaseDialog()">
+                <i class="fa-light fa-database"></i><span>Create new database</span>
+              </button>
+            }
           </div>
         }
       </div>

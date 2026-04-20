@@ -8,7 +8,7 @@ import { Injectable } from "@angular/core";
 import { BehaviorSubject, catchError, concatMap, distinctUntilChanged, filter, finalize, from, map, Observable, of, shareReplay, startWith, Subject, switchMap, takeUntil, tap, throwError } from "rxjs";
 import { v4 as uuid } from "uuid";
 import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
-import { ConnectionConfig, databasesSortedByName, DEFAULT_DATABASE_NAME } from "../concept/connection";
+import { ConnectionConfig, databasesSortedByName } from "../concept/connection";
 import { OperationMode, Transaction } from "../concept/transaction";
 import { fromPromiseWithRetry, requireValue } from "../framework/util/observable";
 import { INTERNAL_ERROR } from "../framework/util/strings";
@@ -147,9 +147,6 @@ export class DriverState {
                 switchMap(() => this.refreshDatabaseList()),
                 switchMap((res) => {
                     if (isOkResponse(res)) {
-                        if (!res.ok.databases.length) return this.setupDefaultDatabase(lockId).pipe(map(() =>
-                            config.withDatabase(this.requireDatabase())
-                        ));
                         if (res.ok.databases.length === 1) this.selectDatabase(res.ok.databases[0], lockId);
                         else if (config.params.database && this.requireDatabaseList().some(x => x.name === config.params.database)) {
                             this.selectDatabase({ name: config.params.database }, lockId);
@@ -443,10 +440,6 @@ export class DriverState {
 
     sendStopSignal() {
         this._stopSignal$.next();
-    }
-
-    private setupDefaultDatabase(lockId?: string) {
-        return this.createAndSelectDatabase(DEFAULT_DATABASE_NAME, lockId);
     }
 
     private tryUseWriteLock<RES = any>(job: () => RES, lockId = uuid()): RES {

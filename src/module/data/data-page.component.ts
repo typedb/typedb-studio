@@ -22,6 +22,7 @@ import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { DataEditorState, DataTab } from "../../service/data-editor-state.service";
 import { DriverState } from "../../service/driver-state.service";
 import { SchemaToolWindowState } from "../../service/schema-tool-window-state.service";
+import { DatabaseCreateDialogComponent } from "../database/create-dialog/database-create-dialog.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { InstanceTableComponent } from "./instance-table/instance-table.component";
 import { InstanceDetailComponent } from "./instance-detail/instance-detail.component";
@@ -110,6 +111,10 @@ export class DataPageComponent implements OnInit, OnDestroy {
 
     openSelectDatabaseDialog() {
         this.dialog.open(DatabaseSelectDialogComponent);
+    }
+
+    openCreateDatabaseDialog() {
+        this.dialog.open(DatabaseCreateDialogComponent);
     }
 
     onTabChange(index: number) {

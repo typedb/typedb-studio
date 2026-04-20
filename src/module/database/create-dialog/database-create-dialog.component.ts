@@ -11,7 +11,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { isApiErrorResponse } from "@typedb/driver-http";
-import { combineLatest, first, map, Subject } from "rxjs";
+import { combineLatest, filter, first, map, Subject } from "rxjs";
 import { ButtonComponent } from "../../../framework/button/button.component";
 import { FormActionsComponent, FormComponent, FormInputComponent, patternValidator, requiredValidator } from "../../../framework/form";
 import { ModalComponent } from "../../../framework/modal";
@@ -47,8 +47,8 @@ export class DatabaseCreateDialogComponent {
         private dialogRef: MatDialogRef<DatabaseCreateDialogComponent>,
         private formBuilder: FormBuilder, private snackbar: SnackbarService, private driver: DriverState,
     ) {
-        this.driver.databaseList$.pipe(first()).subscribe(databases => {
-            if (!databases?.length) {
+        this.driver.databaseList$.pipe(filter(x => x != null), first()).subscribe(databases => {
+            if (!databases.length) {
                 this.form.controls.name.setValue("default");
             }
         });
