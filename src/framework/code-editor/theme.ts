@@ -128,6 +128,7 @@ export const basicDarkTheme = EditorView.theme(
 
 export const basicDarkHighlightStyle = HighlightStyle.define([
     { tag: t.keyword, color: darkConstraint },
+    { tag: t.className, color: "#02dac9", fontStyle: "italic" },
     { tag: [t.variableName], color: darkVariable },
     { tag: [t.function(t.variableName)], color: darkConstraint },
     { tag: [t.labelName], color: darkBase09 },
@@ -184,7 +185,7 @@ export const basicDarkHighlightStyle = HighlightStyle.define([
         tag: [t.url, t.escape, t.special(t.string)],
         color: darkBase0B
     },
-    { tag: [t.meta], color: darkBase08 },
+    { tag: [t.meta], color: "#ffa187" },
     { tag: [t.comment], color: darkBase06, fontStyle: "italic" },
     {
         tag: t.monospace,
@@ -330,6 +331,7 @@ export const basicLightTheme = EditorView.theme(
 
 export const basicLightHighlightStyle = HighlightStyle.define([
     { tag: t.keyword, color: lightConstraint },
+    { tag: t.className, color: "#008f80", fontStyle: "italic" },
     { tag: [t.variableName], color: lightVariable },
     { tag: [t.function(t.variableName)], color: lightConstraint },
     { tag: [t.labelName], color: lightBase09 },
@@ -386,7 +388,7 @@ export const basicLightHighlightStyle = HighlightStyle.define([
         tag: [t.url, t.escape, t.special(t.string)],
         color: lightBase0B
     },
-    { tag: [t.meta], color: lightBase08 },
+    { tag: [t.meta], color: "#cc5530" },
     { tag: [t.comment], color: lightBase04, fontStyle: "italic" },
     {
         tag: t.monospace,

@@ -4,7 +4,7 @@
 // It may be better to rewrite as much as possible so that it's better suited to the LR parser.
 @top QueryFile { QueryFileEntry (END SEMICOLON QueryFileEntry)* (END SEMICOLON)? }
 QueryFileEntry { QuerySchema | QueryPipelinePreambled }
-@skip { whitespace | linecomment }
+@skip { whitespace | LINECOMMENT }
 
 // Schema
 QuerySchema {
@@ -774,6 +774,6 @@ ExpressionParenthesis {
   DOUBLELITERAL { "-"? $[0-9]+('.' $[0-9]+)?  }
   @precedence { DOUBLELITERAL, INTEGERLITERAL }
   
-  linecomment { "#" ![\n]* }
+  LINECOMMENT { "#" ![\n]* }
   whitespace { $[ \t\n\r]+ }
 }

@@ -86,8 +86,23 @@ export const TypeQLLanguage = LRLanguage.define({
         NOT: t.controlOperator,
         TRY: t.controlOperator,
 
+        // Types
+        KIND: t.className,
+
         // Misc
         Annotation: t.meta,
+        AnnotationCategory: t.meta,
+        ANNOTATION_ABSTRACT: t.meta,
+        ANNOTATION_CARD: t.meta,
+        ANNOTATION_CASCADE: t.meta,
+        ANNOTATION_DISTINCT: t.meta,
+        ANNOTATION_INDEPENDENT: t.meta,
+        ANNOTATION_KEY: t.meta,
+        ANNOTATION_RANGE: t.meta,
+        ANNOTATION_REGEX: t.meta,
+        ANNOTATION_SUBKEY: t.meta,
+        ANNOTATION_UNIQUE: t.meta,
+        ANNOTATION_VALUES: t.meta,
         LINECOMMENT: t.lineComment,
       })
     ]
