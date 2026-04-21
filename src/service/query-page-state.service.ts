@@ -101,6 +101,7 @@ const NO_SERVER_CONNECTED = `No server connected`;
 const NO_DATABASE_SELECTED = `No database selected`;
 const NO_OPEN_TRANSACTION = `No open transaction`;
 const QUERY_BLANK = `Query text is blank`;
+const QUERY_RUNNING = `A query is already running`;
 const QUERY_HIGHLIGHT_DIV_ID = null;
 
 const RUN_KEY_BINDING = detectOS() === "mac" ? "⌘+Enter" : "Ctrl+Enter";
@@ -127,6 +128,7 @@ export class QueryPageState {
     private _fallbackOutputState = createTabOutputState();
     private _fallbackRunState = createRunOutputState("", "", this.graphStyleService);
     private _graphCanvasEl: HTMLElement | null = null;
+    private _queryRunning$ = new BehaviorSubject<boolean>(false);
 
     getOrCreateTabOutputState(tabId: string): TabOutputState {
         let state = this.tabOutputStates.get(tabId);
@@ -193,9 +195,12 @@ export class QueryPageState {
 
     readonly runDisabledReason$ = combineLatest([
         this.driver.status$, this.driver.database$, this.driver.transactionOperationModeChanges$,
-        this.driver.transaction$, this.currentTabQuery$, this.queryTabs.selectedTabIndex$
-    ]).pipe(map(([status, db, txMode, tx, query]) => {
-        if (status !== "connected") return NO_SERVER_CONNECTED;
+        this.driver.transaction$, this.currentTabQuery$, this.queryTabs.selectedTabIndex$,
+        this._queryRunning$,
+    ]).pipe(map(([status, db, txMode, tx, query, , running]) => {
+        // Note: element at index 5 (selectedTabIndex) is unused but triggers recalculation
+        if (running) return QUERY_RUNNING;
+        else if (status !== "connected") return NO_SERVER_CONNECTED;
         else if (db == null) return NO_DATABASE_SELECTED;
         else if (txMode === "manual" && !tx) return NO_OPEN_TRANSACTION;
         else if (!query.length) return QUERY_BLANK;
@@ -393,6 +398,7 @@ export class QueryPageState {
     }
 
     runQuery(query: string) {
+        this._queryRunning$.next(true);
         const queries = splitTypeQLQueries(query);
         if (queries.length <= 1) {
             this._runSingleQuery(queries[0] || query);
@@ -441,11 +447,13 @@ export class QueryPageState {
         this.driver.query(query, queryOptions).subscribe({
             next: (res) => {
                 this.outputQueryResponseToRun(newRun, res);
+                this._queryRunning$.next(false);
             },
             error: (err) => {
                 newRun.table.status = "error";
                 newRun.graph.status = "error";
                 this._handleQueryError(newRun, err);
+                this._queryRunning$.next(false);
             },
         });
     }
@@ -520,9 +528,11 @@ export class QueryPageState {
                 }
                 newRun.table.status = "error";
                 this._handleQueryError(newRun, err);
+                this._queryRunning$.next(false);
             },
             complete: () => {
                 newRun.table.status = "ok";
+                this._queryRunning$.next(false);
                 if (this.driver.autoTransactionEnabled$.value) {
                     newRun.log.appendBlankLine();
                     newRun.log.appendLines(`Committed.`);
