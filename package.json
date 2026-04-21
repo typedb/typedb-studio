@@ -31,6 +31,7 @@
     "@codemirror/commands": "6.10.1",
     "@codemirror/language": "6.12.1",
     "@codemirror/lint": "6.9.4",
+    "@codemirror/search": "6.6.0",
     "@codemirror/state": "6.5.3",
     "@codemirror/view": "6.39.16",
     "@customerio/cdp-analytics-browser": "0.2.0",
