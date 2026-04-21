@@ -80,19 +80,10 @@
     border-bottom: none;
 
     ::ng-deep + app-drag-handle {
-        border-left: shapes.$border;
-        border-right: shapes.$border;
-        position: relative;
-
-        &::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            height: 1px;
-            background: var(--theme-light-purple);
-        }
+        height: 12px;
+        margin-top: -6px;
+        margin-bottom: -6px;
+        z-index: 2;
     }
 }
 
