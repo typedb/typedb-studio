@@ -380,6 +380,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         dialogRef.afterClosed().subscribe((newName: string | undefined) => {
             if (newName) {
                 this.queryTabsState.renameTab(tab, newName);
+                this.scrollActiveTabIntoView();
             }
         });
     }
