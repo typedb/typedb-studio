@@ -98,7 +98,7 @@
                   @if (run.pinned) {
                     <i class="fa-light fa-thumbtack pin-icon"></i>
                   }
-                  {{ run.label }}{{ run.batchSummary && run.table.status === 'running' ? ' (' + run.batchCompleted + '/' + run.batchTotal + ')' : '' }}
+                  {{ run.label }}
                 </span>
                 <button mat-icon-button class="run-tab-close-button" (click)="closeRunTab($event, i)">
                   <i class="fa-light fa-xmark"></i>

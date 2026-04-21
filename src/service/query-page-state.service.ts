@@ -461,12 +461,14 @@ export class QueryPageState {
         this.driver.query(query, queryOptions).subscribe({
             next: (res) => {
                 this.outputQueryResponseToRun(newRun, res);
+                newRun.log.flush();
                 this._queryRunning$.next(false);
             },
             error: (err) => {
                 newRun.table.status = "error";
                 newRun.graph.status = "error";
                 this._handleQueryError(newRun, err);
+                newRun.log.flush();
                 this._queryRunning$.next(false);
             },
         });
@@ -537,10 +539,14 @@ export class QueryPageState {
                 newRun.batchCompleted = index + 1;
 
                 // Log output
-                newRun.log.appendBlankLine();
-                newRun.log.appendLines(`${MULTI_QUERY_HEADER}Query ${index + 1}`, queries[index]);
-                newRun.log.appendBlankLine();
-                newRun.log.appendQueryResult(res, autoCommitted);
+                if (isBatchSummary) {
+                    newRun.log.setProgress(`Running query ${index + 1} of ${queries.length}...`);
+                } else {
+                    newRun.log.appendBlankLine();
+                    newRun.log.appendLines(`${MULTI_QUERY_HEADER}Query ${index + 1}`, queries[index]);
+                    newRun.log.appendBlankLine();
+                    newRun.log.appendQueryResult(res, autoCommitted);
+                }
 
                 if (!isBatchSummary) {
                     const sub = newRun.subResults[index];
@@ -564,6 +570,7 @@ export class QueryPageState {
                 }
                 newRun.table.status = "error";
                 this._handleQueryError(newRun, err);
+                newRun.log.flush();
                 queryAction.status = "error";
                 queryAction.completedAtTimestamp = Date.now();
                 this._queryRunning$.next(false);
@@ -593,6 +600,7 @@ export class QueryPageState {
                         if (sub.table.status === "running") sub.table.status = stopped ? "error" : "ok";
                     }
                 }
+                newRun.log.flush();
                 newRun.raw.push(`[\n${rawResults.filter(Boolean).join(',\n')}\n]`);
             }
         });
@@ -729,15 +737,51 @@ function indent(indentation: string, string: string): string {
 export class LogOutputState {
 
     control = new FormControl("", {nonNullable: true});
+    private buffer: string[] = [];
+    private flushScheduled = false;
 
     constructor() {}
 
     appendLines(...lines: string[]) {
-        this.control.patchValue(`${this.control.value}${lines.join(`\n`)}\n`);
+        this.progressLine = null;
+        this.buffer.push(lines.join(`\n`));
+        this.scheduleFlush();
     }
 
     appendBlankLine() {
-        this.appendLines(``);
+        this.progressLine = null;
+        this.buffer.push(``);
+        this.scheduleFlush();
+    }
+
+    /** Flush buffered lines and/or progress to the FormControl. */
+    flush() {
+        this.flushScheduled = false;
+        if (this.progressLine != null) {
+            const line = this.progressLine;
+            this.progressLine = null;
+            this.buffer.length = 0;
+            this.control.patchValue(line);
+            return;
+        }
+        if (this.buffer.length === 0) return;
+        const pending = this.buffer.join(`\n`) + `\n`;
+        this.buffer.length = 0;
+        this.control.patchValue(this.control.value + pending);
+    }
+
+    private progressLine: string | null = null;
+
+    /** Set a progress line that overwrites the control value on next flush. */
+    setProgress(line: string) {
+        this.progressLine = line;
+        this.scheduleFlush();
+    }
+
+    private scheduleFlush() {
+        if (this.flushScheduled) return;
+        this.flushScheduled = true;
+        setTimeout(() => this.flush(), 500);
     }
 
     appendQueryResult(res: ApiResponse<QueryResponse>, autoCommitted?: boolean) {
