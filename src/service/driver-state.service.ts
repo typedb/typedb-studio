@@ -103,6 +103,10 @@ export class DriverState {
         return this._actionLog$;
     }
 
+    emitAction(action: DriverAction) {
+        this._actionLog$.next(action);
+    }
+
     private requireConnection() {
         return requireValue(this.connection$);
     }
@@ -323,22 +327,9 @@ export class DriverState {
 
         const driver = this.requireDriver();
         const databaseName = this.requireDatabase().name;
-        const queryAction = queryRunActionOf(queries.join("\nend;\n"));
-        queryAction.batch = true;
-        this._actionLog$.next(queryAction);
 
         const detectedType = detectTransactionType(queries[0]) ?? "read";
         return this.autoMultiQuery(driver, databaseName, queries, detectedType, queryOptions).pipe(
-            tap({
-                complete: () => {
-                    queryAction.status = "success";
-                    queryAction.completedAtTimestamp = Date.now();
-                    queryAction.autoCommitted = detectedType !== "read";
-                },
-                error: (err) => {
-                    this.updateActionResultUnexpectedError(queryAction, err);
-                },
-            }),
             takeUntil(this._stopSignal$),
         );
     }

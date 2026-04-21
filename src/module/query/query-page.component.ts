@@ -298,6 +298,10 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.state.runCurrentTabQuery();
     }
 
+    stopQuery() {
+        this.state.stopQuery();
+    }
+
     // Query tab methods
     onQueryTabChange(index: number) {
         this.queryTabsState.selectTab(index);
@@ -504,7 +508,10 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     queryRunLabel(entry: QueryRunAction): string {
         const type = entry.batch ? "query batch" : "query";
-        if (entry.status === "error") return `${type} failed`;
+        if (entry.status === "error") {
+            if (entry.batch && (entry.result as any)?.message === "Query batch interrupted") return "query batch interrupted";
+            return `${type} failed`;
+        }
         return entry.autoCommitted ? `ran + committed ${type}` : `ran ${type}`;
     }
 

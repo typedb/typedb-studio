@@ -6,8 +6,8 @@
 
 import { inject, Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { BehaviorSubject, combineLatest, concatMap, from, map, Observable, pairwise, shareReplay, startWith, switchMap } from "rxjs";
-import { DriverAction } from "../concept/action";
+import { BehaviorSubject, combineLatest, map, Observable, pairwise, shareReplay, startWith, Subject, switchMap, takeUntil } from "rxjs";
+import { DriverAction, queryRunActionOf } from "../concept/action";
 import { GraphVisualiser } from "../framework/graph-visualiser/engine";
 import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/engine/sigma-settings";
 import { newGraph, Graph } from "../framework/graph-visualiser/engine/graph";
@@ -41,6 +41,10 @@ export interface RunOutputState {
     query: string;
     pinned: boolean;
     multiQuery: boolean;
+    batchSummary: boolean;
+    batchTotal: number;
+    batchCompleted: number;
+    batchFailed: boolean;
     subResults: SubQueryResult[];
     log: LogOutputState;
     table: TableOutputState;
@@ -55,6 +59,10 @@ export function createRunOutputState(label: string, query: string, styleService:
         query,
         pinned: false,
         multiQuery: false,
+        batchSummary: false,
+        batchTotal: 0,
+        batchCompleted: 0,
+        batchFailed: false,
         subResults: [],
         log: new LogOutputState(),
         table: new TableOutputState(),
@@ -129,6 +137,8 @@ export class QueryPageState {
     private _fallbackRunState = createRunOutputState("", "", this.graphStyleService);
     private _graphCanvasEl: HTMLElement | null = null;
     private _queryRunning$ = new BehaviorSubject<boolean>(false);
+    private _queryStop$ = new Subject<void>();
+    readonly queryRunning$ = this._queryRunning$.asObservable();
 
     getOrCreateTabOutputState(tabId: string): TabOutputState {
         let state = this.tabOutputStates.get(tabId);
@@ -407,6 +417,10 @@ export class QueryPageState {
         }
     }
 
+    stopQuery() {
+        this._queryStop$.next();
+    }
+
     private _runSingleQuery(query: string) {
         const tabState = this.currentTabOutputState;
 
@@ -485,31 +499,42 @@ export class QueryPageState {
         }
 
         // Initialise outputs
+        const isBatchSummary = queries.length > 10;
+        newRun.batchSummary = isBatchSummary;
+        newRun.batchTotal = queries.length;
         newRun.log.appendLines(RUNNING, `${queries.length} queries`, ``, `${TIMESTAMP}${new Date().toISOString()}`);
         newRun.table.status = "running";
         newRun.graph.status = "multiQuery";
 
-        // Create sub-results
-        for (let i = 0; i < queries.length; i++) {
-            const sub: SubQueryResult = {
-                index: i,
-                label: `Query ${i + 1}`,
-                queryText: queries[i],
-                table: new TableOutputState(),
-            };
-            sub.table.status = "running";
-            newRun.subResults.push(sub);
+        // Create sub-results (skip for batch summary mode)
+        if (!isBatchSummary) {
+            for (let i = 0; i < queries.length; i++) {
+                const sub: SubQueryResult = {
+                    index: i,
+                    label: `Query ${i + 1}`,
+                    queryText: queries[i],
+                    table: new TableOutputState(),
+                };
+                sub.table.status = "running";
+                newRun.subResults.push(sub);
+            }
         }
 
         const rowLimit = this.rowLimitControl.value;
         const queryOptions = rowLimit !== "none" ? { answerCountLimit: rowLimit } : undefined;
-        const rawResults: string[] = [];
+        const rawResults: string[] = isBatchSummary ? [] : new Array(queries.length);
         let lastCompletedIndex = -1;
 
-        this.driver.multiQuery(queries, queryOptions).subscribe({
+        const queryAction = queryRunActionOf(queries.join("\nend;\n"));
+        queryAction.batch = true;
+        this.driver.emitAction(queryAction);
+
+        this.driver.multiQuery(queries, queryOptions).pipe(
+            takeUntil(this._queryStop$),
+        ).subscribe({
             next: ({ index, res, autoCommitted }) => {
                 lastCompletedIndex = index;
-                const sub = newRun.subResults[index];
+                newRun.batchCompleted = index + 1;
 
                 // Log output
                 newRun.log.appendBlankLine();
@@ -517,11 +542,11 @@ export class QueryPageState {
                 newRun.log.appendBlankLine();
                 newRun.log.appendQueryResult(res, autoCommitted);
 
-                // Table output per sub-result
-                sub.table.push(res);
-
-                // Raw accumulation
-                rawResults[index] = JSON.stringify(res, null, 2);
+                if (!isBatchSummary) {
+                    const sub = newRun.subResults[index];
+                    sub.table.push(res);
+                    rawResults[index] = JSON.stringify(res, null, 2);
+                }
             },
             error: (err) => {
                 // Log the failed query's header
@@ -531,20 +556,42 @@ export class QueryPageState {
                     newRun.log.appendLines(`${MULTI_QUERY_HEADER}Query ${failedIndex + 1}`, queries[failedIndex]);
                 }
 
-                // Mark remaining sub-results as error
-                for (const sub of newRun.subResults) {
-                    if (sub.table.status === "running") sub.table.status = "error";
+                newRun.batchFailed = true;
+                if (!isBatchSummary) {
+                    for (const sub of newRun.subResults) {
+                        if (sub.table.status === "running") sub.table.status = "error";
+                    }
                 }
                 newRun.table.status = "error";
                 this._handleQueryError(newRun, err);
+                queryAction.status = "error";
+                queryAction.completedAtTimestamp = Date.now();
                 this._queryRunning$.next(false);
             },
             complete: () => {
-                newRun.table.status = "ok";
+                const stopped = lastCompletedIndex < queries.length - 1;
+                newRun.table.status = stopped ? "error" : "ok";
                 this._queryRunning$.next(false);
-                if (this.driver.autoTransactionEnabled$.value) {
+                if (stopped) {
+                    newRun.batchFailed = true;
                     newRun.log.appendBlankLine();
-                    newRun.log.appendLines(`Committed.`);
+                    newRun.log.appendLines(`Query batch interrupted.`);
+                    queryAction.status = "error";
+                    queryAction.completedAtTimestamp = Date.now();
+                    queryAction.result = { message: "Query batch interrupted" } as any;
+                } else {
+                    queryAction.status = "success";
+                    queryAction.completedAtTimestamp = Date.now();
+                    queryAction.autoCommitted = this.driver.autoTransactionEnabled$.value;
+                    if (this.driver.autoTransactionEnabled$.value) {
+                        newRun.log.appendBlankLine();
+                        newRun.log.appendLines(`Committed.`);
+                    }
+                }
+                if (!isBatchSummary) {
+                    for (const sub of newRun.subResults) {
+                        if (sub.table.status === "running") sub.table.status = stopped ? "error" : "ok";
+                    }
                 }
                 newRun.raw.push(`[\n${rawResults.filter(Boolean).join(',\n')}\n]`);
             }
@@ -803,7 +850,7 @@ export class TableOutputState {
         return this._displayedColumns;
     }
 
-    handleMatSortChange(e: any) {
+    handleMatSortChange(_e: any) {
         // TODO
     }
 
