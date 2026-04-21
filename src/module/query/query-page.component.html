@@ -98,7 +98,7 @@
                   @if (run.pinned) {
                     <i class="fa-light fa-thumbtack pin-icon"></i>
                   }
-                  {{ run.label }}
+                  {{ run.label }}{{ run.batchSummary && run.table.status === 'running' ? ' (' + run.batchCompleted + '/' + run.batchTotal + ')' : '' }}
                 </span>
                 <button mat-icon-button class="run-tab-close-button" (click)="closeRunTab($event, i)">
                   <i class="fa-light fa-xmark"></i>
@@ -135,12 +135,10 @@
               <div class="answers-container answers-table-container">
                 @if (currentRun?.batchSummary) {
                   <div class="batch-summary">
-                    @if (currentRun!.table.status === "running") {
-                      <p class="status-text">Running query {{ currentRun!.batchCompleted + 1 }} of {{ currentRun!.batchTotal }}...</p>
-                    } @else if (currentRun!.batchFailed) {
+                    @if (currentRun!.batchFailed) {
                       <p class="status-text">Query batch interrupted. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p>
                     } @else {
-                      <p class="status-text">{{ currentRun!.batchTotal }} queries completed successfully.</p>
+                      <p class="status-text">Table output is not available for large query batches. <a (click)="state.outputTypeControl.patchValue('log')">View results in log</a></p>
                     }
                   </div>
                 } @else if (currentRun?.multiQuery) {
@@ -229,9 +227,13 @@
                             (statusAction)="onGraphStatusAction($event)">
             </ts-graph-canvas>
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'raw'">
-              <mat-form-field class="code-text-field">
-                <textarea class="answers-text-box" [formControl]="state.rawOutput.control" readonly matInput></textarea>
-              </mat-form-field>
+              @if (currentRun?.batchSummary) {
+                <div class="batch-summary"><p class="status-text">Raw output is not available for large query batches. <a (click)="state.outputTypeControl.patchValue('log')">View results in log</a></p></div>
+              } @else {
+                <mat-form-field class="code-text-field">
+                  <textarea class="answers-text-box" [formControl]="state.rawOutput.control" readonly matInput></textarea>
+                </mat-form-field>
+              }
             </div>
           </div>
         } @else if ((driver.status$ | async) === "disconnected") {
