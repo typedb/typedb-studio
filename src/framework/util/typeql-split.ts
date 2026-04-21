@@ -13,8 +13,9 @@ import {
 /**
  * Split a TypeQL document into individual queries using the Lezer grammar.
  *
- * Splits on `end;` separators. String literals (e.g. `"Friend;"`) are handled
- * by the grammar and will never cause a false split.
+ * Splits on `END SEMICOLON` token pairs in the parsed tree. If the grammar
+ * falsely splits (e.g. `end-date` tokenized as `END` + `-date`), the resulting
+ * fragment won't end with `;` and is rejoined to the next query.
  *
  * Returns an array of query strings (without the `end;` delimiters).
  * For a single query with no `end;`, returns a single-element array.

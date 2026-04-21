@@ -223,4 +223,4 @@ export const
   RedefinableType = 221,
   QueryPipelinePreambled = 222,
   Pipeline = 223,
-  END = 224
+  ENDSEMICOLON = 224

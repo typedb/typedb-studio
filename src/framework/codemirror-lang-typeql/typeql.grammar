@@ -2,7 +2,7 @@
 
 // TODO: This is a direct translation of the original pest grammar (which is PEG iirc)
 // It may be better to rewrite as much as possible so that it's better suited to the LR parser.
-@top QueryFile { QueryFileEntry (END SEMICOLON QueryFileEntry)* (END SEMICOLON)? }
+@top QueryFile { QueryFileEntry (ENDSEMICOLON QueryFileEntry)* ENDSEMICOLON? }
 QueryFileEntry { QuerySchema | QueryPipelinePreambled }
 @skip { whitespace | LINECOMMENT }
 
@@ -663,8 +663,7 @@ ExpressionParenthesis {
   // DISTINCT is already covered
   REDUCE { "reduce" }
   GROUPBY { "groupby" }
-  
-  END { "end" }
+  ENDSEMICOLON { "end;" }
 
   COUNT { "count" }
   MAX { "max" }
@@ -759,7 +758,7 @@ ExpressionParenthesis {
 
   //@precedence { ASCENDINGORDER, DESCENDINGORDER }
   @precedence { 
-    END, KIND, STRUCT, LET, FUN, RETURN,
+    ENDSEMICOLON, KIND, STRUCT, LET, FUN, RETURN,
     BOOLEAN, INTEGER, STRING, DURATION, DOUBLE, DECIMAL, DATETIME, DATETIMETZ, DATE, 
     BOOLEANLITERAL, LIKE, CONTAINS,
     NOT, TRY, DELETE, DISTINCT, MATCH, INSERT, PUT, UPDATE, SELECT, SORT, OFFSET, LIMIT, REQUIRE, REDUCE, 

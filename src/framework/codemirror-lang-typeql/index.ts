@@ -71,7 +71,7 @@ export const TypeQLLanguage = LRLanguage.define({
         DELETE: t.heading1,
         UPDATE: t.heading1,
         PUT: t.heading1,
-        END: t.heading1,
+        ENDSEMICOLON: t.heading1,
 
         SELECT: t.heading1,
         REDUCE: t.heading1,

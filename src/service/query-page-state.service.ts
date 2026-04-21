@@ -504,9 +504,11 @@ export class QueryPageState {
         const rowLimit = this.rowLimitControl.value;
         const queryOptions = rowLimit !== "none" ? { answerCountLimit: rowLimit } : undefined;
         const rawResults: string[] = [];
+        let lastCompletedIndex = -1;
 
         this.driver.multiQuery(queries, queryOptions).subscribe({
             next: ({ index, res, autoCommitted }) => {
+                lastCompletedIndex = index;
                 const sub = newRun.subResults[index];
 
                 // Log output
@@ -522,6 +524,13 @@ export class QueryPageState {
                 rawResults[index] = JSON.stringify(res, null, 2);
             },
             error: (err) => {
+                // Log the failed query's header
+                const failedIndex = lastCompletedIndex + 1;
+                if (failedIndex < queries.length) {
+                    newRun.log.appendBlankLine();
+                    newRun.log.appendLines(`${MULTI_QUERY_HEADER}Query ${failedIndex + 1}`, queries[failedIndex]);
+                }
+
                 // Mark remaining sub-results as error
                 for (const sub of newRun.subResults) {
                     if (sub.table.status === "running") sub.table.status = "error";

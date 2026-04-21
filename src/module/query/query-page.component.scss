@@ -77,7 +77,6 @@
 .card-top {
     border: shapes.$border;
     border-radius: shapes.$border-radius shapes.$border-radius 0 0;
-    border-bottom: none;
 
     ::ng-deep + app-drag-handle {
         height: 12px;
