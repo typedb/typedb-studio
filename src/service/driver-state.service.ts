@@ -349,7 +349,7 @@ export class DriverState {
             switchMap(openRes => {
                 if (isApiErrorResponse(openRes)) throw openRes;
                 const transactionId = openRes.ok.transactionId;
-                let errored = false;
+                let completed = false;
 
                 return from(queries.map((q, i) => ({ query: q, index: i }))).pipe(
                     concatMap(({ query, index }) => {
@@ -358,12 +358,9 @@ export class DriverState {
                             map(res => ({ index, res, autoCommitted: false as boolean })),
                         );
                     }),
-                    catchError((err): Observable<never> => {
-                        errored = true;
-                        return throwError(() => err);
-                    }),
+                    tap({ complete: () => { completed = true; } }),
                     finalize(() => {
-                        if (!errored && shouldCommit) {
+                        if (completed && shouldCommit) {
                             fromPromiseWithRetry(() => driver.commitTransaction(transactionId)).subscribe();
                         } else {
                             fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).subscribe();
