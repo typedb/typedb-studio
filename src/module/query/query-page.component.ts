@@ -502,6 +502,12 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.appData.panelLayout.set("query", [...this.panelSizes]);
     }
 
+    queryRunLabel(entry: QueryRunAction): string {
+        const type = entry.batch ? "query batch" : "query";
+        if (entry.status === "error") return `${type} failed`;
+        return entry.autoCommitted ? `ran + committed ${type}` : `ran ${type}`;
+    }
+
     readonly isQueryRun = isQueryRun;
     readonly isTransactionOperation = isTransactionOperation;
     readonly JSON = JSON;

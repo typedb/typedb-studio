@@ -19,6 +19,7 @@ import {
 } from "@typedb/driver-http";
 import { FormBuilder } from "@angular/forms";
 import { QueryTypeDetector } from "./query-type-detector.service";
+import { detectTransactionType } from "../framework/util/typeql-split";
 
 export type DriverStatus = "disconnected" | "connecting" | "connected" | "reconnecting";
 
@@ -303,6 +304,104 @@ export class DriverState {
         } else {
             return this.manualQuery(query, queryOptions);
         }
+    }
+
+    /**
+     * Execute multiple queries in a single transaction.
+     * In auto mode: opens a transaction, runs all queries sequentially, then commits (write/schema) or closes (read).
+     * In manual mode: uses the existing open transaction.
+     * Emits one result per query via the returned Observable.
+     */
+    multiQuery(queries: string[], queryOptions?: QueryOptions): Observable<{ index: number, res: ApiResponse<QueryResponse>, autoCommitted: boolean }> {
+        if (!this.autoTransactionEnabled$.value) {
+            return from(queries.map((q, i) => ({ query: q, index: i }))).pipe(
+                concatMap(({ query, index }) => this.manualQuery(query, queryOptions).pipe(
+                    map(res => ({ index, res, autoCommitted: false }))
+                )),
+            );
+        }
+
+        const driver = this.requireDriver();
+        const databaseName = this.requireDatabase().name;
+        const queryAction = queryRunActionOf(queries.join("\nend;\n"));
+        queryAction.batch = true;
+        this._actionLog$.next(queryAction);
+
+        const detectedType = detectTransactionType(queries[0]) ?? "read";
+        return this.autoMultiQuery(driver, databaseName, queries, detectedType, queryOptions).pipe(
+            tap({
+                complete: () => {
+                    queryAction.status = "success";
+                    queryAction.completedAtTimestamp = Date.now();
+                    queryAction.autoCommitted = detectedType !== "read";
+                },
+                error: (err) => {
+                    this.updateActionResultUnexpectedError(queryAction, err);
+                },
+            }),
+            takeUntil(this._stopSignal$),
+        );
+    }
+
+    /**
+     * Run multiple queries in a single auto-managed transaction.
+     * Opens transaction, runs queries sequentially, commits on success (for write/schema).
+     * On wrong-transaction-type error from the first query, escalates and retries.
+     */
+    private autoMultiQuery(
+        driver: TypeDBHttpDriver, databaseName: string, queries: string[],
+        transactionType: TransactionType, queryOptions?: QueryOptions,
+    ): Observable<{ index: number, res: ApiResponse<QueryResponse>, autoCommitted: boolean }> {
+        const shouldCommit = transactionType !== "read";
+
+        return fromPromiseWithRetry(() => driver.openTransaction(databaseName, transactionType)).pipe(
+            switchMap(openRes => {
+                if (isApiErrorResponse(openRes)) throw openRes;
+                const transactionId = openRes.ok.transactionId;
+                let errored = false;
+
+                return from(queries.map((q, i) => ({ query: q, index: i }))).pipe(
+                    concatMap(({ query, index }) => {
+                        return fromPromiseWithRetry(() => driver.query(transactionId, query, queryOptions)).pipe(
+                            tap(res => { if (isApiErrorResponse(res)) throw res; }),
+                            map(res => ({ index, res, autoCommitted: false as boolean })),
+                        );
+                    }),
+                    catchError((err): Observable<never> => {
+                        errored = true;
+                        return throwError(() => err);
+                    }),
+                    finalize(() => {
+                        if (!errored && shouldCommit) {
+                            fromPromiseWithRetry(() => driver.commitTransaction(transactionId)).subscribe();
+                        } else {
+                            fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).subscribe();
+                        }
+                    }),
+                );
+            }),
+            catchError((err): Observable<{ index: number, res: ApiResponse<QueryResponse>, autoCommitted: boolean }> => {
+                if (this.isWrongTransactionTypeError(err)) {
+                    const nextType = this.nextTransactionType(transactionType);
+                    if (nextType) return this.autoMultiQuery(driver, databaseName, queries, nextType, queryOptions);
+                }
+                return throwError(() => err);
+            }),
+        );
+    }
+
+    private nextTransactionType(current: TransactionType): TransactionType | null {
+        const order: TransactionType[] = ["read", "write", "schema"];
+        const i = order.indexOf(current);
+        return i >= 0 && i < order.length - 1 ? order[i + 1] : null;
+    }
+
+    private isWrongTransactionTypeError(err: unknown): boolean {
+        if (typeof err === "object" && err !== null && isApiErrorResponse(err as any)) {
+            const errString = JSON.stringify(err);
+            return errString.includes("TSV8") || errString.includes("TSV9");
+        }
+        return false;
     }
 
     /**

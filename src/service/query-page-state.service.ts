@@ -497,20 +497,13 @@ export class QueryPageState {
         const queryOptions = rowLimit !== "none" ? { answerCountLimit: rowLimit } : undefined;
         const rawResults: string[] = [];
 
-        from(queries.map((q, i) => ({ query: q, index: i }))).pipe(
-            concatMap(({ query, index }) => {
-                newRun.log.appendBlankLine();
-                newRun.log.appendLines(`${MULTI_QUERY_HEADER}Query ${index + 1}`, query);
-                return this.driver.query(query, queryOptions).pipe(
-                    map(res => ({ index, res }))
-                );
-            })
-        ).subscribe({
-            next: ({ index, res }) => {
+        this.driver.multiQuery(queries, queryOptions).subscribe({
+            next: ({ index, res, autoCommitted }) => {
                 const sub = newRun.subResults[index];
-                const autoCommitted = this.driver.autoTransactionEnabled$.value && !isApiErrorResponse(res) && res.ok.queryType !== "read";
 
                 // Log output
+                newRun.log.appendBlankLine();
+                newRun.log.appendLines(`${MULTI_QUERY_HEADER}Query ${index + 1}`, queries[index]);
                 newRun.log.appendBlankLine();
                 newRun.log.appendQueryResult(res, autoCommitted);
 
@@ -530,6 +523,10 @@ export class QueryPageState {
             },
             complete: () => {
                 newRun.table.status = "ok";
+                if (this.driver.autoTransactionEnabled$.value) {
+                    newRun.log.appendBlankLine();
+                    newRun.log.appendLines(`Committed.`);
+                }
                 newRun.raw.push(`[\n${rawResults.filter(Boolean).join(',\n')}\n]`);
             }
         });
