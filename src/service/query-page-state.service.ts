@@ -28,6 +28,11 @@ import { splitTypeQLQueries } from "../framework/util/typeql-split";
 export type OutputType = "raw" | "log" | "table" | "graph";
 export { RowLimit } from "./app-data.service";
 
+export interface RunResult {
+    success: boolean;
+    error?: unknown;
+}
+
 export interface SubQueryResult {
     index: number;
     label: string;
@@ -407,21 +412,23 @@ export class QueryPageState {
         this.runQuery(currentTab.query);
     }
 
-    runQuery(query: string) {
+    runQuery(query: string): Observable<RunResult> {
         this._queryRunning$.next(true);
+        const completion$ = new Subject<RunResult>();
         const queries = splitTypeQLQueries(query);
         if (queries.length <= 1) {
-            this._runSingleQuery(queries[0] || query);
+            this._runSingleQuery(queries[0] || query, completion$);
         } else {
-            this._runMultiQuery(queries);
+            this._runMultiQuery(queries, completion$);
         }
+        return completion$.asObservable();
     }
 
     stopQuery() {
         this._queryStop$.next();
     }
 
-    private _runSingleQuery(query: string) {
+    private _runSingleQuery(query: string, completion$: Subject<RunResult>) {
         const tabState = this.currentTabOutputState;
 
         // Detach current run's graph before creating new run
@@ -463,6 +470,9 @@ export class QueryPageState {
                 this.outputQueryResponseToRun(newRun, res);
                 newRun.log.flush();
                 this._queryRunning$.next(false);
+                const hasError = isApiErrorResponse(res);
+                completion$.next({ success: !hasError, error: hasError ? (res as any).err : undefined });
+                completion$.complete();
             },
             error: (err) => {
                 newRun.table.status = "error";
@@ -470,11 +480,13 @@ export class QueryPageState {
                 this._handleQueryError(newRun, err);
                 newRun.log.flush();
                 this._queryRunning$.next(false);
+                completion$.next({ success: false, error: err });
+                completion$.complete();
             },
         });
     }
 
-    private _runMultiQuery(queries: string[]) {
+    private _runMultiQuery(queries: string[], completion$: Subject<RunResult>) {
         const tabState = this.currentTabOutputState;
 
         // Detach current run's graph before creating new run
@@ -574,11 +586,15 @@ export class QueryPageState {
                 queryAction.status = "error";
                 queryAction.completedAtTimestamp = Date.now();
                 this._queryRunning$.next(false);
+                completion$.next({ success: false, error: err });
+                completion$.complete();
             },
             complete: () => {
                 const stopped = lastCompletedIndex < queries.length - 1;
                 newRun.table.status = stopped ? "error" : "ok";
                 this._queryRunning$.next(false);
+                completion$.next({ success: !stopped });
+                completion$.complete();
                 if (stopped) {
                     newRun.batchFailed = true;
                     newRun.log.appendBlankLine();

@@ -22,3 +22,8 @@ export interface SampleDatasetVersion {
     schemaFile: string;
     dataFile: string;
 }
+
+export interface ResolvedSampleDatasetVersion extends SampleDatasetVersion {
+    datasetName: string;
+    isExactMatch: boolean;
+}

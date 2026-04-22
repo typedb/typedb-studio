@@ -5,14 +5,14 @@
  */
 
 import { AsyncPipe } from "@angular/common";
-import { Component } from "@angular/core";
+import { Component, inject, OnInit } from "@angular/core";
 import { AbstractControl, AsyncValidatorFn, FormBuilder, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatDialogRef } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
 import { isApiErrorResponse } from "@typedb/driver-http";
-import { combineLatest, filter, first, map, Observable, shareReplay, startWith, Subject } from "rxjs";
+import { combineLatest, first, map, Observable, shareReplay, startWith, Subject } from "rxjs";
 import { ResolvedSampleDatasetVersion, SampleDataset, SampleDatasetManifest } from "../../../concept/sample-dataset";
 import { FormActionsComponent, FormComponent, FormInputComponent, patternValidator, requiredValidator } from "../../../framework/form";
 import { ModalComponent } from "../../../framework/modal";
@@ -20,8 +20,6 @@ import { DriverState } from "../../../service/driver-state.service";
 import { SampleDatasetLoaderService } from "../../../service/sample-dataset-loader.service";
 import { SampleDatasetsService } from "../../../service/sample-datasets.service";
 import { SnackbarService } from "../../../service/snackbar.service";
-
-const NO_DATASET = "";
 
 interface DatasetOptionData {
     name: string;
@@ -31,28 +29,36 @@ interface DatasetOptionData {
 }
 
 @Component({
-    selector: "ts-database-create-dialog",
-    templateUrl: "./database-create-dialog.component.html",
-    styleUrls: ["./database-create-dialog.component.scss"],
+    selector: "ts-sample-dataset-dialog",
+    templateUrl: "./sample-dataset-dialog.component.html",
+    styleUrls: ["./sample-dataset-dialog.component.scss"],
     imports: [
-        ModalComponent, AsyncPipe, FormsModule, ReactiveFormsModule, MatFormFieldModule,
-        MatInputModule, MatSelectModule, FormComponent, FormInputComponent, FormActionsComponent,
+        ModalComponent, AsyncPipe, FormsModule, ReactiveFormsModule,
+        MatFormFieldModule, MatInputModule, MatSelectModule,
+        FormComponent, FormInputComponent, FormActionsComponent,
     ]
 })
-export class DatabaseCreateDialogComponent {
+export class SampleDatasetDialogComponent implements OnInit {
+
+    private formBuilder = inject(FormBuilder);
+    private dialogRef = inject(MatDialogRef<SampleDatasetDialogComponent>);
+    private driver = inject(DriverState);
+    private snackbar = inject(SnackbarService);
+    private datasetsService = inject(SampleDatasetsService);
+    private loader = inject(SampleDatasetLoaderService);
 
     private uniqueValidator: AsyncValidatorFn = (control: AbstractControl<string>) => {
         return this.driver.databaseList$.pipe(
             first(),
             map((databases) => databases?.some(x => x.name === control.value) ?? false),
-            map((hasConflict) => hasConflict ? { errorText: `A database named '${control.value}' already exists` } : null)
+            map((hasConflict) => hasConflict ? { errorText: `A database named '${control.value}' already exists. Please choose a different name.` } : null)
         );
     }
 
     readonly isSubmitting$ = new Subject<boolean>();
     readonly form = this.formBuilder.nonNullable.group({
         name: ["", [patternValidator(/^[\w-_]+$/, `Spaces and special characters are not allowed (except - and _)`), requiredValidator], [this.uniqueValidator]],
-        datasetName: [NO_DATASET],
+        datasetName: [""],
     });
     errorLines: string[] = [];
 
@@ -71,15 +77,17 @@ export class DatabaseCreateDialogComponent {
         map(([list, name]) => list.find(d => d.name === name) ?? null),
     );
 
-    constructor(
-        private dialogRef: MatDialogRef<DatabaseCreateDialogComponent>,
-        private formBuilder: FormBuilder, private snackbar: SnackbarService, private driver: DriverState,
-        private datasetsService: SampleDatasetsService, private loader: SampleDatasetLoaderService,
-    ) {
-        this.driver.databaseList$.pipe(filter(x => x != null), first()).subscribe(databases => {
-            if (!databases.length) {
-                this.form.controls.name.setValue("default");
-            }
+    readonly errorMessage$ = this.datasets$.pipe(
+        map(list => list.length === 0 ? `No sample datasets available for this server.` : null),
+    );
+
+    loadError: string | null = null;
+
+    ngOnInit() {
+        this.selectedDataset$.subscribe(selected => {
+            this.form.controls.name.setValue(selected?.name ?? "");
+            // Mark as touched so the async unique validator's error (if any) is shown immediately.
+            this.form.controls.name.markAsTouched();
         });
     }
 
@@ -94,28 +102,30 @@ export class DatabaseCreateDialogComponent {
 
     submit() {
         const name = this.form.value.name!;
-        const datasetName = this.form.value.datasetName ?? NO_DATASET;
-        this.driver.createAndSelectDatabase(name).subscribe({
-            next: () => {
-                this.close();
-                this.snackbar.success(`Created and connected to database '${name}'`);
-                if (datasetName !== NO_DATASET) {
-                    this.datasets$.pipe(first()).subscribe(list => {
-                        const selected = list.find(d => d.name === datasetName);
-                        if (selected?.resolved) this.loader.load(selected.resolved);
-                    });
-                }
-            },
-            error: (err) => {
-                this.isSubmitting$.next(false);
-                let error = ``;
-                if (isApiErrorResponse(err)) {
-                    error = err.err.message;
-                } else {
-                    error = err?.message ?? err?.toString();
-                }
-                this.errorLines = error.split(`\n`);
-            },
+        const datasetName = this.form.value.datasetName!;
+        this.datasets$.pipe(first()).subscribe(list => {
+            const selected = list.find(d => d.name === datasetName);
+            if (!selected?.resolved) {
+                this.loadError = `No installable version of '${datasetName}' is available.`;
+                return;
+            }
+            this.driver.createAndSelectDatabase(name).subscribe({
+                next: () => {
+                    this.close();
+                    this.snackbar.success(`Created and connected to database '${name}'`);
+                    this.loader.load(selected.resolved!);
+                },
+                error: (err) => {
+                    this.isSubmitting$.next(false);
+                    let error = ``;
+                    if (isApiErrorResponse(err)) {
+                        error = err.err.message;
+                    } else {
+                        error = err?.message ?? err?.toString();
+                    }
+                    this.errorLines = error.split(`\n`);
+                },
+            });
         });
     }
 

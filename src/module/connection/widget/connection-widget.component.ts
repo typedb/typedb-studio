@@ -18,6 +18,7 @@ import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { DatabaseCreateDialogComponent } from "../../database/create-dialog/database-create-dialog.component";
 import { DatabaseDeleteDialogComponent } from "../../database/delete-dialog/database-delete-dialog.component";
+import { SampleDatasetDialogComponent } from "../../database/sample-dataset-dialog/sample-dataset-dialog.component";
 import { TransactionControlComponent } from "../transaction/transaction-control.component";
 
 @Component({
@@ -100,9 +101,29 @@ export class ConnectionWidgetComponent implements OnInit {
         this.dialog.open(DatabaseCreateDialogComponent);
     }
 
+    openLoadSampleDatasetDialog() {
+        this.dialog.open(SampleDatasetDialogComponent);
+    }
+
+    refreshingDatabaseList = false;
+
+    private truncationState = new WeakMap<HTMLElement, boolean>();
+
+    checkTruncation(el: HTMLElement) {
+        this.truncationState.set(el, el.scrollWidth > el.clientWidth);
+    }
+
+    isTruncated(el: HTMLElement): boolean {
+        return this.truncationState.get(el) ?? false;
+    }
+
     refreshDatabaseList() {
-        this.driver.refreshDatabaseList().subscribe(() => {
-            this.snackbar.success(`Database list refreshed`);
+        if (this.refreshingDatabaseList) return;
+        this.refreshingDatabaseList = true;
+        this.driver.refreshDatabaseList().subscribe({
+            next: () => this.snackbar.success(`Database list refreshed`),
+            complete: () => { this.refreshingDatabaseList = false; },
+            error: () => { this.refreshingDatabaseList = false; },
         });
     }
 

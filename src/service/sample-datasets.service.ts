@@ -8,7 +8,8 @@ import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { load as parseYaml } from "js-yaml";
 import { map, Observable, shareReplay, tap } from "rxjs";
-import { SampleDatasetManifest } from "../concept/sample-dataset";
+import { compare as semverCompare, satisfies } from "semver";
+import { ResolvedSampleDatasetVersion, SampleDatasetManifest, SampleDatasetVersion } from "../concept/sample-dataset";
 import { environment } from "../environments/environment";
 
 @Injectable({
@@ -37,4 +38,30 @@ export class SampleDatasetsService {
     reload(): void {
         this.manifestCache$ = undefined;
     }
+
+    /**
+     * Picks the release of `datasetName` best suited to `serverVersion`:
+     *   - the newest release whose `compatibleServers` range is satisfied (exact match), or
+     *   - if none match, the newest release overall (flagged !isExactMatch).
+     * Pre-release server versions are always included when evaluating ranges.
+     */
+    resolveForServer(
+        manifest: SampleDatasetManifest, datasetName: string, serverVersion: string,
+    ): ResolvedSampleDatasetVersion | null {
+        const dataset = manifest.datasets[datasetName];
+        if (!dataset || dataset.versions.length === 0) return null;
+
+        const matching = dataset.versions.filter(v => satisfies(serverVersion, v.compatibleServers, { includePrerelease: true }));
+        if (matching.length > 0) {
+            const newest = newestByVersion(matching);
+            return { ...newest, datasetName, isExactMatch: true };
+        }
+
+        const newest = newestByVersion(dataset.versions);
+        return { ...newest, datasetName, isExactMatch: false };
+    }
+}
+
+function newestByVersion(versions: SampleDatasetVersion[]): SampleDatasetVersion {
+    return [...versions].sort((a, b) => semverCompare(b.version, a.version))[0];
 }

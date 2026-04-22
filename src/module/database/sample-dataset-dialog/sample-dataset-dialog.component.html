@@ -1,15 +1,17 @@
-<tp-modal dialogTitle="Create new database" [isBusy]="isSubmitting$ | async">
-  <p class="description">A database is an isolated data store comprising its own schema and dataset.</p>
-  <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
-    <tp-form-input type="text" [form]="form" field="name" label="Database name" [focusInitial]="true" />
+<tp-modal dialogTitle="Load sample dataset" [isBusy]="isSubmitting$ | async">
+  <p class="description">A new database will be created and the selected sample dataset's schema and data loaded into it.</p>
 
+  @if (errorMessage$ | async; as err) {
+    <p class="error-text">{{ err }}</p>
+  }
+
+  <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
     @if (datasets$ | async; as datasets) {
       @if (datasets.length > 0) {
         <mat-form-field>
-          <mat-label>Sample dataset (optional)</mat-label>
+          <mat-label>Sample dataset</mat-label>
           <mat-select [formControl]="form.controls.datasetName">
-            <mat-select-trigger>{{ (selectedDataset$ | async)?.displayName ?? "(none)" }}</mat-select-trigger>
-            <mat-option value="">(none)</mat-option>
+            <mat-select-trigger>{{ (selectedDataset$ | async)?.displayName }}</mat-select-trigger>
             @for (dataset of datasets; track dataset.name) {
               <mat-option [value]="dataset.name">
                 <div class="option-content">
@@ -24,6 +26,8 @@
     }
 
     @if (selectedDataset$ | async; as selected) {
+      <tp-form-input type="text" [form]="form" field="name" label="Database name" />
+
       @if (selected.resolved && !selected.resolved.isExactMatch) {
         <p class="compat-warning">
           No sample dataset release is known to be compatible with this server. Using the latest release ({{ selected.resolved.version }}); it may not work.
@@ -34,13 +38,18 @@
       }
     }
 
-    <tp-form-actions
-      [cancellable]="true" submitText="Create database" [isSubmitting]="isSubmitting$ | async"
-      [submitDisabled]="!form.valid" submitTooltip="Enter a valid database name"
-      buttonIdPrefix="createDatabaseModal" (cancel)="close()"
-    />
+    @if (loadError) {
+      <p class="error-text">{{ loadError }}</p>
+    }
     @if (errorLines.length) {
       <mat-error>@for (line of errorLines; track line) {<p>{{ line }}</p>}</mat-error>
     }
+
+    <tp-form-actions
+      [cancellable]="true" submitText="Load dataset" [isSubmitting]="isSubmitting$ | async"
+      [submitDisabled]="!form.valid || !form.controls.datasetName.value"
+      [submitTooltip]="!form.controls.datasetName.value ? 'Select a sample dataset' : (form.controls.name.invalid ? 'Enter a valid database name' : '')"
+      buttonIdPrefix="loadSampleDatasetModal" (cancel)="close()"
+    />
   </tp-form>
 </tp-modal>
