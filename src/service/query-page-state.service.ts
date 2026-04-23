@@ -585,6 +585,7 @@ export class QueryPageState {
                 newRun.log.flush();
                 queryAction.status = "error";
                 queryAction.completedAtTimestamp = Date.now();
+                queryAction.result = err;
                 this._queryRunning$.next(false);
                 completion$.next({ success: false, error: err });
                 completion$.complete();

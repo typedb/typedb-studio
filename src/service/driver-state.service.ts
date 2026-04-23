@@ -5,7 +5,7 @@
  */
 
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, concatMap, distinctUntilChanged, filter, finalize, from, map, Observable, of, shareReplay, startWith, Subject, switchMap, takeUntil, tap, throwError } from "rxjs";
+import { BehaviorSubject, catchError, concatMap, concatWith, defer, distinctUntilChanged, filter, finalize, from, ignoreElements, map, Observable, of, shareReplay, startWith, Subject, switchMap, takeUntil, tap, throwError } from "rxjs";
 import { v4 as uuid } from "uuid";
 import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
 import { ConnectionConfig, databasesSortedByName } from "../concept/connection";
@@ -353,7 +353,22 @@ export class DriverState {
             switchMap(openRes => {
                 if (isApiErrorResponse(openRes)) throw openRes;
                 const transactionId = openRes.ok.transactionId;
-                let completed = false;
+                let cleanupDone = false;
+
+                const commitOrClose$: Observable<null> = defer(() => {
+                    if (cleanupDone) return of(null);
+                    cleanupDone = true;
+                    if (shouldCommit) {
+                        return fromPromiseWithRetry(() => driver.commitTransaction(transactionId)).pipe(
+                            tap(res => {
+                                if (isApiErrorResponse(res)) throw res;
+                                if (transactionType === "schema") this.schemaCommitted$.next();
+                            }),
+                            map(() => null),
+                        );
+                    }
+                    return fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).pipe(map(() => null));
+                });
 
                 return from(queries.map((q, i) => ({ query: q, index: i }))).pipe(
                     concatMap(({ query, index }) => {
@@ -362,15 +377,17 @@ export class DriverState {
                             map(res => ({ index, res, autoCommitted: false as boolean })),
                         );
                     }),
-                    tap({ complete: () => { completed = true; } }),
-                    finalize(() => {
-                        if (completed && shouldCommit) {
-                            fromPromiseWithRetry(() => driver.commitTransaction(transactionId)).subscribe((res) => {
-                                if (!isApiErrorResponse(res) && transactionType === "schema") this.schemaCommitted$.next();
-                            });
-                        } else {
-                            fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).subscribe();
+                    // After all query results emit, run commit (or close for read). The commit emits
+                    // nothing on success (ignoreElements); on failure it throws, turning the outer
+                    // stream into an error so subscribers see the failed commit as a failed query batch.
+                    concatWith(commitOrClose$.pipe(ignoreElements())),
+                    // If an error happens before commit (e.g. a query failed), still best-effort close the transaction.
+                    catchError(err => {
+                        if (!cleanupDone) {
+                            cleanupDone = true;
+                            fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).subscribe({ error: () => {} });
                         }
+                        return throwError(() => err);
                     }),
                 );
             }),
