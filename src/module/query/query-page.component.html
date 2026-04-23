@@ -122,7 +122,7 @@
           <div class="answers-outer-container">
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'log'" [class.has-scrollbar]="logHasScrollbar">
               <mat-form-field class="code-text-field">
-                <textarea #logTextarea class="answers-text-box" [formControl]="state.logOutput.control" readonly matInput></textarea>
+                <textarea #logTextarea class="answers-text-box" [formControl]="state.logOutput.control" (scroll)="onLogScroll()" readonly matInput></textarea>
               </mat-form-field>
               <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value.length" (click)="sendLogToAi()">
                 <i [class]="sentLogToAi ? 'fal fa-check' : 'fal fa-wand-magic-sparkles'"></i>

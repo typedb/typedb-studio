@@ -6,7 +6,7 @@
 
 import { CodeEditor } from "@acrodata/code-editor";
 import { AsyncPipe, DatePipe } from "@angular/common";
-import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { AfterViewChecked, AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
 import { FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -61,7 +61,7 @@ import { GraphCanvasComponent } from "../../framework/graph-visualiser/canvas/gr
         GraphCanvasComponent,
     ]
 })
-export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
+export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
 
     @ViewChild(CodeEditor) codeEditor!: CodeEditor;
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
@@ -120,6 +120,8 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     copiedLog = false;
     sentLogToAi = false;
     logHasScrollbar = false;
+    /** Tracks the log textarea's scrollHeight across change-detection passes, so we know when content has grown. */
+    private lastLogScrollHeight = 0;
     canScrollLeft = false;
     canScrollRight = false;
     canScrollRunsLeft = false;
@@ -203,6 +205,25 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.logResizeObserver?.disconnect();
         this.tabsScrollObserver?.disconnect();
         this.runTabsScrollObserver?.disconnect();
+    }
+
+    ngAfterViewChecked() {
+        const el = this.logTextarea?.nativeElement;
+        if (!el) return;
+        if (el.scrollHeight === this.lastLogScrollHeight) return;
+        this.lastLogScrollHeight = el.scrollHeight;
+        if (this.state.logOutput.autoscrollEnabled) {
+            el.scrollTop = el.scrollHeight;
+        }
+    }
+
+    onLogScroll() {
+        // If the user (or any scroll) ends up not at the bottom, we stop auto-following new content.
+        // Programmatic scrolls in ngAfterViewChecked always land at the bottom, so they pass this check harmlessly.
+        const el = this.logTextarea?.nativeElement;
+        if (!el) return;
+        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 4;
+        this.state.logOutput.autoscrollEnabled = atBottom;
     }
 
     // Tab scroll methods

@@ -753,6 +753,9 @@ function indent(indentation: string, string: string): string {
 export class LogOutputState {
 
     control = new FormControl("", {nonNullable: true});
+    /** If true, the viewing component should keep the log scrolled to the bottom as new content arrives.
+     *  Flipped to false the first time the user scrolls away from the bottom manually. */
+    autoscrollEnabled = true;
     private buffer: string[] = [];
     private flushScheduled = false;
 
