@@ -39,15 +39,21 @@ type OwnerCountsByType = Record<string, number>;
 /** Maps role label to count of links for that role */
 type LinkCountsByRole = Record<string, number>;
 
+/**
+ * Row for the instance table. Built-in fields use a "%" prefix to avoid collisions with
+ * user-defined attribute column keys (the "%" character is not a valid TypeQL identifier
+ * character, so it cannot appear in attribute labels). Dynamic attribute columns are stored
+ * as unprefixed keys under the index signature.
+ */
 export interface InstanceRow {
-    iid: string;
-    type: string;
-    kind: "entity" | "relation" | "attribute";
-    relationCounts: RelationCountsByType | null;
-    ownerCounts?: OwnerCountsByType | null;
-    linkCounts?: LinkCountsByRole | null;
+    "%iid": string;
+    "%type": string;
+    "%kind": "entity" | "relation" | "attribute";
+    "%relationCounts": RelationCountsByType | null;
+    "%ownerCounts"?: OwnerCountsByType | null;
+    "%linkCounts"?: LinkCountsByRole | null;
     /** Value type for attribute instances */
-    valueType?: string;
+    "%valueType"?: string;
     /** Dynamic attribute columns store arrays of values */
     [key: string]: string | RelationCountsByType | OwnerCountsByType | LinkCountsByRole | null | AttributeValue[] | "entity" | "relation" | "attribute" | undefined;
 }
@@ -214,14 +220,16 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
     private updateDisplayedColumns() {
         const typeKind = this.tab.type.kind;
-        // Different column sets for different type kinds
+        // Different column sets for different type kinds.
+        // Built-in column IDs are prefixed with '%' to avoid collisions with user attribute names
+        // (the '%' character is not a valid TypeQL identifier character).
         let allColumns: string[];
         if (typeKind === "attributeType") {
-            allColumns = ["type", ...this.attributeColumns, "valueType", "ownerCounts"];
+            allColumns = ["%type", ...this.attributeColumns, "%valueType", "%ownerCounts"];
         } else if (typeKind === "relationType") {
-            allColumns = ["type", "iid", ...this.attributeColumns, "linkCounts", "relationCounts"];
+            allColumns = ["%type", "%iid", ...this.attributeColumns, "%linkCounts", "%relationCounts"];
         } else {
-            allColumns = ["type", "iid", ...this.attributeColumns, "relationCounts"];
+            allColumns = ["%type", "%iid", ...this.attributeColumns, "%relationCounts"];
         }
         this.displayedColumns = allColumns.filter(col => !this.hiddenColumns.has(col));
     }
@@ -231,26 +239,26 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         const typeKind = this.tab.type.kind;
         if (typeKind === "attributeType") {
             return [
-                { id: "type", label: "Type" },
+                { id: "%type", label: "Type" },
                 ...this.attributeColumns.map(attr => ({ id: attr, label: attr })),
-                { id: "valueType", label: "Value Type" },
-                { id: "ownerCounts", label: "Owners" },
+                { id: "%valueType", label: "Value Type" },
+                { id: "%ownerCounts", label: "Owners" },
             ];
         }
         if (typeKind === "relationType") {
             return [
-                { id: "type", label: "Type" },
-                { id: "iid", label: "IID" },
+                { id: "%type", label: "Type" },
+                { id: "%iid", label: "IID" },
                 ...this.attributeColumns.map(attr => ({ id: attr, label: attr })),
-                { id: "linkCounts", label: "Links" },
-                { id: "relationCounts", label: "Relations" },
+                { id: "%linkCounts", label: "Links" },
+                { id: "%relationCounts", label: "Relations" },
             ];
         }
         return [
-            { id: "type", label: "Type" },
-            { id: "iid", label: "IID" },
+            { id: "%type", label: "Type" },
+            { id: "%iid", label: "IID" },
             ...this.attributeColumns.map(attr => ({ id: attr, label: attr })),
-            { id: "relationCounts", label: "Relations" },
+            { id: "%relationCounts", label: "Relations" },
         ];
     }
 
@@ -425,7 +433,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
         // Build query to count relations for all instances in current page
         // Use disjunction to match any of the instance IIDs
-        const iidBranches = this.dataSource.map(row => `{ $instance iid ${row.iid}; }`).join(" or ");
+        const iidBranches = this.dataSource.map(row => `{ $instance iid ${row["%iid"]}; }`).join(" or ");
         const query = `match ${iidBranches}; $rel links ($instance);`;
 
         this.driver.query(query).subscribe({
@@ -433,7 +441,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                 if (isApiErrorResponse(res)) {
                     this.snackbar.errorPersistent(`Error fetching relation counts: ${res.err.message}`);
                     for (const row of this.dataSource) {
-                        row.relationCounts = {};
+                        row["%relationCounts"] = {};
                     }
                     return;
                 }
@@ -464,22 +472,22 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
                 // Update rows with counts by type (empty object if no relations found)
                 for (const row of this.dataSource) {
-                    const typeMap = countsByIid.get(row.iid);
+                    const typeMap = countsByIid.get(row["%iid"]);
                     if (typeMap) {
                         const counts: RelationCountsByType = {};
                         for (const [type, iids] of typeMap) {
                             counts[type] = iids.size;
                         }
-                        row.relationCounts = counts;
+                        row["%relationCounts"] = counts;
                     } else {
-                        row.relationCounts = {};
+                        row["%relationCounts"] = {};
                     }
                 }
             },
             error: (err) => {
                 this.snackbar.errorPersistent(`Error fetching relation counts: ${extractErrorMessage(err)}`);
                 for (const row of this.dataSource) {
-                    row.relationCounts = {};
+                    row["%relationCounts"] = {};
                 }
             }
         });
@@ -489,7 +497,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         if (this.dataSource.length === 0) return;
 
         // Build query to get links for all relation instances in current page
-        const iidBranches = this.dataSource.map(row => `{ $rel iid ${row.iid}; }`).join(" or ");
+        const iidBranches = this.dataSource.map(row => `{ $rel iid ${row["%iid"]}; }`).join(" or ");
         const query = `match ${iidBranches}; $rel links ($role: $player);`;
 
         this.driver.query(query).subscribe({
@@ -497,7 +505,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                 if (isApiErrorResponse(res)) {
                     this.snackbar.errorPersistent(`Error fetching link counts: ${res.err.message}`);
                     for (const row of this.dataSource) {
-                        row.linkCounts = {};
+                        row["%linkCounts"] = {};
                     }
                     return;
                 }
@@ -531,22 +539,22 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
                 // Update rows with counts by role
                 for (const row of this.dataSource) {
-                    const roleMap = countsByIid.get(row.iid);
+                    const roleMap = countsByIid.get(row["%iid"]);
                     if (roleMap && roleMap.size > 0) {
                         const counts: LinkCountsByRole = {};
                         for (const [role, iids] of roleMap) {
                             counts[role] = iids.size;
                         }
-                        row.linkCounts = counts;
+                        row["%linkCounts"] = counts;
                     } else {
-                        row.linkCounts = {};
+                        row["%linkCounts"] = {};
                     }
                 }
             },
             error: (err) => {
                 this.snackbar.errorPersistent(`Error fetching link counts: ${extractErrorMessage(err)}`);
                 for (const row of this.dataSource) {
-                    row.linkCounts = {};
+                    row["%linkCounts"] = {};
                 }
             }
         });
@@ -561,7 +569,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         // Build query to count owners for all attribute values in current page
         // Each branch binds its own $attr so we can match the value back to the row
         const valueBranches = this.dataSource.map(row => {
-            const formattedValue = this.formatAttributeValueForQuery(row.iid, valueType);
+            const formattedValue = this.formatAttributeValueForQuery(row["%iid"], valueType);
             return `{ $owner has $attr; $attr isa ${attrType.label}; $attr == ${formattedValue}; }`;
         }).join(" or ");
 
@@ -572,7 +580,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                 if (isApiErrorResponse(res)) {
                     this.snackbar.errorPersistent(`Error fetching owner counts: ${res.err.message}`);
                     for (const row of this.dataSource) {
-                        row.ownerCounts = {};
+                        row["%ownerCounts"] = {};
                     }
                     return;
                 }
@@ -582,7 +590,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
                 // Initialize map for all rows
                 for (const row of this.dataSource) {
-                    countsByValue.set(row.iid, new Map());
+                    countsByValue.set(row["%iid"], new Map());
                 }
 
                 if (res.ok.answerType === "conceptRows") {
@@ -609,22 +617,22 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
                 // Update rows with counts by type
                 for (const row of this.dataSource) {
-                    const typeMap = countsByValue.get(row.iid);
+                    const typeMap = countsByValue.get(row["%iid"]);
                     if (typeMap && typeMap.size > 0) {
                         const counts: OwnerCountsByType = {};
                         for (const [type, iids] of typeMap) {
                             counts[type] = iids.size;
                         }
-                        row.ownerCounts = counts;
+                        row["%ownerCounts"] = counts;
                     } else {
-                        row.ownerCounts = {};
+                        row["%ownerCounts"] = {};
                     }
                 }
             },
             error: (err) => {
                 this.snackbar.errorPersistent(`Error fetching owner counts: ${extractErrorMessage(err)}`);
                 for (const row of this.dataSource) {
-                    row.ownerCounts = {};
+                    row["%ownerCounts"] = {};
                 }
             }
         });
@@ -677,12 +685,12 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                 let tableRow = rowsByIid.get(key);
                 if (!tableRow) {
                     tableRow = {
-                        iid: key, // Use value as identifier
-                        type,
-                        kind: "attribute",
-                        relationCounts: null,
+                        "%iid": key, // Use value as identifier
+                        "%type": type,
+                        "%kind": "attribute",
+                        "%relationCounts": null,
                         value: [value],
-                        valueType,
+                        "%valueType": valueType,
                     };
                     rowsByIid.set(key, tableRow);
                 }
@@ -700,10 +708,10 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                 let tableRow = rowsByIid.get(iid);
                 if (!tableRow) {
                     tableRow = {
-                        iid,
-                        type,
-                        kind,
-                        relationCounts: null,
+                        "%iid": iid,
+                        "%type": type,
+                        "%kind": kind,
+                        "%relationCounts": null,
                     };
                     rowsByIid.set(iid, tableRow);
                 }
@@ -782,8 +790,8 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
             ? ["$instance", ...this.attributeColumns.map(attr => `$${attr}`)].join(", ")
             : "$instance";
 
-        // Check if we're sorting by an attribute column
-        const sortByAttribute = this.sortColumn && this.sortColumn !== "relationCounts" && this.sortColumn !== "iid" && this.sortColumn !== "type";
+        // Check if we're sorting by an attribute column (built-in column IDs are %-prefixed; anything without the prefix is a user attribute).
+        const sortByAttribute = !!this.sortColumn && !this.sortColumn.startsWith("%");
 
         // Need distinct when filtering (filter can match multiple attrs per instance) or sorting by attribute
         const needsDistinct = filterClause || sortByAttribute;
@@ -944,7 +952,7 @@ offset ${offset}; limit ${limit};`.trim();
         const breadcrumbs: BreadcrumbItem[] = [
             { kind: "type-table", typeLabel: this.tab.type.label, typeKind: this.tab.type.kind }
         ];
-        this.dataEditorState.openInstanceDetail(this.tab.type, row.iid, breadcrumbs);
+        this.dataEditorState.openInstanceDetail(this.tab.type, row["%iid"], breadcrumbs);
     }
 
     onPageChange(event: any) {
