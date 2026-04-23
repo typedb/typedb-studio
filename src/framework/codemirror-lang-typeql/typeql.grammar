@@ -415,13 +415,13 @@ Statement {
 
 
 StatementThing {
-  VAR COMMA? ThingConstraintList
-  // ThingRelationAnonymous (COMMA? ThingConstraintList)?
+  VAR COMMA? ThingConstraintList |
+  ThingRelationAnonymous (COMMA? ThingConstraintList)?
 }
 
-// ThingRelationAnonymous {
-//   TypeRef? Relation
-// }
+ThingRelationAnonymous {
+  TypeRef? Relation
+}
 
 ThingConstraintList {
   ThingConstraint (COMMA ThingConstraint)* COMMA?
@@ -480,9 +480,10 @@ TypeRef {
 ValueLiteral {
   BOOLEANLITERAL |
   STRINGLITERAL |
+  DATETIMELITERAL |
+  DATELITERAL |
   INTEGERLITERAL |
   DOUBLELITERAL
-  // TODO
 }
 
 ValueType {
@@ -769,9 +770,11 @@ ExpressionParenthesis {
 
   BOOLEANLITERAL { "false" | "true" }
   STRINGLITERAL { '"' (!["\\] | "\\" _)* '"' }
+  DATETIMELITERAL { $[0-9]+ "-" $[0-9]+ "-" $[0-9]+ "T" $[0-9]+ ":" $[0-9]+ (":" $[0-9]+ ("." $[0-9]+)?)? }
+  DATELITERAL     { $[0-9]+ "-" $[0-9]+ "-" $[0-9]+ }
   INTEGERLITERAL { "-"? $[0-9]+ }
   DOUBLELITERAL { "-"? $[0-9]+('.' $[0-9]+)?  }
-  @precedence { DOUBLELITERAL, INTEGERLITERAL }
+  @precedence { DATETIMELITERAL, DATELITERAL, DOUBLELITERAL, INTEGERLITERAL }
   
   LINECOMMENT { "#" ![\n]* }
   whitespace { $[ \t\n\r]+ }

@@ -72,3 +72,4 @@ export function detectTransactionType(query: string): TransactionType | null {
 
     return "read";
 }
+
