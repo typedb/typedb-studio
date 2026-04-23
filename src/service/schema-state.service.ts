@@ -88,6 +88,9 @@ export class SchemaState {
         ).subscribe(() => {
             this.refresh();
         });
+        this.driver.schemaCommitted$.subscribe(() => {
+            this.refresh();
+        });
         this.queryResponses$.subscribe(data => {
             this.push(data);
         });

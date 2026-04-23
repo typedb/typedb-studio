@@ -51,6 +51,8 @@ export class DriverState {
     private _actionLog$ = new Subject<DriverAction>();
     private _writeLock$ = new BehaviorSubject<Semaphore | null>(null);
     private _stopSignal$ = new Subject<void>();
+    /** Emits whenever a schema transaction commits successfully. Consumers (e.g. SchemaState) can react by refreshing. */
+    schemaCommitted$ = new Subject<void>();
 
     private driver?: TypeDBHttpDriver;
 
@@ -272,6 +274,7 @@ export class DriverState {
 
     commitTransaction(lockId = uuid()) {
         const transactionId = this.requireTransaction().id;
+        const transactionType = this.requireTransaction().type;
         const action = transactionOperationActionOf("commit");
         this._actionLog$.next(action);
         const driver = this.requireDriver();
@@ -280,6 +283,7 @@ export class DriverState {
                 this.updateActionResult(action, res);
                 this._transaction$.next(null);
                 if (isApiErrorResponse(res)) throw res.err;
+                if (transactionType === "schema") this.schemaCommitted$.next();
             }),
             takeUntil(this._stopSignal$),
             catchError((err) => {
@@ -361,7 +365,9 @@ export class DriverState {
                     tap({ complete: () => { completed = true; } }),
                     finalize(() => {
                         if (completed && shouldCommit) {
-                            fromPromiseWithRetry(() => driver.commitTransaction(transactionId)).subscribe();
+                            fromPromiseWithRetry(() => driver.commitTransaction(transactionId)).subscribe((res) => {
+                                if (!isApiErrorResponse(res) && transactionType === "schema") this.schemaCommitted$.next();
+                            });
                         } else {
                             fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).subscribe();
                         }
@@ -434,6 +440,7 @@ export class DriverState {
         return fromPromiseWithRetry(() => driver.oneShotQuery(query, shouldCommit, databaseName, transactionType, undefined, queryOptions)).pipe(
             tap((res) => {
                 if (isApiErrorResponse(res)) throw res;
+                if (shouldCommit && transactionType === "schema") this.schemaCommitted$.next();
             }),
         );
     }

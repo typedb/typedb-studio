@@ -13,7 +13,6 @@ import { ResolvedSampleDatasetVersion } from "../concept/sample-dataset";
 import { DriverState } from "./driver-state.service";
 import { QueryPageState } from "./query-page-state.service";
 import { QueryTabsState } from "./query-tabs-state.service";
-import { SchemaState } from "./schema-state.service";
 import { SnackbarService } from "./snackbar.service";
 
 @Injectable({
@@ -26,7 +25,6 @@ export class SampleDatasetLoaderService {
     private driver = inject(DriverState);
     private queryTabs = inject(QueryTabsState);
     private queryPageState = inject(QueryPageState);
-    private schemaState = inject(SchemaState);
     private snackbar = inject(SnackbarService);
 
     async load(resolved: ResolvedSampleDatasetVersion): Promise<void> {
@@ -56,7 +54,6 @@ export class SampleDatasetLoaderService {
                 );
                 return;
             }
-            this.schemaState.refresh();
 
             const dataOk = await this.runInNewTab(`${datasetName} data`, dataTql);
             progress.dismiss();
