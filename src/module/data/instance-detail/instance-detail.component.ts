@@ -281,7 +281,24 @@ match
         }));
     }
 
+    private typeOrSubtypePlaysRoles(type: SchemaConcept): boolean {
+        if ("playedRoles" in type && type.playedRoles.length > 0) return true;
+        if ("subtypes" in type) {
+            for (const sub of type.subtypes) {
+                if (this.typeOrSubtypePlaysRoles(sub)) return true;
+            }
+        }
+        return false;
+    }
+
     private fetchRelations() {
+        // Skip if the type (and all subtypes) play no roles in any relation
+        if (!this.typeOrSubtypePlaysRoles(this.type)) {
+            this.relationsLoading = false;
+            this.allRelations = [];
+            return;
+        }
+
         this.relationsLoading = true;
 
         // Fetch all relations where this instance plays a role, along with all links

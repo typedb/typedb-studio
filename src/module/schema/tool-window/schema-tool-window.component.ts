@@ -85,16 +85,11 @@ export class SchemaToolWindowComponent implements AfterViewInit {
         this.state.dataSource$.subscribe((dataSource) => {
             // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
             setTimeout(() => {
-                dataSource.forEach( node => {
-                    // In data mode, expand all recursively
-                    if (this.mode === "data") {
-                        this.expandNodeRecursively(node);
+                dataSource.forEach(node => {
+                    if (this.state.rootNodesCollapsed[node.label]) {
+                        this.tree.collapse(node);
                     } else {
-                        if (this.state.rootNodesCollapsed[node.label]) {
-                            this.tree.collapse(node);
-                        } else {
-                            this.tree.expand(node);
-                        }
+                        this.tree.expand(node);
                     }
                 });
             });

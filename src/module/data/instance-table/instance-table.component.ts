@@ -21,6 +21,7 @@ import { CdkScrollable } from "@angular/cdk/scrolling";
 import { Subject, Subscription, combineLatest } from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, take } from "rxjs/operators";
 import { TypeTableTab, DataEditorState, BreadcrumbItem } from "../../../service/data-editor-state.service";
+import { SchemaConcept } from "../../../service/schema-state.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { ApiResponse, Attribute, Concept, ConceptRow, ConceptRowAnswer, isApiErrorResponse, QueryResponse } from "@typedb/driver-http";
 import { SnackbarService } from "../../../service/snackbar.service";
@@ -431,6 +432,14 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
     private fetchRelationCounts() {
         if (this.dataSource.length === 0) return;
 
+        // Skip if the type (and all subtypes) play no roles in any relation
+        if (!this.typeOrSubtypePlaysRoles(this.tab.type)) {
+            for (const row of this.dataSource) {
+                row["%relationCounts"] = {};
+            }
+            return;
+        }
+
         // Build query to count relations for all instances in current page
         // Use disjunction to match any of the instance IIDs
         const iidBranches = this.dataSource.map(row => `{ $instance iid ${row["%iid"]}; }`).join(" or ");
@@ -491,6 +500,16 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                 }
             }
         });
+    }
+
+    private typeOrSubtypePlaysRoles(type: SchemaConcept): boolean {
+        if ("playedRoles" in type && type.playedRoles.length > 0) return true;
+        if ("subtypes" in type) {
+            for (const sub of type.subtypes) {
+                if (this.typeOrSubtypePlaysRoles(sub)) return true;
+            }
+        }
+        return false;
     }
 
     private fetchLinkCounts() {
