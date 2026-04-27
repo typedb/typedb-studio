@@ -145,6 +145,9 @@ let typeqlAutocomplete = new NodePrefixAutoComplete(
 );
 
 function wrappedAutocomplete(context: CompletionContext) {
+  // Don't trigger autocomplete immediately after a semicolon
+  const charBefore = context.state.doc.sliceString(context.pos - 1, context.pos);
+  if (charBefore === ";") return null;
   return typeqlAutocomplete.autocomplete(context);
 }
 export function typeqlAutocompleteExtension() {
