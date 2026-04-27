@@ -263,7 +263,7 @@ export class DriverState {
     openTransaction(type: TransactionType, lockId = uuid()) {
         const databaseName = this.requireDatabase().name;
         const driver = this.requireDriver();
-        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.openTransaction(databaseName, type)).pipe(
+        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.openTransaction(databaseName, type, this.transactionOptions(type))).pipe(
             tap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;
                 this._transaction$.next(new Transaction({ id: res.ok.transactionId, type: type }));
@@ -349,7 +349,7 @@ export class DriverState {
     ): Observable<{ index: number, res: ApiResponse<QueryResponse>, autoCommitted: boolean }> {
         const shouldCommit = transactionType !== "read";
 
-        return fromPromiseWithRetry(() => driver.openTransaction(databaseName, transactionType)).pipe(
+        return fromPromiseWithRetry(() => driver.openTransaction(databaseName, transactionType, this.transactionOptions(transactionType))).pipe(
             switchMap(openRes => {
                 if (isApiErrorResponse(openRes)) throw openRes;
                 const transactionId = openRes.ok.transactionId;
@@ -399,6 +399,10 @@ export class DriverState {
                 return throwError(() => err);
             }),
         );
+    }
+
+    private transactionOptions(type: TransactionType): { transactionTimeoutMillis: number } {
+        return { transactionTimeoutMillis: type === "schema" ? 5 * 60 * 1000 : 60 * 60 * 1000 };
     }
 
     private nextTransactionType(current: TransactionType): TransactionType | null {
@@ -454,7 +458,7 @@ export class DriverState {
         const driver = this.requireDriver();
         const shouldCommit = transactionType !== "read";
 
-        return fromPromiseWithRetry(() => driver.oneShotQuery(query, shouldCommit, databaseName, transactionType, undefined, queryOptions)).pipe(
+        return fromPromiseWithRetry(() => driver.oneShotQuery(query, shouldCommit, databaseName, transactionType, this.transactionOptions(transactionType), queryOptions)).pipe(
             tap((res) => {
                 if (isApiErrorResponse(res)) throw res;
                 if (shouldCommit && transactionType === "schema") this.schemaCommitted$.next();
@@ -496,7 +500,7 @@ export class DriverState {
     runBackgroundReadQueries(queries: string[]): Observable<ApiOkResponse<QueryResponse>> {
         const driver = this.requireDriver();
         const databaseName = this.requireDatabase().name;
-        return fromPromiseWithRetry(() => driver.openTransaction(databaseName, "read")).pipe(
+        return fromPromiseWithRetry(() => driver.openTransaction(databaseName, "read", this.transactionOptions("read"))).pipe(
             switchMap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;
                 return from(queries).pipe(
