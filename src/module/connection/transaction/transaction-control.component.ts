@@ -8,7 +8,10 @@ import { AsyncPipe } from "@angular/common";
 import { Component } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
+import { MatDialog } from "@angular/material/dialog";
+import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
+import { MatMenuModule } from "@angular/material/menu";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { combineLatest, map } from "rxjs";
@@ -18,12 +21,14 @@ import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { TransactionType } from "@typedb/driver-http";
 import { OperationMode } from "../../../concept/transaction";
+import { TransactionManagerDialogComponent } from "./manager-dialog/transaction-manager-dialog.component";
+import { TransactionOptionsDialogComponent } from "./options-dialog/transaction-options-dialog.component";
 
 @Component({
     selector: "ts-transaction-control",
     templateUrl: "./transaction-control.component.html",
     styleUrls: ["./transaction-control.component.scss"],
-    imports: [MatTooltipModule, AsyncPipe, MatSelectModule, ReactiveFormsModule, MatIconModule, MatButtonModule]
+    imports: [MatTooltipModule, AsyncPipe, MatSelectModule, ReactiveFormsModule, MatIconModule, MatButtonModule, MatMenuModule, MatDividerModule]
 })
 export class TransactionControlComponent {
 
@@ -45,7 +50,7 @@ export class TransactionControlComponent {
     );
     closeButtonVisible$ = this.openButtonVisible$;
 
-    constructor(public driver: DriverState, private formBuilder: FormBuilder, private snackbar: SnackbarService, private appData: AppData) {
+    constructor(public driver: DriverState, private formBuilder: FormBuilder, private snackbar: SnackbarService, private appData: AppData, private dialog: MatDialog) {
         this.transactionConfigDisabled$.subscribe((disabled) => {
             if (disabled) this.driver.transactionControls.disable();
             else this.driver.transactionControls.enable();
@@ -60,6 +65,18 @@ export class TransactionControlComponent {
             this.driver.autoTransactionEnabled$.next(operationMode === "auto");
             this.appData.preferences.setTransactionMode(operationMode);
         });
+    }
+
+    setOperationMode(mode: OperationMode) {
+        this.driver.transactionControls.controls.operationMode.setValue(mode);
+    }
+
+    openTransactionInspector() {
+        this.dialog.open(TransactionManagerDialogComponent, { width: "560px" });
+    }
+
+    openTransactionOptions() {
+        this.dialog.open(TransactionOptionsDialogComponent, { width: "460px" });
     }
 
     open() {

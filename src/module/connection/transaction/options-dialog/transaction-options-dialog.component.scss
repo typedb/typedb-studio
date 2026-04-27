@@ -1,0 +1,38 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+::ng-deep .mdc-dialog__content {
+    overflow: visible !important;
+}
+
+.option-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    label {
+        flex-shrink: 0;
+        white-space: nowrap;
+        color: var(--theme-secondary-light-grey);
+        font-size: 14px;
+    }
+
+    input {
+        background: var(--theme-black);
+        border: 1px solid var(--theme-light-purple);
+        border-radius: 4px;
+        color: var(--theme-white);
+        font-family: var(--font-family-default);
+        font-size: 14px;
+        font-weight: var(--font-weight-regular);
+        padding: 6px 10px;
+        width: 100px;
+        &:focus {
+            outline: none;
+            border-color: var(--theme-secondary-grey);
+        }
+    }
+}

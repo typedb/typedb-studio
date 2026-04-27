@@ -157,6 +157,7 @@ interface PreferencesData {
         showAdvancedConfigByDefault: boolean;
     };
     transactionMode: OperationMode;
+    transactionTimeoutSeconds: number;
     queryRowLimit: RowLimit;
 }
 
@@ -452,6 +453,7 @@ const INITIAL_PREFERENCES: PreferencesData = {
         showAdvancedConfigByDefault: true,
     },
     transactionMode: "auto",
+    transactionTimeoutSeconds: 3600,
     queryRowLimit: 100,
 };
 
@@ -491,6 +493,17 @@ class Preferences {
     setTransactionMode(value: OperationMode): StorageWriteResult {
         const prefs = this.readStorage()!;
         prefs.transactionMode = value;
+        return this.writeStorage(prefs);
+    }
+
+    transactionTimeoutSeconds(): number {
+        const prefs = this.readStorage();
+        return prefs?.transactionTimeoutSeconds ?? INITIAL_PREFERENCES.transactionTimeoutSeconds;
+    }
+
+    setTransactionTimeoutSeconds(value: number): StorageWriteResult {
+        const prefs = this.readStorage()!;
+        prefs.transactionTimeoutSeconds = value;
         return this.writeStorage(prefs);
     }
 

@@ -13,7 +13,7 @@ import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
 import { Database } from "@typedb/driver-http";
-import { combineLatest, distinctUntilChanged, map } from "rxjs";
+import { distinctUntilChanged, map } from "rxjs";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { DatabaseCreateDialogComponent } from "../../database/create-dialog/database-create-dialog.component";
@@ -55,9 +55,8 @@ export class ConnectionWidgetComponent implements OnInit {
     transactionText$ = this.driver.transaction$.pipe(map(tx => tx?.type ?? `No active transaction`));
     transactionWidgetTooltip$ = this.driver.transactionHasUncommittedChanges$.pipe(map(x => x ? `Has uncommitted changes` : ``));
 
-    rootNgClass$ = combineLatest([this.driver.status$, this.transactionControlVisible$]).pipe(map(([status, txWidgetVisible]) => ({
+    rootNgClass$ = this.driver.status$.pipe(map((status) => ({
         "root": true,
-        "has-transaction-widget": txWidgetVisible,
         "hoverable": status !== "disconnected"
     })));
 

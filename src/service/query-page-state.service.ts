@@ -465,8 +465,12 @@ export class QueryPageState {
 
         const rowLimit = this.rowLimitControl.value;
         const queryOptions = rowLimit !== "none" ? { answerCountLimit: rowLimit } : undefined;
-        this.driver.query(query, queryOptions).subscribe({
+        let completed = false;
+        this.driver.query(query, queryOptions).pipe(
+            takeUntil(this._queryStop$),
+        ).subscribe({
             next: (res) => {
+                completed = true;
                 this.outputQueryResponseToRun(newRun, res);
                 newRun.log.flush();
                 this._queryRunning$.next(false);
@@ -475,6 +479,7 @@ export class QueryPageState {
                 completion$.complete();
             },
             error: (err) => {
+                completed = true;
                 newRun.table.status = "error";
                 newRun.graph.status = "error";
                 this._handleQueryError(newRun, err);
@@ -482,6 +487,19 @@ export class QueryPageState {
                 this._queryRunning$.next(false);
                 completion$.next({ success: false, error: err });
                 completion$.complete();
+            },
+            complete: () => {
+                if (!completed) {
+                    // Stopped by user
+                    newRun.table.status = "error";
+                    newRun.graph.status = "error";
+                    newRun.log.appendBlankLine();
+                    newRun.log.appendLines(`Query interrupted.`);
+                    newRun.log.flush();
+                    this._queryRunning$.next(false);
+                    completion$.next({ success: false });
+                    completion$.complete();
+                }
             },
         });
     }

@@ -28,7 +28,7 @@
         @include typography.p2;
 
         i.fa-database {
-            margin-right: 8px;
+            margin-right: 0;
         }
 
         i.fa-code-commit {
@@ -100,10 +100,6 @@ i.ts-beacon {
     color: var(--theme-secondary-light-grey);
 }
 
-.divider-vertical {
-    margin: 0 24px;
-    width: 0;
-}
 
 .menu-content {
     aside {

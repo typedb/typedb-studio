@@ -14,12 +14,12 @@
         <i class="fa-light fa-database"></i><span class="db-trigger-text">{{ databaseText$ | async }}</span>
       </button>
     }
-  </div>
 
-  @if (transactionControlVisible$ | async) {
-    <div class="divider-vertical"></div>
-    <ts-transaction-control/>
-  }
+    @if (transactionControlVisible$ | async) {
+      <i class="fa-light fa-chevron-right"></i>
+      <ts-transaction-control/>
+    }
+  </div>
 </div>
 
 <mat-menu #connectionMenuRef="matMenu" [overlapTrigger]="false">
