@@ -57,16 +57,8 @@ function isSafari(): boolean {
     const ua = window.navigator.userAgent;
     // Chrome's user agent contains "Safari", so we must exclude it
     return ua.includes("Safari") && !ua.includes("Chrome") && !ua.includes("Chromium");
-} 
-
-const safariMixedContentValidator: ValidatorFn = (control: AbstractControl<string>) => {
-    if (control.value.startsWith(`http://`) && isSafari()) return {
-        errorText:
-            "Safari blocks HTTP requests from HTTPS sites. " 
-            + "Please use another browser such as Mozilla Firefox or Google Chrome."
-    };
-    else return null;
 }
+
 
 @Component({
     selector: "tp-connection-creator",
@@ -98,7 +90,7 @@ export class ConnectionCreatorComponent {
     });
     // TODO: support multiple addresses
     readonly advancedForm = this.formBuilder.group({
-        address: ["", [requiredValidator, addressValidator, safariMixedContentValidator]],
+        address: ["", [requiredValidator, addressValidator]],
         username: ["", [requiredValidator]],
         password: ["", [requiredValidator]],
     });
@@ -172,6 +164,12 @@ export class ConnectionCreatorComponent {
         const address = this.advancedForm.controls.address.value;
         if (!address || this.advancedForm.controls.address.invalid) return false;
         return /:1729\b/.test(address);
+    }
+
+    get addressMixedContent(): boolean {
+        const address = this.advancedForm.controls.address.value;
+        if (!address || this.advancedForm.controls.address.invalid) return false;
+        return address.startsWith('http://') && isSafari();
     }
 
     private buildConnectionConfigOrNull(): ConnectionConfig | null {
