@@ -39,6 +39,7 @@ import { SnackbarService } from "../../service/snackbar.service";
 import { ErrorDetailsDialogComponent } from "../../framework/error-details-dialog/error-details-dialog.component";
 import { DatabaseCreateDialogComponent } from "../database/create-dialog/database-create-dialog.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
+import { QueryOptionsDialogComponent } from "./query-options-dialog/query-options-dialog.component";
 import { RenameTabDialogComponent, RenameTabDialogData } from "./rename-tab-dialog/rename-tab-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { keymap } from "@codemirror/view";
@@ -321,6 +322,10 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
 
     stopQuery() {
         this.state.stopQuery();
+    }
+
+    openQueryOptionsDialog() {
+        this.dialog.open(QueryOptionsDialogComponent, { width: "400px" });
     }
 
     // Query tab methods

@@ -1,0 +1,14 @@
+<tp-modal dialogTitle="Query options">
+  <div class="option-row">
+    <label>Result limit</label>
+    <mat-select [formControl]="state.rowLimitControl" panelClass="row-limit-panel">
+      @for (option of state.rowLimitOptions; track option.value) {
+        <mat-option [value]="option.value">{{ option.label }}</mat-option>
+      }
+    </mat-select>
+  </div>
+  <tp-form-actions
+    submitText="OK" [isSubmitting]="false"
+    buttonIdPrefix="queryOptionsModal" (submitClick)="close()"
+  />
+</tp-modal>

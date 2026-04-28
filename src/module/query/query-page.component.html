@@ -35,32 +35,25 @@
                 <button mat-icon-button class="tab-scroll-button right" [class.visible]="canScrollRight" (click)="scrollTabsRight()">
                   <i class="fa-light fa-chevron-right"></i>
                 </button>
-                <button mat-icon-button class="new-query-tab-button" (click)="newQueryTab()" matTooltip="New query tab" [matTooltipShowDelay]="500">
+                <div class="query-tab new-query-tab" (click)="newQueryTab()" matTooltip="New query tab" [matTooltipShowDelay]="500">
                   <i class="fa-light fa-plus"></i>
-                </button>
-                <div class="flex-spacer"></div>
+                </div>
+                <div class="flex-spacer tabs-spacer"></div>
                 <div class="query-tabs-controls">
-                  <div class="row-limit-control">
-                    <label>Limit:</label>
-                    <mat-select [formControl]="state.rowLimitControl" panelClass="row-limit-panel">
-                      @for (option of state.rowLimitOptions; track option.value) {
-                        <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                      }
-                    </mat-select>
-                  </div>
                   @if (state.queryRunning$ | async) {
-                    <button mat-stroked-button (click)="stopQuery()">
+                    <button mat-icon-button (click)="stopQuery()" matTooltip="Stop" matTooltipPosition="below">
                       <i class="fa-light fa-stop" style="color: var(--theme-red)"></i>
-                      <span>Stop</span>
                     </button>
                   } @else {
-                    <button mat-stroked-button [disabled]="!(state.runEnabled$ | async)"
+                    <button mat-icon-button [disabled]="!(state.runEnabled$ | async)"
                             [matTooltip]="(state.runTooltip$ | async) || ''" matTooltipPosition="below"
                             [matTooltipShowDelay]="(state.runDisabledReason$ | async) ? 0 : 500" (click)="runQuery()">
                       <i class="fa-light fa-play"></i>
-                      <span>Run</span>
                     </button>
                   }
+                  <button mat-icon-button (click)="openQueryOptionsDialog()" matTooltip="Query options" matTooltipPosition="below" [matTooltipShowDelay]="500">
+                    <i class="fa-light fa-gear"></i>
+                  </button>
                 </div>
               </div>
               <div class="query-tab-content">

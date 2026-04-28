@@ -575,7 +575,7 @@ export class QueryPageState {
                     newRun.log.appendBlankLine();
                     newRun.log.appendLines(`${MULTI_QUERY_HEADER}Query ${index + 1}`, queries[index]);
                     newRun.log.appendBlankLine();
-                    newRun.log.appendQueryResult(res, autoCommitted);
+                    newRun.log.appendQueryResult(res, autoCommitted, rowLimit !== "none" ? rowLimit : undefined);
                 }
 
                 if (!isBatchSummary) {
@@ -668,8 +668,9 @@ export class QueryPageState {
     }
 
     private outputQueryResponseWithAnswers(run: RunOutputState, res: ApiResponse<QueryResponse>, autoCommitted: boolean) {
+        const rowLimit = this.rowLimitControl.value;
         run.log.appendBlankLine();
-        run.log.appendQueryResult(res, autoCommitted);
+        run.log.appendQueryResult(res, autoCommitted, rowLimit !== "none" ? rowLimit : undefined);
         run.table.push(res);
         try {
             run.graph.push(res);
@@ -822,7 +823,7 @@ export class LogOutputState {
         setTimeout(() => this.flush(), 500);
     }
 
-    appendQueryResult(res: ApiResponse<QueryResponse>, autoCommitted?: boolean) {
+    appendQueryResult(res: ApiResponse<QueryResponse>, autoCommitted?: boolean, resultLimit?: number) {
         if (isApiErrorResponse(res)) {
             this.appendLines(`${RESULT}${ERROR}`, ``, res.err.message);
             return;
@@ -856,6 +857,7 @@ export class LogOutputState {
                 }
 
                 lines.push(`Finished. Total rows: ${answers.length}`);
+                if (resultLimit && answers.length >= resultLimit) lines.push(`Results are limited to ${resultLimit} rows by query options.`);
                 break;
             }
             case "conceptDocuments": {
@@ -867,6 +869,7 @@ export class LogOutputState {
                 answers.forEach(x => lines.push(this.conceptDocumentDisplayString(x)));
 
                 lines.push(`Finished. Total documents: ${answers.length}`);
+                if (resultLimit && answers.length >= resultLimit) lines.push(`Results are limited to ${resultLimit} rows by query options.`);
                 break;
             }
             default:
