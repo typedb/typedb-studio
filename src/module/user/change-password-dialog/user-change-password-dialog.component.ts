@@ -48,12 +48,11 @@ export class UserChangePasswordDialogComponent {
     }
 
     submit() {
-        this.driver.connection$.subscribe(connection => {
-            if (!connection) {
-                this.close();
-                this.snackbar.errorPersistent(`No server connected - could not change password`);
-            }
-        });
+        if (!this.driver.connection$.value) {
+            this.close();
+            this.snackbar.errorPersistent(`No server connected - could not change password`);
+            return;
+        }
         const editingSelf = this.isEditingCurrentlyLoggedInUser;
         this.driver.updateUser(this.data.username, this.form.value.newPassword!).pipe(
             switchMap(res => {
