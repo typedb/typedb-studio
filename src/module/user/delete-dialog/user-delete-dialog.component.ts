@@ -17,6 +17,7 @@ import { FormActionsComponent, FormComponent, FormInputComponent } from "../../.
 import { ModalComponent } from "../../../framework/modal";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
+import { StartupMessageService } from "../../../service/startup-message.service";
 
 @Component({
     selector: "ts-user-delete-dialog",
@@ -36,8 +37,13 @@ export class UserDeleteDialogComponent {
 
     constructor(
         private dialogRef: MatDialogRef<UserDeleteDialogComponent>,
-        private snackbar: SnackbarService, private driver: DriverState, private formBuilder: FormBuilder
+        private snackbar: SnackbarService, private driver: DriverState, private formBuilder: FormBuilder,
+        private startupMessage: StartupMessageService,
     ) {
+    }
+
+    get isDeletingCurrentlyLoggedInUser() {
+        return this.data.username === this.driver.connection$.value?.params.username;
     }
 
     submit() {
@@ -47,12 +53,22 @@ export class UserDeleteDialogComponent {
                 this.snackbar.errorPersistent(`No server connected - could not delete user`);
             }
         });
+        const deletingSelf = this.isDeletingCurrentlyLoggedInUser;
         this.driver.deleteUser(this.data.username).pipe(
-            switchMap(() => this.driver.refreshUserList())
+            switchMap(res => {
+                if (isApiErrorResponse(res)) throw res;
+                if (deletingSelf) return this.driver.tryDisconnect();
+                return this.driver.refreshUserList();
+            })
         ).subscribe({
             next: () => {
                 this.close();
-                this.snackbar.success(`User '${this.data.username}' deleted.`);
+                if (deletingSelf) {
+                    this.startupMessage.set({ kind: "user-deleted", username: this.data.username });
+                    window.location.href = "/connect";
+                } else {
+                    this.snackbar.success(`User '${this.data.username}' deleted.`);
+                }
             },
             error: (err) => {
                 this.isSubmitting$.next(false);

@@ -16,6 +16,7 @@ import { FormActionsComponent, FormComponent, FormPasswordInputComponent, requir
 import { ModalComponent } from "../../../framework/modal";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
+import { StartupMessageService } from "../../../service/startup-message.service";
 
 @Component({
     selector: "ts-user-change-password-dialog",
@@ -38,6 +39,7 @@ export class UserChangePasswordDialogComponent {
     constructor(
         private dialogRef: MatDialogRef<UserChangePasswordDialogComponent>,
         private formBuilder: FormBuilder, private snackbar: SnackbarService, private driver: DriverState,
+        private startupMessage: StartupMessageService,
     ) {
     }
 
@@ -52,18 +54,18 @@ export class UserChangePasswordDialogComponent {
                 this.snackbar.errorPersistent(`No server connected - could not change password`);
             }
         });
+        const editingSelf = this.isEditingCurrentlyLoggedInUser;
         this.driver.updateUser(this.data.username, this.form.value.newPassword!).pipe(
-            switchMap(() => {
-                if (this.isEditingCurrentlyLoggedInUser) {
-                    return this.driver.tryDisconnect();
-                } else {
-                    return of({});
-                }
+            switchMap(res => {
+                if (isApiErrorResponse(res)) throw res;
+                if (editingSelf) return this.driver.tryDisconnect();
+                return of({});
             })
         ).subscribe({
             next: () => {
                 this.close();
-                if (this.isEditingCurrentlyLoggedInUser) {
+                if (editingSelf) {
+                    this.startupMessage.set({ kind: "password-changed", username: this.data.username });
                     window.location.href = "/connect";
                 } else {
                     this.snackbar.success(`Password changed for user '${this.data.username}'.`);
