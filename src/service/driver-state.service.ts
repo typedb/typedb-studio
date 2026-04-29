@@ -49,6 +49,7 @@ export class DriverState {
 
     private _databaseList$ = new BehaviorSubject<Database[] | null>(null);
     userList$ = new BehaviorSubject<User[] | null>(null);
+    isAdmin$ = new BehaviorSubject<boolean | null>(null);
     private _actionLog$ = new Subject<DriverAction>();
     private _writeLock$ = new BehaviorSubject<Semaphore | null>(null);
     private _stopSignal$ = new Subject<void>();
@@ -188,6 +189,7 @@ export class DriverState {
             this.database$.next(null);
             this._databaseList$.next(null);
             this.userList$.next(null);
+            this.isAdmin$.next(null);
             this._status$.next("disconnected");
         }, lockId)));
     }
@@ -205,6 +207,22 @@ export class DriverState {
     refreshUserList() {
         const driver = this.requireDriver();
         return fromPromiseWithRetry(() => driver.getUsers()).pipe(
+            switchMap(res => {
+                // Non-admin users get 403 from /v1/users but can still read their own user record.
+                if (isApiErrorResponse(res) && res.status === 403) {
+                    return fromPromiseWithRetry(() => driver.getCurrentUser()).pipe(
+                        map(currentRes => {
+                            if (isOkResponse(currentRes)) {
+                                this.isAdmin$.next(false);
+                                return { ok: { users: [currentRes.ok] } } satisfies ApiResponse<{ users: User[] }>;
+                            }
+                            return currentRes;
+                        }),
+                    );
+                }
+                if (isOkResponse(res)) this.isAdmin$.next(true);
+                return of(res);
+            }),
             tap(res => {
                 if (isOkResponse(res)) this.userList$.next(res.ok.users);
             }),
