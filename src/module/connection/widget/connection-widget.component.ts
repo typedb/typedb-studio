@@ -15,6 +15,7 @@ import { RouterLink } from "@angular/router";
 import { Database } from "@typedb/driver-http";
 import { distinctUntilChanged, map } from "rxjs";
 import { DriverState } from "../../../service/driver-state.service";
+import { StartupMessageService } from "../../../service/startup-message.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { DatabaseCreateDialogComponent } from "../../database/create-dialog/database-create-dialog.component";
 import { DatabaseDeleteDialogComponent } from "../../database/delete-dialog/database-delete-dialog.component";
@@ -62,7 +63,7 @@ export class ConnectionWidgetComponent implements OnInit {
 
     constructor(
         public driver: DriverState, private snackbar: SnackbarService,
-        private dialog: MatDialog
+        private dialog: MatDialog, private startupMessage: StartupMessageService,
     ) {}
 
     ngOnInit() {
@@ -80,6 +81,7 @@ export class ConnectionWidgetComponent implements OnInit {
 
     signOut() {
         this.driver.tryDisconnect().subscribe(() => {
+            this.startupMessage.set({ kind: "signed-out" });
             window.location.href = "/connect";
         });
     }

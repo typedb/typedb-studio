@@ -12,6 +12,7 @@ import { EMPTY, filter, of, switchMap } from "rxjs";
 import { AsyncPipe } from "@angular/common";
 import { AppData } from "./service/app-data.service";
 import { DriverState } from "./service/driver-state.service";
+import { StartupMessage, StartupMessageService } from "./service/startup-message.service";
 import { SnackbarService } from "./service/snackbar.service";
 import { ThemeService } from "./service/theme.service";
 
@@ -35,7 +36,7 @@ export class RootComponent implements OnInit {
     );
     initialised = false;
 
-    constructor(public vcRef: ViewContainerRef, private analytics: AnalyticsService, private router: Router, private appData: AppData, private driver: DriverState, private snackbar: SnackbarService, private theme: ThemeService) {
+    constructor(public vcRef: ViewContainerRef, private analytics: AnalyticsService, private router: Router, private appData: AppData, private driver: DriverState, private snackbar: SnackbarService, private theme: ThemeService, private startupMessage: StartupMessageService) {
         this.informAnalyticsOnPageView(router, analytics);
     }
 
@@ -47,6 +48,9 @@ export class RootComponent implements OnInit {
     }
 
     ngOnInit() {
+        const message = this.startupMessage.consume();
+        if (message) this.showStartupMessage(message);
+
         const initialConnectionConfig = this.appData.connections.findStartupConnection();
         if (initialConnectionConfig) {
             this.driver.tryConnect(initialConnectionConfig).subscribe({
@@ -62,6 +66,17 @@ export class RootComponent implements OnInit {
             });
         } else {
             this.initialised = true;
+        }
+    }
+
+    private showStartupMessage(message: StartupMessage) {
+        const who = message.username ? `'${message.username}'` : `user`;
+        if (message.kind === "password-changed") {
+            this.snackbar.success(`Password changed for ${who}. Please log in with the new password.`);
+        } else if (message.kind === "user-deleted") {
+            this.snackbar.success(`User ${who} deleted.`);
+        } else if (message.kind === "signed-out") {
+            this.snackbar.info(`You have been signed out.`);
         }
     }
 
