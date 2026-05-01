@@ -410,13 +410,13 @@ button {
 .query-tab {
     display: flex;
     align-items: center;
-    padding: 0 16px;
+    padding: 0 6px 0 14px;
     cursor: pointer;
     border-right: 1px solid var(--theme-light-purple);
     white-space: nowrap;
     color: var(--theme-grey);
     transition: background-color 100ms, color 100ms;
-    font-size: 14px;
+    font-size: 13px;
 
     &:hover:not(.active) {
         background-color: var(--theme-light-purple-02);
@@ -469,9 +469,14 @@ button {
     }
 }
 
-.new-query-tab {
-    padding: 0 12px;
+.new-query-tab-button.mat-mdc-icon-button {
+    --mdc-icon-button-state-layer-size: 28px;
     flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    margin: 0 6px;
+    align-self: center;
 }
 
 .tabs-spacer {
@@ -484,6 +489,13 @@ button {
     gap: 4px;
     padding-right: 8px;
     flex-shrink: 0;
+}
+
+.row-limit-field.mat-mdc-form-field {
+    width: 95px;
+    --mat-form-field-container-text-size: 14px;
+    --mat-form-field-outlined-label-text-size: 11px;
+    --mat-form-field-outlined-label-text-populated-size: 14px;
 }
 
 
