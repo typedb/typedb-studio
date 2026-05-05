@@ -54,19 +54,16 @@ export class RootComponent implements OnInit {
         const initialConnectionConfig = this.appData.connections.findStartupConnection();
         if (initialConnectionConfig) {
             this.driver.tryConnect(initialConnectionConfig).subscribe({
-                next: (databases) => {
+                next: () => {
                     this.snackbar.info(`Connected to ${initialConnectionConfig.name}`);
-                    this.initialised = true;
                 },
                 error: (err) => {
                     console.warn(err);
                     this.appData.connections.clearStartupConnection();
-                    this.initialised = true;
                 },
             });
-        } else {
-            this.initialised = true;
         }
+        this.initialised = true;
     }
 
     private showStartupMessage(message: StartupMessage) {

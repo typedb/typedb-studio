@@ -11,7 +11,7 @@
 
     <!-- Main area: Chat interface -->
     <div class="main-content" resizable [percent]="panelSizes[1]" (percentChange)="onPanelResize(1, $event)">
-      @if ((driver.status$ | async) === "disconnected") {
+      @if ((driver.status$ | async) !== "connected") {
         <div class="placeholder-container">
           <div class="placeholder-content">
             <i class="fa-thin fa-sparkles"></i>
