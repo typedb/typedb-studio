@@ -11,7 +11,15 @@
           <div class="help-input-row">
             <mat-form-field>
               <mat-label>Address</mat-label>
-              <input matInput [formControl]="advancedForm.controls.address" autocomplete="url" (blur)="addressBlurred = true">
+              <input matInput [formControl]="advancedForm.controls.address" autocomplete="url" (blur)="addressBlurred = true" [matAutocomplete]="recentAddressAutocomplete" (keydown)="onAddressKeydown($event)">
+              <mat-autocomplete #recentAddressAutocomplete="matAutocomplete" panelClass="recent-address-autocomplete">
+                @for (suggestion of recentAddressSuggestions$ | async; track suggestion) {
+                  <mat-option [value]="suggestion" class="recent-address-option">
+                    <span class="recent-address-text">{{ suggestion }}</span>
+                    <i class="fa-light fa-trash-can recent-address-delete" matTooltip="Remove from recent addresses" matTooltipPosition="above" (mousedown)="removeRecentAddress(suggestion, $event)"></i>
+                  </mat-option>
+                }
+              </mat-autocomplete>
               <div class="tp-password-input-suffix" matSuffix>
                 <div class="regenerate-id-button" type="button">
                   <i class="help-tooltip-button fa-light fa-circle-question" richTooltip [richTooltipContent]="addressHelpTooltipContent"></i>

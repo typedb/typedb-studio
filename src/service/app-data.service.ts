@@ -150,6 +150,35 @@ class Connections {
     }
 }
 
+const RECENT_ADDRESSES = "recentAddresses";
+const RECENT_ADDRESSES_LIMIT = 10;
+
+class RecentAddresses {
+
+    constructor(private storage: StorageService) {
+        if (this.storage.isAccessible && this.storage.read(RECENT_ADDRESSES, (obj) => obj as string[]) == null) {
+            this.storage.write(RECENT_ADDRESSES, []);
+        }
+    }
+
+    list(): string[] {
+        const data = this.storage.read(RECENT_ADDRESSES, (obj) => obj as string[]);
+        return Array.isArray(data) ? data.filter((x): x is string => typeof x === "string") : [];
+    }
+
+    push(address: string): StorageWriteResult | undefined {
+        const trimmed = address.trim();
+        if (!trimmed) return;
+        const next = [trimmed, ...this.list().filter(x => x !== trimmed)].slice(0, RECENT_ADDRESSES_LIMIT);
+        return this.storage.write(RECENT_ADDRESSES, next);
+    }
+
+    remove(address: string): StorageWriteResult {
+        const next = this.list().filter(x => x !== address);
+        return this.storage.write(RECENT_ADDRESSES, next);
+    }
+}
+
 const PREFERENCES = "preferences";
 
 interface PreferencesData {
@@ -574,6 +603,7 @@ export class AppData {
 
     readonly viewState = new ViewState(this.storage);
     readonly connections = new Connections(this.storage);
+    readonly recentAddresses = new RecentAddresses(this.storage);
     readonly preferences = new Preferences(this.storage);
     readonly dataExplorerTabs = new DataExplorerTabs(this.storage);
     readonly queryTabs = new QueryTabs(this.storage);

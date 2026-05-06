@@ -5,7 +5,8 @@
  */
 
 import { AsyncPipe, Location } from "@angular/common";
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, ViewChild } from "@angular/core";
+import { MatAutocompleteModule, MatAutocompleteTrigger } from "@angular/material/autocomplete";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCheckboxModule } from "@angular/material/checkbox";
 import { MatDialog } from "@angular/material/dialog";
@@ -24,7 +25,7 @@ import { SnackbarService } from "../../../service/snackbar.service";
 import { PageScaffoldComponent, ResourceAvailability } from "../../scaffold/page/page-scaffold.component";
 import { ActivatedRoute, Router } from "@angular/router";
 import { AbstractControl, FormBuilder, FormControl, ReactiveFormsModule, ValidatorFn } from "@angular/forms";
-import { BehaviorSubject, combineLatest, filter, first, map, tap } from "rxjs";
+import { BehaviorSubject, combineLatest, filter, first, map, merge, Observable, startWith, tap } from "rxjs";
 import { FormActionsComponent, FormComponent, FormInputComponent, FormOption, FormToggleGroupComponent, requiredValidator } from "../../../framework/form";
 import { ConnectionStringEditorDialogComponent } from "./connection-string-editor-dialog/connection-string-editor-dialog.component";
 
@@ -79,6 +80,7 @@ function isMixedContent(address: string): boolean {
         PageScaffoldComponent, AsyncPipe, MatFormFieldModule, MatSelectModule, MatTooltipModule,
         ReactiveFormsModule, FormInputComponent, FormComponent, FormActionsComponent,
         FormToggleGroupComponent, MatButtonModule, MatInputModule, RichTooltipDirective, MatCheckboxModule,
+        MatAutocompleteModule,
     ]
 })
 export class ConnectionCreatorComponent {
@@ -108,6 +110,18 @@ export class ConnectionCreatorComponent {
         password: ["", [requiredValidator]],
     });
     readonly isSubmitting$ = new BehaviorSubject(false);
+    private readonly recentAddressesRefresh$ = new BehaviorSubject<void>(undefined);
+    readonly recentAddressSuggestions$: Observable<string[]> = merge(
+        this.advancedForm.controls.address.valueChanges.pipe(startWith(this.advancedForm.controls.address.value)),
+        this.recentAddressesRefresh$,
+    ).pipe(
+        map(() => {
+            const recent = this.appData.recentAddresses.list();
+            const query = (this.advancedForm.controls.address.value ?? "").trim().toLowerCase();
+            if (!query) return recent;
+            return recent.filter(addr => addr.toLowerCase().includes(query) && addr.toLowerCase() !== query);
+        }),
+    );
 
     constructor(
         private formBuilder: FormBuilder, private appData: AppData,
@@ -207,9 +221,14 @@ export class ConnectionCreatorComponent {
     submit() {
         const config = this.buildConnectionConfigOrNull();
         if (!config) throw new Error(INTERNAL_ERROR);
+        const usedAdvancedRoute = this.form.value.advancedConfigActive === true;
+        const submittedAddress = this.advancedForm.controls.address.value;
         this.form.disable();
         this.driver.tryConnect(config).subscribe({
             next: () => {
+                if (usedAdvancedRoute && submittedAddress) {
+                    this.appData.recentAddresses.push(submittedAddress);
+                }
                 this.snackbar.success(`Connected to ${config.name}`);
                 this.router.navigate([this.appData.viewState.lastUsedToolRoute()]).then((navigated) => {
                     if (!navigated) throw new Error(INTERNAL_ERROR);
@@ -236,6 +255,27 @@ export class ConnectionCreatorComponent {
 
     cancel() {
         this.router.navigate(["/"]);
+    }
+
+    @ViewChild(MatAutocompleteTrigger) private addressAutocompleteTrigger?: MatAutocompleteTrigger;
+
+    removeRecentAddress(address: string, event?: Event) {
+        event?.stopPropagation();
+        event?.preventDefault();
+        this.appData.recentAddresses.remove(address);
+        this.recentAddressesRefresh$.next();
+        // Reposition the panel so it adapts to the new option count.
+        this.addressAutocompleteTrigger?.updatePosition();
+    }
+
+    onAddressKeydown(event: KeyboardEvent) {
+        if (event.key !== "Delete" && event.key !== "Backspace") return;
+        const trigger = this.addressAutocompleteTrigger;
+        if (!trigger?.panelOpen) return;
+        const active = trigger.activeOption;
+        if (!active) return;
+        // Backspace would otherwise edit the input text; only intercept when an option is highlighted.
+        this.removeRecentAddress(active.value, event);
     }
 
     openConnectionStringEditor() {
