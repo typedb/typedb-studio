@@ -10,7 +10,7 @@ import { OperationMode } from "../concept/transaction";
 import { SchemaToolWindowState, SidebarState, sidebarStates, Tool, tools } from "../concept/view-state";
 import { StorageService, StorageWriteResult } from "./storage.service";
 
-export type RowLimit = 10 | 50 | 100 | 500 | 1000 | 5000 | "none";
+export type RowLimit = 10 | 50 | 100 | 500 | 1000 | 5000 | 10000 | 25000 | 100000;
 
 function isObjectWithFields<FIELD extends string>(obj: unknown, fields: FIELD[]): obj is { [K in typeof fields[number]]: unknown } {
     return obj != null && typeof obj === "object" && fields.every(x => x in obj);
@@ -509,7 +509,11 @@ class Preferences {
 
     queryRowLimit(): RowLimit {
         const prefs = this.readStorage();
-        return prefs?.queryRowLimit ?? INITIAL_PREFERENCES.queryRowLimit;
+        const stored = prefs?.queryRowLimit as RowLimit | "none" | undefined;
+        if (stored == null) return INITIAL_PREFERENCES.queryRowLimit;
+        // Migrate legacy "No limit" preference to the highest available cap to prevent resource starvation.
+        if (stored === "none") return 100000;
+        return stored;
     }
 
     setQueryRowLimit(value: RowLimit): StorageWriteResult {

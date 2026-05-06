@@ -488,7 +488,7 @@ export class ChatState {
 
         // Execute query
         const rowLimit = this.rowLimitControl.value;
-        const queryOptions = rowLimit !== "none" ? { answerCountLimit: rowLimit } : undefined;
+        const queryOptions = { answerCountLimit: rowLimit };
 
         this.driver.query(query, queryOptions).subscribe({
             next: (res) => {

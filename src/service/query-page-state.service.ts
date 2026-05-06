@@ -100,14 +100,17 @@ function currentRun(tabState: TabOutputState): RunOutputState | null {
     return tabState.runs[tabState.selectedRunIndex];
 }
 
+// Row limits are capped (no "No limit" option) to prevent resource starvation on large result sets.
 export const ROW_LIMIT_OPTIONS: { value: RowLimit; label: string }[] = [
     { value: 10, label: "10" },
     { value: 50, label: "50" },
     { value: 100, label: "100" },
     { value: 500, label: "500" },
-    { value: 1000, label: "1000" },
-    { value: 5000, label: "5000" },
-    { value: "none", label: "No limit" },
+    { value: 1000, label: "1,000" },
+    { value: 5000, label: "5,000" },
+    { value: 10000, label: "10,000" },
+    { value: 25000, label: "25,000" },
+    { value: 100000, label: "100,000" },
 ];
 
 const NO_SERVER_CONNECTED = `No server connected`;
@@ -464,7 +467,7 @@ export class QueryPageState {
         }
 
         const rowLimit = this.rowLimitControl.value;
-        const queryOptions = rowLimit !== "none" ? { answerCountLimit: rowLimit } : undefined;
+        const queryOptions = { answerCountLimit: rowLimit };
         let completed = false;
         this.driver.query(query, queryOptions).pipe(
             takeUntil(this._queryStop$),
@@ -553,7 +556,7 @@ export class QueryPageState {
         }
 
         const rowLimit = this.rowLimitControl.value;
-        const queryOptions = rowLimit !== "none" ? { answerCountLimit: rowLimit } : undefined;
+        const queryOptions = { answerCountLimit: rowLimit };
         const rawResults: string[] = isBatchSummary ? [] : new Array(queries.length);
         let lastCompletedIndex = -1;
 
@@ -575,7 +578,7 @@ export class QueryPageState {
                     newRun.log.appendBlankLine();
                     newRun.log.appendLines(`${MULTI_QUERY_HEADER}Query ${index + 1}`, queries[index]);
                     newRun.log.appendBlankLine();
-                    newRun.log.appendQueryResult(res, autoCommitted, rowLimit !== "none" ? rowLimit : undefined);
+                    newRun.log.appendQueryResult(res, autoCommitted, rowLimit);
                 }
 
                 if (!isBatchSummary) {
@@ -670,7 +673,7 @@ export class QueryPageState {
     private outputQueryResponseWithAnswers(run: RunOutputState, res: ApiResponse<QueryResponse>, autoCommitted: boolean) {
         const rowLimit = this.rowLimitControl.value;
         run.log.appendBlankLine();
-        run.log.appendQueryResult(res, autoCommitted, rowLimit !== "none" ? rowLimit : undefined);
+        run.log.appendQueryResult(res, autoCommitted, rowLimit);
         run.table.push(res);
         try {
             run.graph.push(res);
