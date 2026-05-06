@@ -482,7 +482,7 @@ const INITIAL_PREFERENCES: PreferencesData = {
         showAdvancedConfigByDefault: true,
     },
     transactionMode: "auto",
-    transactionTimeoutSeconds: 3600,
+    transactionTimeoutSeconds: 300,
     queryRowLimit: 100,
 };
 
