@@ -277,7 +277,7 @@
                     @if (entry.status === "pending") {
                       <tp-spinner [size]="14"/>
                     } @else {
-                      <span>{{ entry | actionDuration }}</span>
+                      <span matTooltip="Includes network roundtrip time" [matTooltipShowDelay]="500">{{ entry | actionDuration }}</span>
                       @if (entry.status === "success") {
                         <i class="fa-light fa-check"></i>
                       } @else {
