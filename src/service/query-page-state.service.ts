@@ -588,6 +588,8 @@ export class QueryPageState {
                 }
             },
             error: (err) => {
+                // Freeze pending progress so the failed-query header lands below it.
+                newRun.log.freezeProgress();
                 // Log the failed query's header
                 const failedIndex = lastCompletedIndex + 1;
                 if (failedIndex < queries.length) {
@@ -617,6 +619,9 @@ export class QueryPageState {
                 this._queryRunning$.next(false);
                 completion$.next({ success: !stopped });
                 completion$.complete();
+                // Freeze any pending progress line in place before appending terminal content,
+                // so e.g. "Committed." lands below the final progress line, not above it.
+                newRun.log.freezeProgress();
                 if (stopped) {
                     newRun.batchFailed = true;
                     newRun.log.appendBlankLine();
@@ -785,39 +790,75 @@ export class LogOutputState {
     constructor() {}
 
     appendLines(...lines: string[]) {
-        this.progressLine = null;
         this.buffer.push(lines.join(`\n`));
         this.scheduleFlush();
     }
 
     appendBlankLine() {
-        this.progressLine = null;
         this.buffer.push(``);
         this.scheduleFlush();
     }
 
-    /** Flush buffered lines and/or progress to the FormControl. */
+    /** Flush buffered lines and/or progress to the FormControl.
+     *  Progress is a "sticky-bottom" live-status line: while progress is still updating,
+     *  it should always sit at the bottom of the log, with new content sliding in above it.
+     *  Once progress stops updating, the last progress line freezes in place as historical
+     *  content, and any further appended content (e.g. "Committed.") lands *below* it. */
     flush() {
         this.flushScheduled = false;
+        let next = this.control.value;
+
         if (this.progressLine != null) {
-            const line = this.progressLine;
+            // Progress is still updating: strip the old trailing progress line so we can
+            // append buffered content above the new progress and re-emit progress at the bottom.
+            if (this.lastFlushedProgressLine != null && next.endsWith(this.lastFlushedProgressLine)) {
+                next = next.slice(0, next.length - this.lastFlushedProgressLine.length);
+            }
+            if (this.buffer.length > 0) {
+                next += this.buffer.join(`\n`) + `\n`;
+                this.buffer.length = 0;
+            }
+            next += this.progressLine;
+            this.lastFlushedProgressLine = this.progressLine;
             this.progressLine = null;
+        } else if (this.buffer.length > 0) {
+            // Progress is no longer updating: any prior progress line is now frozen
+            // historical content. Just append the buffer below it (with a newline if needed).
+            if (this.lastFlushedProgressLine != null && next.endsWith(this.lastFlushedProgressLine)) {
+                next += `\n`;
+            }
+            next += this.buffer.join(`\n`) + `\n`;
             this.buffer.length = 0;
-            this.control.patchValue(line);
-            return;
+            // The progress line is no longer at the very end, so don't try to strip it later.
+            this.lastFlushedProgressLine = null;
         }
-        if (this.buffer.length === 0) return;
-        const pending = this.buffer.join(`\n`) + `\n`;
-        this.buffer.length = 0;
-        this.control.patchValue(this.control.value + pending);
+
+        if (next !== this.control.value) this.control.patchValue(next);
     }
 
     private progressLine: string | null = null;
+    private lastFlushedProgressLine: string | null = null;
 
     /** Set a progress line that overwrites the control value on next flush. */
     setProgress(line: string) {
         this.progressLine = line;
         this.scheduleFlush();
+    }
+
+    /** Convert the freshest progress line (pending or last-flushed) into frozen historical
+     *  content, so subsequent appends will land below it rather than replacing it. Call this
+     *  when progress updates have stopped (e.g. on completion or error). */
+    freezeProgress() {
+        const final = this.progressLine ?? this.lastFlushedProgressLine;
+        this.progressLine = null;
+        if (final == null) return;
+        // Strip the old trailing progress text (if any) and re-emit the freshest as frozen content.
+        if (this.lastFlushedProgressLine != null && this.control.value.endsWith(this.lastFlushedProgressLine)) {
+            this.control.patchValue(this.control.value.slice(0, this.control.value.length - this.lastFlushedProgressLine.length) + final + `\n`);
+        } else {
+            this.control.patchValue(this.control.value + final + `\n`);
+        }
+        this.lastFlushedProgressLine = null;
     }
 
     private scheduleFlush() {
