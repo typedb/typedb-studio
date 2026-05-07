@@ -48,16 +48,19 @@
                       }
                     </mat-select>
                   </mat-form-field>
-                  @if (state.queryRunning$ | async) {
+                  <!-- Stop button intentionally hidden: server doesn't support oneshot query cancellation yet.
+                       Run button stays visible but disabled while running (runDisabledReason$ emits "A query is already running"). -->
+                  @if (false && (state.queryRunning$ | async)) {
                     <button mat-icon-button (click)="stopQuery()" matTooltip="Stop" matTooltipPosition="below">
                       <i class="fa-light fa-stop" style="color: var(--theme-red)"></i>
                     </button>
                   } @else {
-                    <button mat-icon-button [disabled]="!(state.runEnabled$ | async)"
-                            [matTooltip]="(state.runTooltip$ | async) || ''" matTooltipPosition="below"
-                            [matTooltipShowDelay]="(state.runDisabledReason$ | async) ? 0 : 500" (click)="runQuery()">
-                      <i class="fa-light fa-play"></i>
-                    </button>
+                    <span [matTooltip]="(state.runTooltip$ | async) || ''" matTooltipPosition="below"
+                          [matTooltipShowDelay]="(state.runDisabledReason$ | async) ? 0 : 500">
+                      <button mat-icon-button [disabled]="!(state.runEnabled$ | async)" (click)="runQuery()">
+                        <i class="fa-light fa-play"></i>
+                      </button>
+                    </span>
                   }
                 </div>
               </div>
