@@ -6,7 +6,7 @@
 
 import { inject, Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { BehaviorSubject, combineLatest, map, Observable, pairwise, shareReplay, startWith, Subject, switchMap, takeUntil } from "rxjs";
+import { BehaviorSubject, combineLatest, map, NEVER, Observable, pairwise, shareReplay, startWith, Subject, switchMap, takeUntil } from "rxjs";
 import { DriverAction, queryRunActionOf } from "../concept/action";
 import { GraphVisualiser } from "../framework/graph-visualiser/engine";
 import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/engine/sigma-settings";
@@ -417,21 +417,6 @@ export class QueryPageState {
 
     runQuery(query: string): Observable<RunResult> {
         this._queryRunning$.next(true);
-        const completion$ = new Subject<RunResult>();
-        const queries = splitTypeQLQueries(query);
-        if (queries.length <= 1) {
-            this._runSingleQuery(queries[0] || query, completion$);
-        } else {
-            this._runMultiQuery(queries, completion$);
-        }
-        return completion$.asObservable();
-    }
-
-    stopQuery() {
-        this._queryStop$.next();
-    }
-
-    private _runSingleQuery(query: string, completion$: Subject<RunResult>) {
         const tabState = this.currentTabOutputState;
 
         // Detach current run's graph before creating new run
@@ -455,249 +440,277 @@ export class QueryPageState {
             tabState.runs.push(newRun);
             tabState.selectedRunIndex = tabState.runs.length - 1;
         }
-
-        // Initialise the new run's outputs
-        newRun.log.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);
-        newRun.table.status = "running";
-        newRun.graph.status = "running";
-        newRun.graph.query = query;
-        newRun.graph.database = this.driver.requireDatabase().name;
         if (this._graphCanvasEl) {
             newRun.graph.canvasEl = this._graphCanvasEl;
         }
 
-        const rowLimit = this.rowLimitControl.value;
-        const queryOptions = { answerCountLimit: rowLimit };
-        let completed = false;
-        this.driver.query(query, queryOptions).pipe(
-            takeUntil(this._queryStop$),
-        ).subscribe({
-            next: (res) => {
-                completed = true;
-                this.outputQueryResponseToRun(newRun, res);
-                newRun.log.flush();
-                this._queryRunning$.next(false);
-                const hasError = isApiErrorResponse(res);
-                completion$.next({ success: !hasError, error: hasError ? (res as any).err : undefined });
-                completion$.complete();
-            },
-            error: (err) => {
-                completed = true;
-                newRun.table.status = "error";
-                newRun.graph.status = "error";
-                this._handleQueryError(newRun, err);
-                newRun.log.flush();
-                this._queryRunning$.next(false);
-                completion$.next({ success: false, error: err });
-                completion$.complete();
-            },
-            complete: () => {
-                if (!completed) {
-                    // Stopped by user
-                    newRun.table.status = "error";
-                    newRun.graph.status = "error";
-                    newRun.log.appendBlankLine();
-                    newRun.log.appendLines(`Query interrupted.`);
-                    newRun.log.flush();
-                    this._queryRunning$.next(false);
-                    completion$.next({ success: false });
-                    completion$.complete();
-                }
-            },
+        const result$ = executeQueryToRun(newRun, query, {
+            driver: this.driver,
+            snackbar: this.snackbar,
+            rowLimit: this.rowLimitControl.value,
+            answersOutputEnabled: this.answersOutputEnabled,
+            stopSignal$: this._queryStop$,
         });
+        result$.subscribe({
+            next: () => {},
+            complete: () => this._queryRunning$.next(false),
+            error: () => this._queryRunning$.next(false),
+        });
+        return result$;
     }
 
-    private _runMultiQuery(queries: string[], completion$: Subject<RunResult>) {
-        const tabState = this.currentTabOutputState;
+    stopQuery() {
+        this._queryStop$.next();
+    }
+}
 
-        // Detach current run's graph before creating new run
-        const oldRun = currentRun(tabState);
-        if (oldRun) oldRun.graph.detach();
+export interface RunExecutionDeps {
+    driver: DriverState;
+    snackbar: SnackbarService;
+    rowLimit: RowLimit;
+    /** Defaults to true; when false, query results are reported as success/error without answer details. */
+    answersOutputEnabled?: boolean;
+    stopSignal$?: Observable<void>;
+}
 
-        const replaceIndex = oldRun && !oldRun.pinned ? tabState.selectedRunIndex : -1;
-        if (replaceIndex >= 0) {
-            oldRun!.graph.destroy();
-            tabState.runs.splice(replaceIndex, 1);
-        }
+/**
+ * Execute a TypeQL document against a pre-created RunOutputState.
+ * Splits the document via `splitTypeQLQueries` and routes to a single-query
+ * (`driver.query`) or multi-query (`driver.multiQuery`) execution accordingly.
+ *
+ * The returned Observable mirrors completion via a Subject — work begins
+ * synchronously regardless of whether the caller subscribes.
+ */
+export function executeQueryToRun(
+    run: RunOutputState,
+    queryText: string,
+    deps: RunExecutionDeps,
+): Observable<RunResult> {
+    const completion$ = new Subject<RunResult>();
+    const queries = splitTypeQLQueries(queryText);
+    if (queries.length <= 1) {
+        runSingleQueryToRun(run, queries[0] || queryText, deps, completion$);
+    } else {
+        runMultiQueryToRun(run, queries, deps, completion$);
+    }
+    return completion$.asObservable();
+}
 
-        tabState.runCounter++;
-        const joinedQuery = queries.join(' end; ');
-        const newRun = createRunOutputState(`Run ${tabState.runCounter}`, joinedQuery, this.graphStyleService);
-        newRun.multiQuery = true;
+function runSingleQueryToRun(
+    run: RunOutputState,
+    query: string,
+    deps: RunExecutionDeps,
+    completion$: Subject<RunResult>,
+) {
+    run.log.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);
+    run.table.status = "running";
+    run.graph.status = "running";
+    run.graph.query = query;
+    run.graph.database = deps.driver.requireDatabase().name;
 
-        if (replaceIndex >= 0) {
-            tabState.runs.splice(replaceIndex, 0, newRun);
-            tabState.selectedRunIndex = replaceIndex;
-        } else {
-            tabState.runs.push(newRun);
-            tabState.selectedRunIndex = tabState.runs.length - 1;
-        }
-
-        // Initialise outputs
-        const isBatchSummary = queries.length > 10;
-        newRun.batchSummary = isBatchSummary;
-        newRun.batchTotal = queries.length;
-        newRun.log.appendLines(RUNNING, `${queries.length} queries`, ``, `${TIMESTAMP}${new Date().toISOString()}`);
-        newRun.table.status = "running";
-        newRun.graph.status = "multiQuery";
-
-        // Create sub-results (skip for batch summary mode)
-        if (!isBatchSummary) {
-            for (let i = 0; i < queries.length; i++) {
-                const sub: SubQueryResult = {
-                    index: i,
-                    label: `Query ${i + 1}`,
-                    queryText: queries[i],
-                    table: new TableOutputState(),
-                };
-                sub.table.status = "running";
-                newRun.subResults.push(sub);
+    const queryOptions = { answerCountLimit: deps.rowLimit };
+    let completed = false;
+    deps.driver.query(query, queryOptions).pipe(
+        takeUntil(deps.stopSignal$ ?? NEVER),
+    ).subscribe({
+        next: (res) => {
+            completed = true;
+            outputQueryResponseToRun(run, res, deps);
+            run.log.flush();
+            const hasError = isApiErrorResponse(res);
+            completion$.next({ success: !hasError, error: hasError ? (res as any).err : undefined });
+            completion$.complete();
+        },
+        error: (err) => {
+            completed = true;
+            run.table.status = "error";
+            run.graph.status = "error";
+            handleQueryError(run, err, deps);
+            run.log.flush();
+            completion$.next({ success: false, error: err });
+            completion$.complete();
+        },
+        complete: () => {
+            if (!completed) {
+                // Stopped by user
+                run.table.status = "error";
+                run.graph.status = "error";
+                run.log.appendBlankLine();
+                run.log.appendLines(`Query interrupted.`);
+                run.log.flush();
+                completion$.next({ success: false });
+                completion$.complete();
             }
+        },
+    });
+}
+
+function runMultiQueryToRun(
+    run: RunOutputState,
+    queries: string[],
+    deps: RunExecutionDeps,
+    completion$: Subject<RunResult>,
+) {
+    run.multiQuery = true;
+    const isBatchSummary = queries.length > 10;
+    run.batchSummary = isBatchSummary;
+    run.batchTotal = queries.length;
+    run.log.appendLines(RUNNING, `${queries.length} queries`, ``, `${TIMESTAMP}${new Date().toISOString()}`);
+    run.table.status = "running";
+    run.graph.status = "multiQuery";
+
+    // Create sub-results (skip for batch summary mode)
+    if (!isBatchSummary) {
+        for (let i = 0; i < queries.length; i++) {
+            const sub: SubQueryResult = {
+                index: i,
+                label: `Query ${i + 1}`,
+                queryText: queries[i],
+                table: new TableOutputState(),
+            };
+            sub.table.status = "running";
+            run.subResults.push(sub);
         }
+    }
 
-        const rowLimit = this.rowLimitControl.value;
-        const queryOptions = { answerCountLimit: rowLimit };
-        const rawResults: string[] = isBatchSummary ? [] : new Array(queries.length);
-        let lastCompletedIndex = -1;
+    const queryOptions = { answerCountLimit: deps.rowLimit };
+    const rawResults: string[] = isBatchSummary ? [] : new Array(queries.length);
+    let lastCompletedIndex = -1;
 
-        const queryAction = queryRunActionOf(queries.join("\nend;\n"));
-        queryAction.batch = true;
-        this.driver.emitAction(queryAction);
+    const queryAction = queryRunActionOf(queries.join("\nend;\n"));
+    queryAction.batch = true;
+    deps.driver.emitAction(queryAction);
 
-        this.driver.multiQuery(queries, queryOptions).pipe(
-            takeUntil(this._queryStop$),
-        ).subscribe({
-            next: ({ index, res, autoCommitted }) => {
-                lastCompletedIndex = index;
-                newRun.batchCompleted = index + 1;
+    deps.driver.multiQuery(queries, queryOptions).pipe(
+        takeUntil(deps.stopSignal$ ?? NEVER),
+    ).subscribe({
+        next: ({ index, res, autoCommitted }) => {
+            lastCompletedIndex = index;
+            run.batchCompleted = index + 1;
 
-                // Log output
-                if (isBatchSummary) {
-                    newRun.log.setProgress(`Running query ${index + 1} of ${queries.length}...`);
-                } else {
-                    newRun.log.appendBlankLine();
-                    newRun.log.appendLines(`${MULTI_QUERY_HEADER}Query ${index + 1}`, queries[index]);
-                    newRun.log.appendBlankLine();
-                    newRun.log.appendQueryResult(res, autoCommitted, rowLimit);
+            // Log output
+            if (isBatchSummary) {
+                run.log.setProgress(`Running query ${index + 1} of ${queries.length}...`);
+            } else {
+                run.log.appendBlankLine();
+                run.log.appendLines(MULTI_QUERY_BORDER, `${MULTI_QUERY_HEADER}Query ${index + 1}`, MULTI_QUERY_BORDER, queries[index]);
+                run.log.appendBlankLine();
+                run.log.appendQueryResult(res, autoCommitted, deps.rowLimit);
+            }
+
+            if (!isBatchSummary) {
+                const sub = run.subResults[index];
+                sub.table.push(res);
+                rawResults[index] = JSON.stringify(res, null, 2);
+            }
+        },
+        error: (err) => {
+            // Freeze pending progress so the failed-query header lands below it.
+            run.log.freezeProgress();
+            // Log the failed query's header
+            const failedIndex = lastCompletedIndex + 1;
+            if (failedIndex < queries.length) {
+                run.log.appendBlankLine();
+                run.log.appendLines(MULTI_QUERY_BORDER, `${MULTI_QUERY_HEADER}Query ${failedIndex + 1}`, MULTI_QUERY_BORDER, queries[failedIndex]);
+            }
+
+            run.batchFailed = true;
+            if (!isBatchSummary) {
+                for (const sub of run.subResults) {
+                    if (sub.table.status === "running") sub.table.status = "error";
                 }
-
-                if (!isBatchSummary) {
-                    const sub = newRun.subResults[index];
-                    sub.table.push(res);
-                    rawResults[index] = JSON.stringify(res, null, 2);
-                }
-            },
-            error: (err) => {
-                // Freeze pending progress so the failed-query header lands below it.
-                newRun.log.freezeProgress();
-                // Log the failed query's header
-                const failedIndex = lastCompletedIndex + 1;
-                if (failedIndex < queries.length) {
-                    newRun.log.appendBlankLine();
-                    newRun.log.appendLines(`${MULTI_QUERY_HEADER}Query ${failedIndex + 1}`, queries[failedIndex]);
-                }
-
-                newRun.batchFailed = true;
-                if (!isBatchSummary) {
-                    for (const sub of newRun.subResults) {
-                        if (sub.table.status === "running") sub.table.status = "error";
-                    }
-                }
-                newRun.table.status = "error";
-                this._handleQueryError(newRun, err);
-                newRun.log.flush();
+            }
+            run.table.status = "error";
+            handleQueryError(run, err, deps);
+            run.log.flush();
+            queryAction.status = "error";
+            queryAction.completedAtTimestamp = Date.now();
+            queryAction.result = err;
+            completion$.next({ success: false, error: err });
+            completion$.complete();
+        },
+        complete: () => {
+            const stopped = lastCompletedIndex < queries.length - 1;
+            run.table.status = stopped ? "error" : "ok";
+            completion$.next({ success: !stopped });
+            completion$.complete();
+            // Freeze any pending progress line in place before appending terminal content,
+            // so e.g. "Committed." lands below the final progress line, not above it.
+            run.log.freezeProgress();
+            if (stopped) {
+                run.batchFailed = true;
+                run.log.appendBlankLine();
+                run.log.appendLines(`Query batch interrupted.`);
                 queryAction.status = "error";
                 queryAction.completedAtTimestamp = Date.now();
-                queryAction.result = err;
-                this._queryRunning$.next(false);
-                completion$.next({ success: false, error: err });
-                completion$.complete();
-            },
-            complete: () => {
-                const stopped = lastCompletedIndex < queries.length - 1;
-                newRun.table.status = stopped ? "error" : "ok";
-                this._queryRunning$.next(false);
-                completion$.next({ success: !stopped });
-                completion$.complete();
-                // Freeze any pending progress line in place before appending terminal content,
-                // so e.g. "Committed." lands below the final progress line, not above it.
-                newRun.log.freezeProgress();
-                if (stopped) {
-                    newRun.batchFailed = true;
-                    newRun.log.appendBlankLine();
-                    newRun.log.appendLines(`Query batch interrupted.`);
-                    queryAction.status = "error";
-                    queryAction.completedAtTimestamp = Date.now();
-                    queryAction.result = { message: "Query batch interrupted" } as any;
-                } else {
-                    queryAction.status = "success";
-                    queryAction.completedAtTimestamp = Date.now();
-                    queryAction.autoCommitted = this.driver.autoTransactionEnabled$.value;
-                    if (this.driver.autoTransactionEnabled$.value) {
-                        newRun.log.appendBlankLine();
-                        newRun.log.appendLines(`Committed.`);
-                    }
+                queryAction.result = { message: "Query batch interrupted" } as any;
+            } else {
+                queryAction.status = "success";
+                queryAction.completedAtTimestamp = Date.now();
+                queryAction.autoCommitted = deps.driver.autoTransactionEnabled$.value;
+                if (deps.driver.autoTransactionEnabled$.value) {
+                    run.log.appendBlankLine();
+                    run.log.appendLines(`Committed.`);
                 }
-                if (!isBatchSummary) {
-                    for (const sub of newRun.subResults) {
-                        if (sub.table.status === "running") sub.table.status = stopped ? "error" : "ok";
-                    }
-                }
-                newRun.log.flush();
-                newRun.raw.push(`[\n${rawResults.filter(Boolean).join(',\n')}\n]`);
             }
-        });
-    }
-
-    private _handleQueryError(run: RunOutputState, err: any) {
-        this.driver.checkHealth().subscribe({
-            next: () => {
-                let msg = ``;
-                if (isApiErrorResponse(err)) {
-                    msg = err.err.message;
-                } else {
-                    msg = err?.message ?? err?.toString() ?? `Unknown error`;
+            if (!isBatchSummary) {
+                for (const sub of run.subResults) {
+                    if (sub.table.status === "running") sub.table.status = stopped ? "error" : "ok";
                 }
-                run.log.appendBlankLine();
-                run.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
-            },
-            error: () => {
-                const msg = `Unable to connect to TypeDB server.`;
-                run.log.appendBlankLine();
-                run.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
             }
-        });
-    }
-
-    private outputQueryResponseToRun(run: RunOutputState, res: ApiResponse<QueryResponse>) {
-        const autoCommitted = this.driver.autoTransactionEnabled$.value && !isApiErrorResponse(res) && res.ok.queryType !== "read";
-        if (this.answersOutputEnabled) this.outputQueryResponseWithAnswers(run, res, autoCommitted);
-        else this.outputQueryResponseNoAnswers(run, autoCommitted);
-    }
-
-    private outputQueryResponseWithAnswers(run: RunOutputState, res: ApiResponse<QueryResponse>, autoCommitted: boolean) {
-        const rowLimit = this.rowLimitControl.value;
-        run.log.appendBlankLine();
-        run.log.appendQueryResult(res, autoCommitted, rowLimit);
-        run.table.push(res);
-        try {
-            run.graph.push(res);
-        } catch (err) {
-            console.error("[Graph Output Error]", err);
-            run.graph.status = "error";
-            this.snackbar.errorPersistent(`Failed to render graph visualization: ${err}`);
+            run.log.flush();
+            run.raw.push(`[\n${rawResults.filter(Boolean).join(',\n')}\n]`);
         }
-        run.raw.push(JSON.stringify(res, null, 2));
-    }
+    });
+}
 
-    private outputQueryResponseNoAnswers(run: RunOutputState, autoCommitted: boolean) {
-        run.log.appendBlankLine();
-        run.log.appendLines(`${RESULT}${SUCCESS}`);
-        if (autoCommitted) run.log.appendLines(`Committed.`);
-        run.table.status = "answerOutputDisabled";
-        run.graph.status = "answerOutputDisabled";
-        run.raw.push(SUCCESS_RAW);
+function handleQueryError(run: RunOutputState, err: any, deps: RunExecutionDeps) {
+    deps.driver.checkHealth().subscribe({
+        next: () => {
+            let msg = ``;
+            if (isApiErrorResponse(err)) {
+                msg = err.err.message;
+            } else {
+                msg = err?.message ?? err?.toString() ?? `Unknown error`;
+            }
+            run.log.appendBlankLine();
+            run.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
+        },
+        error: () => {
+            const msg = `Unable to connect to TypeDB server.`;
+            run.log.appendBlankLine();
+            run.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
+        }
+    });
+}
+
+function outputQueryResponseToRun(run: RunOutputState, res: ApiResponse<QueryResponse>, deps: RunExecutionDeps) {
+    const autoCommitted = deps.driver.autoTransactionEnabled$.value && !isApiErrorResponse(res) && res.ok.queryType !== "read";
+    if (deps.answersOutputEnabled !== false) outputQueryResponseWithAnswers(run, res, autoCommitted, deps);
+    else outputQueryResponseNoAnswers(run, autoCommitted);
+}
+
+function outputQueryResponseWithAnswers(run: RunOutputState, res: ApiResponse<QueryResponse>, autoCommitted: boolean, deps: RunExecutionDeps) {
+    run.log.appendBlankLine();
+    run.log.appendQueryResult(res, autoCommitted, deps.rowLimit);
+    run.table.push(res);
+    try {
+        run.graph.push(res);
+    } catch (err) {
+        console.error("[Graph Output Error]", err);
+        run.graph.status = "error";
+        deps.snackbar.errorPersistent(`Failed to render graph visualization: ${err}`);
     }
+    run.raw.push(JSON.stringify(res, null, 2));
+}
+
+function outputQueryResponseNoAnswers(run: RunOutputState, autoCommitted: boolean) {
+    run.log.appendBlankLine();
+    run.log.appendLines(`${RESULT}${SUCCESS}`);
+    if (autoCommitted) run.log.appendLines(`Committed.`);
+    run.table.status = "answerOutputDisabled";
+    run.graph.status = "answerOutputDisabled";
+    run.raw.push(SUCCESS_RAW);
 }
 
 export class HistoryWindowState {
@@ -718,6 +731,7 @@ const SUCCESS = `Success`;
 const SUCCESS_RAW = `success`;
 const ERROR = `Error`;
 const MULTI_QUERY_HEADER = `## `;
+const MULTI_QUERY_BORDER = `################################`;
 const TABLE_INDENT = "   ";
 const CONTENT_INDENT = "    ";
 const TABLE_DASHES = 7;

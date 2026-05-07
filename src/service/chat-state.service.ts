@@ -7,13 +7,14 @@
 import { inject, Injectable } from "@angular/core";
 import { FormBuilder, FormControl } from "@angular/forms";
 import { BehaviorSubject, Subject, Subscription, switchMap } from "rxjs";
-import { isOkResponse, isApiErrorResponse, ApiResponse, QueryResponse } from "@typedb/driver-http";
+import { isOkResponse } from "@typedb/driver-http";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { ChatMessage as CloudChatMessage, CloudService } from "./cloud.service";
 import { DriverState } from "./driver-state.service";
 import { AppData, PersistedChatMessage, PersistedConversation, RowLimit } from "./app-data.service";
-import { ROW_LIMIT_OPTIONS, RunOutputState, createRunOutputState } from "./query-page-state.service";
+import { ROW_LIMIT_OPTIONS, RunOutputState, createRunOutputState, executeQueryToRun } from "./query-page-state.service";
 import { GraphStyleService } from "./graph-style.service";
+import { SnackbarService } from "./snackbar.service";
 
 
 interface MessagePartText {
@@ -156,6 +157,7 @@ export class ChatState {
     private formBuilder = inject(FormBuilder);
     private appData = inject(AppData);
     private graphStyleService = inject(GraphStyleService);
+    private snackbar = inject(SnackbarService);
 
 
     messages$ = new BehaviorSubject<ChatMessageData[]>([]);
@@ -477,46 +479,16 @@ export class ChatState {
         outputState.runs.push(newRun);
         outputState.selectedRunIndex = outputState.runs.length - 1;
 
-        // Initialize the new run's outputs
-        newRun.log.appendLines(`## Running> `, query, ``, `## Timestamp> ${new Date().toISOString()}`);
-        newRun.table.status = "running";
-        newRun.graph.status = "running";
-        newRun.graph.query = query;
-        newRun.graph.database = this.driver.requireDatabase().name;
-
         this.messages$.next([...messages]);
 
-        // Execute query
-        const rowLimit = this.rowLimitControl.value;
-        const queryOptions = { answerCountLimit: rowLimit };
-
-        this.driver.query(query, queryOptions).subscribe({
-            next: (res) => {
-                this.outputQueryResponseToRun(newRun, res);
-                this.messages$.next([...this.messages$.value]);
-            },
-            error: (err) => {
-                let errorMsg = ``;
-                if (isApiErrorResponse(err)) {
-                    errorMsg = err.err.message;
-                } else {
-                    errorMsg = err?.message ?? err?.toString() ?? `Unknown error`;
-                }
-                newRun.log.appendLines(``, `## Result> Error`, ``, errorMsg);
-                newRun.table.status = "error";
-                newRun.graph.status = "error";
-                this.messages$.next([...this.messages$.value]);
-            },
+        executeQueryToRun(newRun, query, {
+            driver: this.driver,
+            snackbar: this.snackbar,
+            rowLimit: this.rowLimitControl.value,
+        }).subscribe({
+            next: () => this.messages$.next([...this.messages$.value]),
+            complete: () => this.messages$.next([...this.messages$.value]),
         });
-    }
-
-    private outputQueryResponseToRun(run: RunOutputState, res: ApiResponse<QueryResponse>): void {
-        const autoCommitted = this.driver.autoTransactionEnabled$.value && !isApiErrorResponse(res) && res.ok.queryType !== "read";
-        run.log.appendBlankLine();
-        run.log.appendQueryResult(res, autoCommitted);
-        run.table.push(res);
-        run.graph.push(res);
-        run.raw.push(JSON.stringify(res, null, 2));
     }
 
     compactConversation(): void {

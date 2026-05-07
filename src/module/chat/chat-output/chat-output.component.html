@@ -46,36 +46,86 @@
       <!-- Table View -->
       @if (outputState.outputTypeControl.value === 'table') {
         <div class="output-view table-view">
-          @switch (currentRun.table.status) {
-            @case ("ok") {
-              <table mat-table [dataSource]="currentRun.table.data$" matSort (matSortChange)="currentRun.table.handleMatSortChange($event)">
-                @for (column of currentRun.table.columns; track column) {
-                  <ng-container [matColumnDef]="column">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ column }}</th>
-                    <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
-                  </ng-container>
-                }
-                <tr mat-header-row *matHeaderRowDef="currentRun.table.displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: currentRun.table.displayedColumns"></tr>
-              </table>
-            }
-            @case ("error") {
-              <div class="status-text-container"><p class="status-text">This query returned an error. <a (click)="outputState.outputTypeControl.patchValue('log')">View in log</a></p></div>
-            }
-            @case ("running") {
-              <div class="status-text-container"><p class="status-text">Running query...</p></div>
-            }
-            @case ("answerlessQueryType") {
-              <div class="status-text-container"><p class="status-text">Query completed. This query type does not return answers.</p></div>
-            }
-            @case ("answerOutputDisabled") {
-              <div class="status-text-container"><p class="status-text">Query completed. Answer output is disabled.</p></div>
-            }
-            @case ("noColumns") {
-              <div class="status-text-container"><p class="status-text">Query completed. No columns were returned.</p></div>
-            }
-            @case ("noAnswers") {
-              <div class="status-text-container"><p class="status-text">Query completed. No answers were returned.</p></div>
+          @if (currentRun.batchSummary) {
+            <div class="batch-summary">
+              @if (currentRun.batchFailed) {
+                <p class="status-text">Query batch interrupted. <a (click)="outputState.outputTypeControl.patchValue('log')">View in log</a></p>
+              } @else {
+                <p class="status-text">Table output is not available for large query batches. <a (click)="outputState.outputTypeControl.patchValue('log')">View results in log</a></p>
+              }
+            </div>
+          } @else if (currentRun.multiQuery) {
+            <div class="multi-query-tables">
+              @for (sub of currentRun.subResults; track sub.index) {
+                <div class="multi-query-table-section">
+                  <div class="multi-query-table-header">{{ sub.label }}</div>
+                  @switch (sub.table.status) {
+                    @case ("ok") {
+                      <table mat-table [dataSource]="sub.table.data$" matSort>
+                        @for (column of sub.table.columns; track column) {
+                          <ng-container [matColumnDef]="column">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ column }}</th>
+                            <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
+                          </ng-container>
+                        }
+                        <tr mat-header-row *matHeaderRowDef="sub.table.displayedColumns"></tr>
+                        <tr mat-row *matRowDef="let row; columns: sub.table.displayedColumns"></tr>
+                      </table>
+                    }
+                    @case ("error") {
+                      <div class="status-text-inline"><p class="status-text">This query returned an error. <a (click)="outputState.outputTypeControl.patchValue('log')">View in log</a></p></div>
+                    }
+                    @case ("running") {
+                      <div class="status-text-inline"><p class="status-text">Running...</p></div>
+                    }
+                    @case ("answerlessQueryType") {
+                      <div class="status-text-inline"><p class="status-text">No answers for this query type.</p></div>
+                    }
+                    @case ("answerOutputDisabled") {
+                      <div class="status-text-inline"><p class="status-text">Answer output is currently disabled.</p></div>
+                    }
+                    @case ("noColumns") {
+                      <div class="status-text-inline"><p class="status-text">No columns returned.</p></div>
+                    }
+                    @case ("noAnswers") {
+                      <div class="status-text-inline"><p class="status-text">No answers returned.</p></div>
+                    }
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            @switch (currentRun.table.status) {
+              @case ("ok") {
+                <table mat-table [dataSource]="currentRun.table.data$" matSort (matSortChange)="currentRun.table.handleMatSortChange($event)">
+                  @for (column of currentRun.table.columns; track column) {
+                    <ng-container [matColumnDef]="column">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ column }}</th>
+                      <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
+                    </ng-container>
+                  }
+                  <tr mat-header-row *matHeaderRowDef="currentRun.table.displayedColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: currentRun.table.displayedColumns"></tr>
+                </table>
+              }
+              @case ("error") {
+                <div class="status-text-container"><p class="status-text">This query returned an error. <a (click)="outputState.outputTypeControl.patchValue('log')">View in log</a></p></div>
+              }
+              @case ("running") {
+                <div class="status-text-container"><p class="status-text">Running query...</p></div>
+              }
+              @case ("answerlessQueryType") {
+                <div class="status-text-container"><p class="status-text">Query completed. This query type does not return answers.</p></div>
+              }
+              @case ("answerOutputDisabled") {
+                <div class="status-text-container"><p class="status-text">Query completed. Answer output is disabled.</p></div>
+              }
+              @case ("noColumns") {
+                <div class="status-text-container"><p class="status-text">Query completed. No columns were returned.</p></div>
+              }
+              @case ("noAnswers") {
+                <div class="status-text-container"><p class="status-text">Query completed. No answers were returned.</p></div>
+              }
             }
           }
         </div>
