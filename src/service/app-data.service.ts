@@ -10,7 +10,7 @@ import { OperationMode } from "../concept/transaction";
 import { SchemaToolWindowState, SidebarState, sidebarStates, Tool, tools } from "../concept/view-state";
 import { StorageService, StorageWriteResult } from "./storage.service";
 
-export type RowLimit = 10 | 50 | 100 | 500 | 1000 | 5000 | "none";
+export type RowLimit = 10 | 50 | 100 | 500 | 1000 | 5000 | 10000 | 25000 | 100000;
 
 function isObjectWithFields<FIELD extends string>(obj: unknown, fields: FIELD[]): obj is { [K in typeof fields[number]]: unknown } {
     return obj != null && typeof obj === "object" && fields.every(x => x in obj);
@@ -150,6 +150,35 @@ class Connections {
     }
 }
 
+const RECENT_ADDRESSES = "recentAddresses";
+const RECENT_ADDRESSES_LIMIT = 10;
+
+class RecentAddresses {
+
+    constructor(private storage: StorageService) {
+        if (this.storage.isAccessible && this.storage.read(RECENT_ADDRESSES, (obj) => obj as string[]) == null) {
+            this.storage.write(RECENT_ADDRESSES, []);
+        }
+    }
+
+    list(): string[] {
+        const data = this.storage.read(RECENT_ADDRESSES, (obj) => obj as string[]);
+        return Array.isArray(data) ? data.filter((x): x is string => typeof x === "string") : [];
+    }
+
+    push(address: string): StorageWriteResult | undefined {
+        const trimmed = address.trim();
+        if (!trimmed) return;
+        const next = [trimmed, ...this.list().filter(x => x !== trimmed)].slice(0, RECENT_ADDRESSES_LIMIT);
+        return this.storage.write(RECENT_ADDRESSES, next);
+    }
+
+    remove(address: string): StorageWriteResult {
+        const next = this.list().filter(x => x !== address);
+        return this.storage.write(RECENT_ADDRESSES, next);
+    }
+}
+
 const PREFERENCES = "preferences";
 
 interface PreferencesData {
@@ -157,6 +186,7 @@ interface PreferencesData {
         showAdvancedConfigByDefault: boolean;
     };
     transactionMode: OperationMode;
+    transactionTimeoutSeconds: number;
     queryRowLimit: RowLimit;
 }
 
@@ -452,6 +482,7 @@ const INITIAL_PREFERENCES: PreferencesData = {
         showAdvancedConfigByDefault: true,
     },
     transactionMode: "auto",
+    transactionTimeoutSeconds: 300,
     queryRowLimit: 100,
 };
 
@@ -494,9 +525,24 @@ class Preferences {
         return this.writeStorage(prefs);
     }
 
+    transactionTimeoutSeconds(): number {
+        const prefs = this.readStorage();
+        return prefs?.transactionTimeoutSeconds ?? INITIAL_PREFERENCES.transactionTimeoutSeconds;
+    }
+
+    setTransactionTimeoutSeconds(value: number): StorageWriteResult {
+        const prefs = this.readStorage()!;
+        prefs.transactionTimeoutSeconds = value;
+        return this.writeStorage(prefs);
+    }
+
     queryRowLimit(): RowLimit {
         const prefs = this.readStorage();
-        return prefs?.queryRowLimit ?? INITIAL_PREFERENCES.queryRowLimit;
+        const stored = prefs?.queryRowLimit as RowLimit | "none" | undefined;
+        if (stored == null) return INITIAL_PREFERENCES.queryRowLimit;
+        // Migrate legacy "No limit" preference to the highest available cap to prevent resource starvation.
+        if (stored === "none") return 100000;
+        return stored;
     }
 
     setQueryRowLimit(value: RowLimit): StorageWriteResult {
@@ -557,6 +603,7 @@ export class AppData {
 
     readonly viewState = new ViewState(this.storage);
     readonly connections = new Connections(this.storage);
+    readonly recentAddresses = new RecentAddresses(this.storage);
     readonly preferences = new Preferences(this.storage);
     readonly dataExplorerTabs = new DataExplorerTabs(this.storage);
     readonly queryTabs = new QueryTabs(this.storage);

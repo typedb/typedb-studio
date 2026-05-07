@@ -1,0 +1,10 @@
+<tp-modal dialogTitle="Transaction options">
+  <div class="option-row">
+    <label for="timeout">Timeout (seconds)</label>
+    <input id="timeout" type="number" min="1" [ngModel]="timeoutSeconds" (ngModelChange)="onTimeoutChange($event)">
+  </div>
+  <tp-form-actions
+    submitText="OK" [isSubmitting]="false"
+    buttonIdPrefix="transactionSettingsModal" (submitClick)="close()"
+  />
+</tp-modal>

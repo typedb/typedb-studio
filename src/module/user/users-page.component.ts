@@ -36,6 +36,7 @@ import { UsersTableComponent } from "./table/users-table.component";
 export class UsersPageComponent {
 
     users$ = this.driver.userList$;
+    isAdmin$ = this.driver.isAdmin$;
     errorLines: string[] | null = null;
 
     constructor(private driver: DriverState, private dialog: MatDialog) {

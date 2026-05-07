@@ -1,0 +1,108 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+.section-description {
+    color: var(--theme-secondary-light-grey);
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.state-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.state-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.state-label {
+    width: 80px;
+    flex-shrink: 0;
+    color: var(--theme-secondary-light-grey);
+    font-size: 14px;
+}
+
+.state-value {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &.capitalize {
+        text-transform: capitalize;
+    }
+}
+
+.status-dot {
+    font-size: 8px;
+    width: 8px;
+    height: 8px;
+
+    &.open {
+        color: var(--theme-green);
+        animation: beacon 2s ease-in-out 0s infinite;
+    }
+
+    &.closed {
+        color: var(--theme-secondary-grey);
+    }
+}
+
+@keyframes beacon {
+    0% { opacity: 1 }
+    10% { opacity: 1 }
+    50% { opacity: 0.4 }
+    90% { opacity: 1 }
+    100% { opacity: 1 }
+}
+
+.close-tx-button {
+    color: var(--theme-red);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-left: 4px;
+
+    i {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+    }
+
+    &:hover {
+        opacity: 0.8;
+    }
+}
+
+.metadata-row {
+    align-items: flex-start;
+}
+
+.metadata-code {
+    font-family: var(--font-family-code);
+    font-size: 13px;
+    line-height: 20px;
+    background: var(--theme-black);
+    border: 1px solid var(--theme-light-purple);
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin: 0;
+    overflow-x: auto;
+    flex: 1;
+    min-width: 0;
+}
+
+.no-transaction {
+    color: var(--theme-secondary-light-grey);
+    font-size: 14px;
+}

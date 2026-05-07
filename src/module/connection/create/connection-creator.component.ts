@@ -5,7 +5,8 @@
  */
 
 import { AsyncPipe, Location } from "@angular/common";
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, ViewChild } from "@angular/core";
+import { MatAutocompleteModule, MatAutocompleteTrigger } from "@angular/material/autocomplete";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCheckboxModule } from "@angular/material/checkbox";
 import { MatDialog } from "@angular/material/dialog";
@@ -24,7 +25,7 @@ import { SnackbarService } from "../../../service/snackbar.service";
 import { PageScaffoldComponent, ResourceAvailability } from "../../scaffold/page/page-scaffold.component";
 import { ActivatedRoute, Router } from "@angular/router";
 import { AbstractControl, FormBuilder, FormControl, ReactiveFormsModule, ValidatorFn } from "@angular/forms";
-import { BehaviorSubject, combineLatest, filter, first, map, tap } from "rxjs";
+import { BehaviorSubject, combineLatest, filter, first, map, merge, Observable, startWith, tap } from "rxjs";
 import { FormActionsComponent, FormComponent, FormInputComponent, FormOption, FormToggleGroupComponent, requiredValidator } from "../../../framework/form";
 import { ConnectionStringEditorDialogComponent } from "./connection-string-editor-dialog/connection-string-editor-dialog.component";
 
@@ -53,20 +54,23 @@ function addressHasPort(address: string): boolean {
     return portPattern.test(address);
 }
 
-function isSafari(): boolean {
+function isChromiumOrFirefox(): boolean {
     const ua = window.navigator.userAgent;
-    // Chrome's user agent contains "Safari", so we must exclude it
-    return ua.includes("Safari") && !ua.includes("Chrome") && !ua.includes("Chromium");
-} 
-
-const safariMixedContentValidator: ValidatorFn = (control: AbstractControl<string>) => {
-    if (control.value.startsWith(`http://`) && isSafari()) return {
-        errorText:
-            "Safari blocks HTTP requests from HTTPS sites. " 
-            + "Please use another browser such as Mozilla Firefox or Google Chrome."
-    };
-    else return null;
+    return ua.includes("Chrome") || ua.includes("Chromium") || ua.includes("Firefox");
 }
+
+function isMixedContent(address: string): boolean {
+    if (window.location.protocol !== "https:") return false;
+    if (!address.startsWith("http://")) return false;
+    if (isChromiumOrFirefox()) {
+        try {
+            const url = new URL(address);
+            if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return false;
+        } catch { /* invalid URL, skip */ }
+    }
+    return true;
+}
+
 
 @Component({
     selector: "tp-connection-creator",
@@ -76,6 +80,7 @@ const safariMixedContentValidator: ValidatorFn = (control: AbstractControl<strin
         PageScaffoldComponent, AsyncPipe, MatFormFieldModule, MatSelectModule, MatTooltipModule,
         ReactiveFormsModule, FormInputComponent, FormComponent, FormActionsComponent,
         FormToggleGroupComponent, MatButtonModule, MatInputModule, RichTooltipDirective, MatCheckboxModule,
+        MatAutocompleteModule,
     ]
 })
 export class ConnectionCreatorComponent {
@@ -89,6 +94,8 @@ export class ConnectionCreatorComponent {
     connectionStringRevealed = false;
     connectionStringPlaceholder = CONNECTION_STRING_PLACEHOLDER;
     passwordRevealed = false;
+    addressBlurred = false;
+    connectionStringBlurred = false;
 
     readonly form = this.formBuilder.group({
         name: ["", []],
@@ -98,11 +105,23 @@ export class ConnectionCreatorComponent {
     });
     // TODO: support multiple addresses
     readonly advancedForm = this.formBuilder.group({
-        address: ["", [requiredValidator, addressValidator, safariMixedContentValidator]],
+        address: ["", [requiredValidator, addressValidator]],
         username: ["", [requiredValidator]],
         password: ["", [requiredValidator]],
     });
     readonly isSubmitting$ = new BehaviorSubject(false);
+    private readonly recentAddressesRefresh$ = new BehaviorSubject<void>(undefined);
+    readonly recentAddressSuggestions$: Observable<string[]> = merge(
+        this.advancedForm.controls.address.valueChanges.pipe(startWith(this.advancedForm.controls.address.value)),
+        this.recentAddressesRefresh$,
+    ).pipe(
+        map(() => {
+            const recent = this.appData.recentAddresses.list();
+            const query = (this.advancedForm.controls.address.value ?? "").trim().toLowerCase();
+            if (!query) return recent;
+            return recent.filter(addr => addr.toLowerCase().includes(query) && addr.toLowerCase() !== query);
+        }),
+    );
 
     constructor(
         private formBuilder: FormBuilder, private appData: AppData,
@@ -162,16 +181,28 @@ export class ConnectionCreatorComponent {
         return (this.form.dirty || this.advancedForm.dirty) && this.form.valid;
     }
 
-    get addressMissingPort(): boolean {
+    get addressWarnings(): string | null {
         const address = this.advancedForm.controls.address.value;
-        if (!address || this.advancedForm.controls.address.invalid) return false;
-        return !addressHasPort(address);
+        if (!address || this.advancedForm.controls.address.invalid || !this.addressBlurred) return null;
+        return this.buildWarnings(address);
     }
 
-    get addressUsesGrpcPort(): boolean {
-        const address = this.advancedForm.controls.address.value;
-        if (!address || this.advancedForm.controls.address.invalid) return false;
-        return /:1729\b/.test(address);
+    get connectionStringWarnings(): string | null {
+        const url = this.form.controls.url.value;
+        if (!url || this.form.controls.url.invalid || !this.connectionStringBlurred) return null;
+        const params = parseConnectionStringOrNull(url);
+        if (!params) return null;
+        const addresses = isBasicParams(params) ? params.addresses : params.translatedAddresses.map(x => x.external);
+        if (addresses.length === 0) return null;
+        return this.buildWarnings(addresses[0]);
+    }
+
+    private buildWarnings(address: string): string | null {
+        const warnings: string[] = [];
+        if (isMixedContent(address)) warnings.push("Many browsers block HTTP (insecure) connections. Consider setting up TLS or using TypeDB Studio Desktop.");
+        if (/:1729\b/.test(address)) warnings.push("Port 1729 is the gRPC port - TypeDB Studio uses HTTP, by default on port 8000.");
+        else if (!addressHasPort(address)) warnings.push("No port specified - will use default (80 for http, 443 for https).");
+        return warnings.length > 0 ? warnings.join(" ") : null;
     }
 
     private buildConnectionConfigOrNull(): ConnectionConfig | null {
@@ -190,9 +221,14 @@ export class ConnectionCreatorComponent {
     submit() {
         const config = this.buildConnectionConfigOrNull();
         if (!config) throw new Error(INTERNAL_ERROR);
+        const usedAdvancedRoute = this.form.value.advancedConfigActive === true;
+        const submittedAddress = this.advancedForm.controls.address.value;
         this.form.disable();
         this.driver.tryConnect(config).subscribe({
             next: () => {
+                if (usedAdvancedRoute && submittedAddress) {
+                    this.appData.recentAddresses.push(submittedAddress);
+                }
                 this.snackbar.success(`Connected to ${config.name}`);
                 this.router.navigate([this.appData.viewState.lastUsedToolRoute()]).then((navigated) => {
                     if (!navigated) throw new Error(INTERNAL_ERROR);
@@ -219,6 +255,27 @@ export class ConnectionCreatorComponent {
 
     cancel() {
         this.router.navigate(["/"]);
+    }
+
+    @ViewChild(MatAutocompleteTrigger) private addressAutocompleteTrigger?: MatAutocompleteTrigger;
+
+    removeRecentAddress(address: string, event?: Event) {
+        event?.stopPropagation();
+        event?.preventDefault();
+        this.appData.recentAddresses.remove(address);
+        this.recentAddressesRefresh$.next();
+        // Reposition the panel so it adapts to the new option count.
+        this.addressAutocompleteTrigger?.updatePosition();
+    }
+
+    onAddressKeydown(event: KeyboardEvent) {
+        if (event.key !== "Delete" && event.key !== "Backspace") return;
+        const trigger = this.addressAutocompleteTrigger;
+        if (!trigger?.panelOpen) return;
+        const active = trigger.activeOption;
+        if (!active) return;
+        // Backspace would otherwise edit the input text; only intercept when an option is highlighted.
+        this.removeRecentAddress(active.value, event);
     }
 
     openConnectionStringEditor() {

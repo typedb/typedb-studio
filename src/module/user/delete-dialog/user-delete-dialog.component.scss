@@ -45,3 +45,7 @@ mat-divider {
     align-items: center;
     gap: 4px;
 }
+
+mat-error {
+    color: var(--theme-red);
+}

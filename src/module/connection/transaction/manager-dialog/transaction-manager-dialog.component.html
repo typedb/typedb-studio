@@ -1,0 +1,38 @@
+<tp-modal dialogTitle="Transaction inspector">
+  @if (lastTx$ | async; as tx) {
+    <div class="state-rows">
+      <div class="state-row">
+        <span class="state-label">Status</span>
+        <span class="state-value">
+          @if (isOpen$ | async) {
+            <i class="fa-solid fa-circle status-dot open"></i> Open
+          } @else {
+            <i class="fa-solid fa-circle status-dot closed"></i> Closed
+          }
+        </span>
+      </div>
+      <div class="state-row">
+        <span class="state-label">Type</span>
+        <span class="state-value capitalize">{{ tx.type }}</span>
+      </div>
+      <div class="state-row">
+        <span class="state-label">Opened at</span>
+        <span class="state-value">{{ tx.openedAtTimestamp | date:'HH:mm:ss' }}</span>
+      </div>
+      <div class="state-row">
+        <span class="state-label">Closed at</span>
+        <span class="state-value">{{ (closedAt$ | async | date:'HH:mm:ss') ?? '' }}</span>
+      </div>
+      <div class="state-row metadata-row">
+        <span class="state-label">Metadata</span>
+        <pre class="metadata-code">{{ formatMetadata(tx) }}</pre>
+      </div>
+    </div>
+  } @else {
+    <p class="no-transaction">No transaction has been opened yet.</p>
+  }
+  <tp-form-actions
+    submitText="OK" [isSubmitting]="false"
+    buttonIdPrefix="transactionInspectorModal" (submitClick)="close()"
+  />
+</tp-modal>

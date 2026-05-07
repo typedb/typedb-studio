@@ -6,7 +6,7 @@
 
 import { CodeEditor } from "@acrodata/code-editor";
 import { AsyncPipe, DatePipe } from "@angular/common";
-import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { AfterViewChecked, AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
 import { FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -37,6 +37,7 @@ import { QueryTab, QueryTabsState } from "../../service/query-tabs-state.service
 import { RunOutputState } from "../../service/query-page-state.service";
 import { SnackbarService } from "../../service/snackbar.service";
 import { ErrorDetailsDialogComponent } from "../../framework/error-details-dialog/error-details-dialog.component";
+import { DatabaseCreateDialogComponent } from "../database/create-dialog/database-create-dialog.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { RenameTabDialogComponent, RenameTabDialogData } from "./rename-tab-dialog/rename-tab-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
@@ -60,7 +61,7 @@ import { GraphCanvasComponent } from "../../framework/graph-visualiser/canvas/gr
         GraphCanvasComponent,
     ]
 })
-export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
+export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
 
     @ViewChild(CodeEditor) codeEditor!: CodeEditor;
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
@@ -93,9 +94,24 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     graphMaximised = false;
 
+    get currentRun(): RunOutputState | null {
+        const runs = this.state.currentTabRuns;
+        const idx = this.state.selectedRunIndex;
+        return idx >= 0 && idx < runs.length ? runs[idx] : null;
+    }
+
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
     private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();
+    private truncationState = new WeakMap<HTMLElement, boolean>();
+
+    checkTruncation(el: HTMLElement) {
+        this.truncationState.set(el, el.scrollWidth > el.clientWidth);
+    }
+
+    isTruncated(el: HTMLElement): boolean {
+        return this.truncationState.get(el) ?? false;
+    }
     editorKeymap = Prec.highest(keymap.of([
         { key: "Alt-Space", run: startCompletion, preventDefault: true },
         {
@@ -113,6 +129,8 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     copiedLog = false;
     sentLogToAi = false;
     logHasScrollbar = false;
+    /** Tracks the log textarea's scrollHeight across change-detection passes, so we know when content has grown. */
+    private lastLogScrollHeight = 0;
     canScrollLeft = false;
     canScrollRight = false;
     canScrollRunsLeft = false;
@@ -156,6 +174,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.queryTabsState.selectedTabIndex$.pipe(skip(1)).subscribe(() => {
             this.state.handleTabSwitch(this.previousTabId);
             this.previousTabId = this.queryTabsState.currentTab?.id ?? null;
+            this.scrollActiveTabIntoView();
         });
 
         this.state.outputTypeControl.valueChanges.subscribe((value) => {
@@ -179,6 +198,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
                 this.updateTabsScrollState();
             });
             this.tabsScrollObserver.observe(this.tabsScrollContainer.nativeElement);
+            this.scrollActiveTabIntoView();
         }
 
         if (this.runTabsScrollContainer) {
@@ -194,6 +214,25 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.logResizeObserver?.disconnect();
         this.tabsScrollObserver?.disconnect();
         this.runTabsScrollObserver?.disconnect();
+    }
+
+    ngAfterViewChecked() {
+        const el = this.logTextarea?.nativeElement;
+        if (!el) return;
+        if (el.scrollHeight === this.lastLogScrollHeight) return;
+        this.lastLogScrollHeight = el.scrollHeight;
+        if (this.state.logOutput.autoscrollEnabled) {
+            el.scrollTop = el.scrollHeight;
+        }
+    }
+
+    onLogScroll() {
+        // If the user (or any scroll) ends up not at the bottom, we stop auto-following new content.
+        // Programmatic scrolls in ngAfterViewChecked always land at the bottom, so they pass this check harmlessly.
+        const el = this.logTextarea?.nativeElement;
+        if (!el) return;
+        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 4;
+        this.state.logOutput.autoscrollEnabled = atBottom;
     }
 
     // Tab scroll methods
@@ -215,6 +254,17 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
             event.preventDefault();
             el.scrollLeft += event.deltaY;
         }
+    }
+
+    private scrollActiveTabIntoView() {
+        setTimeout(() => {
+            const container = this.tabsScrollContainer?.nativeElement;
+            if (!container) return;
+            const activeTab = container.querySelector('.query-tab.active') as HTMLElement;
+            if (!activeTab) return;
+            activeTab.scrollIntoView({ inline: "nearest", block: "nearest" });
+            this.updateTabsScrollState();
+        });
     }
 
     scrollTabsLeft() {
@@ -266,8 +316,20 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.dialog.open(DatabaseSelectDialogComponent);
     }
 
+    openCreateDatabaseDialog() {
+        this.dialog.open(DatabaseCreateDialogComponent);
+    }
+
+    onGraphStatusAction(action: string) {
+        if (action === "viewLog") this.state.outputTypeControl.patchValue("log");
+    }
+
     runQuery() {
         this.state.runCurrentTabQuery();
+    }
+
+    stopQuery() {
+        this.state.stopQuery();
     }
 
     // Query tab methods
@@ -352,6 +414,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         dialogRef.afterClosed().subscribe((newName: string | undefined) => {
             if (newName) {
                 this.queryTabsState.renameTab(tab, newName);
+                this.scrollActiveTabIntoView();
             }
         });
     }
@@ -471,6 +534,15 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     onPanelResize(index: number, percent: number) {
         this.panelSizes[index] = percent;
         this.appData.panelLayout.set("query", [...this.panelSizes]);
+    }
+
+    queryRunLabel(entry: QueryRunAction): string {
+        const type = entry.batch ? "query batch" : "query";
+        if (entry.status === "error") {
+            if (entry.batch && (entry.result as any)?.message === "Query batch interrupted") return "query batch interrupted";
+            return `${type} failed`;
+        }
+        return entry.autoCommitted ? `ran + committed ${type}` : `ran ${type}`;
     }
 
     readonly isQueryRun = isQueryRun;

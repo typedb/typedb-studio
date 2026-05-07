@@ -1,0 +1,35 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+.description {
+    margin-bottom: 16px;
+}
+
+mat-option .option-content {
+    padding-top: 8px;
+    padding-bottom: 8px;
+
+    aside {
+        color: var(--theme-secondary-light-grey);
+        font-size: 12px;
+        line-height: 20px;
+    }
+}
+
+.compat-warning {
+    margin-top: 12px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--theme-secondary-yellow) 15%, var(--theme-black));
+    color: var(--theme-secondary-yellow);
+    font-size: 13px;
+}
+
+.error-text {
+    margin-top: 12px;
+    color: var(--theme-red);
+    font-size: 13px;
+}

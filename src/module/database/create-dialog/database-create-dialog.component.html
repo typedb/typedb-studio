@@ -1,9 +1,42 @@
-<tp-modal dialogTitle="Create database" [isBusy]="isSubmitting$ | async">
+<tp-modal dialogTitle="Create new database" [isBusy]="isSubmitting$ | async">
   <p class="description">A database is an isolated data store comprising its own schema and dataset.</p>
   <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
     <tp-form-input type="text" [form]="form" field="name" label="Database name" [focusInitial]="true" />
+
+    @if (datasets$ | async; as datasets) {
+      @if (datasets.length > 0) {
+        <mat-form-field>
+          <mat-label>Sample dataset (optional)</mat-label>
+          <mat-select [formControl]="form.controls.datasetName">
+            <mat-select-trigger>{{ (selectedDataset$ | async)?.displayName ?? "(none)" }}</mat-select-trigger>
+            <mat-option value="">(none)</mat-option>
+            @for (dataset of datasets; track dataset.name) {
+              <mat-option [value]="dataset.name">
+                <div class="option-content">
+                  <p>{{ dataset.displayName }}</p>
+                  <aside>{{ dataset.description }}</aside>
+                </div>
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+    }
+
+    @if (selectedDataset$ | async; as selected) {
+      @if (selected.resolved && !selected.resolved.isExactMatch) {
+        <p class="compat-warning">
+          No sample dataset release is known to be compatible with this server. Using the latest release ({{ selected.resolved.version }}); it may not work.
+        </p>
+      }
+      @if (!selected.resolved) {
+        <p class="error-text">No installable version of this dataset is available.</p>
+      }
+    }
+
     <tp-form-actions
       [cancellable]="true" submitText="Create database" [isSubmitting]="isSubmitting$ | async"
+      [submitDisabled]="!form.valid" submitTooltip="Enter a valid database name"
       buttonIdPrefix="createDatabaseModal" (cancel)="close()"
     />
     @if (errorLines.length) {

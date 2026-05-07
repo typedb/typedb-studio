@@ -158,3 +158,58 @@ mat-select-trigger {
     margin-left: 8px;
     margin-right: 4px;
 }
+
+.transaction-menu-trigger {
+    display: flex;
+    align-items: center;
+    color: var(--theme-grey);
+    @include typography.p2;
+    padding: 5px 8px;
+    transition: color 100ms;
+
+    i.fa-code-commit {
+        width: 14px;
+        height: 14px;
+        font-size: 14px;
+        margin-right: 8px;
+    }
+
+    &:hover {
+        color: var(--theme-green);
+    }
+}
+
+.tx-divider {
+    width: 0;
+    height: 24px;
+    border-right: shapes.$border;
+    margin: 0 4px;
+}
+
+.menu-content {
+    aside {
+        margin: 6px 16px;
+        @include typography.aside;
+    }
+
+    button.selected {
+        color: var(--theme-green);
+    }
+
+    mat-divider {
+        margin: 4px 8px;
+    }
+
+    i {
+        width: 14px;
+        height: 14px;
+        font-size: 14px;
+    }
+
+    ::ng-deep .mat-mdc-menu-item-text {
+        display: flex !important;
+        align-items: center;
+        min-width: 0;
+        width: 100%;
+    }
+}

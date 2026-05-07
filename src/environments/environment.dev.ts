@@ -9,6 +9,7 @@ import { Environment } from "./typings";
 export const environment: Environment = {
     env: "development",
     cloudUrl: "https://cloud.typedb.dev",
+    sampleDatasetsManifestUrl: "https://raw.githubusercontent.com/typedb/typedb-examples/refs/heads/master/sample-datasets.yml",
 };
 
 /*

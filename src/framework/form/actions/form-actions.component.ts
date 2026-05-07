@@ -5,6 +5,7 @@
  */
 
 import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { MatTooltipModule } from "@angular/material/tooltip";
 import { ButtonComponent, ButtonStyle } from "../../button/button.component";
 import { SpinnerComponent } from "../../spinner/spinner.component";
 
@@ -12,11 +13,12 @@ import { SpinnerComponent } from "../../spinner/spinner.component";
     selector: "tp-form-actions",
     templateUrl: "form-actions.component.html",
     styleUrls: ["form-actions.component.scss"],
-    imports: [ButtonComponent, SpinnerComponent]
+    imports: [ButtonComponent, SpinnerComponent, MatTooltipModule]
 })
 export class FormActionsComponent {
     @Input() submitText: string = "Submit";
     @Input() submitDisabled?: boolean | null;
+    @Input() submitTooltip: string = "";
     @Output() submitClick = new EventEmitter<void>();
     @Input() cancellable: boolean = false;
     @Input() cancelText: string = "Cancel";

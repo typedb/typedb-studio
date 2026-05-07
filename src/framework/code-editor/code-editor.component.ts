@@ -12,6 +12,7 @@ import { Compartment, Extension, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { startCompletion } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
+import { search, searchKeymap } from "@codemirror/search";
 import { FormControl, ReactiveFormsModule } from "@angular/forms";
 import { ThemeService } from "../../service/theme.service";
 import { Subscription } from "rxjs";
@@ -67,7 +68,7 @@ import { Subscription } from "rxjs";
     }
 
     get extensions(): Extension[] {
-        const baseExtensions = [this.themeCompartment.of(this.currentThemeExtension), TypeQL(), typeqlAutocompleteExtension(), this.keymap];
+        const baseExtensions = [this.themeCompartment.of(this.currentThemeExtension), TypeQL(), typeqlAutocompleteExtension(), this.keymap, search(), keymap.of(searchKeymap)];
         return this.needsWebKitInputFix ? [...baseExtensions, this.webKitInputFix] : baseExtensions;
     }
 

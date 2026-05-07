@@ -17,6 +17,7 @@ import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
 import { MatTree, MatTreeModule } from "@angular/material/tree";
 import { MatTooltipModule } from "@angular/material/tooltip";
+import { Router, RouterLink } from "@angular/router";
 import { combineLatest, map } from "rxjs";
 import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { SchemaToolWindowState, SchemaTreeNode, SchemaTreeConceptNode } from "../../../service/schema-tool-window-state.service";
@@ -36,7 +37,7 @@ import { SnackbarService } from "../../../service/snackbar.service";
     templateUrl: "schema-tool-window.component.html",
     styleUrls: ["schema-tool-window.component.scss"],
     imports: [
-        AsyncPipe, MatDividerModule, MatFormFieldModule, MatTreeModule, MatIconModule,
+        AsyncPipe, RouterLink, MatDividerModule, MatFormFieldModule, MatTreeModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule,
         MatTableModule, MatSortModule, MatTooltipModule, MatButtonModule, MatMenuModule, SchemaTreeNodeComponent,
     ]
@@ -58,6 +59,7 @@ export class SchemaToolWindowComponent implements AfterViewInit {
     constructor(
         public state: SchemaToolWindowState,
         public driver: DriverState,
+        public router: Router,
         private appData: AppData,
         private dialog: MatDialog,
         private dataEditorState: DataEditorState,
@@ -83,16 +85,11 @@ export class SchemaToolWindowComponent implements AfterViewInit {
         this.state.dataSource$.subscribe((dataSource) => {
             // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
             setTimeout(() => {
-                dataSource.forEach( node => {
-                    // In data mode, expand all recursively
-                    if (this.mode === "data") {
-                        this.expandNodeRecursively(node);
+                dataSource.forEach(node => {
+                    if (this.state.rootNodesCollapsed[node.label]) {
+                        this.tree.collapse(node);
                     } else {
-                        if (this.state.rootNodesCollapsed[node.label]) {
-                            this.tree.collapse(node);
-                        } else {
-                            this.tree.expand(node);
-                        }
+                        this.tree.expand(node);
                     }
                 });
             });
@@ -207,9 +204,11 @@ export class SchemaToolWindowComponent implements AfterViewInit {
     loadInstances(concept: SchemaConcept) {
         const typeLabel = concept.label;
         const query = `match $x isa ${typeLabel}; fetch { $x.* };`;
-        const tab = this.queryTabsState.newTab();
-        this.queryTabsState.renameTab(tab, `${typeLabel} instances`);
-        this.queryTabsState.getTabControl(tab).setValue(query);
-        this.queryPageState.runQuery(query);
+        this.router.navigate(["/query"]).then(() => {
+            const tab = this.queryTabsState.newTab();
+            this.queryTabsState.renameTab(tab, `${typeLabel} instances`);
+            this.queryTabsState.getTabControl(tab).setValue(query);
+            this.queryPageState.runQuery(query);
+        });
     }
 }

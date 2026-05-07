@@ -72,18 +72,18 @@
       class="instance-table">
 
       <!-- Type Column -->
-      <ng-container matColumnDef="type">
+      <ng-container matColumnDef="%type">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
-        <td mat-cell *matCellDef="let row" class="type-cell" [class.entity]="row.kind === 'entity'" [class.relation]="row.kind === 'relation'" [class.attribute]="row.kind === 'attribute'">
-          {{ row.type }}
+        <td mat-cell *matCellDef="let row" class="type-cell" [class.entity]="row['%kind'] === 'entity'" [class.relation]="row['%kind'] === 'relation'" [class.attribute]="row['%kind'] === 'attribute'">
+          {{ row["%type"] }}
         </td>
       </ng-container>
 
       <!-- IID Column -->
-      <ng-container matColumnDef="iid">
+      <ng-container matColumnDef="%iid">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>IID</th>
         <td mat-cell *matCellDef="let row" class="iid-cell">
-          {{ row.iid }}
+          {{ row["%iid"] }}
         </td>
       </ng-container>
 
@@ -108,34 +108,34 @@
       }
 
       <!-- Value Type column (for attributes) -->
-      <ng-container matColumnDef="valueType">
+      <ng-container matColumnDef="%valueType">
         <th mat-header-cell *matHeaderCellDef>Value Type</th>
         <td mat-cell *matCellDef="let row" class="value-type-cell">
-          {{ row.valueType }}
+          {{ row["%valueType"] }}
         </td>
       </ng-container>
 
       <!-- Links column (for relations, not sortable) -->
-      <ng-container matColumnDef="linkCounts">
+      <ng-container matColumnDef="%linkCounts">
         <th mat-header-cell *matHeaderCellDef>Links</th>
         <td mat-cell *matCellDef="let row" class="relations-cell">
-          <span richTooltip [showTooltip]="shouldShowLinkTooltip(row.linkCounts)" [richTooltipContent]="formatLinkCounts(row.linkCounts)">{{ truncateLinkCounts(row.linkCounts) }}</span>
+          <span richTooltip [showTooltip]="shouldShowLinkTooltip(row['%linkCounts'])" [richTooltipContent]="formatLinkCounts(row['%linkCounts'])">{{ truncateLinkCounts(row['%linkCounts']) }}</span>
         </td>
       </ng-container>
 
       <!-- Relations column (not sortable) -->
-      <ng-container matColumnDef="relationCounts">
+      <ng-container matColumnDef="%relationCounts">
         <th mat-header-cell *matHeaderCellDef>Relations</th>
         <td mat-cell *matCellDef="let row" class="relations-cell">
-          <span richTooltip [showTooltip]="shouldShowRelationTooltip(row.relationCounts)" [richTooltipContent]="formatRelationCounts(row.relationCounts)">{{ truncateRelationCounts(row.relationCounts) }}</span>
+          <span richTooltip [showTooltip]="shouldShowRelationTooltip(row['%relationCounts'])" [richTooltipContent]="formatRelationCounts(row['%relationCounts'])">{{ truncateRelationCounts(row['%relationCounts']) }}</span>
         </td>
       </ng-container>
 
       <!-- Owners column (for attributes, not sortable) -->
-      <ng-container matColumnDef="ownerCounts">
+      <ng-container matColumnDef="%ownerCounts">
         <th mat-header-cell *matHeaderCellDef>Owners</th>
         <td mat-cell *matCellDef="let row" class="relations-cell">
-          <span richTooltip [showTooltip]="shouldShowOwnerTooltip(row.ownerCounts)" [richTooltipContent]="formatOwnerCounts(row.ownerCounts)">{{ truncateOwnerCounts(row.ownerCounts) }}</span>
+          <span richTooltip [showTooltip]="shouldShowOwnerTooltip(row['%ownerCounts'])" [richTooltipContent]="formatOwnerCounts(row['%ownerCounts'])">{{ truncateOwnerCounts(row['%ownerCounts']) }}</span>
         </td>
       </ng-container>
 

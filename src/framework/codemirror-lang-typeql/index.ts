@@ -47,6 +47,7 @@ export const TypeQLLanguage = LRLanguage.define({
 
         // Keywords
         ISA: t.keyword,
+        SUB: t.keyword,
         HAS: t.keyword,
         LINKS: t.keyword,
         OWNS: t.keyword,
@@ -70,7 +71,7 @@ export const TypeQLLanguage = LRLanguage.define({
         DELETE: t.heading1,
         UPDATE: t.heading1,
         PUT: t.heading1,
-        END: t.heading1,
+        ENDSEMICOLON: t.heading1,
 
         SELECT: t.heading1,
         REDUCE: t.heading1,
@@ -86,8 +87,23 @@ export const TypeQLLanguage = LRLanguage.define({
         NOT: t.controlOperator,
         TRY: t.controlOperator,
 
+        // Types
+        KIND: t.className,
+
         // Misc
         Annotation: t.meta,
+        AnnotationCategory: t.meta,
+        ANNOTATION_ABSTRACT: t.meta,
+        ANNOTATION_CARD: t.meta,
+        ANNOTATION_CASCADE: t.meta,
+        ANNOTATION_DISTINCT: t.meta,
+        ANNOTATION_INDEPENDENT: t.meta,
+        ANNOTATION_KEY: t.meta,
+        ANNOTATION_RANGE: t.meta,
+        ANNOTATION_REGEX: t.meta,
+        ANNOTATION_SUBKEY: t.meta,
+        ANNOTATION_UNIQUE: t.meta,
+        ANNOTATION_VALUES: t.meta,
         LINECOMMENT: t.lineComment,
       })
     ]
@@ -129,6 +145,9 @@ let typeqlAutocomplete = new NodePrefixAutoComplete(
 );
 
 function wrappedAutocomplete(context: CompletionContext) {
+  // Don't trigger autocomplete immediately after a semicolon
+  const charBefore = context.state.doc.sliceString(context.pos - 1, context.pos);
+  if (charBefore === ";" || charBefore === ",") return null;
   return typeqlAutocomplete.autocomplete(context);
 }
 export function typeqlAutocompleteExtension() {

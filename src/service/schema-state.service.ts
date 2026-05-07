@@ -32,7 +32,7 @@ const schemaQueries = {
 } as const satisfies Record<string, string>;
 const schemaQueriesList = Object.values(schemaQueries);
 
-type VisualiserStatus = "ok" | "running" | "noAnswers" | "error";
+type VisualiserStatus = "ok" | "running" | "emptySchema" | "error";
 
 export interface SchemaEntity extends EntityType {
     supertype?: SchemaEntity;
@@ -88,6 +88,9 @@ export class SchemaState {
         ).subscribe(() => {
             this.refresh();
         });
+        this.driver.schemaCommitted$.subscribe(() => {
+            this.refresh();
+        });
         this.queryResponses$.subscribe(data => {
             this.push(data);
         });
@@ -126,7 +129,7 @@ export class SchemaState {
                     this.queryResponses$.next(responses);
                     if (this.visualiser.status === "running") {
                         if (responses[0].ok.answers.length) this.visualiser.status = "ok";
-                        else this.visualiser.status = "noAnswers";
+                        else this.visualiser.status = "emptySchema";
                     }
                 },
             });

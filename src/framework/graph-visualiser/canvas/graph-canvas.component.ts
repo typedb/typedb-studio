@@ -6,12 +6,16 @@
 
 import { Component, ElementRef, EventEmitter, HostBinding, Input, OnDestroy, Output, ViewChild, AfterViewInit } from "@angular/core";
 import { MatTooltipModule } from "@angular/material/tooltip";
+
 import { ResizableDirective } from "@hhangular/resizable";
 import { Subscription } from "rxjs";
 import { GraphVisualiser } from "../engine";
 import { GraphZoomControlsComponent } from "./zoom-controls/graph-zoom-controls.component";
 import { GraphStylesPaneComponent } from "../style-editor/graph-styles-pane.component";
 import { GraphStyleService, buildBackgroundCSS } from "../../../service/graph-style.service";
+
+export type GraphCanvasStatus = "ok" | "running" | "noAnswers" | "error" | "graphlessQueryType" | "answerOutputDisabled" | "multiQuery" | "emptySchema";
+export type GraphCanvasStatusAction = "viewLog";
 
 @Component({
     selector: "ts-graph-canvas",
@@ -21,7 +25,7 @@ import { GraphStyleService, buildBackgroundCSS } from "../../../service/graph-st
 })
 export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
     @Input() visualiser: GraphVisualiser | null = null;
-    @Input() queryRunning = false;
+    @Input() status: GraphCanvasStatus = "ok";
     @Input() graphPercent = 75;
     @Input() stylesPanePercent = 25;
     @Input() maximised = false;
@@ -29,6 +33,9 @@ export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
     @Output() maximisedChange = new EventEmitter<boolean>();
     @Output() graphPercentChange = new EventEmitter<number>();
     @Output() stylesPanePercentChange = new EventEmitter<number>();
+    @Output() statusAction = new EventEmitter<GraphCanvasStatusAction>();
+
+    get queryRunning() { return this.status === "running"; }
 
     @ViewChild("canvasEl", { static: false }) canvasElRef?: ElementRef<HTMLElement>;
 
