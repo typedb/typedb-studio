@@ -475,6 +475,7 @@ export class DriverState {
     private autoQuery(query: string, queryOptions?: QueryOptions): Observable<ApiResponse<QueryResponse>> {
         const queryAction = queryRunActionOf(query);
         const databaseName = this.requireDatabase().name;
+        this._actionLog$.next(queryAction);
 
         return this.queryTypeDetector.runWithAutoType(
             query,
@@ -483,12 +484,10 @@ export class DriverState {
             tap(({ type, result }) => {
                 queryAction.autoCommitted = type !== "read";
                 this.updateActionResult(queryAction, result);
-                this._actionLog$.next(queryAction);
             }),
             map(({ result }) => result),
             catchError((err) => {
                 this.updateActionResultUnexpectedError(queryAction, err);
-                this._actionLog$.next(queryAction);
                 return throwError(() => err);
             }),
             takeUntil(this._stopSignal$)

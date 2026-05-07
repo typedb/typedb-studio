@@ -194,11 +194,12 @@
                 <aside class="text-muted">
                   <time>{{ entry.startedAtTimestamp | date:'HH:mm' }}</time>
                   <span class="bullet">&bull;</span>
-                  @if (isTransactionOperation(entry)) {
-                    <p class="transaction-operation-type">{{ transactionOperationString(entry) }}</p>
-                  } @else {
-                    <p class="transaction-operation-type">{{ entry.status === "error" ? "query failed" : ($any(entry).autoCommitted ? "ran + committed query" : "ran query") }}</p>
-                  }
+                  @let label = isTransactionOperation(entry)
+                    ? transactionOperationString(entry)
+                    : (entry.status === "error" ? "query failed" : ($any(entry).autoCommitted ? "ran + committed query" : "ran query"));
+                  <p #labelEl class="transaction-operation-type"
+                     [matTooltip]="label" [matTooltipDisabled]="!isTruncated(labelEl)" [matTooltipShowDelay]="500"
+                     (mouseenter)="checkTruncation(labelEl)">{{ label }}</p>
                   <span class="flex-spacer"></span>
                   <div class="action-status">
                     @if (entry.status === "pending") {

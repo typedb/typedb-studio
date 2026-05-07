@@ -749,20 +749,12 @@ button {
 
             .action-status {
                 margin-left: 8px;
+                flex-shrink: 0;
                 display: flex;
                 align-items: center;
 
                 span {
                     white-space: nowrap;
-                }
-            }
-
-            @container (max-width: 300px) {
-                .action-status span {
-                    display: none;
-                }
-                .action-status i {
-                    margin-left: 0;
                 }
             }
 

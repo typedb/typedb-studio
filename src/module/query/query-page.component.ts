@@ -103,6 +103,15 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
     private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();
+    private truncationState = new WeakMap<HTMLElement, boolean>();
+
+    checkTruncation(el: HTMLElement) {
+        this.truncationState.set(el, el.scrollWidth > el.clientWidth);
+    }
+
+    isTruncated(el: HTMLElement): boolean {
+        return this.truncationState.get(el) ?? false;
+    }
     editorKeymap = Prec.highest(keymap.of([
         { key: "Alt-Space", run: startCompletion, preventDefault: true },
         {

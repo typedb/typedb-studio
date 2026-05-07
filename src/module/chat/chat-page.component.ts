@@ -75,6 +75,15 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     private historyIndex = -1;
     private historyDraft = "";
     private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();
+    private truncationState = new WeakMap<HTMLElement, boolean>();
+
+    checkTruncation(el: HTMLElement) {
+        this.truncationState.set(el, el.scrollWidth > el.clientWidth);
+    }
+
+    isTruncated(el: HTMLElement): boolean {
+        return this.truncationState.get(el) ?? false;
+    }
 
     constructor(
         public state: ChatState,
