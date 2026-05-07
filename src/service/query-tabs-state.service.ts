@@ -122,11 +122,11 @@ export class QueryTabsState {
 
     closeTab(tab: QueryTab) {
         const tabs = this.openTabs$.value;
-        const index = tabs.indexOf(tab);
+        const index = tabs.findIndex(t => t.id === tab.id);
         if (index === -1) return;
 
         this.tabControls.delete(tab.id);
-        const newTabs = tabs.filter(t => t !== tab);
+        const newTabs = tabs.filter(t => t.id !== tab.id);
 
         if (newTabs.length === 0) {
             this.resetTab(tab);
@@ -142,32 +142,32 @@ export class QueryTabsState {
 
     closeOtherTabs(tab: QueryTab) {
         const tabs = this.openTabs$.value;
-        const index = tabs.indexOf(tab);
+        const index = tabs.findIndex(t => t.id === tab.id);
         if (index === -1) return;
 
-        const newTabs = tabs.filter(t => t === tab || t.pinned);
+        const newTabs = tabs.filter(t => t.id === tab.id || t.pinned);
 
         for (const t of tabs) {
-            if (t !== tab && !t.pinned) {
+            if (t.id !== tab.id && !t.pinned) {
                 this.tabControls.delete(t.id);
             }
         }
 
         this.openTabs$.next(newTabs);
-        const newIndex = newTabs.indexOf(tab);
+        const newIndex = newTabs.findIndex(t => t.id === tab.id);
         this.selectedTabIndex$.next(newIndex);
     }
 
     closeTabsToRight(tab: QueryTab) {
         const tabs = this.openTabs$.value;
-        const index = tabs.indexOf(tab);
+        const index = tabs.findIndex(t => t.id === tab.id);
         if (index === -1) return;
 
         const newTabs = tabs.filter((t, i) => i <= index || t.pinned);
 
-        for (const t of tabs) {
-            if (tabs.indexOf(t) > index && !t.pinned) {
-                this.tabControls.delete(t.id);
+        for (let i = 0; i < tabs.length; i++) {
+            if (i > index && !tabs[i].pinned) {
+                this.tabControls.delete(tabs[i].id);
             }
         }
 
@@ -205,11 +205,11 @@ export class QueryTabsState {
 
     togglePinTab(tab: QueryTab) {
         const tabs = this.openTabs$.value;
-        const index = tabs.indexOf(tab);
+        const index = tabs.findIndex(t => t.id === tab.id);
         if (index === -1) return;
 
         const newTabs = [...tabs];
-        const updatedTab = { ...tab, pinned: !tab.pinned };
+        const updatedTab = { ...tabs[index], pinned: !tabs[index].pinned };
         newTabs[index] = updatedTab;
 
         if (updatedTab.pinned) {
@@ -231,26 +231,27 @@ export class QueryTabsState {
 
     renameTab(tab: QueryTab, newName: string) {
         const tabs = this.openTabs$.value;
-        const index = tabs.indexOf(tab);
+        const index = tabs.findIndex(t => t.id === tab.id);
         if (index === -1) return;
 
         const trimmedName = newName.trim();
         if (!trimmedName) return;
 
         const newTabs = [...tabs];
-        newTabs[index] = { ...tab, name: trimmedName };
+        newTabs[index] = { ...tabs[index], name: trimmedName };
         this.openTabs$.next(newTabs);
     }
 
     duplicateTab(tab: QueryTab): QueryTab {
         const tabs = this.openTabs$.value;
-        const index = tabs.indexOf(tab);
+        const index = tabs.findIndex(t => t.id === tab.id);
+        const source = index !== -1 ? tabs[index] : tab;
         const insertIndex = index === -1 ? tabs.length : index + 1;
 
         const newTab: QueryTab = {
             id: crypto.randomUUID(),
-            name: `${tab.name} (copy)`,
-            query: tab.query,
+            name: `${source.name} (copy)`,
+            query: source.query,
         };
 
         const newTabs = [...tabs];

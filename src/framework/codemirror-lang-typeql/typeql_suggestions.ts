@@ -162,7 +162,10 @@ export const SUGGESTION_MAP: SuggestionMap<TypeQLAutocompleteSchema> = {
         { suffixes: [[tokens.MATCH]], suggestions: [suggestNestedPatterns, suggestVariablesAt10, suggestThingTypeLabels ] },
     ],
     [tokens.ClauseInsert]: SUGGESTION_GROUP_FOR_THING_STATEMENTS,
-    [tokens.Query]: [
+    [tokens.QueryFile]: [
+        { suffixes: [[]], suggestions: [suggestDefinedKeywords, suggestPipelineStages] },
+    ],
+    [tokens.QueryFileEntry]: [
         { suffixes: [[tokens.QuerySchema]], suggestions: [suggestThingTypeLabels, suggestKinds] },
         { suffixes: [[tokens.QueryPipelinePreambled]], suggestions: [suggestNestedPatterns, suggestVariablesAt10, suggestPipelineStages ] },
     ],

@@ -3,6 +3,10 @@
 :host tp-button {
     position: relative;
 
+    ::ng-deep button {
+        min-width: 80px;
+    }
+
     ::ng-deep span.submitting {
         visibility: hidden;
     }

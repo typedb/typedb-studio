@@ -15,7 +15,23 @@
     </div>
   </div>
 </div>
-<div class="schema-container" detectScroll>
+@if (state.isEmpty$ | async) {
+  <div class="empty-schema-placeholder">
+    <div class="empty-schema-content">
+      <p>This is an empty database with no schema defined.</p>
+      <ul>
+        <li><a href="https://typedb.com/docs/home/get-started/schema" target="_blank">Learn about schemas</a></li>
+        @if (!router.url.startsWith('/query')) {
+          <li><a routerLink="/query">Open query editor</a></li>
+        }
+        @if (!router.url.startsWith('/agent-mode')) {
+          <li><a routerLink="/agent-mode">Build with AI agent</a></li>
+        }
+      </ul>
+    </div>
+  </div>
+}
+<div class="schema-container" [hidden]="state.isEmpty$ | async" detectScroll>
   <div class="gutter"></div>
   <mat-tree
     #tree [dataSource]="state.dataSource$" [childrenAccessor]="state.childrenAccessor"

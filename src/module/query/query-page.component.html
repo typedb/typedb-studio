@@ -38,22 +38,30 @@
                 <button mat-icon-button class="new-query-tab-button" (click)="newQueryTab()" matTooltip="New query tab" [matTooltipShowDelay]="500">
                   <i class="fa-light fa-plus"></i>
                 </button>
-                <div class="flex-spacer"></div>
+                <div class="flex-spacer tabs-spacer"></div>
                 <div class="query-tabs-controls">
-                  <div class="row-limit-control">
-                    <label>Limit:</label>
+                  <mat-form-field class="row-limit-field form-field-dense">
+                    <mat-label>Limit</mat-label>
                     <mat-select [formControl]="state.rowLimitControl" panelClass="row-limit-panel">
                       @for (option of state.rowLimitOptions; track option.value) {
                         <mat-option [value]="option.value">{{ option.label }}</mat-option>
                       }
                     </mat-select>
-                  </div>
-                  <button mat-stroked-button [disabled]="!(state.runEnabled$ | async)"
-                          [matTooltip]="(state.runTooltip$ | async) || ''" matTooltipPosition="below"
-                          [matTooltipShowDelay]="(state.runDisabledReason$ | async) ? 0 : 500" (click)="runQuery()">
-                    <i class="fa-light fa-play"></i>
-                    <span>Run</span>
-                  </button>
+                  </mat-form-field>
+                  <!-- Stop button intentionally hidden: server doesn't support oneshot query cancellation yet.
+                       Run button stays visible but disabled while running (runDisabledReason$ emits "A query is already running"). -->
+                  @if (false && (state.queryRunning$ | async)) {
+                    <button mat-icon-button (click)="stopQuery()" matTooltip="Stop" matTooltipPosition="below">
+                      <i class="fa-light fa-stop" style="color: var(--theme-red)"></i>
+                    </button>
+                  } @else {
+                    <span [matTooltip]="(state.runTooltip$ | async) || ''" matTooltipPosition="below"
+                          [matTooltipShowDelay]="(state.runDisabledReason$ | async) ? 0 : 500">
+                      <button mat-icon-button [disabled]="!(state.runEnabled$ | async)" (click)="runQuery()">
+                        <i class="fa-light fa-play"></i>
+                      </button>
+                    </span>
+                  }
                 </div>
               </div>
               <div class="query-tab-content">
@@ -115,7 +123,7 @@
           <div class="answers-outer-container">
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'log'" [class.has-scrollbar]="logHasScrollbar">
               <mat-form-field class="code-text-field">
-                <textarea #logTextarea class="answers-text-box" [formControl]="state.logOutput.control" readonly matInput></textarea>
+                <textarea #logTextarea class="answers-text-box" [formControl]="state.logOutput.control" (scroll)="onLogScroll()" readonly matInput></textarea>
               </mat-form-field>
               <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value.length" (click)="sendLogToAi()">
                 <i [class]="sentLogToAi ? 'fal fa-check' : 'fal fa-wand-magic-sparkles'"></i>
@@ -126,36 +134,86 @@
             </div>
             @if (state.outputTypeControl.value === 'table') {
               <div class="answers-container answers-table-container">
-                @switch (state.tableOutput.status) {
-                  @case ("ok") {
-                    <table mat-table [dataSource]="state.tableOutput.data$" matSort (matSortChange)="state.tableOutput.handleMatSortChange($event)">
-                      @for (column of state.tableOutput.columns; track column) {
-                        <ng-container [matColumnDef]="column">
-                          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ column }}</th>
-                          <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
-                        </ng-container>
-                      }
-                      <tr mat-header-row *matHeaderRowDef="state.tableOutput.displayedColumns"></tr>
-                      <tr mat-row *matRowDef="let row; columns: state.tableOutput.displayedColumns"></tr>
-                    </table>
-                  }
-                  @case ("error") {
-                    <div class="status-text-container"><p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p></div>
-                  }
-                  @case ("running") {
-                    <div class="status-text-container"><p class="status-text">Running query. Answers will be displayed here when they are ready.</p></div>
-                  }
-                  @case ("answerlessQueryType") {
-                    <div class="status-text-container"><p class="status-text">Query completed successfully. This query type does not return answers.</p></div>
-                  }
-                  @case ("answerOutputDisabled") {
-                    <div class="status-text-container"><p class="status-text">Query completed successfully. Answer output is currently disabled.</p></div>
-                  }
-                  @case ("noColumns") {
-                    <div class="status-text-container"><p class="status-text">Query completed successfully. No columns were returned.</p></div>
-                  }
-                  @case ("noAnswers") {
-                    <div class="status-text-container"><p class="status-text">Query completed successfully. No answers were returned.</p></div>
+                @if (currentRun?.batchSummary) {
+                  <div class="batch-summary">
+                    @if (currentRun!.batchFailed) {
+                      <p class="status-text">Query batch interrupted. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p>
+                    } @else {
+                      <p class="status-text">Table output is not available for large query batches. <a (click)="state.outputTypeControl.patchValue('log')">View results in log</a></p>
+                    }
+                  </div>
+                } @else if (currentRun?.multiQuery) {
+                  <div class="multi-query-tables">
+                    @for (sub of currentRun!.subResults; track sub.index) {
+                      <div class="multi-query-table-section">
+                        <div class="multi-query-table-header">{{ sub.label }}</div>
+                        @switch (sub.table.status) {
+                          @case ("ok") {
+                            <table mat-table [dataSource]="sub.table.data$" matSort>
+                              @for (column of sub.table.columns; track column) {
+                                <ng-container [matColumnDef]="column">
+                                  <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ column }}</th>
+                                  <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
+                                </ng-container>
+                              }
+                              <tr mat-header-row *matHeaderRowDef="sub.table.displayedColumns"></tr>
+                              <tr mat-row *matRowDef="let row; columns: sub.table.displayedColumns"></tr>
+                            </table>
+                          }
+                          @case ("error") {
+                            <div class="status-text-inline"><p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p></div>
+                          }
+                          @case ("running") {
+                            <div class="status-text-inline"><p class="status-text">Running...</p></div>
+                          }
+                          @case ("answerlessQueryType") {
+                            <div class="status-text-inline"><p class="status-text">No answers for this query type.</p></div>
+                          }
+                          @case ("answerOutputDisabled") {
+                            <div class="status-text-inline"><p class="status-text">Answer output is currently disabled.</p></div>
+                          }
+                          @case ("noColumns") {
+                            <div class="status-text-inline"><p class="status-text">No columns returned.</p></div>
+                          }
+                          @case ("noAnswers") {
+                            <div class="status-text-inline"><p class="status-text">No answers returned.</p></div>
+                          }
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  @switch (state.tableOutput.status) {
+                    @case ("ok") {
+                      <table mat-table [dataSource]="state.tableOutput.data$" matSort (matSortChange)="state.tableOutput.handleMatSortChange($event)">
+                        @for (column of state.tableOutput.columns; track column) {
+                          <ng-container [matColumnDef]="column">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ column }}</th>
+                            <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
+                          </ng-container>
+                        }
+                        <tr mat-header-row *matHeaderRowDef="state.tableOutput.displayedColumns"></tr>
+                        <tr mat-row *matRowDef="let row; columns: state.tableOutput.displayedColumns"></tr>
+                      </table>
+                    }
+                    @case ("error") {
+                      <div class="status-text-container"><p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p></div>
+                    }
+                    @case ("running") {
+                      <div class="status-text-container"><p class="status-text">Running query. Answers will be displayed here when they are ready.</p></div>
+                    }
+                    @case ("answerlessQueryType") {
+                      <div class="status-text-container"><p class="status-text">Query completed successfully. This query type does not return answers.</p></div>
+                    }
+                    @case ("answerOutputDisabled") {
+                      <div class="status-text-container"><p class="status-text">Query completed successfully. Answer output is currently disabled.</p></div>
+                    }
+                    @case ("noColumns") {
+                      <div class="status-text-container"><p class="status-text">Query completed successfully. No columns were returned.</p></div>
+                    }
+                    @case ("noAnswers") {
+                      <div class="status-text-container"><p class="status-text">Query completed successfully. No answers were returned.</p></div>
+                    }
                   }
                 }
               </div>
@@ -163,35 +221,23 @@
             <ts-graph-canvas #graphCanvas
                             [class.invisible]="state.outputTypeControl.value !== 'graph'"
                             [visualiser]="state.graphOutput.visualiser"
-                            [queryRunning]="state.graphOutput.status === 'running'"
+                            [status]="state.graphOutput.status"
                             [graphPercent]="panelSizes[5]" (graphPercentChange)="onPanelResize(5, $event)"
                             [stylesPanePercent]="panelSizes[6]" (stylesPanePercentChange)="onPanelResize(6, $event)"
-                            [(maximised)]="graphMaximised">
-              @switch (state.graphOutput.status) {
-                @case ("error") {
-                  <p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p>
-                }
-                @case ("running") {
-                  <p class="status-text">Running query. Answers will be displayed here when they are ready.</p>
-                }
-                @case ("graphlessQueryType") {
-                  <p class="status-text">Query completed successfully. This query type does not return answers that can be presented as a graph.</p>
-                }
-                @case ("answerOutputDisabled") {
-                  <p class="status-text">Query completed successfully. Answer output is currently disabled.</p>
-                }
-                @case ("noAnswers") {
-                  <p class="status-text">Query completed successfully. No answers were returned.</p>
-                }
-              }
+                            [(maximised)]="graphMaximised"
+                            (statusAction)="onGraphStatusAction($event)">
             </ts-graph-canvas>
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'raw'">
-              <mat-form-field class="code-text-field">
-                <textarea class="answers-text-box" [formControl]="state.rawOutput.control" readonly matInput></textarea>
-              </mat-form-field>
+              @if (currentRun?.batchSummary) {
+                <div class="batch-summary"><p class="status-text">Raw output is not available for large query batches. <a (click)="state.outputTypeControl.patchValue('log')">View results in log</a></p></div>
+              } @else {
+                <mat-form-field class="code-text-field">
+                  <textarea class="answers-text-box" [formControl]="state.rawOutput.control" readonly matInput></textarea>
+                </mat-form-field>
+              }
             </div>
           </div>
-        } @else if ((driver.status$ | async) === "disconnected") {
+        } @else if ((driver.status$ | async) !== "connected") {
           <div class="answers-placeholder-container">
             <button mat-flat-button id="answersPlaceholderConnect" routerLink="/connect">
               <i class="fa-light fa-bolt"></i><span>Connect TypeDB server</span>
@@ -199,9 +245,15 @@
           </div>
         } @else if (!(driver.database$ | async)) {
           <div class="answers-placeholder-container">
-            <button mat-flat-button id="answersPlaceholderSelectDatabase" (click)="openSelectDatabaseDialog()">
-              <i class="fa-light fa-database"></i><span>Select database</span>
-            </button>
+            @if ((driver.databaseList$ | async)?.length) {
+              <button mat-flat-button id="answersPlaceholderSelectDatabase" (click)="openSelectDatabaseDialog()">
+                <i class="fa-light fa-database"></i><span>Select database</span>
+              </button>
+            } @else {
+              <button mat-flat-button id="answersPlaceholderSelectDatabase" (click)="openCreateDatabaseDialog()">
+                <i class="fa-light fa-database"></i><span>Create new database</span>
+              </button>
+            }
           </div>
         }
       </div>
@@ -218,17 +270,18 @@
                 <aside class="text-muted">
                   <time>{{ entry.startedAtTimestamp | date:'HH:mm' }}</time>
                   <span class="bullet">•</span>
-                  @if (isTransactionOperation(entry)) {
-                    <p class="transaction-operation-type">{{ transactionOperationString(entry) }}</p>
-                  } @else {
-                    <p class="transaction-operation-type">{{ entry.status === "error" ? "query failed" : ($any(entry).autoCommitted ? "ran + committed query" : "ran query") }}</p>
-                  }
+                  @let label = isTransactionOperation(entry)
+                    ? transactionOperationString(entry)
+                    : queryRunLabel($any(entry));
+                  <p #labelEl class="transaction-operation-type"
+                     [matTooltip]="label" [matTooltipDisabled]="!isTruncated(labelEl)" [matTooltipShowDelay]="500"
+                     (mouseenter)="checkTruncation(labelEl)">{{ label }}</p>
                   <span class="flex-spacer"></span>
                   <div class="action-status">
                     @if (entry.status === "pending") {
                       <tp-spinner [size]="14"/>
                     } @else {
-                      <span>{{ entry | actionDuration }}</span>
+                      <span matTooltip="Includes network roundtrip time" [matTooltipShowDelay]="500">{{ entry | actionDuration }}</span>
                       @if (entry.status === "success") {
                         <i class="fa-light fa-check"></i>
                       } @else {

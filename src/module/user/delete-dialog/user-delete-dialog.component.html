@@ -1,5 +1,11 @@
 <tp-modal dialogTitle="Delete user" [isBusy]="isSubmitting$ | async">
   <p class="description">Are you sure you want to delete user '{{ data.username }}'?</p>
+  @if (isDeletingCurrentlyLoggedInUser) {
+    <div class="content-wrapper">
+      <p><i class="fa-solid fa-triangle-exclamation"></i> <span class="admonition-header">Important</span></p>
+      <p>Deleting your own user login will reload the page and clear all session data. You will not be able to log in again.</p>
+    </div>
+  }
   <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
     <tp-form-actions submitText="Delete user" submitButtonStyle="primary-outline red stroke"
       buttonIdPrefix="strongConfirmationModal" [isSubmitting]="isSubmitting$ | async" [cancellable]="true" (cancel)="close()"

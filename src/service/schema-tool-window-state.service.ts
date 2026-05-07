@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { BehaviorSubject, Subject } from "rxjs";
+import { BehaviorSubject, map, Subject } from "rxjs";
 import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from "./schema-state.service";
 import { Injectable } from "@angular/core";
 import { AppData } from "./app-data.service";
@@ -67,6 +67,7 @@ export type SchemaTreeChildNode = SchemaTreeConceptNode | SchemaTreeLinkNode;
 })
 export class SchemaToolWindowState {
     dataSource$ = new BehaviorSubject<SchemaTreeRootNode[]>([]);
+    isEmpty$ = this.dataSource$.pipe(map(data => data.length > 0 && data.every(root => !root.children.length)));
     viewMode$ = new BehaviorSubject<"flat" | "hierarchical">(this.appData.viewState.schemaToolWindowState().viewMode);
     linksVisibility$ = new BehaviorSubject<Record<SchemaTreeLinkKind, boolean>>(this.appData.viewState.schemaToolWindowState().linksVisibility);
     rootNodesCollapsed: Record<SchemaTreeRootNode["label"], boolean> = this.appData.viewState.schemaToolWindowState().rootNodesCollapsed;
@@ -111,8 +112,8 @@ export class SchemaToolWindowState {
                 visible: true,
                 children: ([
                     ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype, visible: linksVisibility.sub }] : []),
-                    ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y, visible: linksVisibility.owns })),
-                    ...x.playedRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y, visible: linksVisibility.plays })),
+                    ...x.ownedAttributes.sort((a, b) => a.label.localeCompare(b.label)).map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y, visible: linksVisibility.owns })),
+                    ...x.playedRoles.sort((a, b) => a.label.localeCompare(b.label)).map(y => ({ nodeKind: "link", linkKind: "plays", role: y, visible: linksVisibility.plays })),
                 ] as SchemaTreeChildNode[]),
             })),
         }, {
@@ -125,9 +126,9 @@ export class SchemaToolWindowState {
                 visible: true,
                 children: ([
                     ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype, visible: linksVisibility.sub }] : []),
-                    ...x.relatedRoles.map(y => ({ nodeKind: "link", linkKind: "relates", role: y, visible: linksVisibility.relates })),
-                    ...x.ownedAttributes.map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y, visible: linksVisibility.owns })),
-                    ...x.playedRoles.map(y => ({ nodeKind: "link", linkKind: "plays", role: y, visible: linksVisibility.plays })),
+                    ...x.relatedRoles.sort((a, b) => a.label.localeCompare(b.label)).map(y => ({ nodeKind: "link", linkKind: "relates", role: y, visible: linksVisibility.relates })),
+                    ...x.ownedAttributes.sort((a, b) => a.label.localeCompare(b.label)).map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y, visible: linksVisibility.owns })),
+                    ...x.playedRoles.sort((a, b) => a.label.localeCompare(b.label)).map(y => ({ nodeKind: "link", linkKind: "plays", role: y, visible: linksVisibility.plays })),
                 ] as SchemaTreeChildNode[]),
             })),
         }, {

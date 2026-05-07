@@ -22,6 +22,7 @@ import { filter, map, Observable, startWith } from "rxjs";
 import { AppData } from "../../service/app-data.service";
 import { DriverState } from "../../service/driver-state.service";
 import { SchemaState } from "../../service/schema-state.service";
+import { DatabaseCreateDialogComponent } from "../database/create-dialog/database-create-dialog.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaToolWindowComponent } from "./tool-window/schema-tool-window.component";
@@ -56,6 +57,10 @@ export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     openSelectDatabaseDialog() {
         this.dialog.open(DatabaseSelectDialogComponent);
+    }
+
+    openCreateDatabaseDialog() {
+        this.dialog.open(DatabaseCreateDialogComponent);
     }
 
     ngOnInit() {

@@ -7,7 +7,7 @@
 import { AsyncPipe } from "@angular/common";
 import { Component } from "@angular/core";
 import { FormBuilder, FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { MatDialogRef } from "@angular/material/dialog";
+import { MatDialog, MatDialogRef } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { Database } from "@typedb/driver-http";
@@ -16,6 +16,7 @@ import { FormActionsComponent, FormComponent, FormOption, FormSelectComponent, r
 import { ModalComponent } from "../../../framework/modal";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
+import { DatabaseCreateDialogComponent } from "../create-dialog/database-create-dialog.component";
 
 @Component({
     selector: "ts-database-select-dialog",
@@ -39,9 +40,14 @@ export class DatabaseSelectDialogComponent {
     errorLines: string[] = [];
 
     constructor(
-        private dialogRef: MatDialogRef<DatabaseSelectDialogComponent>,
+        private dialog: MatDialog, private dialogRef: MatDialogRef<DatabaseSelectDialogComponent>,
         private formBuilder: FormBuilder, private snackbar: SnackbarService, private driver: DriverState,
     ) {
+    }
+
+    openCreateDatabaseDialog() {
+        this.close();
+        this.dialog.open(DatabaseCreateDialogComponent);
     }
 
     submit() {

@@ -136,6 +136,10 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
         setTimeout(() => this.aiSent = false, 3000);
     }
 
+    onGraphStatusAction(action: string) {
+        if (action === "viewLog") this.outputState.outputTypeControl.patchValue("log");
+    }
+
     ngOnDestroy() {
         this.outputTypeSub?.unsubscribe();
         for (const run of this.outputState.runs) {

@@ -52,6 +52,8 @@
     display: flex;
     flex-direction: column;
     gap: 4px !important;
+    @include shapes.standard-border;
+    border-radius: shapes.$border-radius;
 }
 
 .history-pane, .query-pane, .results-pane {
@@ -75,22 +77,12 @@
 .card-top {
     border: shapes.$border;
     border-radius: shapes.$border-radius shapes.$border-radius 0 0;
-    border-bottom: none;
 
     ::ng-deep + app-drag-handle {
-        border-left: shapes.$border;
-        border-right: shapes.$border;
-        position: relative;
-
-        &::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            height: 1px;
-            background: var(--theme-light-purple);
-        }
+        height: 12px;
+        margin-top: -6px;
+        margin-bottom: -6px;
+        z-index: 2;
     }
 }
 
@@ -418,13 +410,13 @@ button {
 .query-tab {
     display: flex;
     align-items: center;
-    padding: 0 16px;
+    padding: 0 6px 0 14px;
     cursor: pointer;
     border-right: 1px solid var(--theme-light-purple);
     white-space: nowrap;
     color: var(--theme-grey);
     transition: background-color 100ms, color 100ms;
-    font-size: 14px;
+    font-size: 13px;
 
     &:hover:not(.active) {
         background-color: var(--theme-light-purple-02);
@@ -483,49 +475,29 @@ button {
     width: 28px;
     height: 28px;
     padding: 0;
-    position: relative;
-    align-self: center;
     margin: 0 6px;
+    align-self: center;
+}
 
-    &::ng-deep .mat-mdc-button-touch-target {
-        height: 28px;
-        width: 28px;
-    }
-
-    i {
-        font-size: 14px;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        line-height: 1;
-        height: 14px;
-    }
-
-    &:hover {
-        background-color: var(--theme-light-purple-03);
-    }
+.tabs-spacer {
+    min-width: 8px;
 }
 
 .query-tabs-controls {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding-right: 12px;
+    gap: 4px;
+    padding-right: 8px;
     flex-shrink: 0;
-
-    button[mat-stroked-button] {
-        --mdc-outlined-button-container-height: 32px;
-        --mat-button-outlined-container-height: 32px;
-        --mdc-outlined-button-outline-color: var(--theme-light-purple);
-        --mat-button-outlined-outline-color: var(--theme-light-purple);
-        --mdc-outlined-button-label-text-color: var(--theme-white);
-        --mat-button-outlined-label-text-color: var(--theme-white);
-        background: var(--theme-deep-purple);
-        font-size: 14px;
-        border-radius: shapes.$border-radius-small;
-    }
 }
+
+.row-limit-field.mat-mdc-form-field {
+    width: 95px;
+    --mat-form-field-container-text-size: 14px;
+    --mat-form-field-outlined-label-text-size: 11px;
+    --mat-form-field-outlined-label-text-populated-size: 14px;
+}
+
 
 .query-tab-content {
     flex: 1;
@@ -640,6 +612,14 @@ button {
     display: flex;
 }
 
+.batch-summary {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .status-text {
     @include typography.p1;
     position: absolute;
@@ -653,6 +633,54 @@ button {
     overflow-wrap: break-word;
     padding: 10px;
     margin: 0;
+}
+
+// Multi-query stacked tables
+.multi-query-tables {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.multi-query-table-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 120px;
+    border-bottom: 1px solid var(--theme-light-purple);
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    table {
+        flex: 1;
+    }
+}
+
+.multi-query-table-header {
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--theme-grey);
+    background: var(--theme-light-purple-03);
+    border-bottom: 1px solid var(--theme-light-purple);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.status-text-inline {
+    padding: 16px 14px;
+
+    .status-text {
+        position: static;
+        transform: none;
+        width: auto;
+        text-align: left;
+        padding: 0;
+        margin: 0;
+    }
 }
 
 .answers-placeholder-container {
@@ -675,6 +703,9 @@ button {
 
 .history-pane {
     flex: 1;
+    border: none;
+    border-radius: 0;
+    container-type: inline-size;
 
     @media (max-width: media.$max-width-mobile) {
         display: none;
@@ -694,9 +725,22 @@ button {
         aside {
             display: flex;
             align-items: center;
+            min-width: 0;
 
             .bullet {
                 margin: 0 4px;
+                flex-shrink: 0;
+            }
+
+            time {
+                flex-shrink: 0;
+            }
+
+            .transaction-operation-type {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                min-width: 0;
             }
 
             tp-spinner {
@@ -705,10 +749,18 @@ button {
 
             .action-status {
                 margin-left: 8px;
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+
+                span {
+                    white-space: nowrap;
+                }
             }
 
             .action-status i {
                 margin-left: 6px;
+                margin-top: 3px;
                 font-size: 12px;
 
                 &.fa-xmark {

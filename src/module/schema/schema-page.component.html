@@ -12,7 +12,7 @@
         </button>
       </div>
       <div class="answers-outer-container">
-        @if ((driver.status$ | async) === "disconnected") {
+        @if ((driver.status$ | async) !== "connected") {
           <div class="answers-placeholder-container">
             <button mat-flat-button routerLink="/connect">
               <i class="fa-light fa-bolt"></i><span>Connect TypeDB server</span>
@@ -20,29 +20,24 @@
           </div>
         } @else if (!(driver.database$ | async)) {
           <div class="answers-placeholder-container">
-            <button mat-flat-button (click)="openSelectDatabaseDialog()">
-              <i class="fa-light fa-database"></i><span>Select database</span>
-            </button>
+            @if ((driver.databaseList$ | async)?.length) {
+              <button mat-flat-button (click)="openSelectDatabaseDialog()">
+                <i class="fa-light fa-database"></i><span>Select database</span>
+              </button>
+            } @else {
+              <button mat-flat-button (click)="openCreateDatabaseDialog()">
+                <i class="fa-light fa-database"></i><span>Create new database</span>
+              </button>
+            }
           </div>
         }
         <ts-graph-canvas #graphCanvas
                          [class.invisible]="(driver.status$ | async) === 'disconnected' || !(driver.database$ | async)"
                          [visualiser]="state.visualiser.visualiser"
-                         [queryRunning]="state.visualiser.status === 'running'"
+                         [status]="state.visualiser.status"
                          [graphPercent]="panelSizes[2]" (graphPercentChange)="onPanelResize(2, $event)"
                          [stylesPanePercent]="panelSizes[3]" (stylesPanePercentChange)="onPanelResize(3, $event)"
                          [(maximised)]="graphMaximised">
-          @switch (state.visualiser.status) {
-            @case ("error") {
-              <p class="status-text">The schema tool encountered an error.</p>
-            }
-            @case ("running") {
-              <p class="status-text">Loading...</p>
-            }
-            @case ("noAnswers") {
-              <p class="status-text">This is an empty database with no schema defined yet. <a routerLink="/query">Go to query tool</a> / <a href="https://typedb.com/docs/home/get-started/schema" target="_blank">learn about schemas</a></p>
-            }
-          }
         </ts-graph-canvas>
       </div>
     </div>

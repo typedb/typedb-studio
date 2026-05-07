@@ -1,11 +1,17 @@
 <tp-modal dialogTitle="Select database" [isBusy]="isSubmitting$ | async">
   <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
     @let databases = databases$ | async;
-    @if (databases) {
-      <tp-form-select [options]="databases" [form]="form" field="database" label="Database" />
+    @if (databases?.length) {
+      <tp-form-select [options]="databases!" [form]="form" field="database" label="Database" />
       <tp-form-actions
         [cancellable]="true" submitText="Confirm" [isSubmitting]="isSubmitting$ | async"
         buttonIdPrefix="createDatabaseModal" (cancel)="close()"
+      />
+    } @else if (databases) {
+      <p>This server has no databases. Create a database to begin developing with TypeDB.</p>
+      <tp-form-actions
+        [cancellable]="true" submitText="Create database" [isSubmitting]="isSubmitting$ | async"
+        buttonIdPrefix="createDatabaseModal" (cancel)="close()" (submitClick)="openCreateDatabaseDialog()"
       />
     }
     @if (errorLines.length) {

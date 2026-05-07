@@ -11,7 +11,7 @@
 
     <!-- Main area: Chat interface -->
     <div class="main-content" resizable [percent]="panelSizes[1]" (percentChange)="onPanelResize(1, $event)">
-      @if ((driver.status$ | async) === "disconnected") {
+      @if ((driver.status$ | async) !== "connected") {
         <div class="placeholder-container">
           <div class="placeholder-content">
             <i class="fa-thin fa-sparkles"></i>
@@ -28,9 +28,15 @@
             <i class="fa-thin fa-sparkles"></i>
             <h3>Build with AI agent</h3>
             <aside class="text-muted">Powered by OpenAI. Chat data is shared for model training purposes. Rate limits apply.<br/>AI code generation can make mistakes, so double-check it.</aside>
-            <button mat-flat-button (click)="openSelectDatabaseDialog()">
-              <i class="fa-light fa-database"></i><span>Select database</span>
-            </button>
+            @if ((driver.databaseList$ | async)?.length) {
+              <button mat-flat-button (click)="openSelectDatabaseDialog()">
+                <i class="fa-light fa-database"></i><span>Select database</span>
+              </button>
+            } @else {
+              <button mat-flat-button (click)="openCreateDatabaseDialog()">
+                <i class="fa-light fa-database"></i><span>Create new database</span>
+              </button>
+            }
           </div>
         </div>
       } @else {
@@ -188,17 +194,18 @@
                 <aside class="text-muted">
                   <time>{{ entry.startedAtTimestamp | date:'HH:mm' }}</time>
                   <span class="bullet">&bull;</span>
-                  @if (isTransactionOperation(entry)) {
-                    <p class="transaction-operation-type">{{ transactionOperationString(entry) }}</p>
-                  } @else {
-                    <p class="transaction-operation-type">{{ entry.status === "error" ? "query failed" : ($any(entry).autoCommitted ? "ran + committed query" : "ran query") }}</p>
-                  }
+                  @let label = isTransactionOperation(entry)
+                    ? transactionOperationString(entry)
+                    : (entry.status === "error" ? "query failed" : ($any(entry).autoCommitted ? "ran + committed query" : "ran query"));
+                  <p #labelEl class="transaction-operation-type"
+                     [matTooltip]="label" [matTooltipDisabled]="!isTruncated(labelEl)" [matTooltipShowDelay]="500"
+                     (mouseenter)="checkTruncation(labelEl)">{{ label }}</p>
                   <span class="flex-spacer"></span>
                   <div class="action-status">
                     @if (entry.status === "pending") {
                       <tp-spinner [size]="14"/>
                     } @else {
-                      <span>{{ entry | actionDuration }}</span>
+                      <span matTooltip="Includes network roundtrip time" [matTooltipShowDelay]="500">{{ entry | actionDuration }}</span>
                       @if (entry.status === "success") {
                         <i class="fa-light fa-check"></i>
                       } @else {
