@@ -164,6 +164,18 @@ i.ts-beacon {
         margin-left: 8px;
     }
 
+    mat-divider:has(+ .database-list),
+    .database-list + mat-divider {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    .database-list {
+        max-height: 256px;
+        overflow-y: auto;
+        padding: 4px 0;
+    }
+
     button.no-databases {
         color: var(--theme-secondary-light-grey);
     }
