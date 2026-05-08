@@ -35,6 +35,7 @@ import { DriverState } from "../../service/driver-state.service";
 import { QueryPageState } from "../../service/query-page-state.service";
 import { QueryTab, QueryTabsState } from "../../service/query-tabs-state.service";
 import { RunOutputState } from "../../service/query-page-state.service";
+import { QueryExportService, SerializedOutput } from "../../service/query-export.service";
 import { SnackbarService } from "../../service/snackbar.service";
 import { ErrorDetailsDialogComponent } from "../../framework/error-details-dialog/error-details-dialog.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
@@ -75,6 +76,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     state = inject(QueryPageState);
     driver = inject(DriverState);
     queryTabsState = inject(QueryTabsState);
+    exportService = inject(QueryExportService);
     private appData = inject(AppData);
     private chatState = inject(ChatState);
     private snackbar = inject(SnackbarService);
@@ -110,7 +112,6 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     private static readonly DEFAULT_PANEL_SIZES = [20, 60, 20, 50, 50, 75, 25];
     panelSizes = [...QueryPageComponent.DEFAULT_PANEL_SIZES];
 
-    copiedLog = false;
     sentLogToAi = false;
     logHasScrollbar = false;
     canScrollLeft = false;
@@ -454,18 +455,103 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.router.navigate(['/agent-mode']);
     }
 
-    async copyLog() {
-        try {
-            await navigator.clipboard.writeText(this.state.logOutput.control.value);
-            this.copiedLog = true;
+    private currentRun(): RunOutputState | undefined {
+        return this.state.currentTabRuns[this.state.selectedRunIndex];
+    }
 
-            // Reset copied state after 3 seconds
-            setTimeout(() => {
-                this.copiedLog = false;
-            }, 3000);
-        } catch (err) {
-            console.error('Failed to copy results log:', err);
+    canExportResults(): boolean {
+        return this.exportService.canExportResults(this.currentRun());
+    }
+
+    canExportLog(): boolean {
+        return !!this.state.logOutput.control.value.length;
+    }
+
+    canExportRaw(): boolean {
+        return !!this.state.rawOutput.control.value.length;
+    }
+
+    private async runCopy(payload: ReturnType<QueryExportService["serializeLog"]>, label: string) {
+        if (!payload) {
+            this.snackbar.warn("Nothing to copy");
+            return;
         }
+        try {
+            await this.exportService.copy(payload);
+            this.snackbar.success(`Copied ${label} to clipboard`);
+        } catch (err) {
+            console.error("Copy failed:", err);
+            this.snackbar.warn(`Failed to copy ${label}`);
+        }
+    }
+
+    private runDownload(run: RunOutputState | undefined, suffix: string, payload: SerializedOutput | null) {
+        if (!run || !payload) {
+            this.snackbar.warn("Nothing to export");
+            return;
+        }
+        this.exportService.download(run, suffix, payload);
+    }
+
+    copyLog() {
+        const run = this.currentRun();
+        if (!run) return;
+        void this.runCopy(this.exportService.serializeLog(run, "log"), "log");
+    }
+
+    copyResultsText() {
+        const run = this.currentRun();
+        if (!run) return;
+        void this.runCopy(this.exportService.serializeLog(run, "results-text"), "results");
+    }
+
+    copyResultsJson() {
+        const run = this.currentRun();
+        if (!run) return;
+        void this.runCopy(this.exportService.serializeLog(run, "results-json"), "results");
+    }
+
+    downloadResultsText() {
+        const run = this.currentRun();
+        this.runDownload(run, "results", run ? this.exportService.serializeLog(run, "results-text") : null);
+    }
+
+    downloadResultsJson() {
+        const run = this.currentRun();
+        this.runDownload(run, "results", run ? this.exportService.serializeLog(run, "results-json") : null);
+    }
+
+    copyTableCsv() {
+        const run = this.currentRun();
+        if (!run) return;
+        void this.runCopy(this.exportService.serializeTable(run, "csv"), "table");
+    }
+
+    copyTableJson() {
+        const run = this.currentRun();
+        if (!run) return;
+        void this.runCopy(this.exportService.serializeTable(run, "json"), "table");
+    }
+
+    downloadTableCsv() {
+        const run = this.currentRun();
+        this.runDownload(run, "table", run ? this.exportService.serializeTable(run, "csv") : null);
+    }
+
+    downloadTableJson() {
+        const run = this.currentRun();
+        this.runDownload(run, "table", run ? this.exportService.serializeTable(run, "json") : null);
+    }
+
+    copyRaw() {
+        const run = this.currentRun();
+        if (!run) return;
+        void this.runCopy(this.exportService.serializeRaw(run), "raw");
+    }
+
+    downloadRaw() {
+        const run = this.currentRun();
+        this.runDownload(run, "raw", run ? this.exportService.serializeRaw(run) : null);
     }
 
     onPanelResize(index: number, percent: number) {

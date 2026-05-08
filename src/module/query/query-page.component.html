@@ -117,15 +117,31 @@
               <mat-form-field class="code-text-field">
                 <textarea #logTextarea class="answers-text-box" [formControl]="state.logOutput.control" readonly matInput></textarea>
               </mat-form-field>
-              <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value.length" (click)="sendLogToAi()">
+              <div class="copy-overlay" [class.visible]="canExportLog()" (click)="sendLogToAi()" matTooltip="Send to AI" matTooltipPosition="below">
                 <i [class]="sentLogToAi ? 'fal fa-check' : 'fal fa-wand-magic-sparkles'"></i>
               </div>
-              <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value.length" (click)="copyLog()">
-                <i [class]="copiedLog ? 'fal fa-check' : 'fal fa-copy'"></i>
+              <div class="copy-overlay" [class.visible]="canExportLog()" [matMenuTriggerFor]="logExportMenu" matTooltip="Copy / download" matTooltipPosition="below">
+                <i class="fal fa-arrow-down-to-line"></i>
               </div>
+              <mat-menu #logExportMenu="matMenu">
+                <button mat-menu-item (click)="copyLog()">Copy log</button>
+                <button mat-menu-item (click)="copyResultsText()" [disabled]="!canExportResults()">Copy results (text)</button>
+                <button mat-menu-item (click)="copyResultsJson()" [disabled]="!canExportResults()">Copy results (JSON)</button>
+                <button mat-menu-item (click)="downloadResultsText()" [disabled]="!canExportResults()">Download results (text)</button>
+                <button mat-menu-item (click)="downloadResultsJson()" [disabled]="!canExportResults()">Download results (JSON)</button>
+              </mat-menu>
             </div>
             @if (state.outputTypeControl.value === 'table') {
               <div class="answers-container answers-table-container">
+                <div class="copy-overlay" [class.visible]="canExportResults()" [matMenuTriggerFor]="tableExportMenu" matTooltip="Copy / download" matTooltipPosition="below">
+                  <i class="fal fa-arrow-down-to-line"></i>
+                </div>
+                <mat-menu #tableExportMenu="matMenu">
+                  <button mat-menu-item (click)="copyTableCsv()">Copy (CSV)</button>
+                  <button mat-menu-item (click)="copyTableJson()">Copy (JSON)</button>
+                  <button mat-menu-item (click)="downloadTableCsv()">Download (CSV)</button>
+                  <button mat-menu-item (click)="downloadTableJson()">Download (JSON)</button>
+                </mat-menu>
                 @switch (state.tableOutput.status) {
                   @case ("ok") {
                     <table mat-table [dataSource]="state.tableOutput.data$" matSort (matSortChange)="state.tableOutput.handleMatSortChange($event)">
@@ -189,6 +205,13 @@
               <mat-form-field class="code-text-field">
                 <textarea class="answers-text-box" [formControl]="state.rawOutput.control" readonly matInput></textarea>
               </mat-form-field>
+              <div class="copy-overlay" [class.visible]="canExportRaw()" [matMenuTriggerFor]="rawExportMenu" matTooltip="Copy / download" matTooltipPosition="below">
+                <i class="fal fa-arrow-down-to-line"></i>
+              </div>
+              <mat-menu #rawExportMenu="matMenu">
+                <button mat-menu-item (click)="copyRaw()">Copy (JSON)</button>
+                <button mat-menu-item (click)="downloadRaw()">Download (JSON)</button>
+              </mat-menu>
             </div>
           </div>
         } @else if ((driver.status$ | async) === "disconnected") {

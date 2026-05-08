@@ -36,6 +36,7 @@ export interface RunOutputState {
     table: TableOutputState;
     graph: GraphOutputState;
     raw: RawOutputState;
+    lastResponse: ApiResponse<QueryResponse> | null;
 }
 
 export function createRunOutputState(label: string, query: string, styleService: GraphStyleService): RunOutputState {
@@ -48,6 +49,7 @@ export function createRunOutputState(label: string, query: string, styleService:
         table: new TableOutputState(),
         graph: new GraphOutputState(styleService),
         raw: new RawOutputState(),
+        lastResponse: null,
     };
 }
 
@@ -447,6 +449,7 @@ export class QueryPageState {
 
     private outputQueryResponseToRun(run: RunOutputState, res: ApiResponse<QueryResponse>) {
         const autoCommitted = this.driver.autoTransactionEnabled$.value && !isApiErrorResponse(res) && res.ok.queryType !== "read";
+        run.lastResponse = res;
         if (this.answersOutputEnabled) this.outputQueryResponseWithAnswers(run, res, autoCommitted);
         else this.outputQueryResponseNoAnswers(run, autoCommitted);
     }
