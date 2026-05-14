@@ -5,9 +5,7 @@
  */
 
 import { Injectable } from "@angular/core";
-import {
-    ApiResponse, Concept, ConceptDocument, ConceptRowAnswer, isApiErrorResponse, QueryResponse,
-} from "@typedb/driver-http";
+import { Concept, ConceptDocument, ConceptRowAnswer, isApiErrorResponse } from "@typedb/driver-http";
 import { RunOutputState } from "./query-page-state.service";
 
 export interface SerializedOutput {
@@ -19,25 +17,13 @@ export interface SerializedOutput {
 @Injectable({ providedIn: "root" })
 export class QueryExportService {
 
-    serializeLog(run: RunOutputState, format: "log" | "results-text" | "results-json"): SerializedOutput | null {
-        if (format === "log") {
-            const text = run.log.control.value;
-            if (!text) return null;
-            return { text, mime: "text/plain;charset=utf-8", ext: "txt" };
-        }
-        const res = run.lastResponse;
-        if (!res || isApiErrorResponse(res)) return null;
-        if (format === "results-text") {
-            const text = this.formatResultsText(res);
-            if (text == null) return null;
-            return { text, mime: "text/plain;charset=utf-8", ext: "txt" };
-        }
-        const json = this.formatResultsJson(res);
-        if (json == null) return null;
-        return { text: json, mime: "application/json;charset=utf-8", ext: "json" };
+    serializeLog(run: RunOutputState): SerializedOutput | null {
+        const text = run.log.control.value;
+        if (!text) return null;
+        return { text, mime: "text/plain;charset=utf-8", ext: "txt" };
     }
 
-    serializeTable(run: RunOutputState, format: "csv" | "json"): SerializedOutput | null {
+    serializeResults(run: RunOutputState, format: "csv" | "json"): SerializedOutput | null {
         const res = run.lastResponse;
         if (!res || isApiErrorResponse(res)) return null;
         if (res.ok.answerType === "conceptRows") {
@@ -45,7 +31,10 @@ export class QueryExportService {
             if (format === "csv") {
                 return { text: this.conceptRowsToCsv(answers), mime: "text/csv;charset=utf-8", ext: "csv" };
             }
-            return { text: JSON.stringify(answers.map(a => a.data), null, 2), mime: "application/json;charset=utf-8", ext: "json" };
+            const rows = answers.map(a =>
+                Object.fromEntries(Object.entries(a.data).map(([varName, concept]) => [varName, stripKind(concept)]))
+            );
+            return { text: JSON.stringify(rows, null, 2), mime: "application/json;charset=utf-8", ext: "json" };
         }
         if (res.ok.answerType === "conceptDocuments") {
             const answers = res.ok.answers as ConceptDocument[];
@@ -85,37 +74,6 @@ export class QueryExportService {
 
     async copy(payload: SerializedOutput): Promise<void> {
         await navigator.clipboard.writeText(payload.text);
-    }
-
-    private formatResultsText(res: ApiResponse<QueryResponse>): string | null {
-        if (isApiErrorResponse(res)) return null;
-        if (res.ok.answerType === "conceptRows") {
-            const answers = res.ok.answers;
-            if (!answers.length) return "";
-            return answers.map(a => {
-                const cols = Object.keys(a.data).sort();
-                return cols.map(col => `$${col}: ${conceptCellValue(a.data[col])}`).join("\n");
-            }).join("\n\n") + "\n";
-        }
-        if (res.ok.answerType === "conceptDocuments") {
-            const answers = res.ok.answers as ConceptDocument[];
-            if (!answers.length) return "";
-            return answers.map(d => {
-                try { return JSON.stringify(d, null, 2); } catch { return String(d); }
-            }).join("\n\n") + "\n";
-        }
-        return null;
-    }
-
-    private formatResultsJson(res: ApiResponse<QueryResponse>): string | null {
-        if (isApiErrorResponse(res)) return null;
-        if (res.ok.answerType === "conceptRows") {
-            return JSON.stringify(res.ok.answers.map(a => a.data), null, 2);
-        }
-        if (res.ok.answerType === "conceptDocuments") {
-            return JSON.stringify(res.ok.answers, null, 2);
-        }
-        return null;
     }
 
     private conceptRowsToCsv(answers: ConceptRowAnswer[]): string {
@@ -168,6 +126,20 @@ function csvEscape(value: string): string {
     if (value == null) return "";
     if (/[",\r\n]/.test(value)) {
         return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
+}
+
+// Recursively drops "kind" keys from a concept (and any nested concepts, e.g. `type`).
+// Only applied to concept values, never to ConceptRow keys, so a `$kind` variable is preserved.
+function stripKind(value: unknown): unknown {
+    if (Array.isArray(value)) return value.map(stripKind);
+    if (value && typeof value === "object") {
+        return Object.fromEntries(
+            Object.entries(value)
+                .filter(([key]) => key !== "kind")
+                .map(([key, val]) => [key, stripKind(val)])
+        );
     }
     return value;
 }

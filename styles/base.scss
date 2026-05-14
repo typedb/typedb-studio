@@ -713,6 +713,17 @@ app-drag-handle span {
     }
 }
 
+// Query output export menu: icon-prefixed items
+.export-menu .mat-mdc-menu-item {
+    i {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+        margin-right: 10px;
+        text-align: center;
+    }
+}
+
 // Graph background: party mode
 @property --party-angle {
     syntax: "<angle>";

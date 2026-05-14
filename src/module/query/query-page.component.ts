@@ -471,7 +471,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
         return !!this.state.rawOutput.control.value.length;
     }
 
-    private async runCopy(payload: ReturnType<QueryExportService["serializeLog"]>, label: string) {
+    private async runCopy(payload: SerializedOutput | null, label: string) {
         if (!payload) {
             this.snackbar.warn("Nothing to copy");
             return;
@@ -496,51 +496,29 @@ export class QueryPageComponent implements OnInit, AfterViewInit, OnDestroy {
     copyLog() {
         const run = this.currentRun();
         if (!run) return;
-        void this.runCopy(this.exportService.serializeLog(run, "log"), "log");
-    }
-
-    copyResultsText() {
-        const run = this.currentRun();
-        if (!run) return;
-        void this.runCopy(this.exportService.serializeLog(run, "results-text"), "results");
+        void this.runCopy(this.exportService.serializeLog(run), "log");
     }
 
     copyResultsJson() {
         const run = this.currentRun();
         if (!run) return;
-        void this.runCopy(this.exportService.serializeLog(run, "results-json"), "results");
+        void this.runCopy(this.exportService.serializeResults(run, "json"), "results");
     }
 
-    downloadResultsText() {
+    copyResultsCsv() {
         const run = this.currentRun();
-        this.runDownload(run, "results", run ? this.exportService.serializeLog(run, "results-text") : null);
+        if (!run) return;
+        void this.runCopy(this.exportService.serializeResults(run, "csv"), "results");
     }
 
     downloadResultsJson() {
         const run = this.currentRun();
-        this.runDownload(run, "results", run ? this.exportService.serializeLog(run, "results-json") : null);
+        this.runDownload(run, "results", run ? this.exportService.serializeResults(run, "json") : null);
     }
 
-    copyTableCsv() {
+    downloadResultsCsv() {
         const run = this.currentRun();
-        if (!run) return;
-        void this.runCopy(this.exportService.serializeTable(run, "csv"), "table");
-    }
-
-    copyTableJson() {
-        const run = this.currentRun();
-        if (!run) return;
-        void this.runCopy(this.exportService.serializeTable(run, "json"), "table");
-    }
-
-    downloadTableCsv() {
-        const run = this.currentRun();
-        this.runDownload(run, "table", run ? this.exportService.serializeTable(run, "csv") : null);
-    }
-
-    downloadTableJson() {
-        const run = this.currentRun();
-        this.runDownload(run, "table", run ? this.exportService.serializeTable(run, "json") : null);
+        this.runDownload(run, "results", run ? this.exportService.serializeResults(run, "csv") : null);
     }
 
     copyRaw() {

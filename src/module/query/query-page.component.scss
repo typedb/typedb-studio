@@ -579,12 +579,18 @@ button {
     .copy-overlay + .copy-overlay {
         right: 54px;
     }
+    .copy-overlay + .copy-overlay + .copy-overlay {
+        right: 94px;
+    }
 
     &.has-scrollbar .copy-overlay {
         right: 22px;
     }
     &.has-scrollbar .copy-overlay + .copy-overlay {
         right: 62px;
+    }
+    &.has-scrollbar .copy-overlay + .copy-overlay + .copy-overlay {
+        right: 102px;
     }
 }
 
@@ -654,6 +660,11 @@ button {
     overflow-wrap: break-word;
     padding: 10px;
     margin: 0;
+
+    a {
+        color: var(--theme-green);
+        cursor: pointer;
+    }
 }
 
 .answers-placeholder-container {

@@ -117,30 +117,32 @@
               <mat-form-field class="code-text-field">
                 <textarea #logTextarea class="answers-text-box" [formControl]="state.logOutput.control" readonly matInput></textarea>
               </mat-form-field>
-              <div class="copy-overlay" [class.visible]="canExportLog()" (click)="sendLogToAi()" matTooltip="Send to AI" matTooltipPosition="below">
+              <div class="copy-overlay" [class.visible]="canExportLog()" (click)="sendLogToAi()" matTooltip="Send to AI" matTooltipPosition="below" [matTooltipShowDelay]="500">
                 <i [class]="sentLogToAi ? 'fal fa-check' : 'fal fa-wand-magic-sparkles'"></i>
               </div>
-              <div class="copy-overlay" [class.visible]="canExportLog()" [matMenuTriggerFor]="logExportMenu" matTooltip="Copy / download" matTooltipPosition="below">
+              <div class="copy-overlay" [class.visible]="canExportLog()" (click)="copyLog()" matTooltip="Copy log" matTooltipPosition="below" [matTooltipShowDelay]="500">
+                <i class="fal fa-copy"></i>
+              </div>
+              <div class="copy-overlay" [class.visible]="canExportResults()" [matMenuTriggerFor]="logExportMenu" matTooltip="Export" matTooltipPosition="below" [matTooltipShowDelay]="500">
                 <i class="fal fa-arrow-down-to-line"></i>
               </div>
-              <mat-menu #logExportMenu="matMenu">
-                <button mat-menu-item (click)="copyLog()">Copy log</button>
-                <button mat-menu-item (click)="copyResultsText()" [disabled]="!canExportResults()">Copy results (text)</button>
-                <button mat-menu-item (click)="copyResultsJson()" [disabled]="!canExportResults()">Copy results (JSON)</button>
-                <button mat-menu-item (click)="downloadResultsText()" [disabled]="!canExportResults()">Download results (text)</button>
-                <button mat-menu-item (click)="downloadResultsJson()" [disabled]="!canExportResults()">Download results (JSON)</button>
+              <mat-menu #logExportMenu="matMenu" class="export-menu">
+                <button mat-menu-item (click)="copyResultsJson()"><i class="fal fa-copy"></i>Copy as JSON</button>
+                <button mat-menu-item (click)="copyResultsCsv()"><i class="fal fa-copy"></i>Copy as CSV</button>
+                <button mat-menu-item (click)="downloadResultsJson()"><i class="fal fa-arrow-down-to-line"></i>Download JSON</button>
+                <button mat-menu-item (click)="downloadResultsCsv()"><i class="fal fa-arrow-down-to-line"></i>Download CSV</button>
               </mat-menu>
             </div>
             @if (state.outputTypeControl.value === 'table') {
               <div class="answers-container answers-table-container">
-                <div class="copy-overlay" [class.visible]="canExportResults()" [matMenuTriggerFor]="tableExportMenu" matTooltip="Copy / download" matTooltipPosition="below">
+                <div class="copy-overlay" [class.visible]="canExportResults()" [matMenuTriggerFor]="tableExportMenu" matTooltip="Export" matTooltipPosition="below" [matTooltipShowDelay]="500">
                   <i class="fal fa-arrow-down-to-line"></i>
                 </div>
-                <mat-menu #tableExportMenu="matMenu">
-                  <button mat-menu-item (click)="copyTableCsv()">Copy (CSV)</button>
-                  <button mat-menu-item (click)="copyTableJson()">Copy (JSON)</button>
-                  <button mat-menu-item (click)="downloadTableCsv()">Download (CSV)</button>
-                  <button mat-menu-item (click)="downloadTableJson()">Download (JSON)</button>
+                <mat-menu #tableExportMenu="matMenu" class="export-menu">
+                  <button mat-menu-item (click)="copyResultsJson()"><i class="fal fa-copy"></i>Copy as JSON</button>
+                  <button mat-menu-item (click)="copyResultsCsv()"><i class="fal fa-copy"></i>Copy as CSV</button>
+                  <button mat-menu-item (click)="downloadResultsJson()"><i class="fal fa-arrow-down-to-line"></i>Download JSON</button>
+                  <button mat-menu-item (click)="downloadResultsCsv()"><i class="fal fa-arrow-down-to-line"></i>Download CSV</button>
                 </mat-menu>
                 @switch (state.tableOutput.status) {
                   @case ("ok") {
@@ -205,12 +207,12 @@
               <mat-form-field class="code-text-field">
                 <textarea class="answers-text-box" [formControl]="state.rawOutput.control" readonly matInput></textarea>
               </mat-form-field>
-              <div class="copy-overlay" [class.visible]="canExportRaw()" [matMenuTriggerFor]="rawExportMenu" matTooltip="Copy / download" matTooltipPosition="below">
+              <div class="copy-overlay" [class.visible]="canExportRaw()" [matMenuTriggerFor]="rawExportMenu" matTooltip="Export" matTooltipPosition="below" [matTooltipShowDelay]="500">
                 <i class="fal fa-arrow-down-to-line"></i>
               </div>
-              <mat-menu #rawExportMenu="matMenu">
-                <button mat-menu-item (click)="copyRaw()">Copy (JSON)</button>
-                <button mat-menu-item (click)="downloadRaw()">Download (JSON)</button>
+              <mat-menu #rawExportMenu="matMenu" class="export-menu">
+                <button mat-menu-item (click)="copyRaw()"><i class="fal fa-copy"></i>Copy as JSON</button>
+                <button mat-menu-item (click)="downloadRaw()"><i class="fal fa-arrow-down-to-line"></i>Download JSON</button>
               </mat-menu>
             </div>
           </div>

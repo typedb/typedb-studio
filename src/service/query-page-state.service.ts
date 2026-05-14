@@ -169,6 +169,7 @@ export class QueryPageState {
         return this.currentRunState.raw;
     }
 
+
     private readonly currentTabQuery$ = combineLatest([
         this.queryTabs.openTabs$,
         this.queryTabs.selectedTabIndex$
@@ -426,6 +427,7 @@ export class QueryPageState {
             error: (err) => {
                 newRun.table.status = "error";
                 newRun.graph.status = "error";
+                newRun.raw.push(stringifyError(err));
                 this.driver.checkHealth().subscribe({
                     next: () => {
                         let msg = ``;
@@ -553,6 +555,16 @@ function formatKeyword(keyword: string): string {
 
 function indent(indentation: string, string: string): string {
     return string.split('\n').map(s => `${indentation}${s}`).join('\n');
+}
+
+function stringifyError(err: any): string {
+    if (isApiErrorResponse(err)) return JSON.stringify(err, null, 2);
+    if (err instanceof Error) return JSON.stringify({ message: err.message, name: err.name }, null, 2);
+    try {
+        return JSON.stringify(err, null, 2);
+    } catch {
+        return JSON.stringify({ message: err?.toString() ?? `Unknown error` }, null, 2);
+    }
 }
 
 export class LogOutputState {
