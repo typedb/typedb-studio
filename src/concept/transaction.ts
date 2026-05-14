@@ -12,8 +12,8 @@ export class Transaction {
     readonly id: string;
     readonly type: TransactionType;
     readonly openedAtTimestamp: number;
-    readonly committed: boolean;
-    readonly closedAtTimestamp?: number;
+    committed: boolean;
+    closedAtTimestamp?: number;
     readonly queryRuns: QueryRunAction[];
 
     constructor(props: { id: string; type: TransactionType }) {

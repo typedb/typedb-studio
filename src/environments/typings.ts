@@ -7,4 +7,5 @@
 export interface Environment {
     env: string;
     cloudUrl: string;
+    sampleDatasetsManifestUrl: string;
 }

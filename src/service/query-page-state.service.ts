@@ -6,8 +6,8 @@
 
 import { inject, Injectable } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { BehaviorSubject, combineLatest, map, Observable, pairwise, shareReplay, startWith, switchMap } from "rxjs";
-import { DriverAction } from "../concept/action";
+import { BehaviorSubject, combineLatest, map, NEVER, Observable, pairwise, shareReplay, startWith, Subject, switchMap, takeUntil } from "rxjs";
+import { DriverAction, queryRunActionOf } from "../concept/action";
 import { GraphVisualiser } from "../framework/graph-visualiser/engine";
 import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/engine/sigma-settings";
 import { newGraph, Graph } from "../framework/graph-visualiser/engine/graph";
@@ -23,15 +23,34 @@ import {
 } from "@typedb/driver-http";
 import { AppData, RowLimit } from "./app-data.service";
 import { GraphStyleService } from "./graph-style.service";
+import { splitTypeQLQueries } from "../framework/util/typeql-split";
 
 export type OutputType = "raw" | "log" | "table" | "graph";
 export { RowLimit } from "./app-data.service";
+
+export interface RunResult {
+    success: boolean;
+    error?: unknown;
+}
+
+export interface SubQueryResult {
+    index: number;
+    label: string;
+    queryText: string;
+    table: TableOutputState;
+}
 
 export interface RunOutputState {
     id: string;
     label: string;
     query: string;
     pinned: boolean;
+    multiQuery: boolean;
+    batchSummary: boolean;
+    batchTotal: number;
+    batchCompleted: number;
+    batchFailed: boolean;
+    subResults: SubQueryResult[];
     log: LogOutputState;
     table: TableOutputState;
     graph: GraphOutputState;
@@ -45,6 +64,12 @@ export function createRunOutputState(label: string, query: string, styleService:
         label,
         query,
         pinned: false,
+        multiQuery: false,
+        batchSummary: false,
+        batchTotal: 0,
+        batchCompleted: 0,
+        batchFailed: false,
+        subResults: [],
         log: new LogOutputState(),
         table: new TableOutputState(),
         graph: new GraphOutputState(styleService),
@@ -77,20 +102,24 @@ function currentRun(tabState: TabOutputState): RunOutputState | null {
     return tabState.runs[tabState.selectedRunIndex];
 }
 
+// Row limits are capped (no "No limit" option) to prevent resource starvation on large result sets.
 export const ROW_LIMIT_OPTIONS: { value: RowLimit; label: string }[] = [
     { value: 10, label: "10" },
     { value: 50, label: "50" },
     { value: 100, label: "100" },
     { value: 500, label: "500" },
-    { value: 1000, label: "1000" },
-    { value: 5000, label: "5000" },
-    { value: "none", label: "No limit" },
+    { value: 1000, label: "1,000" },
+    { value: 5000, label: "5,000" },
+    { value: 10000, label: "10,000" },
+    { value: 25000, label: "25,000" },
+    { value: 100000, label: "100,000" },
 ];
 
 const NO_SERVER_CONNECTED = `No server connected`;
 const NO_DATABASE_SELECTED = `No database selected`;
 const NO_OPEN_TRANSACTION = `No open transaction`;
 const QUERY_BLANK = `Query text is blank`;
+const QUERY_RUNNING = `A query is already running`;
 const QUERY_HIGHLIGHT_DIV_ID = null;
 
 const RUN_KEY_BINDING = detectOS() === "mac" ? "⌘+Enter" : "Ctrl+Enter";
@@ -117,6 +146,9 @@ export class QueryPageState {
     private _fallbackOutputState = createTabOutputState();
     private _fallbackRunState = createRunOutputState("", "", this.graphStyleService);
     private _graphCanvasEl: HTMLElement | null = null;
+    private _queryRunning$ = new BehaviorSubject<boolean>(false);
+    private _queryStop$ = new Subject<void>();
+    readonly queryRunning$ = this._queryRunning$.asObservable();
 
     getOrCreateTabOutputState(tabId: string): TabOutputState {
         let state = this.tabOutputStates.get(tabId);
@@ -184,9 +216,12 @@ export class QueryPageState {
 
     readonly runDisabledReason$ = combineLatest([
         this.driver.status$, this.driver.database$, this.driver.transactionOperationModeChanges$,
-        this.driver.transaction$, this.currentTabQuery$, this.queryTabs.selectedTabIndex$
-    ]).pipe(map(([status, db, txMode, tx, query]) => {
-        if (status !== "connected") return NO_SERVER_CONNECTED;
+        this.driver.transaction$, this.currentTabQuery$, this.queryTabs.selectedTabIndex$,
+        this._queryRunning$,
+    ]).pipe(map(([status, db, txMode, tx, query, , running]) => {
+        // Note: element at index 5 (selectedTabIndex) is unused but triggers recalculation
+        if (running) return QUERY_RUNNING;
+        else if (status !== "connected") return NO_SERVER_CONNECTED;
         else if (db == null) return NO_DATABASE_SELECTED;
         else if (txMode === "manual" && !tx) return NO_OPEN_TRANSACTION;
         else if (!query.length) return QUERY_BLANK;
@@ -383,7 +418,8 @@ export class QueryPageState {
         this.runQuery(currentTab.query);
     }
 
-    runQuery(query: string) {
+    runQuery(query: string): Observable<RunResult> {
+        this._queryRunning$.next(true);
         const tabState = this.currentTabOutputState;
 
         // Detach current run's graph before creating new run
@@ -407,77 +443,279 @@ export class QueryPageState {
             tabState.runs.push(newRun);
             tabState.selectedRunIndex = tabState.runs.length - 1;
         }
-
-        // Initialise the new run's outputs
-        newRun.log.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);
-        newRun.table.status = "running";
-        newRun.graph.status = "running";
-        newRun.graph.query = query;
-        newRun.graph.database = this.driver.requireDatabase().name;
         if (this._graphCanvasEl) {
             newRun.graph.canvasEl = this._graphCanvasEl;
         }
 
-        const rowLimit = this.rowLimitControl.value;
-        const queryOptions = rowLimit !== "none" ? { answerCountLimit: rowLimit } : undefined;
-        this.driver.query(query, queryOptions).subscribe({
-            next: (res) => {
-                this.outputQueryResponseToRun(newRun, res);
-            },
-            error: (err) => {
-                newRun.table.status = "error";
-                newRun.graph.status = "error";
-                newRun.raw.push(stringifyError(err));
-                this.driver.checkHealth().subscribe({
-                    next: () => {
-                        let msg = ``;
-                        if (isApiErrorResponse(err)) {
-                            msg = err.err.message;
-                        } else {
-                            msg = err?.message ?? err?.toString() ?? `Unknown error`;
-                        }
-                        newRun.log.appendBlankLine();
-                        newRun.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
-                    },
-                    error: () => {
-                        const msg = `Unable to connect to TypeDB server.`;
-                        newRun.log.appendBlankLine();
-                        newRun.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
-                    }
-                });
-            },
+        const result$ = executeQueryToRun(newRun, query, {
+            driver: this.driver,
+            snackbar: this.snackbar,
+            rowLimit: this.rowLimitControl.value,
+            answersOutputEnabled: this.answersOutputEnabled,
+            stopSignal$: this._queryStop$,
         });
+        result$.subscribe({
+            next: () => {},
+            complete: () => this._queryRunning$.next(false),
+            error: () => this._queryRunning$.next(false),
+        });
+        return result$;
     }
 
-    private outputQueryResponseToRun(run: RunOutputState, res: ApiResponse<QueryResponse>) {
-        const autoCommitted = this.driver.autoTransactionEnabled$.value && !isApiErrorResponse(res) && res.ok.queryType !== "read";
-        run.lastResponse = res;
-        if (this.answersOutputEnabled) this.outputQueryResponseWithAnswers(run, res, autoCommitted);
-        else this.outputQueryResponseNoAnswers(run, autoCommitted);
+    stopQuery() {
+        this._queryStop$.next();
     }
+}
 
-    private outputQueryResponseWithAnswers(run: RunOutputState, res: ApiResponse<QueryResponse>, autoCommitted: boolean) {
-        run.log.appendBlankLine();
-        run.log.appendQueryResult(res, autoCommitted);
-        run.table.push(res);
-        try {
-            run.graph.push(res);
-        } catch (err) {
-            console.error("[Graph Output Error]", err);
+export interface RunExecutionDeps {
+    driver: DriverState;
+    snackbar: SnackbarService;
+    rowLimit: RowLimit;
+    /** Defaults to true; when false, query results are reported as success/error without answer details. */
+    answersOutputEnabled?: boolean;
+    stopSignal$?: Observable<void>;
+}
+
+/**
+ * Execute a TypeQL document against a pre-created RunOutputState.
+ * Splits the document via `splitTypeQLQueries` and routes to a single-query
+ * (`driver.query`) or multi-query (`driver.multiQuery`) execution accordingly.
+ *
+ * The returned Observable mirrors completion via a Subject — work begins
+ * synchronously regardless of whether the caller subscribes.
+ */
+export function executeQueryToRun(
+    run: RunOutputState,
+    queryText: string,
+    deps: RunExecutionDeps,
+): Observable<RunResult> {
+    const completion$ = new Subject<RunResult>();
+    const queries = splitTypeQLQueries(queryText);
+    if (queries.length <= 1) {
+        runSingleQueryToRun(run, queries[0] || queryText, deps, completion$);
+    } else {
+        runMultiQueryToRun(run, queries, deps, completion$);
+    }
+    return completion$.asObservable();
+}
+
+function runSingleQueryToRun(
+    run: RunOutputState,
+    query: string,
+    deps: RunExecutionDeps,
+    completion$: Subject<RunResult>,
+) {
+    run.log.appendLines(RUNNING, query, ``, `${TIMESTAMP}${new Date().toISOString()}`);
+    run.table.status = "running";
+    run.graph.status = "running";
+    run.graph.query = query;
+    run.graph.database = deps.driver.requireDatabase().name;
+
+    const queryOptions = { answerCountLimit: deps.rowLimit };
+    let completed = false;
+    deps.driver.query(query, queryOptions).pipe(
+        takeUntil(deps.stopSignal$ ?? NEVER),
+    ).subscribe({
+        next: (res) => {
+            completed = true;
+            outputQueryResponseToRun(run, res, deps);
+            run.log.flush();
+            const hasError = isApiErrorResponse(res);
+            completion$.next({ success: !hasError, error: hasError ? (res as any).err : undefined });
+            completion$.complete();
+        },
+        error: (err) => {
+            completed = true;
+            run.table.status = "error";
             run.graph.status = "error";
-            this.snackbar.errorPersistent(`Failed to render graph visualization: ${err}`);
+            handleQueryError(run, err, deps);
+            run.log.flush();
+            completion$.next({ success: false, error: err });
+            completion$.complete();
+        },
+        complete: () => {
+            if (!completed) {
+                // Stopped by user
+                run.table.status = "error";
+                run.graph.status = "error";
+                run.log.appendBlankLine();
+                run.log.appendLines(`Query interrupted.`);
+                run.log.flush();
+                completion$.next({ success: false });
+                completion$.complete();
+            }
+        },
+    });
+}
+
+function runMultiQueryToRun(
+    run: RunOutputState,
+    queries: string[],
+    deps: RunExecutionDeps,
+    completion$: Subject<RunResult>,
+) {
+    run.multiQuery = true;
+    const isBatchSummary = queries.length > 10;
+    run.batchSummary = isBatchSummary;
+    run.batchTotal = queries.length;
+    run.log.appendLines(RUNNING, `${queries.length} queries`, ``, `${TIMESTAMP}${new Date().toISOString()}`);
+    run.table.status = "running";
+    run.graph.status = "multiQuery";
+
+    // Create sub-results (skip for batch summary mode)
+    if (!isBatchSummary) {
+        for (let i = 0; i < queries.length; i++) {
+            const sub: SubQueryResult = {
+                index: i,
+                label: `Query ${i + 1}`,
+                queryText: queries[i],
+                table: new TableOutputState(),
+            };
+            sub.table.status = "running";
+            run.subResults.push(sub);
         }
-        run.raw.push(JSON.stringify(res, null, 2));
     }
 
-    private outputQueryResponseNoAnswers(run: RunOutputState, autoCommitted: boolean) {
-        run.log.appendBlankLine();
-        run.log.appendLines(`${RESULT}${SUCCESS}`);
-        if (autoCommitted) run.log.appendLines(`Committed.`);
-        run.table.status = "answerOutputDisabled";
-        run.graph.status = "answerOutputDisabled";
-        run.raw.push(SUCCESS_RAW);
+    const queryOptions = { answerCountLimit: deps.rowLimit };
+    const rawResults: string[] = isBatchSummary ? [] : new Array(queries.length);
+    let lastCompletedIndex = -1;
+
+    const queryAction = queryRunActionOf(queries.join("\nend;\n"));
+    queryAction.batch = true;
+    deps.driver.emitAction(queryAction);
+
+    deps.driver.multiQuery(queries, queryOptions).pipe(
+        takeUntil(deps.stopSignal$ ?? NEVER),
+    ).subscribe({
+        next: ({ index, res, autoCommitted }) => {
+            lastCompletedIndex = index;
+            run.batchCompleted = index + 1;
+
+            // Log output
+            if (isBatchSummary) {
+                run.log.setProgress(`Running query ${index + 1} of ${queries.length}...`);
+            } else {
+                run.log.appendBlankLine();
+                run.log.appendLines(MULTI_QUERY_BORDER, `${MULTI_QUERY_HEADER}Query ${index + 1}`, MULTI_QUERY_BORDER, queries[index]);
+                run.log.appendBlankLine();
+                run.log.appendQueryResult(res, autoCommitted, deps.rowLimit);
+            }
+
+            if (!isBatchSummary) {
+                const sub = run.subResults[index];
+                sub.table.push(res);
+                rawResults[index] = JSON.stringify(res, null, 2);
+            }
+        },
+        error: (err) => {
+            // Freeze pending progress so the failed-query header lands below it.
+            run.log.freezeProgress();
+            // Log the failed query's header
+            const failedIndex = lastCompletedIndex + 1;
+            if (failedIndex < queries.length) {
+                run.log.appendBlankLine();
+                run.log.appendLines(MULTI_QUERY_BORDER, `${MULTI_QUERY_HEADER}Query ${failedIndex + 1}`, MULTI_QUERY_BORDER, queries[failedIndex]);
+            }
+
+            run.batchFailed = true;
+            if (!isBatchSummary) {
+                for (const sub of run.subResults) {
+                    if (sub.table.status === "running") sub.table.status = "error";
+                }
+            }
+            run.table.status = "error";
+            handleQueryError(run, err, deps);
+            run.log.flush();
+            queryAction.status = "error";
+            queryAction.completedAtTimestamp = Date.now();
+            queryAction.result = err;
+            completion$.next({ success: false, error: err });
+            completion$.complete();
+        },
+        complete: () => {
+            const stopped = lastCompletedIndex < queries.length - 1;
+            run.table.status = stopped ? "error" : "ok";
+            completion$.next({ success: !stopped });
+            completion$.complete();
+            // Freeze any pending progress line in place before appending terminal content,
+            // so e.g. "Committed." lands below the final progress line, not above it.
+            run.log.freezeProgress();
+            if (stopped) {
+                run.batchFailed = true;
+                run.log.appendBlankLine();
+                run.log.appendLines(`Query batch interrupted.`);
+                queryAction.status = "error";
+                queryAction.completedAtTimestamp = Date.now();
+                queryAction.result = { message: "Query batch interrupted" } as any;
+            } else {
+                queryAction.status = "success";
+                queryAction.completedAtTimestamp = Date.now();
+                queryAction.autoCommitted = deps.driver.autoTransactionEnabled$.value;
+                if (deps.driver.autoTransactionEnabled$.value) {
+                    run.log.appendBlankLine();
+                    run.log.appendLines(`Committed.`);
+                }
+            }
+            if (!isBatchSummary) {
+                for (const sub of run.subResults) {
+                    if (sub.table.status === "running") sub.table.status = stopped ? "error" : "ok";
+                }
+            }
+            run.log.flush();
+            run.raw.push(`[\n${rawResults.filter(Boolean).join(',\n')}\n]`);
+        }
+    });
+}
+
+function handleQueryError(run: RunOutputState, err: any, deps: RunExecutionDeps) {
+    run.raw.push(stringifyError(err));
+    deps.driver.checkHealth().subscribe({
+        next: () => {
+            let msg = ``;
+            if (isApiErrorResponse(err)) {
+                msg = err.err.message;
+            } else {
+                msg = err?.message ?? err?.toString() ?? `Unknown error`;
+            }
+            run.log.appendBlankLine();
+            run.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
+        },
+        error: () => {
+            const msg = `Unable to connect to TypeDB server.`;
+            run.log.appendBlankLine();
+            run.log.appendLines(`${RESULT}${ERROR}`, ``, msg);
+        }
+    });
+}
+
+function outputQueryResponseToRun(run: RunOutputState, res: ApiResponse<QueryResponse>, deps: RunExecutionDeps) {
+    const autoCommitted = deps.driver.autoTransactionEnabled$.value && !isApiErrorResponse(res) && res.ok.queryType !== "read";
+    run.lastResponse = res;
+    if (deps.answersOutputEnabled !== false) outputQueryResponseWithAnswers(run, res, autoCommitted, deps);
+    else outputQueryResponseNoAnswers(run, autoCommitted);
+}
+
+function outputQueryResponseWithAnswers(run: RunOutputState, res: ApiResponse<QueryResponse>, autoCommitted: boolean, deps: RunExecutionDeps) {
+    run.log.appendBlankLine();
+    run.log.appendQueryResult(res, autoCommitted, deps.rowLimit);
+    run.table.push(res);
+    try {
+        run.graph.push(res);
+    } catch (err) {
+        console.error("[Graph Output Error]", err);
+        run.graph.status = "error";
+        deps.snackbar.errorPersistent(`Failed to render graph visualization: ${err}`);
     }
+    run.raw.push(JSON.stringify(res, null, 2));
+}
+
+function outputQueryResponseNoAnswers(run: RunOutputState, autoCommitted: boolean) {
+    run.log.appendBlankLine();
+    run.log.appendLines(`${RESULT}${SUCCESS}`);
+    if (autoCommitted) run.log.appendLines(`Committed.`);
+    run.table.status = "answerOutputDisabled";
+    run.graph.status = "answerOutputDisabled";
+    run.raw.push(SUCCESS_RAW);
 }
 
 export class HistoryWindowState {
@@ -497,6 +735,8 @@ const RESULT = `## Result> `;
 const SUCCESS = `Success`;
 const SUCCESS_RAW = `success`;
 const ERROR = `Error`;
+const MULTI_QUERY_HEADER = `## `;
+const MULTI_QUERY_BORDER = `################################`;
 const TABLE_INDENT = "   ";
 const CONTENT_INDENT = "    ";
 const TABLE_DASHES = 7;
@@ -570,18 +810,93 @@ function stringifyError(err: any): string {
 export class LogOutputState {
 
     control = new FormControl("", {nonNullable: true});
+    /** If true, the viewing component should keep the log scrolled to the bottom as new content arrives.
+     *  Flipped to false the first time the user scrolls away from the bottom manually. */
+    autoscrollEnabled = true;
+    private buffer: string[] = [];
+    private flushScheduled = false;
 
     constructor() {}
 
     appendLines(...lines: string[]) {
-        this.control.patchValue(`${this.control.value}${lines.join(`\n`)}\n`);
+        this.buffer.push(lines.join(`\n`));
+        this.scheduleFlush();
     }
 
     appendBlankLine() {
-        this.appendLines(``);
+        this.buffer.push(``);
+        this.scheduleFlush();
     }
 
-    appendQueryResult(res: ApiResponse<QueryResponse>, autoCommitted?: boolean) {
+    /** Flush buffered lines and/or progress to the FormControl.
+     *  Progress is a "sticky-bottom" live-status line: while progress is still updating,
+     *  it should always sit at the bottom of the log, with new content sliding in above it.
+     *  Once progress stops updating, the last progress line freezes in place as historical
+     *  content, and any further appended content (e.g. "Committed.") lands *below* it. */
+    flush() {
+        this.flushScheduled = false;
+        let next = this.control.value;
+
+        if (this.progressLine != null) {
+            // Progress is still updating: strip the old trailing progress line so we can
+            // append buffered content above the new progress and re-emit progress at the bottom.
+            if (this.lastFlushedProgressLine != null && next.endsWith(this.lastFlushedProgressLine)) {
+                next = next.slice(0, next.length - this.lastFlushedProgressLine.length);
+            }
+            if (this.buffer.length > 0) {
+                next += this.buffer.join(`\n`) + `\n`;
+                this.buffer.length = 0;
+            }
+            next += this.progressLine;
+            this.lastFlushedProgressLine = this.progressLine;
+            this.progressLine = null;
+        } else if (this.buffer.length > 0) {
+            // Progress is no longer updating: any prior progress line is now frozen
+            // historical content. Just append the buffer below it (with a newline if needed).
+            if (this.lastFlushedProgressLine != null && next.endsWith(this.lastFlushedProgressLine)) {
+                next += `\n`;
+            }
+            next += this.buffer.join(`\n`) + `\n`;
+            this.buffer.length = 0;
+            // The progress line is no longer at the very end, so don't try to strip it later.
+            this.lastFlushedProgressLine = null;
+        }
+
+        if (next !== this.control.value) this.control.patchValue(next);
+    }
+
+    private progressLine: string | null = null;
+    private lastFlushedProgressLine: string | null = null;
+
+    /** Set a progress line that overwrites the control value on next flush. */
+    setProgress(line: string) {
+        this.progressLine = line;
+        this.scheduleFlush();
+    }
+
+    /** Convert the freshest progress line (pending or last-flushed) into frozen historical
+     *  content, so subsequent appends will land below it rather than replacing it. Call this
+     *  when progress updates have stopped (e.g. on completion or error). */
+    freezeProgress() {
+        const final = this.progressLine ?? this.lastFlushedProgressLine;
+        this.progressLine = null;
+        if (final == null) return;
+        // Strip the old trailing progress text (if any) and re-emit the freshest as frozen content.
+        if (this.lastFlushedProgressLine != null && this.control.value.endsWith(this.lastFlushedProgressLine)) {
+            this.control.patchValue(this.control.value.slice(0, this.control.value.length - this.lastFlushedProgressLine.length) + final + `\n`);
+        } else {
+            this.control.patchValue(this.control.value + final + `\n`);
+        }
+        this.lastFlushedProgressLine = null;
+    }
+
+    private scheduleFlush() {
+        if (this.flushScheduled) return;
+        this.flushScheduled = true;
+        setTimeout(() => this.flush(), 500);
+    }
+
+    appendQueryResult(res: ApiResponse<QueryResponse>, autoCommitted?: boolean, resultLimit?: number) {
         if (isApiErrorResponse(res)) {
             this.appendLines(`${RESULT}${ERROR}`, ``, res.err.message);
             return;
@@ -615,6 +930,7 @@ export class LogOutputState {
                 }
 
                 lines.push(`Finished. Total rows: ${answers.length}`);
+                if (resultLimit && answers.length >= resultLimit) lines.push(`Results are limited to ${resultLimit} rows.`);
                 break;
             }
             case "conceptDocuments": {
@@ -626,6 +942,7 @@ export class LogOutputState {
                 answers.forEach(x => lines.push(this.conceptDocumentDisplayString(x)));
 
                 lines.push(`Finished. Total documents: ${answers.length}`);
+                if (resultLimit && answers.length >= resultLimit) lines.push(`Results are limited to ${resultLimit} rows.`);
                 break;
             }
             default:
@@ -691,7 +1008,7 @@ export class TableOutputState {
         return this._displayedColumns;
     }
 
-    handleMatSortChange(e: any) {
+    handleMatSortChange(_e: any) {
         // TODO
     }
 
@@ -787,7 +1104,7 @@ export class TableOutputState {
     }
 }
 
-type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noAnswers" | "error";
+type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noAnswers" | "error" | "multiQuery";
 
 export class GraphOutputState {
 

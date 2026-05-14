@@ -59,9 +59,15 @@ export const basicDarkTheme = EditorView.theme(
         "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
             { backgroundColor: darkSelection },
 
-        ".cm-panels": { backgroundColor: darkDarkBackground, color: darkBase03 },
+        ".cm-panels": { backgroundColor: darkDarkBackground, color: "#c4c4c4" },
         ".cm-panels.cm-panels-top": { borderBottom: "2px solid black" },
         ".cm-panels.cm-panels-bottom": { borderTop: "2px solid black" },
+
+        ".cm-textfield": { fontSize: "13px", borderRadius: "4px", fontFamily: "inherit" },
+        ".cm-button": { fontSize: "13px", borderRadius: "4px", backgroundColor: "var(--theme-deep-purple)", backgroundImage: "none", borderColor: "var(--theme-light-purple)", transition: "background-color 100ms" },
+        ".cm-button:hover": { backgroundColor: "color-mix(in srgb, var(--theme-deep-purple), var(--theme-white) 8%)" },
+        ".cm-panel.cm-search label": { fontSize: "13px", display: "inline-flex", alignItems: "center", gap: "4px", verticalAlign: "middle" },
+        ".cm-panel.cm-search [name=close]": { fontSize: "20px", color: "var(--theme-white)" },
 
         ".cm-searchMatch": {
             backgroundColor: darkBase02,
@@ -128,6 +134,7 @@ export const basicDarkTheme = EditorView.theme(
 
 export const basicDarkHighlightStyle = HighlightStyle.define([
     { tag: t.keyword, color: darkConstraint },
+    { tag: t.className, color: "#02dac9", fontStyle: "italic" },
     { tag: [t.variableName], color: darkVariable },
     { tag: [t.function(t.variableName)], color: darkConstraint },
     { tag: [t.labelName], color: darkBase09 },
@@ -184,7 +191,7 @@ export const basicDarkHighlightStyle = HighlightStyle.define([
         tag: [t.url, t.escape, t.special(t.string)],
         color: darkBase0B
     },
-    { tag: [t.meta], color: darkBase08 },
+    { tag: [t.meta], color: "#ffa187" },
     { tag: [t.comment], color: darkBase06, fontStyle: "italic" },
     {
         tag: t.monospace,
@@ -265,6 +272,12 @@ export const basicLightTheme = EditorView.theme(
         ".cm-panels.cm-panels-top": { borderBottom: `1px solid ${lightBase02}` },
         ".cm-panels.cm-panels-bottom": { borderTop: `1px solid ${lightBase02}` },
 
+        ".cm-textfield": { fontSize: "13px", borderRadius: "4px", fontFamily: "inherit" },
+        ".cm-button": { fontSize: "13px", borderRadius: "4px", backgroundColor: "var(--theme-deep-purple)", backgroundImage: "none", borderColor: "var(--theme-light-purple)", transition: "background-color 100ms" },
+        ".cm-button:hover": { backgroundColor: "color-mix(in srgb, var(--theme-deep-purple), var(--theme-white) 8%)" },
+        ".cm-panel.cm-search label": { fontSize: "13px", display: "inline-flex", alignItems: "center", gap: "4px", verticalAlign: "middle" },
+        ".cm-panel.cm-search [name=close]": { fontSize: "20px", color: "var(--theme-white)" },
+
         ".cm-searchMatch": {
             backgroundColor: "#e8e0ff",
             outline: `1px solid ${lightBase03}`,
@@ -330,6 +343,7 @@ export const basicLightTheme = EditorView.theme(
 
 export const basicLightHighlightStyle = HighlightStyle.define([
     { tag: t.keyword, color: lightConstraint },
+    { tag: t.className, color: "#008f80", fontStyle: "italic" },
     { tag: [t.variableName], color: lightVariable },
     { tag: [t.function(t.variableName)], color: lightConstraint },
     { tag: [t.labelName], color: lightBase09 },
@@ -386,7 +400,7 @@ export const basicLightHighlightStyle = HighlightStyle.define([
         tag: [t.url, t.escape, t.special(t.string)],
         color: lightBase0B
     },
-    { tag: [t.meta], color: lightBase08 },
+    { tag: [t.meta], color: "#cc5530" },
     { tag: [t.comment], color: lightBase04, fontStyle: "italic" },
     {
         tag: t.monospace,

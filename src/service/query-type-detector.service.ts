@@ -8,6 +8,7 @@ import { Injectable } from "@angular/core";
 import { Observable, of, throwError } from "rxjs";
 import { catchError, switchMap } from "rxjs/operators";
 import { isApiErrorResponse, TransactionType } from "@typedb/driver-http";
+import { detectTransactionType } from "../framework/util/typeql-split";
 
 /**
  * Result of executing a query with auto type detection.
@@ -66,8 +67,7 @@ export class QueryTypeDetector {
      * Returns null if unable to determine, falling back to retry escalation.
      */
     private detectQueryType(query: string): TransactionType | null {
-        // TODO: Add pre-detection logic here (regex, parser, driver analysis)
-        return null;
+        return detectTransactionType(query);
     }
 
     /**

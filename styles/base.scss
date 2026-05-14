@@ -264,6 +264,7 @@ button {
     border: 0;
     font-size: unset;
     font-family: unset;
+    font-weight: var(--font-weight-regular);
     padding: 0;
     margin: 0;
     cursor: pointer;
@@ -721,6 +722,52 @@ app-drag-handle span {
         height: 14px;
         margin-right: 10px;
         text-align: center;
+    }
+}
+
+// Recent-address autocomplete: show a hover trash icon to delete suggestions.
+// Note: panelClass on mat-autocomplete may not propagate as expected, so we target
+// the option's own class directly. Material's own .mdc-list-item__primary-text has
+// "margin-right: auto" which collapses its width — we override to flex-fill.
+.mat-mdc-option.recent-address-option {
+    .mdc-list-item__primary-text {
+        display: flex !important;
+        align-items: center;
+        gap: 8px;
+        flex: 1 1 auto !important;
+        margin-right: 0 !important;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .recent-address-text {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    i.recent-address-delete {
+        flex: 0 0 auto;
+        margin-left: auto;
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+        line-height: 14px;
+        opacity: 0;
+        transition: opacity 100ms;
+        color: var(--theme-grey);
+
+        &:hover {
+            color: var(--theme-white);
+        }
+    }
+
+    &:hover i.recent-address-delete,
+    &.mdc-list-item--selected i.recent-address-delete,
+    &.mat-mdc-option-active i.recent-address-delete {
+        opacity: 1;
     }
 }
 

@@ -461,9 +461,22 @@ button[mat-stroked-button].new-chat-btn {
         aside {
             display: flex;
             align-items: center;
+            min-width: 0;
+
+            time {
+                flex-shrink: 0;
+            }
 
             .bullet {
                 margin: 0 4px;
+                flex-shrink: 0;
+            }
+
+            .transaction-operation-type {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                min-width: 0;
             }
 
             tp-spinner {
@@ -472,6 +485,13 @@ button[mat-stroked-button].new-chat-btn {
 
             .action-status {
                 margin-left: 8px;
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+
+                span {
+                    white-space: nowrap;
+                }
             }
 
             .action-status i {

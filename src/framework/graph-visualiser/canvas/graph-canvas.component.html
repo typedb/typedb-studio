@@ -25,7 +25,33 @@
 
     <ts-graph-zoom-controls [visualiser]="visualiser" [queryRunning]="queryRunning"/>
 
-    <ng-content></ng-content>
+    @switch (status) {
+      @case ("error") {
+        <p class="status-text">This query returned an error. <a (click)="statusAction.emit('viewLog')">View in log</a></p>
+      }
+      @case ("running") {
+        <p class="status-text">Running query...</p>
+      }
+      @case ("graphlessQueryType") {
+        <div class="status-text status-text-left">
+          <p>Query completed. This query type cannot be displayed as a graph.</p>
+          <p>Graph output is available for the following query types:</p>
+          <ul>
+            <li>Match queries without Fetch</li>
+            <li>Insert queries</li>
+          </ul>
+        </div>
+      }
+      @case ("answerOutputDisabled") {
+        <p class="status-text">Query completed. Answer output is disabled.</p>
+      }
+      @case ("noAnswers") {
+        <p class="status-text">Query completed. No answers were returned.</p>
+      }
+      @case ("multiQuery") {
+        <p class="status-text">Graph view is not available for multi-query results. <a (click)="statusAction.emit('viewLog')">View results in log</a></p>
+      }
+    }
   </div>
   <ts-graph-styles-pane resizable [percent]="stylesPanePercent"
                         (percentChange)="stylesPanePercentChange.emit($event)"

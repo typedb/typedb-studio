@@ -8,15 +8,15 @@ import { AsyncPipe } from "@angular/common";
 import { Component, inject } from "@angular/core";
 import { FormBuilder, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
-import { MatDivider } from "@angular/material/divider";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { isApiErrorResponse } from "@typedb/driver-http";
 import { Subject, switchMap } from "rxjs";
-import { FormActionsComponent, FormComponent, FormInputComponent } from "../../../framework/form";
+import { FormActionsComponent, FormComponent } from "../../../framework/form";
 import { ModalComponent } from "../../../framework/modal";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
+import { StartupMessageService } from "../../../service/startup-message.service";
 
 @Component({
     selector: "ts-user-delete-dialog",
@@ -36,23 +36,37 @@ export class UserDeleteDialogComponent {
 
     constructor(
         private dialogRef: MatDialogRef<UserDeleteDialogComponent>,
-        private snackbar: SnackbarService, private driver: DriverState, private formBuilder: FormBuilder
+        private snackbar: SnackbarService, private driver: DriverState, private formBuilder: FormBuilder,
+        private startupMessage: StartupMessageService,
     ) {
     }
 
+    get isDeletingCurrentlyLoggedInUser() {
+        return this.data.username === this.driver.connection$.value?.params.username;
+    }
+
     submit() {
-        this.driver.connection$.subscribe(connection => {
-            if (!connection) {
-                this.close();
-                this.snackbar.errorPersistent(`No server connected - could not delete user`);
-            }
-        });
+        if (!this.driver.connection$.value) {
+            this.close();
+            this.snackbar.errorPersistent(`No server connected - could not delete user`);
+            return;
+        }
+        const deletingSelf = this.isDeletingCurrentlyLoggedInUser;
         this.driver.deleteUser(this.data.username).pipe(
-            switchMap(() => this.driver.refreshUserList())
+            switchMap(res => {
+                if (isApiErrorResponse(res)) throw res;
+                if (deletingSelf) return this.driver.tryDisconnect();
+                return this.driver.refreshUserList();
+            })
         ).subscribe({
             next: () => {
                 this.close();
-                this.snackbar.success(`User '${this.data.username}' deleted.`);
+                if (deletingSelf) {
+                    this.startupMessage.set({ kind: "user-deleted", username: this.data.username });
+                    window.location.href = "/connect";
+                } else {
+                    this.snackbar.success(`User '${this.data.username}' deleted.`);
+                }
             },
             error: (err) => {
                 this.isSubmitting$.next(false);
