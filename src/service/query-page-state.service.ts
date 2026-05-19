@@ -579,6 +579,10 @@ function runMultiQueryToRun(
     const queryOptions = { answerCountLimit: deps.rowLimit };
     const rawResults: string[] = isBatchSummary ? [] : new Array(queries.length);
     let lastCompletedIndex = -1;
+    // The driver only commits if the resolved transaction type is non-read. A write
+    // query can't succeed in a read transaction, so any non-read queryType in the
+    // results means the batch committed.
+    let anyWriteOrSchema = false;
 
     const queryAction = queryRunActionOf(queries.join("\nend;\n"));
     queryAction.batch = true;
@@ -590,6 +594,9 @@ function runMultiQueryToRun(
         next: ({ index, res, autoCommitted }) => {
             lastCompletedIndex = index;
             run.batchCompleted = index + 1;
+            if (!isApiErrorResponse(res) && res.ok.queryType !== "read") {
+                anyWriteOrSchema = true;
+            }
 
             // Log output
             if (isBatchSummary) {
@@ -650,8 +657,9 @@ function runMultiQueryToRun(
             } else {
                 queryAction.status = "success";
                 queryAction.completedAtTimestamp = Date.now();
-                queryAction.autoCommitted = deps.driver.autoTransactionEnabled$.value;
-                if (deps.driver.autoTransactionEnabled$.value) {
+                const committed = deps.driver.autoTransactionEnabled$.value && anyWriteOrSchema;
+                queryAction.autoCommitted = committed;
+                if (committed) {
                     run.log.appendBlankLine();
                     run.log.appendLines(`Committed.`);
                 }
@@ -991,6 +999,9 @@ export class TableOutputState {
 
     status: TableOutputStatus = "ok";
     private _data$ = new BehaviorSubject<TableRow[]>([]);
+    private _unsortedRows: TableRow[] = [];
+    private _sortActive: string | null = null;
+    private _sortDirection: "" | "asc" | "desc" = "";
     private _columns: string[] = [];
     private _displayedColumns: string[] = [];
 
@@ -1008,8 +1019,21 @@ export class TableOutputState {
         return this._displayedColumns;
     }
 
-    handleMatSortChange(_e: any) {
-        // TODO
+    handleMatSortChange(e: { active: string; direction: "" | "asc" | "desc" }) {
+        this._sortActive = e.active || null;
+        this._sortDirection = e.direction;
+        this.emitSortedView();
+    }
+
+    private emitSortedView() {
+        if (!this._sortActive || this._sortDirection === "") {
+            this._data$.next([...this._unsortedRows]);
+            return;
+        }
+        const col = this._sortActive;
+        const dir = this._sortDirection === "desc" ? -1 : 1;
+        const sorted = [...this._unsortedRows].sort((a, b) => compareCells(a[col], b[col]) * dir);
+        this._data$.next(sorted);
     }
 
     push(res: ApiResponse<QueryResponse>) {
@@ -1069,8 +1093,8 @@ export class TableOutputState {
     }
 
     private appendRows(...rows: { [column: string]: string }[]) {
-        this._data$.value.push(...rows);
-        this._data$.next(this._data$.value);
+        this._unsortedRows.push(...rows);
+        this.emitSortedView();
     }
 
     private conceptDisplayString(concept: Concept | undefined): string {
@@ -1100,8 +1124,23 @@ export class TableOutputState {
         this.clearStatus();
         this.columns.length = 0;
         this.displayedColumns.length = 0;
+        this._unsortedRows = [];
+        this._sortActive = null;
+        this._sortDirection = "";
         this._data$.next([]);
     }
+}
+
+function compareCells(a: string | undefined, b: string | undefined): number {
+    if (a == null && b == null) return 0;
+    if (a == null) return -1;
+    if (b == null) return 1;
+    const an = Number(a);
+    const bn = Number(b);
+    if (a !== "" && b !== "" && !isNaN(an) && !isNaN(bn)) {
+        return an - bn;
+    }
+    return a.localeCompare(b);
 }
 
 type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noAnswers" | "error" | "multiQuery";
