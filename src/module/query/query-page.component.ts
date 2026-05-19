@@ -522,6 +522,22 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
         return this.exportService.canExportResults(this.currentRun ?? undefined);
     }
 
+    exportResultsDisabledReason(): string | null {
+        const run = this.currentRun;
+        if (run?.multiQuery || run?.batchSummary) {
+            return "Export is not available for query batches";
+        }
+        return null;
+    }
+
+    isExportResultsVisible(): boolean {
+        return this.canExportResults() || !!this.exportResultsDisabledReason();
+    }
+
+    exportResultsTooltip(): string {
+        return this.exportResultsDisabledReason() ?? "Export";
+    }
+
     canExportLog(): boolean {
         return !!this.state.logOutput.control.value.length;
     }
