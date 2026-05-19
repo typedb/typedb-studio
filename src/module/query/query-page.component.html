@@ -125,15 +125,37 @@
               <mat-form-field class="code-text-field">
                 <textarea #logTextarea class="answers-text-box" [formControl]="state.logOutput.control" (scroll)="onLogScroll()" readonly matInput></textarea>
               </mat-form-field>
-              <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value.length" (click)="sendLogToAi()">
+              <div class="copy-overlay" [class.visible]="canExportLog()" (click)="sendLogToAi()" matTooltip="Send to AI" matTooltipPosition="below" [matTooltipShowDelay]="500">
                 <i [class]="sentLogToAi ? 'fal fa-check' : 'fal fa-wand-magic-sparkles'"></i>
               </div>
-              <div class="copy-overlay" [class.visible]="!!state.logOutput.control.value.length" (click)="copyLog()">
-                <i [class]="copiedLog ? 'fal fa-check' : 'fal fa-copy'"></i>
+              <div class="copy-overlay" [class.visible]="canExportLog()" (click)="copyLog()" matTooltip="Copy log" matTooltipPosition="below" [matTooltipShowDelay]="500">
+                <i class="fal fa-copy"></i>
               </div>
+              <div class="copy-overlay" [class.visible]="isExportResultsVisible()" [class.disabled]="!canExportResults()"
+                   [matMenuTriggerFor]="canExportResults() ? logExportMenu : null"
+                   [matTooltip]="exportResultsTooltip()" matTooltipPosition="below" [matTooltipShowDelay]="500">
+                <i class="fal fa-arrow-down-to-line"></i>
+              </div>
+              <mat-menu #logExportMenu="matMenu" class="export-menu">
+                <button mat-menu-item (click)="copyResultsJson()"><i class="fal fa-copy"></i>Copy as JSON</button>
+                <button mat-menu-item (click)="copyResultsCsv()"><i class="fal fa-copy"></i>Copy as CSV</button>
+                <button mat-menu-item (click)="downloadResultsJson()"><i class="fal fa-arrow-down-to-line"></i>Download JSON</button>
+                <button mat-menu-item (click)="downloadResultsCsv()"><i class="fal fa-arrow-down-to-line"></i>Download CSV</button>
+              </mat-menu>
             </div>
             @if (state.outputTypeControl.value === 'table') {
               <div class="answers-container answers-table-container">
+                <div class="copy-overlay" [class.visible]="isExportResultsVisible()" [class.disabled]="!canExportResults()"
+                     [matMenuTriggerFor]="canExportResults() ? tableExportMenu : null"
+                     [matTooltip]="exportResultsTooltip()" matTooltipPosition="below" [matTooltipShowDelay]="500">
+                  <i class="fal fa-arrow-down-to-line"></i>
+                </div>
+                <mat-menu #tableExportMenu="matMenu" class="export-menu">
+                  <button mat-menu-item (click)="copyResultsJson()"><i class="fal fa-copy"></i>Copy as JSON</button>
+                  <button mat-menu-item (click)="copyResultsCsv()"><i class="fal fa-copy"></i>Copy as CSV</button>
+                  <button mat-menu-item (click)="downloadResultsJson()"><i class="fal fa-arrow-down-to-line"></i>Download JSON</button>
+                  <button mat-menu-item (click)="downloadResultsCsv()"><i class="fal fa-arrow-down-to-line"></i>Download CSV</button>
+                </mat-menu>
                 @if (currentRun?.batchSummary) {
                   <div class="batch-summary">
                     @if (currentRun!.batchFailed) {
@@ -149,7 +171,7 @@
                         <div class="multi-query-table-header">{{ sub.label }}</div>
                         @switch (sub.table.status) {
                           @case ("ok") {
-                            <table mat-table [dataSource]="sub.table.data$" matSort>
+                            <table mat-table [dataSource]="sub.table.data$" matSort (matSortChange)="sub.table.handleMatSortChange($event)">
                               @for (column of sub.table.columns; track column) {
                                 <ng-container [matColumnDef]="column">
                                   <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ column }}</th>
@@ -234,6 +256,13 @@
                 <mat-form-field class="code-text-field">
                   <textarea class="answers-text-box" [formControl]="state.rawOutput.control" readonly matInput></textarea>
                 </mat-form-field>
+                <div class="copy-overlay" [class.visible]="canExportRaw()" [matMenuTriggerFor]="rawExportMenu" matTooltip="Export" matTooltipPosition="below" [matTooltipShowDelay]="500">
+                  <i class="fal fa-arrow-down-to-line"></i>
+                </div>
+                <mat-menu #rawExportMenu="matMenu" class="export-menu">
+                  <button mat-menu-item (click)="copyRaw()"><i class="fal fa-copy"></i>Copy as JSON</button>
+                  <button mat-menu-item (click)="downloadRaw()"><i class="fal fa-arrow-down-to-line"></i>Download JSON</button>
+                </mat-menu>
               }
             </div>
           </div>

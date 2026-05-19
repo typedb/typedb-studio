@@ -18,6 +18,10 @@ import { GraphStyles, colorEdgesByConstraintIndex as _colorEdgesByConstraintInde
 import { setUseBorderColorForLabels, setLabelsVisible, setShowHoverLabel } from "./sigma-label-utils";
 import { InteractionHandler, StudioState } from "./interaction-handler";
 import { LayoutWrapper } from "./layout";
+import { createSigmaRenderer, defaultSigmaSettings } from "./sigma-settings";
+
+export type GraphPngExportMode = "currentView" | "wholeGraph";
+const MAX_EXPORT_DIMENSION = 8192;
 
 export class GraphVisualiser {
     interactionHandler: InteractionHandler;
@@ -465,6 +469,128 @@ export class GraphVisualiser {
 
     stopLayout(): void {
         this.layout.stop();
+    }
+
+    /**
+     * Render the current graph into an offscreen Sigma instance at 100% zoom (ratio = 1)
+     * and composite all of its canvas layers (WebGL nodes/edges + 2D labels) into a single
+     * PNG blob.
+     *
+     * - "currentView": the captured graph region matches what the user can currently see,
+     *   but resolved at 1 graph unit = 1 pixel. Output canvas size = liveViewport × liveCameraRatio.
+     * - "wholeGraph": fits every node, also at 1 graph unit = 1 pixel, with padding for node radii.
+     *
+     * Throws if the graph has no nodes. Dimensions are capped at MAX_EXPORT_DIMENSION per
+     * side to stay within browser canvas limits.
+     */
+    async exportPng(mode: GraphPngExportMode): Promise<Blob> {
+        if (this.graph.order === 0) throw new Error("Graph is empty");
+
+        let width: number;
+        let height: number;
+        let cameraState: { x: number; y: number; ratio: number; angle: number };
+
+        if (mode === "wholeGraph") {
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            let maxNodeRadius = 0;
+            this.graph.nodes().forEach(n => {
+                const a = this.graph.getNodeAttributes(n);
+                minX = Math.min(minX, a.x);
+                maxX = Math.max(maxX, a.x);
+                minY = Math.min(minY, a.y);
+                maxY = Math.max(maxY, a.y);
+                const w = (a as any).width ?? a.size ?? 0;
+                const h = (a as any).height ?? a.size ?? 0;
+                maxNodeRadius = Math.max(maxNodeRadius, Math.max(w, h) / 2);
+            });
+            const padding = Math.ceil(maxNodeRadius + 32);
+            width = Math.max(1, Math.ceil(maxX - minX) + 2 * padding);
+            height = Math.max(1, Math.ceil(maxY - minY) + 2 * padding);
+            cameraState = { x: 0.5, y: 0.5, ratio: 1, angle: 0 };
+        } else {
+            const liveCam = this.sigma.getCamera().getState();
+            const liveDims = this.sigma.getDimensions();
+            width = Math.max(1, Math.ceil(liveDims.width * liveCam.ratio));
+            height = Math.max(1, Math.ceil(liveDims.height * liveCam.ratio));
+            cameraState = { x: liveCam.x, y: liveCam.y, ratio: 1, angle: liveCam.angle };
+        }
+
+        // Clamp to browser canvas limits, preserving aspect ratio.
+        const scale = Math.min(1, MAX_EXPORT_DIMENSION / Math.max(width, height));
+        if (scale < 1) {
+            width = Math.max(1, Math.floor(width * scale));
+            height = Math.max(1, Math.floor(height * scale));
+            cameraState = { ...cameraState, ratio: 1 / scale };
+        }
+
+        const bgHex = this.styleService.effectiveBackgroundHex;
+        const liveNodeReducer = this.sigma.getSetting("nodeReducer");
+        const liveEdgeReducer = this.sigma.getSetting("edgeReducer");
+
+        const container = document.createElement("div");
+        container.style.position = "fixed";
+        container.style.left = "-99999px";
+        container.style.top = "0";
+        container.style.width = `${width}px`;
+        container.style.height = `${height}px`;
+        container.style.visibility = "hidden";
+        document.body.appendChild(container);
+
+        let exportSigma: Sigma | null = null;
+        try {
+            exportSigma = createSigmaRenderer(container, defaultSigmaSettings as any, this.graph);
+            if (liveNodeReducer) exportSigma.setSetting("nodeReducer", liveNodeReducer);
+            if (liveEdgeReducer) exportSigma.setSetting("edgeReducer", liveEdgeReducer);
+            // For currentView, propagate the live sigma's effective bbox so that the
+            // normalised camera (x, y) coords resolve to the same graph coordinates in
+            // both sigmas. For wholeGraph, let the export sigma auto-compute its bbox
+            // from current node positions so (0.5, 0.5) lands on the actual graph center.
+            if (mode === "currentView") {
+                const liveBBox = this.sigma.getCustomBBox() ?? this.sigma.getBBox();
+                exportSigma.setCustomBBox(liveBBox);
+            }
+            exportSigma.getCamera().setState(cameraState);
+
+            return await new Promise<Blob>((resolve, reject) => {
+                const sigma = exportSigma!;
+                const onRendered = () => {
+                    sigma.removeListener("afterRender", onRendered);
+                    try {
+                        // Sigma sizes its internal canvases at (cssDimensions × devicePixelRatio)
+                        // physical pixels. Match the final canvas to physical pixel dimensions
+                        // so drawImage copies 1:1 — otherwise we'd clip the source on hi-DPI displays.
+                        const sourceCanvas = container.querySelector("canvas") as HTMLCanvasElement | null;
+                        const physW = sourceCanvas?.width ?? width;
+                        const physH = sourceCanvas?.height ?? height;
+                        const finalCanvas = document.createElement("canvas");
+                        finalCanvas.width = physW;
+                        finalCanvas.height = physH;
+                        const ctx = finalCanvas.getContext("2d");
+                        if (!ctx) throw new Error("Could not create 2D context for PNG export");
+                        ctx.fillStyle = bgHex;
+                        ctx.fillRect(0, 0, physW, physH);
+                        container.querySelectorAll("canvas").forEach(c => ctx.drawImage(c, 0, 0));
+                        finalCanvas.toBlob(blob => {
+                            if (blob) resolve(blob);
+                            else reject(new Error("Canvas.toBlob returned null"));
+                        }, "image/png");
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                sigma.on("afterRender", onRendered);
+                sigma.refresh();
+            });
+        } finally {
+            if (exportSigma) {
+                container.querySelectorAll("canvas").forEach(c => {
+                    const gl = (c as HTMLCanvasElement).getContext("webgl2") || (c as HTMLCanvasElement).getContext("webgl");
+                    if (gl) gl.getExtension("WEBGL_lose_context")?.loseContext();
+                });
+                exportSigma.kill();
+            }
+            container.parentNode?.removeChild(container);
+        }
     }
 
     private applyBackground(): void {

@@ -18,6 +18,17 @@
       </button>
     </div>
 
+    @if (canExportPng()) {
+      <button class="graph-export-button" [matMenuTriggerFor]="graphExportMenu"
+              matTooltip="Export as PNG" [matTooltipShowDelay]="500" [disabled]="exporting">
+        <i class="fa-light fa-arrow-down-to-line"></i>
+      </button>
+      <mat-menu #graphExportMenu="matMenu" class="export-menu">
+        <button mat-menu-item (click)="exportPng('currentView')"><i class="fa-light fa-arrow-down-to-line"></i>Download PNG (current view)</button>
+        <button mat-menu-item (click)="exportPng('wholeGraph')"><i class="fa-light fa-arrow-down-to-line"></i>Download PNG (entire graph)</button>
+      </mat-menu>
+    }
+
     <button class="graph-maximise-button" (click)="toggleMaximised()"
             [matTooltip]="maximised ? 'Exit fullscreen' : 'Fullscreen'" [matTooltipShowDelay]="500">
       <i class="fa-light" [class.fa-expand]="!maximised" [class.fa-compress]="maximised"></i>

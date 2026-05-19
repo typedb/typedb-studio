@@ -546,9 +546,13 @@ button {
 
     .copy-overlay {
         right: 14px;
+        z-index: 2;
     }
     .copy-overlay + .copy-overlay {
         right: 54px;
+    }
+    .copy-overlay + .copy-overlay + .copy-overlay {
+        right: 94px;
     }
 
     &.has-scrollbar .copy-overlay {
@@ -556,6 +560,9 @@ button {
     }
     &.has-scrollbar .copy-overlay + .copy-overlay {
         right: 62px;
+    }
+    &.has-scrollbar .copy-overlay + .copy-overlay + .copy-overlay {
+        right: 102px;
     }
 }
 
@@ -633,6 +640,11 @@ button {
     overflow-wrap: break-word;
     padding: 10px;
     margin: 0;
+
+    a {
+        color: var(--theme-green);
+        cursor: pointer;
+    }
 }
 
 // Multi-query stacked tables
