@@ -701,6 +701,21 @@ tp-gcp-marketplace-integration, tp-aws-marketplace-integration, tp-azure-marketp
     box-shadow: 0 4px 12px var(--theme-overlay-shadow);
 }
 
+.copy-overlay.disabled {
+    cursor: not-allowed;
+
+    &:hover {
+        background: var(--theme-overlay-bg);
+        border-color: var(--theme-light-purple);
+        color: var(--theme-overlay-text);
+        box-shadow: none;
+    }
+}
+
+.copy-overlay.visible.disabled {
+    opacity: 0.4;
+}
+
 app-drag-handle span {
     display: none !important;
 }
