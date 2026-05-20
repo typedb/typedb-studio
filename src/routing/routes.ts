@@ -18,6 +18,7 @@ import { AppData } from "../service/app-data.service";
 import { SchemaPageComponent } from "../module/schema/schema-page.component";
 import { DataPageComponent } from "../module/data/data-page.component";
 import { ChatPageComponent } from "../module/chat/chat-page.component";
+import { GraphPageComponent } from "../module/graph/graph-page.component";
 import { QueryHistoryPageComponent } from "../module/query-history/query-history-page.component";
 
 const homeGuard: CanActivateFn = () => {
@@ -40,6 +41,7 @@ const connectGuard: CanActivateFn = (route) => {
         case "schema": return of(router.parseUrl(`schema`));
         case "data": return of(router.parseUrl(`data`));
         case "chat": return of(router.parseUrl(`agent-mode`));
+        case "graph": return of(router.parseUrl(`graph`));
         default: return of(router.parseUrl(`welcome`));
     }
 }
@@ -51,6 +53,7 @@ export const routes: Routes = [
     { path: "query", component: QueryPageComponent, title: "Query", data: { domain: "query" } },
     { path: "schema", component: SchemaPageComponent, title: "Schema", data: { domain: "schema" } },
     { path: "data", component: DataPageComponent, title: "Data", data: { domain: "data" } },
+    { path: "graph", component: GraphPageComponent, title: "Graph", data: { domain: "graph-view" } },
     { path: "agent-mode", component: ChatPageComponent, title: "Agent mode", data: { domain: "chat" } },
     { path: "users", component: UsersPageComponent, title: "Users", data: { domain: "users" } },
     { path: "history", component: QueryHistoryPageComponent, title: "Query history", data: { domain: "query-history" } },

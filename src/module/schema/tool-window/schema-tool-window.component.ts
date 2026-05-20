@@ -31,6 +31,7 @@ import { DataEditorState } from "../../../service/data-editor-state.service";
 import { QueryTabsState } from "../../../service/query-tabs-state.service";
 import { QueryPageState } from "../../../service/query-page-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
+import { GraphViewState } from "../../../service/graph-view-state.service";
 
 @Component({
     selector: "ts-schema-tool-window",
@@ -45,7 +46,7 @@ import { SnackbarService } from "../../../service/snackbar.service";
 export class SchemaToolWindowComponent implements AfterViewInit {
 
     @Input() title = "Schema";
-    @Input() mode: "schema" | "data" = "schema";
+    @Input() mode: "schema" | "data" | "graph-view" = "schema";
     @HostBinding("class") readonly clazz = "schema-pane";
     @ViewChild("tree") tree!: MatTree<any>;
     @ViewChild("conceptContextMenuTrigger") conceptContextMenuTrigger!: MatMenuTrigger;
@@ -66,6 +67,7 @@ export class SchemaToolWindowComponent implements AfterViewInit {
         private queryTabsState: QueryTabsState,
         private queryPageState: QueryPageState,
         private snackbar: SnackbarService,
+        private graphViewState: GraphViewState,
     ) {
         // Subscribe to active tab changes to highlight the corresponding type in the schema tree
         combineLatest([
@@ -156,6 +158,12 @@ export class SchemaToolWindowComponent implements AfterViewInit {
             // In data mode, clicking on the concept body opens a tab
             if (node.nodeKind === "concept") {
                 this.dataEditorState.openTypeTab(node.concept);
+                event.stopPropagation();
+            }
+        } else if (this.mode === "graph-view") {
+            // In graph-view mode, clicking opens a graph tab for that type
+            if (node.nodeKind === "concept") {
+                this.graphViewState.openTypeTab(node.concept);
                 event.stopPropagation();
             }
         } else {
