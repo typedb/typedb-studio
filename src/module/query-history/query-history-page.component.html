@@ -1,0 +1,13 @@
+<ts-page-scaffold pageAvailability="ready">
+  <mat-divider/>
+  <article>
+    <div class="card-header">
+      <h1>Query history</h1>
+    </div>
+    <div class="history-pane-container">
+      <div class="history-pane-inner">
+        <ts-history-pane [history]="queryPageState.history" (runHistoryQuery)="onRunHistoryQuery($event)"/>
+      </div>
+    </div>
+  </article>
+</ts-page-scaffold>
