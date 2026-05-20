@@ -16,7 +16,7 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSortModule } from "@angular/material/sort";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { RouterLink } from "@angular/router";
+import { Router, RouterLink } from "@angular/router";
 import { ResizableDirective } from "@hhangular/resizable";
 import { filter, map, Observable, startWith } from "rxjs";
 import { AppData } from "../../service/app-data.service";
@@ -52,7 +52,12 @@ export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     constructor(
         protected state: SchemaState, public driver: DriverState, private appData: AppData,
-        private destroyRef: DestroyRef, private dialog: MatDialog, private cdr: ChangeDetectorRef) {
+        private destroyRef: DestroyRef, private dialog: MatDialog, private cdr: ChangeDetectorRef,
+        private router: Router) {
+    }
+
+    onGraphStatusAction(action: string) {
+        if (action === "viewLog") this.router.navigate(["/history"]);
     }
 
     openSelectDatabaseDialog() {
