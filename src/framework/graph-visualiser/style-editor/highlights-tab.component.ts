@@ -1,4 +1,4 @@
-import { Component, inject, Input, OnChanges, SimpleChanges } from "@angular/core";
+import { Component, DoCheck, inject, Input, OnChanges, SimpleChanges } from "@angular/core";
 import { GraphStyleService } from "../../../service/graph-style.service";
 import { GraphVisualiser } from "../engine";
 import { VertexKind } from "@typedb/graph-utils";
@@ -47,7 +47,7 @@ function kindOrder(kind: string): number { return KIND_ORDER[kind] ?? Infinity; 
     templateUrl: "highlights-tab.component.html",
     styleUrls: ["graph-styles-pane.component.scss"],
 })
-export class HighlightsTabComponent implements OnChanges {
+export class HighlightsTabComponent implements OnChanges, DoCheck {
 
     @Input() visualiser: GraphVisualiser | null = null;
 
@@ -57,29 +57,75 @@ export class HighlightsTabComponent implements OnChanges {
     readonly edgeLabels = DISPLAY_EDGE_LABELS;
 
     discoveredTypes: TypeRow[] = [];
+    kindCounts = new Map<VertexKind, number>();
+    typeCounts = new Map<string, number>();
+    edgeCounts = new Map<string, number>();
+
+    private lastGraphOrder = -1;
+    private lastGraphSize = -1;
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes["visualiser"]) {
-            this.refreshDiscoveredTypes();
+            this.lastGraphOrder = -1; // force recompute on next DoCheck
+            this.lastGraphSize = -1;
+            this.refresh();
         }
     }
 
-    refreshDiscoveredTypes(): void {
+    ngDoCheck(): void {
+        // Recompute when the underlying graph has gained or lost vertices/edges.
+        // Cheap O(1) check; the full refresh runs only when something actually changed.
         if (!this.visualiser) return;
-        const typeMap = new Map<string, VertexKind>();
-        this.visualiser.graph.nodes().forEach(nodeKey => {
-            const attrs = this.visualiser!.graph.getNodeAttributes(nodeKey);
+        const order = this.visualiser.graph.order;
+        const size = this.visualiser.graph.size;
+        if (order !== this.lastGraphOrder || size !== this.lastGraphSize) {
+            this.refresh();
+            this.lastGraphOrder = order;
+            this.lastGraphSize = size;
+        }
+    }
+
+    /** Reduce over the graph once: discover types, count vertices by kind and by type label,
+     *  and count edges by tag. Used by chip rendering. */
+    refresh(): void {
+        this.discoveredTypes = [];
+        this.kindCounts.clear();
+        this.typeCounts.clear();
+        this.edgeCounts.clear();
+        if (!this.visualiser) return;
+
+        const typeKinds = new Map<string, VertexKind>();
+        for (const nodeKey of this.visualiser.graph.nodes()) {
+            const attrs = this.visualiser.graph.getNodeAttributes(nodeKey);
             const concept = attrs.metadata.concept;
+            const kind = concept.kind as VertexKind;
+            this.kindCounts.set(kind, (this.kindCounts.get(kind) ?? 0) + 1);
+
+            let typeLabel: string | undefined;
             if ("type" in concept && concept.type && "label" in concept.type) {
-                typeMap.set(concept.type.label, concept.kind as any);
+                typeLabel = concept.type.label;
             } else if ("label" in concept && !["unavailable", "expression", "functionCall"].includes(concept.kind)) {
-                typeMap.set((concept as any).label, concept.kind as any);
+                typeLabel = (concept as any).label;
             }
-        });
-        this.discoveredTypes = Array.from(typeMap.entries())
+            if (typeLabel) {
+                typeKinds.set(typeLabel, kind);
+                this.typeCounts.set(typeLabel, (this.typeCounts.get(typeLabel) ?? 0) + 1);
+            }
+        }
+        for (const edgeKey of this.visualiser.graph.edges()) {
+            const attrs = this.visualiser.graph.getEdgeAttributes(edgeKey);
+            const tag = attrs.metadata?.dataEdge?.tag;
+            if (tag) this.edgeCounts.set(tag, (this.edgeCounts.get(tag) ?? 0) + 1);
+        }
+
+        this.discoveredTypes = Array.from(typeKinds.entries())
             .map(([typeLabel, kind]) => ({ typeLabel, kind }))
             .sort((a, b) => kindOrder(a.kind) - kindOrder(b.kind) || a.typeLabel.localeCompare(b.typeLabel));
     }
+
+    getKindCount(kind: VertexKind): number { return this.kindCounts.get(kind) ?? 0; }
+    getTypeCount(typeLabel: string): number { return this.typeCounts.get(typeLabel) ?? 0; }
+    getEdgeCount(tag: string): number { return this.edgeCounts.get(tag) ?? 0; }
 
     getKindColor(kind: VertexKind): string {
         return this.styleService.getKindStyle(kind).color;
@@ -165,6 +211,37 @@ export class HighlightsTabComponent implements OnChanges {
     soloHighlightEdge(tag: string): void {
         this.styleService.highlightedEdges.clear();
         this.styleService.highlightedEdges.add(tag);
+        this.visualiser?.sigma.refresh();
+    }
+
+    /** True when the chip-hover preview is allowed to take effect (no real highlight or vertex selection active). */
+    private canPreview(): boolean {
+        if (this.styleService.isHighlightActive()) return false;
+        if (this.visualiser?.interactionHandler.state.selectedNode != null) return false;
+        return true;
+    }
+
+    onChipHoverKind(kind: VertexKind): void {
+        if (!this.canPreview()) return;
+        this.styleService.setPreviewKind(kind);
+        this.visualiser?.sigma.refresh();
+    }
+
+    onChipHoverType(typeLabel: string): void {
+        if (!this.canPreview()) return;
+        this.styleService.setPreviewType(typeLabel);
+        this.visualiser?.sigma.refresh();
+    }
+
+    onChipHoverEdge(tag: string): void {
+        if (!this.canPreview()) return;
+        this.styleService.setPreviewEdge(tag);
+        this.visualiser?.sigma.refresh();
+    }
+
+    onChipHoverEnd(): void {
+        if (!this.styleService.isPreviewActive()) return;
+        this.styleService.clearPreview();
         this.visualiser?.sigma.refresh();
     }
 }

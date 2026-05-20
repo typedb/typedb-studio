@@ -9,13 +9,18 @@
     </div>
     <div class="highlight-chips">
       @for (row of displayKinds; track row.kind) {
-        <button class="highlight-chip"
-                [class.active]="isKindHighlighted(row.kind)"
-                [style.--chip-color]="getKindColor(row.kind)"
-                (click)="toggleHighlightKind(row.kind)"
-                (dblclick)="soloHighlightKind(row.kind)">
-          {{ row.label }}
-        </button>
+        @if (getKindCount(row.kind) > 0) {
+          <button class="highlight-chip"
+                  [class.active]="isKindHighlighted(row.kind)"
+                  [style.--chip-color]="getKindColor(row.kind)"
+                  (click)="toggleHighlightKind(row.kind)"
+                  (dblclick)="soloHighlightKind(row.kind)"
+                  (mouseenter)="onChipHoverKind(row.kind)"
+                  (mouseleave)="onChipHoverEnd()">
+            {{ row.label }}
+            <span class="highlight-chip-count">{{ getKindCount(row.kind) }}</span>
+          </button>
+        }
       }
     </div>
   </div>
@@ -34,8 +39,11 @@
                   [class.active]="isTypeHighlighted(row.typeLabel)"
                   [style.--chip-color]="getTypeColor(row.typeLabel, row.kind)"
                   (click)="toggleHighlightType(row.typeLabel)"
-                  (dblclick)="soloHighlightType(row.typeLabel)">
+                  (dblclick)="soloHighlightType(row.typeLabel)"
+                  (mouseenter)="onChipHoverType(row.typeLabel)"
+                  (mouseleave)="onChipHoverEnd()">
             {{ row.typeLabel }}
+            <span class="highlight-chip-count">{{ getTypeCount(row.typeLabel) }}</span>
           </button>
         }
       </div>
@@ -51,13 +59,18 @@
     </div>
     <div class="highlight-chips">
       @for (row of edgeLabels; track row.tag) {
-        <button class="highlight-chip"
-                [class.active]="isEdgeHighlighted(row.tag)"
-                [style.--chip-color]="getEdgeLabelColor(row.tag)"
-                (click)="toggleHighlightEdge(row.tag)"
-                (dblclick)="soloHighlightEdge(row.tag)">
-          {{ row.displayLabel }}
-        </button>
+        @if (getEdgeCount(row.tag) > 0) {
+          <button class="highlight-chip"
+                  [class.active]="isEdgeHighlighted(row.tag)"
+                  [style.--chip-color]="getEdgeLabelColor(row.tag)"
+                  (click)="toggleHighlightEdge(row.tag)"
+                  (dblclick)="soloHighlightEdge(row.tag)"
+                  (mouseenter)="onChipHoverEdge(row.tag)"
+                  (mouseleave)="onChipHoverEnd()">
+            {{ row.displayLabel }}
+            <span class="highlight-chip-count">{{ getEdgeCount(row.tag) }}</span>
+          </button>
+        }
       }
     </div>
   </div>

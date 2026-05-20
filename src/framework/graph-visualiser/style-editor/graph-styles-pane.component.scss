@@ -605,9 +605,12 @@
 
 .highlight-chip {
   --chip-color: var(--theme-secondary-light-grey);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   font-weight: var(--font-weight-regular);
-  padding: 3px 10px;
+  padding: 3px 8px 3px 10px;
   border-radius: 12px;
   border: 1px solid var(--theme-secondary-deep-grey);
   background: transparent;
@@ -625,6 +628,15 @@
     background: color-mix(in srgb, var(--chip-color) 20%, transparent);
     color: var(--chip-color);
   }
+}
+
+.highlight-chip-count {
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--chip-color) 25%, transparent);
+  color: var(--chip-color);
 }
 
 // -- Presets --
