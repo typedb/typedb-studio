@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Component, Input } from "@angular/core";
+import { ChangeDetectionStrategy, Component, Input } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -22,6 +22,7 @@ import { SchemaTreeNode } from "../../../service/schema-tool-window-state.servic
     selector: "ts-schema-tree-node",
     templateUrl: "schema-tree-node.component.html",
     styleUrls: ["schema-tree-node.component.scss"],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         MatDividerModule, MatFormFieldModule, MatTreeModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule,

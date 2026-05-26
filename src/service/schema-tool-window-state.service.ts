@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { BehaviorSubject, map, Subject } from "rxjs";
+import { BehaviorSubject, map } from "rxjs";
 import { SchemaState, Schema, SchemaAttribute, SchemaRole, SchemaConcept } from "./schema-state.service";
 import { Injectable } from "@angular/core";
 import { AppData } from "./app-data.service";
@@ -14,7 +14,11 @@ export type SchemaTreeNodeKind = "root" | "concept" | "link";
 export interface SchemaTreeNodeBase {
     nodeKind: SchemaTreeNodeKind;
     children?: SchemaTreeNode[];
-    visible: boolean;
+    /** Stable identifier for expansion tracking and `cdkVirtualFor` trackBy. */
+    key: string;
+    /** Precomputed CSS class string applied to the row host. */
+    cssClass: string;
+    clickable: boolean;
 }
 
 export interface SchemaTreeRootNode extends SchemaTreeNodeBase {
@@ -62,16 +66,42 @@ export type SchemaTreeNode = SchemaTreeRootNode | SchemaTreeConceptNode | Schema
 
 export type SchemaTreeChildNode = SchemaTreeConceptNode | SchemaTreeLinkNode;
 
+/** A node in the flattened render list. Only this gets handed to `cdkVirtualFor`. */
+export interface FlatSchemaTreeNode {
+    node: SchemaTreeNode;
+    level: number;
+    expandable: boolean;
+    expanded: boolean;
+}
+
+function conceptCssClass(_node: SchemaTreeConceptNode): string {
+    return "concept";
+}
+
+function rootCssClass(label: string): string {
+    return `root ${label}`;
+}
+
+function linkCssClass(link: SchemaTreeLinkNode): string {
+    return `link ${link.linkKind}${link.linkKind === "sub" ? ` ${link.supertype.kind}` : ""}`;
+}
+
 @Injectable({
     providedIn: "root",
 })
 export class SchemaToolWindowState {
+    /** Hierarchical source — kept for any external consumer; rendering uses {@link flatNodes$}. */
     dataSource$ = new BehaviorSubject<SchemaTreeRootNode[]>([]);
+    /** Flattened, render-ready list. Recomputed whenever the hierarchy, link visibility, or expansion changes. */
+    flatNodes$ = new BehaviorSubject<FlatSchemaTreeNode[]>([]);
     isEmpty$ = this.dataSource$.pipe(map(data => data.length > 0 && data.every(root => !root.children.length)));
     viewMode$ = new BehaviorSubject<"flat" | "hierarchical">(this.appData.viewState.schemaToolWindowState().viewMode);
     linksVisibility$ = new BehaviorSubject<Record<SchemaTreeLinkKind, boolean>>(this.appData.viewState.schemaToolWindowState().linksVisibility);
     rootNodesCollapsed: Record<SchemaTreeRootNode["label"], boolean> = this.appData.viewState.schemaToolWindowState().rootNodesCollapsed;
     highlightedConceptLabel$ = new BehaviorSubject<string | null>(null);
+
+    /** Keys of currently-expanded nodes. */
+    private expandedKeys = new Set<string>();
 
     constructor(public schema: SchemaState, private appData: AppData) {
         schema.value$.subscribe(() => {
@@ -81,17 +111,58 @@ export class SchemaToolWindowState {
             this.buildView();
         });
         this.linksVisibility$.subscribe(() => {
-            for (const conceptNode of this.dataSource$.value.flatMap(x => x.children)) {
-                this.updateViewVisibility(conceptNode);
-            }
+            this.rebuildFlatNodes();
         });
     }
 
-    hasChild = (_: number, node: SchemaTreeNode) => !!node.children?.length;
+    isExpanded(node: SchemaTreeNode): boolean {
+        return this.expandedKeys.has(node.key);
+    }
 
-    childrenAccessor = (node: SchemaTreeNode): SchemaTreeNode[] => {
-        return (node.children || []).filter(child => child.visible === true);
-    };
+    toggleExpand(node: SchemaTreeNode): void {
+        if (this.expandedKeys.has(node.key)) {
+            this.expandedKeys.delete(node.key);
+            if (node.nodeKind === "root") {
+                this.rootNodesCollapsed[node.label] = true;
+                this.persistRootCollapse();
+            }
+        } else {
+            this.expandedKeys.add(node.key);
+            if (node.nodeKind === "root") {
+                this.rootNodesCollapsed[node.label] = false;
+                this.persistRootCollapse();
+            }
+        }
+        this.rebuildFlatNodes();
+    }
+
+    private persistRootCollapse() {
+        const state = this.appData.viewState.schemaToolWindowState();
+        state.rootNodesCollapsed = this.rootNodesCollapsed;
+        this.appData.viewState.setSchemaToolWindowState(state);
+    }
+
+    private visibleChildren(node: SchemaTreeNode): SchemaTreeNode[] {
+        if (!node.children) return [];
+        if (node.nodeKind === "root") return node.children;
+        const vis = this.linksVisibility$.value;
+        return node.children.filter(child => child.nodeKind !== "link" || vis[child.linkKind]);
+    }
+
+    private rebuildFlatNodes() {
+        const flat: FlatSchemaTreeNode[] = [];
+        const visit = (node: SchemaTreeNode, level: number) => {
+            const children = this.visibleChildren(node);
+            const expandable = children.length > 0;
+            const expanded = expandable && this.expandedKeys.has(node.key);
+            flat.push({ node, level, expandable, expanded });
+            if (expanded) {
+                for (const child of children) visit(child, level + 1);
+            }
+        };
+        for (const root of this.dataSource$.value) visit(root, 0);
+        this.flatNodes$.next(flat);
+    }
 
     private buildView() {
         const schema = this.schema.value$.value;
@@ -99,51 +170,26 @@ export class SchemaToolWindowState {
 
         if (!schema) {
             this.dataSource$.next([]);
+            this.flatNodes$.next([]);
             return;
         }
 
-        const data: SchemaTreeRootNode[] = [{
-            nodeKind: "root",
-            label: "entities",
-            visible: true,
-            children: Object.values(schema.entities).sort((a, b) => a.label.localeCompare(b.label)).map(x => ({
-                nodeKind: "concept",
-                concept: x,
-                visible: true,
-                children: ([
-                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype, visible: linksVisibility.sub }] : []),
-                    ...x.ownedAttributes.sort((a, b) => a.label.localeCompare(b.label)).map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y, visible: linksVisibility.owns })),
-                    ...x.playedRoles.sort((a, b) => a.label.localeCompare(b.label)).map(y => ({ nodeKind: "link", linkKind: "plays", role: y, visible: linksVisibility.plays })),
-                ] as SchemaTreeChildNode[]),
-            })),
-        }, {
-            nodeKind: "root",
-            label: "relations",
-            visible: true,
-            children: Object.values(schema.relations).sort((a, b) => a.label.localeCompare(b.label)).map(x => ({
-                nodeKind: "concept",
-                concept: x,
-                visible: true,
-                children: ([
-                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype, visible: linksVisibility.sub }] : []),
-                    ...x.relatedRoles.sort((a, b) => a.label.localeCompare(b.label)).map(y => ({ nodeKind: "link", linkKind: "relates", role: y, visible: linksVisibility.relates })),
-                    ...x.ownedAttributes.sort((a, b) => a.label.localeCompare(b.label)).map(y => ({ nodeKind: "link", linkKind: "owns", ownedAttribute: y, visible: linksVisibility.owns })),
-                    ...x.playedRoles.sort((a, b) => a.label.localeCompare(b.label)).map(y => ({ nodeKind: "link", linkKind: "plays", role: y, visible: linksVisibility.plays })),
-                ] as SchemaTreeChildNode[]),
-            })),
-        }, {
-            nodeKind: "root",
-            label: "attributes",
-            visible: true,
-            children: Object.values(schema.attributes).sort((a, b) => a.label.localeCompare(b.label)).map(x => ({
-                nodeKind: "concept",
-                concept: x,
-                visible: true,
-                children: ([
-                    ...(x.supertype ? [{ nodeKind: "link", linkKind: "sub", supertype: x.supertype, visible: linksVisibility.sub }] : []),
-                ] as SchemaTreeChildNode[]),
-            })),
-        }];
+        const data: SchemaTreeRootNode[] = [
+            this.buildRoot("entities", schema.entities, (x) => [
+                ...(x.supertype ? [this.buildSubLink(x, x.supertype, linksVisibility.sub)] : []),
+                ...x.ownedAttributes.sort((a, b) => a.label.localeCompare(b.label)).map(y => this.buildOwnsLink(x, y, linksVisibility.owns)),
+                ...x.playedRoles.sort((a, b) => a.label.localeCompare(b.label)).map(y => this.buildPlaysLink(x, y, linksVisibility.plays)),
+            ]),
+            this.buildRoot("relations", schema.relations, (x) => [
+                ...(x.supertype ? [this.buildSubLink(x, x.supertype, linksVisibility.sub)] : []),
+                ...x.relatedRoles.sort((a, b) => a.label.localeCompare(b.label)).map(y => this.buildRelatesLink(x, y, linksVisibility.relates)),
+                ...x.ownedAttributes.sort((a, b) => a.label.localeCompare(b.label)).map(y => this.buildOwnsLink(x, y, linksVisibility.owns)),
+                ...x.playedRoles.sort((a, b) => a.label.localeCompare(b.label)).map(y => this.buildPlaysLink(x, y, linksVisibility.plays)),
+            ]),
+            this.buildRoot("attributes", schema.attributes, (x) => [
+                ...(x.supertype ? [this.buildSubLink(x, x.supertype, linksVisibility.sub)] : []),
+            ]),
+        ];
 
         if (this.viewMode$.value === "hierarchical") {
             const nodeMap = Object.fromEntries(data.flatMap(rootNode => rootNode.children.map(conceptNode => ([
@@ -154,8 +200,8 @@ export class SchemaToolWindowState {
                 rootNode.children.forEach(conceptNode => {
                     const subNode = conceptNode.children.find(node => node.nodeKind === "link" && node.linkKind === "sub");
                     if (subNode) {
-                        const superNode = nodeMap[subNode.supertype.label];
-                        if (!superNode) throw new Error(`Missing supertype node for ${subNode.supertype.label} (nodeMap is: ${JSON.stringify(nodeMap)})`);
+                        const superNode = nodeMap[(subNode as SchemaTreeSubLinkNode).supertype.label];
+                        if (!superNode) throw new Error(`Missing supertype node for ${(subNode as SchemaTreeSubLinkNode).supertype.label}`);
                         superNode.children.unshift(conceptNode);
                     }
                 });
@@ -168,21 +214,92 @@ export class SchemaToolWindowState {
             data.forEach(x => x.children = x.children.filter(conceptNode => !conceptNode.concept.supertype));
         }
 
+        // Seed expanded set: roots whose collapsed pref is `false` (i.e. expanded).
+        // We don't carry over concept-level expansion across schema rebuilds.
+        this.expandedKeys = new Set();
+        for (const root of data) {
+            if (!this.rootNodesCollapsed[root.label]) this.expandedKeys.add(root.key);
+        }
+
         this.dataSource$.next(data);
+        this.rebuildFlatNodes();
     }
 
-    private updateViewVisibility(conceptNode: SchemaTreeConceptNode) {
-        for (const childNode of conceptNode.children) {
-            switch (childNode.nodeKind) {
-                case "link":
-                    childNode.visible = this.linksVisibility$.value[childNode.linkKind];
-                    break;
-                case "concept":
-                    this.updateViewVisibility(childNode);
-                    break;
-            }
-        }
-        this.dataSource$.next([...this.dataSource$.value]);
+    private buildRoot<T extends SchemaConcept>(
+        label: SchemaTreeRootNode["label"],
+        concepts: Record<string, T>,
+        buildChildren: (c: T) => SchemaTreeChildNode[],
+    ): SchemaTreeRootNode {
+        return {
+            nodeKind: "root",
+            label,
+            key: `root:${label}`,
+            cssClass: rootCssClass(label),
+            clickable: true,
+            children: Object.values(concepts).sort((a, b) => a.label.localeCompare(b.label)).map(x => {
+                const conceptNode: SchemaTreeConceptNode = {
+                    nodeKind: "concept",
+                    concept: x,
+                    key: `concept:${x.label}`,
+                    cssClass: conceptCssClass(null as any),
+                    clickable: true,
+                    children: buildChildren(x),
+                };
+                return conceptNode;
+            }),
+        };
+    }
+
+    private buildSubLink(owner: SchemaConcept, supertype: SchemaConcept, visible: boolean): SchemaTreeSubLinkNode {
+        const node: SchemaTreeSubLinkNode = {
+            nodeKind: "link",
+            linkKind: "sub",
+            supertype,
+            key: `sub:${owner.label}:${supertype.label}`,
+            cssClass: "",
+            clickable: false,
+        };
+        node.cssClass = linkCssClass(node);
+        return node;
+    }
+
+    private buildOwnsLink(owner: SchemaConcept, ownedAttribute: SchemaAttribute, visible: boolean): SchemaTreeOwnsLinkNode {
+        const node: SchemaTreeOwnsLinkNode = {
+            nodeKind: "link",
+            linkKind: "owns",
+            ownedAttribute,
+            key: `owns:${owner.label}:${ownedAttribute.label}`,
+            cssClass: "",
+            clickable: false,
+        };
+        node.cssClass = linkCssClass(node);
+        return node;
+    }
+
+    private buildPlaysLink(owner: SchemaConcept, role: SchemaRole, visible: boolean): SchemaTreePlaysLinkNode {
+        const node: SchemaTreePlaysLinkNode = {
+            nodeKind: "link",
+            linkKind: "plays",
+            role,
+            key: `plays:${owner.label}:${role.label}`,
+            cssClass: "",
+            clickable: false,
+        };
+        node.cssClass = linkCssClass(node);
+        return node;
+    }
+
+    private buildRelatesLink(owner: SchemaConcept, role: SchemaRole, visible: boolean): SchemaTreeRelatesLinkNode {
+        const node: SchemaTreeRelatesLinkNode = {
+            nodeKind: "link",
+            linkKind: "relates",
+            role,
+            key: `relates:${owner.label}:${role.label}`,
+            cssClass: "",
+            clickable: false,
+        };
+        node.cssClass = linkCssClass(node);
+        return node;
     }
 
     useFlatView() {
@@ -210,24 +327,14 @@ export class SchemaToolWindowState {
     }
 
     showAllLinks() {
-        this.linksVisibility$.next({
-            sub: true,
-            owns: true,
-            relates: true,
-            plays: true,
-        });
+        this.linksVisibility$.next({ sub: true, owns: true, relates: true, plays: true });
         const state = this.appData.viewState.schemaToolWindowState();
         state.linksVisibility = this.linksVisibility$.value;
         this.appData.viewState.setSchemaToolWindowState(state);
     }
 
     hideAllLinks() {
-        this.linksVisibility$.next({
-            sub: false,
-            owns: false,
-            relates: false,
-            plays: false,
-        });
+        this.linksVisibility$.next({ sub: false, owns: false, relates: false, plays: false });
         const state = this.appData.viewState.schemaToolWindowState();
         state.linksVisibility = this.linksVisibility$.value;
         this.appData.viewState.setSchemaToolWindowState(state);
@@ -243,31 +350,26 @@ export class SchemaToolWindowState {
         return !v.sub && !v.owns && !v.relates && !v.plays;
     }
 
-    collapseAll$ = new Subject<void>();
-
-    collapseAll() {
-        const state = this.appData.viewState.schemaToolWindowState();
-
-        this.dataSource$.value.forEach(node => {
-            this.rootNodesCollapsed[node.label] = false;
-            state.rootNodesCollapsed[node.label] = false;
-        });
-
-        this.appData.viewState.setSchemaToolWindowState(state);
-        this.collapseAll$.next();
+    expandAll() {
+        // Expand every node in the current hierarchy.
+        const visit = (node: SchemaTreeNode) => {
+            this.expandedKeys.add(node.key);
+            for (const child of node.children ?? []) visit(child);
+        };
+        for (const root of this.dataSource$.value) visit(root);
+        for (const root of this.dataSource$.value) this.rootNodesCollapsed[root.label] = false;
+        this.persistRootCollapse();
+        this.rebuildFlatNodes();
     }
 
-    expandAll$ = new Subject<void>();
-
-    expandAll() {
-        const state = this.appData.viewState.schemaToolWindowState();
-
-        this.dataSource$.value.forEach(node => {
-            this.rootNodesCollapsed[node.label] = false;
-            state.rootNodesCollapsed[node.label] = false;
-        });
-
-        this.appData.viewState.setSchemaToolWindowState(state);
-        this.expandAll$.next();
+    collapseAll() {
+        // Collapse everything except the roots — matches the previous behaviour.
+        this.expandedKeys.clear();
+        for (const root of this.dataSource$.value) {
+            this.expandedKeys.add(root.key);
+            this.rootNodesCollapsed[root.label] = false;
+        }
+        this.persistRootCollapse();
+        this.rebuildFlatNodes();
     }
 }
