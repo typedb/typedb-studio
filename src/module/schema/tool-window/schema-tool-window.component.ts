@@ -219,4 +219,16 @@ export class SchemaToolWindowComponent implements AfterViewInit {
             this.queryPageState.runQuery(query);
         });
     }
+
+    openDataTab(concept: SchemaConcept) {
+        this.dataEditorState.openTypeTab(concept);
+    }
+
+    openGraphTabWithConnections(concept: SchemaConcept) {
+        this.graphViewState.openTypeTab(concept);
+    }
+
+    openGraphTabAttrsOnly(concept: SchemaConcept) {
+        this.graphViewState.openTypeTab(concept, { includeConnections: false });
+    }
 }

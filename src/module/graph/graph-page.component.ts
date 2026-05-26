@@ -84,7 +84,7 @@ export class GraphPageComponent implements OnInit {
     }
 
     getTabTrackId(tab: GraphViewTab): string {
-        return `type:${tab.type.label}`;
+        return `type:${tab.type.label}:${tab.attrsOnly ? "attrs" : "all"}`;
     }
 
     getTypeIconClass(typeKind: string): string {

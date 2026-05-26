@@ -15,7 +15,14 @@ import { createRunOutputState, RunOutputState } from "./query-page-state.service
 
 export interface GraphViewTab {
     type: SchemaConcept;
+    /** When true, the tab only fetches instances and their attributes (no relations). */
+    attrsOnly: boolean;
     run: RunOutputState;
+}
+
+export interface OpenTypeTabOptions {
+    /** Whether to also fetch relation participation + secondary connections. Defaults to true. */
+    includeConnections?: boolean;
 }
 
 @Injectable({ providedIn: "root" })
@@ -39,16 +46,18 @@ export class GraphViewState {
         });
     }
 
-    openTypeTab(type: SchemaConcept) {
+    openTypeTab(type: SchemaConcept, options: OpenTypeTabOptions = {}) {
+        // Attribute types have no "connections" branch — include/exclude is meaningless for them.
+        const attrsOnly = type.kind !== "attributeType" && options.includeConnections === false;
         const tabs = this.openTabs$.value;
-        const existing = tabs.find(t => t.type.label === type.label);
+        const existing = tabs.find(t => t.type.label === type.label && t.attrsOnly === attrsOnly);
         if (existing) {
             this.selectedTabIndex$.next(tabs.indexOf(existing));
             return;
         }
         const label = `match $${this.instanceVar(type)} isa ${type.label};`;
         const run = createRunOutputState(type.label, label, this.graphStyleService);
-        const tab: GraphViewTab = { type, run };
+        const tab: GraphViewTab = { type, attrsOnly, run };
         this.openTabs$.next([...tabs, tab]);
         this.selectedTabIndex$.next(tabs.length);
         this.runQueriesForTab(tab);
@@ -127,7 +136,7 @@ export class GraphViewState {
 
     private runFollowUps(tab: GraphViewTab, iids: string[], rowLimit: number) {
         const run = tab.run;
-        const queries = this.buildFollowUpQueries(tab.type, iids);
+        const queries = this.buildFollowUpQueries(tab.type, iids, tab.attrsOnly);
         if (queries.length === 0) {
             run.graph.status = "ok";
             return;
@@ -176,22 +185,26 @@ export class GraphViewState {
         return iids;
     }
 
-    private buildFollowUpQueries(type: SchemaConcept, iids: string[]): string[] {
+    private buildFollowUpQueries(type: SchemaConcept, iids: string[], attrsOnly: boolean): string[] {
         if (type.kind === "entityType") {
             const branches = iids.map(iid => `{ $x iid ${iid}; }`).join(" or ");
-            return [
-                `match ${branches}; $x has $a;`,
-                `match ${branches}; $r links ($x); $r links ($other);`,
-            ];
+            const queries = [`match ${branches}; $x has $a;`];
+            if (!attrsOnly) {
+                queries.push(`match ${branches}; $r links ($x); $r links ($other);`);
+            }
+            return queries;
         }
         if (type.kind === "relationType") {
             const branches = iids.map(iid => `{ $r iid ${iid}; }`).join(" or ");
-            return [
-                `match ${branches}; $r has $a;`,
-                `match ${branches}; $r links ($p);`,
-                `match ${branches}; $r links ($p); $p has $pa;`,
-                `match ${branches}; $r links ($p); $r2 links ($p); $r2 links ($other);`,
-            ];
+            const queries = [`match ${branches}; $r has $a;`];
+            if (!attrsOnly) {
+                queries.push(
+                    `match ${branches}; $r links ($p);`,
+                    `match ${branches}; $r links ($p); $p has $pa;`,
+                    `match ${branches}; $r links ($p); $r2 links ($p); $r2 links ($other);`,
+                );
+            }
+            return queries;
         }
         return [];
     }
