@@ -61,6 +61,14 @@ export class HighlightsTabComponent implements OnChanges, DoCheck {
     typeCounts = new Map<string, number>();
     edgeCounts = new Map<string, number>();
 
+    /** Filter input for the Types chip section. Live-narrows the rendered chip list — necessary
+     *  at scale (some schemas have 10k+ types and rendering a chip per type cripples the UI). */
+    typeFilter = "";
+    /** Hard cap on the number of Types chips rendered at once. */
+    static readonly TYPE_DISPLAY_LIMIT = 200;
+    displayedTypes: TypeRow[] = [];
+    typeOverflow = 0;
+
     private lastGraphOrder = -1;
     private lastGraphSize = -1;
 
@@ -121,6 +129,33 @@ export class HighlightsTabComponent implements OnChanges, DoCheck {
         this.discoveredTypes = Array.from(typeKinds.entries())
             .map(([typeLabel, kind]) => ({ typeLabel, kind }))
             .sort((a, b) => kindOrder(a.kind) - kindOrder(b.kind) || a.typeLabel.localeCompare(b.typeLabel));
+        this.recomputeDisplayedTypes();
+    }
+
+    private recomputeDisplayedTypes(): void {
+        const needle = this.typeFilter.trim().toLowerCase();
+        const matches = needle
+            ? this.discoveredTypes.filter(t => t.typeLabel.toLowerCase().includes(needle))
+            : this.discoveredTypes;
+        const limit = HighlightsTabComponent.TYPE_DISPLAY_LIMIT;
+        if (matches.length > limit) {
+            this.displayedTypes = matches.slice(0, limit);
+            this.typeOverflow = matches.length - limit;
+        } else {
+            this.displayedTypes = matches;
+            this.typeOverflow = 0;
+        }
+    }
+
+    onTypeFilterInput(event: Event): void {
+        this.typeFilter = (event.target as HTMLInputElement).value;
+        this.recomputeDisplayedTypes();
+    }
+
+    clearTypeFilter(): void {
+        if (!this.typeFilter) return;
+        this.typeFilter = "";
+        this.recomputeDisplayedTypes();
     }
 
     getKindCount(kind: VertexKind): number { return this.kindCounts.get(kind) ?? 0; }
