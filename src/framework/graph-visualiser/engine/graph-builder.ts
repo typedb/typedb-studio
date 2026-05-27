@@ -149,6 +149,12 @@ export class GraphBuilder extends AbstractGraphBuilder {
         if (this.shouldCreateEdge(edge, queryFrom, queryTo)) {
             let fromKey = this.vertex(answerIndex, from, queryFrom);
             let toKey = this.vertex(answerIndex, to, queryTo);
+            // Skip sub self-loops: sigma doesn't render them, but they still
+            // get counted in highlight chips and produce phantom no-op entries.
+            // Arises from schema queries like `$t sub $supertype; $t is $supertype`.
+            if (fromKey === toKey && label === "sub") {
+                return;
+            }
             let edgeKey = this.edgeKey(fromKey, toKey, label);
             const attributes = this.edgeAttributes(label, this.edgeMetadata(answerIndex, edge));
             this.createEdge(edgeKey, fromKey, toKey, attributes);
