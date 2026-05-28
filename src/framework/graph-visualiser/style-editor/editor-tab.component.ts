@@ -27,7 +27,9 @@ const DISPLAY_EDGE_LABELS: EdgeLabelRow[] = [
     { tag: "has", displayLabel: "has" },
     { tag: "links", displayLabel: "links" },
     { tag: "isa", displayLabel: "isa" },
+    { tag: "isa!", displayLabel: "isa!" },
     { tag: "sub", displayLabel: "sub" },
+    { tag: "sub!", displayLabel: "sub!" },
     { tag: "owns", displayLabel: "owns" },
     { tag: "relates", displayLabel: "relates" },
     { tag: "plays", displayLabel: "plays" },
@@ -72,7 +74,9 @@ export class EditorTabComponent implements OnChanges {
 
     settingsCollapsed = false;
     kindsCollapsed = false;
-    typesCollapsed = false;
+    /** Default-collapsed: each row in this section is heavy (color + mat-select + two number
+     *  inputs), so on large schemas auto-expanding it freezes the app. */
+    typesCollapsed = true;
     edgesCollapsed = false;
 
     readonly displayKinds = DISPLAY_KINDS;
@@ -80,6 +84,15 @@ export class EditorTabComponent implements OnChanges {
     readonly edgeLabels = DISPLAY_EDGE_LABELS;
 
     discoveredTypes: TypeRow[] = [];
+
+    /** Filter input for the Types section. Live-narrows the rendered row list — necessary at
+     *  scale (some schemas have 10k+ types and rendering a heavy row per type freezes the app). */
+    typeFilter = "";
+    /** Hard cap on the number of Types rows rendered at once. Smaller than the Elements chip
+     *  limit because each Customise row is much heavier than a chip. */
+    static readonly TYPE_DISPLAY_LIMIT = 100;
+    displayedTypes: TypeRow[] = [];
+    typeOverflow = 0;
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes["visualiser"]) {
@@ -102,6 +115,33 @@ export class EditorTabComponent implements OnChanges {
         this.discoveredTypes = Array.from(typeMap.entries())
             .map(([typeLabel, kind]) => ({ typeLabel, kind }))
             .sort((a, b) => kindOrder(a.kind) - kindOrder(b.kind) || a.typeLabel.localeCompare(b.typeLabel));
+        this.recomputeDisplayedTypes();
+    }
+
+    private recomputeDisplayedTypes(): void {
+        const needle = this.typeFilter.trim().toLowerCase();
+        const matches = needle
+            ? this.discoveredTypes.filter(t => t.typeLabel.toLowerCase().includes(needle))
+            : this.discoveredTypes;
+        const limit = EditorTabComponent.TYPE_DISPLAY_LIMIT;
+        if (matches.length > limit) {
+            this.displayedTypes = matches.slice(0, limit);
+            this.typeOverflow = matches.length - limit;
+        } else {
+            this.displayedTypes = matches;
+            this.typeOverflow = 0;
+        }
+    }
+
+    onTypeFilterInput(event: Event): void {
+        this.typeFilter = (event.target as HTMLInputElement).value;
+        this.recomputeDisplayedTypes();
+    }
+
+    clearTypeFilter(): void {
+        if (!this.typeFilter) return;
+        this.typeFilter = "";
+        this.recomputeDisplayedTypes();
     }
 
     // -- Kind getters --
