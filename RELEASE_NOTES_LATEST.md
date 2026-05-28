@@ -5,7 +5,7 @@ TypeDB Studio is hosted on the Web at https://studio.typedb.com.
 Alternatively:
 
 - Install: https://typedb.com/docs/home/install/studio
-- Direct download: https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:3.10.3
+- Direct download: https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:3.10.4
 
 Desktop builds of TypeDB Studio run in the following environments:
 
@@ -20,42 +20,21 @@ Desktop builds of TypeDB Studio run in the following environments:
 
 ### TypeDB server compatibility
 
-TypeDB Studio 3.10.3 is compatible with TypeDB >= 3.3. For older TypeDB versions, enquire on the TypeDB Discord chat server (https://typedb.com/discord).
+TypeDB Studio 3.10.4 is compatible with TypeDB >= 3.3. For older TypeDB versions, enquire on the TypeDB Discord chat server (https://typedb.com/discord).
 
 ---
 
 ## New features
 
-### Multi-queries
-
-Studio now supports running multi-queries (multiple queries separated by the `end;` marker to be run sequentially).
-
-### Load sample datasets
-
-Studio now offers UI actions for loading sample datasets. These are always loaded into a newly created database. The current sample datasets on offer are Bookstore, Cyber Threat Intelligence, and Robotics.
-
-### Other features
-
-- TypeQL editor now offers 'find and replace'
-- Add a transaction inspector that shows the state of the current or most recent transaction
-- Add ability to configure transaction timeout (default is 5 minutes)
+- **Export query output**: You can now copy or download a JSON or CSV export of your query results. Additionally, you can now easily export a result graph as a PNG
+- **Graph Elements view**: Shows how many of each element type is in the currently rendered graph and allows higlighting specific types. Replaces and extends the functionality of the old Highlights view
+- **History page**: Shows the timestamps, execution times and results of all queries in the current Studio session. Full-page version of the existing History pane on the Query page
+- Connection page now prefills username and server address with the current connection details, if available
+- Sharply improve app performance on large schemas
 
 ## Bugs fixed
 
-- Fixed various UI elements being low-contrast in light mode
-- Fixed various TypeQL tokens not being syntax-highlighted
-- Fixed a few cases where the current query tab's header would not correctly scroll into view
-- Committing a schema transaction now auto-refreshes schema views
-- Log output now auto-scrolls to the end unless manually scrolled
-- Fixed a bug where Data Explorer would fail to load when viewing a type with no playable relation types (reported by `@markmclellan` on Discord)
-- Schema tool window now sorts capabilities by type, then alphabetically (reported by `@markmclellan` on Discord)
-- Fix a bug where non-admin users couldn't load the Users page (to change their own password)
-- Fix a bug where Studio would hang on startup if the last used server was unresponsive
-
-## Other improvements
-
-- Studio will now try to detect transaction type when in auto-transaction mode (instead of sending everything as a read query and escalating on failure)
-- Connecting to a server with no databases no longer results in Studio automatically creating a 'default' database. While this was convenient for some users, it was odd behaviour
-- The Run button and Limit setting now take up much less space (reported by `@markmclellan` on Discord)
-- When trying to connect to an HTTP server over HTTPS, warn that this most likely won't work and suggest using Studio Desktop
-- Enforce a max answer limit of 100k to tackle server resource starvation
+- Fix a bug where schemas with over 10,000 types would not render properly in tooling (reported by `@richard_clouter` on Discord)
+- Sorting table columns now works for multi-queries
+- Fix a bug where Studio would erroneously claim it had "Committed" read-only multi-queries
+- Fix a bug where Fetch queries' table output could incorrectly omit some columns
