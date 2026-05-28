@@ -1064,7 +1064,16 @@ export class TableOutputState {
             case "conceptDocuments": {
                 const answers = res.ok.answers;
                 if (answers.length) {
-                    const keys = Object.keys(answers[0]);
+                    const seen = new Set<string>();
+                    const keys: string[] = [];
+                    for (const answer of answers) {
+                        for (const key of Object.keys(answer)) {
+                            if (!seen.has(key)) {
+                                seen.add(key);
+                                keys.push(key);
+                            }
+                        }
+                    }
                     if (keys.length) {
                         this.status = "ok";
                         this.appendColumns(...keys);
