@@ -1,0 +1,123 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "typography";
+
+:host {
+    display: block;
+    width: 100%;
+}
+
+.history-container {
+    width: 100%;
+    container-type: inline-size;
+}
+
+ol {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+ol li {
+    margin-top: 8px;
+
+    aside {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+
+        .bullet {
+            margin: 0 4px;
+            flex-shrink: 0;
+        }
+
+        time {
+            flex-shrink: 0;
+        }
+
+        .transaction-operation-type {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
+
+        tp-spinner {
+            width: unset;
+        }
+
+        .action-status {
+            margin-left: 8px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+
+            span {
+                white-space: nowrap;
+            }
+
+            i {
+                margin-left: 6px;
+                margin-top: 3px;
+                font-size: 12px;
+
+                &.fa-xmark {
+                    color: var(--theme-red);
+                    cursor: pointer;
+                }
+            }
+        }
+    }
+}
+
+.history-code-editor {
+    margin-top: 4px;
+    border: 1px solid var(--theme-light-purple);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+
+    tp-code-editor {
+        display: block;
+
+        ::ng-deep code-editor {
+            .cm-editor {
+                max-height: 120px;
+                overflow: auto;
+            }
+
+            .cm-scroller {
+                overflow: auto;
+            }
+
+            .cm-content {
+                min-height: 56px;
+            }
+        }
+    }
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 16px;
+    color: var(--theme-grey);
+
+    i {
+        font-size: 36px;
+        width: 36px;
+        height: 36px;
+        margin-bottom: 12px;
+    }
+
+    p {
+        font-size: 14px;
+        margin: 0;
+    }
+}

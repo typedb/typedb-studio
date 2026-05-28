@@ -31,35 +31,45 @@
     </div>
   </div>
 }
-<div class="schema-container" [hidden]="state.isEmpty$ | async" detectScroll>
-  <div class="gutter"></div>
-  <mat-tree
-    #tree [dataSource]="state.dataSource$" [childrenAccessor]="state.childrenAccessor"
-    [class]="state.viewMode$.value"
-  >
-    <!-- This is the tree node template for leaf nodes -->
-    <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="16" [class]="treeNodeClass(node)" [class.highlighted]="isNodeHighlighted(node)" [class.clickable]="node.nodeKind === 'concept' || node.nodeKind === 'root'">
-      <!-- use a disabled button to provide padding for tree leaf -->
-      <button matIconButton disabled></button>
-      <div class="tree-node-content" (click)="onNodeClick(node, $event)" (contextmenu)="node.nodeKind === 'concept' && openConceptContextMenu($event, node.concept)">
-        <ts-schema-tree-node [data]="node"/>
-      </div>
-    </mat-tree-node>
-    <!-- This is the tree node template for expandable nodes -->
-    <mat-tree-node *matTreeNodeDef="let node;when: state.hasChild" matTreeNodePadding
-                    [matTreeNodePaddingIndent]="16"
-                    [cdkTreeNodeTypeaheadLabel]="node.name" [class]="treeNodeClass(node)" [class.highlighted]="isNodeHighlighted(node)" [class.clickable]="node.nodeKind === 'concept' || node.nodeKind === 'root'">
-      <button matIconButton aria-label="Toggle node" (click)="toggleNode(node)">
-        <mat-icon class="mat-icon-rtl-mirror">
-          {{tree.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
-        </mat-icon>
+<div class="schema-container" [hidden]="state.isEmpty$ | async" [class]="state.viewMode$.value" detectScroll>
+  <cdk-virtual-scroll-viewport itemSize="32" minBufferPx="240" maxBufferPx="480" class="schema-virtual-scroll">
+    <div *cdkVirtualFor="let flat of (state.flatNodes$ | async); trackBy: trackByFlatNode"
+         class="tree-row"
+         [class]="flat.node.cssClass"
+         [class.highlighted]="isNodeHighlighted(flat.node)"
+         [class.clickable]="flat.node.clickable"
+         [style.padding-left.px]="flat.level * 16"
+         (click)="onRowClick(flat, $event)"
+         (contextmenu)="flat.node.nodeKind === 'concept' && openConceptContextMenu($event, $any(flat.node).concept)">
+      <button matIconButton class="expand-button"
+              [disabled]="!flat.expandable"
+              (click)="onExpandClick(flat, $event)">
+        @if (flat.expandable) {
+          <mat-icon class="mat-icon-rtl-mirror">{{ flat.expanded ? 'expand_more' : 'chevron_right' }}</mat-icon>
+        }
       </button>
-      <div class="tree-node-content" (click)="onNodeClick(node, $event)" (contextmenu)="node.nodeKind === 'concept' && openConceptContextMenu($event, node.concept)">
-        <ts-schema-tree-node [data]="node"/>
+      <div class="tree-node-content">
+        @switch (flat.node.nodeKind) {
+          @case ("root") {
+            <div class="root-node">{{ $any(flat.node).label }}</div>
+          }
+          @case ("concept") {
+            {{ $any(flat.node).concept.label }}@if ($any(flat.node).concept.kind === "attributeType") {<em class="text-muted">, value {{ $any(flat.node).concept.valueType }}</em>}
+          }
+          @case ("link") {
+            <div class="link-node">
+              @switch ($any(flat.node).linkKind) {
+                @case ("sub") { <em>sub</em> {{ $any(flat.node).supertype.label }} }
+                @case ("owns") { <em>owns</em> {{ $any(flat.node).ownedAttribute.label }}<em>, value {{ $any(flat.node).ownedAttribute.valueType }}</em> }
+                @case ("relates") { <em>relates</em> {{ $any(flat.node).role.label }} }
+                @case ("plays") { <em>plays</em> {{ $any(flat.node).role.label }} }
+              }
+            </div>
+          }
+        }
       </div>
-    </mat-tree-node>
-  </mat-tree>
-  <div class="gutter"></div>
+    </div>
+  </cdk-virtual-scroll-viewport>
 </div>
 
 <mat-menu #actionsMenu="matMenu">
@@ -126,8 +136,16 @@
   <ng-template matMenuContent let-concept="concept">
     <span class="menu-content">
       <button mat-menu-item (click)="copyTypeLabel(concept)">Copy type label</button>
-      @if (mode !== 'data') {
+      @if (mode === 'data') {
+        <button mat-menu-item (click)="openDataTab(concept)">Load instances</button>
+      } @else if (mode !== 'graph-view') {
         <button mat-menu-item (click)="loadInstances(concept)">Load instances</button>
+      }
+      @if (mode === 'graph-view') {
+        <button mat-menu-item (click)="openGraphTabWithConnections(concept)">Load instances and connections</button>
+        @if (concept.kind !== 'attributeType') {
+          <button mat-menu-item (click)="openGraphTabAttrsOnly(concept)">Load instances and attributes</button>
+        }
       }
     </span>
   </ng-template>

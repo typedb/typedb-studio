@@ -305,7 +305,7 @@
     }
 }
 
-.empty-state, .transaction-prompt {
+.empty-state, .transaction-prompt, .error-state {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -326,7 +326,22 @@
     }
 }
 
+.error-state {
+    i.fa-circle-exclamation {
+        color: var(--theme-red);
+    }
+
+    a {
+        cursor: pointer;
+    }
+}
+
 .transaction-prompt {
+    .prompt-actions {
+        display: flex;
+        gap: 12px;
+    }
+
     button {
         i {
             font-size: 14px;

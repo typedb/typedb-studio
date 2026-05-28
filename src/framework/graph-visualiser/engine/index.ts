@@ -107,12 +107,13 @@ export class GraphVisualiser {
     }
 
     private setupReducers(): void {
-        const FADE_RATIO = 0.075; // mix 7.5% original color, 92.5% black
+        const FADE_RATIO = 0.075; // mix 7.5% original color, 92.5% background
+        const PREVIEW_FADE_RATIO = 0.3; // mix 30% original color, 70% background — gentler than the regular fade
 
         const fade = (color: string) => chroma.mix(this.styleService.effectiveBackgroundHex, color, FADE_RATIO).hex();
-        const fadeSoft = (color: string) => {
+        const fadeForPreview = (color: string) => chroma.mix(this.styleService.effectiveBackgroundHex, color, PREVIEW_FADE_RATIO).hex();
+        const buildFadeSoft = (alpha: number) => (color: string) => {
             // Output premultiplied-alpha hex for Sigma's gl.blendFunc(ONE, ONE_MINUS_SRC_ALPHA)
-            const alpha = 0.15;
             const [r, g, b] = chroma(color).rgb();
             const pr = Math.round(r * alpha);
             const pg = Math.round(g * alpha);
@@ -120,10 +121,13 @@ export class GraphVisualiser {
             const pa = Math.round(alpha * 255);
             return `#${pr.toString(16).padStart(2, "0")}${pg.toString(16).padStart(2, "0")}${pb.toString(16).padStart(2, "0")}${pa.toString(16).padStart(2, "0")}`;
         };
+        const fadeSoft = buildFadeSoft(0.15);
+        const fadeSoftForPreview = buildFadeSoft(0.3);
 
         this.sigma.setSetting("nodeReducer", (node, data) => {
             const state = this.interactionHandler.state;
             let shouldFade = false;
+            let isPreviewFade = false;
 
             // Search takes priority over everything
             if (this.searchMatches != null) {
@@ -145,6 +149,14 @@ export class GraphVisualiser {
                             if (!this.styleService.shouldHighlightNode(concept.kind as any, getTypeLabel(concept as any))) {
                                 shouldFade = true;
                             }
+                        } else if (state.selectedNode == null && this.styleService.isPreviewActive()) {
+                            // Hover-preview: only kicks in when there's no real highlight or selection
+                            const attrs = this.graph.getNodeAttributes(node);
+                            const concept = attrs.metadata.concept;
+                            if (!this.styleService.shouldPreviewNode(concept.kind as any, getTypeLabel(concept as any))) {
+                                shouldFade = true;
+                                isPreviewFade = true;
+                            }
                         }
                     } catch (_) { /* guard against missing metadata during graph mutations */ }
                 }
@@ -152,16 +164,24 @@ export class GraphVisualiser {
 
             if (!shouldFade) return { ...data, zIndex: 1 };
             const res = { ...data };
-            res["color"] = fadeSoft(data["color"]);
-            if (data["borderColor"]) res["borderColor"] = fadeSoft(data["borderColor"]);
-            res["label"] = "";
-            res["zIndex"] = 0;
+            if (isPreviewFade) {
+                res["color"] = fadeSoftForPreview(data["color"]);
+                if (data["borderColor"]) res["borderColor"] = fadeSoftForPreview(data["borderColor"]);
+                // Keep the label visible for a subtle preview
+                res["zIndex"] = 0;
+            } else {
+                res["color"] = fadeSoft(data["color"]);
+                if (data["borderColor"]) res["borderColor"] = fadeSoft(data["borderColor"]);
+                res["label"] = "";
+                res["zIndex"] = 0;
+            }
             return res;
         });
 
         this.sigma.setSetting("edgeReducer", (edge, data) => {
             const state = this.interactionHandler.state;
             let shouldFade = false;
+            let isPreviewFade = false;
 
             // Search takes priority over everything
             if (this.searchMatches != null) {
@@ -200,6 +220,24 @@ export class GraphVisualiser {
                             if (tag && !this.styleService.shouldHighlightEdge(tag)) {
                                 shouldFade = true;
                             }
+                        } else if (state.selectedNode == null && this.styleService.isPreviewActive()) {
+                            const source = this.graph.source(edge);
+                            const target = this.graph.target(edge);
+                            const sourceAttrs = this.graph.getNodeAttributes(source);
+                            const targetAttrs = this.graph.getNodeAttributes(target);
+                            const sourceConcept = sourceAttrs.metadata.concept;
+                            const targetConcept = targetAttrs.metadata.concept;
+                            const sourcePreviewed = this.styleService.shouldPreviewNode(sourceConcept.kind as any, getTypeLabel(sourceConcept as any));
+                            const targetPreviewed = this.styleService.shouldPreviewNode(targetConcept.kind as any, getTypeLabel(targetConcept as any));
+                            if (!sourcePreviewed || !targetPreviewed) {
+                                shouldFade = true;
+                                isPreviewFade = true;
+                            }
+                            const tag = this.graph.getEdgeAttributes(edge).metadata?.dataEdge?.tag;
+                            if (tag && !this.styleService.shouldPreviewEdge(tag)) {
+                                shouldFade = true;
+                                isPreviewFade = true;
+                            }
                         }
                     } catch (_) { /* guard against missing metadata during graph mutations */ }
                 }
@@ -207,8 +245,8 @@ export class GraphVisualiser {
 
             if (!shouldFade) return { ...data, zIndex: 1 };
             const res = { ...data };
-            res["color"] = fade(data["color"] ?? "#ccc");
-            res["label"] = "";
+            res["color"] = (isPreviewFade ? fadeForPreview : fade)(data["color"] ?? "#ccc");
+            if (!isPreviewFade) res["label"] = "";
             res["zIndex"] = 0;
             return res;
         });

@@ -151,10 +151,21 @@
       <div class="transaction-prompt">
         <i class="fa-light fa-lock"></i>
         <p>Open a transaction to explore your data</p>
-        <button mat-stroked-button (click)="openTransactionAndLoad()">
-          <i class="fa-light fa-play"></i>
-          Open read transaction
-        </button>
+        <div class="prompt-actions">
+          <button mat-stroked-button (click)="openTransactionAndLoad()">
+            <i class="fa-light fa-play"></i>
+            Open read transaction
+          </button>
+          <button mat-stroked-button (click)="switchToAutoMode()">
+            <i class="fa-light fa-shuffle"></i>
+            Switch to auto mode
+          </button>
+        </div>
+      </div>
+    } @else if (!loading && queryError) {
+      <div class="error-state">
+        <i class="fa-light fa-circle-exclamation"></i>
+        <p>This query returned an error. <a routerLink="/history">View in log</a></p>
       </div>
     } @else if (!loading && dataSource.length === 0) {
       <div class="empty-state">
