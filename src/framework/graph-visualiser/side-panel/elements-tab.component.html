@@ -1,0 +1,92 @@
+<div class="panel-section highlights-section">
+  <div class="highlight-group">
+    <div class="highlight-group-header">
+      <span class="highlight-group-label">Kinds</span>
+      <div class="highlight-group-actions">
+        <button class="highlight-action-button" (click)="selectAllKinds()">All</button>
+        <button class="highlight-action-button" (click)="unselectAllKinds()">None</button>
+      </div>
+    </div>
+    <div class="highlight-chips">
+      @for (row of displayKinds; track row.kind) {
+        @if (getKindCount(row.kind) > 0) {
+          <button class="highlight-chip"
+                  [class.active]="isKindHighlighted(row.kind)"
+                  [style.--chip-color]="getKindColor(row.kind)"
+                  (click)="toggleHighlightKind(row.kind)"
+                  (dblclick)="soloHighlightKind(row.kind)"
+                  (mouseenter)="onChipHoverKind(row.kind)"
+                  (mouseleave)="onChipHoverEnd()">
+            {{ row.label }}
+            <span class="highlight-chip-count">{{ getKindCount(row.kind) }}</span>
+          </button>
+        }
+      }
+    </div>
+  </div>
+  @if (discoveredTypes.length > 0) {
+    <div class="highlight-group">
+      <div class="highlight-group-header">
+        <span class="highlight-group-label">Types</span>
+        <div class="highlight-group-actions">
+          <button class="highlight-action-button" (click)="selectAllTypes()">All</button>
+          <button class="highlight-action-button" (click)="unselectAllTypes()">None</button>
+        </div>
+      </div>
+      @if (discoveredTypes.length > 20) {
+        <div class="highlight-filter">
+          <i class="fa-light fa-magnifying-glass"></i>
+          <input type="text" placeholder="Filter types"
+                 [value]="typeFilter" (input)="onTypeFilterInput($event)">
+          @if (typeFilter) {
+            <button class="highlight-filter-clear" (click)="clearTypeFilter()">
+              <i class="fa-light fa-xmark"></i>
+            </button>
+          }
+        </div>
+      }
+      <div class="highlight-chips">
+        @for (row of displayedTypes; track row.typeLabel) {
+          <button class="highlight-chip"
+                  [class.active]="isTypeHighlighted(row.typeLabel)"
+                  [style.--chip-color]="getTypeColor(row.typeLabel, row.kind)"
+                  (click)="toggleHighlightType(row.typeLabel)"
+                  (dblclick)="soloHighlightType(row.typeLabel)"
+                  (mouseenter)="onChipHoverType(row.typeLabel)"
+                  (mouseleave)="onChipHoverEnd()">
+            {{ row.typeLabel }}
+            <span class="highlight-chip-count">{{ getTypeCount(row.typeLabel) }}</span>
+          </button>
+        }
+      </div>
+      @if (typeOverflow > 0) {
+        <div class="highlight-overflow-hint">+{{ typeOverflow }} more, refine the filter to narrow</div>
+      }
+    </div>
+  }
+  <div class="highlight-group">
+    <div class="highlight-group-header">
+      <span class="highlight-group-label">Edges</span>
+      <div class="highlight-group-actions">
+        <button class="highlight-action-button" (click)="selectAllEdges()">All</button>
+        <button class="highlight-action-button" (click)="unselectAllEdges()">None</button>
+      </div>
+    </div>
+    <div class="highlight-chips">
+      @for (row of edgeLabels; track row.tag) {
+        @if (getEdgeCount(row.tag) > 0) {
+          <button class="highlight-chip"
+                  [class.active]="isEdgeHighlighted(row.tag)"
+                  [style.--chip-color]="getEdgeLabelColor(row.tag)"
+                  (click)="toggleHighlightEdge(row.tag)"
+                  (dblclick)="soloHighlightEdge(row.tag)"
+                  (mouseenter)="onChipHoverEdge(row.tag)"
+                  (mouseleave)="onChipHoverEnd()">
+            {{ row.displayLabel }}
+            <span class="highlight-chip-count">{{ getEdgeCount(row.tag) }}</span>
+          </button>
+        }
+      }
+    </div>
+  </div>
+</div>

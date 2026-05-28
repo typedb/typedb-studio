@@ -136,9 +136,18 @@ export class ConnectionCreatorComponent {
         route.queryParamMap.pipe(first()).subscribe((params) => {
             if (params.get(NAME)) this.form.patchValue({ name: params.get(NAME) ?? `` });
 
+            // Fall back to the active connection's address/username when the URL
+            // params don't specify them — so re-opening the connect page from a
+            // live session pre-fills with the current target.
+            const current = this.driver.connection$.value;
+            const currentAddress = current
+                ? (isBasicParams(current.params) ? current.params.addresses[0] : current.params.translatedAddresses[0]?.external) ?? null
+                : null;
+            const currentUsername = current?.params.username ?? null;
+
             this.advancedForm.patchValue({
-                address: params.get(ADDRESS) ?? ``,
-                username: params.get(USERNAME) ?? ``,
+                address: params.get(ADDRESS) ?? currentAddress ?? ``,
+                username: params.get(USERNAME) ?? currentUsername ?? ``,
             });
         });
     }

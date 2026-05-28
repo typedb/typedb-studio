@@ -91,7 +91,19 @@
         @if (discoveredTypes.length === 0) {
           <p class="empty-message">No types found. Run a query first to discover types.</p>
         }
-        @for (row of discoveredTypes; track row.typeLabel) {
+        @if (discoveredTypes.length > 20) {
+          <div class="highlight-filter">
+            <i class="fa-light fa-magnifying-glass"></i>
+            <input type="text" placeholder="Filter types"
+                   [value]="typeFilter" (input)="onTypeFilterInput($event)">
+            @if (typeFilter) {
+              <button class="highlight-filter-clear" (click)="clearTypeFilter()">
+                <i class="fa-light fa-xmark"></i>
+              </button>
+            }
+          </div>
+        }
+        @for (row of displayedTypes; track row.typeLabel) {
           <div class="style-row">
             <div class="type-label-row">
               <span class="style-label">{{ row.typeLabel }}</span>
@@ -139,6 +151,9 @@
               </div>
             </div>
           </div>
+        }
+        @if (typeOverflow > 0) {
+          <div class="highlight-overflow-hint">+{{ typeOverflow }} more, refine the filter to narrow</div>
         }
       }
 

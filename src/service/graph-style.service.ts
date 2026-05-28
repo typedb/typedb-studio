@@ -118,6 +118,12 @@ export class GraphStyleService implements OnDestroy {
     private _highlightedKinds = new Set<VertexKind>();
     private _highlightedTypes = new Set<string>();
     private _highlightedEdges = new Set<string>();
+
+    /** Transient preview state set by hovering a highlight chip when no real highlights/selection are active.
+     *  Drives a softer fade in the visualiser's reducers — see `setPreview*` / `clearPreview` below. */
+    private _previewedKind: VertexKind | null = null;
+    private _previewedType: string | null = null;
+    private _previewedEdge: string | null = null;
     private _activePreset: string | null = null;
     private _labelsVisible = true;
     private _showHoverLabel = true;
@@ -387,6 +393,57 @@ export class GraphStyleService implements OnDestroy {
     shouldHighlightEdge(tag: string): boolean {
         if (this._highlightedEdges.size === 0) return true;
         if (this._highlightedEdges.has(tag)) return true;
+        return false;
+    }
+
+    // -- Hover preview (subtle fade triggered by hovering a highlight chip) --
+
+    get previewedKind(): VertexKind | null { return this._previewedKind; }
+    get previewedType(): string | null { return this._previewedType; }
+    get previewedEdge(): string | null { return this._previewedEdge; }
+
+    isPreviewActive(): boolean {
+        return this._previewedKind !== null || this._previewedType !== null || this._previewedEdge !== null;
+    }
+
+    setPreviewKind(kind: VertexKind): void {
+        this._previewedKind = kind;
+        this._previewedType = null;
+        this._previewedEdge = null;
+    }
+
+    setPreviewType(typeLabel: string): void {
+        this._previewedKind = null;
+        this._previewedType = typeLabel;
+        this._previewedEdge = null;
+    }
+
+    setPreviewEdge(tag: string): void {
+        this._previewedKind = null;
+        this._previewedType = null;
+        this._previewedEdge = tag;
+    }
+
+    clearPreview(): void {
+        this._previewedKind = null;
+        this._previewedType = null;
+        this._previewedEdge = null;
+    }
+
+    /** Whether a node should be drawn at full strength under the current preview state.
+     *  Returns true when no node-targeting preview is active (e.g. only an edge chip is hovered). */
+    shouldPreviewNode(kind: VertexKind, typeLabel?: string): boolean {
+        if (this._previewedKind === null && this._previewedType === null) return true;
+        if (this._previewedKind === kind) return true;
+        if (typeLabel && this._previewedType === typeLabel) return true;
+        return false;
+    }
+
+    /** Whether an edge should be drawn at full strength under the current preview state.
+     *  Returns true when no edge-targeting preview is active. */
+    shouldPreviewEdge(tag: string): boolean {
+        if (this._previewedEdge === null) return true;
+        if (this._previewedEdge === tag) return true;
         return false;
     }
 

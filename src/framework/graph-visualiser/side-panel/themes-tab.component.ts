@@ -7,7 +7,7 @@ import { GraphVisualiser } from "../engine";
 @Component({
     selector: "ts-graph-styles-themes-tab",
     templateUrl: "themes-tab.component.html",
-    styleUrls: ["graph-styles-pane.component.scss"],
+    styleUrls: ["graph-side-panel.component.scss"],
     imports: [FormsModule, MatMenuModule],
 })
 export class ThemesTabComponent {

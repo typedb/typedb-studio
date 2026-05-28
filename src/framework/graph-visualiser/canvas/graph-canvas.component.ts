@@ -6,12 +6,13 @@
 
 import { Component, ElementRef, EventEmitter, HostBinding, Input, OnDestroy, Output, ViewChild, AfterViewInit } from "@angular/core";
 import { MatTooltipModule } from "@angular/material/tooltip";
+import { MatMenuModule } from "@angular/material/menu";
 
 import { ResizableDirective } from "@hhangular/resizable";
 import { Subscription } from "rxjs";
-import { GraphVisualiser } from "../engine";
+import { GraphPngExportMode, GraphVisualiser } from "../engine";
 import { GraphZoomControlsComponent } from "./zoom-controls/graph-zoom-controls.component";
-import { GraphStylesPaneComponent } from "../style-editor/graph-styles-pane.component";
+import { GraphSidePanelComponent } from "../side-panel/graph-side-panel.component";
 import { GraphStyleService, buildBackgroundCSS } from "../../../service/graph-style.service";
 
 export type GraphCanvasStatus = "ok" | "running" | "noAnswers" | "error" | "graphlessQueryType" | "answerOutputDisabled" | "multiQuery" | "emptySchema";
@@ -21,7 +22,7 @@ export type GraphCanvasStatusAction = "viewLog";
     selector: "ts-graph-canvas",
     templateUrl: "graph-canvas.component.html",
     styleUrls: ["graph-canvas.component.scss"],
-    imports: [MatTooltipModule, ResizableDirective, GraphZoomControlsComponent, GraphStylesPaneComponent],
+    imports: [MatTooltipModule, MatMenuModule, ResizableDirective, GraphZoomControlsComponent, GraphSidePanelComponent],
 })
 export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
     @Input() visualiser: GraphVisualiser | null = null;
@@ -92,5 +93,33 @@ export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
             this.visualiser?.sigma.resize();
             this.visualiser?.sigma.refresh();
         });
+    }
+
+    exporting = false;
+    async exportPng(mode: GraphPngExportMode) {
+        const visualiser = this.visualiser;
+        if (!visualiser || this.exporting) return;
+        this.exporting = true;
+        try {
+            const blob = await visualiser.exportPng(mode);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            const ts = new Date().toISOString().replace(/[:.]/g, "-");
+            const suffix = mode === "wholeGraph" ? "whole-graph" : "current-view";
+            a.download = `graph-${suffix}-${ts}.png`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 0);
+        } catch (err) {
+            console.error("[Graph PNG Export]", err);
+        } finally {
+            this.exporting = false;
+        }
+    }
+
+    canExportPng(): boolean {
+        return !!this.visualiser && this.visualiser.graph.order > 0 && this.status === "ok";
     }
 }

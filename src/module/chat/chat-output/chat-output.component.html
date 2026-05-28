@@ -61,7 +61,7 @@
                   <div class="multi-query-table-header">{{ sub.label }}</div>
                   @switch (sub.table.status) {
                     @case ("ok") {
-                      <table mat-table [dataSource]="sub.table.data$" matSort>
+                      <table mat-table [dataSource]="sub.table.data$" matSort (matSortChange)="sub.table.handleMatSortChange($event)">
                         @for (column of sub.table.columns; track column) {
                           <ng-container [matColumnDef]="column">
                             <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ column }}</th>

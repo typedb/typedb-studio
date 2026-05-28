@@ -18,6 +18,7 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatMenuModule } from "@angular/material/menu";
 import { MatCheckboxModule } from "@angular/material/checkbox";
 import { CdkScrollable } from "@angular/cdk/scrolling";
+import { RouterLink } from "@angular/router";
 import { Subject, Subscription, combineLatest } from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, take } from "rxjs/operators";
 import { TypeTableTab, DataEditorState, BreadcrumbItem } from "../../../service/data-editor-state.service";
@@ -78,6 +79,7 @@ export interface InstanceRow {
         MatCheckboxModule,
         RichTooltipDirective,
         CdkScrollable,
+        RouterLink,
     ],
 })
 export class InstanceTableComponent implements OnInit, OnDestroy {
@@ -93,6 +95,9 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
 
     /** True when in manual mode with no open transaction */
     needsTransaction = false;
+
+    /** Set when the most recent instances-fetch query failed; cleared on the next successful fetch. */
+    queryError: string | null = null;
 
     /** Transaction ID used to load the current data (for stale detection) */
     private loadedWithTransactionId: string | null = null;
@@ -199,6 +204,13 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
     openTransactionAndLoad() {
         this.driver.openTransaction("read").subscribe();
         // Data will load automatically via the transaction$ subscription
+    }
+
+    /** Called from template to switch the driver to auto transaction mode. The autoTransactionEnabled$
+     *  flip is handled by the TransactionControl side-effect listener, which then triggers the
+     *  needsTransaction reset + data reload via the existing subscription below. */
+    switchToAutoMode() {
+        this.driver.transactionControls.controls.operationMode.setValue("auto");
     }
 
     ngOnDestroy() {
@@ -331,12 +343,14 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                     if (isApiErrorResponse(res)) {
                         this.snackbar.errorPersistent(`Error fetching instances: ${res.err.message}`);
                         this.dataSource = [];
+                        this.queryError = res.err.message;
                         return;
                     }
 
                     // Record transaction used for this data load
                     this.loadedWithTransactionId = currentTxId;
                     this.isDataStale = false;
+                    this.queryError = null;
 
                     // Transform response to table rows
                     if (res.ok.answerType === "conceptRows") {
@@ -367,6 +381,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                     }
                     this.snackbar.errorPersistent(`Error fetching instances:\n${msg}`);
                     this.dataSource = [];
+                    this.queryError = msg;
                 }
             });
         } catch (error) {
@@ -374,7 +389,9 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
             this.loading = false;
             this.showSpinner = false;
             console.error("Error fetching instances:", error);
-            this.snackbar.errorPersistent(`Error fetching instances: ${extractErrorMessage(error)}`);
+            const msg = extractErrorMessage(error);
+            this.snackbar.errorPersistent(`Error fetching instances: ${msg}`);
+            this.queryError = msg;
         }
     }
 

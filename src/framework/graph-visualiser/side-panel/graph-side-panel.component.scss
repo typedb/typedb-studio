@@ -605,9 +605,12 @@
 
 .highlight-chip {
   --chip-color: var(--theme-secondary-light-grey);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   font-weight: var(--font-weight-regular);
-  padding: 3px 10px;
+  padding: 3px 8px 3px 10px;
   border-radius: 12px;
   border: 1px solid var(--theme-secondary-deep-grey);
   background: transparent;
@@ -625,6 +628,78 @@
     background: color-mix(in srgb, var(--chip-color) 20%, transparent);
     color: var(--chip-color);
   }
+}
+
+.highlight-chip-count {
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--chip-color) 25%, transparent);
+  color: var(--chip-color);
+}
+
+.highlight-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+  padding: 4px 8px;
+  border: 1px solid var(--theme-secondary-deep-grey);
+  border-radius: 6px;
+  background: transparent;
+
+  &:focus-within {
+    border-color: var(--theme-secondary-light-grey);
+  }
+
+  i.fa-magnifying-glass {
+    // base.scss sets a global `i { width: 16px; height: 16px; font-size: 16px; }`,
+    // so all three must be overridden together or the icon's box stays at 16px and
+    // visually misaligns with the smaller text. (See CSS Pitfalls in AGENTS.md.)
+    font-size: 11px;
+    width: 11px;
+    height: 11px;
+    line-height: 1;
+    color: var(--theme-secondary-light-grey);
+    flex-shrink: 0;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--theme-white);
+    // `inherit` was unreliable here — explicit value matches the preset-name input.
+    font-family: typography.$default-font-family;
+    font-size: 13px;
+    padding: 2px 0;
+
+    &::placeholder {
+      color: var(--theme-secondary-grey);
+    }
+  }
+
+  .highlight-filter-clear {
+    border: none;
+    background: transparent;
+    color: var(--theme-secondary-light-grey);
+    cursor: pointer;
+    padding: 0 2px;
+    font-size: 11px;
+
+    &:hover {
+      color: var(--theme-white);
+    }
+  }
+}
+
+.highlight-overflow-hint {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--theme-secondary-light-grey);
 }
 
 // -- Presets --

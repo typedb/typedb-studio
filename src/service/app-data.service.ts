@@ -93,6 +93,7 @@ class ViewState {
             case "schema": return "/schema";
             case "data": return "/data";
             case "chat": return "/agent-mode";
+            case "graph": return "/graph";
             case null: return "/welcome";
         }
     }
@@ -554,7 +555,7 @@ class Preferences {
 
 const PANEL_LAYOUT = "panelLayout";
 
-type PanelLayoutPage = "query" | "schema" | "data" | "chat";
+type PanelLayoutPage = "query" | "schema" | "data" | "chat" | "graph";
 
 interface PanelLayoutData {
     [page: string]: number[];

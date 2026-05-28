@@ -5,9 +5,9 @@
  */
 
 import { CodeEditor } from "@acrodata/code-editor";
-import { AsyncPipe, DatePipe } from "@angular/common";
+import { AsyncPipe } from "@angular/common";
 import { AfterViewChecked, AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
-import { FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatDialog } from "@angular/material/dialog";
@@ -25,18 +25,16 @@ import { ResizableDirective } from "@hhangular/resizable";
 import { map, skip, startWith } from "rxjs";
 import { CodeEditorComponent } from "../../framework/code-editor/code-editor.component";
 import { otherExampleLinter, TypeQL, typeqlAutocompleteExtension } from "../../framework/codemirror-lang-typeql";
-import { DriverAction, QueryRunAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../concept/action";
 import { basicDark } from "../../framework/code-editor/theme";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
-import { ActionDurationPipe } from "../../framework/util/action-duration.pipe";
 import { AppData } from "../../service/app-data.service";
 import { ChatState } from "../../service/chat-state.service";
 import { DriverState } from "../../service/driver-state.service";
 import { QueryPageState } from "../../service/query-page-state.service";
 import { QueryTab, QueryTabsState } from "../../service/query-tabs-state.service";
 import { RunOutputState } from "../../service/query-page-state.service";
+import { QueryExportService, SerializedOutput } from "../../service/query-export.service";
 import { SnackbarService } from "../../service/snackbar.service";
-import { ErrorDetailsDialogComponent } from "../../framework/error-details-dialog/error-details-dialog.component";
 import { DatabaseCreateDialogComponent } from "../database/create-dialog/database-create-dialog.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { RenameTabDialogComponent, RenameTabDialogData } from "./rename-tab-dialog/rename-tab-dialog.component";
@@ -48,6 +46,7 @@ import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatSelectModule } from "@angular/material/select";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
 import { GraphCanvasComponent } from "../../framework/graph-visualiser/canvas/graph-canvas.component";
+import { HistoryPaneComponent } from "../query-history/history-pane/history-pane.component";
 
 @Component({
     selector: "ts-query-page",
@@ -56,9 +55,9 @@ import { GraphCanvasComponent } from "../../framework/graph-visualiser/canvas/gr
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, ResizableDirective,
-        DatePipe, SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule,
-        MatMenuModule, MatSelectModule, SchemaToolWindowComponent, CodeEditorComponent, ActionDurationPipe,
-        GraphCanvasComponent,
+        SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule,
+        MatMenuModule, MatSelectModule, SchemaToolWindowComponent, CodeEditorComponent,
+        GraphCanvasComponent, HistoryPaneComponent,
     ]
 })
 export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
@@ -76,6 +75,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     state = inject(QueryPageState);
     driver = inject(DriverState);
     queryTabsState = inject(QueryTabsState);
+    exportService = inject(QueryExportService);
     private appData = inject(AppData);
     private chatState = inject(ChatState);
     private snackbar = inject(SnackbarService);
@@ -102,16 +102,6 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
 
     readonly codeEditorTheme = basicDark;
     codeEditorHidden = true;
-    private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();
-    private truncationState = new WeakMap<HTMLElement, boolean>();
-
-    checkTruncation(el: HTMLElement) {
-        this.truncationState.set(el, el.scrollWidth > el.clientWidth);
-    }
-
-    isTruncated(el: HTMLElement): boolean {
-        return this.truncationState.get(el) ?? false;
-    }
     editorKeymap = Prec.highest(keymap.of([
         { key: "Alt-Space", run: startCompletion, preventDefault: true },
         {
@@ -126,7 +116,6 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     private static readonly DEFAULT_PANEL_SIZES = [20, 60, 20, 50, 50, 75, 25];
     panelSizes = [...QueryPageComponent.DEFAULT_PANEL_SIZES];
 
-    copiedLog = false;
     sentLogToAi = false;
     logHasScrollbar = false;
     /** Tracks the log textarea's scrollHeight across change-detection passes, so we know when content has grown. */
@@ -463,43 +452,6 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
         });
     }
 
-    getHistoryEntryControl(entry: QueryRunAction): FormControl<string> {
-        let control = this.historyEntryControls.get(entry);
-        if (!control) {
-            control = new FormControl(entry.query, { nonNullable: true });
-            this.historyEntryControls.set(entry, control);
-        }
-        return control;
-    }
-
-    runHistoryQuery(entry: QueryRunAction) {
-        this.state.runQuery(entry.query);
-    }
-
-    transactionOperationString(action: TransactionOperationAction) {
-        switch (action.operation) {
-            case "open": return "opened transaction";
-            case "commit": return action.status === "error" ? "commit failed" : "committed";
-            case "close": return "closed transaction";
-        }
-    }
-
-    historyEntryErrorTooltip(entry: DriverAction) {
-        if (!entry.result) return ``;
-        else if ("err" in entry.result && !!entry.result.err?.message) return entry.result.err.message;
-        else if ("message" in entry.result) return entry.result.message as string;
-        else return entry.result.toString();
-    }
-
-    openErrorDetails(entry: DriverAction) {
-        const message = this.historyEntryErrorTooltip(entry);
-        if (!message) return;
-        this.dialog.open(ErrorDetailsDialogComponent, {
-            data: { message },
-            width: "600px",
-        });
-    }
-
     sendLogToAi(): void {
         const logText = this.state.logOutput.control.value;
         if (!logText) return;
@@ -517,18 +469,93 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
         this.router.navigate(['/agent-mode']);
     }
 
-    async copyLog() {
-        try {
-            await navigator.clipboard.writeText(this.state.logOutput.control.value);
-            this.copiedLog = true;
+    canExportResults(): boolean {
+        return this.exportService.canExportResults(this.currentRun ?? undefined);
+    }
 
-            // Reset copied state after 3 seconds
-            setTimeout(() => {
-                this.copiedLog = false;
-            }, 3000);
-        } catch (err) {
-            console.error('Failed to copy results log:', err);
+    exportResultsDisabledReason(): string | null {
+        const run = this.currentRun;
+        if (run?.multiQuery || run?.batchSummary) {
+            return "Export is not available for query batches";
         }
+        return null;
+    }
+
+    isExportResultsVisible(): boolean {
+        return this.canExportResults() || !!this.exportResultsDisabledReason();
+    }
+
+    exportResultsTooltip(): string {
+        return this.exportResultsDisabledReason() ?? "Export";
+    }
+
+    canExportLog(): boolean {
+        return !!this.state.logOutput.control.value.length;
+    }
+
+    canExportRaw(): boolean {
+        return !!this.state.rawOutput.control.value.length;
+    }
+
+    private async runCopy(payload: SerializedOutput | null, label: string) {
+        if (!payload) {
+            this.snackbar.warn("Nothing to copy");
+            return;
+        }
+        try {
+            await this.exportService.copy(payload);
+            this.snackbar.success(`Copied ${label} to clipboard`);
+        } catch (err) {
+            console.error("Copy failed:", err);
+            this.snackbar.warn(`Failed to copy ${label}`);
+        }
+    }
+
+    private runDownload(run: RunOutputState | null, suffix: string, payload: SerializedOutput | null) {
+        if (!run || !payload) {
+            this.snackbar.warn("Nothing to export");
+            return;
+        }
+        this.exportService.download(run, suffix, payload);
+    }
+
+    copyLog() {
+        const run = this.currentRun;
+        if (!run) return;
+        void this.runCopy(this.exportService.serializeLog(run), "log");
+    }
+
+    copyResultsJson() {
+        const run = this.currentRun;
+        if (!run) return;
+        void this.runCopy(this.exportService.serializeResults(run, "json"), "results");
+    }
+
+    copyResultsCsv() {
+        const run = this.currentRun;
+        if (!run) return;
+        void this.runCopy(this.exportService.serializeResults(run, "csv"), "results");
+    }
+
+    downloadResultsJson() {
+        const run = this.currentRun;
+        this.runDownload(run, "results", run ? this.exportService.serializeResults(run, "json") : null);
+    }
+
+    downloadResultsCsv() {
+        const run = this.currentRun;
+        this.runDownload(run, "results", run ? this.exportService.serializeResults(run, "csv") : null);
+    }
+
+    copyRaw() {
+        const run = this.currentRun;
+        if (!run) return;
+        void this.runCopy(this.exportService.serializeRaw(run), "raw");
+    }
+
+    downloadRaw() {
+        const run = this.currentRun;
+        this.runDownload(run, "raw", run ? this.exportService.serializeRaw(run) : null);
     }
 
     onPanelResize(index: number, percent: number) {
@@ -536,17 +563,6 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
         this.appData.panelLayout.set("query", [...this.panelSizes]);
     }
 
-    queryRunLabel(entry: QueryRunAction): string {
-        const type = entry.batch ? "query batch" : "query";
-        if (entry.status === "error") {
-            if (entry.batch && (entry.result as any)?.message === "Query batch interrupted") return "query batch interrupted";
-            return `${type} failed`;
-        }
-        return entry.autoCommitted ? `ran + committed ${type}` : `ran ${type}`;
-    }
-
-    readonly isQueryRun = isQueryRun;
-    readonly isTransactionOperation = isTransactionOperation;
     readonly JSON = JSON;
     readonly TypeQL = TypeQL;
     readonly linter = otherExampleLinter;

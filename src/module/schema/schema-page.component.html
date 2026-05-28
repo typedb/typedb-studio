@@ -37,7 +37,8 @@
                          [status]="state.visualiser.status"
                          [graphPercent]="panelSizes[2]" (graphPercentChange)="onPanelResize(2, $event)"
                          [stylesPanePercent]="panelSizes[3]" (stylesPanePercentChange)="onPanelResize(3, $event)"
-                         [(maximised)]="graphMaximised">
+                         [(maximised)]="graphMaximised"
+                         (statusAction)="onGraphStatusAction($event)">
         </ts-graph-canvas>
       </div>
     </div>

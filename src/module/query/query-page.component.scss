@@ -546,9 +546,13 @@ button {
 
     .copy-overlay {
         right: 14px;
+        z-index: 2;
     }
     .copy-overlay + .copy-overlay {
         right: 54px;
+    }
+    .copy-overlay + .copy-overlay + .copy-overlay {
+        right: 94px;
     }
 
     &.has-scrollbar .copy-overlay {
@@ -556,6 +560,9 @@ button {
     }
     &.has-scrollbar .copy-overlay + .copy-overlay {
         right: 62px;
+    }
+    &.has-scrollbar .copy-overlay + .copy-overlay + .copy-overlay {
+        right: 102px;
     }
 }
 
@@ -633,6 +640,11 @@ button {
     overflow-wrap: break-word;
     padding: 10px;
     margin: 0;
+
+    a {
+        color: var(--theme-green);
+        cursor: pointer;
+    }
 }
 
 // Multi-query stacked tables
@@ -705,7 +717,6 @@ button {
     flex: 1;
     border: none;
     border-radius: 0;
-    container-type: inline-size;
 
     @media (max-width: media.$max-width-mobile) {
         display: none;
@@ -715,105 +726,6 @@ button {
         height: 100%;
         width: 100%;
         overflow: auto;
-    
-    }
-
-    ol li {
-        list-style: none;
-        margin-top: 8px;
-
-        aside {
-            display: flex;
-            align-items: center;
-            min-width: 0;
-
-            .bullet {
-                margin: 0 4px;
-                flex-shrink: 0;
-            }
-
-            time {
-                flex-shrink: 0;
-            }
-
-            .transaction-operation-type {
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                min-width: 0;
-            }
-
-            tp-spinner {
-                width: unset;
-            }
-
-            .action-status {
-                margin-left: 8px;
-                flex-shrink: 0;
-                display: flex;
-                align-items: center;
-
-                span {
-                    white-space: nowrap;
-                }
-            }
-
-            .action-status i {
-                margin-left: 6px;
-                margin-top: 3px;
-                font-size: 12px;
-
-                &.fa-xmark {
-                    color: #{var(--theme-red)};
-                    cursor: pointer;
-                }
-            }
-        }
-
-        .mat-divider {
-            margin-top: 8px;
-        }
-    }
-
-    .history-code-editor {
-        margin-top: 4px;
-        border: 1px solid var(--theme-light-purple);
-        border-radius: 4px;
-        overflow: hidden;
-        position: relative;
-
-        tp-code-editor {
-            display: block;
-
-            ::ng-deep code-editor {
-                .cm-editor {
-                    max-height: 120px;
-                    overflow: auto;
-                
-                }
-
-                .cm-scroller {
-                    overflow: auto;
-                }
-
-                .cm-content {
-                    min-height: 56px;
-                }
-            }
-        }
-    }
-
-    mat-form-field {
-        margin-top: 4px;
-
-        textarea {
-            resize: none;
-            @include typography.code;
-        }
-    }
-
-    .transaction-operation-type {
-        white-space: nowrap;
     }
 }
 

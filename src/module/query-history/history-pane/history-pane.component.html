@@ -1,0 +1,43 @@
+<div class="history-container">
+  @if (history.entries.length === 0) {
+    <div class="empty-state">
+      <i class="fa-light fa-clock-rotate-left"></i>
+      <p>No queries have been run yet</p>
+    </div>
+  } @else {
+    <ol>
+      @for (entry of history.entries; track entry) {
+        <li class="history-entry">
+          <aside class="text-muted">
+            <time>{{ entry.startedAtTimestamp | date:'HH:mm' }}</time>
+            <span class="bullet">&bull;</span>
+            @let label = isTransactionOperation(entry)
+              ? transactionOperationString(entry)
+              : queryRunLabel($any(entry));
+            <p #labelEl class="transaction-operation-type"
+               [matTooltip]="label" [matTooltipDisabled]="!isTruncated(labelEl)" [matTooltipShowDelay]="500"
+               (mouseenter)="checkTruncation(labelEl)">{{ label }}</p>
+            <span class="flex-spacer"></span>
+            <div class="action-status">
+              @if (entry.status === "pending") {
+                <tp-spinner [size]="14"/>
+              } @else {
+                <span matTooltip="Includes network roundtrip time" [matTooltipShowDelay]="500">{{ entry | actionDuration }}</span>
+                @if (entry.status === "success") {
+                  <i class="fa-light fa-check"></i>
+                } @else {
+                  <i class="fa-light fa-xmark" matTooltip="View error details" (click)="openErrorDetails(entry)"></i>
+                }
+              }
+            </div>
+          </aside>
+          @if (isQueryRun(entry)) {
+            <div class="history-code-editor">
+              <tp-code-editor [formControlProp]="getHistoryEntryControl(entry)" [runOverlayVisible]="true" (runButtonClick)="onRunHistoryQuery(entry)"/>
+            </div>
+          }
+        </li>
+      }
+    </ol>
+  }
+</div>
