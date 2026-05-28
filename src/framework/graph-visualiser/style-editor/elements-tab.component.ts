@@ -45,11 +45,11 @@ const KIND_ORDER: Record<string, number> = Object.fromEntries(DISPLAY_KINDS.map(
 function kindOrder(kind: string): number { return KIND_ORDER[kind] ?? Infinity; }
 
 @Component({
-    selector: "ts-graph-styles-highlights-tab",
-    templateUrl: "highlights-tab.component.html",
-    styleUrls: ["graph-styles-pane.component.scss"],
+    selector: "ts-graph-side-panel-elements-tab",
+    templateUrl: "elements-tab.component.html",
+    styleUrls: ["graph-side-panel.component.scss"],
 })
-export class HighlightsTabComponent implements OnChanges, DoCheck {
+export class ElementsTabComponent implements OnChanges, DoCheck {
 
     @Input() visualiser: GraphVisualiser | null = null;
 
@@ -139,7 +139,7 @@ export class HighlightsTabComponent implements OnChanges, DoCheck {
         const matches = needle
             ? this.discoveredTypes.filter(t => t.typeLabel.toLowerCase().includes(needle))
             : this.discoveredTypes;
-        const limit = HighlightsTabComponent.TYPE_DISPLAY_LIMIT;
+        const limit = ElementsTabComponent.TYPE_DISPLAY_LIMIT;
         if (matches.length > limit) {
             this.displayedTypes = matches.slice(0, limit);
             this.typeOverflow = matches.length - limit;

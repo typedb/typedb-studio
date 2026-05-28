@@ -5,25 +5,25 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatSlideToggleModule } from "@angular/material/slide-toggle";
 import { GraphStyleService } from "../../../service/graph-style.service";
 import { GraphVisualiser } from "../engine";
-import { HighlightsTabComponent } from "./highlights-tab.component";
+import { ElementsTabComponent } from "./elements-tab.component";
 import { ThemesTabComponent } from "./themes-tab.component";
 import { EditorTabComponent } from "./editor-tab.component";
 
 @Component({
-    selector: "ts-graph-styles-pane",
-    templateUrl: "graph-styles-pane.component.html",
-    styleUrls: ["graph-styles-pane.component.scss"],
+    selector: "ts-graph-side-panel",
+    templateUrl: "graph-side-panel.component.html",
+    styleUrls: ["graph-side-panel.component.scss"],
     imports: [
         MatSelectModule, MatTooltipModule, MatFormFieldModule, MatSlideToggleModule,
-        HighlightsTabComponent, ThemesTabComponent, EditorTabComponent,
+        ElementsTabComponent, ThemesTabComponent, EditorTabComponent,
     ],
 })
-export class GraphStylesPaneComponent {
+export class GraphSidePanelComponent {
 
     @Input() visualiser: GraphVisualiser | null = null;
 
     styleService = inject(GraphStyleService);
-    topTab: "highlights" | "presets" | "customise" = "highlights";
+    topTab: "elements" | "presets" | "customise" = "elements";
 
     get isHighlightActive(): boolean {
         return this.styleService.isHighlightActive();

@@ -12,7 +12,7 @@ import { ResizableDirective } from "@hhangular/resizable";
 import { Subscription } from "rxjs";
 import { GraphPngExportMode, GraphVisualiser } from "../engine";
 import { GraphZoomControlsComponent } from "./zoom-controls/graph-zoom-controls.component";
-import { GraphStylesPaneComponent } from "../style-editor/graph-styles-pane.component";
+import { GraphSidePanelComponent } from "../style-editor/graph-side-panel.component";
 import { GraphStyleService, buildBackgroundCSS } from "../../../service/graph-style.service";
 
 export type GraphCanvasStatus = "ok" | "running" | "noAnswers" | "error" | "graphlessQueryType" | "answerOutputDisabled" | "multiQuery" | "emptySchema";
@@ -22,7 +22,7 @@ export type GraphCanvasStatusAction = "viewLog";
     selector: "ts-graph-canvas",
     templateUrl: "graph-canvas.component.html",
     styleUrls: ["graph-canvas.component.scss"],
-    imports: [MatTooltipModule, MatMenuModule, ResizableDirective, GraphZoomControlsComponent, GraphStylesPaneComponent],
+    imports: [MatTooltipModule, MatMenuModule, ResizableDirective, GraphZoomControlsComponent, GraphSidePanelComponent],
 })
 export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
     @Input() visualiser: GraphVisualiser | null = null;

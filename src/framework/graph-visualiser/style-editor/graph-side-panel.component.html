@@ -1,18 +1,14 @@
 <div class="panel">
-  <div class="panel-header">
-    <span class="panel-title">Graph Style</span>
-  </div>
-
   <!-- Top-level tabs -->
   <div class="tab-bar">
-    <button class="tab" [class.active]="topTab === 'highlights'" (click)="topTab = 'highlights'">Highlights @if (isHighlightActive) { <span class="highlight-indicator"></span> }</button>
+    <button class="tab" [class.active]="topTab === 'elements'" (click)="topTab = 'elements'">Elements @if (isHighlightActive) { <span class="highlight-indicator"></span> }</button>
     <button class="tab" [class.active]="topTab === 'presets'" (click)="topTab = 'presets'">Themes</button>
-    <button class="tab" [class.active]="topTab === 'customise'" (click)="topTab = 'customise'">Editor</button>
+    <button class="tab" [class.active]="topTab === 'customise'" (click)="topTab = 'customise'">Customise</button>
   </div>
 
   <div class="panel-scroll">
-    @if (topTab === 'highlights') {
-      <ts-graph-styles-highlights-tab [visualiser]="visualiser"></ts-graph-styles-highlights-tab>
+    @if (topTab === 'elements') {
+      <ts-graph-side-panel-elements-tab [visualiser]="visualiser"></ts-graph-side-panel-elements-tab>
     }
     @if (topTab === 'presets') {
       <ts-graph-styles-themes-tab [visualiser]="visualiser"></ts-graph-styles-themes-tab>

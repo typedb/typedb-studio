@@ -56,7 +56,7 @@ function kindOrder(kind: string): number { return KIND_ORDER[kind] ?? Infinity; 
 @Component({
     selector: "ts-graph-styles-editor-tab",
     templateUrl: "editor-tab.component.html",
-    styleUrls: ["graph-styles-pane.component.scss"],
+    styleUrls: ["graph-side-panel.component.scss"],
     imports: [
         CommonModule,
         MatSelectModule, MatTooltipModule,
