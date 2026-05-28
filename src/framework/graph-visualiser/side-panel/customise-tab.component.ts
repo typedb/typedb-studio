@@ -56,8 +56,8 @@ const KIND_ORDER: Record<string, number> = Object.fromEntries(DISPLAY_KINDS.map(
 function kindOrder(kind: string): number { return KIND_ORDER[kind] ?? Infinity; }
 
 @Component({
-    selector: "ts-graph-styles-editor-tab",
-    templateUrl: "editor-tab.component.html",
+    selector: "ts-graph-side-panel-customise-tab",
+    templateUrl: "customise-tab.component.html",
     styleUrls: ["graph-side-panel.component.scss"],
     imports: [
         CommonModule,
@@ -65,7 +65,7 @@ function kindOrder(kind: string): number { return KIND_ORDER[kind] ?? Infinity; 
         MatFormFieldModule, MatInputModule,
     ],
 })
-export class EditorTabComponent implements OnChanges {
+export class CustomiseTabComponent implements OnChanges {
 
     @Input() visualiser: GraphVisualiser | null = null;
 
@@ -123,7 +123,7 @@ export class EditorTabComponent implements OnChanges {
         const matches = needle
             ? this.discoveredTypes.filter(t => t.typeLabel.toLowerCase().includes(needle))
             : this.discoveredTypes;
-        const limit = EditorTabComponent.TYPE_DISPLAY_LIMIT;
+        const limit = CustomiseTabComponent.TYPE_DISPLAY_LIMIT;
         if (matches.length > limit) {
             this.displayedTypes = matches.slice(0, limit);
             this.typeOverflow = matches.length - limit;

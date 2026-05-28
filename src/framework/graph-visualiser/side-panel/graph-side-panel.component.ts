@@ -7,7 +7,7 @@ import { GraphStyleService } from "../../../service/graph-style.service";
 import { GraphVisualiser } from "../engine";
 import { ElementsTabComponent } from "./elements-tab.component";
 import { ThemesTabComponent } from "./themes-tab.component";
-import { EditorTabComponent } from "./editor-tab.component";
+import { CustomiseTabComponent } from "./customise-tab.component";
 
 @Component({
     selector: "ts-graph-side-panel",
@@ -15,7 +15,7 @@ import { EditorTabComponent } from "./editor-tab.component";
     styleUrls: ["graph-side-panel.component.scss"],
     imports: [
         MatSelectModule, MatTooltipModule, MatFormFieldModule, MatSlideToggleModule,
-        ElementsTabComponent, ThemesTabComponent, EditorTabComponent,
+        ElementsTabComponent, ThemesTabComponent, CustomiseTabComponent,
     ],
 })
 export class GraphSidePanelComponent {
