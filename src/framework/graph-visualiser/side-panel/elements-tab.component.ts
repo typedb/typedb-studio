@@ -67,7 +67,7 @@ export class ElementsTabComponent implements OnChanges, DoCheck {
      *  at scale (some schemas have 10k+ types and rendering a chip per type cripples the UI). */
     typeFilter = "";
     /** Hard cap on the number of Types chips rendered at once. */
-    static readonly TYPE_DISPLAY_LIMIT = 200;
+    static readonly TYPE_DISPLAY_LIMIT = 100;
     displayedTypes: TypeRow[] = [];
     typeOverflow = 0;
 
