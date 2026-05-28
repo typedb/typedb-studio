@@ -117,7 +117,10 @@ export class SchemaState {
             this.initialiseOutput();
             const responses: ApiOkResponse<ConceptRowsQueryResponse>[] = [];
             this.isRefreshing = true;
-            this.driver.runBackgroundReadQueries(schemaQueriesList).pipe(
+            // Server defaults this to 10k rows, which is exceeded by hierarchy/owns/plays/relates
+            // queries on very large schemas — silently truncating the tree. Lift the cap so we get
+            // a complete picture even on big schemas.
+            this.driver.runBackgroundReadQueries(schemaQueriesList, { answerCountLimit: 100000 }).pipe(
                 finalize(() => { this.isRefreshing = false; })
             ).subscribe({
                 next: (res) => {

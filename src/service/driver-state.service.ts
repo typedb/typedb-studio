@@ -550,14 +550,14 @@ export class DriverState {
         ), lockId);
     }
 
-    runBackgroundReadQueries(queries: string[]): Observable<ApiOkResponse<QueryResponse>> {
+    runBackgroundReadQueries(queries: string[], queryOptions?: QueryOptions): Observable<ApiOkResponse<QueryResponse>> {
         const driver = this.requireDriver();
         const databaseName = this.requireDatabase().name;
         return fromPromiseWithRetry(() => driver.openTransaction(databaseName, "read", this.transactionOptions("read"))).pipe(
             switchMap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;
                 return from(queries).pipe(
-                    concatMap(x => fromPromiseWithRetry(() => driver.query(res.ok.transactionId, x)).pipe(
+                    concatMap(x => fromPromiseWithRetry(() => driver.query(res.ok.transactionId, x, queryOptions)).pipe(
                         map(x => {
                             if (isApiErrorResponse(x)) throw x;
                             else return x;
