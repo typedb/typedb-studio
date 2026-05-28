@@ -38,9 +38,11 @@
   <ts-sidebar-link [matTooltip]="collapsed ? 'Data' : ''" matTooltipPosition="right" link="/data" domain="data" idSuffix="data">
     <i class="fa-light fa-table"></i>@if (!collapsed) { <span>Data</span> }
   </ts-sidebar-link>
-  <ts-sidebar-link [matTooltip]="collapsed ? 'Graph' : ''" matTooltipPosition="right" link="/graph" domain="graph-view" idSuffix="graph-view">
+  <!-- TEMP: Graph explorer sidebar entry hidden. The /graph route and all supporting code remain
+       intact — re-enable by uncommenting this link. -->
+  <!-- <ts-sidebar-link [matTooltip]="collapsed ? 'Graph' : ''" matTooltipPosition="right" link="/graph" domain="graph-view" idSuffix="graph-view">
     <i class="fa-light fa-circle-nodes"></i>@if (!collapsed) { <span>Graph</span> }
-  </ts-sidebar-link>
+  </ts-sidebar-link> -->
 
   <mat-divider></mat-divider>
 
