@@ -136,16 +136,17 @@
   <ng-template matMenuContent let-concept="concept">
     <span class="menu-content">
       <button mat-menu-item (click)="copyTypeLabel(concept)">Copy type label</button>
+      <mat-divider></mat-divider>
       @if (mode === 'data') {
         <button mat-menu-item (click)="openDataTab(concept)">Load instances</button>
-      } @else if (mode !== 'graph-view') {
-        <button mat-menu-item (click)="loadInstances(concept)">Load instances</button>
-      }
-      @if (mode === 'graph-view') {
-        <button mat-menu-item (click)="openGraphTabWithConnections(concept)">Load instances and connections</button>
+      } @else if (mode === 'graph-view') {
+        <button mat-menu-item (click)="openGraphTabInstancesOnly(concept)">Load instances</button>
         @if (concept.kind !== 'attributeType') {
-          <button mat-menu-item (click)="openGraphTabAttrsOnly(concept)">Load instances and attributes</button>
+          <button mat-menu-item (click)="openGraphTabWithLinks(concept)">Load instances and links</button>
+          <button mat-menu-item (click)="openGraphTabWithAttributes(concept)">Load instances and attributes</button>
         }
+      } @else {
+        <button mat-menu-item (click)="loadInstances(concept)">Load instances</button>
       }
     </span>
   </ng-template>

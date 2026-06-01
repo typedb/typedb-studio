@@ -163,11 +163,15 @@ export class SchemaToolWindowComponent {
         this.dataEditorState.openTypeTab(concept);
     }
 
-    openGraphTabWithConnections(concept: SchemaConcept) {
+    openGraphTabInstancesOnly(concept: SchemaConcept) {
         this.graphViewState.openTypeTab(concept);
     }
 
-    openGraphTabAttrsOnly(concept: SchemaConcept) {
-        this.graphViewState.openTypeTab(concept, { includeConnections: false });
+    openGraphTabWithLinks(concept: SchemaConcept) {
+        this.graphViewState.openTypeTab(concept, { includeLinks: true });
+    }
+
+    openGraphTabWithAttributes(concept: SchemaConcept) {
+        this.graphViewState.openTypeTab(concept, { includeAttributes: true });
     }
 }

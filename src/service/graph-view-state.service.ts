@@ -15,14 +15,14 @@ import { createRunOutputState, RunOutputState } from "./query-page-state.service
 
 export interface GraphViewTab {
     type: SchemaConcept;
-    /** When true, the tab only fetches instances and their attributes (no relations). */
-    attrsOnly: boolean;
     run: RunOutputState;
 }
 
 export interface OpenTypeTabOptions {
-    /** Whether to also fetch relation participation + secondary connections. Defaults to true. */
-    includeConnections?: boolean;
+    /** Also fetch relations the instances participate in. Defaults to false. */
+    includeLinks?: boolean;
+    /** Also fetch instance attributes. Defaults to false. */
+    includeAttributes?: boolean;
 }
 
 @Injectable({ providedIn: "root" })
@@ -46,21 +46,38 @@ export class GraphViewState {
         });
     }
 
-    openTypeTab(type: SchemaConcept, options: OpenTypeTabOptions = {}) {
-        // Attribute types have no "connections" branch — include/exclude is meaningless for them.
-        const attrsOnly = type.kind !== "attributeType" && options.includeConnections === false;
+    async openTypeTab(type: SchemaConcept, options: OpenTypeTabOptions = {}): Promise<void> {
+        // Same type → same tab; subsequent opens add to the existing graph.
         const tabs = this.openTabs$.value;
-        const existing = tabs.find(t => t.type.label === type.label && t.attrsOnly === attrsOnly);
-        if (existing) {
-            this.selectedTabIndex$.next(tabs.indexOf(existing));
-            return;
+        let tab = tabs.find(t => t.type.label === type.label);
+        if (!tab) {
+            const baseQuery = `match $${this.instanceVar(type)} isa ${type.label};`;
+            const run = createRunOutputState(type.label, baseQuery, this.graphStyleService);
+            tab = { type, run };
+            this.openTabs$.next([...tabs, tab]);
+            this.selectedTabIndex$.next(this.openTabs$.value.indexOf(tab));
+        } else {
+            this.selectedTabIndex$.next(tabs.indexOf(tab));
         }
-        const label = `match $${this.instanceVar(type)} isa ${type.label};`;
-        const run = createRunOutputState(type.label, label, this.graphStyleService);
-        const tab: GraphViewTab = { type, attrsOnly, run };
-        this.openTabs$.next([...tabs, tab]);
-        this.selectedTabIndex$.next(tabs.length);
-        this.runQueriesForTab(tab);
+
+        const run = tab.run;
+        run.graph.status = "running";
+        run.graph.database = this.driver.requireDatabase().name;
+        run.graph.query = `match $${this.instanceVar(type)} isa ${type.label};`;
+
+        try {
+            const iids = await this.fetchInstancesOfType(run, type);
+            if (iids.length > 0 && type.kind !== "attributeType") {
+                const tasks: Promise<void>[] = [];
+                if (options.includeAttributes) tasks.push(this.fetchAttributesOf(run, type, iids));
+                if (options.includeLinks) tasks.push(this.fetchLinksOf(run, type, iids));
+                await Promise.all(tasks);
+            }
+            run.graph.status = "ok";
+        } catch (err) {
+            console.error("[Graph fetch]", err);
+            run.graph.status = "error";
+        }
     }
 
     closeTab(tab: GraphViewTab) {
@@ -85,79 +102,63 @@ export class GraphViewState {
     }
 
     /**
-     * Two-phase fetch mirroring the data explorer pattern:
-     *
-     *   1. Query the instances of the type.
-     *   2. Anchor follow-up queries on those IIDs via `{ $v iid <iid>; } or …`,
-     *      one query per connection kind (has, links, secondary links). Anchoring
-     *      first sidesteps an issue where TypeQL chokes on unbound role inference
-     *      when the relation variable in a `links` constraint is only typed via
-     *      its players' types rather than a concrete iid.
-     *
-     * The graph builder merges every response into the same `RunOutputState.graph`
-     * since nodes/edges dedupe by IID / label / composite key.
+     * Fetch instances of `type` into `run.graph`. Returns IIDs of the returned
+     * entities/relations (empty for attribute types). Pushes results via
+     * `GraphOutputState.push`, which dedupes by IID/label.
      */
-    private runQueriesForTab(tab: GraphViewTab) {
-        const run = tab.run;
-        const databaseName = this.driver.requireDatabase().name;
+    async fetchInstancesOfType(run: RunOutputState, type: SchemaConcept): Promise<string[]> {
         const rowLimit = this.appData.preferences.queryRowLimit();
+        const query = `match $${this.instanceVar(type)} isa ${type.label};`;
+        const res = await this.runQuery(query, rowLimit);
+        if (isApiErrorResponse(res)) return [];
+        this.pushSafely(run, res);
+        return this.extractIids(res, this.instanceVar(type));
+    }
 
-        run.graph.status = "running";
-        run.graph.database = databaseName;
-        run.graph.query = `match $${this.instanceVar(tab.type)} isa ${tab.type.label};`;
+    /**
+     * Fetch attributes of the given IIDs (must be entities or relations of `type`)
+     * into `run.graph`. No-op for attribute types.
+     */
+    async fetchAttributesOf(run: RunOutputState, type: SchemaConcept, iids: string[]): Promise<void> {
+        if (iids.length === 0) return;
+        const queries = this.buildAttributeQueries(type, iids);
+        const rowLimit = this.appData.preferences.queryRowLimit();
+        await Promise.all(queries.map(q => this.runAndPush(run, q, rowLimit * 50)));
+    }
 
-        const instanceQuery = `match $${this.instanceVar(tab.type)} isa ${tab.type.label};`;
-        this.driver.query(instanceQuery, { answerCountLimit: rowLimit }).subscribe({
-            next: (res) => {
-                if (isApiErrorResponse(res)) {
-                    run.graph.status = "error";
-                    return;
-                }
-                try { run.graph.push(res); } catch (err) { console.error("[Graph push]", err); }
+    /**
+     * Fetch links (relation participation + role players) of the given IIDs
+     * (must be entities or relations of `type`) into `run.graph`. IID-anchored
+     * patterns sidestep TypeQL role-inference issues where a relation variable
+     * is typed only by its players' types.
+     */
+    async fetchLinksOf(run: RunOutputState, type: SchemaConcept, iids: string[]): Promise<void> {
+        if (iids.length === 0) return;
+        const queries = this.buildLinksQueries(type, iids);
+        const rowLimit = this.appData.preferences.queryRowLimit();
+        await Promise.all(queries.map(q => this.runAndPush(run, q, rowLimit * 50)));
+    }
 
-                if (tab.type.kind === "attributeType") {
-                    run.graph.status = "ok";
-                    return;
-                }
+    private async runAndPush(run: RunOutputState, query: string, rowLimit: number): Promise<void> {
+        try {
+            const res = await this.runQuery(query, rowLimit);
+            if (!isApiErrorResponse(res)) this.pushSafely(run, res);
+        } catch (err) {
+            console.error("[Graph query]", err);
+        }
+    }
 
-                const iids = this.extractIids(res, this.instanceVar(tab.type));
-                if (iids.length === 0) {
-                    run.graph.status = "ok";
-                    return;
-                }
-                this.runFollowUps(tab, iids, rowLimit);
-            },
-            error: (err) => {
-                console.error("[Graph instance query]", err);
-                run.graph.status = "error";
-            },
+    private runQuery(query: string, rowLimit: number): Promise<ApiResponse<QueryResponse>> {
+        return new Promise((resolve, reject) => {
+            this.driver.query(query, { answerCountLimit: rowLimit }).subscribe({
+                next: (res) => resolve(res),
+                error: (err) => reject(err),
+            });
         });
     }
 
-    private runFollowUps(tab: GraphViewTab, iids: string[], rowLimit: number) {
-        const run = tab.run;
-        const queries = this.buildFollowUpQueries(tab.type, iids, tab.attrsOnly);
-        if (queries.length === 0) {
-            run.graph.status = "ok";
-            return;
-        }
-        // Run all follow-ups in parallel — the graph builder dedupes nodes/edges
-        // so the order responses arrive doesn't matter.
-        let pending = queries.length;
-        for (const q of queries) {
-            this.driver.query(q, { answerCountLimit: rowLimit * 50 }).subscribe({
-                next: (res) => {
-                    if (!isApiErrorResponse(res)) {
-                        try { run.graph.push(res); } catch (err) { console.error("[Graph push]", err); }
-                    }
-                    if (--pending === 0) run.graph.status = "ok";
-                },
-                error: (err) => {
-                    console.error("[Graph follow-up query]", err);
-                    if (--pending === 0) run.graph.status = "ok";
-                },
-            });
-        }
+    private pushSafely(run: RunOutputState, res: ApiResponse<QueryResponse>): void {
+        try { run.graph.push(res); } catch (err) { console.error("[Graph push]", err); }
     }
 
     private instanceVar(type: SchemaConcept): string {
@@ -185,26 +186,30 @@ export class GraphViewState {
         return iids;
     }
 
-    private buildFollowUpQueries(type: SchemaConcept, iids: string[], attrsOnly: boolean): string[] {
+    private buildAttributeQueries(type: SchemaConcept, iids: string[]): string[] {
         if (type.kind === "entityType") {
             const branches = iids.map(iid => `{ $x iid ${iid}; }`).join(" or ");
-            const queries = [`match ${branches}; $x has $a;`];
-            if (!attrsOnly) {
-                queries.push(`match ${branches}; $r links ($x); $r links ($other);`);
-            }
-            return queries;
+            return [`match ${branches}; $x has $a;`];
         }
         if (type.kind === "relationType") {
             const branches = iids.map(iid => `{ $r iid ${iid}; }`).join(" or ");
-            const queries = [`match ${branches}; $r has $a;`];
-            if (!attrsOnly) {
-                queries.push(
-                    `match ${branches}; $r links ($p);`,
-                    `match ${branches}; $r links ($p); $p has $pa;`,
-                    `match ${branches}; $r links ($p); $r2 links ($p); $r2 links ($other);`,
-                );
-            }
-            return queries;
+            return [`match ${branches}; $r has $a;`];
+        }
+        return [];
+    }
+
+    private buildLinksQueries(type: SchemaConcept, iids: string[]): string[] {
+        if (type.kind === "entityType") {
+            const branches = iids.map(iid => `{ $x iid ${iid}; }`).join(" or ");
+            return [`match ${branches}; $r links ($x); $r links ($other);`];
+        }
+        if (type.kind === "relationType") {
+            const branches = iids.map(iid => `{ $r iid ${iid}; }`).join(" or ");
+            return [
+                `match ${branches}; $r links ($p);`,
+                `match ${branches}; $r links ($p); $p has $pa;`,
+                `match ${branches}; $r links ($p); $r2 links ($p); $r2 links ($other);`,
+            ];
         }
         return [];
     }
