@@ -297,6 +297,20 @@ export class GraphVisualiser {
         this.centerCamera();
     }
 
+    /**
+     * Resume the layout simulation so newly added nodes settle into the
+     * existing graph. Unlike `reLayout`, this preserves current node
+     * positions — the simulation restarts at full alpha from where things
+     * are now, so existing structure shifts only to accommodate the new
+     * elements.
+     */
+    reheat(): void {
+        this.autoZoomEnabled = true;
+        this.peakCameraRatio = 0;
+        this.layout.start();
+        this.centerCamera();
+    }
+
     centerCamera(zoomOutOnly = false): void {
         const nodes = this.graph.nodes();
         if (nodes.length === 0) return;
