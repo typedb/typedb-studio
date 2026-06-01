@@ -86,13 +86,16 @@ export class InstanceDetailViewModel implements OnDestroy {
 
     private loadedWithTransactionId: string | null = null;
     private subscriptions: Subscription[] = [];
-    private initialized = false;
 
+    /**
+     * Initialise (or re-initialise) with a new instance. Calling again with
+     * different inputs resets all state and re-fetches — useful when the
+     * host component stays mounted while the selected instance changes
+     * (e.g. clicking different nodes in the graph).
+     */
     initialize(type: SchemaConcept, instanceIID: string): void {
-        if (this.initialized) {
-            throw new Error("InstanceDetailViewModel already initialized");
-        }
-        this.initialized = true;
+        if (this.type === type && this.instanceIID === instanceIID) return;
+        this.reset();
         this.type = type;
         this.instanceIID = instanceIID;
 
@@ -136,6 +139,23 @@ export class InstanceDetailViewModel implements OnDestroy {
 
     ngOnDestroy() {
         this.subscriptions.forEach(s => s.unsubscribe());
+    }
+
+    private reset(): void {
+        this.subscriptions.forEach(s => s.unsubscribe());
+        this.subscriptions = [];
+        this.attributes = [];
+        this.allRelations = [];
+        this.relationTypes = [];
+        this.ownLinks = [];
+        this.owners = [];
+        this.loading = false;
+        this.relationsLoading = false;
+        this.linksLoading = false;
+        this.ownersLoading = false;
+        this.needsTransaction = false;
+        this.isDataStale = false;
+        this.loadedWithTransactionId = null;
     }
 
     refresh(): void {

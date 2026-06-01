@@ -1,0 +1,302 @@
+<div class="inspector-panel">
+  <div class="inspector-title-bar">
+    <h5>Inspector</h5>
+  </div>
+
+  @if (!hasSelection) {
+    <div class="inspector-placeholder">
+      <i class="fa-light fa-arrow-pointer"></i>
+      <p>No instance selected</p>
+      <p class="placeholder-hint">Click a node in the graph to inspect it</p>
+    </div>
+  } @else {
+    <div class="detail-panel inspector-detail">
+      @if (vm.isDataStale) {
+        <div class="stale-data-banner">
+          <i class="fa-light fa-clock-rotate-left"></i>
+          <span>Data was loaded in a different transaction</span>
+          <button mat-stroked-button (click)="vm.refresh()">
+            <i class="fa-light fa-refresh"></i>
+            Refresh
+          </button>
+        </div>
+      }
+      <div class="detail-content">
+        @if (vm.needsTransaction) {
+          <div class="transaction-prompt">
+            <i class="fa-light fa-lock"></i>
+            <p>Open a transaction to explore your data</p>
+            <button mat-stroked-button (click)="vm.openTransactionAndLoad()">
+              <i class="fa-light fa-play"></i>
+              Open read transaction
+            </button>
+          </div>
+        } @else if (vm.loading) {
+          <div class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+          </div>
+        } @else {
+          <!-- Type Section -->
+          <div class="detail-section">
+            <button class="section-header" (click)="typeCollapsed = !typeCollapsed">
+              <i class="fa-light" [class.fa-chevron-down]="!typeCollapsed" [class.fa-chevron-right]="typeCollapsed"></i>
+              <h6>Type</h6>
+            </button>
+            @if (!typeCollapsed) {
+              <div class="type-row">
+                <span class="type-info">
+                  @if (type!.supertype) {
+                    <span class="type-label" [ngClass]="vm.typeKindLabel">{{ type!.label }}@if (type!.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
+                    <span class="type-muted">sub {{ type!.supertype.label }}</span>
+                  } @else {
+                    <span class="type-muted">{{ vm.typeKindLabel }}</span>
+                    <span class="type-label" [ngClass]="vm.typeKindLabel">{{ type!.label }}@if (type!.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
+                  }
+                </span>
+                <span class="instance-iid">{{ instanceIID }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Links Section (only for relations) -->
+          @if (type!.kind === 'relationType') {
+            <div class="detail-section">
+              <button class="section-header" (click)="linksCollapsed = !linksCollapsed">
+                <i class="fa-light" [class.fa-chevron-down]="!linksCollapsed" [class.fa-chevron-right]="linksCollapsed"></i>
+                <h6>Links</h6>
+              </button>
+              @if (linksCollapsed) {
+              } @else if (vm.linksLoading) {
+                <div class="relations-loading">
+                  <mat-spinner diameter="24"></mat-spinner>
+                </div>
+              } @else if (vm.ownLinks.length === 0) {
+                <p class="text-muted">No links</p>
+              } @else {
+                <div class="section-bulk-action">
+                  <button class="add-to-graph-button" (click)="addAllRelations()">
+                    <i class="fa-light fa-plus"></i> Add all links
+                  </button>
+                </div>
+                <div class="links-list">
+                  @for (link of vm.ownLinks; track link.roleLabel + link.playerIID) {
+                    <div class="link-card">
+                      <div class="link-info">
+                        <span class="role-label">{{ link.roleLabel }}</span>
+                        <div class="player-details">
+                          <span class="player-type">{{ link.playerTypeLabel }}</span>
+                          <span class="player-iid">{{ link.playerIID }}</span>
+                        </div>
+                        <button class="add-to-graph-button"
+                                (click)="addOwnLink(link)"
+                                matTooltip="Add to graph"
+                                matTooltipPosition="above">
+                          <i class="fa-light fa-plus"></i>
+                        </button>
+                      </div>
+                      <div class="link-attrs">
+                        @for (attr of link.attributes; track attr.type) {
+                          <div class="attr-row">
+                            <span class="attr-key">{{ attr.type }}:</span>
+                            <span class="attr-val">{{ attr.values.join(', ') }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Attributes Section -->
+          @if (type!.kind !== 'attributeType') {
+            <div class="detail-section">
+              <button class="section-header" (click)="attributesCollapsed = !attributesCollapsed">
+                <i class="fa-light" [class.fa-chevron-down]="!attributesCollapsed" [class.fa-chevron-right]="attributesCollapsed"></i>
+                <h6>Attributes</h6>
+              </button>
+              @if (attributesCollapsed) {
+              } @else if (vm.attributes.length === 0) {
+                <p class="text-muted">No attributes</p>
+              } @else {
+                <div class="section-bulk-action">
+                  <button class="add-to-graph-button" (click)="addAllAttributes()">
+                    <i class="fa-light fa-plus"></i> Add all attributes
+                  </button>
+                </div>
+                <table class="attributes-table">
+                  <tbody>
+                    @for (attr of vm.attributes; track attr.type) {
+                      <tr>
+                        <td class="attr-label">{{ attr.type }}<em class="value-type">, value {{ attr.valueType }}</em></td>
+                        <td class="attr-value">
+                          @for (value of attr.values; track $index) {
+                            <div class="value-row">{{ value }}<button
+                                class="copy-button"
+                                (click)="copyValue(value, tooltip)"
+                                matTooltip="Copied"
+                                matTooltipPosition="above"
+                                matTooltipShowDelay="999999"
+                                #tooltip="matTooltip"><i class="fa-light fa-copy"></i></button></div>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
+            </div>
+          }
+
+          <!-- Relations Section -->
+          @if (type!.kind !== 'attributeType') {
+            <div class="detail-section">
+              <button class="section-header" (click)="relationsCollapsed = !relationsCollapsed">
+                <i class="fa-light" [class.fa-chevron-down]="!relationsCollapsed" [class.fa-chevron-right]="relationsCollapsed"></i>
+                <h6>Relations</h6>
+              </button>
+              @if (relationsCollapsed) {
+              } @else if (vm.relationsLoading) {
+                <div class="relations-loading">
+                  <mat-spinner diameter="24"></mat-spinner>
+                </div>
+              } @else if (vm.allRelations.length === 0) {
+                <p class="text-muted">No relations</p>
+              } @else {
+                <div class="section-bulk-action">
+                  <button class="add-to-graph-button" (click)="addAllRelations()">
+                    <i class="fa-light fa-plus"></i> Add all relations
+                  </button>
+                </div>
+                <div class="relation-filter-chips">
+                  <button
+                      class="filter-chip"
+                      [class.active]="selectedRelationType === null"
+                      (click)="selectRelationType(null)">
+                    All
+                    <span class="chip-count">{{ vm.allRelations.length }}</span>
+                  </button>
+                  @for (relType of vm.relationTypes; track relType) {
+                    <button
+                        class="filter-chip"
+                        [class.active]="selectedRelationType === relType"
+                        (click)="selectRelationType(relType)">
+                      {{ relType }}
+                      <span class="chip-count">{{ vm.getRelationTypeCount(relType) }}</span>
+                    </button>
+                  }
+                </div>
+                <div class="relations-list">
+                  @for (instance of filteredRelations; track instance.relationIID) {
+                    <div class="relation-card">
+                      <div class="relation-card-header">
+                        <span class="relation-type-label">{{ instance.relationTypeLabel }}</span>
+                        <span class="relation-iid">{{ instance.relationIID }}</span>
+                        <button class="add-to-graph-button header-explore"
+                                (click)="addRelation(instance)"
+                                matTooltip="Add to graph"
+                                matTooltipPosition="above">
+                          <i class="fa-light fa-plus"></i>
+                        </button>
+                      </div>
+                      <div class="relation-card-body">
+                        @for (link of instance.links; track link.roleLabel + link.playerIID) {
+                          <div class="link-card" [class.is-self]="link.isSelf">
+                            <div class="link-info">
+                              <span class="role-label">{{ link.roleLabel }}</span>
+                              <div class="player-details">
+                                <span class="player-type">{{ link.playerTypeLabel }}</span>
+                                <span class="player-iid">{{ link.playerIID }}</span>
+                                @if (link.isSelf) {
+                                  <span class="self-tag">this</span>
+                                }
+                              </div>
+                            </div>
+                            @if (!link.isSelf) {
+                              <div class="link-attrs">
+                                @for (attr of link.attributes; track attr.type) {
+                                  <div class="attr-row">
+                                    <span class="attr-key">{{ attr.type }}:</span>
+                                    <span class="attr-val">{{ attr.values.join(', ') }}</span>
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                      @if (instance.attributes.length > 0) {
+                        <div class="relation-card-attrs">
+                          <table class="attributes-table">
+                            <tbody>
+                              @for (attr of instance.attributes; track attr.type) {
+                                <tr>
+                                  <td class="attr-label">{{ attr.type }}<em class="value-type">, value {{ attr.valueType }}</em></td>
+                                  <td class="attr-value">
+                                    @for (value of attr.values; track $index) {
+                                      <div class="value-row">{{ value }}<button
+                                          class="copy-button"
+                                          (click)="copyValue(value, tooltip)"
+                                          matTooltip="Copied"
+                                          matTooltipPosition="above"
+                                          matTooltipShowDelay="999999"
+                                          #tooltip="matTooltip"><i class="fa-light fa-copy"></i></button></div>
+                                    }
+                                  </td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Owners Section (only for attributes) -->
+          @if (type!.kind === 'attributeType') {
+            <div class="detail-section">
+              <button class="section-header" (click)="ownersCollapsed = !ownersCollapsed">
+                <i class="fa-light" [class.fa-chevron-down]="!ownersCollapsed" [class.fa-chevron-right]="ownersCollapsed"></i>
+                <h6>Owners</h6>
+              </button>
+              @if (ownersCollapsed) {
+              } @else if (vm.ownersLoading) {
+                <div class="relations-loading">
+                  <mat-spinner diameter="24"></mat-spinner>
+                </div>
+              } @else if (vm.owners.length === 0) {
+                <p class="text-muted">No owners</p>
+              } @else {
+                <div class="links-list">
+                  @for (owner of vm.owners; track owner.ownerIID) {
+                    <div class="link-card">
+                      <div class="link-info">
+                        <div class="player-details">
+                          <span class="player-type" [ngClass]="owner.ownerKind">{{ owner.ownerTypeLabel }}</span>
+                          <span class="player-iid">{{ owner.ownerIID }}</span>
+                        </div>
+                      </div>
+                      <div class="link-attrs">
+                        @for (attr of owner.attributes; track attr.type) {
+                          <div class="attr-row">
+                            <span class="attr-key">{{ attr.type }}:</span>
+                            <span class="attr-val">{{ attr.values.join(', ') }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>
