@@ -3,11 +3,15 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatSlideToggleModule } from "@angular/material/slide-toggle";
+import { ResizableDirective } from "@hhangular/resizable";
 import { GraphStyleService } from "../../../service/graph-style.service";
+import { RunOutputState } from "../../../service/query-page-state.service";
+import { SchemaConcept } from "../../../service/schema-state.service";
 import { GraphVisualiser } from "../engine";
 import { ElementsTabComponent } from "./elements-tab.component";
 import { ThemesTabComponent } from "./themes-tab.component";
 import { CustomiseTabComponent } from "./customise-tab.component";
+import { GraphInspectorComponent } from "../inspector/graph-inspector.component";
 
 @Component({
     selector: "ts-graph-side-panel",
@@ -15,12 +19,22 @@ import { CustomiseTabComponent } from "./customise-tab.component";
     styleUrls: ["graph-side-panel.component.scss"],
     imports: [
         MatSelectModule, MatTooltipModule, MatFormFieldModule, MatSlideToggleModule,
+        ResizableDirective,
         ElementsTabComponent, ThemesTabComponent, CustomiseTabComponent,
+        GraphInspectorComponent,
     ],
 })
 export class GraphSidePanelComponent {
 
     @Input() visualiser: GraphVisualiser | null = null;
+    @Input() run: RunOutputState | null = null;
+    // Selection — wired in Phase C4. Until then the Inspector shows its placeholder.
+    @Input() selectedType: SchemaConcept | null = null;
+    @Input() selectedInstanceIID: string | null = null;
+
+    // Internal vertical split between Inspector and the tabbed lower pane.
+    inspectorPercent = 40;
+    lowerPanelPercent = 60;
 
     styleService = inject(GraphStyleService);
     topTab: "elements" | "presets" | "customise" = "elements";

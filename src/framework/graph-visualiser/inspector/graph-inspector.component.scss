@@ -7,10 +7,20 @@
 @use "colors";
 @use "shapes";
 
+// Override the absolute positioning that the data-side inspector applies via
+// :host. Inside the side panel we live in a flex column and need to honor the
+// parent's allocated height.
 :host {
     display: block;
     height: 100%;
+    width: 100%;
     overflow: hidden;
+    position: static;
+    inset: auto;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
 }
 
 .inspector-panel {

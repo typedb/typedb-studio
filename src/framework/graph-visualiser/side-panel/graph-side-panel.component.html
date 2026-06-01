@@ -1,4 +1,11 @@
-<div class="panel">
+<ts-graph-inspector class="inspector-pane"
+                    resizable [percent]="inspectorPercent" (percentChange)="inspectorPercent = $event"
+                    [type]="selectedType"
+                    [instanceIID]="selectedInstanceIID"
+                    [run]="run"
+                    [visualiser]="visualiser"/>
+
+<div class="panel" resizable [percent]="lowerPanelPercent" (percentChange)="lowerPanelPercent = $event">
   <!-- Top-level tabs -->
   <div class="tab-bar">
     <button class="tab" [class.active]="topTab === 'elements'" (click)="topTab = 'elements'">Elements @if (isHighlightActive) { <span class="highlight-indicator"></span> }</button>

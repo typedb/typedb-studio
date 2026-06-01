@@ -14,6 +14,7 @@ import { GraphPngExportMode, GraphVisualiser } from "../engine";
 import { GraphZoomControlsComponent } from "./zoom-controls/graph-zoom-controls.component";
 import { GraphSidePanelComponent } from "../side-panel/graph-side-panel.component";
 import { GraphStyleService, buildBackgroundCSS } from "../../../service/graph-style.service";
+import { RunOutputState } from "../../../service/query-page-state.service";
 
 export type GraphCanvasStatus = "ok" | "running" | "noAnswers" | "error" | "graphlessQueryType" | "answerOutputDisabled" | "multiQuery" | "emptySchema";
 export type GraphCanvasStatusAction = "viewLog";
@@ -30,6 +31,9 @@ export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
     @Input() graphPercent = 75;
     @Input() stylesPanePercent = 25;
     @Input() maximised = false;
+    /** The run that owns this canvas's graph. Passed through to the side panel
+     *  so the Inspector knows where to push instances/attributes/links. */
+    @Input() run: RunOutputState | null = null;
 
     @Output() maximisedChange = new EventEmitter<boolean>();
     @Output() graphPercentChange = new EventEmitter<number>();

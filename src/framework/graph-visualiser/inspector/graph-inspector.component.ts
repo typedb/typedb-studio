@@ -10,7 +10,8 @@ import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatButtonModule } from "@angular/material/button";
 import { MatTooltip, MatTooltipModule } from "@angular/material/tooltip";
 import { Clipboard } from "@angular/cdk/clipboard";
-import { GraphViewState, GraphViewTab } from "../../../service/graph-view-state.service";
+import { GraphViewState } from "../../../service/graph-view-state.service";
+import { RunOutputState } from "../../../service/query-page-state.service";
 import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
 import { InstanceDetailViewModel, LinkData, OwnerData, RelationInstanceData } from "../../../service/instance-detail-view-model.service";
 import { SnackbarService } from "../../../service/snackbar.service";
@@ -20,11 +21,12 @@ import { GraphVisualiser } from "../engine";
     selector: "ts-graph-inspector",
     templateUrl: "./graph-inspector.component.html",
     styleUrls: [
-        "./graph-inspector.component.scss",
         // Reuse the data-side inspector's section/card/attribute styling so we
         // don't duplicate ~600 lines of SCSS. Angular's view encapsulation
-        // keeps them scoped to this component.
+        // keeps them scoped to this component. Listed first so the
+        // graph-inspector's own SCSS (below) wins on the :host overrides.
         "../../../module/data/instance-detail/instance-detail.component.scss",
+        "./graph-inspector.component.scss",
     ],
     providers: [InstanceDetailViewModel],
     imports: [
@@ -37,7 +39,7 @@ import { GraphVisualiser } from "../engine";
 export class GraphInspectorComponent implements OnChanges {
     @Input() type: SchemaConcept | null = null;
     @Input() instanceIID: string | null = null;
-    @Input() tab: GraphViewTab | null = null;
+    @Input() run: RunOutputState | null = null;
     @Input() visualiser: GraphVisualiser | null = null;
 
     vm = inject(InstanceDetailViewModel);
@@ -79,42 +81,41 @@ export class GraphInspectorComponent implements OnChanges {
     }
 
     addAllAttributes() {
-        if (!this.tab || !this.type || !this.instanceIID) return;
+        if (!this.run || !this.type || !this.instanceIID) return;
         this.graphViewState
-            .fetchAttributesOf(this.tab.run, this.type, [this.instanceIID])
+            .fetchAttributesOf(this.run, this.type, [this.instanceIID])
             .then(() => this.visualiser?.reheat());
     }
 
     addAllRelations() {
-        if (!this.tab || !this.type || !this.instanceIID) return;
+        if (!this.run || !this.type || !this.instanceIID) return;
         this.graphViewState
-            .fetchLinksOf(this.tab.run, this.type, [this.instanceIID])
+            .fetchLinksOf(this.run, this.type, [this.instanceIID])
             .then(() => this.visualiser?.reheat());
     }
 
     addRelation(rel: RelationInstanceData) {
-        if (!this.tab) return;
+        if (!this.run) return;
         const relationType = this.lookupType(rel.relationTypeLabel);
         if (!relationType) return;
         this.graphViewState
-            .fetchLinksOf(this.tab.run, relationType, [rel.relationIID])
+            .fetchLinksOf(this.run, relationType, [rel.relationIID])
             .then(() => this.visualiser?.reheat());
     }
 
-    addLink(link: LinkData) {
-        // Add the player and the relation edge by fetching this relation's links.
-        // We don't have the parent relation in scope for a single link row inside
-        // a relation card, so fall back to refetching all of the current
-        // instance's relations — graph dedupes the rest.
+    addLink(_link: LinkData) {
+        // No parent relation in scope for a single link row inside a relation
+        // card, so fall back to refetching all of the current instance's
+        // relations — graph dedupes the rest.
         this.addAllRelations();
     }
 
     addOwnLink(_link: LinkData) {
-        // Own-links live on a relation instance — adding any one player pulls in
-        // the relation's full link set anyway, so just refetch.
-        if (!this.tab || !this.type || !this.instanceIID) return;
+        // Own-links live on a relation instance — adding any one player pulls
+        // in the relation's full link set anyway, so just refetch.
+        if (!this.run || !this.type || !this.instanceIID) return;
         this.graphViewState
-            .fetchLinksOf(this.tab.run, this.type, [this.instanceIID])
+            .fetchLinksOf(this.run, this.type, [this.instanceIID])
             .then(() => this.visualiser?.reheat());
     }
 

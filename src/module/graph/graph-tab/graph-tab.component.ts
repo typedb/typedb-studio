@@ -15,6 +15,7 @@ import { GraphViewTab } from "../../../service/graph-view-state.service";
         <ts-graph-canvas
             [visualiser]="tab.run.graph.visualiser"
             [status]="tab.run.graph.status"
+            [run]="tab.run"
             (statusAction)="onGraphStatusAction($event)"
         />
     `,

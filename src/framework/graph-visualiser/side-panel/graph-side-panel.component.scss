@@ -10,6 +10,19 @@
   font-weight: var(--font-weight-regular);
   background: var(--theme-deep-purple);
   border-left: 1px solid var(--theme-secondary-deep-grey);
+  gap: 0 !important;
+
+  ::ng-deep > app-drag-handle[direction="vertical"] {
+    height: 5px;
+    margin-top: -2px;
+    margin-bottom: -3px;
+    z-index: 2;
+  }
+}
+
+.inspector-pane {
+  min-height: 0;
+  overflow: hidden;
 }
 
 :host ::ng-deep .highlight-chip,
