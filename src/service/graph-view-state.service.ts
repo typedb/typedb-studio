@@ -127,6 +127,26 @@ export class GraphViewState {
     }
 
     /**
+     * Like `fetchAttributesOf`, but scoped to one specific attribute type
+     * label — used by the per-row "Add" affordance in the Inspector's
+     * Attributes section to pull in just one attribute kind.
+     */
+    async fetchAttributesOfTypeFor(
+        run: RunOutputState,
+        type: SchemaConcept,
+        iids: string[],
+        attrTypeLabel: string,
+    ): Promise<void> {
+        if (iids.length === 0) return;
+        const rowLimit = this.appData.preferences.queryRowLimit();
+        const instanceVar = this.instanceVar(type);
+        if (instanceVar === "a") return; // attribute types don't have own attributes
+        const branches = iids.map(iid => `{ $${instanceVar} iid ${iid}; }`).join(" or ");
+        const query = `match ${branches}; $${instanceVar} has ${attrTypeLabel} $a;`;
+        await this.runAndPush(run, query, rowLimit * 50);
+    }
+
+    /**
      * Fetch links (relation participation + role players) of the given IIDs
      * (must be entities or relations of `type`) into `run.graph`. IID-anchored
      * patterns sidestep TypeQL role-inference issues where a relation variable
@@ -137,6 +157,48 @@ export class GraphViewState {
         const queries = this.buildLinksQueries(type, iids);
         const rowLimit = this.appData.preferences.queryRowLimit();
         await Promise.all(queries.map(q => this.runAndPush(run, q, rowLimit * 50)));
+    }
+
+    /**
+     * Add a single relation instance to the graph along with its role players
+     * and role edges — *nothing else*. Used by the Inspector's per-relation
+     * "Explore" affordance. Distinct from `fetchLinksOf` (which also pulls in
+     * secondary relations that the players happen to participate in — way too
+     * much for a focused exploration of one relation).
+     *
+     * Binds the role variable so the graph builder can construct the role
+     * edge between $r and $p — without it the edge is missing.
+     */
+    async fetchRelation(run: RunOutputState, relationIID: string): Promise<void> {
+        const rowLimit = this.appData.preferences.queryRowLimit();
+        const query = `match $r iid ${relationIID}; $r links ($role: $p);`;
+        await this.runAndPush(run, query, rowLimit * 50);
+    }
+
+    /**
+     * Add a specific role-player of a relation to the graph, including the
+     * relation node and the role edge between them. Used by the Inspector's
+     * per-role-player "Explore" affordance — the relation is included too so
+     * the player has its connecting edge regardless of current graph state.
+     *
+     * If `originalIID` is supplied and differs from both the new player and
+     * the relation, the query also pulls in the role edge from the relation
+     * back to the original — so when the user explores a co-player from
+     * inside the relation card of an entity they're inspecting, the result
+     * stays connected to that entity in the graph.
+     */
+    async fetchPlayerInRelation(
+        run: RunOutputState,
+        relationIID: string,
+        playerIID: string,
+        originalIID?: string,
+    ): Promise<void> {
+        const rowLimit = this.appData.preferences.queryRowLimit();
+        let query = `match $r iid ${relationIID}; $r links ($role: $p); $p iid ${playerIID};`;
+        if (originalIID && originalIID !== playerIID && originalIID !== relationIID) {
+            query += ` $r links ($origRole: $orig); $orig iid ${originalIID};`;
+        }
+        await this.runAndPush(run, query, rowLimit * 50);
     }
 
     private async runAndPush(run: RunOutputState, query: string, rowLimit: number): Promise<void> {

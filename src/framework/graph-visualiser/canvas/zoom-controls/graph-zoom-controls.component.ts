@@ -1,3 +1,4 @@
+import { AsyncPipe } from "@angular/common";
 import { Component, Input } from "@angular/core";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { GraphVisualiser } from "../../engine";
@@ -8,7 +9,7 @@ const ZOOM_FACTOR = 0.7;
     selector: "ts-graph-zoom-controls",
     templateUrl: "graph-zoom-controls.component.html",
     styleUrls: ["graph-zoom-controls.component.scss"],
-    imports: [MatTooltipModule],
+    imports: [MatTooltipModule, AsyncPipe],
 })
 export class GraphZoomControlsComponent {
 
@@ -29,8 +30,13 @@ export class GraphZoomControlsComponent {
         camera.animatedZoom({ duration: 150, factor: ZOOM_FACTOR });
     }
 
-    resetZoom(): void {
-        this.visualiser?.centerCamera();
+    /** When something is selected, frame it; otherwise reset to the global view. */
+    resetOrFocus(): void {
+        if (this.visualiser?.interactionHandler?.state?.selectedNode != null) {
+            this.visualiser.focusSelection();
+        } else {
+            this.visualiser?.centerCamera();
+        }
     }
 
     stopLayout(): void {

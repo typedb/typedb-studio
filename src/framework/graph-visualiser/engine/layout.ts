@@ -116,8 +116,15 @@ export class Layouts {
 }
 
 
+export interface LayoutStartOptions {
+    /** D3-force only: initial alpha (default 1.0). Lower = less perturbation. */
+    initialAlpha?: number;
+    /** D3-force only: alpha decay rate (default 0.01). Higher = settles faster. */
+    alphaDecay?: number;
+}
+
 export interface LayoutWrapper {
-    start(): void;
+    start(opts?: LayoutStartOptions): void;
 
     stop(): void;
 
@@ -155,7 +162,7 @@ class LayoutSupervisorWrapper implements LayoutWrapper {
         this.runDurationMs = runDurationMs;
     }
 
-    start() {
+    start(_opts?: LayoutStartOptions) {
         this.stop();
         this.layout = this.factory();
         if (this.stopTimeout) clearTimeout(this.stopTimeout);
@@ -207,7 +214,7 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
         this.graph = graph;
     }
 
-    private buildSimulation(): ReturnType<typeof forceSimulation<D3Node>> {
+    private buildSimulation(opts?: LayoutStartOptions): ReturnType<typeof forceSimulation<D3Node>> {
         const nodes: D3Node[] = this.graph.nodes().map(key => {
             const attrs = this.graph.getNodeAttributes(key);
             return {
@@ -272,14 +279,15 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
             .force("center", forceCenter(0, 0))
             .force("x", forceX(0).strength(gravityStrength))
             .force("y", forceY(0).strength(gravityStrength))
-            .alphaDecay(0.01)
+            .alpha(opts?.initialAlpha ?? 1.0)
+            .alphaDecay(opts?.alphaDecay ?? 0.01)
             .stop();
     }
 
-    start() {
+    start(opts?: LayoutStartOptions) {
         this.stop();
         this.isRunning = true;
-        this.simulation = this.buildSimulation();
+        this.simulation = this.buildSimulation(opts);
         const sim = this.simulation;
         const tick = () => {
             sim.tick();
@@ -349,7 +357,7 @@ class StaticLayoutWrapper<LayoutParams> implements LayoutWrapper {
         this.params = params;
     }
 
-    start(): void {
+    start(_opts?: LayoutStartOptions): void {
     }
 
     stop(): void {

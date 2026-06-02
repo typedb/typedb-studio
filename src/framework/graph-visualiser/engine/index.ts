@@ -35,6 +35,14 @@ export class GraphVisualiser {
     private settingCameraProgrammatically = false;
     private peakCameraRatio = 0;
     private labelsAutoHidden = false;
+    /**
+     * When set, every layout tick re-projects this world point back to the
+     * current bbox's coordinate space and snaps the camera there. Used by
+     * `reheat({ preserveCamera })` so the camera stays pinned to the world
+     * spot the user was looking at even as the simulation re-positions nodes
+     * and Sigma's bbox shifts under it.
+     */
+    private pinnedCameraWorld: { worldX: number; worldY: number; ratio: number } | null = null;
     private stylesSub!: Subscription;
 
     constructor(public graph: Graph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
@@ -45,11 +53,18 @@ export class GraphVisualiser {
         this.interactionHandler.layout = this.layout;
         this.setupReducers();
         this.layout.onTick = () => {
-            if (this.autoZoomEnabled) this.centerCamera();
+            if (this.pinnedCameraWorld) {
+                this.restoreCameraWorld(this.pinnedCameraWorld);
+            } else if (this.autoZoomEnabled) {
+                this.centerCamera();
+            }
         };
         this.sigma.getCamera().addListener("updated", () => {
             if (!this.settingCameraProgrammatically) {
                 this.autoZoomEnabled = false;
+                // User took control — release the pin so future Explores don't
+                // snap back to a stale saved position.
+                this.pinnedCameraWorld = null;
             }
             this.updateLabelVisibilityForZoom();
         });
@@ -107,7 +122,7 @@ export class GraphVisualiser {
     }
 
     private setupReducers(): void {
-        const FADE_RATIO = 0.075; // mix 7.5% original color, 92.5% background
+        const FADE_RATIO = 0.15; // mix 15% original color, 85% background
         const PREVIEW_FADE_RATIO = 0.3; // mix 30% original color, 70% background — gentler than the regular fade
 
         const fade = (color: string) => chroma.mix(this.styleService.effectiveBackgroundHex, color, FADE_RATIO).hex();
@@ -121,7 +136,7 @@ export class GraphVisualiser {
             const pa = Math.round(alpha * 255);
             return `#${pr.toString(16).padStart(2, "0")}${pg.toString(16).padStart(2, "0")}${pb.toString(16).padStart(2, "0")}${pa.toString(16).padStart(2, "0")}`;
         };
-        const fadeSoft = buildFadeSoft(0.15);
+        const fadeSoft = buildFadeSoft(0.25);
         const fadeSoftForPreview = buildFadeSoft(0.3);
 
         this.sigma.setSetting("nodeReducer", (node, data) => {
@@ -289,6 +304,8 @@ export class GraphVisualiser {
     reLayout(): void {
         this.autoZoomEnabled = true;
         this.peakCameraRatio = 0;
+        this.pinnedCameraWorld = null;
+        this.unfreezeViewport();
         this.graph.nodes().forEach(node => {
             this.graph.setNodeAttribute(node, "x", Math.random());
             this.graph.setNodeAttribute(node, "y", Math.random());
@@ -300,15 +317,87 @@ export class GraphVisualiser {
     /**
      * Resume the layout simulation so newly added nodes settle into the
      * existing graph. Unlike `reLayout`, this preserves current node
-     * positions — the simulation restarts at full alpha from where things
-     * are now, so existing structure shifts only to accommodate the new
-     * elements.
+     * positions — the simulation restarts from where things are now.
+     *
+     * - `soft`: use a lower initial alpha + higher alpha decay so the
+     *   simulation perturbs the layout less and settles faster. Good for
+     *   incremental Explore/Add actions where we don't want the existing
+     *   layout to swirl.
+     * - `preserveCamera`: don't re-enable auto-zoom and don't recenter.
+     *   Use when the user has framed the view themselves and an Explore
+     *   shouldn't yank the camera around.
      */
-    reheat(): void {
-        this.autoZoomEnabled = true;
-        this.peakCameraRatio = 0;
-        this.layout.start();
-        this.centerCamera();
+    /**
+     * Pin the current bbox so that subsequent graph mutations (new nodes
+     * appearing, simulation re-laying out positions) don't visually shift
+     * the camera: Sigma stores the camera in coords normalized to the bbox,
+     * so an auto-growing bbox makes the same camera state cover more world
+     * space — which looks like a zoom-out. Same trick used in
+     * `onDownNode` when a drag begins. No-op if already pinned.
+     */
+    freezeViewport(): void {
+        if (!this.sigma.getCustomBBox()) {
+            this.sigma.setCustomBBox(this.sigma.getBBox());
+        }
+    }
+
+    /** Release the pinned bbox so Sigma resumes auto-fitting to the graph. */
+    unfreezeViewport(): void {
+        this.sigma.setCustomBBox(null);
+    }
+
+    /**
+     * Capture the camera's current world coordinates + ratio. Combined with
+     * `restoreCameraWorld`, this lets a caller pin the camera to the same
+     * world point across operations that mutate the bbox.
+     */
+    captureCameraWorld(): { worldX: number; worldY: number; ratio: number } {
+        const cam = this.sigma.getCamera().getState();
+        const bbox = this.sigma.getCustomBBox() ?? this.sigma.getBBox();
+        const bboxW = (bbox.x[1] - bbox.x[0]) || 1;
+        const bboxH = (bbox.y[1] - bbox.y[0]) || 1;
+        return {
+            worldX: bbox.x[0] + cam.x * bboxW,
+            worldY: bbox.y[0] + cam.y * bboxH,
+            ratio: cam.ratio,
+        };
+    }
+
+    /** Convert saved world coords back to current-bbox-relative camera state. */
+    restoreCameraWorld(saved: { worldX: number; worldY: number; ratio: number }): void {
+        const bbox = this.sigma.getCustomBBox() ?? this.sigma.getBBox();
+        const bboxW = (bbox.x[1] - bbox.x[0]) || 1;
+        const bboxH = (bbox.y[1] - bbox.y[0]) || 1;
+        const x = (saved.worldX - bbox.x[0]) / bboxW;
+        const y = (saved.worldY - bbox.y[0]) / bboxH;
+        this.settingCameraProgrammatically = true;
+        this.sigma.getCamera().setState({ x, y, ratio: saved.ratio, angle: 0 });
+        this.settingCameraProgrammatically = false;
+    }
+
+    reheat(opts?: { soft?: boolean; preserveCamera?: boolean }): void {
+        if (opts?.preserveCamera) {
+            // Force off — without this, an already-true `autoZoomEnabled`
+            // would have the onTick callback recentering the camera on every
+            // frame as nodes shift around.
+            this.autoZoomEnabled = false;
+            // Pin the camera to the world point it's currently looking at so
+            // the per-tick onTick callback can snap it back there as the
+            // simulation re-positions things and Sigma's bbox shifts.
+            this.pinnedCameraWorld = this.captureCameraWorld();
+        } else {
+            this.autoZoomEnabled = true;
+            this.peakCameraRatio = 0;
+            this.pinnedCameraWorld = null;
+        }
+        if (opts?.soft) {
+            this.layout.start({ initialAlpha: 0.5, alphaDecay: 0.04 });
+        } else {
+            this.layout.start();
+        }
+        if (!opts?.preserveCamera) {
+            this.centerCamera();
+        }
     }
 
     centerCamera(zoomOutOnly = false): void {
@@ -317,6 +406,12 @@ export class GraphVisualiser {
 
         const { width, height } = this.sigma.getDimensions();
         if (width === 0 || height === 0) return;
+
+        // Reset view should always re-fit the entire graph; clear any pinned
+        // bbox so x/y = 0.5 actually centers on the full extent rather than
+        // on a stale frozen subregion.
+        this.unfreezeViewport();
+        this.pinnedCameraWorld = null;
 
         // Compute graph bounding box in graph coordinates
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -356,13 +451,22 @@ export class GraphVisualiser {
         if (isApiErrorResponse(res)) return;
 
         if (res.ok.answerType === "conceptRows") {
+            // Snapshot whether the graph was empty *before* this push. A
+            // first-time push (e.g. opening a new type tab) gets the full
+            // auto-fit treatment; subsequent incremental pushes (Inspector
+            // Explore/Add actions) leave the camera and layout supervisor
+            // alone so the user's focused view isn't yanked away. The
+            // inspector kicks its own `reheat({ preserveCamera })` after.
+            const wasEmpty = this.graph.order === 0;
             this.state.activeQueryDatabase = database;
-            this.autoZoomEnabled = true;
-            this.peakCameraRatio = 0;
             this.handleQueryResult(res);
             if (this.styleService.degreeScaling) this.applyStyleUpdate();
-            this.layout.startOrRedraw();
-            this.centerCamera();
+            if (wasEmpty) {
+                this.autoZoomEnabled = true;
+                this.peakCameraRatio = 0;
+                this.layout.startOrRedraw();
+                this.centerCamera();
+            }
         }
     }
 
@@ -418,6 +522,104 @@ export class GraphVisualiser {
     clearSearch() {
         if (this.searchMatches == null) return;
         this.searchGraph("");
+    }
+
+    /**
+     * Programmatically select an instance node — equivalent to the user
+     * clicking it: highlight ring, neighbor fade, Inspector update. For
+     * entity/relation nodes we match by IID; for attributes we match by
+     * (typeLabel, value). No-op if the node isn't in the graph yet.
+     */
+    selectInstance(kind: "entity" | "relation" | "attribute", typeLabel: string, instanceId: string): void {
+        const nodeKey = this.findInstanceNode(kind, typeLabel, instanceId);
+        if (nodeKey == null) return;
+        this.interactionHandler.selectNode(nodeKey);
+    }
+
+    /**
+     * Set the secondary highlight anchors by instance identity (kind +
+     * typeLabel + iid/value) — used by the Inspector to keep every step in
+     * its breadcrumb trail visually lit alongside the current selection.
+     * Entries that don't map to a graph node are silently dropped.
+     */
+    setHighlightAnchorsByInstance(specs: { kind: "entity" | "relation" | "attribute"; typeLabel: string; instanceId: string }[]): void {
+        const keys = new Set<string>();
+        for (const spec of specs) {
+            const key = this.findInstanceNode(spec.kind, spec.typeLabel, spec.instanceId);
+            if (key != null) keys.add(key);
+        }
+        this.interactionHandler.setSecondaryAnchors(keys);
+    }
+
+    /**
+     * Pan + zoom the camera to enclose the current selection (selected node +
+     * its highlighted neighbors). No-op if nothing is selected. Mirrors the
+     * bbox-fitting math of `focusSearchMatches`.
+     */
+    focusSelection(): void {
+        const handler = this.interactionHandler;
+        const selectedNode = handler.state.selectedNode;
+        if (selectedNode == null) return;
+
+        const { width, height } = this.sigma.getDimensions();
+        if (width === 0 || height === 0) return;
+
+        const nodes = new Set<string>([selectedNode]);
+        handler.state.selectedNeighbors?.forEach(n => nodes.add(n));
+
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        nodes.forEach(node => {
+            try {
+                const attrs = this.graph.getNodeAttributes(node);
+                if (attrs.x == null || attrs.y == null) return;
+                minX = Math.min(minX, attrs.x);
+                maxX = Math.max(maxX, attrs.x);
+                minY = Math.min(minY, attrs.y);
+                maxY = Math.max(maxY, attrs.y);
+            } catch { /* missing metadata mid-mutation */ }
+        });
+        if (!isFinite(minX)) return;
+
+        const graphWidth = maxX - minX || 1;
+        const graphHeight = maxY - minY || 1;
+        const padding = 1.3;
+        const rawRatio = Math.max(graphWidth / width, graphHeight / height) * padding;
+        const ratio = Math.max(Math.min(rawRatio, 20), 1);
+
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const bbox = this.sigma.getCustomBBox() || this.sigma.getBBox();
+        const x = (centerX - bbox.x[0]) / (bbox.x[1] - bbox.x[0]) || 0.5;
+        const y = (centerY - bbox.y[0]) / (bbox.y[1] - bbox.y[0]) || 0.5;
+
+        // Focus is establishing a new framing — drop any prior world pin so
+        // the next onTick doesn't snap us back somewhere else.
+        this.autoZoomEnabled = false;
+        this.pinnedCameraWorld = null;
+        this.settingCameraProgrammatically = true;
+        this.sigma.getCamera().setState({ x, y, ratio, angle: 0 });
+        this.settingCameraProgrammatically = false;
+    }
+
+    private findInstanceNode(kind: "entity" | "relation" | "attribute", typeLabel: string, instanceId: string): string | null {
+        let found: string | null = null;
+        this.graph.nodes().forEach(node => {
+            if (found != null) return;
+            try {
+                const concept = this.graph.getNodeAttributes(node)?.["metadata"]?.concept;
+                if (!concept) return;
+                if (kind === "attribute") {
+                    if (concept.kind === "attribute"
+                        && concept.type?.label === typeLabel
+                        && String(concept.value) === instanceId) {
+                        found = node;
+                    }
+                } else if (concept.kind === kind && concept.iid === instanceId) {
+                    found = node;
+                }
+            } catch { /* missing metadata mid-mutation */ }
+        });
+        return found;
     }
 
     focusSearchMatches(): void {

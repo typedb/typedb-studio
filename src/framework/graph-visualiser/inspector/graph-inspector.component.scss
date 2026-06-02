@@ -81,18 +81,82 @@
     user-select: text;
 }
 
+// Per-row "Add to graph" affordance next to each attribute type label in the
+// Attributes table. Icon-only; matches the framed look of `.add-to-graph-button`
+// (background + border) but in a compact square instead of a wide pill.
+//
+// Positioned absolutely against the cell so it sits flush against the right
+// edge regardless of how short the type label is — the cell reserves a
+// right-padding track for it (see `.attr-label` in the shared SCSS).
+.add-attr-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: var(--theme-secondary-purple);
+    border: 1px solid var(--theme-secondary-deep-grey);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--theme-grey);
+    transition: all 0.15s ease;
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+
+    &:hover {
+        color: var(--theme-green);
+        border-color: var(--theme-green);
+    }
+
+    // All three properties must be overridden together (see AGENTS.md CSS
+    // pitfall about icon sizing in buttons).
+    i {
+        font-size: 11px;
+        width: 11px;
+        height: 11px;
+        line-height: 1;
+    }
+}
+
 .section-bulk-action {
     display: flex;
-    justify-content: flex-end;
-    padding: 4px 0 8px;
+    justify-content: flex-start;
+    padding: 4px 0 16px;
+
+    // Attributes section sits directly above the attributes table which
+    // already provides its own row spacing, so the bulk-action button
+    // doesn't need as much breathing room below.
+    &--tight {
+        padding-bottom: 8px;
+    }
 }
+
+// Allow breadcrumbs to wrap onto multiple lines when the inspector pane is
+// narrow. Each `.breadcrumb-group` keeps a chevron glued to the breadcrumb it
+// points to, so a wrapped chevron never dangles at the start of a new line.
+.breadcrumbs {
+    flex-wrap: wrap;
+    row-gap: 4px;
+}
+
+.breadcrumb-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 
 .add-to-graph-button {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 10px;
+    padding: 7px 12px;
+    min-height: 28px;
     font-size: 12px;
+    line-height: 1;
     color: var(--theme-grey);
     background: var(--theme-secondary-purple);
     border: 1px solid var(--theme-secondary-deep-grey);
@@ -105,8 +169,15 @@
         border-color: var(--theme-green);
     }
 
+    // All three properties must be overridden together — base.scss sets a
+    // global `i { width: 16px; height: 16px; font-size: 16px }`, so setting
+    // only font-size leaves the 16px box dimensions and pushes the glyph
+    // off-center against the button's text baseline.
     i {
-        font-size: 11px;
+        font-size: 12px;
+        width: 12px;
+        height: 12px;
+        line-height: 1;
     }
 
     // Compact icon-only variant (used per-row)

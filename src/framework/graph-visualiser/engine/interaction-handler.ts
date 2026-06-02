@@ -2,10 +2,26 @@ import type { GraphVisualiser } from "./index";
 import Sigma from "sigma";
 import MultiGraph from "graphology";
 import chroma from "chroma-js";
+import { BehaviorSubject } from "rxjs";
 import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "sigma/types";
 import {GraphStyles} from "./styles";
 import {LayoutWrapper} from "./layout";
 import type {GraphStyleService} from "../../../service/graph-style.service";
+
+/**
+ * Selection payload emitted when a graph instance node is clicked. Carries
+ * just enough info for an upstream consumer (e.g. the Inspector) to look up
+ * the full SchemaConcept via the application's schema state. Type nodes
+ * (entityType / relationType / attributeType) are not surfaced — only
+ * concrete instances are inspectable.
+ */
+export interface InspectableSelection {
+    kind: "entity" | "relation" | "attribute";
+    typeLabel: string;
+    /** For entity/relation: the IID. For attribute: the value (attributes have
+     *  no IID in TypeDB; values uniquely identify them per type). */
+    instanceId: string;
+}
 
 // Ref: https://www.sigmajs.org/docs/advanced/events/
 // and: https://www.sigmajs.org/storybook/?path=/story/mouse-manipulations--story
@@ -26,6 +42,22 @@ export class InteractionHandler {
     state: InteractionState;
     layout: LayoutWrapper | null = null;
     visualiser: GraphVisualiser | null = null;
+    selection$ = new BehaviorSubject<InspectableSelection | null>(null);
+    /**
+     * True iff the most recent selection change came from the user clicking a
+     * node that was already in the previous selection's highlighted neighbor
+     * set. The Inspector reads this to decide whether to extend the breadcrumb
+     * trail or start a fresh one. Reset to false for programmatic selections
+     * and selection clears.
+     */
+    lastSelectionWasFromHighlight = false;
+    /**
+     * Additional anchor nodes whose neighborhoods are highlighted alongside
+     * the primary selection — populated by the Inspector with the node keys
+     * for breadcrumb ancestors, so the union of every step in the exploration
+     * chain stays lit up.
+     */
+    private secondaryAnchors: Set<string> = new Set();
 
     constructor(public graph: MultiGraph, public renderer: Sigma, private studioState: StudioState, public styleParams: GraphStyles, public styleService?: GraphStyleService) {
         this.state = {
@@ -139,12 +171,28 @@ export class InteractionHandler {
         }
         this.visualiser?.clearSearch();
         const node = event.node;
-        if (this.state.selectedNode === node) {
-            this.clearSelection();
-        } else {
-            this.state.selectedNode = node;
-            this.state.selectedNeighbors = this.collectHighlightedNeighbors(node);
-            this.renderer.refresh();
+        if (this.state.selectedNode === node) return; // re-clicking the selected node is a no-op
+        this.lastSelectionWasFromHighlight = this.state.selectedNeighbors?.has(node) ?? false;
+        this.state.selectedNode = node;
+        this.recomputeHighlightSet();
+        this.selection$.next(this.extractInspectableSelection(node));
+    }
+
+    private extractInspectableSelection(node: string): InspectableSelection | null {
+        try {
+            const concept = this.graph.getNodeAttributes(node)?.["metadata"]?.concept;
+            if (!concept) return null;
+            if (concept.kind === "entity" || concept.kind === "relation") {
+                if (!concept.iid || !concept.type?.label) return null;
+                return { kind: concept.kind, typeLabel: concept.type.label, instanceId: concept.iid };
+            }
+            if (concept.kind === "attribute") {
+                if (concept.value == null || !concept.type?.label) return null;
+                return { kind: "attribute", typeLabel: concept.type.label, instanceId: String(concept.value) };
+            }
+            return null;
+        } catch {
+            return null;
         }
     }
 
@@ -154,12 +202,15 @@ export class InteractionHandler {
      * Starting from the clicked node's direct neighbors:
      * - Entity / entityType: also highlight its connected attributes / attributeTypes
      * - Relation / relationType: also highlight all its connected concepts (entities, relations, attributes / their type equivalents)
-     * - Attribute / attributeType / value: no further expansion
+     * - Attribute / attributeType / value: only the direct owners — we do NOT
+     *   expand to the owners' other attributes, since that would highlight
+     *   most of the graph any time a common attribute (e.g. a name) is clicked.
      *
      * Recurses up to maxDepth (4) to follow relation chains without blowing up.
      */
     private collectHighlightedNeighbors(root: string, maxDepth = 4): Set<string> {
         const highlighted = new Set<string>();
+        const rootKind = this.getNodeKind(root);
 
         // Seed with direct neighbors of the root
         const directNeighbors = this.graph.neighbors(root);
@@ -169,6 +220,11 @@ export class InteractionHandler {
                 highlighted.add(neighbor);
                 queue.push({ node: neighbor, depth: 1 });
             }
+        }
+
+        // Attribute clicks stop at direct owners — no further expansion.
+        if (rootKind === "attribute" || rootKind === "attributeType") {
+            return highlighted;
         }
 
         while (queue.length > 0) {
@@ -220,7 +276,60 @@ export class InteractionHandler {
 
     clearSelection() {
         this.state.selectedNode = null;
-        this.state.selectedNeighbors = null;
+        this.lastSelectionWasFromHighlight = false;
+        this.recomputeHighlightSet();
+        this.selection$.next(null);
+    }
+
+    /**
+     * Programmatically select a node — same effect as clicking it: highlight
+     * ring, neighbor fade, and selection$ emission for the Inspector.
+     */
+    selectNode(node: string): void {
+        if (this.state.selectedNode === node) return;
+        this.lastSelectionWasFromHighlight = false;
+        this.state.selectedNode = node;
+        this.recomputeHighlightSet();
+        this.selection$.next(this.extractInspectableSelection(node));
+    }
+
+    /**
+     * Replace the set of secondary anchor nodes — additional nodes whose
+     * neighborhoods should also stay highlighted alongside the primary
+     * selection. The Inspector calls this with the breadcrumb ancestors'
+     * node keys whenever the trail changes.
+     */
+    setSecondaryAnchors(anchors: Set<string>): void {
+        this.secondaryAnchors = anchors;
+        this.recomputeHighlightSet();
+    }
+
+    /**
+     * Rebuild `selectedNeighbors` as the union of:
+     *   - the primary selection's highlighted neighbors, and
+     *   - each secondary anchor (itself) and its highlighted neighbors.
+     * Leaves it null when nothing is selected and no anchors are set so the
+     * reducer treats the graph as un-highlighted (no fade).
+     *
+     * Public so callers that mutate the graph (e.g. bulk-add fetches in the
+     * Inspector) can ask for the highlight to re-evaluate against the new
+     * node set without having to change the selection.
+     */
+    recomputeHighlightSet(): void {
+        if (this.state.selectedNode == null && this.secondaryAnchors.size === 0) {
+            this.state.selectedNeighbors = null;
+            this.renderer.refresh();
+            return;
+        }
+        const all = new Set<string>();
+        if (this.state.selectedNode != null) {
+            this.collectHighlightedNeighbors(this.state.selectedNode).forEach(n => all.add(n));
+        }
+        this.secondaryAnchors.forEach(anchor => {
+            all.add(anchor);
+            this.collectHighlightedNeighbors(anchor).forEach(n => all.add(n));
+        });
+        this.state.selectedNeighbors = all;
         this.renderer.refresh();
     }
 

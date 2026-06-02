@@ -21,6 +21,9 @@
     flex-direction: column;
     height: 100%;
     overflow: hidden;
+    // Establish a query container so children can respond to the *pane's*
+    // width via @container rules below, independent of the viewport.
+    container: instance-detail / inline-size;
 }
 
 .stale-data-banner {
@@ -284,7 +287,9 @@
 
     .attr-label {
         width: 1%;
-        padding: 6px 10px;
+        // Right padding reserves a track for the absolutely-positioned
+        // "Add" icon button so the label text and button don't overlap.
+        padding: 6px 40px 6px 10px;
         font-size: 13px;
         color: var(--theme-attribute-blue);
         font-weight: 500;
@@ -292,6 +297,7 @@
         border-radius: 4px 0 0 4px;
         white-space: nowrap;
         vertical-align: top;
+        position: relative;
 
         .value-type {
             color: var(--theme-grey);
@@ -307,10 +313,16 @@
         border-radius: 0 4px 4px 0;
         vertical-align: top;
         white-space: normal;
+        // Break unbreakable strings (URLs, hashes, long IDs) at the character
+        // level so they wrap inside the cell instead of pushing the table out.
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
 
     .value-row {
         display: block;
+        overflow-wrap: anywhere;
+        word-break: break-word;
 
         &:not(:last-child) {
             margin-bottom: 4px;
@@ -431,17 +443,26 @@
         font-size: 14px;
         font-weight: 600;
         color: var(--theme-relation-yellow);
+        flex-shrink: 0;
     }
 
+    // The IID is the first thing to give up space when the pane gets narrow —
+    // it truncates with an ellipsis so the action button stays visible.
     .relation-iid {
         font-family: monospace;
         font-size: 11px;
         color: var(--theme-secondary-grey);
+        flex: 0 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .header-explore {
         margin-left: auto;
         margin-top: 0;
+        flex-shrink: 0;
     }
 }
 
@@ -522,7 +543,9 @@
     }
 }
 
-// Link attributes - vertical scroll pane
+// Link attributes - vertical scroll pane (horizontal scroll too: long
+// attribute values are kept full-length and scroll horizontally rather
+// than getting clipped or wrapped, which would mangle structured values.)
 .link-attrs {
     display: flex;
     flex-direction: column;
@@ -530,7 +553,7 @@
     flex: 1;
     min-width: 0;
     max-height: 80px;
-    overflow-y: auto;
+    overflow: auto;
 
     padding: 8px;
     border: 1px solid var(--theme-secondary-deep-grey);
@@ -543,6 +566,11 @@
     align-items: baseline;
     gap: 6px;
     font-size: 12px;
+    // Stretch the row to its content so the value's overflow drives the
+    // parent's horizontal scroll instead of getting clipped at the column's
+    // (narrow) width.
+    width: max-content;
+    max-width: none;
 
     .attr-key {
         color: var(--theme-attribute-blue);
@@ -552,8 +580,6 @@
     .attr-val {
         color: var(--theme-grey);
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
 }
 
@@ -587,5 +613,114 @@
 
     &:active {
         transform: scale(0.98);
+    }
+}
+
+// Narrow-pane responsive tweaks — these fire based on the inspector pane's
+// own width via the `instance-detail` container declared on .detail-panel.
+@container instance-detail (width < 450px) {
+    // Drop the ", value <type>" suffix on attribute labels — saves a lot of
+    // horizontal space in the label column when the pane is tight.
+    .attributes-table .attr-label .value-type {
+        display: none;
+    }
+
+    // Stack the type row's outer children — type label + supertype/kind stay
+    // side-by-side inside .type-info, and the trailing element (IID in graph
+    // inspector, Explore button in data inspector) drops below, left-aligned.
+    .type-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    // The graph inspector's IID has `margin-left: auto` to push right in the
+    // default row layout. In a column flex container that auto margin still
+    // applies cross-axis and pushes the item to the right edge — clear it so
+    // align-items: flex-start can left-align.
+    .type-row .instance-iid {
+        margin-left: 0;
+    }
+
+    // Within any link card (relation's own links, or a related relation's
+    // role players), stack role / player / attributes vertically instead of
+    // side-by-side so each can use the full available width.
+    .link-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .link-card .link-info {
+        min-width: 0;
+    }
+
+    .link-card .link-attrs {
+        max-height: none;
+    }
+
+    // Stack the relation card header: type label → iid → Explore button.
+    // `order` reorders the IID (DOM-order: 2nd) and the button (DOM-order:
+    // 3rd) so the IID sits between them visually.
+    .relation-card-header {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .relation-card-header .relation-iid {
+        order: 1;
+        flex-basis: auto;
+    }
+
+    .relation-card-header .header-explore {
+        order: 2;
+        margin-left: 0;
+    }
+}
+
+// Ultra-narrow tweaks — collapse the attributes table from a 2-column row
+// layout to a vertical stack so the value sits below its label.
+@container instance-detail (width < 300px) {
+    // Stack the player meta: type label → iid → optional self tag.
+    .link-info .player-details {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .attributes-table {
+        display: block;
+        border-spacing: 0;
+    }
+
+    .attributes-table tbody,
+    .attributes-table tr {
+        display: block;
+    }
+
+    // `border-spacing` is a table-only property, so once the row is block
+    // we need explicit margin between rows.
+    .attributes-table tr {
+        margin-bottom: 8px;
+    }
+
+    .attributes-table td {
+        display: block;
+        width: 100%;
+    }
+
+    // Restack the rounded corners: label rounds at the top, value at the
+    // bottom, so the pair visually reads as one stacked card. Also widen the
+    // label cell — the `width: 1%` shrink-to-content trick only works under
+    // table layout, and under display:block it collapses to ~1% of parent.
+    .attributes-table .attr-label {
+        width: 100%;
+        border-radius: 4px 4px 0 0;
+    }
+
+    .attributes-table .attr-value {
+        border-radius: 0 0 4px 4px;
     }
 }

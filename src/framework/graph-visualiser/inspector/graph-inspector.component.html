@@ -11,6 +11,28 @@
     </div>
   } @else {
     <div class="detail-panel inspector-detail">
+      <div class="breadcrumbs">
+        @for (crumb of breadcrumbs; track $index; let i = $index) {
+          <div class="breadcrumb-group">
+            @if (i > 0) {
+              <i class="fa-light fa-chevron-right breadcrumb-separator"></i>
+            }
+            <button class="breadcrumb-item" (click)="navigateToBreadcrumb(i)">
+              <i class="breadcrumb-icon" [ngClass]="getTypeIconClass(crumb.typeKind, true)"></i>
+              {{ crumb.typeLabel }}: {{ crumb.instanceId.substring(0, 8) }}...
+            </button>
+          </div>
+        }
+        <div class="breadcrumb-group">
+          @if (breadcrumbs.length > 0) {
+            <i class="fa-light fa-chevron-right breadcrumb-separator"></i>
+          }
+          <span class="breadcrumb-current">
+            <i class="breadcrumb-icon" [ngClass]="getTypeIconClass(type!.kind, true)"></i>
+            {{ type!.label }}: {{ instanceIID!.substring(0, 8) }}...
+          </span>
+        </div>
+      </div>
       @if (vm.isDataStale) {
         <div class="stale-data-banner">
           <i class="fa-light fa-clock-rotate-left"></i>
@@ -36,26 +58,20 @@
             <mat-spinner diameter="40"></mat-spinner>
           </div>
         } @else {
-          <!-- Type Section -->
-          <div class="detail-section">
-            <button class="section-header" (click)="typeCollapsed = !typeCollapsed">
-              <i class="fa-light" [class.fa-chevron-down]="!typeCollapsed" [class.fa-chevron-right]="typeCollapsed"></i>
-              <h6>Type</h6>
-            </button>
-            @if (!typeCollapsed) {
-              <div class="type-row">
-                <span class="type-info">
-                  @if (type!.supertype) {
-                    <span class="type-label" [ngClass]="vm.typeKindLabel">{{ type!.label }}@if (type!.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
-                    <span class="type-muted">sub {{ type!.supertype.label }}</span>
-                  } @else {
-                    <span class="type-muted">{{ vm.typeKindLabel }}</span>
-                    <span class="type-label" [ngClass]="vm.typeKindLabel">{{ type!.label }}@if (type!.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
-                  }
-                </span>
-                <span class="instance-iid">{{ instanceIID }}</span>
-              </div>
-            }
+          <!-- Type row (no collapsible heading) -->
+          <div class="detail-section type-section">
+            <div class="type-row">
+              <span class="type-info">
+                @if (type!.supertype) {
+                  <span class="type-label" [ngClass]="vm.typeKindLabel">{{ type!.label }}@if (type!.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
+                  <span class="type-muted">sub {{ type!.supertype.label }}</span>
+                } @else {
+                  <span class="type-muted">{{ vm.typeKindLabel }}</span>
+                  <span class="type-label" [ngClass]="vm.typeKindLabel">{{ type!.label }}@if (type!.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
+                }
+              </span>
+              <span class="instance-iid">{{ instanceIID }}</span>
+            </div>
           </div>
 
           <!-- Links Section (only for relations) -->
@@ -75,7 +91,7 @@
               } @else {
                 <div class="section-bulk-action">
                   <button class="add-to-graph-button" (click)="addAllRelations()">
-                    <i class="fa-light fa-plus"></i> Add all links
+                    <i class="fa-light fa-arrow-up"></i> Add all to graph
                   </button>
                 </div>
                 <div class="links-list">
@@ -87,11 +103,10 @@
                           <span class="player-type">{{ link.playerTypeLabel }}</span>
                           <span class="player-iid">{{ link.playerIID }}</span>
                         </div>
-                        <button class="add-to-graph-button"
-                                (click)="addOwnLink(link)"
-                                matTooltip="Add to graph"
-                                matTooltipPosition="above">
-                          <i class="fa-light fa-plus"></i>
+                        <button class="open-details-button"
+                                (click)="exploreOwnLink(link)">
+                          Explore
+                          <i class="fa-light fa-arrow-right"></i>
                         </button>
                       </div>
                       <div class="link-attrs">
@@ -120,16 +135,21 @@
               } @else if (vm.attributes.length === 0) {
                 <p class="text-muted">No attributes</p>
               } @else {
-                <div class="section-bulk-action">
+                <div class="section-bulk-action section-bulk-action--tight">
                   <button class="add-to-graph-button" (click)="addAllAttributes()">
-                    <i class="fa-light fa-plus"></i> Add all attributes
+                    <i class="fa-light fa-arrow-up"></i> Add all to graph
                   </button>
                 </div>
                 <table class="attributes-table">
                   <tbody>
                     @for (attr of vm.attributes; track attr.type) {
                       <tr>
-                        <td class="attr-label">{{ attr.type }}<em class="value-type">, value {{ attr.valueType }}</em></td>
+                        <td class="attr-label">{{ attr.type }}<em class="value-type">, value {{ attr.valueType }}</em><button
+                            class="add-attr-icon-button"
+                            (click)="addAttribute(attr)"
+                            matTooltip="Add to graph"
+                            matTooltipPosition="above"
+                            [matTooltipShowDelay]="500"><i class="fa-light fa-arrow-up"></i></button></td>
                         <td class="attr-value">
                           @for (value of attr.values; track $index) {
                             <div class="value-row">{{ value }}<button
@@ -166,7 +186,7 @@
               } @else {
                 <div class="section-bulk-action">
                   <button class="add-to-graph-button" (click)="addAllRelations()">
-                    <i class="fa-light fa-plus"></i> Add all relations
+                    <i class="fa-light fa-arrow-up"></i> Add all to graph
                   </button>
                 </div>
                 <div class="relation-filter-chips">
@@ -193,11 +213,10 @@
                       <div class="relation-card-header">
                         <span class="relation-type-label">{{ instance.relationTypeLabel }}</span>
                         <span class="relation-iid">{{ instance.relationIID }}</span>
-                        <button class="add-to-graph-button header-explore"
-                                (click)="addRelation(instance)"
-                                matTooltip="Add to graph"
-                                matTooltipPosition="above">
-                          <i class="fa-light fa-plus"></i>
+                        <button class="open-details-button header-explore"
+                                (click)="exploreRelation(instance)">
+                          Explore
+                          <i class="fa-light fa-arrow-right"></i>
                         </button>
                       </div>
                       <div class="relation-card-body">
@@ -212,6 +231,13 @@
                                   <span class="self-tag">this</span>
                                 }
                               </div>
+                              @if (!link.isSelf) {
+                                <button class="open-details-button"
+                                        (click)="explorePlayer(instance, link)">
+                                  Explore
+                                  <i class="fa-light fa-arrow-right"></i>
+                                </button>
+                              }
                             </div>
                             @if (!link.isSelf) {
                               <div class="link-attrs">
