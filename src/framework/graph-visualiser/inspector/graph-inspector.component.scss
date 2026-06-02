@@ -100,15 +100,14 @@
     border-radius: 4px;
     cursor: pointer;
     color: var(--theme-grey);
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
     position: absolute;
     top: 50%;
     right: 8px;
     transform: translateY(-50%);
 
     &:hover {
-        color: var(--theme-green);
-        border-color: var(--theme-green);
+        background: var(--theme-secondary-mid-deep-grey);
     }
 
     // All three properties must be overridden together (see AGENTS.md CSS
@@ -162,11 +161,12 @@
     border: 1px solid var(--theme-secondary-deep-grey);
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
 
+    // Match `.open-details-button` ("Explore") hover behaviour — just nudge
+    // the background a touch darker; no green border or text colour change.
     &:hover {
-        color: var(--theme-green);
-        border-color: var(--theme-green);
+        background: var(--theme-secondary-mid-deep-grey);
     }
 
     // All three properties must be overridden together — base.scss sets a

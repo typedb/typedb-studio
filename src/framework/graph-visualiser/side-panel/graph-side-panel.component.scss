@@ -23,6 +23,7 @@
 .inspector-pane {
   min-height: 0;
   overflow: hidden;
+  border-bottom: 1px solid var(--theme-secondary-dark-grey);
 }
 
 :host ::ng-deep .highlight-chip,

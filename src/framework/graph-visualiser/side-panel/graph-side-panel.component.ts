@@ -36,8 +36,8 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
     selectedInstanceIID: string | null = null;
 
     // Internal vertical split between Inspector and the tabbed lower pane.
-    inspectorPercent = 40;
-    lowerPanelPercent = 60;
+    inspectorPercent = 50;
+    lowerPanelPercent = 50;
 
     private schemaState = inject(SchemaState);
     private selectionSub: Subscription | null = null;
