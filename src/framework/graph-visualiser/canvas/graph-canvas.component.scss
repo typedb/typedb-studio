@@ -158,6 +158,54 @@
     }
 }
 
+// Standalone bottom-left overlay for the type/instance selection-mode
+// toggle. Same vertical pill shape as the zoom-pair, with a green-tinted
+// active state so the chosen mode is clearly distinguishable from a
+// non-active hover.
+.graph-selection-mode-toggle {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--gc-border);
+    background: var(--gc-bg);
+    border-radius: 6px;
+    overflow: hidden;
+
+    .mode-button {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        color: var(--gc-fg);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        font-size: 14px;
+        transition: background-color 0.15s, color 0.15s;
+
+        &:hover:not(.active) {
+            background: var(--gc-hover-bg);
+        }
+
+        // Active mode: green-tinted background + green icon. Distinct from
+        // the plain hover (which is just a darker bg, no colour change).
+        &.active {
+            background: color-mix(in srgb, var(--gc-green) 22%, transparent);
+            color: var(--gc-green);
+        }
+    }
+
+    .divider {
+        height: 1px;
+        background: var(--gc-border);
+    }
+}
+
 .graph-maximise-button,
 .graph-export-button {
     position: absolute;

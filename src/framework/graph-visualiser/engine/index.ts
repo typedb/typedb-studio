@@ -310,6 +310,9 @@ export class GraphVisualiser {
             this.graph.setNodeAttribute(node, "x", Math.random());
             this.graph.setNodeAttribute(node, "y", Math.random());
         });
+        // Positions are now random — drop the "settled" set so the simulation
+        // starts fresh and doesn't try to anchor new nodes to stale data.
+        this.layout.forgetSettled();
         this.layout.startOrRedraw();
         this.centerCamera();
     }

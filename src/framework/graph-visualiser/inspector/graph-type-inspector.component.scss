@@ -1,0 +1,131 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+// Override the absolute positioning that the data-side inspector applies via
+// :host (we import that SCSS for the shared section/card/attribute styles
+// below). Without these explicit static positions, the type inspector would
+// be pulled out of its flex slot in the side panel.
+:host {
+    display: block;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: static;
+    inset: auto;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+}
+
+.inspector-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.inspector-title-bar {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--theme-secondary-deep-grey);
+    flex-shrink: 0;
+
+    h5 {
+        margin: 0;
+    }
+}
+
+.inspector-placeholder {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px;
+    color: var(--theme-grey);
+    text-align: center;
+
+    > i {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
+
+    p {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .placeholder-hint {
+        font-size: 12px;
+        opacity: 0.75;
+    }
+}
+
+.inspector-detail {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+}
+
+// Live count of instances of the selected type currently in the graph,
+// shown on the right of the type row.
+.instance-count {
+    font-size: 11px;
+    color: var(--theme-grey);
+    margin-left: auto;
+    user-select: text;
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px;
+    color: var(--theme-grey);
+}
+
+// Pill-style chips for the per-type connection-load toggles. Each chip uses
+// a `--chip-color` set by the variant class (attribute / relation) and the
+// `.loaded` modifier flips the chip to a filled state to indicate the
+// connection's been loaded into the graph.
+.connection-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.connection-chip {
+    --chip-color: var(--theme-secondary-light-grey);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--chip-color);
+    background: transparent;
+    border: 1px solid var(--theme-secondary-deep-grey);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+
+    &.attribute { --chip-color: var(--theme-attribute-blue); }
+    &.relation  { --chip-color: var(--theme-relation-yellow); }
+
+    &:hover {
+        border-color: var(--chip-color);
+        color: var(--chip-color);
+    }
+
+    &.loaded {
+        background: color-mix(in srgb, var(--chip-color) 22%, transparent);
+        border-color: var(--chip-color);
+        color: var(--chip-color);
+        cursor: default;
+    }
+}

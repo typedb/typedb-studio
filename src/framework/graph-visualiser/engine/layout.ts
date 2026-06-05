@@ -143,6 +143,14 @@ export interface LayoutWrapper {
     // Pin/unpin a node during drag (no-op for non-animated layouts)
     fixNode(nodeKey: string, x: number, y: number): void;
     unfixNode(nodeKey: string): void;
+
+    /**
+     * Forget which nodes have been settled by a previous simulation. Callers
+     * use this when the underlying graph is cleared or every node's position
+     * has been deliberately reset (e.g. `reLayout`). No-op for layouts that
+     * don't track per-node settling state.
+     */
+    forgetSettled(): void;
 }
 
 type LayoutSupervisor = ForceSupervisor | FA2LayoutSupervisor;
@@ -196,6 +204,9 @@ class LayoutSupervisorWrapper implements LayoutWrapper {
 
     fixNode(_nodeKey: string, _x: number, _y: number): void {}
     unfixNode(_nodeKey: string): void {}
+
+    // Force-Atlas2 / generic-force supervisors don't track per-node settling.
+    forgetSettled(): void {}
 }
 
 interface D3Node extends SimulationNodeDatum {
@@ -209,12 +220,53 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
     private graph: MultiGraph;
     private animationFrame: number | null = null;
     private simulation: ReturnType<typeof forceSimulation<D3Node>> | null = null;
+    /**
+     * Nodes that have been through a complete simulation. New nodes that
+     * appear later get pre-positioned near these (via the average of any
+     * settled neighbors) so the force simulation doesn't have to drag a
+     * cluster of freshly-randomised positions across the canvas.
+     */
+    private settledNodes: Set<string> = new Set();
 
     constructor(graph: MultiGraph) {
         this.graph = graph;
     }
 
+    /**
+     * For each node not yet seen by a previous simulation, look at its
+     * graph neighbors that *have* settled positions and seed this node at
+     * their centroid (with a small jitter to avoid coincident points). New
+     * nodes with no settled neighbors keep whatever initial position the
+     * graph builder gave them.
+     */
+    private prePositionNewNodes(): void {
+        if (this.settledNodes.size === 0) return;
+        const jitter = 10;
+        this.graph.nodes().forEach(key => {
+            if (this.settledNodes.has(key)) return;
+            let sumX = 0, sumY = 0, count = 0;
+            for (const neighborKey of this.graph.neighbors(key)) {
+                if (!this.settledNodes.has(neighborKey)) continue;
+                const attrs = this.graph.getNodeAttributes(neighborKey);
+                if (attrs["x"] == null || attrs["y"] == null) continue;
+                sumX += attrs["x"];
+                sumY += attrs["y"];
+                count++;
+            }
+            if (count === 0) return; // no anchor; leave the random position alone
+            const cx = sumX / count;
+            const cy = sumY / count;
+            this.graph.setNodeAttribute(key, "x", cx + (Math.random() - 0.5) * jitter);
+            this.graph.setNodeAttribute(key, "y", cy + (Math.random() - 0.5) * jitter);
+        });
+    }
+
+    forgetSettled(): void {
+        this.settledNodes.clear();
+    }
+
     private buildSimulation(opts?: LayoutStartOptions): ReturnType<typeof forceSimulation<D3Node>> {
+        this.prePositionNewNodes();
         const nodes: D3Node[] = this.graph.nodes().map(key => {
             const attrs = this.graph.getNodeAttributes(key);
             return {
@@ -301,6 +353,10 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
             } else {
                 this.animationFrame = null;
                 this.isRunning = false;
+                // Every node that exists at the end of this run is now
+                // "settled" — subsequent reheats will pre-position any
+                // newly-added nodes near these via their connecting edges.
+                this.graph.nodes().forEach(key => this.settledNodes.add(key));
             }
         };
         this.animationFrame = requestAnimationFrame(tick);
@@ -378,6 +434,9 @@ class StaticLayoutWrapper<LayoutParams> implements LayoutWrapper {
 
     fixNode(_nodeKey: string, _x: number, _y: number): void {}
     unfixNode(_nodeKey: string): void {}
+
+    // Static layouts don't track per-node settling.
+    forgetSettled(): void {}
 }
 
 class ForceAtlasStaticWrapper implements StaticLayoutInner<ForceAtlas2SynchronousLayoutParameters> {

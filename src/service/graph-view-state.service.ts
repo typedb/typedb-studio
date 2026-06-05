@@ -13,6 +13,8 @@ import { GraphStyleService } from "./graph-style.service";
 import { AppData } from "./app-data.service";
 import { createRunOutputState, RunOutputState } from "./query-page-state.service";
 
+export type SelectionMode = "types" | "instances";
+
 export interface GraphViewTab {
     type: SchemaConcept;
     run: RunOutputState;
@@ -24,6 +26,20 @@ export interface GraphViewTab {
      *  whether anything's been added since (so it can enable the
      *  "Reset changes" button only when there's actually something to undo). */
     initialNodeCount: number;
+    /** Whether clicking a node selects the node's type (Inspector shows
+     *  type-detail) or the instance itself (Inspector shows instance-detail).
+     *  Defaults to "types" — type-level exploration is the primary flow. */
+    selectionMode: SelectionMode;
+    /**
+     * For each source type (key = type label), the set of target type labels
+     * (attribute or relation type labels) that have been loaded into the
+     * graph via a type-detail chip toggle. Tracked separately from the graph
+     * itself so the chip state isn't conflated with whatever happened at the
+     * single-instance level — toggling ON for the type means "load it across
+     * every instance of this source type"; the chip's loaded indicator stays
+     * sticky regardless of what other adds may have introduced.
+     */
+    loadedConnections: Map<string, Set<string>>;
 }
 
 export interface OpenTypeTabOptions {
@@ -62,7 +78,13 @@ export class GraphViewState {
         if (!tab) {
             const baseQuery = `match $${this.instanceVar(type)} isa ${type.label};`;
             const run = createRunOutputState(type.label, baseQuery, this.graphStyleService);
-            tab = { type, run, initialOptions: options, initialNodeCount: 0 };
+            tab = {
+                type, run,
+                initialOptions: options,
+                initialNodeCount: 0,
+                selectionMode: "types",
+                loadedConnections: new Map(),
+            };
             this.openTabs$.next([...tabs, tab]);
             this.selectedTabIndex$.next(this.openTabs$.value.indexOf(tab));
         } else {
@@ -117,8 +139,10 @@ export class GraphViewState {
             visualiser.interactionHandler.setSecondaryAnchors(new Set());
             visualiser.unfreezeViewport();
             visualiser.graph.clear();
+            visualiser.layout.forgetSettled();
         }
         tab.initialNodeCount = 0;
+        tab.loadedConnections.clear();
         // Pass isNew=true so the post-reset node count is re-snapshotted; the
         // tab itself stays in openTabs$ throughout.
         await this.runInitialFetches(tab, tab.type, tab.initialOptions, true);
@@ -128,6 +152,32 @@ export class GraphViewState {
     tabHasChanges(tab: GraphViewTab): boolean {
         const order = tab.run.graph.visualiser?.graph.order ?? 0;
         return order > tab.initialNodeCount;
+    }
+
+    /** Find the tab whose `run` matches the given one, or null. */
+    findTabForRun(run: RunOutputState): GraphViewTab | null {
+        return this.openTabs$.value.find(t => t.run === run) ?? null;
+    }
+
+    /**
+     * Whether the user has loaded `targetTypeLabel` for `sourceTypeLabel`
+     * via a type-detail chip toggle on this tab.
+     */
+    isConnectionLoaded(run: RunOutputState, sourceTypeLabel: string, targetTypeLabel: string): boolean {
+        const tab = this.findTabForRun(run);
+        return tab?.loadedConnections.get(sourceTypeLabel)?.has(targetTypeLabel) ?? false;
+    }
+
+    /** Mark `targetTypeLabel` as loaded for `sourceTypeLabel` on this tab. */
+    markConnectionLoaded(run: RunOutputState, sourceTypeLabel: string, targetTypeLabel: string): void {
+        const tab = this.findTabForRun(run);
+        if (!tab) return;
+        let targets = tab.loadedConnections.get(sourceTypeLabel);
+        if (!targets) {
+            targets = new Set();
+            tab.loadedConnections.set(sourceTypeLabel, targets);
+        }
+        targets.add(targetTypeLabel);
     }
 
     closeTab(tab: GraphViewTab) {
@@ -249,6 +299,34 @@ export class GraphViewState {
             query += ` $r links ($origRole: $orig); $orig iid ${originalIID};`;
         }
         await this.runAndPush(run, query, rowLimit * 50);
+    }
+
+    /**
+     * Load every relation of type `relationTypeLabel` that has *any* of
+     * `sourceIids` as one of its role-players, including its other role
+     * players + role edges. Used by the per-relation-type chip on the
+     * type-detail Inspector. The source type is needed to choose the
+     * right anchor variable in the IID-branches.
+     */
+    async fetchRelationsOfTypeForPlayers(
+        run: RunOutputState,
+        sourceType: SchemaConcept,
+        sourceIids: string[],
+        relationTypeLabel: string,
+    ): Promise<void> {
+        if (sourceIids.length === 0) return;
+        const rowLimit = this.appData.preferences.queryRowLimit();
+        const playerVar = this.instanceVar(sourceType);
+        if (playerVar === "a") return; // attributes don't play roles
+        const branches = sourceIids.map(iid => `{ $${playerVar} iid ${iid}; }`).join(" or ");
+        // Two queries so we get both the relation→source edges AND the
+        // relation's other role-players (with their role edges). Both
+        // contribute to the same graph push.
+        const queries = [
+            `match ${branches}; $r isa ${relationTypeLabel}; $r links ($role: $${playerVar});`,
+            `match ${branches}; $r isa ${relationTypeLabel}; $r links ($role1: $${playerVar}); $r links ($role2: $other);`,
+        ];
+        await Promise.all(queries.map(q => this.runAndPush(run, q, rowLimit * 50)));
     }
 
     private async runAndPush(run: RunOutputState, query: string, rowLimit: number): Promise<void> {

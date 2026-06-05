@@ -7,7 +7,7 @@
 import { Component, inject, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild } from "@angular/core";
 import { MatMenu, MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { Subscription } from "rxjs";
-import { GraphViewState } from "../../../service/graph-view-state.service";
+import { GraphViewState, SelectionMode } from "../../../service/graph-view-state.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
 import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
@@ -29,11 +29,11 @@ function typeKindFromSelectionKind(kind: SelectionKind): "entityType" | "relatio
  *
  * Sits invisibly in the canvas; subscribes to `interactionHandler.nodeContextMenu$`,
  * positions a hidden trigger element at the click coordinates, then opens a
- * mat-menu with two groups of actions:
+ * mat-menu. The current selection mode picks which group of actions is shown:
  *
- *   - "This instance" → Load links / Load attributes (acts on the clicked IID)
- *   - "All instances of type '<X>'" → Load links / Load attributes (acts on
- *     every IID of that type currently in the graph)
+ *   - "instances" → Load links / Load attributes for just the clicked IID
+ *   - "types"     → Load links / Load attributes for every IID of the
+ *                   clicked node's type currently in the graph
  *
  * Each action calls the corresponding `GraphViewState.fetch*` method, then
  * triggers a soft reheat with camera preserved and re-evaluates the highlight
@@ -54,9 +54,6 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
 
     triggerPosition = { x: 0, y: 0 };
     target: InspectableSelection | null = null;
-    /** Number of nodes in the graph sharing the right-clicked node's type.
-     *  Snapshotted at menu-open time so the header reads consistently. */
-    targetInstanceCount = 0;
 
     private graphViewState = inject(GraphViewState);
     private schemaState = inject(SchemaState);
@@ -72,7 +69,6 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                 this.sub = v.interactionHandler.nodeContextMenu$.subscribe(ev => {
                     this.triggerPosition = { x: ev.clientX, y: ev.clientY };
                     this.target = ev.target;
-                    this.targetInstanceCount = this.collectInstanceIidsOfType(ev.target.typeLabel).length;
                     // setTimeout so position styles flush to the DOM before
                     // mat-menu measures the trigger. Setting `_openedBy` to
                     // "mouse" lets FocusMonitor suppress the focus ring on
@@ -92,7 +88,9 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         this.sub?.unsubscribe();
     }
 
-    get targetTypeLabel(): string { return this.target?.typeLabel ?? ""; }
+    get selectionMode(): SelectionMode {
+        return this.visualiser?.interactionHandler.selectionMode ?? "types";
+    }
 
     // -- "This instance" actions --
 

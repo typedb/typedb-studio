@@ -1,9 +1,17 @@
-<ts-graph-inspector class="inspector-pane"
-                    resizable [percent]="inspectorPercent" (percentChange)="inspectorPercent = $event"
-                    [type]="selectedType"
-                    [instanceIID]="selectedInstanceIID"
-                    [run]="run"
-                    [visualiser]="visualiser"/>
+@if (selectionMode === 'types') {
+  <ts-graph-type-inspector class="inspector-pane"
+                           resizable [percent]="inspectorPercent" (percentChange)="inspectorPercent = $event"
+                           [selectedType]="selectedTypeForTypeMode"
+                           [run]="run"
+                           [visualiser]="visualiser"/>
+} @else {
+  <ts-graph-inspector class="inspector-pane"
+                      resizable [percent]="inspectorPercent" (percentChange)="inspectorPercent = $event"
+                      [type]="selectedType"
+                      [instanceIID]="selectedInstanceIID"
+                      [run]="run"
+                      [visualiser]="visualiser"/>
+}
 
 <div class="panel" resizable [percent]="lowerPanelPercent" (percentChange)="lowerPanelPercent = $event">
   <!-- Top-level tabs -->

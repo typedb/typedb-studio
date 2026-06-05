@@ -7,6 +7,7 @@ import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "
 import {GraphStyles} from "./styles";
 import {LayoutWrapper} from "./layout";
 import type {GraphStyleService} from "../../../service/graph-style.service";
+import type { SelectionMode } from "../../../service/graph-view-state.service";
 
 /**
  * Selection payload emitted when a graph instance node is clicked. Carries
@@ -35,6 +36,12 @@ export interface NodeContextMenuEvent {
     clientY: number;
 }
 
+/** Emitted when a TYPE is selected in the graph (type-mode click). */
+export interface TypeSelection {
+    typeKind: "entityType" | "relationType" | "attributeType";
+    typeLabel: string;
+}
+
 // Ref: https://www.sigmajs.org/docs/advanced/events/
 // and: https://www.sigmajs.org/storybook/?path=/story/mouse-manipulations--story
 
@@ -55,6 +62,25 @@ export class InteractionHandler {
     layout: LayoutWrapper | null = null;
     visualiser: GraphVisualiser | null = null;
     selection$ = new BehaviorSubject<InspectableSelection | null>(null);
+    /**
+     * Emitted on click when `selectionMode === "types"` — carries the type
+     * of whatever was clicked. Parallel to `selection$` but for type-level
+     * exploration. The two are mutually exclusive: when one fires non-null
+     * the other is reset to null.
+     */
+    typeSelection$ = new BehaviorSubject<TypeSelection | null>(null);
+    /**
+     * Currently-selected type label in type-mode. Stored separately so
+     * `recomputeHighlightSet` can light up every instance of this type
+     * across the graph in addition to (or instead of) the BFS neighborhood.
+     */
+    selectedTypeLabel: string | null = null;
+    /**
+     * Drives `onClickNode`'s dispatch. Owned externally (the GraphTab
+     * pushes the tab's `selectionMode` here on creation + on user toggle).
+     * Defaults to "types" — type-level exploration is the primary flow.
+     */
+    selectionMode: SelectionMode = "types";
     /**
      * Fires every time the user right-clicks an instance node. Consumers
      * (typically a context-menu component) use this to open a menu at the
@@ -199,11 +225,66 @@ export class InteractionHandler {
         }
         this.visualiser?.clearSearch();
         const node = event.node;
-        if (this.state.selectedNode === node) return; // re-clicking the selected node is a no-op
+        if (this.selectionMode === "types") this.handleTypeSelectionClick(node);
+        else this.handleInstanceSelectionClick(node);
+    }
+
+    private handleInstanceSelectionClick(node: string) {
+        if (this.state.selectedNode === node && this.selectedTypeLabel == null) return; // no-op re-click
         this.lastSelectionWasFromHighlight = this.state.selectedNeighbors?.has(node) ?? false;
         this.state.selectedNode = node;
+        this.selectedTypeLabel = null;
         this.recomputeHighlightSet();
         this.selection$.next(this.extractInspectableSelection(node));
+        if (this.typeSelection$.value !== null) this.typeSelection$.next(null);
+    }
+
+    private handleTypeSelectionClick(node: string) {
+        const concept = this.safeReadConcept(node);
+        if (!concept) return;
+        const ext = this.extractTypeFromConcept(concept);
+        if (!ext) return;
+        if (this.selectedTypeLabel === ext.typeLabel) return; // no-op re-click on same type
+        this.lastSelectionWasFromHighlight = false;
+        this.state.selectedNode = node; // populated so the existing reducer fade path runs
+        this.selectedTypeLabel = ext.typeLabel;
+        this.recomputeHighlightSet();
+        this.typeSelection$.next({ typeKind: ext.typeKind, typeLabel: ext.typeLabel });
+        if (this.selection$.value !== null) this.selection$.next(null);
+    }
+
+    /**
+     * Update the click-dispatch mode and clear any current selection — the
+     * two modes select different things, so the previous selection is no
+     * longer meaningful when the user switches.
+     */
+    setSelectionMode(mode: SelectionMode): void {
+        if (this.selectionMode === mode) return;
+        this.selectionMode = mode;
+        this.clearSelection();
+    }
+
+    private safeReadConcept(node: string): any | null {
+        try {
+            return this.graph.getNodeAttributes(node)?.["metadata"]?.concept ?? null;
+        } catch { return null; }
+    }
+
+    /**
+     * Pull a `{ typeKind, typeLabel }` pair out of a concept regardless of
+     * whether the clicked node is an instance (entity/relation/attribute) or
+     * a schema-type node (entityType/relationType/attributeType).
+     */
+    private extractTypeFromConcept(concept: any): { typeKind: "entityType" | "relationType" | "attributeType"; typeLabel: string } | null {
+        switch (concept?.kind) {
+            case "entity":     return concept.type?.label ? { typeKind: "entityType",    typeLabel: concept.type.label } : null;
+            case "relation":   return concept.type?.label ? { typeKind: "relationType",  typeLabel: concept.type.label } : null;
+            case "attribute":  return concept.type?.label ? { typeKind: "attributeType", typeLabel: concept.type.label } : null;
+            case "entityType":    return concept.label ? { typeKind: "entityType",    typeLabel: concept.label } : null;
+            case "relationType":  return concept.label ? { typeKind: "relationType",  typeLabel: concept.label } : null;
+            case "attributeType": return concept.label ? { typeKind: "attributeType", typeLabel: concept.label } : null;
+            default: return null;
+        }
     }
 
     private extractInspectableSelection(node: string): InspectableSelection | null {
@@ -304,9 +385,11 @@ export class InteractionHandler {
 
     clearSelection() {
         this.state.selectedNode = null;
+        this.selectedTypeLabel = null;
         this.lastSelectionWasFromHighlight = false;
         this.recomputeHighlightSet();
         this.selection$.next(null);
+        this.typeSelection$.next(null);
     }
 
     /**
@@ -344,19 +427,47 @@ export class InteractionHandler {
      * node set without having to change the selection.
      */
     recomputeHighlightSet(): void {
-        if (this.state.selectedNode == null && this.secondaryAnchors.size === 0) {
+        if (this.state.selectedNode == null && this.secondaryAnchors.size === 0 && this.selectedTypeLabel == null) {
             this.state.selectedNeighbors = null;
             this.renderer.refresh();
             return;
         }
         const all = new Set<string>();
-        if (this.state.selectedNode != null) {
+        if (this.selectedTypeLabel != null) {
+            // Type-selection: every node sharing the selected type label is in
+            // the highlight set, plus each of their highlighted neighborhoods.
+            // Done in two passes so that ALL matching instances get added
+            // first, independent of the BFS results (which only finds
+            // *neighbors* of each instance — instances with no edges yet
+            // would otherwise only show up implicitly via the early
+            // `all.add(node)`, which we keep but make explicit here).
+            const target = this.selectedTypeLabel;
+            const typeMembers: string[] = [];
+            this.graph.nodes().forEach(node => {
+                const concept = this.safeReadConcept(node);
+                if (!concept) return;
+                const ext = this.extractTypeFromConcept(concept);
+                if (ext?.typeLabel !== target) return;
+                typeMembers.push(node);
+                all.add(node);
+            });
+            typeMembers.forEach(node => {
+                this.collectHighlightedNeighbors(node).forEach(n => all.add(n));
+            });
+        } else if (this.state.selectedNode != null) {
+            // Instance-selection: BFS from the primary node only.
             this.collectHighlightedNeighbors(this.state.selectedNode).forEach(n => all.add(n));
         }
         this.secondaryAnchors.forEach(anchor => {
             all.add(anchor);
             this.collectHighlightedNeighbors(anchor).forEach(n => all.add(n));
         });
+        // Defensive: the primary selected node should always be in the
+        // highlight set. (In type-mode it's already covered by the iteration
+        // above; in instance-mode the reducer's `node === state.selectedNode`
+        // path covers it. Explicit add here in case either of those paths
+        // misses for an unexpected reason.)
+        if (this.state.selectedNode != null) all.add(this.state.selectedNode);
         this.state.selectedNeighbors = all;
         this.renderer.refresh();
     }

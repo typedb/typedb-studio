@@ -16,6 +16,7 @@ import { GraphSidePanelComponent } from "../side-panel/graph-side-panel.componen
 import { GraphContextMenuComponent } from "../context-menu/graph-context-menu.component";
 import { GraphStyleService, buildBackgroundCSS } from "../../../service/graph-style.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
+import { SelectionMode } from "../../../service/graph-view-state.service";
 
 export type GraphCanvasStatus = "ok" | "running" | "noAnswers" | "error" | "graphlessQueryType" | "answerOutputDisabled" | "multiQuery" | "emptySchema";
 export type GraphCanvasStatusAction = "viewLog";
@@ -40,12 +41,18 @@ export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
      *  contents have diverged from the initial query). Drives the
      *  reset-changes button's enabled state in the zoom-controls panel. */
     @Input() hasChanges = false;
+    /** When non-null, an in-canvas toggle is shown for switching between
+     *  type-selection and instance-selection modes. Null hides the toggle
+     *  (e.g. for canvas usages that don't have a type/instance distinction
+     *  like chat output). */
+    @Input() selectionMode: SelectionMode | null = null;
 
     @Output() maximisedChange = new EventEmitter<boolean>();
     @Output() graphPercentChange = new EventEmitter<number>();
     @Output() stylesPanePercentChange = new EventEmitter<number>();
     @Output() statusAction = new EventEmitter<GraphCanvasStatusAction>();
     @Output() resetChangesClicked = new EventEmitter<void>();
+    @Output() selectionModeChange = new EventEmitter<SelectionMode>();
 
     get queryRunning() { return this.status === "running"; }
 

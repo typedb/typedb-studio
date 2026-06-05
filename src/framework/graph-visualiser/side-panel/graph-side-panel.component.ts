@@ -8,12 +8,14 @@ import { Subscription } from "rxjs";
 import { GraphStyleService } from "../../../service/graph-style.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
 import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
+import { SelectionMode } from "../../../service/graph-view-state.service";
 import { GraphVisualiser } from "../engine";
-import { InspectableSelection } from "../engine/interaction-handler";
+import { InspectableSelection, TypeSelection } from "../engine/interaction-handler";
 import { ElementsTabComponent } from "./elements-tab.component";
 import { ThemesTabComponent } from "./themes-tab.component";
 import { CustomiseTabComponent } from "./customise-tab.component";
 import { GraphInspectorComponent } from "../inspector/graph-inspector.component";
+import { GraphTypeInspectorComponent } from "../inspector/graph-type-inspector.component";
 
 @Component({
     selector: "ts-graph-side-panel",
@@ -23,17 +25,21 @@ import { GraphInspectorComponent } from "../inspector/graph-inspector.component"
         MatSelectModule, MatTooltipModule, MatFormFieldModule, MatSlideToggleModule,
         ResizableDirective,
         ElementsTabComponent, ThemesTabComponent, CustomiseTabComponent,
-        GraphInspectorComponent,
+        GraphInspectorComponent, GraphTypeInspectorComponent,
     ],
 })
 export class GraphSidePanelComponent implements OnChanges, OnDestroy {
 
     @Input() visualiser: GraphVisualiser | null = null;
     @Input() run: RunOutputState | null = null;
+    @Input() selectionMode: SelectionMode = "types";
 
     // Selection state, populated from the visualiser's interaction handler.
     selectedType: SchemaConcept | null = null;
     selectedInstanceIID: string | null = null;
+    /** Type currently selected in type-mode (parallel to selectedType /
+     *  selectedInstanceIID for the instance-mode inspector). */
+    selectedTypeForTypeMode: SchemaConcept | null = null;
 
     // Internal vertical split between Inspector and the tabbed lower pane.
     inspectorPercent = 50;
@@ -41,16 +47,24 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
 
     private schemaState = inject(SchemaState);
     private selectionSub: Subscription | null = null;
+    private typeSelectionSub: Subscription | null = null;
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes["visualiser"]) {
             this.selectionSub?.unsubscribe();
+            this.typeSelectionSub?.unsubscribe();
+            this.selectionSub = null;
+            this.typeSelectionSub = null;
             this.selectedType = null;
             this.selectedInstanceIID = null;
+            this.selectedTypeForTypeMode = null;
             const v = this.visualiser;
             if (v) {
                 this.selectionSub = v.interactionHandler.selection$.subscribe(sel => {
-                    this.applySelection(sel);
+                    this.applyInstanceSelection(sel);
+                });
+                this.typeSelectionSub = v.interactionHandler.typeSelection$.subscribe(sel => {
+                    this.applyTypeSelection(sel);
                 });
             }
         }
@@ -58,9 +72,10 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
 
     ngOnDestroy() {
         this.selectionSub?.unsubscribe();
+        this.typeSelectionSub?.unsubscribe();
     }
 
-    private applySelection(selection: InspectableSelection | null) {
+    private applyInstanceSelection(selection: InspectableSelection | null) {
         if (!selection) {
             this.selectedType = null;
             this.selectedInstanceIID = null;
@@ -76,6 +91,21 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
         if (!type) return;
         this.selectedType = type;
         this.selectedInstanceIID = selection.instanceId;
+    }
+
+    private applyTypeSelection(selection: TypeSelection | null) {
+        if (!selection) {
+            this.selectedTypeForTypeMode = null;
+            return;
+        }
+        const schema = this.schemaState.value$.value;
+        if (!schema) return;
+        const map = selection.typeKind === "entityType" ? schema.entities
+                  : selection.typeKind === "relationType" ? schema.relations
+                  : schema.attributes;
+        const type = map[selection.typeLabel];
+        if (!type) return;
+        this.selectedTypeForTypeMode = type;
     }
 
     styleService = inject(GraphStyleService);

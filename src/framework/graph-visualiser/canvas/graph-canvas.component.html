@@ -38,6 +38,26 @@
                             [hasChanges]="hasChanges"
                             (resetChangesClicked)="resetChangesClicked.emit()"/>
 
+    @if (selectionMode != null) {
+      <div class="graph-selection-mode-toggle">
+        <button class="mode-button"
+                [class.active]="selectionMode === 'types'"
+                (click)="selectionModeChange.emit('types')"
+                matTooltip="Select types"
+                [matTooltipShowDelay]="500">
+          <i class="fa-light fa-shapes"></i>
+        </button>
+        <div class="divider"></div>
+        <button class="mode-button"
+                [class.active]="selectionMode === 'instances'"
+                (click)="selectionModeChange.emit('instances')"
+                matTooltip="Select instances"
+                [matTooltipShowDelay]="500">
+          <i class="fa-light fa-circle-dot"></i>
+        </button>
+      </div>
+    }
+
     <ts-graph-context-menu [visualiser]="visualiser" [run]="run"/>
 
     @switch (status) {
@@ -71,5 +91,6 @@
   <ts-graph-side-panel resizable [percent]="stylesPanePercent"
                        (percentChange)="stylesPanePercentChange.emit($event)"
                        [visualiser]="visualiser"
-                       [run]="run"/>
+                       [run]="run"
+                       [selectionMode]="selectionMode ?? 'types'"/>
 </div>
