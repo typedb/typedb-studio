@@ -34,7 +34,11 @@
       <i class="fa-light" [class.fa-expand]="!maximised" [class.fa-compress]="maximised"></i>
     </button>
 
-    <ts-graph-zoom-controls [visualiser]="visualiser" [queryRunning]="queryRunning"/>
+    <ts-graph-zoom-controls [visualiser]="visualiser" [queryRunning]="queryRunning"
+                            [hasChanges]="hasChanges"
+                            (resetChangesClicked)="resetChangesClicked.emit()"/>
+
+    <ts-graph-context-menu [visualiser]="visualiser" [run]="run"/>
 
     @switch (status) {
       @case ("error") {

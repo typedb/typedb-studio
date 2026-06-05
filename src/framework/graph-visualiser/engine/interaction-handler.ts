@@ -2,7 +2,7 @@ import type { GraphVisualiser } from "./index";
 import Sigma from "sigma";
 import MultiGraph from "graphology";
 import chroma from "chroma-js";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, Subject } from "rxjs";
 import {SigmaEventPayload, SigmaNodeEventPayload, SigmaStageEventPayload} from "sigma/types";
 import {GraphStyles} from "./styles";
 import {LayoutWrapper} from "./layout";
@@ -21,6 +21,18 @@ export interface InspectableSelection {
     /** For entity/relation: the IID. For attribute: the value (attributes have
      *  no IID in TypeDB; values uniquely identify them per type). */
     instanceId: string;
+}
+
+/**
+ * Emitted when the user right-clicks a graph instance node — gives upstream
+ * UI (the context menu) what it needs to know which instance was clicked and
+ * where on screen to open the menu.
+ */
+export interface NodeContextMenuEvent {
+    target: InspectableSelection;
+    /** Viewport coordinates of the click, for positioning the menu trigger. */
+    clientX: number;
+    clientY: number;
 }
 
 // Ref: https://www.sigmajs.org/docs/advanced/events/
@@ -43,6 +55,12 @@ export class InteractionHandler {
     layout: LayoutWrapper | null = null;
     visualiser: GraphVisualiser | null = null;
     selection$ = new BehaviorSubject<InspectableSelection | null>(null);
+    /**
+     * Fires every time the user right-clicks an instance node. Consumers
+     * (typically a context-menu component) use this to open a menu at the
+     * click coordinates. Type nodes don't emit — they're not actionable.
+     */
+    nodeContextMenu$ = new Subject<NodeContextMenuEvent>();
     /**
      * True iff the most recent selection change came from the user clicking a
      * node that was already in the previous selection's highlighted neighbor
@@ -68,6 +86,11 @@ export class InteractionHandler {
             selectedNeighbors: null,
         };
         this.registerAll(renderer);
+        // Sigma's rightClickNode fires from the mousedown event, but the
+        // browser still fires its own `contextmenu` afterwards which would
+        // overlay the default browser menu on top of ours. Suppress it on
+        // the canvas container so only our menu appears.
+        renderer.getContainer().addEventListener("contextmenu", e => e.preventDefault());
     }
 
     registerAll(renderer: Sigma) {
@@ -80,6 +103,7 @@ export class InteractionHandler {
         renderer.on(StudioSigmaEventType.clickNode, (e) => this.onClickNode(e));
         renderer.on(StudioSigmaEventType.clickStage, () => this.onClickStage());
         renderer.on(StudioSigmaEventType.doubleClickNode, (e) => this.onDoubleClickNode(e));
+        renderer.on(StudioSigmaEventType.rightClickNode, (e) => this.onRightClickNode(e));
     }
 
 
@@ -112,6 +136,10 @@ export class InteractionHandler {
     }
 
     onDownNode(event: SigmaNodeEventPayload) {
+        // Only the primary (left) mouse button initiates a drag — right-click
+        // is reserved for the context menu, middle-click for browser default.
+        const button = (event.event?.original as MouseEvent | undefined)?.button;
+        if (button != null && button !== 0) return;
         const node = event.node;
         this.state.draggedNode = node;
         const original = this.graph.getNodeAttribute(node, "_originalColor") ?? this.graph.getNodeAttribute(node, "color");
@@ -334,6 +362,21 @@ export class InteractionHandler {
     }
 
     onDoubleClickNode(event: SigmaNodeEventPayload) {
+    }
+
+    onRightClickNode(event: SigmaNodeEventPayload) {
+        // Sigma's right-click event already preventsDefault on the underlying
+        // mousedown event so the browser context menu won't show — we just
+        // need to surface the target + coordinates.
+        const target = this.extractInspectableSelection(event.node);
+        if (!target) return; // type nodes etc. aren't actionable
+        const mouseEvent = event.event?.original as MouseEvent | undefined;
+        if (!mouseEvent) return;
+        this.nodeContextMenu$.next({
+            target,
+            clientX: mouseEvent.clientX,
+            clientY: mouseEvent.clientY,
+        });
     }
 
     highlightAnswer(answerIndex: number) {

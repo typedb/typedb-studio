@@ -4,10 +4,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { AfterViewInit, Component, Input, OnDestroy, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, inject, Input, OnDestroy, ViewChild } from "@angular/core";
 import { Router } from "@angular/router";
 import { GraphCanvasComponent } from "../../../framework/graph-visualiser/canvas/graph-canvas.component";
-import { GraphViewTab } from "../../../service/graph-view-state.service";
+import { GraphViewState, GraphViewTab } from "../../../service/graph-view-state.service";
 
 @Component({
     selector: "ts-graph-tab",
@@ -16,7 +16,9 @@ import { GraphViewTab } from "../../../service/graph-view-state.service";
             [visualiser]="tab.run.graph.visualiser"
             [status]="tab.run.graph.status"
             [run]="tab.run"
+            [hasChanges]="hasChanges"
             (statusAction)="onGraphStatusAction($event)"
+            (resetChangesClicked)="onResetChanges()"
         />
     `,
     styles: [`
@@ -38,7 +40,17 @@ export class GraphTabComponent implements AfterViewInit, OnDestroy {
     @Input({ required: true }) tab!: GraphViewTab;
     @ViewChild(GraphCanvasComponent) graphCanvas?: GraphCanvasComponent;
 
+    private graphViewState = inject(GraphViewState);
+
     constructor(private router: Router) {}
+
+    get hasChanges(): boolean {
+        return this.graphViewState.tabHasChanges(this.tab);
+    }
+
+    onResetChanges(): void {
+        this.graphViewState.resetTab(this.tab);
+    }
 
     ngAfterViewInit() {
         const canvasEl = this.graphCanvas?.canvasEl;

@@ -15,7 +15,7 @@
 
   <div class="panel-scroll">
     @if (topTab === 'elements') {
-      <ts-graph-side-panel-elements-tab [visualiser]="visualiser"></ts-graph-side-panel-elements-tab>
+      <ts-graph-side-panel-elements-tab [visualiser]="visualiser" [run]="run"></ts-graph-side-panel-elements-tab>
     }
     @if (topTab === 'presets') {
       <ts-graph-styles-themes-tab [visualiser]="visualiser"></ts-graph-styles-themes-tab>

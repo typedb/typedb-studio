@@ -1,0 +1,26 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+// Invisible trigger element fixed-positioned at the click coordinates; the
+// mat-menu opens relative to its position.
+.context-menu-trigger {
+    position: fixed;
+    width: 0;
+    height: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+// Section label inside the menu — non-interactive, just groups the actions.
+::ng-deep .mat-mdc-menu-panel .menu-group-label {
+    display: block;
+    padding: 8px 16px 4px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--theme-secondary-light-grey);
+}

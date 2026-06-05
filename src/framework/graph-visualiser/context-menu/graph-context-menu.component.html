@@ -1,0 +1,18 @@
+<div class="context-menu-trigger"
+     [style.left.px]="triggerPosition.x"
+     [style.top.px]="triggerPosition.y"
+     [matMenuTriggerFor]="menu"
+     #trigger="matMenuTrigger">
+</div>
+
+<mat-menu #menu="matMenu" [overlapTrigger]="false">
+  @if (target && !isAttributeTarget) {
+    <span class="menu-group-label">This instance</span>
+    <button mat-menu-item (click)="loadLinksForThisInstance()">Load links</button>
+    <button mat-menu-item (click)="loadAttributesForThisInstance()">Load attributes</button>
+
+    <span class="menu-group-label">All '{{ targetTypeLabel }}' instances ({{ targetInstanceCount }})</span>
+    <button mat-menu-item (click)="loadLinksForAllInstancesOfType()">Load links</button>
+    <button mat-menu-item (click)="loadAttributesForAllInstancesOfType()">Load attributes</button>
+  }
+</mat-menu>

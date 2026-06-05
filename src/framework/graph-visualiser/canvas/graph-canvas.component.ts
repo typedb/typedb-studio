@@ -13,6 +13,7 @@ import { Subscription } from "rxjs";
 import { GraphPngExportMode, GraphVisualiser } from "../engine";
 import { GraphZoomControlsComponent } from "./zoom-controls/graph-zoom-controls.component";
 import { GraphSidePanelComponent } from "../side-panel/graph-side-panel.component";
+import { GraphContextMenuComponent } from "../context-menu/graph-context-menu.component";
 import { GraphStyleService, buildBackgroundCSS } from "../../../service/graph-style.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
 
@@ -23,7 +24,7 @@ export type GraphCanvasStatusAction = "viewLog";
     selector: "ts-graph-canvas",
     templateUrl: "graph-canvas.component.html",
     styleUrls: ["graph-canvas.component.scss"],
-    imports: [MatTooltipModule, MatMenuModule, ResizableDirective, GraphZoomControlsComponent, GraphSidePanelComponent],
+    imports: [MatTooltipModule, MatMenuModule, ResizableDirective, GraphZoomControlsComponent, GraphSidePanelComponent, GraphContextMenuComponent],
 })
 export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
     @Input() visualiser: GraphVisualiser | null = null;
@@ -34,11 +35,17 @@ export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
     /** The run that owns this canvas's graph. Passed through to the side panel
      *  so the Inspector knows where to push instances/attributes/links. */
     @Input() run: RunOutputState | null = null;
+    /** True if the parent surface tracks a "Reset changes" capability and the
+     *  graph currently has something to reset (e.g. a graph-view tab whose
+     *  contents have diverged from the initial query). Drives the
+     *  reset-changes button's enabled state in the zoom-controls panel. */
+    @Input() hasChanges = false;
 
     @Output() maximisedChange = new EventEmitter<boolean>();
     @Output() graphPercentChange = new EventEmitter<number>();
     @Output() stylesPanePercentChange = new EventEmitter<number>();
     @Output() statusAction = new EventEmitter<GraphCanvasStatusAction>();
+    @Output() resetChangesClicked = new EventEmitter<void>();
 
     get queryRunning() { return this.status === "running"; }
 

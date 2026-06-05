@@ -1,5 +1,5 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, Input } from "@angular/core";
+import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { GraphVisualiser } from "../../engine";
 
@@ -15,6 +15,10 @@ export class GraphZoomControlsComponent {
 
     @Input() visualiser: GraphVisualiser | null = null;
     @Input() queryRunning = false;
+    @Input() hasChanges = false;
+
+    @Output() resetChangesClicked = new EventEmitter<void>();
+
     redrawCooldown = false;
     private cooldownTimer: ReturnType<typeof setTimeout> | null = null;
 

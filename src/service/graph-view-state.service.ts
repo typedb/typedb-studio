@@ -16,6 +16,14 @@ import { createRunOutputState, RunOutputState } from "./query-page-state.service
 export interface GraphViewTab {
     type: SchemaConcept;
     run: RunOutputState;
+    /** Options the tab was originally opened with — used by `resetTab` to
+     *  replay the exact initial query when the user clicks "Reset changes". */
+    initialOptions: OpenTypeTabOptions;
+    /** Snapshot of `graph.order` taken right after the initial query
+     *  completes; the UI compares the current order against this to decide
+     *  whether anything's been added since (so it can enable the
+     *  "Reset changes" button only when there's actually something to undo). */
+    initialNodeCount: number;
 }
 
 export interface OpenTypeTabOptions {
@@ -50,16 +58,28 @@ export class GraphViewState {
         // Same type → same tab; subsequent opens add to the existing graph.
         const tabs = this.openTabs$.value;
         let tab = tabs.find(t => t.type.label === type.label);
+        const isNew = !tab;
         if (!tab) {
             const baseQuery = `match $${this.instanceVar(type)} isa ${type.label};`;
             const run = createRunOutputState(type.label, baseQuery, this.graphStyleService);
-            tab = { type, run };
+            tab = { type, run, initialOptions: options, initialNodeCount: 0 };
             this.openTabs$.next([...tabs, tab]);
             this.selectedTabIndex$.next(this.openTabs$.value.indexOf(tab));
         } else {
             this.selectedTabIndex$.next(tabs.indexOf(tab));
         }
 
+        await this.runInitialFetches(tab, type, options, isNew);
+    }
+
+    /**
+     * Run the initial query (instances of the type, plus any attribute/link
+     * follow-ups requested by `options`) into the tab's graph. When `isNew`
+     * is true the post-load node count is snapshotted onto the tab so the
+     * "Reset changes" affordance can later tell whether the user has added
+     * anything beyond the initial state.
+     */
+    private async runInitialFetches(tab: GraphViewTab, type: SchemaConcept, options: OpenTypeTabOptions, isNew: boolean): Promise<void> {
         const run = tab.run;
         run.graph.status = "running";
         run.graph.database = this.driver.requireDatabase().name;
@@ -73,11 +93,41 @@ export class GraphViewState {
                 if (options.includeLinks) tasks.push(this.fetchLinksOf(run, type, iids));
                 await Promise.all(tasks);
             }
+            if (isNew) {
+                tab.initialNodeCount = run.graph.visualiser?.graph.order ?? 0;
+            }
             run.graph.status = "ok";
         } catch (err) {
             console.error("[Graph fetch]", err);
             run.graph.status = "error";
         }
+    }
+
+    /**
+     * "Reset changes": clear everything that's been added to the tab's graph
+     * beyond what the initial query produced, then re-run that initial query
+     * (with the same `OpenTypeTabOptions` the tab was opened with) on a blank
+     * slate. Selection, secondary anchors, and any pinned viewport are also
+     * cleared so the result behaves like a freshly-opened tab.
+     */
+    async resetTab(tab: GraphViewTab): Promise<void> {
+        const visualiser = tab.run.graph.visualiser;
+        if (visualiser) {
+            visualiser.interactionHandler.clearSelection();
+            visualiser.interactionHandler.setSecondaryAnchors(new Set());
+            visualiser.unfreezeViewport();
+            visualiser.graph.clear();
+        }
+        tab.initialNodeCount = 0;
+        // Pass isNew=true so the post-reset node count is re-snapshotted; the
+        // tab itself stays in openTabs$ throughout.
+        await this.runInitialFetches(tab, tab.type, tab.initialOptions, true);
+    }
+
+    /** Whether the tab's graph has anything in it beyond the initial query's results. */
+    tabHasChanges(tab: GraphViewTab): boolean {
+        const order = tab.run.graph.visualiser?.graph.order ?? 0;
+        return order > tab.initialNodeCount;
     }
 
     closeTab(tab: GraphViewTab) {
