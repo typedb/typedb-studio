@@ -44,6 +44,7 @@ export class GraphVisualiser {
      */
     private pinnedCameraWorld: { worldX: number; worldY: number; ratio: number } | null = null;
     private stylesSub!: Subscription;
+    private cameraUpdatedListener: (() => void) | null = null;
 
     constructor(public graph: Graph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
         this.state = { activeQueryDatabase: null };
@@ -59,7 +60,7 @@ export class GraphVisualiser {
                 this.centerCamera();
             }
         };
-        this.sigma.getCamera().addListener("updated", () => {
+        this.cameraUpdatedListener = () => {
             if (!this.settingCameraProgrammatically) {
                 this.autoZoomEnabled = false;
                 // User took control — release the pin so future Explores don't
@@ -67,7 +68,8 @@ export class GraphVisualiser {
                 this.pinnedCameraWorld = null;
             }
             this.updateLabelVisibilityForZoom();
-        });
+        };
+        this.sigma.getCamera().addListener("updated", this.cameraUpdatedListener);
         this.stylesSub = this.styleService.styles$.subscribe(() => {
             this.syncStyles();
             try {
@@ -870,6 +872,16 @@ export class GraphVisualiser {
 
     destroy() {
         this.stylesSub.unsubscribe();
+        // Stop the layout sim and detach our onTick before killing sigma —
+        // otherwise the rAF tick keeps mutating the graph and calling
+        // centerCamera() on the dead sigma, which schedules renders that
+        // crash inside process() (empty nodePrograms / nodeDataCache).
+        this.layout.stop();
+        this.layout.onTick = null;
+        if (this.cameraUpdatedListener) {
+            this.sigma.getCamera().removeListener("updated", this.cameraUpdatedListener);
+            this.cameraUpdatedListener = null;
+        }
         // Force-lose WebGL contexts before killing sigma so the browser
         // reclaims context slots immediately instead of waiting for GC.
         const container = this.sigma.getContainer();

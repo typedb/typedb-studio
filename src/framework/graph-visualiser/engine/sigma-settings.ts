@@ -58,6 +58,23 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
 
 export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: SigmaSettings, graph: MultiGraph): Sigma {
     const renderer = new Sigma(graph, containerEl, sigmaSettings);
+
+    // Defensive heal: sigma occasionally ends up with graphology nodes/edges
+    // that have no entry in its internal data caches. When that happens the
+    // stock `process()` throws on `data.x = attrs.x` (undefined data) on
+    // every frame. We re-index any missing items before delegating to the
+    // original implementation.
+    const originalProcess = (renderer as any).process;
+    (renderer as any).process = function () {
+        this.graph.forEachNode((node: string) => {
+            if (!this.nodeDataCache[node]) this.addNode(node);
+        });
+        this.graph.forEachEdge((edge: string) => {
+            if (!this.edgeDataCache[edge]) this.addEdge(edge);
+        });
+        return originalProcess.call(this);
+    };
+
     // Override renderLabels to sort by zIndex. Each drawLabel erases canvas
     // content in its node's shape area before drawing its label, so front nodes
     // (drawn last) erase back nodes' labels where they overlap.
