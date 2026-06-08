@@ -19,6 +19,7 @@ import { setUseBorderColorForLabels, setLabelsVisible, setShowHoverLabel } from 
 import { InteractionHandler, StudioState } from "./interaction-handler";
 import { LayoutWrapper } from "./layout";
 import { createSigmaRenderer, defaultSigmaSettings } from "./sigma-settings";
+import { DisplayAttributeStore, refreshInstanceLabels } from "./instance-label";
 
 export type GraphPngExportMode = "currentView" | "wholeGraph";
 const MAX_EXPORT_DIMENSION = 8192;
@@ -45,6 +46,10 @@ export class GraphVisualiser {
     private pinnedCameraWorld: { worldX: number; worldY: number; ratio: number } | null = null;
     private stylesSub!: Subscription;
     private cameraUpdatedListener: (() => void) | null = null;
+    /** Per-instance attribute values fetched purely to populate the label
+     *  heuristic. Not rendered into the graph — kept off-graph so the user
+     *  still has to opt in to attribute nodes/edges. */
+    private displayAttributes: DisplayAttributeStore = new Map();
 
     constructor(public graph: Graph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
         this.state = { activeQueryDatabase: null };
@@ -482,7 +487,46 @@ export class GraphVisualiser {
             let builder = new GraphBuilder(this.graph, res.ok.query, false, this.structureParams, this.styleParams);
             let answers = buildStructuredAnswers(res.ok as any);
             builder.build(answers);
+            refreshInstanceLabels(this.graph, this.displayAttributes);
         }
+    }
+
+    /**
+     * Parse a conceptRows response shaped like `match $owner has $a;` and
+     * record each (owner-iid, attribute-type-label) → value pair in the
+     * off-graph display-attribute store. Used to feed the label heuristic
+     * without ever drawing the attribute nodes/edges.
+     */
+    recordDisplayAttributes(res: ApiResponse<QueryResponse>, ownerVar: string, attrVar: string = "a"): void {
+        if (isApiErrorResponse(res)) return;
+        if (res.ok.answerType !== "conceptRows") return;
+        for (const answer of (res.ok as any).answers) {
+            const data = answer.data as Record<string, any>;
+            const owner = data[ownerVar];
+            const attr = data[attrVar];
+            if (!owner?.iid || !attr || attr.kind !== "attribute") continue;
+            const typeLabel: string | undefined = attr.type?.label;
+            if (!typeLabel) continue;
+            let perOwner = this.displayAttributes.get(owner.iid);
+            if (!perOwner) {
+                perOwner = new Map();
+                this.displayAttributes.set(owner.iid, perOwner);
+            }
+            perOwner.set(typeLabel, attr.value);
+        }
+    }
+
+    /** Recompute every entity / relation label from the latest graph state +
+     *  off-graph display-attribute store. Cheap; safe to call after any new
+     *  data arrives. */
+    refreshLabels(): void {
+        refreshInstanceLabels(this.graph, this.displayAttributes);
+    }
+
+    /** Drop the off-graph display-attribute store. Used by `resetTab` so a
+     *  reset starts from a clean slate; new fetches will repopulate. */
+    clearDisplayAttributes(): void {
+        this.displayAttributes.clear();
     }
 
     handleExplorationQueryResult(res: ApiResponse<QueryResponse>) {
@@ -492,6 +536,7 @@ export class GraphVisualiser {
             let builder = new GraphBuilder(this.graph, res.ok.query, true, this.structureParams, this.styleParams);
             let answers = buildStructuredAnswers(res.ok as any);
             builder.build(answers);
+            refreshInstanceLabels(this.graph, this.displayAttributes);
             if (this.styleService.degreeScaling) this.applyStyleUpdate();
         }
     }
