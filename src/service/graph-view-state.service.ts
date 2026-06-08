@@ -149,14 +149,43 @@ export class GraphViewState {
 
         try {
             if (tab.rootKind) {
-                await this.fetchInstancesOfKind(run, tab.rootKind);
+                if (tab.rootKind === "attribute") {
+                    await this.fetchInstancesOfKind(run, tab.rootKind);
+                } else {
+                    // Two-step: fetch instance response without pushing, fetch
+                    // display attributes off-graph, then push instances. This
+                    // way the first frame the user sees already has the
+                    // best-attribute labels resolved.
+                    const rowLimit = this.appData.preferences.queryRowLimit();
+                    const instancesRes = await this.runQuery(kindInstancesQuery(tab.rootKind), rowLimit);
+                    if (!isApiErrorResponse(instancesRes)) {
+                        const iids = this.extractIids(instancesRes, "x");
+                        if (iids.length > 0) {
+                            await this.fetchDisplayAttributes(run, tab.rootKind, iids);
+                        }
+                        this.pushSafely(run, instancesRes);
+                    }
+                }
             } else {
-                const iids = await this.fetchInstancesOfType(run, type);
-                if (iids.length > 0 && type.kind !== "attributeType") {
-                    const tasks: Promise<void>[] = [];
-                    if (options.includeAttributes) tasks.push(this.fetchAttributesOf(run, type, iids));
-                    if (options.includeLinks) tasks.push(this.fetchLinksOf(run, type, iids));
-                    await Promise.all(tasks);
+                if (type.kind === "attributeType") {
+                    await this.fetchInstancesOfType(run, type);
+                } else {
+                    const ownerVar = this.instanceVar(type);
+                    const rowLimit = this.appData.preferences.queryRowLimit();
+                    const instancesRes = await this.runQuery(`match $${ownerVar} isa ${type.label};`, rowLimit);
+                    if (!isApiErrorResponse(instancesRes)) {
+                        const iids = this.extractIids(instancesRes, ownerVar);
+                        if (iids.length > 0) {
+                            const ownerKind = type.kind === "entityType" ? "entity" : "relation";
+                            const tasks: Promise<void>[] = [
+                                this.fetchDisplayAttributes(run, ownerKind, iids),
+                            ];
+                            if (options.includeAttributes) tasks.push(this.fetchAttributesOf(run, type, iids));
+                            if (options.includeLinks) tasks.push(this.fetchLinksOf(run, type, iids));
+                            await Promise.all(tasks);
+                        }
+                        this.pushSafely(run, instancesRes);
+                    }
                 }
             }
             if (isNew) {
@@ -184,6 +213,7 @@ export class GraphViewState {
             visualiser.unfreezeViewport();
             visualiser.graph.clear();
             visualiser.layout.forgetSettled();
+            visualiser.clearDisplayAttributes();
         }
         tab.initialNodeCount = 0;
         tab.loadedConnections.clear();
@@ -265,9 +295,11 @@ export class GraphViewState {
      */
     async fetchAttributesOf(run: RunOutputState, type: SchemaConcept, iids: string[]): Promise<void> {
         if (iids.length === 0) return;
-        const queries = this.buildAttributeQueries(type, iids);
         const rowLimit = this.appData.preferences.queryRowLimit();
-        await Promise.all(queries.map(q => this.runAndPush(run, q, rowLimit * 50)));
+        const instanceVar = this.instanceVar(type);
+        if (instanceVar === "a") return; // attributes don't have own attributes
+        await this.runIidBatched(run, iids, instanceVar, rowLimit * 50,
+            branches => `match ${branches}; $${instanceVar} has $a;`);
     }
 
     /**
@@ -285,9 +317,8 @@ export class GraphViewState {
         const rowLimit = this.appData.preferences.queryRowLimit();
         const instanceVar = this.instanceVar(type);
         if (instanceVar === "a") return; // attribute types don't have own attributes
-        const branches = iids.map(iid => `{ $${instanceVar} iid ${iid}; }`).join(" or ");
-        const query = `match ${branches}; $${instanceVar} has ${attrTypeLabel} $a;`;
-        await this.runAndPush(run, query, rowLimit * 50);
+        await this.runIidBatched(run, iids, instanceVar, rowLimit * 50,
+            branches => `match ${branches}; $${instanceVar} has ${attrTypeLabel} $a;`);
     }
 
     /**
@@ -298,9 +329,22 @@ export class GraphViewState {
      */
     async fetchLinksOf(run: RunOutputState, type: SchemaConcept, iids: string[]): Promise<void> {
         if (iids.length === 0) return;
-        const queries = this.buildLinksQueries(type, iids);
         const rowLimit = this.appData.preferences.queryRowLimit();
-        await Promise.all(queries.map(q => this.runAndPush(run, q, rowLimit * 50)));
+        if (type.kind === "entityType") {
+            await this.runIidBatched(run, iids, "x", rowLimit * 50,
+                branches => `match ${branches}; $r links ($x); $r links ($other);`);
+            return;
+        }
+        if (type.kind === "relationType") {
+            await Promise.all([
+                this.runIidBatched(run, iids, "r", rowLimit * 50,
+                    branches => `match ${branches}; $r links ($p);`),
+                this.runIidBatched(run, iids, "r", rowLimit * 50,
+                    branches => `match ${branches}; $r links ($p); $p has $pa;`),
+                this.runIidBatched(run, iids, "r", rowLimit * 50,
+                    branches => `match ${branches}; $r links ($p); $r2 links ($p); $r2 links ($other);`),
+            ]);
+        }
     }
 
     /**
@@ -362,15 +406,47 @@ export class GraphViewState {
         const rowLimit = this.appData.preferences.queryRowLimit();
         const playerVar = this.instanceVar(sourceType);
         if (playerVar === "a") return; // attributes don't play roles
-        const branches = sourceIids.map(iid => `{ $${playerVar} iid ${iid}; }`).join(" or ");
-        // Two queries so we get both the relation→source edges AND the
-        // relation's other role-players (with their role edges). Both
-        // contribute to the same graph push.
-        const queries = [
-            `match ${branches}; $r isa ${relationTypeLabel}; $r links ($role: $${playerVar});`,
-            `match ${branches}; $r isa ${relationTypeLabel}; $r links ($role1: $${playerVar}); $r links ($role2: $other);`,
-        ];
-        await Promise.all(queries.map(q => this.runAndPush(run, q, rowLimit * 50)));
+        // Two query templates so we get both the relation→source edges AND
+        // the relation's other role-players (with their role edges). Each
+        // template is batched separately and runs in parallel.
+        await Promise.all([
+            this.runIidBatched(run, sourceIids, playerVar, rowLimit * 50,
+                branches => `match ${branches}; $r isa ${relationTypeLabel}; $r links ($role: $${playerVar});`),
+            this.runIidBatched(run, sourceIids, playerVar, rowLimit * 50,
+                branches => `match ${branches}; $r isa ${relationTypeLabel}; $r links ($role1: $${playerVar}); $r links ($role2: $other);`),
+        ]);
+    }
+
+    /**
+     * Build a `{ $v iid X; } or ...` pattern from each batch of IIDs and run
+     * the resulting query through `runAndPush` in parallel.
+     *
+     * Chunking is mandatory because the server silently returns
+     * `query: null` (the AnalyzedPipeline) for very long OR-of-iid patterns,
+     * which makes the graph-builder pipeline drop the response entirely.
+     * Per the TypeDB team, the server-side limit is 64 branches; 50 leaves
+     * comfortable headroom while still keeping the number of round-trips
+     * low as the graph grows.
+     */
+    private static readonly IID_BATCH_SIZE = 50;
+
+    private async runIidBatched(
+        run: RunOutputState,
+        iids: string[],
+        instanceVar: string,
+        rowLimit: number,
+        buildQuery: (branches: string) => string,
+    ): Promise<void> {
+        if (iids.length === 0) return;
+        const batches: string[][] = [];
+        for (let i = 0; i < iids.length; i += GraphViewState.IID_BATCH_SIZE) {
+            batches.push(iids.slice(i, i + GraphViewState.IID_BATCH_SIZE));
+        }
+        const queries = batches.map(batch => {
+            const branches = batch.map(iid => `{ $${instanceVar} iid ${iid}; }`).join(" or ");
+            return buildQuery(branches);
+        });
+        await Promise.all(queries.map(q => this.runAndPush(run, q, rowLimit)));
     }
 
     private async runAndPush(run: RunOutputState, query: string, rowLimit: number): Promise<void> {
@@ -384,7 +460,11 @@ export class GraphViewState {
 
     private runQuery(query: string, rowLimit: number): Promise<ApiResponse<QueryResponse>> {
         return new Promise((resolve, reject) => {
-            this.driver.query(query, { answerCountLimit: rowLimit }).subscribe({
+            // `includeQueryStructure` is required so the response carries the
+            // AnalyzedPipeline that the graph builder pipeline consumes.
+            // Without it, `handleQueryResult` sees `res.ok.query == null` and
+            // silently skips the build, leaving the graph unchanged.
+            this.driver.query(query, { answerCountLimit: rowLimit, includeQueryStructure: true }).subscribe({
                 next: (res) => resolve(res),
                 error: (err) => reject(err),
             });
@@ -420,43 +500,49 @@ export class GraphViewState {
         return iids;
     }
 
-    private buildAttributeQueries(type: SchemaConcept, iids: string[]): string[] {
-        if (type.kind === "entityType") {
-            const branches = iids.map(iid => `{ $x iid ${iid}; }`).join(" or ");
-            return [`match ${branches}; $x has $a;`];
-        }
-        if (type.kind === "relationType") {
-            const branches = iids.map(iid => `{ $r iid ${iid}; }`).join(" or ");
-            return [`match ${branches}; $r has $a;`];
-        }
-        return [];
+    /**
+     * Run the kind-instances query (entity/relation/attribute) into `run.graph`.
+     * Returns the IIDs of the returned instances so the caller can do
+     * follow-up fetches (e.g. label-only attribute fetch).
+     */
+    async fetchInstancesOfKind(run: RunOutputState, rootKind: RootKind): Promise<string[]> {
+        const rowLimit = this.appData.preferences.queryRowLimit();
+        const res = await this.runQuery(kindInstancesQuery(rootKind), rowLimit);
+        if (isApiErrorResponse(res)) return [];
+        this.pushSafely(run, res);
+        return this.extractIids(res, "x");
     }
 
     /**
-     * Run the kind-instances query (entity/relation/attribute) into `run.graph`.
-     * Used for root-kind tabs and for any future kind-level chip toggles.
+     * Fetch every attribute owned by the given IIDs *off-graph* — the
+     * attribute values feed the label heuristic only, no attribute nodes or
+     * edges are added to the visualiser. Skipped for attribute kinds (they
+     * don't have attributes). `ownerKind` selects the right query template
+     * (entities/relations) and matching variable name.
      */
-    async fetchInstancesOfKind(run: RunOutputState, rootKind: RootKind): Promise<void> {
+    async fetchDisplayAttributes(run: RunOutputState, ownerKind: "entity" | "relation", iids: string[]): Promise<void> {
+        if (iids.length === 0) return;
+        const ownerVar = ownerKind === "entity" ? "x" : "r";
         const rowLimit = this.appData.preferences.queryRowLimit();
-        const res = await this.runQuery(kindInstancesQuery(rootKind), rowLimit);
-        if (!isApiErrorResponse(res)) this.pushSafely(run, res);
+        const batches: string[][] = [];
+        for (let i = 0; i < iids.length; i += GraphViewState.IID_BATCH_SIZE) {
+            batches.push(iids.slice(i, i + GraphViewState.IID_BATCH_SIZE));
+        }
+        await Promise.all(batches.map(async batch => {
+            const branches = batch.map(iid => `{ $${ownerVar} iid ${iid}; }`).join(" or ");
+            const query = `match ${branches}; $${ownerVar} has $a;`;
+            try {
+                const res = await this.runQuery(query, rowLimit * 50);
+                // `run.graph` buffers when the visualiser doesn't exist yet
+                // (display attrs are typically fetched before the first push),
+                // so the records survive until the visualiser is constructed.
+                run.graph.recordDisplayAttributes(res, ownerVar);
+            } catch (err) {
+                console.error("[Display attributes fetch]", err);
+            }
+        }));
     }
 
-    private buildLinksQueries(type: SchemaConcept, iids: string[]): string[] {
-        if (type.kind === "entityType") {
-            const branches = iids.map(iid => `{ $x iid ${iid}; }`).join(" or ");
-            return [`match ${branches}; $r links ($x); $r links ($other);`];
-        }
-        if (type.kind === "relationType") {
-            const branches = iids.map(iid => `{ $r iid ${iid}; }`).join(" or ");
-            return [
-                `match ${branches}; $r links ($p);`,
-                `match ${branches}; $r links ($p); $p has $pa;`,
-                `match ${branches}; $r links ($p); $r2 links ($p); $r2 links ($other);`,
-            ];
-        }
-        return [];
-    }
 }
 
 /** TypeQL that returns every instance of a root kind. Used by kind-level tabs

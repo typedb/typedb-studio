@@ -108,6 +108,11 @@ export class SchemaToolWindowComponent {
             if (node.nodeKind === "concept") {
                 this.graphViewState.openTypeTab(node.concept);
                 event.stopPropagation();
+            } else if (node.nodeKind === "root") {
+                const rootKind: RootKind = node.label === "entities" ? "entity"
+                    : node.label === "relations" ? "relation" : "attribute";
+                this.graphViewState.openKindTab(rootKind);
+                event.stopPropagation();
             }
         } else {
             // In other modes, clicking toggles expand/collapse

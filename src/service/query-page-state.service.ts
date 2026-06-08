@@ -1164,6 +1164,9 @@ export class GraphOutputState {
     private _preservedGraph: Graph | null = null;
     private _preservedCamera: { x: number; y: number; ratio: number; angle: number } | null = null;
     private _pendingResponses: ApiResponse<QueryResponse>[] = [];
+    /** Display-attribute responses recorded *before* the visualiser exists.
+     *  Drained into the visualiser as soon as `pushInternal` constructs it. */
+    private _pendingDisplayAttrs: Array<{ res: ApiResponse<QueryResponse>; ownerVar: string; attrVar: string }> = [];
     private _styleService: GraphStyleService;
 
     constructor(styleService: GraphStyleService) {
@@ -1193,6 +1196,18 @@ export class GraphOutputState {
         this.pushInternal(res);
     }
 
+    /** Forward a display-attribute response to the visualiser, or buffer it
+     *  if the visualiser hasn't been constructed yet (instance push hasn't
+     *  fired). Buffered records are replayed before any instance build runs. */
+    recordDisplayAttributes(res: ApiResponse<QueryResponse>, ownerVar: string, attrVar: string = "a"): void {
+        if (this.visualiser) {
+            this.visualiser.recordDisplayAttributes(res, ownerVar, attrVar);
+            this.visualiser.refreshLabels();
+        } else {
+            this._pendingDisplayAttrs.push({ res, ownerVar, attrVar });
+        }
+    }
+
     private pushInternal(res: ApiResponse<QueryResponse>) {
         if (isApiErrorResponse(res)) {
             this.status = "error";
@@ -1205,6 +1220,14 @@ export class GraphOutputState {
             const sigma = createSigmaRenderer(this._canvasEl!, defaultSigmaSettings as any, graph);
             const layout = Layouts.createD3ForceSupervisor(graph);
             this.visualiser = new GraphVisualiser(graph, sigma, layout, this._styleService);
+            // Replay any display-attribute responses that arrived before the
+            // visualiser existed so the imminent build picks up correct labels.
+            if (this._pendingDisplayAttrs.length > 0) {
+                for (const p of this._pendingDisplayAttrs) {
+                    this.visualiser.recordDisplayAttributes(p.res, p.ownerVar, p.attrVar);
+                }
+                this._pendingDisplayAttrs = [];
+            }
         }
 
         switch (res.ok.answerType) {
