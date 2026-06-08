@@ -141,8 +141,17 @@ export class GraphBuilder extends AbstractGraphBuilder {
     }
 
     private maybeCreateEdge(answerIndex: number, edge: DataConstraintAny, label: string, from: StudioDataVertex, to: StudioDataVertex, queryFrom: ConstraintVertexOrSpecial, queryTo: ConstraintVertexOrSpecial) {
-        // Don't create edges if either vertex is unavailable
+        // If either endpoint is unavailable (e.g. its variable was projected
+        // out by `select`), we can't draw the edge — but the surviving
+        // endpoint may still be a selected output that deserves a node on
+        // its own. Fall back to creating just the available vertex.
         if (from.kind === "unavailable" || to.kind === "unavailable") {
+            if (from.kind !== "unavailable" && this.shouldCreateNode(queryFrom)) {
+                this.vertex(answerIndex, from, queryFrom);
+            }
+            if (to.kind !== "unavailable" && this.shouldCreateNode(queryTo)) {
+                this.vertex(answerIndex, to, queryTo);
+            }
             return;
         }
 
