@@ -15,8 +15,14 @@ import { createRunOutputState, RunOutputState } from "./query-page-state.service
 
 export type SelectionMode = "types" | "instances";
 
+export type RootKind = "entity" | "relation" | "attribute";
+
 export interface GraphViewTab {
     type: SchemaConcept;
+    /** When set, the tab represents *all* instances of a root kind rather than
+     *  a single SchemaConcept. `type` is a synthetic placeholder; downstream
+     *  code paths that build TypeQL or fetch counts should branch on this. */
+    rootKind?: RootKind;
     run: RunOutputState;
     /** Options the tab was originally opened with — used by `resetTab` to
      *  replay the exact initial query when the user clicks "Reset changes". */
@@ -70,6 +76,38 @@ export class GraphViewState {
         });
     }
 
+    /**
+     * Open (or focus) a tab that loads every instance of a root kind
+     * (`entity` / `relation` / `attribute`). Uses the projected-out `select $x`
+     * pattern so we get instance nodes for arbitrary subtypes in a single
+     * round-trip.
+     */
+    async openKindTab(rootKind: RootKind): Promise<void> {
+        const tabs = this.openTabs$.value;
+        let tab = tabs.find(t => t.rootKind === rootKind);
+        const isNew = !tab;
+        if (!tab) {
+            const syntheticType = syntheticRootKindConcept(rootKind);
+            const baseQuery = kindInstancesQuery(rootKind);
+            const run = createRunOutputState(rootKind, baseQuery, this.graphStyleService);
+            tab = {
+                type: syntheticType,
+                rootKind,
+                run,
+                initialOptions: {},
+                initialNodeCount: 0,
+                selectionMode: "types",
+                loadedConnections: new Map(),
+            };
+            this.openTabs$.next([...tabs, tab]);
+            this.selectedTabIndex$.next(this.openTabs$.value.indexOf(tab));
+        } else {
+            this.selectedTabIndex$.next(tabs.indexOf(tab));
+        }
+
+        await this.runInitialFetches(tab, tab.type, tab.initialOptions, isNew);
+    }
+
     async openTypeTab(type: SchemaConcept, options: OpenTypeTabOptions = {}): Promise<void> {
         // Same type → same tab; subsequent opens add to the existing graph.
         const tabs = this.openTabs$.value;
@@ -105,15 +143,21 @@ export class GraphViewState {
         const run = tab.run;
         run.graph.status = "running";
         run.graph.database = this.driver.requireDatabase().name;
-        run.graph.query = `match $${this.instanceVar(type)} isa ${type.label};`;
+        run.graph.query = tab.rootKind
+            ? kindInstancesQuery(tab.rootKind)
+            : `match $${this.instanceVar(type)} isa ${type.label};`;
 
         try {
-            const iids = await this.fetchInstancesOfType(run, type);
-            if (iids.length > 0 && type.kind !== "attributeType") {
-                const tasks: Promise<void>[] = [];
-                if (options.includeAttributes) tasks.push(this.fetchAttributesOf(run, type, iids));
-                if (options.includeLinks) tasks.push(this.fetchLinksOf(run, type, iids));
-                await Promise.all(tasks);
+            if (tab.rootKind) {
+                await this.fetchInstancesOfKind(run, tab.rootKind);
+            } else {
+                const iids = await this.fetchInstancesOfType(run, type);
+                if (iids.length > 0 && type.kind !== "attributeType") {
+                    const tasks: Promise<void>[] = [];
+                    if (options.includeAttributes) tasks.push(this.fetchAttributesOf(run, type, iids));
+                    if (options.includeLinks) tasks.push(this.fetchLinksOf(run, type, iids));
+                    await Promise.all(tasks);
+                }
             }
             if (isNew) {
                 tab.initialNodeCount = run.graph.visualiser?.graph.order ?? 0;
@@ -388,6 +432,16 @@ export class GraphViewState {
         return [];
     }
 
+    /**
+     * Run the kind-instances query (entity/relation/attribute) into `run.graph`.
+     * Used for root-kind tabs and for any future kind-level chip toggles.
+     */
+    async fetchInstancesOfKind(run: RunOutputState, rootKind: RootKind): Promise<void> {
+        const rowLimit = this.appData.preferences.queryRowLimit();
+        const res = await this.runQuery(kindInstancesQuery(rootKind), rowLimit);
+        if (!isApiErrorResponse(res)) this.pushSafely(run, res);
+    }
+
     private buildLinksQueries(type: SchemaConcept, iids: string[]): string[] {
         if (type.kind === "entityType") {
             const branches = iids.map(iid => `{ $x iid ${iid}; }`).join(" or ");
@@ -403,4 +457,29 @@ export class GraphViewState {
         }
         return [];
     }
+}
+
+/** TypeQL that returns every instance of a root kind. Used by kind-level tabs
+ *  in both the Graph and Query pages. The intermediate type variable `$y` is
+ *  projected out via `select $x` so the graph builder only renders instance
+ *  vertices (no per-subtype-label nodes). */
+export function kindInstancesQuery(rootKind: RootKind): string {
+    return `match\n    $x isa $y;\n    ${rootKind} $y;\nselect $x;`;
+}
+
+/** Placeholder SchemaConcept used as `GraphViewTab.type` for kind tabs. Most
+ *  downstream code consults `tab.rootKind` first when it matters; for the
+ *  fields that don't (label, kind, icon class), this carries enough info. */
+function syntheticRootKindConcept(rootKind: RootKind): SchemaConcept {
+    const kind = rootKind === "entity" ? "entityType"
+        : rootKind === "relation" ? "relationType" : "attributeType";
+    return {
+        kind,
+        label: rootKind,
+        subtypes: [],
+        ownedAttributes: [],
+        playedRoles: [],
+        ...(rootKind === "relation" ? { relatedRoles: [] } : {}),
+        ...(rootKind === "attribute" ? { valueType: "string" } : {}),
+    } as unknown as SchemaConcept;
 }

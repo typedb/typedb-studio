@@ -137,3 +137,26 @@
     background: var(--theme-black);
     --mat-button-filled-container-height: 40px;
 }
+
+// When the graph visualiser enters its own fullscreen mode it sets
+// `.graph-fullscreen` on <body> and applies `position: fixed; z-index: 10000`
+// to the canvas container. By default Material's sidenav sits above
+// sidenav-content, so the fixed overlay gets obscured by the left sidebar.
+// Flip the stacking order so sidenav-content (which contains both the action
+// bar *and* the fullscreen overlay) wins; the overlay's own z-index then
+// covers the action bar inside the same stacking context.
+:host-context(.graph-fullscreen) {
+    ::ng-deep mat-sidenav-container > mat-sidenav {
+        z-index: 0 !important;
+    }
+    ::ng-deep mat-sidenav-container > .mat-sidenav-content {
+        z-index: 1 !important;
+    }
+    // The action bar is `position: sticky` and lives in a different ancestor
+    // stacking context than the fixed graph overlay, so a z-index bump alone
+    // can't reliably cover it. Just hide it outright while the visualiser is
+    // maximised — restored as soon as the user exits fullscreen.
+    ::ng-deep .action-bar {
+        display: none !important;
+    }
+}

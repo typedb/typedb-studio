@@ -29,7 +29,7 @@ import { DataEditorState } from "../../../service/data-editor-state.service";
 import { QueryTabsState } from "../../../service/query-tabs-state.service";
 import { QueryPageState } from "../../../service/query-page-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
-import { GraphViewState } from "../../../service/graph-view-state.service";
+import { GraphViewState, kindInstancesQuery, RootKind } from "../../../service/graph-view-state.service";
 
 @Component({
     selector: "ts-schema-tool-window",
@@ -48,12 +48,16 @@ export class SchemaToolWindowComponent {
     @Input() mode: "schema" | "data" | "graph-view" = "schema";
     @HostBinding("class") readonly clazz = "schema-pane";
     @ViewChild("conceptContextMenuTrigger") conceptContextMenuTrigger!: MatMenuTrigger;
+    @ViewChild("rootContextMenuTrigger") rootContextMenuTrigger!: MatMenuTrigger;
     refreshSchemaTooltip$ = this.state.schema.interactionDisabledReason$.pipe(map(x => x ? `` : `Refresh`));
     actionsButtonTooltip$ = this.state.schema.interactionDisabledReason$.pipe(map(x => x ? x : `More actions`));
 
     // Concept context menu state
     conceptContextMenuPosition = { x: 0, y: 0 };
     conceptContextMenuConcept: SchemaConcept | null = null;
+
+    // Root context menu state
+    rootContextMenuPosition = { x: 0, y: 0 };
 
     constructor(
         public state: SchemaToolWindowState,
@@ -139,6 +143,35 @@ export class SchemaToolWindowComponent {
         });
     }
 
+    onRowContextMenu(flat: FlatSchemaTreeNode, event: MouseEvent) {
+        if (flat.node.nodeKind === "concept") {
+            this.openConceptContextMenu(event, flat.node.concept);
+        } else if (flat.node.nodeKind === "root") {
+            // No data-mode equivalent yet, so skip root right-click in that mode.
+            if (this.mode === "data") return;
+            this.openRootContextMenu(event, flat.node.label);
+        }
+    }
+
+    openRootContextMenu(event: MouseEvent, rootLabel: "entities" | "relations" | "attributes") {
+        event.preventDefault();
+        event.stopPropagation();
+        this.rootContextMenuPosition = { x: event.clientX, y: event.clientY };
+        // Schema tree labels them in plural ("entities") but the TypeQL
+        // matcher kind is singular ("entity").
+        const rootKind: RootKind = rootLabel === "entities" ? "entity"
+            : rootLabel === "relations" ? "relation" : "attribute";
+        this.rootContextMenuTrigger.menuData = { rootKind };
+        this.rootContextMenuTrigger.openMenu();
+
+        setTimeout(() => {
+            const activeElement = document.activeElement as HTMLElement;
+            if (activeElement?.classList.contains("mat-mdc-menu-item")) {
+                activeElement.blur();
+            }
+        });
+    }
+
     async copyTypeLabel(concept: SchemaConcept) {
         try {
             await navigator.clipboard.writeText(concept.label);
@@ -174,4 +207,20 @@ export class SchemaToolWindowComponent {
     openGraphTabWithAttributes(concept: SchemaConcept) {
         this.graphViewState.openTypeTab(concept, { includeAttributes: true });
     }
+
+    loadKindInstances(rootKind: RootKind) {
+        const query = kindInstancesQuery(rootKind);
+        const title = `${rootKind} instances`;
+        this.router.navigate(["/query"]).then(() => {
+            const tab = this.queryTabsState.newTab();
+            this.queryTabsState.renameTab(tab, title);
+            this.queryTabsState.getTabControl(tab).setValue(query);
+            this.queryPageState.runQuery(query);
+        });
+    }
+
+    openGraphKindTab(rootKind: RootKind) {
+        this.graphViewState.openKindTab(rootKind);
+    }
 }
+

@@ -40,7 +40,7 @@
          [class.clickable]="flat.node.clickable"
          [style.padding-left.px]="flat.level * 16"
          (click)="onRowClick(flat, $event)"
-         (contextmenu)="flat.node.nodeKind === 'concept' && openConceptContextMenu($event, $any(flat.node).concept)">
+         (contextmenu)="onRowContextMenu(flat, $event)">
       <button matIconButton class="expand-button"
               [disabled]="!flat.expandable"
               (click)="onExpandClick(flat, $event)">
@@ -147,6 +147,26 @@
         }
       } @else {
         <button mat-menu-item (click)="loadInstances(concept)">Load instances</button>
+      }
+    </span>
+  </ng-template>
+</mat-menu>
+
+<!-- Root-kind context menu trigger -->
+<div class="concept-context-menu-trigger"
+     [style.left.px]="rootContextMenuPosition.x"
+     [style.top.px]="rootContextMenuPosition.y"
+     [matMenuTriggerFor]="rootContextMenu"
+     #rootContextMenuTrigger="matMenuTrigger">
+</div>
+
+<mat-menu #rootContextMenu="matMenu" [overlapTrigger]="false">
+  <ng-template matMenuContent let-rootKind="rootKind">
+    <span class="menu-content">
+      @if (mode === 'graph-view') {
+        <button mat-menu-item (click)="openGraphKindTab(rootKind)">Load instances</button>
+      } @else if (mode !== 'data') {
+        <button mat-menu-item (click)="loadKindInstances(rootKind)">Load instances</button>
       }
     </span>
   </ng-template>
