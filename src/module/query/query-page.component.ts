@@ -70,6 +70,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     @ViewChildren(GraphCanvasComponent) graphCanvasComponents!: QueryList<GraphCanvasComponent>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     @ViewChild("queryTabContextMenuTrigger") queryTabContextMenuTrigger!: MatMenuTrigger;
+    @ViewChild("newTabContextMenuTrigger") newTabContextMenuTrigger!: MatMenuTrigger;
     @ViewChild("runTabContextMenuTrigger") runTabContextMenuTrigger!: MatMenuTrigger;
     @ViewChild("tabsScrollContainer") tabsScrollContainer?: ElementRef<HTMLElement>;
     @ViewChild("runTabsScrollContainer") runTabsScrollContainer?: ElementRef<HTMLElement>;
@@ -94,6 +95,9 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     runTabContextMenuPosition = { x: 0, y: 0 };
     runTabContextMenuRun: RunOutputState | null = null;
     runTabContextMenuTabIndex = 0;
+
+    // (+) button context menu state
+    newTabContextMenuPosition = { x: 0, y: 0 };
 
     graphMaximised = false;
 
@@ -332,6 +336,19 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     newQueryTab() {
         this.queryTabsState.newTab();
         this.scrollTabsToEnd();
+    }
+
+    /** Right-click on the (+) button — pops a small menu with "Open empty
+     *  tab" (same as left-click) and a shortcut to the Saved Queries page. */
+    openNewTabContextMenu(event: MouseEvent) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.newTabContextMenuPosition = { x: event.clientX, y: event.clientY };
+        this.newTabContextMenuTrigger.openMenu();
+    }
+
+    goToSavedQueriesPage() {
+        this.router.navigate(["/saved-queries"]);
     }
 
     private scrollTabsToEnd() {
