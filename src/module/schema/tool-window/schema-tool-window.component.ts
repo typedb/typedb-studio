@@ -5,7 +5,7 @@
  */
 
 import { AsyncPipe } from "@angular/common";
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Input, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostBinding, HostListener, Input, ViewChild } from "@angular/core";
 import { ScrollingModule } from "@angular/cdk/scrolling";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
@@ -49,6 +49,7 @@ export class SchemaToolWindowComponent {
     @HostBinding("class") readonly clazz = "schema-pane";
     @ViewChild("conceptContextMenuTrigger") conceptContextMenuTrigger!: MatMenuTrigger;
     @ViewChild("rootContextMenuTrigger") rootContextMenuTrigger!: MatMenuTrigger;
+    @ViewChild("searchInput") searchInputRef?: ElementRef<HTMLInputElement>;
     refreshSchemaTooltip$ = this.state.schema.interactionDisabledReason$.pipe(map(x => x ? `` : `Refresh`));
     actionsButtonTooltip$ = this.state.schema.interactionDisabledReason$.pipe(map(x => x ? x : `More actions`));
 
@@ -58,6 +59,11 @@ export class SchemaToolWindowComponent {
 
     // Root context menu state
     rootContextMenuPosition = { x: 0, y: 0 };
+
+    /** Whether the search overlay is mounted (and the input is focused). The
+     *  query itself lives on the state service so the tree filter reacts
+     *  reactively. */
+    searchOpen = false;
 
     constructor(
         public state: SchemaToolWindowState,
@@ -125,6 +131,62 @@ export class SchemaToolWindowComponent {
 
     openSchemaTextDialog() {
         this.dialog.open(SchemaTextDialogComponent, { width: "80vw", height: "80vh" });
+    }
+
+    /** Cmd/Ctrl+F opens the search overlay anywhere the schema tool window
+     *  is alive. Hijacks the browser's "find in page" shortcut — matches the
+     *  spec ("hit Ctrl/Cmd+F"). */
+    @HostListener("window:keydown", ["$event"])
+    onWindowKeydown(event: KeyboardEvent) {
+        if ((event.ctrlKey || event.metaKey) && (event.key === "f" || event.key === "F")) {
+            event.preventDefault();
+            this.openSearch();
+        }
+    }
+
+    openSearch() {
+        this.searchOpen = true;
+        // Wait one microtask so the input is in the DOM, then focus it. We
+        // still call markForCheck because OnPush won't notice the boolean
+        // flip from inside an async callback.
+        this.cdr.markForCheck();
+        queueMicrotask(() => this.searchInputRef?.nativeElement.focus());
+    }
+
+    closeSearch() {
+        this.searchOpen = false;
+        // Clearing also restores the original tree (filter goes inert when
+        // the query is empty). Expansion state is untouched throughout.
+        this.state.searchQuery$.next("");
+        this.cdr.markForCheck();
+    }
+
+    onSearchInput(value: string) {
+        this.state.searchQuery$.next(value);
+    }
+
+    onSearchKeydown(event: KeyboardEvent) {
+        if (event.key === "Escape") {
+            event.preventDefault();
+            this.closeSearch();
+        }
+    }
+
+    onSearchBlur() {
+        // Hide the bar on blur only if it's empty — typing then clicking
+        // away into the tree keeps the filter active so the user can browse
+        // the matches. Esc and the inline X button are the explicit clears.
+        if (!this.state.searchQuery$.value) {
+            this.searchOpen = false;
+            this.cdr.markForCheck();
+        }
+    }
+
+    clearSearch() {
+        // X-button: clear the filter but keep the bar open + focused so the
+        // user can type something else.
+        this.state.searchQuery$.next("");
+        queueMicrotask(() => this.searchInputRef?.nativeElement.focus());
     }
 
     isNodeHighlighted(node: SchemaTreeNode): boolean {
