@@ -50,6 +50,12 @@ export class GraphVisualiser {
      *  heuristic. Not rendered into the graph — kept off-graph so the user
      *  still has to opt in to attribute nodes/edges. */
     private displayAttributes: DisplayAttributeStore = new Map();
+    /** User-set overrides for the instance-label heuristic: typeLabel →
+     *  attribute type label to use as the display value. Loaded from
+     *  `AppData.nodeLabelPrefs` when a tab opens; mutated from the type
+     *  inspector dropdown. Independent of GraphStyleService so "Reset all
+     *  styles" doesn't clear it. */
+    labelOverridesByType: Map<string, string> = new Map();
 
     constructor(public graph: Graph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
         this.state = { activeQueryDatabase: null };
@@ -487,7 +493,7 @@ export class GraphVisualiser {
             let builder = new GraphBuilder(this.graph, res.ok.query, false, this.structureParams, this.styleParams);
             let answers = buildStructuredAnswers(res.ok as any);
             builder.build(answers);
-            refreshInstanceLabels(this.graph, this.displayAttributes);
+            refreshInstanceLabels(this.graph, this.displayAttributes, this.labelOverridesByType);
         }
     }
 
@@ -512,7 +518,15 @@ export class GraphVisualiser {
                 perOwner = new Map();
                 this.displayAttributes.set(owner.iid, perOwner);
             }
-            perOwner.set(typeLabel, attr.value);
+            // Multi-valued attributes: append rather than overwrite so each
+            // (owner, attr-type) pair holds every value the row stream
+            // reports. Dedup happens later at format time.
+            let values = perOwner.get(typeLabel);
+            if (!values) {
+                values = [];
+                perOwner.set(typeLabel, values);
+            }
+            values.push(attr.value);
         }
     }
 
@@ -520,7 +534,22 @@ export class GraphVisualiser {
      *  off-graph display-attribute store. Cheap; safe to call after any new
      *  data arrives. */
     refreshLabels(): void {
-        refreshInstanceLabels(this.graph, this.displayAttributes);
+        refreshInstanceLabels(this.graph, this.displayAttributes, this.labelOverridesByType);
+    }
+
+    /** Replace the full override map (e.g. when loading from AppData). */
+    applyLabelOverrides(overrides: Map<string, string>): void {
+        this.labelOverridesByType = new Map(overrides);
+        this.refreshLabels();
+    }
+
+    /** Set or clear a single type's override and refresh labels. UI hook
+     *  for the type-detail dropdown — persisting to AppData is the caller's
+     *  responsibility. */
+    setLabelOverride(typeLabel: string, attrTypeLabel: string | null): void {
+        if (attrTypeLabel) this.labelOverridesByType.set(typeLabel, attrTypeLabel);
+        else this.labelOverridesByType.delete(typeLabel);
+        this.refreshLabels();
     }
 
     /** Drop the off-graph display-attribute store. Used by `resetTab` so a
@@ -536,7 +565,7 @@ export class GraphVisualiser {
             let builder = new GraphBuilder(this.graph, res.ok.query, true, this.structureParams, this.styleParams);
             let answers = buildStructuredAnswers(res.ok as any);
             builder.build(answers);
-            refreshInstanceLabels(this.graph, this.displayAttributes);
+            refreshInstanceLabels(this.graph, this.displayAttributes, this.labelOverridesByType);
             if (this.styleService.degreeScaling) this.applyStyleUpdate();
         }
     }

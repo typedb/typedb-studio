@@ -1167,6 +1167,9 @@ export class GraphOutputState {
     /** Display-attribute responses recorded *before* the visualiser exists.
      *  Drained into the visualiser as soon as `pushInternal` constructs it. */
     private _pendingDisplayAttrs: Array<{ res: ApiResponse<QueryResponse>; ownerVar: string; attrVar: string }> = [];
+    /** Pre-visualiser buffer for the label override map (same pattern as
+     *  display-attrs). Drained into the visualiser as soon as it's created. */
+    private _pendingLabelOverrides: Map<string, string> | null = null;
     private _styleService: GraphStyleService;
 
     constructor(styleService: GraphStyleService) {
@@ -1208,6 +1211,17 @@ export class GraphOutputState {
         }
     }
 
+    /** Apply the full per-type label override map to the visualiser, or buffer
+     *  it if the visualiser doesn't exist yet (so the very first build's
+     *  labels reflect persisted user overrides). */
+    applyLabelOverrides(overrides: Map<string, string>): void {
+        if (this.visualiser) {
+            this.visualiser.applyLabelOverrides(overrides);
+        } else {
+            this._pendingLabelOverrides = new Map(overrides);
+        }
+    }
+
     private pushInternal(res: ApiResponse<QueryResponse>) {
         if (isApiErrorResponse(res)) {
             this.status = "error";
@@ -1227,6 +1241,10 @@ export class GraphOutputState {
                     this.visualiser.recordDisplayAttributes(p.res, p.ownerVar, p.attrVar);
                 }
                 this._pendingDisplayAttrs = [];
+            }
+            if (this._pendingLabelOverrides) {
+                this.visualiser.applyLabelOverrides(this._pendingLabelOverrides);
+                this._pendingLabelOverrides = null;
             }
         }
 

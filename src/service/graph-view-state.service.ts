@@ -142,10 +142,16 @@ export class GraphViewState {
     private async runInitialFetches(tab: GraphViewTab, type: SchemaConcept, options: OpenTypeTabOptions, isNew: boolean): Promise<void> {
         const run = tab.run;
         run.graph.status = "running";
-        run.graph.database = this.driver.requireDatabase().name;
+        const databaseName = this.driver.requireDatabase().name;
+        run.graph.database = databaseName;
         run.graph.query = tab.rootKind
             ? kindInstancesQuery(tab.rootKind)
             : `match $${this.instanceVar(type)} isa ${type.label};`;
+
+        // Apply persisted per-type label overrides for this database. Buffered
+        // until the visualiser is constructed, so labels come out correct on
+        // the first frame.
+        run.graph.applyLabelOverrides(this.appData.nodeLabelPrefs.getAll(databaseName));
 
         try {
             if (tab.rootKind) {

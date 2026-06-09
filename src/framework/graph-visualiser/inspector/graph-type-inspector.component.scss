@@ -129,3 +129,86 @@
         cursor: default;
     }
 }
+
+// One row inside the "Display Settings" section — a left label and a
+// right-aligned compact mat-select. Mirrors the structure used by the side
+// panel footer's settings, so the mat-form-field tightening rules below are
+// the same recipe as `.footer-select-field`.
+.display-setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+// Very-narrow pane: stack the label above its select to keep the trigger
+// from shrinking. Uses the 300px tier of the `instance-detail` container
+// query already declared on the inherited `.detail-panel`.
+@container instance-detail (width < 300px) {
+    .display-setting-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+    }
+    .display-setting-select {
+        width: 100%;
+    }
+}
+
+.display-setting-label {
+    font-size: 12px;
+    color: var(--theme-secondary-light-grey);
+}
+
+.display-setting-select {
+    flex: 0 0 auto;
+    width: 160px;
+
+    --mat-form-field-container-height: 28px;
+    --mat-form-field-container-vertical-padding: 0;
+    --mat-form-field-filled-with-label-container-padding-top: 0;
+    --mat-form-field-filled-with-label-container-padding-bottom: 0;
+    --mdc-filled-text-field-container-color: #{var(--theme-secondary-purple)};
+
+    ::ng-deep {
+        .mat-mdc-text-field-wrapper,
+        .mdc-text-field,
+        .mdc-text-field--filled {
+            padding: 0 8px !important;
+            background: var(--theme-secondary-purple) !important;
+            border-radius: 3px;
+            height: 28px !important;
+            max-height: 28px !important;
+        }
+
+        .mat-mdc-form-field-flex {
+            height: 28px !important;
+            max-height: 28px !important;
+        }
+
+        .mat-mdc-form-field-infix {
+            min-height: 0 !important;
+            height: 28px !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            display: flex;
+            align-items: center;
+            width: auto;
+        }
+
+        .mat-mdc-form-field-subscript-wrapper { display: none; }
+        .mdc-floating-label { display: none; }
+
+        .mat-mdc-select-trigger {
+            height: 28px !important;
+            font-size: 12px;
+            color: var(--theme-white);
+        }
+
+        .mat-mdc-select-value { padding: 0; }
+
+        .mat-mdc-select-arrow-wrapper {
+            transform: scale(0.85);
+        }
+    }
+}

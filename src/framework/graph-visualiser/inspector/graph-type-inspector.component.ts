@@ -6,8 +6,11 @@
 
 import { Component, DoCheck, inject, Input } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatSelectModule } from "@angular/material/select";
 import { GraphVisualiser } from "../engine";
 import { GraphViewState } from "../../../service/graph-view-state.service";
+import { AppData } from "../../../service/app-data.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
 import { SchemaAttribute, SchemaConcept, SchemaRelation, SchemaState } from "../../../service/schema-state.service";
 
@@ -44,7 +47,7 @@ interface RelationChipRow {
         "../../../module/data/instance-detail/instance-detail.component.scss",
         "./graph-type-inspector.component.scss",
     ],
-    imports: [CommonModule],
+    imports: [CommonModule, MatFormFieldModule, MatSelectModule],
 })
 export class GraphTypeInspectorComponent implements DoCheck {
     @Input() selectedType: SchemaConcept | null = null;
@@ -58,6 +61,7 @@ export class GraphTypeInspectorComponent implements DoCheck {
 
     private graphViewState = inject(GraphViewState);
     private schemaState = inject(SchemaState);
+    private appData = inject(AppData);
 
     private lastGraphOrder = -1;
     private lastSelectedTypeLabel: string | null = null;
@@ -120,6 +124,23 @@ export class GraphTypeInspectorComponent implements DoCheck {
         }
         rels.sort((a, b) => a.label.localeCompare(b.label));
         this.relationChips = rels;
+    }
+
+    /** Bound to the <select> value. Empty string means "(auto)" — i.e. no
+     *  override; the heuristic picks. */
+    get currentLabelOverride(): string {
+        if (!this.selectedType || !this.visualiser) return "";
+        return this.visualiser.labelOverridesByType.get(this.selectedType.label) ?? "";
+    }
+
+    onLabelOverrideChange(value: string): void {
+        if (!this.selectedType || !this.visualiser || !this.run) return;
+        const next = value === "" ? null : value;
+        this.visualiser.setLabelOverride(this.selectedType.label, next);
+        const database = this.run.graph.database;
+        if (database) {
+            this.appData.nodeLabelPrefs.set(database, this.selectedType.label, next);
+        }
     }
 
     isAttributeLoaded(row: AttributeChipRow): boolean {

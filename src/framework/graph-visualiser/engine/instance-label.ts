@@ -8,8 +8,11 @@ import { Graph } from "./graph";
 
 /** External store of attribute values per instance IID, populated by
  *  label-only fetches that don't push to the graph. Used as a second source
- *  for the label heuristic alongside in-graph attribute neighbors. */
-export type DisplayAttributeStore = Map<string, Map<string, unknown>>;
+ *  for the label heuristic alongside in-graph attribute neighbors. Values are
+ *  stored as arrays so multi-valued attributes (an owner with several values
+ *  of the same attribute type) render every value, not just the last one
+ *  recorded. */
+export type DisplayAttributeStore = Map<string, Map<string, unknown[]>>;
 
 /**
  * Re-derive labels for every entity / relation instance in the graph.
@@ -29,7 +32,11 @@ export type DisplayAttributeStore = Map<string, Map<string, unknown>>;
  * different attributes (one `name`, one `id`) just because their loaded
  * attribute sets differ.
  */
-export function refreshInstanceLabels(graph: Graph, store?: DisplayAttributeStore): void {
+export function refreshInstanceLabels(
+    graph: Graph,
+    store?: DisplayAttributeStore,
+    overridesByType?: Map<string, string>,
+): void {
     // Phase 1: collect candidate attribute type labels per instance type.
     const candidatesByType = new Map<string, Set<string>>();
     graph.forEachNode((nodeKey, attrs) => {
@@ -52,9 +59,16 @@ export function refreshInstanceLabels(graph: Graph, store?: DisplayAttributeStor
         }
     });
 
-    // Phase 2: pick the highest-scoring attribute type per instance type.
+    // Phase 2: pick the chosen attribute type per instance type. User
+    // overrides (set via the type-detail inspector) always win and bypass
+    // the heuristic; otherwise we pick the highest-scoring candidate.
     const chosenByType = new Map<string, string | null>();
     for (const [typeLabel, candidates] of candidatesByType.entries()) {
+        const override = overridesByType?.get(typeLabel);
+        if (override) {
+            chosenByType.set(typeLabel, override);
+            continue;
+        }
         let best: { typeLabel: string; score: number } | null = null;
         for (const candTypeLabel of candidates) {
             const score = scoreAttributeTypeName(candTypeLabel);
@@ -71,11 +85,12 @@ export function refreshInstanceLabels(graph: Graph, store?: DisplayAttributeStor
         if (concept.kind !== "entity" && concept.kind !== "relation") return;
         const typeLabel: string = concept.type?.label ?? "";
         const chosen = chosenByType.get(typeLabel) ?? null;
-        const value = chosen != null
-            ? lookupAttributeValue(graph, nodeKey, concept.iid, chosen, store)
-            : undefined;
-        const newLabel = value != null && String(value).length > 0
-            ? `${typeLabel}: ${formatValue(value)}`
+        const values = chosen != null
+            ? collectAttributeValues(graph, nodeKey, concept.iid, chosen, store)
+            : [];
+        const formatted = formatValues(values);
+        const newLabel = formatted.length > 0
+            ? `${typeLabel}: ${formatted}`
             : typeLabel;
         if (attrs.label !== newLabel) {
             graph.setNodeAttribute(nodeKey, "label", newLabel);
@@ -83,28 +98,29 @@ export function refreshInstanceLabels(graph: Graph, store?: DisplayAttributeStor
     });
 }
 
-function lookupAttributeValue(
+function collectAttributeValues(
     graph: Graph,
     ownerKey: string,
     ownerIid: string | undefined,
     chosenTypeLabel: string,
     store?: DisplayAttributeStore,
-): unknown {
-    // Prefer in-graph value when the user has explicitly loaded the
-    // attribute (so what they see matches what's drawn). Fall back to the
-    // off-graph store.
-    let found: unknown = undefined;
+): unknown[] {
+    // Union over both sources so a multi-valued attribute renders every
+    // value, regardless of whether some came from explicit in-graph loads
+    // and others from the off-graph label-only fetch.
+    const out: unknown[] = [];
     graph.forEachOutNeighbor(ownerKey, (neighborKey: string) => {
-        if (found !== undefined) return;
         const n = graph.getNodeAttributes(neighborKey);
         const nc = n?.metadata?.concept as any;
         if (nc?.kind === "attribute" && nc.type?.label === chosenTypeLabel) {
-            found = nc.value;
+            out.push(nc.value);
         }
     });
-    if (found !== undefined) return found;
-    if (store && ownerIid) return store.get(ownerIid)?.get(chosenTypeLabel);
-    return undefined;
+    if (store && ownerIid) {
+        const fromStore = store.get(ownerIid)?.get(chosenTypeLabel);
+        if (fromStore) out.push(...fromStore);
+    }
+    return out;
 }
 
 const NAME_TIER_A = new Set([
@@ -149,8 +165,25 @@ function scoreAttributeTypeName(typeLabel: string): number {
     return 50 - lengthPenalty;
 }
 
-function formatValue(value: unknown): string {
-    if (typeof value === "string") return value;
-    if (value == null) return "";
-    return String(value);
+/** Render a collected value-set as one label fragment. Deduplicates by the
+ *  rendered string (so identical values across the in-graph + store sources
+ *  show once), sorts ascending using a numeric-aware comparator (`"2"`
+ *  before `"10"`), and joins with commas. Empty strings and null values are
+ *  dropped — a `name` with no value at all reduces back to just the type
+ *  label rather than `<type>: , `. */
+function formatValues(values: unknown[]): string {
+    if (values.length === 0) return "";
+    const seen = new Set<string>();
+    const strs: string[] = [];
+    for (const v of values) {
+        if (v == null) continue;
+        const s = typeof v === "string" ? v : String(v);
+        if (s.length === 0) continue;
+        if (seen.has(s)) continue;
+        seen.add(s);
+        strs.push(s);
+    }
+    if (strs.length === 0) return "";
+    strs.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+    return strs.join(", ");
 }
