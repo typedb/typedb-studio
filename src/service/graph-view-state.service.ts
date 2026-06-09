@@ -328,6 +328,29 @@ export class GraphViewState {
     }
 
     /**
+     * Given a relation type plus IIDs of in-graph instances of it, load every
+     * role-player attached to those relations under the given role name. Used
+     * by the per-role chip on the type-detail inspector when the selected
+     * type is a relation.
+     */
+    async fetchRolePlayersOfTypeFor(
+        run: RunOutputState,
+        relationType: SchemaConcept,
+        relationIids: string[],
+        roleShortName: string,
+    ): Promise<void> {
+        if (relationIids.length === 0) return;
+        if (relationType.kind !== "relationType") return;
+        const rowLimit = this.appData.preferences.queryRowLimit();
+        const harvested = await this.runIidBatchedHarvesting(
+            run, relationIids, "r", rowLimit * 50,
+            branches => `match ${branches}; $r links (${roleShortName}: $p);`,
+            ["p"],
+        );
+        await this.fetchLabelAttributesFor(run, harvested);
+    }
+
+    /**
      * Fetch links (relation participation + role players) of the given IIDs
      * (must be entities or relations of `type`) into `run.graph`. IID-anchored
      * patterns sidestep TypeQL role-inference issues where a relation variable
@@ -336,21 +359,27 @@ export class GraphViewState {
     async fetchLinksOf(run: RunOutputState, type: SchemaConcept, iids: string[]): Promise<void> {
         if (iids.length === 0) return;
         const rowLimit = this.appData.preferences.queryRowLimit();
+        const harvest = new Set<string>();
         if (type.kind === "entityType") {
-            await this.runIidBatched(run, iids, "x", rowLimit * 50,
-                branches => `match ${branches}; $r links ($x); $r links ($other);`);
-            return;
-        }
-        if (type.kind === "relationType") {
-            await Promise.all([
-                this.runIidBatched(run, iids, "r", rowLimit * 50,
-                    branches => `match ${branches}; $r links ($p);`),
-                this.runIidBatched(run, iids, "r", rowLimit * 50,
-                    branches => `match ${branches}; $r links ($p); $p has $pa;`),
-                this.runIidBatched(run, iids, "r", rowLimit * 50,
-                    branches => `match ${branches}; $r links ($p); $r2 links ($p); $r2 links ($other);`),
+            const h = await this.runIidBatchedHarvesting(run, iids, "x", rowLimit * 50,
+                branches => `match ${branches}; $r links ($x); $r links ($other);`,
+                ["r", "other"]);
+            h.forEach(iid => harvest.add(iid));
+        } else if (type.kind === "relationType") {
+            const groups = await Promise.all([
+                this.runIidBatchedHarvesting(run, iids, "r", rowLimit * 50,
+                    branches => `match ${branches}; $r links ($p);`,
+                    ["p"]),
+                this.runIidBatchedHarvesting(run, iids, "r", rowLimit * 50,
+                    branches => `match ${branches}; $r links ($p); $p has $pa;`,
+                    ["p"]),
+                this.runIidBatchedHarvesting(run, iids, "r", rowLimit * 50,
+                    branches => `match ${branches}; $r links ($p); $r2 links ($p); $r2 links ($other);`,
+                    ["p", "r2", "other"]),
             ]);
+            groups.forEach(s => s.forEach(iid => harvest.add(iid)));
         }
+        await this.fetchLabelAttributesFor(run, harvest);
     }
 
     /**
@@ -365,8 +394,12 @@ export class GraphViewState {
      */
     async fetchRelation(run: RunOutputState, relationIID: string): Promise<void> {
         const rowLimit = this.appData.preferences.queryRowLimit();
-        const query = `match $r iid ${relationIID}; $r links ($role: $p);`;
-        await this.runAndPush(run, query, rowLimit * 50);
+        const harvested = await this.runIidBatchedHarvesting(
+            run, [relationIID], "r", rowLimit * 50,
+            branches => `match ${branches}; $r links ($role: $p);`,
+            ["r", "p"],
+        );
+        await this.fetchLabelAttributesFor(run, harvested);
     }
 
     /**
@@ -389,10 +422,15 @@ export class GraphViewState {
     ): Promise<void> {
         const rowLimit = this.appData.preferences.queryRowLimit();
         let query = `match $r iid ${relationIID}; $r links ($role: $p); $p iid ${playerIID};`;
+        const harvest: string[] = [relationIID, playerIID];
         if (originalIID && originalIID !== playerIID && originalIID !== relationIID) {
             query += ` $r links ($origRole: $orig); $orig iid ${originalIID};`;
+            harvest.push(originalIID);
         }
         await this.runAndPush(run, query, rowLimit * 50);
+        // No need to harvest from the response — every new node here was
+        // pinned by IID in the query, so we already know them.
+        await this.fetchLabelAttributesFor(run, harvest);
     }
 
     /**
@@ -415,12 +453,17 @@ export class GraphViewState {
         // Two query templates so we get both the relation→source edges AND
         // the relation's other role-players (with their role edges). Each
         // template is batched separately and runs in parallel.
-        await Promise.all([
-            this.runIidBatched(run, sourceIids, playerVar, rowLimit * 50,
-                branches => `match ${branches}; $r isa ${relationTypeLabel}; $r links ($role: $${playerVar});`),
-            this.runIidBatched(run, sourceIids, playerVar, rowLimit * 50,
-                branches => `match ${branches}; $r isa ${relationTypeLabel}; $r links ($role1: $${playerVar}); $r links ($role2: $other);`),
+        const groups = await Promise.all([
+            this.runIidBatchedHarvesting(run, sourceIids, playerVar, rowLimit * 50,
+                branches => `match ${branches}; $r isa ${relationTypeLabel}; $r links ($role: $${playerVar});`,
+                ["r"]),
+            this.runIidBatchedHarvesting(run, sourceIids, playerVar, rowLimit * 50,
+                branches => `match ${branches}; $r isa ${relationTypeLabel}; $r links ($role1: $${playerVar}); $r links ($role2: $other);`,
+                ["r", "other"]),
         ]);
+        const harvest = new Set<string>();
+        groups.forEach(s => s.forEach(iid => harvest.add(iid)));
+        await this.fetchLabelAttributesFor(run, harvest);
     }
 
     /**
@@ -435,6 +478,60 @@ export class GraphViewState {
      * low as the graph grows.
      */
     private static readonly IID_BATCH_SIZE = 50;
+
+    /**
+     * Same chunked-OR pipeline as `runIidBatched` but also harvests the IIDs
+     * bound to a set of variable names in each response and returns their
+     * union. Used by link-loading helpers so they can fire a follow-up
+     * label-attribute fetch for the newly-introduced instances — without it,
+     * new player nodes show up labelled with just their type name.
+     */
+    private async runIidBatchedHarvesting(
+        run: RunOutputState,
+        iids: string[],
+        instanceVar: string,
+        rowLimit: number,
+        buildQuery: (branches: string) => string,
+        harvestVars: string[],
+    ): Promise<Set<string>> {
+        const harvested = new Set<string>();
+        if (iids.length === 0) return harvested;
+        const batches: string[][] = [];
+        for (let i = 0; i < iids.length; i += GraphViewState.IID_BATCH_SIZE) {
+            batches.push(iids.slice(i, i + GraphViewState.IID_BATCH_SIZE));
+        }
+        await Promise.all(batches.map(async batch => {
+            const branches = batch.map(iid => `{ $${instanceVar} iid ${iid}; }`).join(" or ");
+            const query = buildQuery(branches);
+            const res = await this.runQuery(query, rowLimit);
+            if (isApiErrorResponse(res)) return;
+            if (res.ok.answerType === "conceptRows") {
+                for (const answer of (res.ok as any).answers) {
+                    const data = answer.data as Record<string, any>;
+                    for (const v of harvestVars) {
+                        const c = data[v];
+                        if (c?.iid && (c.kind === "entity" || c.kind === "relation")) {
+                            harvested.add(c.iid);
+                        }
+                    }
+                }
+            }
+            this.pushSafely(run, res);
+        }));
+        return harvested;
+    }
+
+    /**
+     * Fetch off-graph display attributes for a set of entity/relation IIDs so
+     * the label heuristic can render them as `<type>: <name>` from the moment
+     * they enter the graph. Owner-kind agnostic: the underlying query uses
+     * `$x` as the owner variable; the iid filter is what disambiguates.
+     */
+    private async fetchLabelAttributesFor(run: RunOutputState, iids: Set<string> | string[]): Promise<void> {
+        const list = Array.isArray(iids) ? iids : [...iids];
+        if (list.length === 0) return;
+        await this.fetchDisplayAttributes(run, "entity", list);
+    }
 
     private async runIidBatched(
         run: RunOutputState,

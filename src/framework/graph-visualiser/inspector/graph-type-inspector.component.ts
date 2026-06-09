@@ -12,7 +12,7 @@ import { GraphVisualiser } from "../engine";
 import { GraphViewState } from "../../../service/graph-view-state.service";
 import { AppData } from "../../../service/app-data.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
-import { SchemaAttribute, SchemaConcept, SchemaRelation, SchemaState } from "../../../service/schema-state.service";
+import { SchemaAttribute, SchemaConcept, SchemaRelation, SchemaRole, SchemaState } from "../../../service/schema-state.service";
 
 interface AttributeChipRow {
     type: SchemaAttribute;
@@ -22,6 +22,16 @@ interface AttributeChipRow {
 interface RelationChipRow {
     type: SchemaRelation;
     label: string;
+}
+
+interface RoleChipRow {
+    role: SchemaRole;
+    /** Scoped role label (e.g. "friendship:friend") used as the unique key
+     *  for sticky loaded-state. */
+    label: string;
+    /** Short role name (e.g. "friend") — used to display the chip and to
+     *  build the TypeQL pattern `links (<shortName>: $p)`. */
+    shortName: string;
 }
 
 /**
@@ -58,6 +68,11 @@ export class GraphTypeInspectorComponent implements DoCheck {
     instanceCount = 0;
     attributeChips: AttributeChipRow[] = [];
     relationChips: RelationChipRow[] = [];
+    /** Populated only when the selected type is a relation type. Each entry
+     *  represents a role this relation relates; toggling the chip loads
+     *  every role-player of that role across every in-graph instance of the
+     *  relation. */
+    roleChips: RoleChipRow[] = [];
 
     private graphViewState = inject(GraphViewState);
     private schemaState = inject(SchemaState);
@@ -101,9 +116,14 @@ export class GraphTypeInspectorComponent implements DoCheck {
         if (!this.selectedType || !this.supportsConnections) {
             this.attributeChips = [];
             this.relationChips = [];
+            this.roleChips = [];
             return;
         }
-        const t = this.selectedType as { ownedAttributes: SchemaAttribute[]; playedRoles: { label: string }[] };
+        const t = this.selectedType as {
+            ownedAttributes: SchemaAttribute[];
+            playedRoles: SchemaRole[];
+            relatedRoles?: SchemaRole[];
+        };
         // ownedAttributes is a flat list of SchemaAttribute entries.
         this.attributeChips = (t.ownedAttributes ?? []).map(attr => ({
             type: attr,
@@ -124,6 +144,18 @@ export class GraphTypeInspectorComponent implements DoCheck {
         }
         rels.sort((a, b) => a.label.localeCompare(b.label));
         this.relationChips = rels;
+        // Roles section: only meaningful for relation types. Pull the relation's
+        // related role list, derive the short name from the scoped "rel:role"
+        // label, and sort alphabetically.
+        if (this.selectedType.kind === "relationType") {
+            this.roleChips = (t.relatedRoles ?? []).map(r => ({
+                role: r,
+                label: r.label,
+                shortName: r.label.split(":").at(-1) ?? r.label,
+            })).sort((a, b) => a.shortName.localeCompare(b.shortName));
+        } else {
+            this.roleChips = [];
+        }
     }
 
     /** Bound to the <select> value. Empty string means "(auto)" — i.e. no
@@ -153,6 +185,11 @@ export class GraphTypeInspectorComponent implements DoCheck {
         return this.graphViewState.isConnectionLoaded(this.run, this.selectedType.label, row.label);
     }
 
+    isRoleLoaded(row: RoleChipRow): boolean {
+        if (!this.selectedType || !this.run) return false;
+        return this.graphViewState.isConnectionLoaded(this.run, this.selectedType.label, row.label);
+    }
+
     toggleAttributeChip(row: AttributeChipRow): void {
         if (!this.selectedType || !this.run || !this.visualiser) return;
         if (this.isAttributeLoaded(row)) return; // sticky: re-toggle is no-op
@@ -165,6 +202,24 @@ export class GraphTypeInspectorComponent implements DoCheck {
         this.visualiser.freezeViewport();
         this.graphViewState
             .fetchAttributesOfTypeFor(this.run, this.selectedType, iids, row.label)
+            .then(() => {
+                this.visualiser?.reheat({ soft: true, preserveCamera: true });
+                this.visualiser?.interactionHandler.recomputeHighlightSet();
+                this.graphViewState.markConnectionLoaded(this.run!, this.selectedType!.label, row.label);
+            });
+    }
+
+    toggleRoleChip(row: RoleChipRow): void {
+        if (!this.selectedType || !this.run || !this.visualiser) return;
+        if (this.isRoleLoaded(row)) return; // sticky
+        const iids = this.collectInstanceIidsOfType(this.selectedType.label);
+        if (iids.length === 0) {
+            this.graphViewState.markConnectionLoaded(this.run, this.selectedType.label, row.label);
+            return;
+        }
+        this.visualiser.freezeViewport();
+        this.graphViewState
+            .fetchRolePlayersOfTypeFor(this.run, this.selectedType, iids, row.shortName)
             .then(() => {
                 this.visualiser?.reheat({ soft: true, preserveCamera: true });
                 this.visualiser?.interactionHandler.recomputeHighlightSet();

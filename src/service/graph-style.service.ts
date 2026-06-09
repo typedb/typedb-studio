@@ -592,6 +592,10 @@ export class GraphStyleService implements OnDestroy {
         this._labelsVisible = true;
         this._showHoverLabel = true;
         this._degreeScaling = false;
+        // Default matches the field initializer and the persisted-state
+        // fallback below — without this line the customise slider stayed
+        // wherever the user last left it after Reset all.
+        this._fillOpacity = 0.25;
         this._activePreset = null;
         this.save();
         this.styles$.next();

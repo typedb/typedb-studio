@@ -30,6 +30,21 @@
         </div>
 
         @if (supportsConnections) {
+          @if (selectedType!.kind === 'relationType' && roleChips.length > 0) {
+            <div class="detail-section">
+              <h6 class="section-title">Roles</h6>
+              <div class="connection-chips">
+                @for (row of roleChips; track row.label) {
+                  <button class="connection-chip role"
+                          [class.loaded]="isRoleLoaded(row)"
+                          (click)="toggleRoleChip(row)">
+                    {{ row.shortName }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
           <div class="detail-section">
             <h6 class="section-title">Attributes</h6>
             @if (attributeChips.length === 0) {

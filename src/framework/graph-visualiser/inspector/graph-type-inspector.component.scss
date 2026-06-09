@@ -116,6 +116,7 @@
 
     &.attribute { --chip-color: var(--theme-attribute-blue); }
     &.relation  { --chip-color: var(--theme-relation-yellow); }
+    &.role      { --chip-color: var(--theme-role-orange); }
 
     &:hover {
         border-color: var(--chip-color);
