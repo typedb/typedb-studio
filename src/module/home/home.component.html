@@ -7,37 +7,46 @@
 
     <div class="home-page-body">
       @if (isConnected$ | async) {
-        <div class="tp-bento-container row">
-          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/query">
-            <i class="fa-thin fa-rectangle-terminal"></i>
-            <div class="tp-icon-card-content">
-              <h3>Query your database</h3>
-              <p>Run TypeQL queries using the query tool</p>
-            </div>
-          </a>
-          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/data">
-            <i class="fa-thin fa-table"></i>
-            <div class="tp-icon-card-content">
-              <h3>Explore your data</h3>
-              <p>Browse and explore your data using the interactive data explorer</p>
-            </div>
-          </a>
-        </div>
-        <div class="tp-bento-container row">
-          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/schema">
-            <i class="fa-thin fa-vector-square"></i>
-            <div class="tp-icon-card-content">
-              <h3>Visualise your schema</h3>
-              <p>View and understand your database schema in a visual graph representation</p>
-            </div>
-          </a>
-          <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/agent-mode">
-            <i class="fa-thin fa-sparkles"></i>
-            <div class="tp-icon-card-content">
-              <h3>Build with AI agent</h3>
-              <p>Use an AI agent to develop and query your database with natural language</p>
-            </div>
-          </a>
+        <div class="tp-bento-container row connected-tools">
+          <div class="bento-column primary-column">
+            <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/query">
+              <i class="fa-thin fa-rectangle-terminal"></i>
+              <div class="tp-icon-card-content">
+                <h3>Query your database</h3>
+                <p>Run TypeQL queries using the query tool</p>
+              </div>
+            </a>
+            <a class="tp-bento-box hoverable tp-icon-card flex-1" routerLink="/schema">
+              <i class="fa-thin fa-vector-square"></i>
+              <div class="tp-icon-card-content">
+                <h3>Visualise your schema</h3>
+                <p>View and understand your database schema</p>
+              </div>
+            </a>
+          </div>
+          <div class="bento-column secondary-column">
+            <a class="tp-bento-box hoverable tp-icon-card tp-icon-card-compact flex-1" routerLink="/agent-mode">
+              <i class="fa-thin fa-sparkles"></i>
+              <div class="tp-icon-card-content">
+                <h3>Build with AI agent</h3>
+                <p>Develop and query with natural language</p>
+              </div>
+            </a>
+            <a class="tp-bento-box hoverable tp-icon-card tp-icon-card-compact flex-1" routerLink="/data">
+              <i class="fa-thin fa-table"></i>
+              <div class="tp-icon-card-content">
+                <h3>View your data</h3>
+                <p>Use the interactive data explorer</p>
+              </div>
+            </a>
+            <a class="tp-bento-box hoverable tp-icon-card tp-icon-card-compact flex-1" routerLink="/graph">
+              <i class="fa-thin fa-chart-network"></i>
+              <div class="tp-icon-card-content">
+                <h3>Explore data as a graph</h3>
+                <p>Use graphs to visualise connections</p>
+              </div>
+            </a>
+          </div>
         </div>
       } @else {
         <div class="tp-bento-box tp-deploy-cluster">

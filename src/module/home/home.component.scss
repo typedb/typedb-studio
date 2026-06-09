@@ -207,6 +207,54 @@ article {
     }
 }
 
+// Two-column hero on the connected home page. Left column holds the two
+// "primary" tools at full size; right column holds three "secondary" tools
+// stacked vertically. Both columns are flex-1 so they share width, and each
+// inner card is flex-1 so they evenly divide the shared vertical space — a
+// row of 2 lines up against a row of 3 of equal total height.
+.connected-tools {
+    align-items: stretch;
+    gap: 28px;
+}
+
+.bento-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    min-width: 0;
+}
+
+// Compact icon-card used by the secondary column. Three of them need to fit
+// in the same vertical space as two regular cards, so we shrink the icon and
+// keep the layout horizontal (icon left of the title + description) instead
+// of stacked.
+.tp-icon-card-compact {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+
+    > i {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+    }
+
+    .tp-icon-card-content {
+        gap: 4px;
+    }
+
+    h3 {
+        margin: 0;
+    }
+
+    p {
+        margin: 0;
+    }
+}
+
 .tp-additional-resources {
     display: grid;
     grid-template: repeat(2, 1fr) / repeat(3, 1fr);
