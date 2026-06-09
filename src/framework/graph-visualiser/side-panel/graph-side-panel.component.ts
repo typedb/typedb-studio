@@ -1,4 +1,4 @@
-import { Component, inject, Input, OnChanges, OnDestroy, SimpleChanges } from "@angular/core";
+import { Component, HostBinding, inject, Input, OnChanges, OnDestroy, SimpleChanges } from "@angular/core";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatFormFieldModule } from "@angular/material/form-field";
@@ -29,6 +29,15 @@ import { GraphTypeInspectorComponent } from "../inspector/graph-type-inspector.c
     ],
 })
 export class GraphSidePanelComponent implements OnChanges, OnDestroy {
+
+    // Force column layout via inline style. The view-encapsulated SCSS sets
+    // this too, but on tab switch the host's stylesheet sometimes lags one
+    // frame behind the child resizable directive's `ngAfterViewInit`. That
+    // directive calls `getComputedStyle(parent).flexDirection`, gets the
+    // browser default "row", and latches into horizontal mode — which is what
+    // makes the inspector tile to the left of the customise pane.
+    @HostBinding("style.flexDirection") readonly hostFlexDirection = "column";
+    @HostBinding("style.display") readonly hostDisplay = "flex";
 
     @Input() visualiser: GraphVisualiser | null = null;
     @Input() run: RunOutputState | null = null;
