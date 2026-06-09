@@ -76,6 +76,7 @@ export class SchemaToolWindowComponent {
         private queryPageState: QueryPageState,
         private snackbar: SnackbarService,
         private graphViewState: GraphViewState,
+        private elementRef: ElementRef<HTMLElement>,
     ) {
         // Subscribe to active tab changes to highlight the corresponding type in the schema tree.
         combineLatest([
@@ -135,22 +136,50 @@ export class SchemaToolWindowComponent {
 
     /** Cmd/Ctrl+F opens the search overlay anywhere the schema tool window
      *  is alive. Hijacks the browser's "find in page" shortcut — matches the
-     *  spec ("hit Ctrl/Cmd+F"). */
+     *  spec ("hit Ctrl/Cmd+F"). Esc closes the overlay regardless of focus
+     *  (the input's own keydown only fires when the input itself is focused,
+     *  so the user-reported "Esc only works when focused" came from missing
+     *  the global path). */
     @HostListener("window:keydown", ["$event"])
     onWindowKeydown(event: KeyboardEvent) {
         if ((event.ctrlKey || event.metaKey) && (event.key === "f" || event.key === "F")) {
             event.preventDefault();
             this.openSearch();
+            return;
+        }
+        if (this.searchOpen && event.key === "Escape") {
+            event.preventDefault();
+            this.closeSearch();
+        }
+    }
+
+    /** Click anywhere outside the schema tool window dismisses the search
+     *  bar. Inside-the-window clicks (tree rows, headers, etc.) keep it
+     *  open so the user can browse the filtered list while the filter is
+     *  still applied. Replaces an earlier blur-on-input handler — blur
+     *  couldn't distinguish "focus moved to a tree row" (rows aren't
+     *  focusable) from "focus moved entirely elsewhere", which made simply
+     *  clicking a result dismiss the bar. */
+    @HostListener("document:mousedown", ["$event"])
+    onDocumentMouseDown(event: MouseEvent) {
+        if (!this.searchOpen) return;
+        const host = this.elementRef.nativeElement;
+        if (!host.contains(event.target as Node)) {
+            this.closeSearch();
         }
     }
 
     openSearch() {
         this.searchOpen = true;
-        // Wait one microtask so the input is in the DOM, then focus it. We
-        // still call markForCheck because OnPush won't notice the boolean
-        // flip from inside an async callback.
-        this.cdr.markForCheck();
-        queueMicrotask(() => this.searchInputRef?.nativeElement.focus());
+        // detectChanges() forces the @if branch to render synchronously,
+        // which also resolves the #searchInput ViewChild for the new
+        // element. setTimeout (a macrotask) defers the actual focus call
+        // past mat-menu's focus restoration — when the user opens the bar
+        // via the "Find" actions-menu item, Material restores focus to the
+        // menu trigger button after the click handler returns, which
+        // otherwise steals focus right after we set it.
+        this.cdr.detectChanges();
+        setTimeout(() => this.searchInputRef?.nativeElement.focus());
     }
 
     closeSearch() {
@@ -172,19 +201,25 @@ export class SchemaToolWindowComponent {
         }
     }
 
-    onSearchBlur() {
-        // Hide the bar on blur only if it's empty — typing then clicking
-        // away into the tree keeps the filter active so the user can browse
-        // the matches. Esc and the inline X button are the explicit clears.
-        if (!this.state.searchQuery$.value) {
-            this.searchOpen = false;
-            this.cdr.markForCheck();
-        }
+
+    /** Display form for the root-row labels. The tree-node `label` field is
+     *  the plural form ("entities" / "relations" / "attributes") because it
+     *  doubles as a stable key in CSS classes and persisted view state; this
+     *  helper just maps it to the singular wording shown in the UI. */
+    rootDisplayLabel(label: string): string {
+        return label === "entities" ? "entity"
+            : label === "relations" ? "relation"
+            : "attribute";
+    }
+
+    get searchHasNoResults(): boolean {
+        return this.state.searchQuery$.value.trim().length > 0
+            && this.state.flatNodes$.value.length === 0;
     }
 
     clearSearch() {
         // X-button: clear the filter but keep the bar open + focused so the
-        // user can type something else.
+        // user can immediately type a new query.
         this.state.searchQuery$.next("");
         queueMicrotask(() => this.searchInputRef?.nativeElement.focus());
     }

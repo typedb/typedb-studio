@@ -32,14 +32,13 @@
   </div>
 }
 @if (searchOpen) {
-  <div class="schema-search-overlay">
+  <div class="schema-search-overlay" [class.no-results]="searchHasNoResults">
     <i class="fa-light fa-magnifying-glass"></i>
     <input #searchInput type="text" class="schema-search-input"
            placeholder="Search types..."
            [value]="state.searchQuery$.value"
            (input)="onSearchInput($any($event.target).value)"
-           (keydown)="onSearchKeydown($event)"
-           (blur)="onSearchBlur()" />
+           (keydown)="onSearchKeydown($event)" />
     @if (state.searchQuery$.value) {
       <!-- mousedown.preventDefault stops the input losing focus when the X
            is clicked, which would otherwise fire blur right before click. -->
@@ -72,7 +71,7 @@
       <div class="tree-node-content">
         @switch (flat.node.nodeKind) {
           @case ("root") {
-            <div class="root-node">{{ $any(flat.node).label }}</div>
+            <div class="root-node">{{ rootDisplayLabel($any(flat.node).label) }}</div>
           }
           @case ("concept") {
             {{ $any(flat.node).concept.label }}@if ($any(flat.node).concept.kind === "attributeType") {<em class="text-muted">, value {{ $any(flat.node).concept.valueType }}</em>}
@@ -118,10 +117,12 @@
       <span>Hierarchical view</span>
     </button>
     <mat-divider></mat-divider>
-    <button mat-menu-item (click)="state.toggleLinksVisibility('sub')">
-      <i class="fa-light fa-check" [class.invisible]="!state.linksVisibility$.value.sub"></i>
-      <span>Show sub in flat view</span>
-    </button>
+    @if (state.viewMode$.value === 'flat') {
+      <button mat-menu-item (click)="state.toggleLinksVisibility('sub')">
+        <i class="fa-light fa-check" [class.invisible]="!state.linksVisibility$.value.sub"></i>
+        <span>Show sub</span>
+      </button>
+    }
     <button mat-menu-item (click)="state.toggleLinksVisibility('owns')">
       <i class="fa-light fa-check" [class.invisible]="!state.linksVisibility$.value.owns"></i>
       <span>Show owns</span>
