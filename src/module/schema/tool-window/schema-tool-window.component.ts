@@ -24,6 +24,7 @@ import { FlatSchemaTreeNode, SchemaToolWindowState, SchemaTreeNode } from "../..
 import { DriverState } from "../../../service/driver-state.service";
 import { MatDialog } from "@angular/material/dialog";
 import { SchemaTextDialogComponent } from "../text-dialog/schema-text-dialog.component";
+import { SampleDatasetDialogComponent } from "../../database/sample-dataset-dialog/sample-dataset-dialog.component";
 import { SchemaConcept } from "../../../service/schema-state.service";
 import { DataEditorState } from "../../../service/data-editor-state.service";
 import { QueryTabsState } from "../../../service/query-tabs-state.service";
@@ -128,6 +129,10 @@ export class SchemaToolWindowComponent {
                 event.stopPropagation();
             }
         }
+    }
+
+    openLoadSampleDatasetDialog() {
+        this.dialog.open(SampleDatasetDialogComponent);
     }
 
     openSchemaTextDialog() {

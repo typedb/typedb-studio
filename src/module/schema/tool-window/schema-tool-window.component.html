@@ -20,6 +20,7 @@
     <div class="empty-schema-content">
       <p>This is an empty database with no schema defined.</p>
       <ul>
+        <li><a (click)="openLoadSampleDatasetDialog()">Load sample dataset</a></li>
         <li><a href="https://typedb.com/docs/home/get-started/schema" target="_blank">Learn about schemas</a></li>
         @if (!router.url.startsWith('/query')) {
           <li><a routerLink="/query">Open query editor</a></li>
