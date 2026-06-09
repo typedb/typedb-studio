@@ -12,67 +12,99 @@ import { Graph } from "./graph";
 export type DisplayAttributeStore = Map<string, Map<string, unknown>>;
 
 /**
- * Re-derive labels for every entity / relation instance in the graph based on
- * whichever of its currently-attached attributes is most name-like.
+ * Re-derive labels for every entity / relation instance in the graph.
  *
- * Called after each graph-builder pass so newly-loaded attribute edges feed
- * back into the owner's display label. The output is `<typeLabel>: <value>` if
- * a name-like attribute is found, otherwise just `<typeLabel>` (unchanged).
+ * Two-phase, so each *type* picks one display attribute that every instance
+ * of that type uses:
+ *  1. Walk every entity/relation node. Group their available attribute type
+ *     labels (union over in-graph `has` neighbors *and* the off-graph
+ *     display-attribute store) by the instance's type label.
+ *  2. Score each candidate attribute type label per group and pick the
+ *     highest-scoring one as that instance type's display attribute. Then
+ *     apply it: each instance's label becomes `<typeLabel>: <value>` if it
+ *     has a value for the chosen attribute, otherwise just `<typeLabel>`.
+ *
+ * Picking one attribute per *type* is what keeps labels consistent across
+ * siblings — without it, two `person` nodes could end up labelled with
+ * different attributes (one `name`, one `id`) just because their loaded
+ * attribute sets differ.
  */
 export function refreshInstanceLabels(graph: Graph, store?: DisplayAttributeStore): void {
+    // Phase 1: collect candidate attribute type labels per instance type.
+    const candidatesByType = new Map<string, Set<string>>();
     graph.forEachNode((nodeKey, attrs) => {
         const concept = attrs.metadata?.concept as any;
         if (!concept) return;
         if (concept.kind !== "entity" && concept.kind !== "relation") return;
+        const typeLabel: string | undefined = concept.type?.label;
+        if (!typeLabel) return;
+        let set = candidatesByType.get(typeLabel);
+        if (!set) { set = new Set(); candidatesByType.set(typeLabel, set); }
+        graph.forEachOutNeighbor(nodeKey, (neighborKey: string) => {
+            const n = graph.getNodeAttributes(neighborKey);
+            const nc = n?.metadata?.concept as any;
+            const tl = nc?.kind === "attribute" ? nc.type?.label : null;
+            if (tl) set!.add(tl);
+        });
+        if (store && concept.iid) {
+            const perOwner = store.get(concept.iid);
+            if (perOwner) for (const tl of perOwner.keys()) set.add(tl);
+        }
+    });
 
+    // Phase 2: pick the highest-scoring attribute type per instance type.
+    const chosenByType = new Map<string, string | null>();
+    for (const [typeLabel, candidates] of candidatesByType.entries()) {
+        let best: { typeLabel: string; score: number } | null = null;
+        for (const candTypeLabel of candidates) {
+            const score = scoreAttributeTypeName(candTypeLabel);
+            if (score <= 0) continue;
+            if (!best || score > best.score) best = { typeLabel: candTypeLabel, score };
+        }
+        chosenByType.set(typeLabel, best?.typeLabel ?? null);
+    }
+
+    // Phase 3: apply.
+    graph.forEachNode((nodeKey, attrs) => {
+        const concept = attrs.metadata?.concept as any;
+        if (!concept) return;
+        if (concept.kind !== "entity" && concept.kind !== "relation") return;
         const typeLabel: string = concept.type?.label ?? "";
-        const best = pickDisplayAttribute(graph, nodeKey, concept.iid, store);
-        const newLabel = best != null
-            ? `${typeLabel}: ${formatValue(best.value)}`
+        const chosen = chosenByType.get(typeLabel) ?? null;
+        const value = chosen != null
+            ? lookupAttributeValue(graph, nodeKey, concept.iid, chosen, store)
+            : undefined;
+        const newLabel = value != null && String(value).length > 0
+            ? `${typeLabel}: ${formatValue(value)}`
             : typeLabel;
-
         if (attrs.label !== newLabel) {
             graph.setNodeAttribute(nodeKey, "label", newLabel);
         }
     });
 }
 
-interface CandidateAttribute {
-    typeLabel: string;
-    value: unknown;
-    score: number;
-}
-
-function pickDisplayAttribute(
-    graph: Graph, ownerKey: string, ownerIid: string | undefined, store?: DisplayAttributeStore,
-): CandidateAttribute | null {
-    let best: CandidateAttribute | null = null;
-    const consider = (typeLabel: string, value: unknown) => {
-        if (!typeLabel) return;
-        const score = scoreAttribute(typeLabel, value);
-        if (score <= 0) return;
-        if (!best || score > best.score) best = { typeLabel, value, score };
-    };
-
-    // 1. In-graph attribute neighbors (user-loaded attribute edges).
-    // `has` edges are directed owner → attribute.
+function lookupAttributeValue(
+    graph: Graph,
+    ownerKey: string,
+    ownerIid: string | undefined,
+    chosenTypeLabel: string,
+    store?: DisplayAttributeStore,
+): unknown {
+    // Prefer in-graph value when the user has explicitly loaded the
+    // attribute (so what they see matches what's drawn). Fall back to the
+    // off-graph store.
+    let found: unknown = undefined;
     graph.forEachOutNeighbor(ownerKey, (neighborKey: string) => {
-        const neighborAttrs = graph.getNodeAttributes(neighborKey);
-        const concept = neighborAttrs?.metadata?.concept as any;
-        if (!concept || concept.kind !== "attribute") return;
-        consider(concept.type?.label ?? "", concept.value);
-    });
-
-    // 2. Off-graph attribute values from the label-only fetch.
-    if (store && ownerIid) {
-        const perOwner = store.get(ownerIid);
-        if (perOwner) {
-            for (const [typeLabel, value] of perOwner.entries()) {
-                consider(typeLabel, value);
-            }
+        if (found !== undefined) return;
+        const n = graph.getNodeAttributes(neighborKey);
+        const nc = n?.metadata?.concept as any;
+        if (nc?.kind === "attribute" && nc.type?.label === chosenTypeLabel) {
+            found = nc.value;
         }
-    }
-    return best;
+    });
+    if (found !== undefined) return found;
+    if (store && ownerIid) return store.get(ownerIid)?.get(chosenTypeLabel);
+    return undefined;
 }
 
 const NAME_TIER_A = new Set([
@@ -82,45 +114,39 @@ const NAME_TIER_A = new Set([
     "nickname", "screenname",
 ]);
 
-const NAME_TIER_B = new Set([
+// Tier between A and B: "text" is content-y but not a canonical "name". We
+// want it to win against id/email/code yet still lose to name/title/label.
+const NAME_TIER_A2 = new Set([
     "text",
+]);
+
+const NAME_TIER_B = new Set([
     "email", "emailaddress",
     "identifier", "id", "uid", "uuid",
     "code", "slug", "key", "ref", "reference",
 ]);
 
 /**
- * Score how good `value` is as a display label for an instance.
- * Higher is better; 0 means don't use this attribute.
- *
- * Tiers reflect "how likely a human would call this the thing's name":
- *  - A (~300): canonical name fields
- *  - B (~200): identifier-ish fields (email, code, id)
- *  - C (~100): anything else that contains "name" or "title"
- *  - D (~50):  reasonably-short string/number values
- * Within a tier we prefer shorter, simpler type labels (so `name` beats
- * `display_name`) and penalise unwieldy values.
+ * Score an attribute type name purely on how name-like it is. Higher is
+ * better; 0 means "don't use this attribute". Tiers:
+ *  - A   (~300): canonical name fields
+ *  - A2  (~250): `text`
+ *  - B   (~200): identifier-ish (email, id, code, ...)
+ *  - C   (~100): anything containing "name", "title" or "text"
+ *  - D   (~50):  fallback for any unknown attribute name
+ * Within a tier, shorter type labels win (so `name` beats `display_name`).
  */
-function scoreAttribute(typeLabel: string, value: unknown): number {
-    if (value == null) return 0;
-    if (typeof value === "boolean") return 0;
-
-    const valueStr = String(value);
-    if (valueStr.length === 0) return 0;
-    if (valueStr.length > 120) return 0;
-
+function scoreAttributeTypeName(typeLabel: string): number {
+    if (!typeLabel) return 0;
     const norm = typeLabel.toLowerCase().replace(/[-_\s]/g, "");
     const lengthPenalty = Math.min(typeLabel.length, 40);
-    const valuePenalty = valueStr.length > 64 ? 20 : 0;
-
-    let tierBase = 0;
-    if (NAME_TIER_A.has(norm)) tierBase = 300;
-    else if (NAME_TIER_B.has(norm)) tierBase = 200;
-    else if (norm.includes("name") || norm.includes("title")) tierBase = 100;
-    else if (typeof value === "string" || typeof value === "number") tierBase = 50;
-    else return 0;
-
-    return tierBase - lengthPenalty - valuePenalty;
+    if (NAME_TIER_A.has(norm)) return 300 - lengthPenalty;
+    if (NAME_TIER_A2.has(norm)) return 250 - lengthPenalty;
+    if (NAME_TIER_B.has(norm)) return 200 - lengthPenalty;
+    if (norm.includes("name") || norm.includes("title") || norm.includes("text")) {
+        return 100 - lengthPenalty;
+    }
+    return 50 - lengthPenalty;
 }
 
 function formatValue(value: unknown): string {
