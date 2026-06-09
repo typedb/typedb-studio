@@ -20,7 +20,10 @@ import { ResizableDirective } from "@hhangular/resizable";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
-import { ChatMessageComponent, RunQueryEvent } from "./chat-message/chat-message.component";
+import { ChatMessageComponent, RunQueryEvent, SaveQueryEvent } from "./chat-message/chat-message.component";
+import { SavedQueriesState } from "../../service/saved-queries-state.service";
+import { SnackbarService } from "../../service/snackbar.service";
+import { SaveQueryDialogComponent, SaveQueryDialogData } from "../saved-queries/save-query-dialog/save-query-dialog.component";
 import { ChatMessageData, ChatState, ConversationSummary } from "../../service/chat-state.service";
 import { DriverState } from "../../service/driver-state.service";
 import { HistoryWindowState } from "../../service/query-page-state.service";
@@ -74,6 +77,8 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
         private appData: AppData,
         private dialog: MatDialog,
         private zone: NgZone,
+        private savedQueries: SavedQueriesState,
+        private snackbar: SnackbarService,
     ) {
         this.history = new HistoryWindowState(driver);
     }
@@ -276,6 +281,28 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
         setTimeout(() => {
             const el = this.messagesContainer?.nativeElement.querySelector(`[data-output-block="${event.messageId}-${event.blockIndex}"]`);
             el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+    }
+
+    /**
+     * Saves a query from an AI-generated code block. Agent Mode has no tab
+     * name to fall back on, so we always prompt: the dialog opens with an
+     * empty suggested name and the user picks something meaningful before
+     * the query lands in the saved-queries list.
+     */
+    onSaveQuery(event: SaveQueryEvent): void {
+        if (!event.query?.trim()) {
+            this.snackbar.warn("Empty query — nothing to save");
+            return;
+        }
+        const ref = this.dialog.open(SaveQueryDialogComponent, {
+            data: { suggestedName: "" } as SaveQueryDialogData,
+            width: "400px",
+        });
+        ref.afterClosed().subscribe((name: string | undefined) => {
+            if (!name) return;
+            this.savedQueries.add(name, event.query);
+            this.snackbar.success(`Saved "${name}"`);
         });
     }
 

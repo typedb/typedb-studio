@@ -15,7 +15,9 @@
                 <tp-code-editor
                   [formControlProp]="part.formControl"
                   [runOverlayVisible]="true"
-                  (runButtonClick)="onRunClick(i, part.formControl.value)"/>
+                  [saveOverlayVisible]="true"
+                  (runButtonClick)="onRunClick(i, part.formControl.value)"
+                  (saveButtonClick)="onSaveClick(i, part.formControl.value)"/>
                 <ts-chat-output [attr.data-output-block]="message.id + '-' + i" [outputState]="$any(message.content[i + 1]).outputState" (sendLogToAi)="sendLogToAi.emit($event)"/>
               </div>
             } @else {

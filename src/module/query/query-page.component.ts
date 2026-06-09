@@ -32,6 +32,8 @@ import { ChatState } from "../../service/chat-state.service";
 import { DriverState } from "../../service/driver-state.service";
 import { QueryPageState } from "../../service/query-page-state.service";
 import { QueryTab, QueryTabsState } from "../../service/query-tabs-state.service";
+import { SavedQueriesState, isDefaultQueryTabName } from "../../service/saved-queries-state.service";
+import { SaveQueryDialogComponent, SaveQueryDialogData } from "../saved-queries/save-query-dialog/save-query-dialog.component";
 import { RunOutputState } from "../../service/query-page-state.service";
 import { QueryExportService, SerializedOutput } from "../../service/query-export.service";
 import { SnackbarService } from "../../service/snackbar.service";
@@ -81,6 +83,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     private snackbar = inject(SnackbarService);
     private dialog = inject(MatDialog);
     private router = inject(Router);
+    private savedQueries = inject(SavedQueriesState);
 
     // Query tab context menu state
     queryTabContextMenuPosition = { x: 0, y: 0 };
@@ -410,6 +413,40 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
 
     duplicateQueryTab(tab: QueryTab) {
         this.queryTabsState.duplicateTab(tab);
+    }
+
+    /**
+     * Snapshot the tab's current query text and persist it under a name.
+     * If the tab still has its auto-generated "Query N" name we prompt the
+     * user first; otherwise we save under the existing tab name directly.
+     */
+    saveQueryTab(tab: QueryTab) {
+        const query = this.queryTabsState.getTabControl(tab).value;
+        if (!query || !query.trim()) {
+            this.snackbar.warn("Tab is empty — nothing to save");
+            return;
+        }
+        const commit = (name: string) => {
+            this.savedQueries.add(name, query);
+            this.snackbar.success(`Saved "${name}"`);
+        };
+        if (!isDefaultQueryTabName(tab.name)) {
+            commit(tab.name);
+            return;
+        }
+        const ref = this.dialog.open(SaveQueryDialogComponent, {
+            data: { suggestedName: "" } as SaveQueryDialogData,
+            width: "400px",
+        });
+        ref.afterClosed().subscribe((name: string | undefined) => {
+            if (!name) return;
+            // Mirror the chosen name onto the tab itself: the user just gave
+            // this query a meaningful identity, and leaving the tab labelled
+            // "Query 7" would be a UX disconnect (and force them through the
+            // dialog again if they re-save later).
+            this.queryTabsState.renameTab(tab, name);
+            commit(name);
+        });
     }
 
     // Run tab methods

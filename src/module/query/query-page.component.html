@@ -319,6 +319,8 @@
       <button mat-menu-item (click)="togglePinQueryTab(tab)">{{ tab?.pinned ? 'Unpin' : 'Pin' }}</button>
       <button mat-menu-item (click)="duplicateQueryTab(tab)">Duplicate</button>
       <button mat-menu-item (click)="openRenameTabDialog(tab)">Rename</button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="saveQueryTab(tab)">Save query</button>
     </span>
   </ng-template>
 </mat-menu>

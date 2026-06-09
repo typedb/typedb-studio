@@ -1,0 +1,9 @@
+<tp-modal dialogTitle="Save query">
+  <tp-form [formGroup]="form" [isSubmitting$]="isSubmitting$" (doSubmit)="submit()">
+    <tp-form-input type="text" [form]="form" field="name" label="Name" [focusInitial]="true" />
+    <tp-form-actions
+      [cancellable]="true" submitText="Save" [isSubmitting]="isSubmitting$ | async"
+      buttonIdPrefix="saveQueryModal" (cancel)="close()"
+    />
+  </tp-form>
+</tp-modal>

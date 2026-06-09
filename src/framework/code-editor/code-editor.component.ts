@@ -35,6 +35,8 @@ import { Subscription } from "rxjs";
     @Input({ required: true }) formControlProp!: FormControl<string>;
     @Input() runOverlayVisible = false;
     @Output() runButtonClick = new EventEmitter<void>();
+    @Input() saveOverlayVisible = false;
+    @Output() saveButtonClick = new EventEmitter<void>();
 
     @ViewChild(CodeEditor) private codeEditor?: CodeEditor;
 
@@ -74,6 +76,7 @@ import { Subscription } from "rxjs";
 
     ran = false;
     copied = false;
+    saved = false;
     hasScrollbar = false;
     private resizeObserver?: ResizeObserver;
 
@@ -112,6 +115,14 @@ import { Subscription } from "rxjs";
         setTimeout(() => {
             this.ran = false;
         }, 3000);
+    }
+
+    onSaveButtonClick() {
+        // Pure delegation — the host decides whether to prompt for a name
+        // and ultimately persists; we only flicker a check on the icon.
+        this.saved = true;
+        this.saveButtonClick.emit();
+        setTimeout(() => { this.saved = false; }, 3000);
     }
 
     async onCopyButtonClick() {

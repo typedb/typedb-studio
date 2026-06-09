@@ -319,6 +319,73 @@ class QueryTabs {
     }
 }
 
+const SAVED_QUERIES = "savedQueries";
+
+export interface PersistedSavedQuery {
+    id: string;
+    name: string;
+    query: string;
+    /** ms since epoch — used for default ordering (newest first). */
+    savedAt: number;
+}
+
+interface SavedQueriesData {
+    queries: PersistedSavedQuery[];
+}
+
+const INITIAL_SAVED_QUERIES: SavedQueriesData = { queries: [] };
+
+function parseSavedQueriesData(obj: Object | null): SavedQueriesData {
+    return Object.assign({}, INITIAL_SAVED_QUERIES, obj) as SavedQueriesData;
+}
+
+export class SavedQueries {
+    constructor(private storage: StorageService) {
+        if (this.storage.isAccessible && this.readStorage() == null) {
+            this.writeStorage(INITIAL_SAVED_QUERIES);
+        }
+    }
+
+    private readStorage(): SavedQueriesData {
+        if (!this.storage.isAccessible) return { ...INITIAL_SAVED_QUERIES };
+        return this.storage.read<SavedQueriesData>(SAVED_QUERIES, parseSavedQueriesData);
+    }
+
+    private writeStorage(data: SavedQueriesData): StorageWriteResult {
+        return this.storage.write(SAVED_QUERIES, data);
+    }
+
+    list(): PersistedSavedQuery[] {
+        return [...this.readStorage().queries];
+    }
+
+    add(name: string, query: string): PersistedSavedQuery {
+        const data = this.readStorage();
+        const entry: PersistedSavedQuery = {
+            id: crypto.randomUUID(),
+            name,
+            query,
+            savedAt: Date.now(),
+        };
+        data.queries.push(entry);
+        this.writeStorage(data);
+        return entry;
+    }
+
+    remove(id: string): StorageWriteResult {
+        const data = this.readStorage();
+        data.queries = data.queries.filter(q => q.id !== id);
+        return this.writeStorage(data);
+    }
+
+    rename(id: string, name: string): StorageWriteResult {
+        const data = this.readStorage();
+        const q = data.queries.find(x => x.id === id);
+        if (q) q.name = name;
+        return this.writeStorage(data);
+    }
+}
+
 const CHAT_CONVERSATIONS = "chatConversations";
 
 export interface PersistedChatMessage {
@@ -669,6 +736,7 @@ export class AppData {
     readonly preferences = new Preferences(this.storage);
     readonly dataExplorerTabs = new DataExplorerTabs(this.storage);
     readonly queryTabs = new QueryTabs(this.storage);
+    readonly savedQueries = new SavedQueries(this.storage);
     readonly chatConversations = new ChatConversations(this.storage);
     readonly panelLayout = new PanelLayout(this.storage);
     readonly nodeLabelPrefs = new NodeLabelPrefs(this.storage);

@@ -1,0 +1,38 @@
+<div class="saved-container">
+  @let entries = state.entries$ | async;
+  @if (!entries || entries.length === 0) {
+    <div class="empty-state">
+      <i class="fa-light fa-bookmark"></i>
+      <p>No queries saved yet</p>
+    </div>
+  } @else {
+    <ol>
+      @for (entry of entries; track trackById($index, entry)) {
+        <li class="saved-entry">
+          <aside>
+            <span class="entry-name" [title]="entry.name">{{ entry.name }}</span>
+            <span class="bullet">&bull;</span>
+            <time class="text-muted">{{ entry.savedAt | date:'MMM d, HH:mm' }}</time>
+            <span class="flex-spacer"></span>
+            <div class="entry-actions">
+              <i class="fa-light fa-arrow-up-right-from-square"
+                 matTooltip="Open in Query page" [matTooltipShowDelay]="500"
+                 (click)="onOpen(entry)"></i>
+              <i class="fa-light fa-pen-to-square"
+                 matTooltip="Rename" [matTooltipShowDelay]="500"
+                 (click)="onRename(entry)"></i>
+              <i class="fa-light fa-trash-can"
+                 matTooltip="Delete" [matTooltipShowDelay]="500"
+                 (click)="onDelete(entry)"></i>
+            </div>
+          </aside>
+          <div class="saved-code-editor">
+            <tp-code-editor [formControlProp]="getEntryControl(entry)"
+                            [runOverlayVisible]="true"
+                            (runButtonClick)="onRun(entry)"/>
+          </div>
+        </li>
+      }
+    </ol>
+  }
+</div>

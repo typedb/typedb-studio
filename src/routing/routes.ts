@@ -20,6 +20,7 @@ import { DataPageComponent } from "../module/data/data-page.component";
 import { ChatPageComponent } from "../module/chat/chat-page.component";
 import { GraphPageComponent } from "../module/graph/graph-page.component";
 import { QueryHistoryPageComponent } from "../module/query-history/query-history-page.component";
+import { SavedQueriesPageComponent } from "../module/saved-queries/saved-queries-page.component";
 
 const homeGuard: CanActivateFn = () => {
     const appData = inject(AppData);
@@ -57,5 +58,6 @@ export const routes: Routes = [
     { path: "agent-mode", component: ChatPageComponent, title: "Agent mode", data: { domain: "chat" } },
     { path: "users", component: UsersPageComponent, title: "Users", data: { domain: "users" } },
     { path: "history", component: QueryHistoryPageComponent, title: "Query history", data: { domain: "query-history" } },
+    { path: "saved-queries", component: SavedQueriesPageComponent, title: "Saved queries", data: { domain: "saved-queries" } },
     { path: "**", component: _404PageComponent, title: "404" },
 ];
