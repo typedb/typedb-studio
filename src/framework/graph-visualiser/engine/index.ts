@@ -805,6 +805,20 @@ export class GraphVisualiser {
     }
 
     /**
+     * Collapse the whole graph inward: reheat the simulation with a strong
+     * centering force so nodes pull together into a tight cluster. Re-enables
+     * auto-zoom so the camera tracks the shrinking graph.
+     */
+    collapse(): void {
+        this.autoZoomEnabled = true;
+        this.peakCameraRatio = 0;
+        this.pinnedCameraWorld = null;
+        this.unfreezeViewport();
+        this.layout.collapse();
+        this.centerCamera();
+    }
+
+    /**
      * Render the current graph into an offscreen Sigma instance at 100% zoom (ratio = 1)
      * and composite all of its canvas layers (WebGL nodes/edges + 2D labels) into a single
      * PNG blob.

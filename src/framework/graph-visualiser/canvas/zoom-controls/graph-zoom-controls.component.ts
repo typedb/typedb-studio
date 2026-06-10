@@ -53,4 +53,14 @@ export class GraphZoomControlsComponent {
     reLayout(): void {
         this.visualiser?.reLayout();
     }
+
+    collapse(): void {
+        this.visualiser?.collapse();
+    }
+
+    get canCollapse(): boolean {
+        return !this.queryRunning
+            && !this.visualiser?.isLayoutRunning
+            && (this.visualiser?.graph.order ?? 0) > 0;
+    }
 }

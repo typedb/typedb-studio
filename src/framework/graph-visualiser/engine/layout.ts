@@ -121,6 +121,11 @@ export interface LayoutStartOptions {
     initialAlpha?: number;
     /** D3-force only: alpha decay rate (default 0.01). Higher = settles faster. */
     alphaDecay?: number;
+    /**
+     * D3-force only: scales the centering (gravity) force pulling every node
+     * toward the origin (default 1). Large values collapse the graph inward.
+     */
+    gravityMultiplier?: number;
 }
 
 export interface LayoutWrapper {
@@ -143,6 +148,13 @@ export interface LayoutWrapper {
     // Pin/unpin a node during drag (no-op for non-animated layouts)
     fixNode(nodeKey: string, x: number, y: number): void;
     unfixNode(nodeKey: string): void;
+
+    /**
+     * Reheat the simulation from current positions with a strong centering
+     * force so the whole graph collapses inward. No-op / redraw for layouts
+     * without an animated, gravity-tunable simulation.
+     */
+    collapse(): void;
 
     /**
      * Forget which nodes have been settled by a previous simulation. Callers
@@ -207,6 +219,9 @@ class LayoutSupervisorWrapper implements LayoutWrapper {
 
     // Force-Atlas2 / generic-force supervisors don't track per-node settling.
     forgetSettled(): void {}
+
+    // No tunable gravity force here — collapsing isn't supported.
+    collapse(): void {}
 }
 
 interface D3Node extends SimulationNodeDatum {
@@ -227,6 +242,12 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
      * cluster of freshly-randomised positions across the canvas.
      */
     private settledNodes: Set<string> = new Set();
+    /**
+     * Persistent gravity scaling for this simulation. Each "Collapse" doubles
+     * it, compounding across clicks, and it stays in effect for every
+     * subsequent run until `forgetSettled` resets it (Redraw / Reset changes).
+     */
+    private gravityMultiplier = 1;
 
     constructor(graph: MultiGraph) {
         this.graph = graph;
@@ -263,6 +284,8 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
 
     forgetSettled(): void {
         this.settledNodes.clear();
+        // A fresh layout (Redraw / Reset changes) starts from baseline gravity.
+        this.gravityMultiplier = 1;
     }
 
     private buildSimulation(opts?: LayoutStartOptions): ReturnType<typeof forceSimulation<D3Node>> {
@@ -320,7 +343,7 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
             }
         }
 
-        const gravityStrength = componentCount > 1 ? 0.06 : 0.02;
+        const gravityStrength = (componentCount > 1 ? 0.06 : 0.02) * this.gravityMultiplier * (opts?.gravityMultiplier ?? 1);
 
         return forceSimulation(nodes)
             .force("charge", forceManyBody()
@@ -377,6 +400,15 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
 
     startOrRedraw() {
         this.start();
+    }
+
+    collapse() {
+        // Bump this simulation's gravity by one unit each click (1 → 2 → 3 …);
+        // since gravity grows linearly, each successive collapse adds a
+        // proportionally smaller pull. Reset by forgetSettled on Redraw /
+        // Reset changes. Reheat from current positions so the graph eases in.
+        this.gravityMultiplier += 1;
+        this.start({ initialAlpha: 0.5, alphaDecay: 0.05 });
     }
 
     fixNode(nodeKey: string, x: number, y: number): void {
@@ -437,6 +469,9 @@ class StaticLayoutWrapper<LayoutParams> implements LayoutWrapper {
 
     // Static layouts don't track per-node settling.
     forgetSettled(): void {}
+
+    // Static layouts have no animated gravity to collapse with.
+    collapse(): void {}
 }
 
 class ForceAtlasStaticWrapper implements StaticLayoutInner<ForceAtlas2SynchronousLayoutParameters> {
