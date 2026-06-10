@@ -193,7 +193,9 @@
     <span class="menu-content">
       @if (mode === 'graph-view') {
         <button mat-menu-item (click)="openGraphKindTab(rootKind)">Load instances</button>
-      } @else if (mode !== 'data') {
+      } @else if (mode === 'data') {
+        <button mat-menu-item (click)="openDataKindTab(rootKind)">Load instances</button>
+      } @else {
         <button mat-menu-item (click)="loadKindInstances(rootKind)">Load instances</button>
       }
     </span>

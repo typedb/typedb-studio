@@ -131,7 +131,9 @@ export class DataPageComponent implements OnInit, OnDestroy {
 
     getTabTrackId(tab: DataTab): string {
         if (tab.kind === "type-table") {
-            return `type:${tab.type.label}`;
+            // Kind tables share their synthetic label with a possible real type,
+            // so key them on rootKind to keep the two distinct.
+            return tab.rootKind ? `kind:${tab.rootKind}` : `type:${tab.type.label}`;
         } else {
             return `instance:${tab.instanceIID}`;
         }

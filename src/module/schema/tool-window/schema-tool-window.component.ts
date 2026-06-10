@@ -111,6 +111,11 @@ export class SchemaToolWindowComponent {
             if (node.nodeKind === "concept") {
                 this.dataEditorState.openTypeTab(node.concept);
                 event.stopPropagation();
+            } else if (node.nodeKind === "root") {
+                const rootKind: RootKind = node.label === "entities" ? "entity"
+                    : node.label === "relations" ? "relation" : "attribute";
+                this.dataEditorState.openKindTab(rootKind);
+                event.stopPropagation();
             }
         } else if (this.mode === "graph-view") {
             if (node.nodeKind === "concept") {
@@ -254,8 +259,6 @@ export class SchemaToolWindowComponent {
         if (flat.node.nodeKind === "concept") {
             this.openConceptContextMenu(event, flat.node.concept);
         } else if (flat.node.nodeKind === "root") {
-            // No data-mode equivalent yet, so skip root right-click in that mode.
-            if (this.mode === "data") return;
             this.openRootContextMenu(event, flat.node.label);
         }
     }
@@ -328,6 +331,10 @@ export class SchemaToolWindowComponent {
 
     openGraphKindTab(rootKind: RootKind) {
         this.graphViewState.openKindTab(rootKind);
+    }
+
+    openDataKindTab(rootKind: RootKind) {
+        this.dataEditorState.openKindTab(rootKind);
     }
 }
 

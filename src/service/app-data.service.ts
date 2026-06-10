@@ -203,6 +203,9 @@ export interface PersistedBreadcrumbItem {
 export interface PersistedTypeTableTab {
     kind: "type-table";
     typeLabel: string;
+    /** Set for kind tables (all instances of a root kind). When present the tab
+     *  is rebuilt via a synthetic kind concept rather than a schema type lookup. */
+    rootKind?: "entity" | "relation" | "attribute";
     typeqlFilter?: string;
     breadcrumbs?: PersistedBreadcrumbItem[];
     pinned?: boolean;
