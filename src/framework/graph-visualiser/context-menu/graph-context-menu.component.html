@@ -7,12 +7,22 @@
 
 <mat-menu #menu="matMenu" [overlapTrigger]="false">
   @if (target && !isAttributeTarget) {
-    @if (selectionMode === "instances") {
-      <button mat-menu-item (click)="loadLinksForThisInstance()">Load links</button>
-      <button mat-menu-item (click)="loadAttributesForThisInstance()">Load attributes</button>
-    } @else {
-      <button mat-menu-item (click)="loadLinksForAllInstancesOfType()">Load links</button>
-      <button mat-menu-item (click)="loadAttributesForAllInstancesOfType()">Load attributes</button>
-    }
+    <span class="menu-group-label">This instance</span>
+    <span [matTooltip]="noLinksTooltip" [matTooltipDisabled]="canLoadLinks" [matTooltipShowDelay]="500">
+      <button mat-menu-item (click)="loadLinksForThisInstance()" [disabled]="!canLoadLinks">Load links</button>
+    </span>
+    <span [matTooltip]="noAttributesTooltip" [matTooltipDisabled]="canLoadAttributes" [matTooltipShowDelay]="500">
+      <button mat-menu-item (click)="loadAttributesForThisInstance()" [disabled]="!canLoadAttributes">Load attributes</button>
+    </span>
+
+    <mat-divider></mat-divider>
+
+    <span class="menu-group-label">All '{{ target.typeLabel }}' instances</span>
+    <span [matTooltip]="noLinksTooltip" [matTooltipDisabled]="canLoadLinks" [matTooltipShowDelay]="500">
+      <button mat-menu-item (click)="loadLinksForAllInstancesOfType()" [disabled]="!canLoadLinks">Load links</button>
+    </span>
+    <span [matTooltip]="noAttributesTooltip" [matTooltipDisabled]="canLoadAttributes" [matTooltipShowDelay]="500">
+      <button mat-menu-item (click)="loadAttributesForAllInstancesOfType()" [disabled]="!canLoadAttributes">Load attributes</button>
+    </span>
   }
 </mat-menu>

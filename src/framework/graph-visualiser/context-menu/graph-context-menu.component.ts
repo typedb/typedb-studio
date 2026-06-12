@@ -6,8 +6,10 @@
 
 import { Component, inject, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild } from "@angular/core";
 import { MatMenu, MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
+import { MatDividerModule } from "@angular/material/divider";
+import { MatTooltipModule } from "@angular/material/tooltip";
 import { Subscription } from "rxjs";
-import { GraphViewState, SelectionMode } from "../../../service/graph-view-state.service";
+import { GraphViewState } from "../../../service/graph-view-state.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
 import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
@@ -24,16 +26,40 @@ function typeKindFromSelectionKind(kind: SelectionKind): "entityType" | "relatio
     }
 }
 
+/** True if the type, or any of its subtypes, plays a role in a relation. */
+function typeOrSubtypePlaysRoles(type: SchemaConcept): boolean {
+    if ("playedRoles" in type && type.playedRoles.length > 0) return true;
+    if ("subtypes" in type) {
+        for (const sub of type.subtypes) {
+            if (typeOrSubtypePlaysRoles(sub)) return true;
+        }
+    }
+    return false;
+}
+
+/** True if the type, or any of its subtypes, owns an attribute type. */
+function typeOrSubtypeOwnsAttributes(type: SchemaConcept): boolean {
+    if ("ownedAttributes" in type && type.ownedAttributes.length > 0) return true;
+    if ("subtypes" in type) {
+        for (const sub of type.subtypes) {
+            if (typeOrSubtypeOwnsAttributes(sub)) return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Right-click context menu for graph instance nodes.
  *
  * Sits invisibly in the canvas; subscribes to `interactionHandler.nodeContextMenu$`,
  * positions a hidden trigger element at the click coordinates, then opens a
- * mat-menu. The current selection mode picks which group of actions is shown:
+ * mat-menu. Regardless of selection mode, the menu shows two groups:
  *
- *   - "instances" → Load links / Load attributes for just the clicked IID
- *   - "types"     → Load links / Load attributes for every IID of the
- *                   clicked node's type currently in the graph
+ *   - "This instance"            → Load links / Load attributes for just the
+ *                                  clicked IID
+ *   - "All '<type>' instances"   → Load links / Load attributes for every IID
+ *                                  of the clicked node's type currently in the
+ *                                  graph
  *
  * Each action calls the corresponding `GraphViewState.fetch*` method, then
  * triggers a soft reheat with camera preserved and re-evaluates the highlight
@@ -43,7 +69,7 @@ function typeKindFromSelectionKind(kind: SelectionKind): "entityType" | "relatio
     selector: "ts-graph-context-menu",
     templateUrl: "./graph-context-menu.component.html",
     styleUrls: ["./graph-context-menu.component.scss"],
-    imports: [MatMenuModule],
+    imports: [MatMenuModule, MatDividerModule, MatTooltipModule],
 })
 export class GraphContextMenuComponent implements OnChanges, OnDestroy {
     @Input() visualiser: GraphVisualiser | null = null;
@@ -88,10 +114,6 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         this.sub?.unsubscribe();
     }
 
-    get selectionMode(): SelectionMode {
-        return this.visualiser?.interactionHandler.selectionMode ?? "types";
-    }
-
     // -- "This instance" actions --
 
     loadLinksForThisInstance(): void {
@@ -133,6 +155,23 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
     get isAttributeTarget(): boolean {
         return this.target?.kind === "attribute";
     }
+
+    /** False when the target type (or any subtype) plays no role in any
+     *  relation — there are no links to load, so the action is disabled. */
+    get canLoadLinks(): boolean {
+        const type = this.target ? this.lookupType(this.target) : null;
+        return !!type && type.kind !== "attributeType" && typeOrSubtypePlaysRoles(type);
+    }
+
+    /** False when the target type (or any subtype) owns no attribute types —
+     *  there are no attributes to load, so the action is disabled. */
+    get canLoadAttributes(): boolean {
+        const type = this.target ? this.lookupType(this.target) : null;
+        return !!type && type.kind !== "attributeType" && typeOrSubtypeOwnsAttributes(type);
+    }
+
+    readonly noLinksTooltip = "This type has no links";
+    readonly noAttributesTooltip = "This type owns no attributes";
 
     private lookupType(target: InspectableSelection): SchemaConcept | null {
         const schema = this.schemaState.value$.value;
