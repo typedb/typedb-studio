@@ -4,7 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Component, ElementRef, EventEmitter, HostBinding, Input, OnDestroy, Output, ViewChild, AfterViewInit } from "@angular/core";
+import { Component, ElementRef, EventEmitter, HostBinding, Input, OnDestroy, Output, ViewChild, AfterViewInit, AfterViewChecked } from "@angular/core";
+import { NgTemplateOutlet } from "@angular/common";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatMenuModule } from "@angular/material/menu";
 
@@ -25,14 +26,19 @@ export type GraphCanvasStatusAction = "viewLog";
     selector: "ts-graph-canvas",
     templateUrl: "graph-canvas.component.html",
     styleUrls: ["graph-canvas.component.scss"],
-    imports: [MatTooltipModule, MatMenuModule, ResizableDirective, GraphZoomControlsComponent, GraphSidePanelComponent, GraphContextMenuComponent],
+    imports: [NgTemplateOutlet, MatTooltipModule, MatMenuModule, ResizableDirective, GraphZoomControlsComponent, GraphSidePanelComponent, GraphContextMenuComponent],
 })
-export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
+export class GraphCanvasComponent implements AfterViewInit, AfterViewChecked, OnDestroy {
     @Input() visualiser: GraphVisualiser | null = null;
     @Input() status: GraphCanvasStatus = "ok";
     @Input() graphPercent = 75;
     @Input() stylesPanePercent = 25;
     @Input() maximised = false;
+
+    /** Side-panel size when docked bottom. Kept separate from
+     *  `stylesPanePercent` (the right-dock width) because a width-tuned value
+     *  is too short as a height — bottom defaults taller. */
+    private bottomPanePercent = 45;
     /** The run that owns this canvas's graph. Passed through to the side panel
      *  so the Inspector knows where to push instances/attributes/links. */
     @Input() run: RunOutputState | null = null;
@@ -71,8 +77,33 @@ export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
         this.updateControlTheme();
     }
 
+    /** The canvas element currently hosting the sigma renderer. When the dock
+     *  axis flips, the `@if` rebuilds `.canvas-element`, so we detect the new
+     *  node here and move the renderer onto it (preserving graph + camera). */
+    private attachedCanvasEl: HTMLElement | null = null;
+
     ngAfterViewInit() {
         this.applyBackground();
+    }
+
+    ngAfterViewChecked() {
+        const el = this.canvasElRef?.nativeElement ?? null;
+        if (el && el !== this.attachedCanvasEl && this.attachedCanvasEl !== null && this.run) {
+            // The host element was rebuilt (dock axis changed). Re-home the
+            // renderer; GraphOutputState.attach/detach preserves the graph and
+            // restores the camera, so no graph state is lost.
+            this.run.graph.detach();
+            this.run.graph.attach(el);
+            this.attachedCanvasEl = el;
+            this.applyBackground();
+            setTimeout(() => {
+                this.visualiser?.sigma.resize();
+                this.visualiser?.sigma.refresh();
+            });
+        } else if (el && this.attachedCanvasEl === null) {
+            // First view-check after the parent's initial attach(); record it.
+            this.attachedCanvasEl = el;
+        }
     }
 
     ngOnDestroy() {
@@ -101,6 +132,31 @@ export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
 
     get canvasEl(): HTMLElement | undefined {
         return this.canvasElRef?.nativeElement;
+    }
+
+    /** Which edge the side panel docks to (graph-wide, persisted). */
+    get dock() {
+        return this.styleService.sidePanelDock;
+    }
+
+    /** True when the outer split stacks vertically (panel docked bottom). */
+    get isVertical(): boolean {
+        return this.dock === "bottom";
+    }
+
+    /** Side-panel size for the current dock (height for bottom, width for right). */
+    get sidePanelPercent(): number {
+        return this.isVertical ? this.bottomPanePercent : this.stylesPanePercent;
+    }
+
+    /** Persist a side-panel resize against the right dock-orientation slot. */
+    onSidePanelPercentChange(percent: number): void {
+        if (this.isVertical) {
+            this.bottomPanePercent = percent;
+        } else {
+            this.stylesPanePercent = percent;
+            this.stylesPanePercentChange.emit(percent);
+        }
     }
 
     toggleMaximised() {

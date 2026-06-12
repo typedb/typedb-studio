@@ -4,13 +4,62 @@
 :host {
   display: flex !important;
   flex-direction: column !important;
+  position: relative;
   height: 100%;
   min-width: 0;
   white-space: normal !important;
   font-weight: var(--font-weight-regular);
   background: var(--theme-deep-purple);
-  border-left: 1px solid var(--theme-secondary-deep-grey);
   gap: 0 !important;
+
+  // Divider border on the edge facing the canvas, per dock side.
+  &.dock-right  { border-left: 1px solid var(--theme-secondary-deep-grey); }
+  &.dock-bottom { border-top: 1px solid var(--theme-secondary-deep-grey); }
+}
+
+// Dock-side kebab, overlaid in the inspector pane's top-right corner. Its 35px
+// height matches the inspector title bar, so `align-items: center` vertically
+// aligns the kebab with the "Inspector" label.
+.side-panel-header {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.dock-kebab {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--theme-secondary-light-grey);
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  border-radius: 3px;
+
+  &:hover {
+    color: var(--theme-white);
+    background: var(--theme-purple);
+  }
+}
+
+// Inspector + tabbed-panel split. Column for left/right docks (handle is
+// horizontal/"vertical"-direction); row for bottom dock (handle is vertical/
+// "horizontal"-direction). The resize directive injects the handle with the
+// orientation it reads from this container's flex-direction at init.
+.split {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+
+  &.split-col { flex-direction: column; }
+  &.split-row { flex-direction: row; }
 
   ::ng-deep > app-drag-handle[direction="vertical"] {
     height: 5px;
@@ -18,13 +67,37 @@
     margin-bottom: -3px;
     z-index: 2;
   }
+  ::ng-deep > app-drag-handle[direction="horizontal"] {
+    width: 5px;
+    margin-left: -2px;
+    margin-right: -3px;
+    z-index: 2;
+  }
 }
 
 .inspector-pane {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
-  border-bottom: 1px solid var(--theme-secondary-dark-grey);
+
+  // The inspector component fills the wrapper; the kebab header overlays its
+  // title bar.
+  > ts-graph-type-inspector,
+  > ts-graph-inspector {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
 }
+
+// Divider between inspector and panel: bottom border in column mode, right
+// border in row (bottom-dock) mode.
+.split-col > .inspector-pane { border-bottom: 1px solid var(--theme-secondary-dark-grey); }
+.split-row > .inspector-pane { border-right: 1px solid var(--theme-secondary-dark-grey); }
 
 // Invisible trigger fixed-positioned at the right-click coords; the mat-menu
 // opens relative to it. Used by Elements-tab type chips.
@@ -34,6 +107,16 @@
   height: 0;
   visibility: hidden;
   pointer-events: none;
+}
+
+// Dock-side menu: highlight the currently-active dock option and give each
+// item a leading icon gap.
+::ng-deep .dock-menu .mat-mdc-menu-item {
+  i { margin-right: 8px; width: 14px; text-align: center; }
+  &.active {
+    color: var(--theme-green);
+    i { color: var(--theme-green); }
+  }
 }
 
 // Section label inside the type chip mat-menu — non-interactive header.
@@ -178,6 +261,11 @@
   align-items: center;
   gap: 8px;
   margin-top: 4px;
+
+  ::ng-deep mat-slide-toggle .mdc-switch {
+    transform: scale(0.85);
+    transform-origin: left center;
+  }
 }
 
 .color-input {
@@ -398,19 +486,6 @@
   border-top: 1px solid var(--theme-secondary-dark-grey);
 }
 
-.footer-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.footer-option-label {
-  font-size: 13px;
-  font-weight: var(--font-weight-regular);
-  color: var(--theme-secondary-light-grey);
-  flex: 1;
-}
-
 .footer-select-field {
   flex: 0 0 auto;
   width: 172px;
@@ -463,34 +538,6 @@
 
     .mat-mdc-select-arrow-wrapper {
       transform: scale(0.85);
-    }
-  }
-}
-
-.footer-toggles {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  ::ng-deep mat-slide-toggle {
-    width: 100%;
-    --mat-slide-toggle-label-text-size: 13px;
-    --mat-slide-toggle-label-text-color: var(--theme-secondary-light-grey);
-    --mat-slide-toggle-label-text-weight: var(--font-weight-regular);
-    --mat-slide-toggle-label-text-font: inherit;
-    --mat-slide-toggle-label-text-tracking: var(--body-letter-spacing);
-
-    .mdc-form-field {
-      width: 100%;
-    }
-
-    .mdc-label {
-      flex: 1;
-    }
-
-    .mdc-switch {
-      transform: scale(0.85);
-      transform-origin: center;
     }
   }
 }

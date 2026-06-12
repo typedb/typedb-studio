@@ -62,6 +62,9 @@ export function buildBackgroundCSS(bg: GraphBackground): BackgroundCSS {
     }
 }
 
+/** Which edge of the graph canvas the side panel docks to. */
+export type GraphSidePanelDock = "bottom" | "right";
+
 export interface CustomPreset {
     name: string;
     description: string;
@@ -129,6 +132,7 @@ export class GraphStyleService implements OnDestroy {
     private _showHoverLabel = true;
     private _degreeScaling = false;
     private _fillOpacity = 0.25;
+    private _sidePanelDock: GraphSidePanelDock = "right";
     private _background: GraphBackground = { ...DEFAULT_BACKGROUND };
 
     private _customPresets: CustomPreset[] = [];
@@ -478,6 +482,14 @@ export class GraphStyleService implements OnDestroy {
         this.styles$.next();
     }
 
+    get sidePanelDock(): GraphSidePanelDock { return this._sidePanelDock; }
+
+    set sidePanelDock(value: GraphSidePanelDock) {
+        this._sidePanelDock = value;
+        this.save();
+        this.styles$.next();
+    }
+
     get degreeScaling(): boolean { return this._degreeScaling; }
 
     set degreeScaling(value: boolean) {
@@ -701,6 +713,7 @@ export class GraphStyleService implements OnDestroy {
                 showHoverLabel: this._showHoverLabel,
                 degreeScaling: this._degreeScaling,
                 fillOpacity: this._fillOpacity,
+                sidePanelDock: this._sidePanelDock,
                 background: this._background,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -724,6 +737,7 @@ export class GraphStyleService implements OnDestroy {
                 this._showHoverLabel = data.showHoverLabel ?? true;
                 this._degreeScaling = data.degreeScaling ?? false;
                 this._fillOpacity = data.fillOpacity ?? 0.25;
+                this._sidePanelDock = data.sidePanelDock ?? "right";
                 if (data.background) this._background = { ...DEFAULT_BACKGROUND, ...data.background };
             }
         } catch (e) {

@@ -1,4 +1,20 @@
-<div class="graph-canvas-container" [class.maximised]="maximised">
+<!-- Outer split keyed on the dock axis (row vs column). The resize directive
+     locks its handle orientation at init, so the resizable subtree is rebuilt
+     when the axis flips (bottom ⇆ right); the canvas then re-attaches its sigma
+     renderer (preserving graph + camera). -->
+<div class="graph-canvas-container"
+     [class.maximised]="maximised"
+     [class.dock-bottom]="dock === 'bottom'">
+  @if (isVertical) {
+    <ng-container *ngTemplateOutlet="canvasPane"></ng-container>
+    <ng-container *ngTemplateOutlet="sidePanel"></ng-container>
+  } @else {
+    <ng-container *ngTemplateOutlet="canvasPane"></ng-container>
+    <ng-container *ngTemplateOutlet="sidePanel"></ng-container>
+  }
+</div>
+
+<ng-template #canvasPane>
   <div class="graph-split-left" resizable [percent]="graphPercent" (percentChange)="graphPercentChange.emit($event)">
     <div class="canvas-element" #canvasEl></div>
 
@@ -88,9 +104,12 @@
       }
     }
   </div>
-  <ts-graph-side-panel resizable [percent]="stylesPanePercent"
-                       (percentChange)="stylesPanePercentChange.emit($event)"
+</ng-template>
+
+<ng-template #sidePanel>
+  <ts-graph-side-panel resizable [percent]="sidePanelPercent"
+                       (percentChange)="onSidePanelPercentChange($event)"
                        [visualiser]="visualiser"
                        [run]="run"
                        [selectionMode]="selectionMode ?? 'types'"/>
-</div>
+</ng-template>

@@ -8,6 +8,7 @@ import { Component, DoCheck, inject, Input } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatSelectModule } from "@angular/material/select";
+import { MatTooltipModule } from "@angular/material/tooltip";
 import { GraphVisualiser } from "../engine";
 import { GraphViewState } from "../../../service/graph-view-state.service";
 import { AppData } from "../../../service/app-data.service";
@@ -57,7 +58,7 @@ interface RoleChipRow {
         "../../../module/data/instance-detail/instance-detail.component.scss",
         "./graph-type-inspector.component.scss",
     ],
-    imports: [CommonModule, MatFormFieldModule, MatSelectModule],
+    imports: [CommonModule, MatFormFieldModule, MatSelectModule, MatTooltipModule],
 })
 export class GraphTypeInspectorComponent implements DoCheck {
     @Input() selectedType: SchemaConcept | null = null;
@@ -243,6 +244,67 @@ export class GraphTypeInspectorComponent implements DoCheck {
                 this.visualiser?.interactionHandler.recomputeHighlightSet();
                 this.graphViewState.markConnectionLoaded(this.run!, this.selectedType!.label, row.label);
             });
+    }
+
+    // -- "All" (*) chips: load every attribute / relation / role at once. The
+    //    chip is highlighted (loaded) and non-interactive once every individual
+    //    chip in its section is loaded. --
+
+    get allAttributesLoaded(): boolean {
+        return this.attributeChips.length > 0 && this.attributeChips.every(r => this.isAttributeLoaded(r));
+    }
+
+    get allRelationsLoaded(): boolean {
+        return this.relationChips.length > 0 && this.relationChips.every(r => this.isRelationLoaded(r));
+    }
+
+    get allRolesLoaded(): boolean {
+        return this.roleChips.length > 0 && this.roleChips.every(r => this.isRoleLoaded(r));
+    }
+
+    loadAllAttributes(): void {
+        if (!this.selectedType || !this.run || !this.visualiser || this.allAttributesLoaded) return;
+        const iids = this.collectInstanceIidsOfType(this.selectedType.label);
+        const markAll = () => this.attributeChips.forEach(r =>
+            this.graphViewState.markConnectionLoaded(this.run!, this.selectedType!.label, r.label));
+        if (iids.length === 0) { markAll(); return; }
+        // One fetch for every attribute kind in a single pass, then reheat once.
+        this.visualiser.freezeViewport();
+        this.graphViewState.fetchAttributesOf(this.run, this.selectedType, iids).then(() => {
+            this.afterLoadAll(markAll);
+        });
+    }
+
+    loadAllRelations(): void {
+        if (!this.selectedType || !this.run || !this.visualiser || this.allRelationsLoaded) return;
+        const iids = this.collectInstanceIidsOfType(this.selectedType.label);
+        const markAll = () => this.relationChips.forEach(r =>
+            this.graphViewState.markConnectionLoaded(this.run!, this.selectedType!.label, r.label));
+        if (iids.length === 0) { markAll(); return; }
+        this.visualiser.freezeViewport();
+        // Load each relation kind the type participates in, then reheat once.
+        Promise.all(this.relationChips.map(r =>
+            this.graphViewState.fetchRelationsOfTypeForPlayers(this.run!, this.selectedType!, iids, r.label),
+        )).then(() => this.afterLoadAll(markAll));
+    }
+
+    loadAllRoles(): void {
+        if (!this.selectedType || !this.run || !this.visualiser || this.allRolesLoaded) return;
+        const iids = this.collectInstanceIidsOfType(this.selectedType.label);
+        const markAll = () => this.roleChips.forEach(r =>
+            this.graphViewState.markConnectionLoaded(this.run!, this.selectedType!.label, r.label));
+        if (iids.length === 0) { markAll(); return; }
+        this.visualiser.freezeViewport();
+        Promise.all(this.roleChips.map(r =>
+            this.graphViewState.fetchRolePlayersOfTypeFor(this.run!, this.selectedType!, iids, r.shortName),
+        )).then(() => this.afterLoadAll(markAll));
+    }
+
+    /** Shared post-load step: reheat, re-light, and mark the section loaded. */
+    private afterLoadAll(markAll: () => void): void {
+        this.visualiser?.reheat({ soft: true, preserveCamera: true });
+        this.visualiser?.interactionHandler.recomputeHighlightSet();
+        markAll();
     }
 
     private computeInstanceCount(): number {

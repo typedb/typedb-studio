@@ -29,7 +29,12 @@
 }
 
 .inspector-title-bar {
-    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    // Match the height of the tab bar in the customise/elements area
+    // (8px vertical padding + 13px line + 2px active underline ≈ 35px).
+    height: 35px;
+    padding: 0 16px;
     border-bottom: 1px solid var(--theme-secondary-deep-grey);
     flex-shrink: 0;
 
@@ -128,6 +133,24 @@
         border-color: var(--chip-color);
         color: var(--chip-color);
         cursor: default;
+    }
+
+    // The "*" = load-all chip. Square-ish, bold glyph; when every chip in its
+    // section is loaded it's disabled and shows the same filled state via
+    // `.loaded`, so a disabled all-chip just stops responding to hover.
+    &.all-chip {
+        min-width: 28px;
+        justify-content: center;
+        font-weight: 700;
+        line-height: 1;
+
+        &:disabled {
+            cursor: default;
+            &:hover {
+                border-color: var(--chip-color);
+                color: var(--chip-color);
+            }
+        }
     }
 }
 

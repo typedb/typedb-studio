@@ -34,6 +34,13 @@
             <div class="detail-section">
               <h6 class="section-title">Roles</h6>
               <div class="connection-chips">
+                <button class="connection-chip role all-chip"
+                        [class.loaded]="allRolesLoaded"
+                        [disabled]="allRolesLoaded"
+                        matTooltip="Load all roles" [matTooltipShowDelay]="500"
+                        (click)="loadAllRoles()">
+                  *
+                </button>
                 @for (row of roleChips; track row.label) {
                   <button class="connection-chip role"
                           [class.loaded]="isRoleLoaded(row)"
@@ -51,6 +58,13 @@
               <p class="text-muted">This type owns no attributes.</p>
             } @else {
               <div class="connection-chips">
+                <button class="connection-chip attribute all-chip"
+                        [class.loaded]="allAttributesLoaded"
+                        [disabled]="allAttributesLoaded"
+                        matTooltip="Load all attributes" [matTooltipShowDelay]="500"
+                        (click)="loadAllAttributes()">
+                  *
+                </button>
                 @for (row of attributeChips; track row.label) {
                   <button class="connection-chip attribute"
                           [class.loaded]="isAttributeLoaded(row)"
@@ -68,6 +82,13 @@
               <p class="text-muted">This type plays no roles.</p>
             } @else {
               <div class="connection-chips">
+                <button class="connection-chip relation all-chip"
+                        [class.loaded]="allRelationsLoaded"
+                        [disabled]="allRelationsLoaded"
+                        matTooltip="Load all relations" [matTooltipShowDelay]="500"
+                        (click)="loadAllRelations()">
+                  *
+                </button>
                 @for (row of relationChips; track row.label) {
                   <button class="connection-chip relation"
                           [class.loaded]="isRelationLoaded(row)"

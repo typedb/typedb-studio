@@ -1,11 +1,10 @@
 import { Component, HostBinding, inject, Input, OnChanges, OnDestroy, SimpleChanges } from "@angular/core";
-import { MatSelectModule } from "@angular/material/select";
+import { NgTemplateOutlet } from "@angular/common";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatSlideToggleModule } from "@angular/material/slide-toggle";
+import { MatMenuModule } from "@angular/material/menu";
 import { ResizableDirective } from "@hhangular/resizable";
 import { Subscription } from "rxjs";
-import { GraphStyleService } from "../../../service/graph-style.service";
+import { GraphStyleService, GraphSidePanelDock } from "../../../service/graph-style.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
 import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
 import { SelectionMode } from "../../../service/graph-view-state.service";
@@ -22,7 +21,8 @@ import { GraphTypeInspectorComponent } from "../inspector/graph-type-inspector.c
     templateUrl: "graph-side-panel.component.html",
     styleUrls: ["graph-side-panel.component.scss"],
     imports: [
-        MatSelectModule, MatTooltipModule, MatFormFieldModule, MatSlideToggleModule,
+        NgTemplateOutlet,
+        MatTooltipModule, MatMenuModule,
         ResizableDirective,
         ElementsTabComponent, ThemesTabComponent, CustomiseTabComponent,
         GraphInspectorComponent, GraphTypeInspectorComponent,
@@ -38,6 +38,12 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
     // makes the inspector tile to the left of the customise pane.
     @HostBinding("style.flexDirection") readonly hostFlexDirection = "column";
     @HostBinding("style.display") readonly hostDisplay = "flex";
+
+    /** Dock class on the host: `.dock-bottom` flips the inner Inspector/tabbed
+     *  split to horizontal; `.dock-right` carries the divider border on the
+     *  left edge. */
+    @HostBinding("class.dock-bottom") get isDockBottom(): boolean { return this.dock === "bottom"; }
+    @HostBinding("class.dock-right") get isDockRight(): boolean { return this.dock === "right"; }
 
     @Input() visualiser: GraphVisualiser | null = null;
     @Input() run: RunOutputState | null = null;
@@ -124,53 +130,17 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
         return this.styleService.isHighlightActive();
     }
 
-    // -- Footer controls --
+    // -- Dock side --
 
-    get colorEdgesByConstraint(): boolean {
-        return this.styleService.colorEdgesByConstraint;
+    get dock(): GraphSidePanelDock {
+        return this.styleService.sidePanelDock;
     }
 
-    toggleEdgeColoring(): void {
-        this.styleService.colorEdgesByConstraint = !this.styleService.colorEdgesByConstraint;
-        this.visualiser?.colorEdgesByConstraintIndex(!this.styleService.colorEdgesByConstraint);
+    setDock(dock: GraphSidePanelDock): void {
+        this.styleService.sidePanelDock = dock;
     }
 
-    get labelMode(): "auto" | "fixed" | "hidden" {
-        if (!this.styleService.labelsVisible) return "hidden";
-        return this.styleService.labelColorMode === "fixed" ? "fixed" : "auto";
-    }
-
-    setLabelMode(mode: "auto" | "fixed" | "hidden"): void {
-        if (mode === "hidden") {
-            this.styleService.labelsVisible = false;
-        } else {
-            this.styleService.labelsVisible = true;
-            this.styleService.labelColorMode = mode === "fixed" ? "fixed" : "auto";
-        }
-        this.visualiser?.restoreLabels();
-    }
-
-    get showHoverLabel(): boolean {
-        return this.styleService.showHoverLabel;
-    }
-
-    toggleShowHoverLabel(): void {
-        this.styleService.showHoverLabel = !this.styleService.showHoverLabel;
-        this.visualiser?.restoreLabels();
-    }
-
-    get degreeScaling(): boolean {
-        return this.styleService.degreeScaling;
-    }
-
-    toggleDegreeScaling(): void {
-        this.styleService.degreeScaling = !this.styleService.degreeScaling;
-        if (this.styleService.degreeScaling) {
-            this.visualiser?.applyStructureMode();
-        } else {
-            this.visualiser?.applyStyleUpdate();
-        }
-    }
+    // -- Footer actions --
 
     reLayout(): void {
         this.visualiser?.reLayout();

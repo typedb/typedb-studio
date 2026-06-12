@@ -49,6 +49,18 @@
         margin-right: -3px;
         z-index: 2;
     }
+    ::ng-deep > app-drag-handle[direction="vertical"] {
+        height: 5px;
+        margin-top: -2px;
+        margin-bottom: -3px;
+        z-index: 2;
+    }
+
+    // Bottom dock: stack vertically. The @if rebuild gives the resize handle
+    // its vertical orientation.
+    &.dock-bottom {
+        flex-direction: column;
+    }
 
     &.maximised {
         position: fixed;
@@ -65,8 +77,14 @@
 .graph-split-left {
     position: relative;
     overflow: hidden;
-    height: 100%;
     flex: 1;
+    // Min sizing on both axes so the canvas shrinks rather than overflowing
+    // when the side panel takes its share, in either dock orientation.
+    min-width: 0;
+    min-height: 0;
+    // Cross-axis fill: full width in row docks, full height handled by flex
+    // stretch in column dock.
+    align-self: stretch;
 }
 
 .canvas-element {
