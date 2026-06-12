@@ -23,6 +23,40 @@
             <span class="angle-value">{{ fillOpacityPercent }}%</span>
           </div>
         </div>
+
+        <div class="style-row">
+          <span class="style-label">Labels in nodes</span>
+          <div class="style-controls">
+            <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
+              <mat-select [value]="labelMode" panelClass="graph-style-select-panel" (selectionChange)="setLabelMode($event.value)">
+                <mat-option value="auto">Visible (auto color)</mat-option>
+                <mat-option value="fixed">Visible (black/white)</mat-option>
+                <mat-option value="hidden">Hidden</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="style-row">
+          <span class="style-label">Show label on hover</span>
+          <div class="style-controls">
+            <mat-slide-toggle color="primary" [checked]="showHoverLabel" (change)="toggleShowHoverLabel()"></mat-slide-toggle>
+          </div>
+        </div>
+
+        <div class="style-row">
+          <span class="style-label">Scale nodes by link count</span>
+          <div class="style-controls">
+            <mat-slide-toggle color="primary" [checked]="degreeScaling" (change)="toggleDegreeScaling()"></mat-slide-toggle>
+          </div>
+        </div>
+
+        <div class="style-row">
+          <span class="style-label">Color edges by constraint</span>
+          <div class="style-controls">
+            <mat-slide-toggle color="primary" [checked]="colorEdgesByConstraint" (change)="toggleEdgeColoring()"></mat-slide-toggle>
+          </div>
+        </div>
       }
 
       <!-- Kinds section -->
