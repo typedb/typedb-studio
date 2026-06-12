@@ -806,16 +806,13 @@ export class GraphVisualiser {
 
     /**
      * Collapse the whole graph inward: reheat the simulation with a strong
-     * centering force so nodes pull together into a tight cluster. Re-enables
-     * auto-zoom so the camera tracks the shrinking graph.
+     * centering force so nodes pull together into a tight cluster. The camera
+     * is deliberately left untouched — no auto-zoom and no recenter — so the
+     * user's current view stays fixed while the nodes draw together.
      */
     collapse(): void {
-        this.autoZoomEnabled = true;
-        this.peakCameraRatio = 0;
-        this.pinnedCameraWorld = null;
-        this.unfreezeViewport();
+        this.autoZoomEnabled = false;
         this.layout.collapse();
-        this.centerCamera();
     }
 
     /**

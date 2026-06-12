@@ -85,13 +85,20 @@ export function refreshInstanceLabels(
         if (concept.kind !== "entity" && concept.kind !== "relation") return;
         const typeLabel: string = concept.type?.label ?? "";
         const chosen = chosenByType.get(typeLabel) ?? null;
-        const values = chosen != null
+        const collected = chosen != null
             ? collectAttributeValues(graph, nodeKey, concept.iid, chosen, store)
-            : [];
-        const formatted = formatValues(values);
-        const newLabel = formatted.length > 0
-            ? `${typeLabel}: ${formatted}`
-            : typeLabel;
+            : { values: [], isBoolean: false };
+        const formatted = formatValues(collected.values);
+        let newLabel: string;
+        if (formatted.length === 0) {
+            newLabel = typeLabel;
+        } else if (collected.isBoolean && chosen) {
+            // A bare `true`/`false` is meaningless on its own, so name the
+            // attribute: `<type>: <attr-type>=<value>`.
+            newLabel = `${typeLabel}: ${chosen}=${formatted}`;
+        } else {
+            newLabel = `${typeLabel}: ${formatted}`;
+        }
         if (attrs.label !== newLabel) {
             graph.setNodeAttribute(nodeKey, "label", newLabel);
         }
@@ -104,23 +111,31 @@ function collectAttributeValues(
     ownerIid: string | undefined,
     chosenTypeLabel: string,
     store?: DisplayAttributeStore,
-): unknown[] {
+): { values: unknown[]; isBoolean: boolean } {
     // Union over both sources so a multi-valued attribute renders every
     // value, regardless of whether some came from explicit in-graph loads
     // and others from the off-graph label-only fetch.
     const out: unknown[] = [];
+    let isBoolean = false;
     graph.forEachOutNeighbor(ownerKey, (neighborKey: string) => {
         const n = graph.getNodeAttributes(neighborKey);
         const nc = n?.metadata?.concept as any;
         if (nc?.kind === "attribute" && nc.type?.label === chosenTypeLabel) {
             out.push(nc.value);
+            if (nc.valueType === "boolean" || nc.type?.valueType === "boolean" || typeof nc.value === "boolean") {
+                isBoolean = true;
+            }
         }
     });
     if (store && ownerIid) {
         const fromStore = store.get(ownerIid)?.get(chosenTypeLabel);
-        if (fromStore) out.push(...fromStore);
+        if (fromStore) {
+            out.push(...fromStore);
+            // Store values are untyped; fall back to the JS type of the value.
+            if (fromStore.some(v => typeof v === "boolean")) isBoolean = true;
+        }
     }
-    return out;
+    return { values: out, isBoolean };
 }
 
 const NAME_TIER_A = new Set([
