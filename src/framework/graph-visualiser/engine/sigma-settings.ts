@@ -91,11 +91,18 @@ export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: Sig
             if (!labelsToDisplay.includes(n)) labelsToDisplay.push(n);
         });
 
-        // Sort by zIndex so higher-zIndex nodes erase and draw on top
+        // Draw labels in the SAME back-to-front order Sigma draws the node
+        // bodies. `nodeIndices` is the draw index Sigma assigns to each body
+        // during indexation (already zIndex-ordered, with graph-insertion order
+        // as the tie-break). Reusing it here keeps a node's body and label one
+        // group for stacking: a node drawn on top both covers the body behind
+        // it AND (via each label's destination-out erase) covers that node's
+        // label. Sorting by zIndex alone tie-broke differently from the bodies,
+        // which let a node's label sit over a neighbour whose body sat over it.
         labelsToDisplay.sort((a: string, b: string) => {
-            const zA = this.nodeDataCache[a]?.zIndex ?? 0;
-            const zB = this.nodeDataCache[b]?.zIndex ?? 0;
-            return zA - zB;
+            const iA = this.nodeIndices[a] ?? 0;
+            const iB = this.nodeIndices[b] ?? 0;
+            return iA - iB;
         });
 
         this.displayedNodeLabels = new Set();

@@ -51,6 +51,7 @@ export interface StudioState {
 
 interface InteractionState {
     draggedNode: string | null;
+    hoveredNode: string | null;
     didDrag: boolean;
     highlightedAnswer: number | null; // demonstrative
     selectedNode: string | null;
@@ -106,6 +107,7 @@ export class InteractionHandler {
     constructor(public graph: MultiGraph, public renderer: Sigma, private studioState: StudioState, public styleParams: GraphStyles, public styleService?: GraphStyleService) {
         this.state = {
             draggedNode : null,
+            hoveredNode: null,
             didDrag: false,
             highlightedAnswer: null,
             selectedNode: null,
@@ -146,6 +148,12 @@ export class InteractionHandler {
                 this.graph.setNodeAttribute(node, "label", this.styleParams.vertexDefaultLabel(concept));
             }
         }
+        // Lift the hovered node to the front so its body AND label stack on top
+        // of neighbours as one group (the reducer reads this). Hovering doesn't
+        // change any layout-impacting attribute, so force a re-indexation to
+        // rebuild the body/label draw order with the new zIndex.
+        this.state.hoveredNode = node;
+        this.renderer.refresh({ partialGraph: { nodes: [node] }, skipIndexation: false, schedule: true });
     }
 
     onLeaveNode(event: SigmaNodeEventPayload) {
@@ -159,6 +167,8 @@ export class InteractionHandler {
         if (this.styleService?.showHoverLabel && !this.styleService.labelsVisible) {
             this.graph.setNodeAttribute(node, "label", "");
         }
+        if (this.state.hoveredNode === node) this.state.hoveredNode = null;
+        this.renderer.refresh({ partialGraph: { nodes: [node] }, skipIndexation: false, schedule: true });
     }
 
     onDownNode(event: SigmaNodeEventPayload) {
@@ -402,6 +412,24 @@ export class InteractionHandler {
         this.state.selectedNode = node;
         this.recomputeHighlightSet();
         this.selection$.next(this.extractInspectableSelection(node));
+    }
+
+    /**
+     * Switch the highlight to a specific instance regardless of selection
+     * mode — used by the "load connections" flows (context menu, instance
+     * inspector) so the just-touched instance becomes the focus even when
+     * the panel is in type-selection mode. Clears any active type selection
+     * (and notifies the type-selection stream) so `recomputeHighlightSet`
+     * runs the instance-mode branch.
+     */
+    focusInstance(node: string): void {
+        const typeWasSet = this.selectedTypeLabel != null;
+        this.lastSelectionWasFromHighlight = false;
+        this.selectedTypeLabel = null;
+        this.state.selectedNode = node;
+        this.recomputeHighlightSet();
+        this.selection$.next(this.extractInspectableSelection(node));
+        if (typeWasSet) this.typeSelection$.next(null);
     }
 
     /**

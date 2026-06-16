@@ -154,6 +154,13 @@ export class GraphVisualiser {
 
         this.sigma.setSetting("nodeReducer", (node, data) => {
             const state = this.interactionHandler.state;
+            // The node being dragged is lifted above all others so its body,
+            // label, and hover overlay stack as one consistent group on top.
+            // A drag re-indexes every move (x/y are layout-impacting), so this
+            // elevated zIndex propagates to the body draw order, the label
+            // draw order (renderLabels sorts by the same nodeIndices), and to
+            // picking — keeping the dragged node the hovered one throughout.
+            if (node === state.draggedNode) return { ...data, zIndex: 2 };
             let shouldFade = false;
             let isPreviewFade = false;
 
@@ -190,7 +197,10 @@ export class GraphVisualiser {
                 }
             }
 
-            if (!shouldFade) return { ...data, zIndex: 1 };
+            // Lift the hovered node above its peers so body + label come to the
+            // front together (a faded node keeps its blanked label, so there's
+            // nothing to lift — leave it at the normal level).
+            if (!shouldFade) return { ...data, zIndex: node === state.hoveredNode ? 2 : 1 };
             const res = { ...data };
             if (isPreviewFade) {
                 res["color"] = fadeSoftForPreview(data["color"]);
@@ -645,6 +655,18 @@ export class GraphVisualiser {
         const nodeKey = this.findInstanceNode(kind, typeLabel, instanceId);
         if (nodeKey == null) return;
         this.interactionHandler.selectNode(nodeKey);
+    }
+
+    /**
+     * Focus an instance even when the panel is in type-selection mode — used
+     * by the context-menu / inspector "load connections" actions to make the
+     * just-touched instance the highlight focus regardless of the current
+     * selection mode. No-op if the instance isn't in the graph.
+     */
+    focusInstance(kind: "entity" | "relation" | "attribute", typeLabel: string, instanceId: string): void {
+        const nodeKey = this.findInstanceNode(kind, typeLabel, instanceId);
+        if (nodeKey == null) return;
+        this.interactionHandler.focusInstance(nodeKey);
     }
 
     /**

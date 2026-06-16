@@ -109,15 +109,24 @@ export function drawClippedNodeLabel<
     buildPath: (ctx: CanvasRenderingContext2D, d: typeof data) => void,
 ): void {
     context.save();
-    // Widen the clip horizontally about the node centre.
-    context.translate(data.x, data.y);
-    context.scale(LABEL_OVERFLOW, 1);
-    context.translate(-data.x, -data.y);
+    // Erase from the labels canvas only the node's *own body* shape, so a node
+    // drawn on top clears the labels strictly behind its body — not a wider
+    // box. Using the widened (overflow) shape here would carve out a band 50%
+    // larger than the node and wipe neighbouring nodes' labels inside it, which
+    // reads as an invisible box obstructing other nodes (most visible while
+    // dragging a node past its neighbours).
     buildPath(context, data);
     context.globalCompositeOperation = "destination-out";
     context.fillStyle = "#000";
     context.fill();
     context.globalCompositeOperation = "source-over";
+    // Clip the label text to a horizontally-widened shape so a slightly-too-
+    // long label can still spill past the node edges (bounded) instead of being
+    // hard-clipped at the outline.
+    context.translate(data.x, data.y);
+    context.scale(LABEL_OVERFLOW, 1);
+    context.translate(-data.x, -data.y);
+    buildPath(context, data);
     context.clip();
     // Undo just our horizontal scale (preserving any DPR transform sigma set)
     // so the label text itself isn't stretched.
