@@ -11,7 +11,7 @@ import { DriverState } from "./driver-state.service";
 import { SchemaConcept } from "./schema-state.service";
 import { GraphStyleService } from "./graph-style.service";
 import { AppData } from "./app-data.service";
-import { createRunOutputState, RunOutputState } from "./query-page-state.service";
+import { createRunOutputState, GraphOutputStatus, RunOutputState } from "./query-page-state.service";
 
 export type SelectionMode = "types" | "instances";
 
@@ -197,7 +197,9 @@ export class GraphViewState {
             if (isNew) {
                 tab.initialNodeCount = run.graph.visualiser?.graph.order ?? 0;
             }
-            run.graph.status = "ok";
+            const postStatus = run.graph.status as GraphOutputStatus;
+            if (postStatus === "noQueryAnswers") run.graph.status = "noInstancesFound";
+            else if (postStatus === "running") run.graph.status = "ok";
         } catch (err) {
             console.error("[Graph fetch]", err);
             run.graph.status = "error";

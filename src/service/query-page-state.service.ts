@@ -1152,7 +1152,7 @@ function compareCells(a: string | undefined, b: string | undefined): number {
     return a.localeCompare(b);
 }
 
-type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noAnswers" | "error" | "multiQuery";
+export type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noQueryAnswers" | "noInstancesFound" | "error" | "multiQuery";
 
 export class GraphOutputState {
 
@@ -1263,7 +1263,7 @@ export class GraphOutputState {
                     }
                 }
                 this.visualiser.colorEdgesByConstraintIndex(!this._styleService.colorEdgesByConstraint);
-                this.status = "ok";
+                this.status = res.ok.answers.length > 0 ? "ok" : "noQueryAnswers";
                 break;
             }
             case "conceptDocuments": {

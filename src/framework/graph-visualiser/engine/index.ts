@@ -509,7 +509,7 @@ export class GraphVisualiser {
             this.state.activeQueryDatabase = database;
             this.handleQueryResult(res);
             if (this.styleService.degreeScaling) this.applyStyleUpdate();
-            if (wasEmpty) {
+            if (wasEmpty && this.graph.order > 0) {
                 this.autoZoomEnabled = true;
                 this.peakCameraRatio = 0;
                 this.layout.startOrRedraw();
