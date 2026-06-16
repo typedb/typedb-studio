@@ -28,20 +28,20 @@
       <div class="section-header">Load relations</div>
       <div class="scope-row">
         <span class="scope-row-label">*</span>
-        <button class="scope-chip scope-chip--link"
+        <button class="scope-chip scope-chip--relation"
                 [class.loaded]="allRelationsLoadedHere" [disabled]="allRelationsLoadedHere"
                 (click)="$event.stopPropagation(); loadAllRelations('instance')">here</button>
-        <button class="scope-chip scope-chip--link"
+        <button class="scope-chip scope-chip--relation"
                 [class.loaded]="allRelationsLoaded" [disabled]="allRelationsLoaded"
                 (click)="$event.stopPropagation(); loadAllRelations('type')">every '{{ typeChipLabel }}'</button>
       </div>
       @for (row of relationRows; track row.label) {
         <div class="scope-row">
           <span class="scope-row-label">{{ row.label }}</span>
-          <button class="scope-chip scope-chip--link"
+          <button class="scope-chip scope-chip--relation"
                   [class.loaded]="isRelationLoadedHere(row)"
                   (click)="$event.stopPropagation(); loadRelation(row, 'instance')">here</button>
-          <button class="scope-chip scope-chip--link"
+          <button class="scope-chip scope-chip--relation"
                   [class.loaded]="isRelationLoaded(row)"
                   (click)="$event.stopPropagation(); loadRelation(row, 'type')">every '{{ typeChipLabel }}'</button>
         </div>
@@ -54,20 +54,20 @@
       <div class="section-header">Load links</div>
       <div class="scope-row">
         <span class="scope-row-label">*</span>
-        <button class="scope-chip scope-chip--link"
+        <button class="scope-chip scope-chip--role"
                 [class.loaded]="allRolesLoadedHere" [disabled]="allRolesLoadedHere"
                 (click)="$event.stopPropagation(); loadAllRoles('instance')">here</button>
-        <button class="scope-chip scope-chip--link"
+        <button class="scope-chip scope-chip--role"
                 [class.loaded]="allRolesLoaded" [disabled]="allRolesLoaded"
                 (click)="$event.stopPropagation(); loadAllRoles('type')">every '{{ typeChipLabel }}'</button>
       </div>
       @for (row of roleRows; track row.label) {
         <div class="scope-row">
           <span class="scope-row-label">{{ row.shortName }}</span>
-          <button class="scope-chip scope-chip--link"
+          <button class="scope-chip scope-chip--role"
                   [class.loaded]="isRoleLoadedHere(row)"
                   (click)="$event.stopPropagation(); loadRole(row, 'instance')">here</button>
-          <button class="scope-chip scope-chip--link"
+          <button class="scope-chip scope-chip--role"
                   [class.loaded]="isRoleLoaded(row)"
                   (click)="$event.stopPropagation(); loadRole(row, 'type')">every '{{ typeChipLabel }}'</button>
         </div>

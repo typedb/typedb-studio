@@ -86,7 +86,8 @@
         white-space: nowrap;
         transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 
-        &--link      { --chip-color: var(--theme-relation-yellow); }
+        &--relation  { --chip-color: var(--theme-relation-yellow); }
+        &--role      { --chip-color: var(--theme-role-orange); }
         &--attribute { --chip-color: var(--theme-attribute-blue); }
 
         &:hover {
