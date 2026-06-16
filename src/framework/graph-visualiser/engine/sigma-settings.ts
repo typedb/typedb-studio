@@ -4,6 +4,7 @@ import { drawStraightEdgeLabel } from "sigma/rendering";
 import { Settings as SigmaSettings } from "sigma/settings";
 import MultiGraph from "graphology";
 import { NodeDiamondProgram } from "./node-programs/diamond";
+import { NodeHexagonProgram } from "./node-programs/hexagon";
 import { NodeRoundedRectangleProgram } from "./node-programs/rounded-rect";
 import { NodeEllipseProgram } from "./node-programs/ellipse";
 import { zoomScaledFontSize } from "./sigma-label-utils";
@@ -49,6 +50,7 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
     nodeProgramClasses: {
         "rounded-rect": NodeRoundedRectangleProgram,
         diamond: NodeDiamondProgram,
+        hexagon: NodeHexagonProgram,
         ellipse: NodeEllipseProgram,
     },
     edgeProgramClasses: {

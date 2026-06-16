@@ -6,6 +6,10 @@ const MAX_LINES = 3;
 const LINE_HEIGHT = 1.3;
 const PADDING_X = 6;
 const LABEL_FONT_SIZE = 14;
+/** How far a node label may extend past the node's own width before it wraps
+ *  or truncates (1.0 = stay inside the node). The shape label clips scale by
+ *  the same factor so the overflowing text is actually visible. */
+export const LABEL_OVERFLOW = 1.5;
 
 let _useBorderColorForLabels = true;
 let _labelsVisible = true;
@@ -65,7 +69,9 @@ export function drawCenteredNodeLabel<
     context.font = `${weight} ${fontSize}px ${settings.labelFont}`;
     context.fillStyle = labelColor;
 
-    const maxWidth = screenHalfW * 2 - PADDING_X;
+    // Allow labels to overflow the node a bounded amount before wrapping /
+    // truncating, so slightly-too-long names stay readable without spilling far.
+    const maxWidth = (screenHalfW * 2 - PADDING_X) * LABEL_OVERFLOW;
     const { lines, truncated } = wrapText(context, data.label, maxWidth);
 
     const lineH = fontSize * LINE_HEIGHT;
@@ -77,6 +83,44 @@ export function drawCenteredNodeLabel<
     }
 
     return truncated;
+}
+
+/**
+ * Knock the label area out of the node fill and clip the centered label to the
+ * node shape — but with the clip widened horizontally by `LABEL_OVERFLOW` so a
+ * slightly-too-long label can spill past the node's edges (bounded) instead of
+ * being hard-clipped at the outline. `buildPath` traces the node's base shape;
+ * we scale the canvas horizontally around the node centre while building the
+ * clip, then reset before drawing the (undistorted) text.
+ */
+export function drawClippedNodeLabel<
+    N extends Attributes = Attributes,
+    E extends Attributes = Attributes,
+    G extends Attributes = Attributes,
+>(
+    context: CanvasRenderingContext2D,
+    data: PartialButFor<NodeDisplayData, "x" | "y" | "size" | "label" | "color">,
+    settings: Settings<N, E, G>,
+    buildPath: (ctx: CanvasRenderingContext2D, d: typeof data) => void,
+): void {
+    context.save();
+    // Widen the clip horizontally about the node centre.
+    context.translate(data.x, data.y);
+    context.scale(LABEL_OVERFLOW, 1);
+    context.translate(-data.x, -data.y);
+    buildPath(context, data);
+    context.globalCompositeOperation = "destination-out";
+    context.fillStyle = "#000";
+    context.fill();
+    context.globalCompositeOperation = "source-over";
+    context.clip();
+    // Undo just our horizontal scale (preserving any DPR transform sigma set)
+    // so the label text itself isn't stretched.
+    context.translate(data.x, data.y);
+    context.scale(1 / LABEL_OVERFLOW, 1);
+    context.translate(-data.x, -data.y);
+    drawCenteredNodeLabel<N, E, G>(context, data, settings);
+    context.restore();
 }
 
 interface WrapResult {

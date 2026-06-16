@@ -14,17 +14,28 @@ uniform float u_sizeRatio;
 const float BORDER_ABSOLUTE = 0.8;
 const vec4 transparent = vec4(0.0, 0.0, 0.0, 0.0);
 
+// Regular hexagon SDF (Inigo Quilez), point-up: corners at top & bottom and
+// flat-ish edges left & right. r = circumradius (centre → corner).
+// The canonical IQ hexagon is flat-top; we swap x/y so a corner faces up.
+float sdHexagon(vec2 p, float r) {
+  const vec3 k = vec3(-0.866025404, 0.5, 0.577350269);
+  p = abs(p.yx); // swap to make the hexagon point-up
+  p -= 2.0 * min(dot(k.xy, p), 0.0) * k.xy;
+  p -= vec2(clamp(p.x, -k.z * r, k.z * r), r);
+  return length(p) * sign(p.y);
+}
+
 void main(void) {
   float u = log2(max(u_sizeRatio, 1.0));
   float borderScale = clamp(1.0 + u * (0.96 + u * (-0.75 + 0.29 * u)), 1.0, 5.0);
   float bw = BORDER_ABSOLUTE * borderScale / v_size;
-  vec2 halfSize = vec2(v_aspect * 0.5, 0.5);
-  vec2 scaled = v_uv / halfSize;
-  float len = length(scaled);
-  float rawDist = len - 1.0;
-  // Gradient correction: normalize by |∇f| so border width is uniform around the ellipse
-  vec2 grad = (scaled / halfSize) / max(len, 0.001);
-  float dist = rawDist / length(grad);
+
+  // Point-up hexagon. In IQ's SDF r is the apothem (centre to edge midpoint);
+  // for a point-up hexagon the top/bottom corners sit at r / cos(30deg) ~= 1.155r.
+  // Pick r so those corners land at +/-0.5 (the box's vertical half-extent):
+  // r = 0.5 * cos(30deg) ~= 0.433. With a square node this is a regular hexagon.
+  float r = 0.4330127;
+  float dist = sdHexagon(v_uv, r);
 
   float aaWidth = u_correctionRatio * 2.0;
 

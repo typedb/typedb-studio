@@ -50,6 +50,7 @@ const DISPLAY_KINDS: KindRow[] = [
 export const AVAILABLE_SHAPES = [
     { value: "rounded-rect", label: "Rectangle" },
     { value: "diamond", label: "Diamond" },
+    { value: "hexagon", label: "Hexagon" },
     { value: "ellipse", label: "Ellipse" },
 ];
 
@@ -263,6 +264,27 @@ export class CustomiseTabComponent implements OnChanges {
         this.visualiser?.applyEdgeStyleUpdate();
     }
 
+    // -- Default ("all") edge color: applies to every edge without its own
+    //    per-label override. --
+
+    getDefaultEdgeColor(): string {
+        return this.styleService.defaultEdgeColor;
+    }
+
+    setDefaultEdgeColor(color: string): void {
+        this.styleService.defaultEdgeColor = color;
+        this.visualiser?.applyEdgeStyleUpdate();
+    }
+
+    get hasDefaultEdgeColorOverride(): boolean {
+        return this.styleService.hasDefaultEdgeColorOverride;
+    }
+
+    clearDefaultEdgeColor(): void {
+        this.styleService.clearDefaultEdgeColor();
+        this.visualiser?.applyEdgeStyleUpdate();
+    }
+
     // -- Background --
 
     get backgroundType(): GraphBackgroundType { return this.styleService.background.type; }
@@ -274,9 +296,9 @@ export class CustomiseTabComponent implements OnChanges {
         if (type === "default") {
             this.styleService.updateBackground({ type });
         } else if (type === "grid") {
-            this.styleService.updateBackground({ type, color1: "#0e0e0e", color2: "#232135" });
+            this.styleService.updateBackground({ type, color1: "#0e0e0e", color2: "#1a1928" });
         } else if (type === "dots") {
-            this.styleService.updateBackground({ type, color1: "#0e0e0e", color2: "#4e4b63" });
+            this.styleService.updateBackground({ type, color1: "#0e0e0e", color2: "#3a3848" });
         } else if (type === "party") {
             this.styleService.updateBackground({ type, color1: "#1a2766", color2: "#cc3344" });
         } else {
@@ -340,6 +362,15 @@ export class CustomiseTabComponent implements OnChanges {
     toggleEdgeColoring(): void {
         this.styleService.colorEdgesByConstraint = !this.styleService.colorEdgesByConstraint;
         this.visualiser?.colorEdgesByConstraintIndex(!this.styleService.colorEdgesByConstraint);
+    }
+
+    get edgesCurvedByDefault(): boolean {
+        return this.styleService.edgesCurvedByDefault;
+    }
+
+    toggleEdgesCurved(): void {
+        this.styleService.edgesCurvedByDefault = !this.styleService.edgesCurvedByDefault;
+        this.visualiser?.applyEdgeCurvature();
     }
 
     setBackgroundColor1(color1: string): void {

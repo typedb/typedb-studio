@@ -11,6 +11,17 @@
         </button>
       </div>
     </div>
+    <div class="preset-card" [class.active]="activePreset === 'cal'">
+      <div class="preset-info">
+        <span class="preset-name">Cal Aesthetics</span>
+        <span class="preset-description">Styles that signal how oversubscribed your funding round is</span>
+      </div>
+      <div class="preset-actions">
+        <button class="preset-apply" (click)="applyPreset('cal')">
+          @if (appliedPreset === 'cal') { <i class="fa-light fa-check"></i> } @else { Apply }
+        </button>
+      </div>
+    </div>
     <div class="preset-card" [class.active]="activePreset === 'uniform'">
       <div class="preset-info">
         <span class="preset-name">Fair and Square</span>

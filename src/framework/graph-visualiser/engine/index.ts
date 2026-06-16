@@ -314,6 +314,38 @@ export class GraphVisualiser {
         this.sigma.refresh();
     }
 
+    /**
+     * Re-apply the curved-vs-straight edge type to every existing edge based on
+     * the current `edgesCurvedByDefault` setting. Parallel edges between the
+     * same pair stay curved (and fanned out) regardless, so they don't overlap.
+     */
+    applyEdgeCurvature(): void {
+        const curvedByDefault = this.styleService.edgesCurvedByDefault;
+        // Count edges per unordered node pair so parallels can be detected.
+        const pairCounts = new Map<string, number>();
+        const pairKey = (a: string, b: string) => a < b ? `${a} ${b}` : `${b} ${a}`;
+        this.graph.forEachEdge((_e, _a, source, target) => {
+            const k = pairKey(source, target);
+            pairCounts.set(k, (pairCounts.get(k) ?? 0) + 1);
+        });
+        const seen = new Map<string, number>();
+        this.graph.forEachEdge((edge, _attrs, source, target) => {
+            const k = pairKey(source, target);
+            const total = pairCounts.get(k) ?? 1;
+            const idx = seen.get(k) ?? 0;
+            seen.set(k, idx + 1);
+            if (total > 1) {
+                // Parallel edges: always curve and fan out.
+                this.graph.setEdgeAttribute(edge, "type", "curved");
+                this.graph.setEdgeAttribute(edge, "curvature", 0.25 * (idx + 1));
+            } else {
+                this.graph.setEdgeAttribute(edge, "type", curvedByDefault ? "curved" : "line");
+                this.graph.setEdgeAttribute(edge, "curvature", 0.25);
+            }
+        });
+        this.sigma.refresh();
+    }
+
     reLayout(): void {
         this.autoZoomEnabled = true;
         this.peakCameraRatio = 0;
@@ -785,6 +817,9 @@ export class GraphVisualiser {
             const metadata = this.graph.getEdgeAttributes(edgeKey).metadata;
             this.graph.setEdgeAttribute(edgeKey, "label", metadata?.dataEdge?.tag ?? "");
         });
+        // The loop above resets every node to its basic type label; re-run the
+        // heuristic so entity/relation instances keep their enriched labels.
+        refreshInstanceLabels(this.graph, this.displayAttributes, this.labelOverridesByType);
         this.sigma.refresh();
     }
 

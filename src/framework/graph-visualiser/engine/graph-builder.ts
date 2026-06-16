@@ -1,4 +1,5 @@
 import { getVariableName, ConstraintVertexAny } from "@typedb/driver-http";
+import { DEFAULT_EDGE_CURVATURE } from "@sigma/edge-curve";
 import {
     AbstractGraphBuilder,
     StructuredAnswer, DataConstraintAny, DataVertex, getTypeLabel,
@@ -103,11 +104,16 @@ export class GraphBuilder extends AbstractGraphBuilder {
         const tag = metadata.dataEdge.tag;
         const colorHex = this.styleParameters.edgeLabelColors?.[tag]
             ?? this.styleParameters.edgeColor.hex();
+        const curved = this.styleParameters.edgesCurvedByDefault === true;
         return {
             label: label,
             color: colorHex,
             size: this.styleParameters.edgeSize,
-            type: "line",
+            // Curved-by-default when the style enables it; otherwise straight
+            // (parallel edges between the same pair are still curved — see
+            // createEdge — so they don't overlap).
+            type: curved ? "curved" : "line",
+            curvature: DEFAULT_EDGE_CURVATURE,
             metadata: metadata,
         }
     }
@@ -132,12 +138,26 @@ export class GraphBuilder extends AbstractGraphBuilder {
 
     private createEdge(edgeKey: string, from: string, to: string, attributes: EdgeAttributes) {
         if (!this.graph.hasDirectedEdge(edgeKey)) {
-            // TODO: If there is an edge between the two vertices, make it curved
-            if (this.graph.hasDirectedEdge(from, to)) {
+            // When another edge already connects this pair (either direction),
+            // curve this one (and fan it out further if curving is the default)
+            // so the parallel edges don't overlap.
+            const parallelCount = this.countEdgesBetween(from, to);
+            if (parallelCount > 0) {
                 attributes.type = "curved";
+                attributes.curvature = DEFAULT_EDGE_CURVATURE * (parallelCount + 1);
             }
             this.graph.addDirectedEdgeWithKey(edgeKey, from, to, attributes);
         }
+    }
+
+    /** Number of edges (either direction) already connecting the two nodes. */
+    private countEdgesBetween(a: string, b: string): number {
+        let n = 0;
+        if (this.graph.hasNode(a) && this.graph.hasNode(b)) {
+            this.graph.forEachDirectedEdge(a, b, () => { n++; });
+            this.graph.forEachDirectedEdge(b, a, () => { n++; });
+        }
+        return n;
     }
 
     private maybeCreateEdge(answerIndex: number, edge: DataConstraintAny, label: string, from: StudioDataVertex, to: StudioDataVertex, queryFrom: ConstraintVertexOrSpecial, queryTo: ConstraintVertexOrSpecial) {
