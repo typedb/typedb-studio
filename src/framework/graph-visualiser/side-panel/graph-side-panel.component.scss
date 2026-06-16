@@ -3,14 +3,21 @@
 
 :host {
   display: flex !important;
-  flex-direction: column !important;
   position: relative;
   height: 100%;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   white-space: normal !important;
   font-weight: var(--font-weight-regular);
   background: var(--theme-deep-purple);
   gap: 0 !important;
+
+  // Default flex-direction is column (right dock). The component sets the
+  // axis-flipping inline style via @HostBinding so the child resizable
+  // directive reads the right orientation when it inits.
+  flex-direction: column !important;
+  &.dock-bottom { flex-direction: row !important; }
 
   // Divider border on the edge facing the canvas, per dock side.
   &.dock-right  { border-left: 1px solid var(--theme-secondary-deep-grey); }
@@ -47,32 +54,20 @@
   }
 }
 
-// Inspector + tabbed-panel split. Column for left/right docks (handle is
-// horizontal/"vertical"-direction); row for bottom dock (handle is vertical/
-// "horizontal"-direction). The resize directive injects the handle with the
-// orientation it reads from this container's flex-direction at init.
-.split {
-  flex: 1;
-  display: flex;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-
-  &.split-col { flex-direction: column; }
-  &.split-row { flex-direction: row; }
-
-  ::ng-deep > app-drag-handle[direction="vertical"] {
-    height: 5px;
-    margin-top: -2px;
-    margin-bottom: -3px;
-    z-index: 2;
-  }
-  ::ng-deep > app-drag-handle[direction="horizontal"] {
-    width: 5px;
-    margin-left: -2px;
-    margin-right: -3px;
-    z-index: 2;
-  }
+// Drag-handle styling for the Inspector/tabbed-panel split. The handle's
+// orientation comes from the resize directive based on the parent's
+// flex-direction (which is :host now).
+:host ::ng-deep > app-drag-handle[direction="vertical"] {
+  height: 5px;
+  margin-top: -2px;
+  margin-bottom: -3px;
+  z-index: 2;
+}
+:host ::ng-deep > app-drag-handle[direction="horizontal"] {
+  width: 5px;
+  margin-left: -2px;
+  margin-right: -3px;
+  z-index: 2;
 }
 
 .inspector-pane {
@@ -94,10 +89,10 @@
   }
 }
 
-// Divider between inspector and panel: bottom border in column mode, right
-// border in row (bottom-dock) mode.
-.split-col > .inspector-pane { border-bottom: 1px solid var(--theme-secondary-dark-grey); }
-.split-row > .inspector-pane { border-right: 1px solid var(--theme-secondary-dark-grey); }
+// Divider between inspector and panel: bottom border in column (right-dock)
+// mode, right border in row (bottom-dock) mode.
+:host(.dock-right)  > .inspector-pane { border-bottom: 1px solid var(--theme-secondary-dark-grey); }
+:host(.dock-bottom) > .inspector-pane { border-right: 1px solid var(--theme-secondary-dark-grey); }
 
 // Invisible trigger fixed-positioned at the right-click coords; the mat-menu
 // opens relative to it. Used by Elements-tab type chips.

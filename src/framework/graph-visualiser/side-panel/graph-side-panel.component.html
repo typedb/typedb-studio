@@ -1,16 +1,14 @@
-<!-- Inspector + tabbed panel split. Keyed on dock so the resizable subtree is
-     rebuilt when the axis flips (the resize directive locks orientation at
-     init). Column for right dock, row for bottom dock. -->
+<!-- Inspector + tabbed panel are direct flex children of :host so the host's
+     inline-style flex-direction (set via @HostBinding) is what the child
+     resizable directive reads via getComputedStyle(parent). Keyed on dock so
+     the resizable subtree is rebuilt when the axis flips (the resize directive
+     locks orientation at init). -->
 @if (dock === 'bottom') {
-  <div class="split split-row">
-    <ng-container *ngTemplateOutlet="inspector"></ng-container>
-    <ng-container *ngTemplateOutlet="panel"></ng-container>
-  </div>
+  <ng-container *ngTemplateOutlet="inspector"></ng-container>
+  <ng-container *ngTemplateOutlet="panel"></ng-container>
 } @else {
-  <div class="split split-col">
-    <ng-container *ngTemplateOutlet="inspector"></ng-container>
-    <ng-container *ngTemplateOutlet="panel"></ng-container>
-  </div>
+  <ng-container *ngTemplateOutlet="inspector"></ng-container>
+  <ng-container *ngTemplateOutlet="panel"></ng-container>
 }
 
 <ng-template #inspector>

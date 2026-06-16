@@ -30,13 +30,16 @@ import { GraphTypeInspectorComponent } from "../inspector/graph-type-inspector.c
 })
 export class GraphSidePanelComponent implements OnChanges, OnDestroy {
 
-    // Force column layout via inline style. The view-encapsulated SCSS sets
-    // this too, but on tab switch the host's stylesheet sometimes lags one
+    // Force the dock-driven layout via inline style. The view-encapsulated SCSS
+    // sets these too, but on tab switch the host's stylesheet sometimes lags one
     // frame behind the child resizable directive's `ngAfterViewInit`. That
-    // directive calls `getComputedStyle(parent).flexDirection`, gets the
-    // browser default "row", and latches into horizontal mode — which is what
-    // makes the inspector tile to the left of the customise pane.
-    @HostBinding("style.flexDirection") readonly hostFlexDirection = "column";
+    // directive calls `getComputedStyle(parent).flexDirection` on the inspector
+    // pane's parent (which is :host now that the Inspector + tabbed panel are
+    // direct flex children again); without the inline style it reads the
+    // browser default "row" and latches into the wrong orientation.
+    @HostBinding("style.flexDirection") get hostFlexDirection(): string {
+        return this.dock === "bottom" ? "row" : "column";
+    }
     @HostBinding("style.display") readonly hostDisplay = "flex";
 
     /** Dock class on the host: `.dock-bottom` flips the inner Inspector/tabbed

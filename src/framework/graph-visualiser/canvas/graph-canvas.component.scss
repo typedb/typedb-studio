@@ -57,9 +57,13 @@
     }
 
     // Bottom dock: stack vertically. The @if rebuild gives the resize handle
-    // its vertical orientation.
+    // its vertical orientation. !important because the resizable directive
+    // writes inline `style.flexDirection = 'row'` on its parent when its
+    // ngAfterViewInit reads an empty computed flex-direction (happens on
+    // second mat-tab visit when the host isn't fully attached yet); without
+    // !important that inline 'row' beats this class rule.
     &.dock-bottom {
-        flex-direction: column;
+        flex-direction: column !important;
     }
 
     &.maximised {

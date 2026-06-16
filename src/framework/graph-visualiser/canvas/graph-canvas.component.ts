@@ -91,14 +91,21 @@ export class GraphCanvasComponent implements AfterViewInit, AfterViewChecked, On
         if (el && el !== this.attachedCanvasEl && this.attachedCanvasEl !== null && this.run) {
             // The host element was rebuilt (dock axis changed). Re-home the
             // renderer; GraphOutputState.attach/detach preserves the graph and
-            // restores the camera, so no graph state is lost.
-            this.run.graph.detach();
-            this.run.graph.attach(el);
+            // restores the camera, so no graph state is lost. Deferred via
+            // setTimeout so detach() (which sets visualiser=null) doesn't
+            // mutate parent-read state inside the same CD cycle and trip
+            // ExpressionChangedAfterItHasBeenCheckedError on GraphTabComponent.
+            const run = this.run;
             this.attachedCanvasEl = el;
-            this.applyBackground();
             setTimeout(() => {
-                this.visualiser?.sigma.resize();
-                this.visualiser?.sigma.refresh();
+                run.graph.detach();
+                run.graph.attach(el);
+                this.applyBackground();
+                // Use run.graph.visualiser, not this.visualiser: the @Input
+                // hasn't been re-checked yet, so this.visualiser still points
+                // at the destroyed pre-detach instance.
+                run.graph.visualiser?.sigma.resize();
+                run.graph.visualiser?.sigma.refresh();
             });
         } else if (el && this.attachedCanvasEl === null) {
             // First view-check after the parent's initial attach(); record it.
