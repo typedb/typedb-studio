@@ -19,7 +19,7 @@ import { GraphTypeInspectorComponent } from "../inspector/graph-type-inspector.c
 @Component({
     selector: "ts-graph-side-panel",
     templateUrl: "graph-side-panel.component.html",
-    styleUrls: ["graph-side-panel.component.scss"],
+    styleUrls: ["graph-side-panel.host.scss", "graph-side-panel.component.scss"],
     imports: [
         NgTemplateOutlet,
         MatTooltipModule, MatMenuModule,

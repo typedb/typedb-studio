@@ -1,28 +1,11 @@
 
 @use "typography";
 
-:host {
-  display: flex !important;
-  position: relative;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  white-space: normal !important;
-  font-weight: var(--font-weight-regular);
-  background: var(--theme-deep-purple);
-  gap: 0 !important;
-
-  // Default flex-direction is column (right dock). The component sets the
-  // axis-flipping inline style via @HostBinding so the child resizable
-  // directive reads the right orientation when it inits.
-  flex-direction: column !important;
-  &.dock-bottom { flex-direction: row !important; }
-
-  // Divider border on the edge facing the canvas, per dock side.
-  &.dock-right  { border-left: 1px solid var(--theme-secondary-deep-grey); }
-  &.dock-bottom { border-top: 1px solid var(--theme-secondary-deep-grey); }
-}
+// NOTE: this SCSS file is shared as styleUrls by graph-side-panel and the
+// three tab components (elements-tab, themes-tab, customise-tab). Any `:host`
+// rule here would be re-emitted under each tab's encapsulation ID and leak
+// onto every tab's host. Side-panel's :host styles live in
+// graph-side-panel.host.scss, which only graph-side-panel imports.
 
 // Dock-side kebab, overlaid in the inspector pane's top-right corner. Its 35px
 // height matches the inspector title bar, so `align-items: center` vertically
@@ -54,28 +37,13 @@
   }
 }
 
-// Drag-handle styling for the Inspector/tabbed-panel split. The handle's
-// orientation comes from the resize directive based on the parent's
-// flex-direction (which is :host now).
-:host ::ng-deep > app-drag-handle[direction="vertical"] {
-  height: 5px;
-  margin-top: -2px;
-  margin-bottom: -3px;
-  z-index: 2;
-}
-:host ::ng-deep > app-drag-handle[direction="horizontal"] {
-  width: 5px;
-  margin-left: -2px;
-  margin-right: -3px;
-  z-index: 2;
-}
-
 .inspector-pane {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  min-width: 0;
+  // !important — see .panel comment above; same resizable-inline-`unset` issue.
+  min-height: 0 !important;
+  min-width: 0 !important;
   overflow: hidden;
 
   // The inspector component fills the wrapper; the kebab header overlays its
@@ -135,7 +103,14 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-height: 0;
+  // !important because the resizable directive writes inline
+  // `min-height: unset` / `min-width: unset` on its host element, which
+  // resolves to the flex default `auto` and stops the panel from shrinking
+  // below its content — which would prevent .panel-scroll from triggering
+  // overflow. Both axes covered because the host flex-direction flips with
+  // dock (column for right, row for bottom).
+  min-height: 0 !important;
+  min-width: 0 !important;
 }
 
 .panel-scroll {
@@ -145,6 +120,20 @@
   min-height: 0;
   scrollbar-width: thin;
   scrollbar-color: var(--theme-secondary-dark-grey) transparent;
+  // The resizable directive on .panel writes inline `white-space: nowrap`
+  // on its host, which cascades into the scroll container. Reset here so
+  // tab content (e.g. theme card descriptions) wraps normally.
+  white-space: normal;
+
+  // The tab components are custom elements (default display: inline), which
+  // prevents the parent scroll container from measuring their block content
+  // correctly. Force them to block so scrollHeight reflects their full
+  // children rather than just the inline box.
+  > ts-graph-side-panel-elements-tab,
+  > ts-graph-styles-themes-tab,
+  > ts-graph-side-panel-customise-tab {
+    display: block;
+  }
 }
 
 .panel-header {
