@@ -9,6 +9,25 @@ import { NodeRoundedRectangleProgram } from "./node-programs/rounded-rect";
 import { NodeEllipseProgram } from "./node-programs/ellipse";
 import { zoomScaledFontSize } from "./sigma-label-utils";
 
+/**
+ * Best-effort heuristic to tell a physical mouse wheel apart from a trackpad
+ * two-finger swipe. There's no standard API, so we combine the signals that
+ * are reliable per engine:
+ *  - Firefox reports mouse-wheel notches in "lines" (deltaMode 1); trackpads
+ *    (and high-resolution wheels) report pixels (deltaMode 0).
+ *  - Blink/WebKit: a physical wheel notch yields a `wheelDelta` that is a
+ *    multiple of 120, whereas trackpad scrolling produces irregular values.
+ *  - Fallback: a chunky, vertical-only integer delta looks like a wheel.
+ */
+function isMouseWheelEvent(e: WheelEvent): boolean {
+    if (e.deltaMode !== 0) return true;
+    const wheelDelta = (e as any).wheelDeltaY ?? (e as any).wheelDelta;
+    if (typeof wheelDelta === "number" && wheelDelta !== 0) {
+        return Math.abs(wheelDelta) % 120 === 0;
+    }
+    return e.deltaX === 0 && Number.isInteger(e.deltaY) && Math.abs(e.deltaY) >= 50;
+}
+
 function edgeLabelSize(sourceData: any, targetData: any, maxSize: number): number {
     return Math.max(zoomScaledFontSize(sourceData, maxSize), zoomScaledFontSize(targetData, maxSize));
 }
@@ -128,14 +147,28 @@ export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: Sig
         return this;
     };
 
-    // Convert wheel/trackpad scroll from zoom to pan, but let pinch-to-zoom
-    // through (browsers fire pinch gestures as wheel events with ctrlKey set)
+    // Wheel handling:
+    //  - Trackpad two-finger swipe → pan (both axes).
+    //  - Physical mouse wheel → zoom toward the cursor. A mouse wheel only has
+    //    a vertical axis, so panning vertically on it feels wrong; zooming is
+    //    the natural mapping.
+    //  - Pinch-to-zoom (fired as a wheel event with ctrlKey set) is left for
+    //    sigma's own handler.
+    const ZOOM_FACTOR = 1.2;
     const container = renderer.getContainer();
     container.addEventListener("wheel", (e: WheelEvent) => {
         if (e.ctrlKey) return;
         e.preventDefault();
         e.stopPropagation();
         const camera = renderer.getCamera();
+        if (isMouseWheelEvent(e)) {
+            const { ratio } = camera.getState();
+            const newRatio = e.deltaY > 0 ? ratio * ZOOM_FACTOR : ratio / ZOOM_FACTOR;
+            const rect = container.getBoundingClientRect();
+            const target = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            camera.setState(renderer.getViewportZoomedState(target, newRatio));
+            return;
+        }
         const { ratio } = camera.getState();
         const { width, height } = renderer.getDimensions();
         // Convert pixel deltas to graph-coordinate deltas
