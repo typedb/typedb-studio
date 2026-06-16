@@ -177,10 +177,16 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         return this.attributeRows.length > 0;
     }
 
-    /** False when there's no link section to show (no played roles for an entity;
-     *  no related roles for a relation). */
-    get hasLinks(): boolean {
-        return this.relationRows.length > 0 || this.roleRows.length > 0;
+    /** False when the target's type plays no roles in any relation — the
+     *  "Load relations" section would be empty. */
+    get hasRelations(): boolean {
+        return this.relationRows.length > 0;
+    }
+
+    /** False when the target isn't a relation (only relations relate roles) —
+     *  the "Load links" section would be empty. */
+    get hasRoles(): boolean {
+        return this.roleRows.length > 0;
     }
 
     get typeChipLabel(): string {
@@ -237,18 +243,20 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         return this.attributeRows.length > 0 && this.attributeRows.every(r => this.isAttributeLoadedHere(r));
     }
 
-    get allLinksLoaded(): boolean {
-        const total = this.relationRows.length + this.roleRows.length;
-        return total > 0
-            && this.relationRows.every(r => this.isRelationLoaded(r))
-            && this.roleRows.every(r => this.isRoleLoaded(r));
+    get allRelationsLoaded(): boolean {
+        return this.relationRows.length > 0 && this.relationRows.every(r => this.isRelationLoaded(r));
     }
 
-    get allLinksLoadedHere(): boolean {
-        const total = this.relationRows.length + this.roleRows.length;
-        return total > 0
-            && this.relationRows.every(r => this.isRelationLoadedHere(r))
-            && this.roleRows.every(r => this.isRoleLoadedHere(r));
+    get allRelationsLoadedHere(): boolean {
+        return this.relationRows.length > 0 && this.relationRows.every(r => this.isRelationLoadedHere(r));
+    }
+
+    get allRolesLoaded(): boolean {
+        return this.roleRows.length > 0 && this.roleRows.every(r => this.isRoleLoaded(r));
+    }
+
+    get allRolesLoadedHere(): boolean {
+        return this.roleRows.length > 0 && this.roleRows.every(r => this.isRoleLoadedHere(r));
     }
 
     // -- Actions --
@@ -258,6 +266,7 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         this.withTargetType((type, iids) => {
             this.runFetch(
                 state => state.fetchAttributesOf(this.run!, type, iids),
+                scope,
                 () => this.attributeRows.forEach(r => this.markConnForScope(r.label, scope)),
             );
         }, scope);
@@ -268,20 +277,33 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         this.withTargetType((type, iids) => {
             this.runFetch(
                 state => state.fetchAttributesOfTypeFor(this.run!, type, iids, row.label),
+                scope,
                 () => this.markConnForScope(row.label, scope),
             );
         }, scope);
     }
 
-    loadAllLinks(scope: Scope): void {
-        if (scope === "type" ? this.allLinksLoaded : this.allLinksLoadedHere) return; // sticky
+    loadAllRelations(scope: Scope): void {
+        if (scope === "type" ? this.allRelationsLoaded : this.allRelationsLoadedHere) return; // sticky
         this.withTargetType((type, iids) => {
             this.runFetch(
-                state => state.fetchLinksOf(this.run!, type, iids),
-                () => {
-                    this.relationRows.forEach(r => this.markConnForScope(r.label, scope));
-                    this.roleRows.forEach(r => this.markConnForScope(r.label, scope));
-                },
+                state => Promise.all(this.relationRows.map(r =>
+                    state.fetchRelationsOfTypeForPlayers(this.run!, type, iids, r.label))).then(() => {}),
+                scope,
+                () => this.relationRows.forEach(r => this.markConnForScope(r.label, scope)),
+            );
+        }, scope);
+    }
+
+    loadAllRoles(scope: Scope): void {
+        if (scope === "type" ? this.allRolesLoaded : this.allRolesLoadedHere) return; // sticky
+        this.withTargetType((type, iids) => {
+            if (type.kind !== "relationType") return;
+            this.runFetch(
+                state => Promise.all(this.roleRows.map(r =>
+                    state.fetchRolePlayersOfTypeFor(this.run!, type, iids, r.shortName))).then(() => {}),
+                scope,
+                () => this.roleRows.forEach(r => this.markConnForScope(r.label, scope)),
             );
         }, scope);
     }
@@ -291,6 +313,7 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         this.withTargetType((type, iids) => {
             this.runFetch(
                 state => state.fetchRelationsOfTypeForPlayers(this.run!, type, iids, row.label),
+                scope,
                 () => this.markConnForScope(row.label, scope),
             );
         }, scope);
@@ -302,6 +325,7 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
             if (type.kind !== "relationType") return;
             this.runFetch(
                 state => state.fetchRolePlayersOfTypeFor(this.run!, type, iids, row.shortName),
+                scope,
                 () => this.markConnForScope(row.label, scope),
             );
         }, scope);
@@ -373,19 +397,25 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         return out;
     }
 
-    private runFetch(op: (state: GraphViewState) => Promise<void>, markLoaded?: () => void): void {
+    private runFetch(op: (state: GraphViewState) => Promise<void>, scope: Scope, markLoaded?: () => void): void {
         if (!this.run || !this.visualiser || !this.target) return;
         const target = this.target;
         this.visualiser.freezeViewport();
         op(this.graphViewState).then(() => {
-            // Focus the clicked instance even if we're in type-selection mode —
-            // the user explicitly targeted it via right-click, so the highlight
-            // should track that instance and its (now-loaded) connections.
-            this.visualiser?.focusInstance(target.kind, target.typeLabel, target.instanceId);
+            // Match the highlight to what was loaded: a "here" load lights up
+            // just the clicked instance; an "every '<type>'" load lights up
+            // every instance of the type (since that's what got connections).
+            // Both override the panel's selection mode — the user explicitly
+            // targeted this via right-click.
+            if (scope === "type") {
+                this.visualiser?.focusType(target.kind, target.typeLabel, target.instanceId);
+            } else {
+                this.visualiser?.focusInstance(target.kind, target.typeLabel, target.instanceId);
+            }
             this.visualiser?.reheat({ soft: true, preserveCamera: true });
-            // Record the type-level load so the "every '<type>'" chips show the
-            // sticky "loaded" fill next time the menu opens (and stay in sync
-            // with the type-details inspector, which reads the same state).
+            // Record the load so the relevant chips show the sticky "loaded"
+            // fill next time the menu opens (and, for "type" scope, stay in
+            // sync with the type-details inspector, which reads the same state).
             markLoaded?.();
         });
         this.trigger.closeMenu();

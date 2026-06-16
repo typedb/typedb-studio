@@ -694,6 +694,19 @@ export class GraphVisualiser {
     }
 
     /**
+     * Highlight every instance of `typeLabel` — the type-scope counterpart to
+     * `focusInstance`. Used after a context-menu "every '<type>'" load so the
+     * highlight spans all instances the connections were loaded for. Resolves a
+     * representative node (the given instance) to read the type from. No-op if
+     * that instance isn't in the graph.
+     */
+    focusType(kind: "entity" | "relation" | "attribute", typeLabel: string, instanceId: string): void {
+        const nodeKey = this.findInstanceNode(kind, typeLabel, instanceId);
+        if (nodeKey == null) return;
+        this.interactionHandler.focusType(nodeKey);
+    }
+
+    /**
      * Set the secondary highlight anchors by instance identity (kind +
      * typeLabel + iid/value) — used by the Inspector to keep every step in
      * its breadcrumb trail visually lit alongside the current selection.

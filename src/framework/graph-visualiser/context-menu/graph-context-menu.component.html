@@ -6,11 +6,12 @@
 </div>
 
 <!--
-  Single menu with two sections — Load links, then Load attributes — each
-  introduced by a sticky group header. Each row carries the same two
-  scope-chip click targets (here / every '<type>'). Plain <div> rows so the
-  row itself is never a click target; stopPropagation on chip clicks keeps
-  mat-menu from interpreting them as row activation.
+  Single menu with up to three sections — Load relations, Load links (role
+  players, relation targets only), then Load attributes — each introduced by a
+  sticky group header. Each row carries the same two scope-chip click targets
+  (here / every '<type>'). Plain <div> rows so the row itself is never a click
+  target; stopPropagation on chip clicks keeps mat-menu from interpreting them
+  as row activation.
 -->
 <mat-menu #menu="matMenu" [overlapTrigger]="false" class="scoped-action-menu">
   <!--
@@ -23,16 +24,16 @@
   @if (target && !isAttributeTarget) {
     <aside class="node-label">{{ nodeLabel }}</aside>
     <mat-divider/>
-    @if (hasLinks) {
-      <div class="section-header">Load links</div>
+    @if (hasRelations) {
+      <div class="section-header">Load relations</div>
       <div class="scope-row">
         <span class="scope-row-label">*</span>
         <button class="scope-chip scope-chip--link"
-                [class.loaded]="allLinksLoadedHere" [disabled]="allLinksLoadedHere"
-                (click)="$event.stopPropagation(); loadAllLinks('instance')">here</button>
+                [class.loaded]="allRelationsLoadedHere" [disabled]="allRelationsLoadedHere"
+                (click)="$event.stopPropagation(); loadAllRelations('instance')">here</button>
         <button class="scope-chip scope-chip--link"
-                [class.loaded]="allLinksLoaded" [disabled]="allLinksLoaded"
-                (click)="$event.stopPropagation(); loadAllLinks('type')">every '{{ typeChipLabel }}'</button>
+                [class.loaded]="allRelationsLoaded" [disabled]="allRelationsLoaded"
+                (click)="$event.stopPropagation(); loadAllRelations('type')">every '{{ typeChipLabel }}'</button>
       </div>
       @for (row of relationRows; track row.label) {
         <div class="scope-row">
@@ -45,6 +46,21 @@
                   (click)="$event.stopPropagation(); loadRelation(row, 'type')">every '{{ typeChipLabel }}'</button>
         </div>
       }
+    }
+    @if (hasRelations && hasRoles) {
+      <mat-divider></mat-divider>
+    }
+    @if (hasRoles) {
+      <div class="section-header">Load links</div>
+      <div class="scope-row">
+        <span class="scope-row-label">*</span>
+        <button class="scope-chip scope-chip--link"
+                [class.loaded]="allRolesLoadedHere" [disabled]="allRolesLoadedHere"
+                (click)="$event.stopPropagation(); loadAllRoles('instance')">here</button>
+        <button class="scope-chip scope-chip--link"
+                [class.loaded]="allRolesLoaded" [disabled]="allRolesLoaded"
+                (click)="$event.stopPropagation(); loadAllRoles('type')">every '{{ typeChipLabel }}'</button>
+      </div>
       @for (row of roleRows; track row.label) {
         <div class="scope-row">
           <span class="scope-row-label">{{ row.shortName }}</span>
@@ -57,7 +73,7 @@
         </div>
       }
     }
-    @if (hasLinks && hasAttributes) {
+    @if ((hasRelations || hasRoles) && hasAttributes) {
       <mat-divider></mat-divider>
     }
     @if (hasAttributes) {

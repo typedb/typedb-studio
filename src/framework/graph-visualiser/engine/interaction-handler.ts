@@ -433,6 +433,27 @@ export class InteractionHandler {
     }
 
     /**
+     * Highlight every instance of `node`'s type — the type-mode counterpart to
+     * `focusInstance`. Used after a context-menu "every '<type>'" load so the
+     * highlight covers all instances the connections were loaded for, not just
+     * the originally-clicked one. Works regardless of the current selection
+     * mode and clears any active instance selection. `node` is just a
+     * representative used to read the concept's type.
+     */
+    focusType(node: string): void {
+        const concept = this.safeReadConcept(node);
+        if (!concept) return;
+        const ext = this.extractTypeFromConcept(concept);
+        if (!ext) return;
+        this.lastSelectionWasFromHighlight = false;
+        this.state.selectedNode = node;
+        this.selectedTypeLabel = ext.typeLabel;
+        this.recomputeHighlightSet();
+        this.typeSelection$.next({ typeKind: ext.typeKind, typeLabel: ext.typeLabel });
+        if (this.selection$.value !== null) this.selection$.next(null);
+    }
+
+    /**
      * Replace the set of secondary anchor nodes — additional nodes whose
      * neighborhoods should also stay highlighted alongside the primary
      * selection. The Inspector calls this with the breadcrumb ancestors'
