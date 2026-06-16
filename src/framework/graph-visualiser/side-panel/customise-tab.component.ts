@@ -37,14 +37,14 @@ const DISPLAY_EDGE_LABELS: EdgeLabelRow[] = [
 ];
 
 const DISPLAY_KINDS: KindRow[] = [
-    { kind: "entity", label: "Entity" },
-    { kind: "relation", label: "Relation" },
-    { kind: "attribute", label: "Attribute" },
-    { kind: "entityType", label: "Entity Type" },
-    { kind: "relationType", label: "Relation Type" },
-    { kind: "attributeType", label: "Attribute Type" },
-    { kind: "roleType", label: "Role Type" },
-    { kind: "value", label: "Value" },
+    { kind: "entity", label: "entity" },
+    { kind: "relation", label: "relation" },
+    { kind: "attribute", label: "attribute" },
+    { kind: "entityType", label: "entity type" },
+    { kind: "relationType", label: "relation type" },
+    { kind: "attributeType", label: "attribute type" },
+    { kind: "roleType", label: "role type" },
+    { kind: "value", label: "value" },
 ];
 
 export const AVAILABLE_SHAPES = [
