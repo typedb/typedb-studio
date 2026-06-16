@@ -14,13 +14,98 @@
     pointer-events: none;
 }
 
-// Section label inside the menu — non-interactive, just groups the actions.
-::ng-deep .mat-mdc-menu-panel .menu-group-label {
-    display: block;
-    padding: 8px 16px 4px;
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--theme-secondary-light-grey);
+// Single context menu with two sections (Load links / Load attributes).
+// Each row has a left label (the action target — "*" for the bulk row, or a
+// specific attribute / relation / role name) and two right-aligned scope
+// chips. Chip click is the actual action; the row itself isn't clickable.
+::ng-deep .mat-mdc-menu-panel.scoped-action-menu {
+    // Cap height so a node with many attribute or relation types scrolls
+    // rather than running off-screen.
+    max-height: 60vh;
+    overflow-y: auto;
+    // Let the panel grow to fit long type labels; cap at viewport width.
+    max-width: 90vw !important;
+
+    // Node label at the top of the menu (the text drawn on the clicked node).
+    // Styled to match the connection widget's server-info aside — colour is
+    // left to inherit from mat-menu so it picks up the same default as the
+    // mat-menu-item rows.
+    .node-label {
+        display: block;
+        margin: 6px 16px;
+        font-size: 12px;
+        font-weight: var(--font-weight-regular);
+    }
+
+    .section-header {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        // Match mat-menu's panel background so the rows underneath don't
+        // bleed through when the header pins.
+        background: var(--mat-menu-container-color, inherit);
+        padding: 8px 16px 4px;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--theme-secondary-light-grey);
+    }
+
+    .scope-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 12px;
+        min-height: 32px;
+        // Row itself is not interactive — only the chips inside it are.
+        cursor: default;
+    }
+
+    .scope-row-label {
+        flex: 1;
+        white-space: nowrap;
+        font-size: 14px;
+        color: var(--mat-menu-item-label-text-color, inherit);
+    }
+
+    // Mirrors the type inspector's `.connection-chip` highlight state: a
+    // per-variant `--chip-color` that the hover state applies to the border and
+    // text (transparent background). Links highlight yellow, attributes blue.
+    .scope-chip {
+        --chip-color: var(--theme-secondary-light-grey);
+        flex: 0 0 auto;
+        padding: 3px 8px;
+        font-size: 12px;
+        font-weight: 500;
+        background: transparent;
+        color: var(--theme-secondary-light-grey);
+        border: 1px solid var(--theme-secondary-deep-grey);
+        border-radius: 3px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+
+        &--link      { --chip-color: var(--theme-relation-yellow); }
+        &--attribute { --chip-color: var(--theme-attribute-blue); }
+
+        &:hover {
+            border-color: var(--chip-color);
+            color: var(--chip-color);
+        }
+
+        // Sticky "loaded" fill — a connection that's been pulled in for the
+        // whole type. Same filled treatment as the type inspector's chips.
+        &.loaded {
+            background: color-mix(in srgb, var(--chip-color) 22%, transparent);
+            border-color: var(--chip-color);
+            color: var(--chip-color);
+            cursor: default;
+        }
+
+        &:focus-visible {
+            outline: 1px solid var(--theme-secondary-light-grey);
+            outline-offset: 1px;
+        }
+    }
 }

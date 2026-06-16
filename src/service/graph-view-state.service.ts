@@ -46,6 +46,16 @@ export interface GraphViewTab {
      * sticky regardless of what other adds may have introduced.
      */
     loadedConnections: Map<string, Set<string>>;
+    /**
+     * Per-instance counterpart to {@link loadedConnections}: for each instance
+     * IID (key), the set of connection labels (attribute / relation type
+     * labels, or scoped role labels) that have been loaded for *just that
+     * instance* via a context-menu "here" action. Lets the context menu show a
+     * sticky loaded indicator for single-instance loads, independent of the
+     * type-level state. (A type-level load implies every instance is loaded,
+     * so consumers OR the two together when deciding a "here" chip's state.)
+     */
+    loadedInstanceConnections: Map<string, Set<string>>;
 }
 
 export interface OpenTypeTabOptions {
@@ -98,6 +108,7 @@ export class GraphViewState {
                 initialNodeCount: 0,
                 selectionMode: "types",
                 loadedConnections: new Map(),
+                loadedInstanceConnections: new Map(),
             };
             this.openTabs$.next([...tabs, tab]);
             this.selectedTabIndex$.next(this.openTabs$.value.indexOf(tab));
@@ -122,6 +133,7 @@ export class GraphViewState {
                 initialNodeCount: 0,
                 selectionMode: "types",
                 loadedConnections: new Map(),
+                loadedInstanceConnections: new Map(),
             };
             this.openTabs$.next([...tabs, tab]);
             this.selectedTabIndex$.next(this.openTabs$.value.indexOf(tab));
@@ -225,6 +237,7 @@ export class GraphViewState {
         }
         tab.initialNodeCount = 0;
         tab.loadedConnections.clear();
+        tab.loadedInstanceConnections.clear();
         // Pass isNew=true so the post-reset node count is re-snapshotted; the
         // tab itself stays in openTabs$ throughout.
         await this.runInitialFetches(tab, tab.type, tab.initialOptions, true);
@@ -260,6 +273,29 @@ export class GraphViewState {
             tab.loadedConnections.set(sourceTypeLabel, targets);
         }
         targets.add(targetTypeLabel);
+    }
+
+    /**
+     * Whether `connectionLabel` has been loaded for the single instance
+     * `instanceId` (a context-menu "here" load) on this tab. Does NOT account
+     * for type-level loads — callers that want "is this instance covered either
+     * way" should also check {@link isConnectionLoaded} for the instance's type.
+     */
+    isInstanceConnectionLoaded(run: RunOutputState, instanceId: string, connectionLabel: string): boolean {
+        const tab = this.findTabForRun(run);
+        return tab?.loadedInstanceConnections.get(instanceId)?.has(connectionLabel) ?? false;
+    }
+
+    /** Mark `connectionLabel` as loaded for the single instance `instanceId`. */
+    markInstanceConnectionLoaded(run: RunOutputState, instanceId: string, connectionLabel: string): void {
+        const tab = this.findTabForRun(run);
+        if (!tab) return;
+        let targets = tab.loadedInstanceConnections.get(instanceId);
+        if (!targets) {
+            targets = new Set();
+            tab.loadedInstanceConnections.set(instanceId, targets);
+        }
+        targets.add(connectionLabel);
     }
 
     closeTab(tab: GraphViewTab) {

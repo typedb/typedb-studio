@@ -453,9 +453,33 @@ export class GraphVisualiser {
         } else {
             this.layout.start();
         }
-        if (!opts?.preserveCamera) {
+        if (opts?.preserveCamera) {
+            // An Explore/Add reheat preserves the camera, but the simulation
+            // can still fling the explored node itself out of view as new
+            // neighbours add their forces. Pin that node at its current
+            // position for this run so the new nodes settle around it while it
+            // (and the preserved camera) stay put. `start()` has just rebuilt
+            // the simulation, so the node exists to be fixed; the fix lasts
+            // only for this run (the next simulation is built fresh).
+            this.pinFocusedNodeForReheat();
+        } else {
             this.centerCamera();
         }
+    }
+
+    /**
+     * Fix the currently-selected node in the running simulation at its present
+     * position, so a `preserveCamera` reheat grows new nodes around it instead
+     * of letting the explored node drift off-screen. No-op if nothing is
+     * selected or the node has no position yet.
+     */
+    private pinFocusedNodeForReheat(): void {
+        const anchor = this.interactionHandler.state.selectedNode;
+        if (anchor == null || !this.graph.hasNode(anchor)) return;
+        const x = this.graph.getNodeAttribute(anchor, "x");
+        const y = this.graph.getNodeAttribute(anchor, "y");
+        if (x == null || y == null) return;
+        this.layout.fixNode(anchor, x, y);
     }
 
     centerCamera(zoomOutOnly = false): void {

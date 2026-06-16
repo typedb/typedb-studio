@@ -11,12 +11,13 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { Subscription } from "rxjs";
 import { GraphViewState } from "../../../service/graph-view-state.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
-import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
+import { SchemaAttribute, SchemaConcept, SchemaRelation, SchemaRole, SchemaState } from "../../../service/schema-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { GraphVisualiser } from "../engine";
 import { InspectableSelection } from "../engine/interaction-handler";
 
 type SelectionKind = "entity" | "relation" | "attribute";
+type Scope = "instance" | "type";
 
 function typeKindFromSelectionKind(kind: SelectionKind): "entityType" | "relationType" | "attributeType" {
     switch (kind) {
@@ -26,44 +27,34 @@ function typeKindFromSelectionKind(kind: SelectionKind): "entityType" | "relatio
     }
 }
 
-/** True if the type, or any of its subtypes, plays a role in a relation. */
-function typeOrSubtypePlaysRoles(type: SchemaConcept): boolean {
-    if ("playedRoles" in type && type.playedRoles.length > 0) return true;
-    if ("subtypes" in type) {
-        for (const sub of type.subtypes) {
-            if (typeOrSubtypePlaysRoles(sub)) return true;
-        }
-    }
-    return false;
+interface AttributeRow {
+    type: SchemaAttribute;
+    label: string;
 }
 
-/** True if the type, or any of its subtypes, owns an attribute type. */
-function typeOrSubtypeOwnsAttributes(type: SchemaConcept): boolean {
-    if ("ownedAttributes" in type && type.ownedAttributes.length > 0) return true;
-    if ("subtypes" in type) {
-        for (const sub of type.subtypes) {
-            if (typeOrSubtypeOwnsAttributes(sub)) return true;
-        }
-    }
-    return false;
+interface RelationRow {
+    type: SchemaRelation;
+    label: string;
+}
+
+interface RoleRow {
+    role: SchemaRole;
+    label: string;
+    shortName: string;
 }
 
 /**
  * Right-click context menu for graph instance nodes.
  *
- * Sits invisibly in the canvas; subscribes to `interactionHandler.nodeContextMenu$`,
- * positions a hidden trigger element at the click coordinates, then opens a
- * mat-menu. Regardless of selection mode, the menu shows two groups:
+ * Two top-level entries — "Attributes" and "Links" — each open a submenu of
+ * scoped actions. Every row inside a submenu (the bulk "Load all" row plus one
+ * per individual attribute / relation / role type) carries two scope chips:
  *
- *   - "This instance"            → Load links / Load attributes for just the
- *                                  clicked IID
- *   - "All '<type>' instances"   → Load links / Load attributes for every IID
- *                                  of the clicked node's type currently in the
- *                                  graph
+ *   - "This instance"  → load just for the clicked IID
+ *   - "All '<type>'"   → load for every in-graph IID of the clicked node's type
  *
- * Each action calls the corresponding `GraphViewState.fetch*` method, then
- * triggers a soft reheat with camera preserved and re-evaluates the highlight
- * set so the new nodes join the lit area.
+ * The chip is the click target, so the user picks scope + target in one click
+ * instead of navigating a separate "this instance" vs "all of type" branch.
  */
 @Component({
     selector: "ts-graph-context-menu",
@@ -81,6 +72,20 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
     triggerPosition = { x: 0, y: 0 };
     target: InspectableSelection | null = null;
 
+    /** Displayed label of the target node (the text drawn on the node in the
+     *  canvas). Snapshot when the menu opens; falls back to the type label if
+     *  the node has no display label. */
+    nodeLabel = "";
+    /** Owned attribute types of the target's type — populated when the menu
+     *  opens. Empty for attribute targets. */
+    attributeRows: AttributeRow[] = [];
+    /** Relation types the target's (entity) type plays roles in. Empty for
+     *  relation / attribute targets. */
+    relationRows: RelationRow[] = [];
+    /** Roles related by the target's (relation) type. Empty for entity /
+     *  attribute targets. */
+    roleRows: RoleRow[] = [];
+
     private graphViewState = inject(GraphViewState);
     private schemaState = inject(SchemaState);
     private snackbar = inject(SnackbarService);
@@ -95,6 +100,7 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                 this.sub = v.interactionHandler.nodeContextMenu$.subscribe(ev => {
                     this.triggerPosition = { x: ev.clientX, y: ev.clientY };
                     this.target = ev.target;
+                    this.refreshRows();
                     // setTimeout so position styles flush to the DOM before
                     // mat-menu measures the trigger. Setting `_openedBy` to
                     // "mouse" lets FocusMonitor suppress the focus ring on
@@ -114,64 +120,206 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         this.sub?.unsubscribe();
     }
 
-    // -- "This instance" actions --
-
-    loadLinksForThisInstance(): void {
+    /** Snapshot the per-type rows for the target. Called once per open so the
+     *  submenus render against a fixed list — schema changes mid-menu are
+     *  extremely unlikely but avoiding live reads also keeps the @for stable. */
+    private refreshRows(): void {
+        this.attributeRows = [];
+        this.relationRows = [];
+        this.roleRows = [];
+        this.nodeLabel = "";
         if (!this.target) return;
-        const type = this.lookupType(this.target);
-        if (!type || type.kind === "attributeType") return; // attributes don't have links
-        this.runFetch(state => state.fetchLinksOf(this.run!, type, [this.target!.instanceId]));
-    }
-
-    loadAttributesForThisInstance(): void {
-        if (!this.target) return;
-        const type = this.lookupType(this.target);
-        if (!type || type.kind === "attributeType") return;
-        this.runFetch(state => state.fetchAttributesOf(this.run!, type, [this.target!.instanceId]));
-    }
-
-    // -- "All instances of type 'X'" actions --
-
-    loadLinksForAllInstancesOfType(): void {
-        if (!this.target) return;
+        this.nodeLabel = this.lookupNodeLabel(this.target.instanceId) || this.target.typeLabel;
+        if (this.isAttributeTarget) return;
         const type = this.lookupType(this.target);
         if (!type || type.kind === "attributeType") return;
-        const iids = this.collectInstanceIidsOfType(this.target.typeLabel);
-        if (iids.length === 0) return;
-        this.runFetch(state => state.fetchLinksOf(this.run!, type, iids));
+
+        const owned = ("ownedAttributes" in type ? type.ownedAttributes : []) ?? [];
+        this.attributeRows = owned
+            .map(attr => ({ type: attr, label: attr.label }))
+            .sort((a, b) => a.label.localeCompare(b.label));
+
+        if (type.kind === "entityType" || type.kind === "relationType") {
+            const schema = this.schemaState.value$.value;
+            const seen = new Set<string>();
+            const rels: RelationRow[] = [];
+            for (const role of (type.playedRoles ?? []) as SchemaRole[]) {
+                const relLabel = role.label.split(":")[0];
+                if (seen.has(relLabel)) continue;
+                seen.add(relLabel);
+                const relType = schema?.relations[relLabel];
+                if (relType) rels.push({ type: relType, label: relLabel });
+            }
+            rels.sort((a, b) => a.label.localeCompare(b.label));
+            this.relationRows = rels;
+        }
+
+        if (type.kind === "relationType") {
+            const related = (type as SchemaRelation).relatedRoles ?? [];
+            this.roleRows = related
+                .map(r => ({
+                    role: r,
+                    label: r.label,
+                    shortName: r.label.split(":").at(-1) ?? r.label,
+                }))
+                .sort((a, b) => a.shortName.localeCompare(b.shortName));
+        }
     }
 
-    loadAttributesForAllInstancesOfType(): void {
-        if (!this.target) return;
-        const type = this.lookupType(this.target);
-        if (!type || type.kind === "attributeType") return;
-        const iids = this.collectInstanceIidsOfType(this.target.typeLabel);
-        if (iids.length === 0) return;
-        this.runFetch(state => state.fetchAttributesOf(this.run!, type, iids));
-    }
-
-    /** True when both "instance" actions should be hidden — e.g. attributes don't
-     *  have links/attributes themselves, only owners. */
+    /** True when both action groups should be hidden — attributes don't have
+     *  links/attributes of their own, only owners. */
     get isAttributeTarget(): boolean {
         return this.target?.kind === "attribute";
     }
 
-    /** False when the target type (or any subtype) plays no role in any
-     *  relation — there are no links to load, so the action is disabled. */
-    get canLoadLinks(): boolean {
-        const type = this.target ? this.lookupType(this.target) : null;
-        return !!type && type.kind !== "attributeType" && typeOrSubtypePlaysRoles(type);
+    /** False when the target type owns no attributes — submenu would be empty. */
+    get hasAttributes(): boolean {
+        return this.attributeRows.length > 0;
     }
 
-    /** False when the target type (or any subtype) owns no attribute types —
-     *  there are no attributes to load, so the action is disabled. */
-    get canLoadAttributes(): boolean {
-        const type = this.target ? this.lookupType(this.target) : null;
-        return !!type && type.kind !== "attributeType" && typeOrSubtypeOwnsAttributes(type);
+    /** False when there's no link section to show (no played roles for an entity;
+     *  no related roles for a relation). */
+    get hasLinks(): boolean {
+        return this.relationRows.length > 0 || this.roleRows.length > 0;
     }
 
-    readonly noLinksTooltip = "This type has no links";
-    readonly noAttributesTooltip = "This type owns no attributes";
+    get typeChipLabel(): string {
+        return this.target?.typeLabel ?? "";
+    }
+
+    // -- Loaded state --
+    //
+    // Two parallel sticky states, both per-tab:
+    //   - "type" scope ("every '<type>'" chips): mirrors the type inspector —
+    //     a connection is loaded once pulled in for *every* in-graph instance
+    //     of the target's type. Keyed by (sourceTypeLabel, connectionLabel) in
+    //     `loadedConnections`, so context menu and type details stay in sync.
+    //   - "instance" scope ("here" chips): loaded for just the target IID,
+    //     keyed by (instanceId, connectionLabel) in `loadedInstanceConnections`.
+    //
+    // A type-level load implies the instance is loaded too, so the "here"
+    // checks OR in the type-level state.
+
+    private isConnLoaded(connLabel: string): boolean {
+        if (!this.run || !this.target) return false;
+        return this.graphViewState.isConnectionLoaded(this.run, this.target.typeLabel, connLabel);
+    }
+
+    private isConnLoadedHere(connLabel: string): boolean {
+        if (!this.run || !this.target) return false;
+        return this.graphViewState.isInstanceConnectionLoaded(this.run, this.target.instanceId, connLabel)
+            || this.isConnLoaded(connLabel);
+    }
+
+    /** Record a connection as loaded for the requested scope. */
+    private markConnForScope(connLabel: string, scope: Scope): void {
+        if (!this.run || !this.target) return;
+        if (scope === "type") {
+            this.graphViewState.markConnectionLoaded(this.run, this.target.typeLabel, connLabel);
+        } else {
+            this.graphViewState.markInstanceConnectionLoaded(this.run, this.target.instanceId, connLabel);
+        }
+    }
+
+    isAttributeLoaded(row: AttributeRow): boolean { return this.isConnLoaded(row.label); }
+    isRelationLoaded(row: RelationRow): boolean { return this.isConnLoaded(row.label); }
+    isRoleLoaded(row: RoleRow): boolean { return this.isConnLoaded(row.label); }
+
+    isAttributeLoadedHere(row: AttributeRow): boolean { return this.isConnLoadedHere(row.label); }
+    isRelationLoadedHere(row: RelationRow): boolean { return this.isConnLoadedHere(row.label); }
+    isRoleLoadedHere(row: RoleRow): boolean { return this.isConnLoadedHere(row.label); }
+
+    get allAttributesLoaded(): boolean {
+        return this.attributeRows.length > 0 && this.attributeRows.every(r => this.isAttributeLoaded(r));
+    }
+
+    get allAttributesLoadedHere(): boolean {
+        return this.attributeRows.length > 0 && this.attributeRows.every(r => this.isAttributeLoadedHere(r));
+    }
+
+    get allLinksLoaded(): boolean {
+        const total = this.relationRows.length + this.roleRows.length;
+        return total > 0
+            && this.relationRows.every(r => this.isRelationLoaded(r))
+            && this.roleRows.every(r => this.isRoleLoaded(r));
+    }
+
+    get allLinksLoadedHere(): boolean {
+        const total = this.relationRows.length + this.roleRows.length;
+        return total > 0
+            && this.relationRows.every(r => this.isRelationLoadedHere(r))
+            && this.roleRows.every(r => this.isRoleLoadedHere(r));
+    }
+
+    // -- Actions --
+
+    loadAllAttributes(scope: Scope): void {
+        if (scope === "type" ? this.allAttributesLoaded : this.allAttributesLoadedHere) return; // sticky
+        this.withTargetType((type, iids) => {
+            this.runFetch(
+                state => state.fetchAttributesOf(this.run!, type, iids),
+                () => this.attributeRows.forEach(r => this.markConnForScope(r.label, scope)),
+            );
+        }, scope);
+    }
+
+    loadAttribute(row: AttributeRow, scope: Scope): void {
+        if (scope === "type" ? this.isAttributeLoaded(row) : this.isAttributeLoadedHere(row)) return; // sticky
+        this.withTargetType((type, iids) => {
+            this.runFetch(
+                state => state.fetchAttributesOfTypeFor(this.run!, type, iids, row.label),
+                () => this.markConnForScope(row.label, scope),
+            );
+        }, scope);
+    }
+
+    loadAllLinks(scope: Scope): void {
+        if (scope === "type" ? this.allLinksLoaded : this.allLinksLoadedHere) return; // sticky
+        this.withTargetType((type, iids) => {
+            this.runFetch(
+                state => state.fetchLinksOf(this.run!, type, iids),
+                () => {
+                    this.relationRows.forEach(r => this.markConnForScope(r.label, scope));
+                    this.roleRows.forEach(r => this.markConnForScope(r.label, scope));
+                },
+            );
+        }, scope);
+    }
+
+    loadRelation(row: RelationRow, scope: Scope): void {
+        if (scope === "type" ? this.isRelationLoaded(row) : this.isRelationLoadedHere(row)) return; // sticky
+        this.withTargetType((type, iids) => {
+            this.runFetch(
+                state => state.fetchRelationsOfTypeForPlayers(this.run!, type, iids, row.label),
+                () => this.markConnForScope(row.label, scope),
+            );
+        }, scope);
+    }
+
+    loadRole(row: RoleRow, scope: Scope): void {
+        if (scope === "type" ? this.isRoleLoaded(row) : this.isRoleLoadedHere(row)) return; // sticky
+        this.withTargetType((type, iids) => {
+            if (type.kind !== "relationType") return;
+            this.runFetch(
+                state => state.fetchRolePlayersOfTypeFor(this.run!, type, iids, row.shortName),
+                () => this.markConnForScope(row.label, scope),
+            );
+        }, scope);
+    }
+
+    /** Common pre-flight: look up the schema type for the target, collect IIDs
+     *  for the requested scope, and forward both to the action. Attribute
+     *  targets and unknown types short-circuit. */
+    private withTargetType(op: (type: SchemaConcept, iids: string[]) => void, scope: Scope): void {
+        if (!this.target) return;
+        const type = this.lookupType(this.target);
+        if (!type || type.kind === "attributeType") return;
+        const iids = scope === "instance"
+            ? [this.target.instanceId]
+            : this.collectInstanceIidsOfType(this.target.typeLabel);
+        if (iids.length === 0) return;
+        op(type, iids);
+    }
 
     private lookupType(target: InspectableSelection): SchemaConcept | null {
         const schema = this.schemaState.value$.value;
@@ -185,6 +333,22 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
             case "relationType": return schema.relations[target.typeLabel] ?? null;
             case "attributeType": return schema.attributes[target.typeLabel] ?? null;
         }
+    }
+
+    /** Find the displayed label of the graph node whose concept iid matches.
+     *  Returns "" when no matching node is in the graph or it has no label. */
+    private lookupNodeLabel(instanceId: string): string {
+        if (!this.visualiser) return "";
+        for (const key of this.visualiser.graph.nodes()) {
+            try {
+                const attrs = this.visualiser.graph.getNodeAttributes(key);
+                const concept: any = attrs?.["metadata"]?.concept;
+                if (concept?.iid === instanceId) {
+                    return (attrs?.["label"] as string) ?? "";
+                }
+            } catch { /* missing metadata mid-mutation */ }
+        }
+        return "";
     }
 
     /** Walk the graph, gathering IIDs of every entity/relation node whose
@@ -209,12 +373,21 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         return out;
     }
 
-    private runFetch(op: (state: GraphViewState) => Promise<void>): void {
-        if (!this.run || !this.visualiser) return;
+    private runFetch(op: (state: GraphViewState) => Promise<void>, markLoaded?: () => void): void {
+        if (!this.run || !this.visualiser || !this.target) return;
+        const target = this.target;
         this.visualiser.freezeViewport();
         op(this.graphViewState).then(() => {
+            // Focus the clicked instance even if we're in type-selection mode —
+            // the user explicitly targeted it via right-click, so the highlight
+            // should track that instance and its (now-loaded) connections.
+            this.visualiser?.focusInstance(target.kind, target.typeLabel, target.instanceId);
             this.visualiser?.reheat({ soft: true, preserveCamera: true });
-            this.visualiser?.interactionHandler.recomputeHighlightSet();
+            // Record the type-level load so the "every '<type>'" chips show the
+            // sticky "loaded" fill next time the menu opens (and stay in sync
+            // with the type-details inspector, which reads the same state).
+            markLoaded?.();
         });
+        this.trigger.closeMenu();
     }
 }
