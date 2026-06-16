@@ -69,10 +69,15 @@ export function drawCenteredNodeLabel<
     context.font = `${weight} ${fontSize}px ${settings.labelFont}`;
     context.fillStyle = labelColor;
 
-    // Allow labels to overflow the node a bounded amount before wrapping /
-    // truncating, so slightly-too-long names stay readable without spilling far.
-    const maxWidth = (screenHalfW * 2 - PADDING_X) * LABEL_OVERFLOW;
-    const { lines, truncated } = wrapText(context, data.label, maxWidth);
+    // First try to wrap inside the node itself (up to MAX_LINES lines). Only
+    // fall back to the wider LABEL_OVERFLOW budget if even that wrap had to
+    // truncate — so labels that fit comfortably across two lines stay inside
+    // the node, while genuinely-too-long names still get the overflow room.
+    const nodeWidth = screenHalfW * 2 - PADDING_X;
+    let { lines, truncated } = wrapText(context, data.label, nodeWidth);
+    if (truncated) {
+        ({ lines, truncated } = wrapText(context, data.label, nodeWidth * LABEL_OVERFLOW));
+    }
 
     const lineH = fontSize * LINE_HEIGHT;
     const totalH = lines.length * lineH;
