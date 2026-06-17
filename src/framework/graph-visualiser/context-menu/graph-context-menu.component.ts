@@ -402,12 +402,15 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         const target = this.target;
         this.visualiser.freezeViewport();
         op(this.graphViewState).then(() => {
-            // Match the highlight to what was loaded: a "here" load lights up
-            // just the clicked instance; an "every '<type>'" load lights up
-            // every instance of the type (since that's what got connections).
-            // Both override the panel's selection mode — the user explicitly
-            // targeted this via right-click.
-            if (scope === "type") {
+            // A context-menu load is additive: keep whatever the panel is
+            // currently inspecting rather than yanking it to the right-clicked
+            // node (which blanked/jumped the Explorer). Only when nothing is
+            // selected do we take focus, so the freshly-loaded neighbourhood is
+            // highlighted; otherwise just recompute the highlight so the new
+            // nodes light up under the existing selection.
+            if (this.visualiser?.hasActiveSelection) {
+                this.visualiser?.refreshHighlight();
+            } else if (scope === "type") {
                 this.visualiser?.focusType(target.kind, target.typeLabel, target.instanceId);
             } else {
                 this.visualiser?.focusInstance(target.kind, target.typeLabel, target.instanceId);

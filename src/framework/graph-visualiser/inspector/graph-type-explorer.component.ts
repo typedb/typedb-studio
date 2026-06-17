@@ -36,8 +36,8 @@ interface RoleChipRow {
 }
 
 /**
- * Right-pane inspector for **type-level** exploration. Counterpart to
- * `GraphInspectorComponent`. The `GraphSidePanelComponent` swaps between the
+ * Right-pane explorer for **type-level** exploration. Counterpart to
+ * `GraphExplorerComponent`. The `GraphSidePanelComponent` swaps between the
  * two based on the tab's `selectionMode`.
  *
  * F4 wires the chip discovery + load actions. Each chip toggles a sticky
@@ -49,18 +49,18 @@ interface RoleChipRow {
  * query.
  */
 @Component({
-    selector: "ts-graph-type-inspector",
-    templateUrl: "./graph-type-inspector.component.html",
+    selector: "ts-graph-type-explorer",
+    templateUrl: "./graph-type-explorer.component.html",
     styleUrls: [
         // Reuse the data-side inspector's section / type-row styling so we
         // don't duplicate it. Listed first so this component's own SCSS
         // wins on the :host overrides.
         "../../../module/data/instance-detail/instance-detail.component.scss",
-        "./graph-type-inspector.component.scss",
+        "./graph-type-explorer.component.scss",
     ],
     imports: [CommonModule, MatFormFieldModule, MatSelectModule, MatTooltipModule],
 })
-export class GraphTypeInspectorComponent implements DoCheck {
+export class GraphTypeExplorerComponent implements DoCheck {
     @Input() selectedType: SchemaConcept | null = null;
     @Input() run: RunOutputState | null = null;
     @Input() visualiser: GraphVisualiser | null = null;

@@ -4,19 +4,20 @@
      the resizable subtree is rebuilt when the axis flips (the resize directive
      locks orientation at init). -->
 @if (dock === 'bottom') {
-  <ng-container *ngTemplateOutlet="inspector"></ng-container>
+  <ng-container *ngTemplateOutlet="explorer"></ng-container>
   <ng-container *ngTemplateOutlet="panel"></ng-container>
 } @else {
-  <ng-container *ngTemplateOutlet="inspector"></ng-container>
+  <ng-container *ngTemplateOutlet="explorer"></ng-container>
   <ng-container *ngTemplateOutlet="panel"></ng-container>
 }
 
-<ng-template #inspector>
+<ng-template #explorer>
   <!-- The dock-side kebab is anchored to the inspector pane's top-right so it
        sits beside the "Inspector" title regardless of dock orientation (the
        inspector is full-width when docked right, the left pane when bottom). -->
-  <div class="inspector-pane" resizable [percent]="inspectorPercent" (percentChange)="inspectorPercent = $event">
+  <div class="explorer-pane" resizable [percent]="inspectorPercent" (percentChange)="inspectorPercent = $event">
     <div class="side-panel-header">
+      <h5 class="explorer-title">Explorer</h5>
       <button class="dock-kebab" [matMenuTriggerFor]="dockMenu"
               matTooltip="Dock side" [matTooltipShowDelay]="500">
         <i class="fa-light fa-ellipsis"></i>
@@ -31,17 +32,32 @@
       </mat-menu>
     </div>
 
+    @if (showSelectionModeToggle && hasSelection) {
+      <div class="selection-mode-toggle">
+        <button class="mode-button"
+                [class.active]="selectionMode === 'types'"
+                (click)="selectionModeChange.emit('types')">
+          <i class="fa-light fa-shapes"></i><span>type</span>
+        </button>
+        <button class="mode-button"
+                [class.active]="selectionMode === 'instances'"
+                (click)="selectionModeChange.emit('instances')">
+          <i class="fa-light fa-circle-dot"></i><span>instance</span>
+        </button>
+      </div>
+    }
+
     @if (selectionMode === 'types') {
-      <ts-graph-type-inspector
-                               [selectedType]="selectedTypeForTypeMode"
-                               [run]="run"
-                               [visualiser]="visualiser"/>
+      <ts-graph-type-explorer
+                             [selectedType]="selectedTypeForTypeMode"
+                             [run]="run"
+                             [visualiser]="visualiser"/>
     } @else {
-      <ts-graph-inspector
-                          [type]="selectedType"
-                          [instanceIID]="selectedInstanceIID"
-                          [run]="run"
-                          [visualiser]="visualiser"/>
+      <ts-graph-explorer
+                        [type]="selectedType"
+                        [instanceIID]="selectedInstanceIID"
+                        [run]="run"
+                        [visualiser]="visualiser"/>
     }
   </div>
 </ng-template>

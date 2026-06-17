@@ -1,16 +1,12 @@
-<div class="inspector-panel">
-  <div class="inspector-title-bar">
-    <h5>Explorer</h5>
-  </div>
-
+<div class="explorer-panel">
   @if (!hasSelection) {
-    <div class="inspector-placeholder">
+    <div class="explorer-placeholder">
       <i class="fa-light fa-shapes"></i>
       <p>No type selected</p>
       <p class="placeholder-hint">Click a node in the graph to explore its type</p>
     </div>
   } @else {
-    <div class="detail-panel inspector-detail">
+    <div class="detail-panel explorer-detail">
       <div class="detail-content">
 
         <!-- Type row (no collapsible heading, same shape as instance inspector) -->

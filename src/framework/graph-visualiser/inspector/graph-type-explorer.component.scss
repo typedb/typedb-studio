@@ -21,14 +21,14 @@
     bottom: auto;
 }
 
-.inspector-panel {
+.explorer-panel {
     display: flex;
     flex-direction: column;
     height: 100%;
     overflow: hidden;
 }
 
-.inspector-title-bar {
+.explorer-title-bar {
     display: flex;
     align-items: center;
     // Match the height of the tab bar in the customise/elements area
@@ -43,7 +43,7 @@
     }
 }
 
-.inspector-placeholder {
+.explorer-placeholder {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -70,7 +70,7 @@
     }
 }
 
-.inspector-detail {
+.explorer-detail {
     flex: 1;
     min-height: 0;
     position: relative;

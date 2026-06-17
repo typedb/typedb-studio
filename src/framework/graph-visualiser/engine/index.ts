@@ -333,7 +333,7 @@ export class GraphVisualiser {
         const curvedByDefault = this.styleService.edgesCurvedByDefault;
         // Count edges per unordered node pair so parallels can be detected.
         const pairCounts = new Map<string, number>();
-        const pairKey = (a: string, b: string) => a < b ? `${a} ${b}` : `${b} ${a}`;
+        const pairKey = (a: string, b: string) => a < b ? `${a} ${b}` : `${b} ${a}`;
         this.graph.forEachEdge((_e, _a, source, target) => {
             const k = pairKey(source, target);
             pairCounts.set(k, (pairCounts.get(k) ?? 0) + 1);
@@ -706,6 +706,19 @@ export class GraphVisualiser {
         this.interactionHandler.focusType(nodeKey);
     }
 
+    /** Whether a node is currently selected (drives whether a context-menu
+     *  load should preserve the panel's selection or take focus itself). */
+    get hasActiveSelection(): boolean {
+        return this.interactionHandler.state.selectedNode != null
+            || this.interactionHandler.selectedTypeLabel != null;
+    }
+
+    /** Recompute the highlight set against the current selection — lights up
+     *  any newly-loaded neighbours without changing what the panel inspects. */
+    refreshHighlight(): void {
+        this.interactionHandler.recomputeHighlightSet();
+    }
+
     /**
      * Set the secondary highlight anchors by instance identity (kind +
      * typeLabel + iid/value) — used by the Inspector to keep every step in
@@ -769,6 +782,86 @@ export class GraphVisualiser {
         this.settingCameraProgrammatically = true;
         this.sigma.getCamera().setState({ x, y, ratio, angle: 0 });
         this.settingCameraProgrammatically = false;
+    }
+
+    /**
+     * Pan + zoom the camera to enclose the given graph nodes, without changing
+     * the current selection — used by the Explorer's "Reveal in graph" buttons
+     * to show where an already-loaded relation / attribute sits. No-op if none
+     * of the nodes are in the graph (or have no position yet).
+     */
+    revealNodes(nodeKeys: string[]): void {
+        const { width, height } = this.sigma.getDimensions();
+        if (width === 0 || height === 0) return;
+
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (const node of nodeKeys) {
+            if (!this.graph.hasNode(node)) continue;
+            try {
+                const attrs = this.graph.getNodeAttributes(node);
+                if (attrs.x == null || attrs.y == null) continue;
+                minX = Math.min(minX, attrs.x);
+                maxX = Math.max(maxX, attrs.x);
+                minY = Math.min(minY, attrs.y);
+                maxY = Math.max(maxY, attrs.y);
+            } catch { /* missing metadata mid-mutation */ }
+        }
+        if (!isFinite(minX)) return;
+
+        const graphWidth = maxX - minX || 1;
+        const graphHeight = maxY - minY || 1;
+        const padding = 1.6;
+        const rawRatio = Math.max(graphWidth / width, graphHeight / height) * padding;
+        const ratio = Math.max(Math.min(rawRatio, 20), 1);
+
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const bbox = this.sigma.getCustomBBox() || this.sigma.getBBox();
+        const x = (centerX - bbox.x[0]) / (bbox.x[1] - bbox.x[0]) || 0.5;
+        const y = (centerY - bbox.y[0]) / (bbox.y[1] - bbox.y[0]) || 0.5;
+
+        this.autoZoomEnabled = false;
+        this.pinnedCameraWorld = null;
+        this.settingCameraProgrammatically = true;
+        this.sigma.getCamera().setState({ x, y, ratio, angle: 0 });
+        this.settingCameraProgrammatically = false;
+    }
+
+    /** Resolve the graph node key for an instance (entity/relation by IID,
+     *  attribute by type+value), or null if it isn't in the graph. */
+    instanceNodeKey(kind: "entity" | "relation" | "attribute", typeLabel: string, instanceId: string): string | null {
+        return this.findInstanceNode(kind, typeLabel, instanceId);
+    }
+
+    /** Resolve a graph node by entity/relation IID without needing its kind —
+     *  used to reveal a role-player whose kind isn't known at the call site. */
+    nodeKeyByIid(iid: string): string | null {
+        let found: string | null = null;
+        this.graph.nodes().forEach(node => {
+            if (found != null) return;
+            try {
+                const concept = this.graph.getNodeAttributes(node)?.["metadata"]?.concept as any;
+                if ((concept?.kind === "entity" || concept?.kind === "relation") && concept.iid === iid) {
+                    found = node;
+                }
+            } catch { /* missing metadata mid-mutation */ }
+        });
+        return found;
+    }
+
+    /** Node keys of every attribute of `attrTypeLabel` owned by the given
+     *  entity/relation instance currently in the graph. */
+    attributeNodeKeysOf(ownerKind: "entity" | "relation", ownerTypeLabel: string, ownerIID: string, attrTypeLabel: string): string[] {
+        const ownerKey = this.findInstanceNode(ownerKind, ownerTypeLabel, ownerIID);
+        if (ownerKey == null) return [];
+        const out: string[] = [];
+        this.graph.forEachOutNeighbor(ownerKey, (neighborKey: string) => {
+            try {
+                const c = this.graph.getNodeAttributes(neighborKey)?.["metadata"]?.concept as any;
+                if (c?.kind === "attribute" && c.type?.label === attrTypeLabel) out.push(neighborKey);
+            } catch { /* missing metadata mid-mutation */ }
+        });
+        return out;
     }
 
     private findInstanceNode(kind: "entity" | "relation" | "attribute", typeLabel: string, instanceId: string): string | null {

@@ -264,14 +264,31 @@ export class InteractionHandler {
     }
 
     /**
-     * Update the click-dispatch mode and clear any current selection — the
-     * two modes select different things, so the previous selection is no
-     * longer meaningful when the user switches.
+     * Update the click-dispatch mode. If a node is currently selected, re-select
+     * it under the new mode so the same node stays focused and the matching
+     * inspector (type vs instance) takes over — rather than clearing, which
+     * would empty the panel on every toggle. Falls back to clearing if there's
+     * nothing selected to carry over.
      */
     setSelectionMode(mode: SelectionMode): void {
         if (this.selectionMode === mode) return;
         this.selectionMode = mode;
-        this.clearSelection();
+        const node = this.state.selectedNode;
+        if (node != null && this.graph.hasNode(node)) {
+            // Reset the per-mode selection markers so the re-dispatch isn't
+            // treated as a no-op re-click, then re-run the click for this mode.
+            // Clear the neighbour set too: a mode switch on the same node is not
+            // a highlight-driven explore, so the instance explorer must not
+            // append a (duplicate) breadcrumb for it.
+            this.state.selectedNode = null;
+            this.selectedTypeLabel = null;
+            this.state.selectedNeighbors = null;
+            this.lastSelectionWasFromHighlight = false;
+            if (mode === "types") this.handleTypeSelectionClick(node);
+            else this.handleInstanceSelectionClick(node);
+        } else {
+            this.clearSelection();
+        }
     }
 
     private safeReadConcept(node: string): any | null {

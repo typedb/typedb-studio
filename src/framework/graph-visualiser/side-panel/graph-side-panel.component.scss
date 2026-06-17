@@ -7,18 +7,21 @@
 // onto every tab's host. Side-panel's :host styles live in
 // graph-side-panel.host.scss, which only graph-side-panel imports.
 
-// Dock-side kebab, overlaid in the inspector pane's top-right corner. Its 35px
-// height matches the inspector title bar, so `align-items: center` vertically
-// aligns the kebab with the "Inspector" label.
+// Inspector-pane header: the "Explorer" title on the left, the dock-side kebab
+// on the right.
 .side-panel-header {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 3;
+  flex: 0 0 auto;
   height: 35px;
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px 0 16px;
+  border-bottom: 1px solid var(--theme-secondary-deep-grey);
+
+  .explorer-title {
+    margin: 0;
+  }
 }
 
 .dock-kebab {
@@ -37,7 +40,47 @@
   }
 }
 
-.inspector-pane {
+// Segmented instance/type toggle in the inspector body, just below the header.
+// The active segment gets the green-tinted treatment used elsewhere for the
+// chosen mode so it's obvious which is selected.
+.selection-mode-toggle {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+
+  .mode-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: none;
+    border: 1px solid var(--theme-secondary-deep-grey);
+    border-radius: 6px;
+    padding: 5px 8px;
+    cursor: pointer;
+    color: var(--theme-secondary-light-grey);
+    font-size: 12px;
+    line-height: 1;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+
+    i { font-size: 12px; width: 12px; height: 12px; }
+
+    &:hover:not(.active) { color: var(--theme-white); }
+
+    // Active mode: a neutral purple-grey fill + border, both lighter than the
+    // resting chip (deep-grey border / panel bg), so the chosen segment reads
+    // as raised without picking up a kind colour.
+    &.active {
+      background: var(--theme-secondary-mid-deep-grey);
+      border-color: var(--theme-secondary-grey);
+      color: var(--theme-white);
+    }
+  }
+}
+
+.explorer-pane {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -46,10 +89,10 @@
   min-width: 0 !important;
   overflow: hidden;
 
-  // The inspector component fills the wrapper; the kebab header overlays its
-  // title bar.
-  > ts-graph-type-inspector,
-  > ts-graph-inspector {
+  // The header bar sits on top (flex: 0 0 auto); the inspector component fills
+  // the remaining height below it.
+  > ts-graph-type-explorer,
+  > ts-graph-explorer {
     flex: 1;
     min-height: 0;
     min-width: 0;
@@ -59,8 +102,8 @@
 
 // Divider between inspector and panel: bottom border in column (right-dock)
 // mode, right border in row (bottom-dock) mode.
-:host(.dock-right)  > .inspector-pane { border-bottom: 1px solid var(--theme-secondary-dark-grey); }
-:host(.dock-bottom) > .inspector-pane { border-right: 1px solid var(--theme-secondary-dark-grey); }
+:host(.dock-right)  > .explorer-pane { border-bottom: 1px solid var(--theme-secondary-dark-grey); }
+:host(.dock-bottom) > .explorer-pane { border-right: 1px solid var(--theme-secondary-dark-grey); }
 
 // Invisible trigger fixed-positioned at the right-click coords; the mat-menu
 // opens relative to it. Used by Elements-tab type chips.

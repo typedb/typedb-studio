@@ -1,4 +1,4 @@
-import { Component, HostBinding, inject, Input, OnChanges, OnDestroy, SimpleChanges } from "@angular/core";
+import { Component, EventEmitter, HostBinding, inject, Input, OnChanges, OnDestroy, Output, SimpleChanges } from "@angular/core";
 import { NgTemplateOutlet } from "@angular/common";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatMenuModule } from "@angular/material/menu";
@@ -13,8 +13,8 @@ import { InspectableSelection, TypeSelection } from "../engine/interaction-handl
 import { ElementsTabComponent } from "./elements-tab.component";
 import { ThemesTabComponent } from "./themes-tab.component";
 import { CustomiseTabComponent } from "./customise-tab.component";
-import { GraphInspectorComponent } from "../inspector/graph-inspector.component";
-import { GraphTypeInspectorComponent } from "../inspector/graph-type-inspector.component";
+import { GraphExplorerComponent } from "../inspector/graph-explorer.component";
+import { GraphTypeExplorerComponent } from "../inspector/graph-type-explorer.component";
 
 @Component({
     selector: "ts-graph-side-panel",
@@ -25,7 +25,7 @@ import { GraphTypeInspectorComponent } from "../inspector/graph-type-inspector.c
         MatTooltipModule, MatMenuModule,
         ResizableDirective,
         ElementsTabComponent, ThemesTabComponent, CustomiseTabComponent,
-        GraphInspectorComponent, GraphTypeInspectorComponent,
+        GraphExplorerComponent, GraphTypeExplorerComponent,
     ],
 })
 export class GraphSidePanelComponent implements OnChanges, OnDestroy {
@@ -51,6 +51,14 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
     @Input() visualiser: GraphVisualiser | null = null;
     @Input() run: RunOutputState | null = null;
     @Input() selectionMode: SelectionMode = "types";
+    /** When true, the inspector header shows the instance/type selection-mode
+     *  toggle. Only the graph-explorer canvas enables it; other canvases
+     *  (query/schema/chat) have no type-vs-instance distinction. */
+    @Input() showSelectionModeToggle = false;
+
+    /** Emitted when the user flips the inspector-header mode toggle. The host
+     *  (graph tab, via the canvas) owns `selectionMode` and applies it. */
+    @Output() selectionModeChange = new EventEmitter<SelectionMode>();
 
     // Selection state, populated from the visualiser's interaction handler.
     selectedType: SchemaConcept | null = null;
@@ -132,6 +140,15 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
     get isHighlightActive(): boolean {
         return this.styleService.isHighlightActive();
     }
+
+    /** Whether the active mode currently has a node selected — drives whether
+     *  the type/instance toggle is shown (it's local to a live selection). */
+    get hasSelection(): boolean {
+        return this.selectionMode === "types"
+            ? this.selectedTypeForTypeMode != null
+            : this.selectedType != null && this.selectedInstanceIID != null;
+    }
+
 
     // -- Dock side --
 
