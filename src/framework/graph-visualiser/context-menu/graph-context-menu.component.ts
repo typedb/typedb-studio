@@ -10,6 +10,7 @@ import { MatDividerModule } from "@angular/material/divider";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { Subscription } from "rxjs";
 import { GraphViewState } from "../../../service/graph-view-state.service";
+import { GraphStyleService } from "../../../service/graph-style.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
 import { SchemaAttribute, SchemaConcept, SchemaRelation, SchemaRole, SchemaState } from "../../../service/schema-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
@@ -88,8 +89,27 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
 
     private graphViewState = inject(GraphViewState);
     private schemaState = inject(SchemaState);
+    private styleService = inject(GraphStyleService);
     private snackbar = inject(SnackbarService);
     private sub: Subscription | null = null;
+
+    /** A restricted, Google-Calendar-style palette for the per-type colour
+     *  picker: 12 medium-tone hues, none too close to the default kind colours
+     *  (pink / yellow / blue) and none too light or too dark. */
+    readonly colorSwatches: readonly string[] = [
+        "#e8403a", // bright red
+        "#c2603c", // terracotta
+        "#d98a3d", // orange
+        "#a3d182", // pale lime
+        "#0ae632", // vivid green
+        "#3fb6a8", // teal
+        "#1ec8d8", // bold cyan
+        "#6464ff", // pure blue
+        "#b45cf0", // purple
+        "#e63bd0", // neon magenta
+        "#b0b5c0", // light slate grey
+        "#838897", // dark slate grey
+    ];
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes["visualiser"]) {
@@ -191,6 +211,33 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
 
     get typeChipLabel(): string {
         return this.target?.typeLabel ?? "";
+    }
+
+    // -- Per-type colour --
+
+    /** The currently-applied type-level colour override for the target's type,
+     *  or null if none is set (so no swatch shows a ring). */
+    get currentTypeColor(): string | null {
+        if (!this.target) return null;
+        return this.styleService.typeStyles[this.target.typeLabel]?.color ?? null;
+    }
+
+    isColorSelected(hex: string): boolean {
+        const c = this.currentTypeColor;
+        return c != null && c.toLowerCase() === hex.toLowerCase();
+    }
+
+    /** Set the node colour for the target's whole type (toggle off if the same
+     *  swatch is re-clicked), then re-render the graph. */
+    setNodeColor(hex: string): void {
+        if (!this.target) return;
+        const typeLabel = this.target.typeLabel;
+        if (this.isColorSelected(hex)) {
+            this.styleService.setTypeStyle(typeLabel, { color: undefined });
+        } else {
+            this.styleService.setTypeStyle(typeLabel, { color: hex });
+        }
+        this.visualiser?.applyStyleUpdate();
     }
 
     // -- Loaded state --

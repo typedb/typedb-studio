@@ -109,4 +109,44 @@
             outline-offset: 1px;
         }
     }
+
+    // Per-type colour picker: a row of filled circles. The selected swatch
+    // gets a ring (a gap + outline ring in its own colour).
+    .colour-swatches {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 16px 8px;
+        margin-top: 6px;
+        // Cap to 8 swatches per row (18px each + 8px gaps + 16px side padding),
+        // so the 12 colours wrap to 8 + 4 without stretching the menu wide.
+        max-width: calc(8 * 18px + 7 * 8px + 32px);
+    }
+
+    .colour-swatch {
+        flex: 0 0 auto;
+        width: 18px;
+        height: 18px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        // Ring (when selected) is drawn with box-shadow: a background-coloured
+        // gap then a ring in the swatch's own colour.
+        box-shadow: none;
+        transition: box-shadow 0.12s ease, transform 0.12s ease;
+
+        &:hover {
+            transform: scale(1.12);
+        }
+
+        &.selected {
+            box-shadow:
+                0 0 0 2px var(--mat-menu-container-color, var(--theme-deep-purple)),
+                0 0 0 3.5px currentColor;
+            // `currentColor` for the ring = the swatch's own colour.
+            color: inherit;
+        }
+    }
 }

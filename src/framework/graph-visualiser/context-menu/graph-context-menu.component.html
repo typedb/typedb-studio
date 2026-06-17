@@ -99,6 +99,19 @@
         </div>
       }
     }
+
+    <!-- Per-type colour: a restricted swatch palette, applied to every node of
+         the target's type. The selected swatch (if any) gets a ring. -->
+    <mat-divider></mat-divider>
+    <div class="colour-swatches">
+      @for (hex of colorSwatches; track hex) {
+        <button class="colour-swatch"
+                [class.selected]="isColorSelected(hex)"
+                [style.background]="hex"
+                [style.color]="hex"
+                (click)="$event.stopPropagation(); setNodeColor(hex)"></button>
+      }
+    </div>
   }
   </span>
 </mat-menu>
