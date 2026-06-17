@@ -17,7 +17,7 @@ import { GraphBuilder } from "./graph-builder";
 import { GraphStyles, colorEdgesByConstraintIndex as _colorEdgesByConstraintIndex, colorQuery as _colorQuery } from "./styles";
 import { setUseBorderColorForLabels, setLabelsVisible, setShowHoverLabel } from "./sigma-label-utils";
 import { InteractionHandler, StudioState } from "./interaction-handler";
-import { LayoutWrapper } from "./layout";
+import { LayoutWrapper, LayoutDensity } from "./layout";
 import { createSigmaRenderer, defaultSigmaSettings } from "./sigma-settings";
 import { DisplayAttributeStore, refreshInstanceLabels } from "./instance-label";
 
@@ -992,14 +992,19 @@ export class GraphVisualiser {
     }
 
     /**
-     * Collapse the whole graph inward: reheat the simulation with a strong
-     * centering force so nodes pull together into a tight cluster. The camera
-     * is deliberately left untouched — no auto-zoom and no recenter — so the
-     * user's current view stays fixed while the nodes draw together.
+     * Set the graph's node-spacing density (spacious / default / compact),
+     * which retunes the layout's centering gravity and reheats. The camera is
+     * deliberately left untouched — no auto-zoom and no recenter — so the
+     * user's current view stays fixed while the nodes re-space.
      */
-    collapse(): void {
+    setLayoutDensity(mode: LayoutDensity): void {
         this.autoZoomEnabled = false;
-        this.layout.collapse();
+        this.layout.setDensity(mode);
+    }
+
+    /** The currently-applied node-spacing density (for the controls' menu). */
+    get layoutDensity(): LayoutDensity {
+        return this.layout.density;
     }
 
     /**

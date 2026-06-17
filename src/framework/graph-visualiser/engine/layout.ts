@@ -116,6 +116,18 @@ export class Layouts {
 }
 
 
+/** Node-spacing density presets for the force layout's centering gravity. */
+export type LayoutDensity = "spacious" | "default" | "compact";
+
+/** Persistent gravity multiplier per density mode. "default" is 1.5× the base
+ *  gravity; "compact" is 4× the base and "spacious" is the default / 3. */
+export const DEFAULT_GRAVITY_MULTIPLIER = 1.5;
+export const DENSITY_GRAVITY: Record<LayoutDensity, number> = {
+    spacious: DEFAULT_GRAVITY_MULTIPLIER / 3,
+    default: DEFAULT_GRAVITY_MULTIPLIER,
+    compact: 4,
+};
+
 export interface LayoutStartOptions {
     /** D3-force only: initial alpha (default 1.0). Lower = less perturbation. */
     initialAlpha?: number;
@@ -150,11 +162,14 @@ export interface LayoutWrapper {
     unfixNode(nodeKey: string): void;
 
     /**
-     * Reheat the simulation from current positions with a strong centering
-     * force so the whole graph collapses inward. No-op / redraw for layouts
-     * without an animated, gravity-tunable simulation.
+     * Set the node-spacing density (centering-gravity preset) and reheat from
+     * current positions so the graph eases into the new spacing. No-op for
+     * layouts without an animated, gravity-tunable simulation.
      */
-    collapse(): void;
+    setDensity(mode: LayoutDensity): void;
+
+    /** The currently-applied node-spacing density. */
+    readonly density: LayoutDensity;
 
     /**
      * Forget which nodes have been settled by a previous simulation. Callers
@@ -220,8 +235,9 @@ class LayoutSupervisorWrapper implements LayoutWrapper {
     // Force-Atlas2 / generic-force supervisors don't track per-node settling.
     forgetSettled(): void {}
 
-    // No tunable gravity force here — collapsing isn't supported.
-    collapse(): void {}
+    // No tunable gravity force here — density presets aren't supported.
+    readonly density: LayoutDensity = "default";
+    setDensity(_mode: LayoutDensity): void {}
 }
 
 interface D3Node extends SimulationNodeDatum {
@@ -243,11 +259,14 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
      */
     private settledNodes: Set<string> = new Set();
     /**
-     * Persistent gravity scaling for this simulation. Each "Collapse" doubles
-     * it, compounding across clicks, and it stays in effect for every
-     * subsequent run until `forgetSettled` resets it (Redraw / Reset changes).
+     * Persistent gravity scaling for this simulation, set by the density
+     * presets (spacious / default / compact). Stays in effect for every
+     * subsequent run until `forgetSettled` resets it to the default (Redraw /
+     * Reset changes).
      */
-    private gravityMultiplier = 1;
+    private gravityMultiplier = DEFAULT_GRAVITY_MULTIPLIER;
+    /** Current spacing preset; mirrors `gravityMultiplier` for the UI. */
+    density: LayoutDensity = "default";
 
     constructor(graph: MultiGraph) {
         this.graph = graph;
@@ -284,8 +303,9 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
 
     forgetSettled(): void {
         this.settledNodes.clear();
-        // A fresh layout (Redraw / Reset changes) starts from baseline gravity.
-        this.gravityMultiplier = 1;
+        // A fresh layout (Redraw / Reset changes) starts from default gravity.
+        this.gravityMultiplier = DEFAULT_GRAVITY_MULTIPLIER;
+        this.density = "default";
     }
 
     private buildSimulation(opts?: LayoutStartOptions): ReturnType<typeof forceSimulation<D3Node>> {
@@ -402,12 +422,13 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
         this.start();
     }
 
-    collapse() {
-        // Bump this simulation's gravity by one unit each click (1 → 2 → 3 …);
-        // since gravity grows linearly, each successive collapse adds a
-        // proportionally smaller pull. Reset by forgetSettled on Redraw /
-        // Reset changes. Reheat from current positions so the graph eases in.
-        this.gravityMultiplier += 1;
+    setDensity(mode: LayoutDensity) {
+        // Re-selecting the current density is a no-op — no need to reheat.
+        if (mode === this.density) return;
+        // Set the persistent gravity for the chosen spacing preset, then reheat
+        // from current positions so the graph eases into the new spacing.
+        this.density = mode;
+        this.gravityMultiplier = DENSITY_GRAVITY[mode];
         this.start({ initialAlpha: 0.5, alphaDecay: 0.05 });
     }
 
@@ -470,8 +491,9 @@ class StaticLayoutWrapper<LayoutParams> implements LayoutWrapper {
     // Static layouts don't track per-node settling.
     forgetSettled(): void {}
 
-    // Static layouts have no animated gravity to collapse with.
-    collapse(): void {}
+    // Static layouts have no animated gravity to retune.
+    readonly density: LayoutDensity = "default";
+    setDensity(_mode: LayoutDensity): void {}
 }
 
 class ForceAtlasStaticWrapper implements StaticLayoutInner<ForceAtlas2SynchronousLayoutParameters> {

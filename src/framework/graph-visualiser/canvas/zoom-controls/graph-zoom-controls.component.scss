@@ -65,3 +65,16 @@
   height: 1px;
   background: var(--gc-border);
 }
+
+// Reserve a fixed left gutter for the check on every density item, so the
+// active item's check doesn't shift the label (inline icons don't get
+// Material's icon-slot gutter). Hidden — not removed — when inactive.
+::ng-deep .density-menu .density-check {
+  width: 14px;
+  margin-right: 8px;
+  font-size: 12px;
+  text-align: center;
+  flex: 0 0 auto;
+
+  &.hidden { visibility: hidden; }
+}

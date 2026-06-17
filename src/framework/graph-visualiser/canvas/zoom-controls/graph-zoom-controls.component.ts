@@ -1,7 +1,9 @@
 import { AsyncPipe } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { MatTooltipModule } from "@angular/material/tooltip";
+import { MatMenuModule } from "@angular/material/menu";
 import { GraphVisualiser } from "../../engine";
+import { LayoutDensity } from "../../engine/layout";
 
 const ZOOM_FACTOR = 0.7;
 
@@ -9,7 +11,7 @@ const ZOOM_FACTOR = 0.7;
     selector: "ts-graph-zoom-controls",
     templateUrl: "graph-zoom-controls.component.html",
     styleUrls: ["graph-zoom-controls.component.scss"],
-    imports: [MatTooltipModule, AsyncPipe],
+    imports: [MatTooltipModule, MatMenuModule, AsyncPipe],
 })
 export class GraphZoomControlsComponent {
 
@@ -54,11 +56,17 @@ export class GraphZoomControlsComponent {
         this.visualiser?.reLayout();
     }
 
-    collapse(): void {
-        this.visualiser?.collapse();
+    setDensity(mode: LayoutDensity): void {
+        this.visualiser?.setLayoutDensity(mode);
     }
 
-    get canCollapse(): boolean {
+    /** The currently-applied density, for marking the active menu item. */
+    get density(): LayoutDensity {
+        return this.visualiser?.layoutDensity ?? "default";
+    }
+
+    /** Whether the density menu can be used: graph present and not mid-run. */
+    get canSetDensity(): boolean {
         return !this.queryRunning
             && !this.visualiser?.isLayoutRunning
             && (this.visualiser?.graph.order ?? 0) > 0;
