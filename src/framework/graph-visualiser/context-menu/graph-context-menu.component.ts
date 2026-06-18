@@ -378,6 +378,99 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         }, scope);
     }
 
+    // -- Toggles: a connection chip loads when unloaded and UNLOADS (deletes
+    //    the matching nodes/edges and reheats) when loaded. Works for both the
+    //    "every '<type>'" (type) and "here" (instance) scopes. The "here" toggle
+    //    keys off the instance-scope flag only, so a type-loaded connection's
+    //    "here" chip (shown loaded via the OR) doesn't try to instance-unload. --
+
+    /** Pure instance-scope loaded flags (no OR-in of the type-level state). */
+    private isInstanceLoaded(connLabel: string): boolean {
+        if (!this.run || !this.target) return false;
+        return this.graphViewState.isInstanceConnectionLoaded(this.run, this.target.instanceId, connLabel);
+    }
+
+    /**
+     * Unload one or more connections at the given scope: drop the matching
+     * nodes/edges, clear the loaded flag, then reheat + close the menu once.
+     */
+    private unloadConnections(scope: Scope, rows: { label: string; unload: (v: GraphVisualiser, scope: Scope) => void }[]): void {
+        if (!this.run || !this.visualiser || !this.target || rows.length === 0) return;
+        const t = this.target;
+        this.visualiser.freezeViewport();
+        for (const r of rows) {
+            r.unload(this.visualiser, scope);
+            if (scope === "type") {
+                this.graphViewState.removeConnectionLoaded(this.run, t.typeLabel, r.label);
+            } else {
+                this.graphViewState.removeInstanceConnectionLoaded(this.run, t.instanceId, r.label);
+            }
+        }
+        this.visualiser.reheat({ soft: true, preserveCamera: true });
+        this.trigger.closeMenu();
+    }
+
+    private get tk(): SelectionKind { return this.target!.kind; }
+    private get tl(): string { return this.target!.typeLabel; }
+    private get ti(): string { return this.target!.instanceId; }
+
+    toggleAllAttributes(scope: Scope): void {
+        const loaded = scope === "type" ? this.allAttributesLoaded : this.attributeRows.every(r => this.isInstanceLoaded(r.label));
+        if (loaded) {
+            this.unloadConnections(scope, this.attributeRows.map(r =>
+                ({ label: r.label, unload: (v, s) => v.unloadAttribute(s, this.tk, this.tl, this.ti, r.label) })));
+        } else {
+            this.loadAllAttributes(scope);
+        }
+    }
+
+    toggleAttribute(row: AttributeRow, scope: Scope): void {
+        const loaded = scope === "type" ? this.isAttributeLoaded(row) : this.isInstanceLoaded(row.label);
+        if (loaded) {
+            this.unloadConnections(scope, [{ label: row.label, unload: (v, s) => v.unloadAttribute(s, this.tk, this.tl, this.ti, row.label) }]);
+        } else {
+            this.loadAttribute(row, scope);
+        }
+    }
+
+    toggleAllRelations(scope: Scope): void {
+        const loaded = scope === "type" ? this.allRelationsLoaded : this.relationRows.every(r => this.isInstanceLoaded(r.label));
+        if (loaded) {
+            this.unloadConnections(scope, this.relationRows.map(r =>
+                ({ label: r.label, unload: (v, s) => v.unloadRelation(s, this.tk, this.tl, this.ti, r.label) })));
+        } else {
+            this.loadAllRelations(scope);
+        }
+    }
+
+    toggleRelation(row: RelationRow, scope: Scope): void {
+        const loaded = scope === "type" ? this.isRelationLoaded(row) : this.isInstanceLoaded(row.label);
+        if (loaded) {
+            this.unloadConnections(scope, [{ label: row.label, unload: (v, s) => v.unloadRelation(s, this.tk, this.tl, this.ti, row.label) }]);
+        } else {
+            this.loadRelation(row, scope);
+        }
+    }
+
+    toggleAllRoles(scope: Scope): void {
+        const loaded = scope === "type" ? this.allRolesLoaded : this.roleRows.every(r => this.isInstanceLoaded(r.label));
+        if (loaded) {
+            this.unloadConnections(scope, this.roleRows.map(r =>
+                ({ label: r.label, unload: (v, s) => v.unloadRole(s, this.tk, this.tl, this.ti, r.shortName) })));
+        } else {
+            this.loadAllRoles(scope);
+        }
+    }
+
+    toggleRole(row: RoleRow, scope: Scope): void {
+        const loaded = scope === "type" ? this.isRoleLoaded(row) : this.isInstanceLoaded(row.label);
+        if (loaded) {
+            this.unloadConnections(scope, [{ label: row.label, unload: (v, s) => v.unloadRole(s, this.tk, this.tl, this.ti, row.shortName) }]);
+        } else {
+            this.loadRole(row, scope);
+        }
+    }
+
     /** Common pre-flight: look up the schema type for the target, collect IIDs
      *  for the requested scope, and forward both to the action. Attribute
      *  targets and unknown types short-circuit. */

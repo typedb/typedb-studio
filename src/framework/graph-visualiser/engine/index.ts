@@ -864,6 +864,101 @@ export class GraphVisualiser {
         return out;
     }
 
+    // -- Unloading connections (the inverse of the context-menu "load" actions).
+    //    Each drops the nodes matching the connection criteria — graphology's
+    //    dropNode removes their incident edges too — then reheats so the graph
+    //    settles back without them. Scoped to in-graph instances of the source
+    //    type so only what that connection pulled in is removed. --
+
+    /** Set of node keys for in-graph entity/relation instances of `typeLabel`. */
+    private instanceNodesOfType(typeLabel: string): Set<string> {
+        const set = new Set<string>();
+        this.graph.nodes().forEach(node => {
+            try {
+                const c = this.graph.getNodeAttributes(node)?.["metadata"]?.concept as any;
+                if ((c?.kind === "entity" || c?.kind === "relation") && c.type?.label === typeLabel) set.add(node);
+            } catch { /* missing metadata mid-mutation */ }
+        });
+        return set;
+    }
+
+    private conceptOf(node: string): any | null {
+        try { return this.graph.getNodeAttributes(node)?.["metadata"]?.concept ?? null; }
+        catch { return null; }
+    }
+
+    /** Drop the given nodes (and their incident edges) and recompute the
+     *  highlight set. Does NOT reheat — the caller reheats once after a batch of
+     *  unloads (see the context menu's `unloadConnections`). */
+    private dropNodes(nodeKeys: Iterable<string>): void {
+        let dropped = 0;
+        for (const key of nodeKeys) {
+            if (this.graph.hasNode(key)) { this.graph.dropNode(key); dropped++; }
+        }
+        if (dropped > 0) this.interactionHandler.recomputeHighlightSet();
+    }
+
+    /** The source node set for an unload: every in-graph instance of the type
+     *  ("type" scope) or just the one clicked instance node ("instance" scope). */
+    private unloadSources(scope: "type" | "instance", typeLabel: string, kind: "entity" | "relation" | "attribute", instanceId: string): Set<string> {
+        if (scope === "type") return this.instanceNodesOfType(typeLabel);
+        const node = this.findInstanceNode(kind, typeLabel, instanceId);
+        return node ? new Set([node]) : new Set();
+    }
+
+    /** Drop every attribute node of `attrTypeLabel` adjacent to a source node. */
+    private unloadAttributeFrom(sources: Set<string>, attrTypeLabel: string): void {
+        const targets = new Set<string>();
+        sources.forEach(src => {
+            if (!this.graph.hasNode(src)) return;
+            this.graph.forEachNeighbor(src, (n: string) => {
+                const c = this.conceptOf(n);
+                if (c?.kind === "attribute" && c.type?.label === attrTypeLabel) targets.add(n);
+            });
+        });
+        this.dropNodes(targets);
+    }
+
+    /** Drop every relation node of `relationTypeLabel` adjacent to a source node. */
+    private unloadRelationFrom(sources: Set<string>, relationTypeLabel: string): void {
+        const targets = new Set<string>();
+        sources.forEach(src => {
+            if (!this.graph.hasNode(src)) return;
+            this.graph.forEachNeighbor(src, (n: string) => {
+                const c = this.conceptOf(n);
+                if (c?.kind === "relation" && c.type?.label === relationTypeLabel) targets.add(n);
+            });
+        });
+        this.dropNodes(targets);
+    }
+
+    /** Drop the player nodes reached from a source node via a `roleShortName` edge. */
+    private unloadRoleFrom(sources: Set<string>, roleShortName: string): void {
+        const targets = new Set<string>();
+        sources.forEach(src => {
+            if (!this.graph.hasNode(src)) return;
+            this.graph.forEachEdge(src, (_edge: string, attrs: any, source: string, target: string) => {
+                const tag = attrs?.metadata?.dataEdge?.tag;
+                const roleLabel = typeof tag === "string" ? tag.split(":").at(-1) : tag;
+                const other = source === src ? target : source;
+                if (roleLabel === roleShortName && other !== src) targets.add(other);
+            });
+        });
+        this.dropNodes(targets);
+    }
+
+    unloadAttribute(scope: "type" | "instance", sourceKind: "entity" | "relation" | "attribute", sourceTypeLabel: string, sourceId: string, attrTypeLabel: string): void {
+        this.unloadAttributeFrom(this.unloadSources(scope, sourceTypeLabel, sourceKind, sourceId), attrTypeLabel);
+    }
+
+    unloadRelation(scope: "type" | "instance", sourceKind: "entity" | "relation" | "attribute", sourceTypeLabel: string, sourceId: string, relationTypeLabel: string): void {
+        this.unloadRelationFrom(this.unloadSources(scope, sourceTypeLabel, sourceKind, sourceId), relationTypeLabel);
+    }
+
+    unloadRole(scope: "type" | "instance", sourceKind: "entity" | "relation" | "attribute", sourceTypeLabel: string, sourceId: string, roleShortName: string): void {
+        this.unloadRoleFrom(this.unloadSources(scope, sourceTypeLabel, sourceKind, sourceId), roleShortName);
+    }
+
     private findInstanceNode(kind: "entity" | "relation" | "attribute", typeLabel: string, instanceId: string): string | null {
         let found: string | null = null;
         this.graph.nodes().forEach(node => {

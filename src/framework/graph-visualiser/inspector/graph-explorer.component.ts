@@ -210,6 +210,35 @@ export class GraphExplorerComponent implements OnChanges {
             });
     }
 
+    /** Add every relation of `relationTypeLabel` the current instance plays a
+     *  role in, in one fetch — the per-card "Add all to graph" affordance. */
+    addAllRelationsOfType(relationTypeLabel: string) {
+        if (!this.run || !this.type || !this.instanceIID) return;
+        const ofType = this.vm.allRelations.filter(r => r.relationTypeLabel === relationTypeLabel);
+        this.visualiser?.freezeViewport();
+        this.graphViewState
+            .fetchRelationsOfTypeForPlayers(this.run, this.type, [this.instanceIID], relationTypeLabel)
+            .then(() => {
+                this.visualiser?.reheat({ soft: true, preserveCamera: true });
+                this.visualiser?.interactionHandler.recomputeHighlightSet();
+                // Mark each relation (and its links) of this type loaded for the
+                // instance, then the relation type itself.
+                ofType.forEach(rel => {
+                    this.markInstanceLoaded(relationInstanceKey(rel.relationIID));
+                    rel.links.forEach(link =>
+                        this.markInstanceLoaded(linkInstanceKey(rel.relationIID, link.playerIID)));
+                });
+                this.maybeMarkRelationTypeLoaded(relationTypeLabel);
+            });
+    }
+
+    /** True once every relation of `relationTypeLabel` for the current instance
+     *  has been added — hides the per-card "Add all to graph" button. */
+    allRelationsOfTypeAdded(relationTypeLabel: string): boolean {
+        const ofType = this.vm.allRelations.filter(r => r.relationTypeLabel === relationTypeLabel);
+        return ofType.length > 0 && ofType.every(r => this.isRelationAdded(r));
+    }
+
     /** Mark a relation TYPE loaded for the current instance once all of its
      *  relation instances have been individually added — keeping the context
      *  menu's per-type relation chip in sync with individual Explorer adds. */

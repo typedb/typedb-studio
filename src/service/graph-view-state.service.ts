@@ -275,6 +275,13 @@ export class GraphViewState {
         targets.add(targetTypeLabel);
     }
 
+    /** Clear the loaded flag for `targetTypeLabel` on `sourceTypeLabel` (used
+     *  when the user unloads a type-level connection). */
+    removeConnectionLoaded(run: RunOutputState, sourceTypeLabel: string, targetTypeLabel: string): void {
+        const tab = this.findTabForRun(run);
+        tab?.loadedConnections.get(sourceTypeLabel)?.delete(targetTypeLabel);
+    }
+
     /**
      * Whether `connectionLabel` has been loaded for the single instance
      * `instanceId` (a context-menu "here" load) on this tab. Does NOT account
@@ -296,6 +303,13 @@ export class GraphViewState {
             tab.loadedInstanceConnections.set(instanceId, targets);
         }
         targets.add(connectionLabel);
+    }
+
+    /** Clear the loaded flag for `connectionLabel` on the single instance
+     *  `instanceId` (used when the user unloads a "here" connection). */
+    removeInstanceConnectionLoaded(run: RunOutputState, instanceId: string, connectionLabel: string): void {
+        const tab = this.findTabForRun(run);
+        tab?.loadedInstanceConnections.get(instanceId)?.delete(connectionLabel);
     }
 
     closeTab(tab: GraphViewTab) {

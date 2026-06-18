@@ -143,6 +143,56 @@
     }
 }
 
+// Relation-card header: type + IID on the left, action buttons on the right.
+// The two groups wrap independently, so when the pane is too narrow to hold the
+// actions beside the title they drop onto their own left-aligned line below it.
+.relation-card-header {
+    flex-wrap: wrap;
+    // `gap` is the base's 10px — but that doubles as the row gap once we wrap,
+    // bulking up the two-row header. Use a tight row gap, keep the column gap.
+    row-gap: 4px;
+
+    // Title group (type + IID) takes the row's slack and keeps a sensible
+    // minimum width, so the actions group wraps below it rather than crushing
+    // it. `flex-basis: auto` keeps the basis content-sized (not a tall box);
+    // `min-width` is the wrap threshold.
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1 1 auto;
+        min-width: 160px;
+    }
+
+    .relation-iid {
+        flex: 0 1 auto;
+        min-width: 0;
+    }
+}
+
+// The two relation actions ("Add to graph"/"Reveal" + "Add all to graph") sit
+// adjacent. They stay beside the title while there's room and, when wrapped to
+// their own line, are left-aligned (default flex-start) — under the IID.
+.header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+
+    .open-details-button {
+        margin-top: 0;
+        flex-shrink: 0;
+    }
+}
+
+// Keep the role-player meta on one line — type label with the IID to its right.
+// The shared base stacks these into a column under its < 300px container query,
+// but the narrow explorer pane otherwise loses the side-by-side layout.
+.link-info .player-details {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+}
+
 .section-bulk-action {
     display: flex;
     justify-content: flex-start;

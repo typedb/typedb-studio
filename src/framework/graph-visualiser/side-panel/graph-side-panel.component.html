@@ -35,14 +35,14 @@
     @if (showSelectionModeToggle && hasSelection) {
       <div class="selection-mode-toggle">
         <button class="mode-button"
-                [class.active]="selectionMode === 'types'"
-                (click)="selectionModeChange.emit('types')">
-          <i class="fa-light fa-shapes"></i><span>type</span>
-        </button>
-        <button class="mode-button"
                 [class.active]="selectionMode === 'instances'"
                 (click)="selectionModeChange.emit('instances')">
-          <i class="fa-light fa-circle-dot"></i><span>instance</span>
+          <span>here</span>
+        </button>
+        <button class="mode-button"
+                [class.active]="selectionMode === 'types'"
+                (click)="selectionModeChange.emit('types')">
+          <span>every '{{ currentTypeLabel }}'</span>
         </button>
       </div>
     }

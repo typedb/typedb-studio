@@ -95,13 +95,17 @@
             color: var(--chip-color);
         }
 
-        // Sticky "loaded" fill — a connection that's been pulled in for the
-        // whole type. Same filled treatment as the type inspector's chips.
+        // Loaded fill — a connection that's been pulled in. The "every '<type>'"
+        // chips stay clickable in this state to UNLOAD; keep the pointer cursor
+        // and a subtle hover so it reads as actionable.
         &.loaded {
             background: color-mix(in srgb, var(--chip-color) 22%, transparent);
             border-color: var(--chip-color);
             color: var(--chip-color);
-            cursor: default;
+
+            &:hover {
+                background: color-mix(in srgb, var(--chip-color) 34%, transparent);
+            }
         }
 
         &:focus-visible {

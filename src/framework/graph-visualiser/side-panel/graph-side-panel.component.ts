@@ -142,11 +142,16 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
     }
 
     /** Whether the active mode currently has a node selected — drives whether
-     *  the type/instance toggle is shown (it's local to a live selection). */
+     *  the here / every-type toggle is shown (it's local to a live selection). */
     get hasSelection(): boolean {
         return this.selectionMode === "types"
             ? this.selectedTypeForTypeMode != null
             : this.selectedType != null && this.selectedInstanceIID != null;
+    }
+
+    /** Type label of the current selection, for the "every '<type>'" toggle. */
+    get currentTypeLabel(): string {
+        return (this.selectionMode === "types" ? this.selectedTypeForTypeMode : this.selectedType)?.label ?? "";
     }
 
 

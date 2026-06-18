@@ -200,21 +200,32 @@
                   @for (instance of filteredRelations; track instance.relationIID) {
                     <div class="relation-card">
                       <div class="relation-card-header">
-                        <span class="relation-type-label">{{ instance.relationTypeLabel }}</span>
-                        <span class="relation-iid">{{ instance.relationIID }}</span>
-                        @if (isRelationAdded(instance)) {
-                          <button class="open-details-button header-explore added"
-                                  (click)="revealRelation(instance)">
-                            Reveal in graph
-                            <i class="fa-light fa-arrow-right"></i>
-                          </button>
-                        } @else {
-                          <button class="open-details-button header-explore"
-                                  (click)="addRelation(instance)">
-                            <i class="fa-light fa-arrow-up"></i>
-                            Add to graph
-                          </button>
-                        }
+                        <div class="header-title">
+                          <span class="relation-type-label">{{ instance.relationTypeLabel }}</span>
+                          <span class="relation-iid">{{ instance.relationIID }}</span>
+                        </div>
+                        <div class="header-actions">
+                          @if (isRelationAdded(instance)) {
+                            <button class="open-details-button added"
+                                    (click)="revealRelation(instance)">
+                              Reveal in graph
+                              <i class="fa-light fa-arrow-right"></i>
+                            </button>
+                          } @else {
+                            <button class="open-details-button"
+                                    (click)="addRelation(instance)">
+                              <i class="fa-light fa-arrow-up"></i>
+                              Add to graph
+                            </button>
+                          }
+                          @if (!allRelationsOfTypeAdded(instance.relationTypeLabel)) {
+                            <button class="open-details-button"
+                                    (click)="addAllRelationsOfType(instance.relationTypeLabel)">
+                              <i class="fa-light fa-arrow-up"></i>
+                              Add all to graph
+                            </button>
+                          }
+                        </div>
                       </div>
                       <div class="relation-card-body">
                         @for (link of instance.links; track link.roleLabel + link.playerIID) {
