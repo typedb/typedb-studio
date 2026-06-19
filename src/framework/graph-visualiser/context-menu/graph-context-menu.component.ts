@@ -315,6 +315,7 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                 state => state.fetchAttributesOf(this.run!, type, iids),
                 scope,
                 () => this.attributeRows.forEach(r => this.markConnForScope(r.label, scope)),
+                this.noResultMessage(scope, "attributes"),
             );
         }, scope);
     }
@@ -326,6 +327,7 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                 state => state.fetchAttributesOfTypeFor(this.run!, type, iids, row.label),
                 scope,
                 () => this.markConnForScope(row.label, scope),
+                this.noResultMessage(scope, `'${row.label}' attributes`),
             );
         }, scope);
     }
@@ -338,6 +340,7 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                     state.fetchRelationsOfTypeForPlayers(this.run!, type, iids, r.label))).then(() => {}),
                 scope,
                 () => this.relationRows.forEach(r => this.markConnForScope(r.label, scope)),
+                this.noResultMessage(scope, "relations"),
             );
         }, scope);
     }
@@ -351,6 +354,7 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                     state.fetchRolePlayersOfTypeFor(this.run!, type, iids, r.shortName))).then(() => {}),
                 scope,
                 () => this.roleRows.forEach(r => this.markConnForScope(r.label, scope)),
+                this.noResultMessage(scope, "role players"),
             );
         }, scope);
     }
@@ -362,6 +366,7 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                 state => state.fetchRelationsOfTypeForPlayers(this.run!, type, iids, row.label),
                 scope,
                 () => this.markConnForScope(row.label, scope),
+                this.noResultMessage(scope, `'${row.label}' relations`),
             );
         }, scope);
     }
@@ -374,6 +379,7 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                 state => state.fetchRolePlayersOfTypeFor(this.run!, type, iids, row.shortName),
                 scope,
                 () => this.markConnForScope(row.label, scope),
+                this.noResultMessage(scope, `'${row.label}' role players`),
             );
         }, scope);
     }
@@ -537,11 +543,29 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         return out;
     }
 
-    private runFetch(op: (state: GraphViewState) => Promise<void>, scope: Scope, markLoaded?: () => void): void {
+    /** Snackbar text for an additive load that found nothing to add, e.g.
+     *  "This 'person' has no 'name' attributes" (instance scope) or
+     *  "'person' has no relations" (type scope). */
+    private noResultMessage(scope: Scope, what: string): string {
+        const label = this.target?.typeLabel ? `'${this.target.typeLabel}'` : "this type";
+        return scope === "type"
+            ? `${label} has no ${what}`
+            : `This ${label} has no ${what}`;
+    }
+
+    private runFetch(op: (state: GraphViewState) => Promise<void>, scope: Scope, markLoaded?: () => void, noResultMessage?: string): void {
         if (!this.run || !this.visualiser || !this.target) return;
         const target = this.target;
+        const orderBefore = this.visualiser.graph.order;
         this.visualiser.freezeViewport();
         op(this.graphViewState).then(() => {
+            // An additive load that brought in no new nodes (e.g. the instance
+            // has none of the requested connections) leaves the graph visually
+            // unchanged. Without feedback the action looks broken, so surface a
+            // transient note instead of silently doing nothing.
+            if (this.visualiser!.graph.order === orderBefore && noResultMessage) {
+                this.snackbar.info(noResultMessage);
+            }
             // A context-menu load is additive: keep whatever the panel is
             // currently inspecting rather than yanking it to the right-clicked
             // node (which blanked/jumped the Explorer). Only when nothing is
