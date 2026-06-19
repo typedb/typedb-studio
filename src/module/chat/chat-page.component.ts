@@ -28,6 +28,7 @@ import { ChatMessageData, ChatState, ConversationSummary } from "../../service/c
 import { DriverState } from "../../service/driver-state.service";
 import { HistoryWindowState } from "../../service/query-page-state.service";
 import { AppData } from "../../service/app-data.service";
+import { AiConsentState } from "../../service/ai-consent-state.service";
 import { DatabaseCreateDialogComponent } from "../database/create-dialog/database-create-dialog.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { HistoryPaneComponent } from "../query-history/history-pane/history-pane.component";
@@ -79,8 +80,18 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
         private zone: NgZone,
         private savedQueries: SavedQueriesState,
         private snackbar: SnackbarService,
+        public aiConsent: AiConsentState,
     ) {
         this.history = new HistoryWindowState(driver);
+    }
+
+    /** Run an AI action only after consent. Opens the lazy opt-in modal on first
+     *  use; silently no-ops if the user declines. All chat send paths funnel
+     *  through here so nothing reaches the AI backend without opt-in. */
+    private withConsent(action: () => void): void {
+        this.aiConsent.requireConsent().then(granted => {
+            if (granted) this.zone.run(action);
+        });
     }
 
     ngOnInit() {
@@ -197,11 +208,13 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     onSubmit(event: Event): void {
         event.preventDefault();
         if (this.handleSlashCommand()) return;
-        if (this.state.isProcessing$.value) {
-            this.state.cancelStream();
-        }
-        this.state.submitPrompt();
-        this.scheduleScrollToLastUserMessage();
+        this.withConsent(() => {
+            if (this.state.isProcessing$.value) {
+                this.state.cancelStream();
+            }
+            this.state.submitPrompt();
+            this.scheduleScrollToLastUserMessage();
+        });
     }
 
     onInputKeyDownEnter(event: KeyboardEvent): void {
@@ -212,13 +225,15 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
                 this.historyDraft = "";
                 return;
             }
-            if (this.state.isProcessing$.value) {
-                this.state.cancelStream();
-            }
-            this.state.submitPrompt();
             this.historyIndex = -1;
             this.historyDraft = "";
-            this.scheduleScrollToLastUserMessage();
+            this.withConsent(() => {
+                if (this.state.isProcessing$.value) {
+                    this.state.cancelStream();
+                }
+                this.state.submitPrompt();
+                this.scheduleScrollToLastUserMessage();
+            });
         }
     }
 
@@ -307,16 +322,20 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     }
 
     onSendLogToAi(logText: string): void {
-        this.state.promptControl.setValue(logText);
-        this.state.submitPrompt();
-        this.scheduleScrollToLastUserMessage();
+        this.withConsent(() => {
+            this.state.promptControl.setValue(logText);
+            this.state.submitPrompt();
+            this.scheduleScrollToLastUserMessage();
+        });
     }
 
     /** Re-runs a query from the History pane by feeding it into the chat prompt. */
     onRunHistoryQuery(query: string) {
-        this.state.promptControl.setValue(query);
-        this.state.submitPrompt();
-        setTimeout(() => this.scrollToBottom());
+        this.withConsent(() => {
+            this.state.promptControl.setValue(query);
+            this.state.submitPrompt();
+            setTimeout(() => this.scrollToBottom());
+        });
     }
 
     onPanelResize(index: number, percent: number) {
@@ -333,7 +352,7 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     }
 
     compactChat(): void {
-        this.state.compactConversation();
+        this.withConsent(() => this.state.compactConversation());
     }
 
     get selectedConversationTitle(): string {

@@ -1,0 +1,26 @@
+<tp-modal dialogTitle="Enable AI features" [isBusy]="isSubmitting$ | async">
+  <div class="consent-body">
+    <p class="consent-lead">
+      AI features (chat and “Send to AI”) are powered by OpenAI. To answer your
+      prompts, Studio sends them to OpenAI along with your database schema.
+    </p>
+    <div class="consent-admonition">
+      <p><i class="fa-light fa-circle-info"></i> <span class="admonition-header">Data sharing</span></p>
+      <p>
+        Data shared with OpenAI may be used for model training. You
+        can disable AI features at any time from the Agent mode page.
+      </p>
+    </div>
+
+    <mat-checkbox class="consent-checkbox" [(ngModel)]="accepted">
+      I understand and consent to sharing my data with OpenAI.
+    </mat-checkbox>
+
+    <tp-form-actions
+      submitText="Enable AI features" submitButtonStyle="primary-outline green stroke"
+      [submitDisabled]="!accepted" buttonIdPrefix="aiConsentGrant"
+      [isSubmitting]="isSubmitting$ | async" (submitClick)="confirm()"
+      [cancellable]="true" cancelText="Not now" (cancel)="close()"
+    />
+  </div>
+</tp-modal>

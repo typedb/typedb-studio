@@ -4,9 +4,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Injectable, NgZone } from "@angular/core";
+import { inject, Injectable, NgZone } from "@angular/core";
 import { Observable } from "rxjs";
 import { environment } from "../environments/environment";
+import { AppData } from "./app-data.service";
 
 
 export interface ChatMessage {
@@ -21,14 +22,34 @@ export interface AICompactRequest {
     conversation: ChatMessage[];
 }
 
+/** Error thrown when an AI request is attempted without the user having granted
+ *  consent. This is the hard backstop: it makes it impossible for any code path
+ *  to send schema/chat data to the AI provider without opt-in, independent of
+ *  whatever UI gating exists upstream. */
+export class AiConsentRequiredError extends Error {
+    constructor() {
+        super("AI Agent mode is not enabled. Consent to data sharing is required.");
+        this.name = "AiConsentRequiredError";
+    }
+}
+
 
 @Injectable({
     providedIn: "root",
 })
 export class CloudService {
+    private appData = inject(AppData);
+
     constructor(private zone: NgZone) {}
 
+    /** Single enforcement point for all AI requests. Throws synchronously so a
+     *  consent-less call fails before any data leaves the machine. */
+    private assertConsent(): void {
+        if (!this.appData.aiConsent.isGranted()) throw new AiConsentRequiredError();
+    }
+
     aiChat(schema: string, conversation: ChatMessage[]): Observable<string> {
+        this.assertConsent();
         return new Observable<string>(subscriber => {
             const controller = new AbortController();
 
@@ -115,6 +136,7 @@ export class CloudService {
     }
 
     aiCompact(request: AICompactRequest): Observable<string> {
+        this.assertConsent();
         return new Observable<string>(subscriber => {
             const controller = new AbortController();
 

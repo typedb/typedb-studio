@@ -542,6 +542,12 @@ class ChatConversations {
         delete data.databases[databaseName];
         return this.writeStorage(data);
     }
+
+    /** Wipe all conversations across every database. Used when AI consent is
+     *  withdrawn and the user opts to also delete chat history. */
+    clearAll(): StorageWriteResult {
+        return this.writeStorage({ ...INITIAL_CHAT_CONVERSATIONS });
+    }
 }
 
 function parsePreferencesData(obj: Object | null): PreferencesData {
@@ -726,6 +732,56 @@ export class NodeLabelPrefs {
     }
 }
 
+const AI_CONSENT = "aiConsent";
+
+interface AiConsentData {
+    /** True once the user has explicitly opted in to AI Agent features, which
+     *  share the database schema and chat data with the AI backend (OpenAI).
+     *  Gates every AI Agent path; does NOT gate Intercom "AI Support". */
+    granted: boolean;
+    /** ms since epoch the consent was granted, for display/audit. null when
+     *  never granted or after withdrawal. */
+    grantedAt: number | null;
+}
+
+const INITIAL_AI_CONSENT: AiConsentData = {
+    granted: false,
+    grantedAt: null,
+};
+
+function parseAiConsentData(obj: Object | null): AiConsentData {
+    return Object.assign({}, INITIAL_AI_CONSENT, obj) as AiConsentData;
+}
+
+class AiConsent {
+    constructor(private storage: StorageService) {
+        if (this.storage.isAccessible && this.storage.read(AI_CONSENT, parseAiConsentData) == null) {
+            this.storage.write(AI_CONSENT, INITIAL_AI_CONSENT);
+        }
+    }
+
+    private readStorage(): AiConsentData {
+        if (!this.storage.isAccessible) return { ...INITIAL_AI_CONSENT };
+        return this.storage.read<AiConsentData>(AI_CONSENT, parseAiConsentData);
+    }
+
+    isGranted(): boolean {
+        return this.readStorage().granted;
+    }
+
+    grantedAt(): number | null {
+        return this.readStorage().grantedAt;
+    }
+
+    grant(): StorageWriteResult {
+        return this.storage.write(AI_CONSENT, { granted: true, grantedAt: Date.now() });
+    }
+
+    withdraw(): StorageWriteResult {
+        return this.storage.write(AI_CONSENT, { granted: false, grantedAt: null });
+    }
+}
+
 @Injectable({
     providedIn: "root",
 })
@@ -743,6 +799,7 @@ export class AppData {
     readonly chatConversations = new ChatConversations(this.storage);
     readonly panelLayout = new PanelLayout(this.storage);
     readonly nodeLabelPrefs = new NodeLabelPrefs(this.storage);
+    readonly aiConsent = new AiConsent(this.storage);
 
     constructor(private storage: StorageService) {
     }

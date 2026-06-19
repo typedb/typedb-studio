@@ -112,7 +112,7 @@
                   <div class="welcome-content">
                     <i class="fa-thin fa-sparkles"></i>
                     <h3>Build with AI agent</h3>
-                    <aside class="text-muted">Powered by OpenAI. Chat data is shared for model training purposes. Rate limits apply.<br/>AI code generation can make mistakes, so double-check it.</aside>
+                    <aside class="text-muted">Rate limits apply. AI code generation can make mistakes, so double-check it.</aside>
                   </div>
                 } @else {
                   <div class="spacer"></div>
@@ -175,6 +175,16 @@
                   </div>
                 </div>
               </form>
+            </div>
+
+            <!-- Perpetual data-sharing notice. Stays visible the whole session
+                 (unlike the welcome blurb) and is where consent is withdrawn. -->
+            <div class="ai-consent-footer">
+              <i class="fa-light fa-circle-info"></i>
+              <span>Powered by OpenAI. Your chat data is shared with the AI provider.</span>
+              @if (aiConsent.granted$ | async) {
+                <button type="button" class="consent-withdraw-link" (click)="aiConsent.withdraw()">Disable AI features</button>
+              }
             </div>
           </div>
         </div>

@@ -29,6 +29,7 @@ import { basicDark } from "../../framework/code-editor/theme";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { AppData } from "../../service/app-data.service";
 import { ChatState } from "../../service/chat-state.service";
+import { AiConsentState } from "../../service/ai-consent-state.service";
 import { DriverState } from "../../service/driver-state.service";
 import { QueryPageState } from "../../service/query-page-state.service";
 import { QueryTab, QueryTabsState } from "../../service/query-tabs-state.service";
@@ -81,6 +82,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     exportService = inject(QueryExportService);
     private appData = inject(AppData);
     private chatState = inject(ChatState);
+    private aiConsent = inject(AiConsentState);
     private snackbar = inject(SnackbarService);
     private dialog = inject(MatDialog);
     private router = inject(Router);
@@ -519,17 +521,24 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
         const logText = this.state.logOutput.control.value;
         if (!logText) return;
 
-        this.chatState.newConversation();
-        if (!this.chatState.selectedConversationId$.value) return;
+        // Gate before navigating: a single wand click would otherwise silently
+        // ship the schema + log to the AI provider. On first use this opens the
+        // consent modal explaining exactly what's shared; only on opt-in do we
+        // stash the message and navigate to Agent mode (which auto-sends it).
+        this.aiConsent.requireConsent().then(granted => {
+            if (!granted) return;
+            this.chatState.newConversation();
+            if (!this.chatState.selectedConversationId$.value) return;
 
-        const run = this.state.currentTabRuns[this.state.selectedRunIndex];
-        if (run?.query) {
-            this.chatState.pendingTitle = run.query;
-        }
-        this.chatState.pendingMessage = logText;
-        this.sentLogToAi = true;
-        setTimeout(() => this.sentLogToAi = false, 3000);
-        this.router.navigate(['/agent-mode']);
+            const run = this.state.currentTabRuns[this.state.selectedRunIndex];
+            if (run?.query) {
+                this.chatState.pendingTitle = run.query;
+            }
+            this.chatState.pendingMessage = logText;
+            this.sentLogToAi = true;
+            setTimeout(() => this.sentLogToAi = false, 3000);
+            this.router.navigate(['/agent-mode']);
+        });
     }
 
     canExportResults(): boolean {

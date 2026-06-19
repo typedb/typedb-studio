@@ -255,6 +255,38 @@
     }
 }
 
+.ai-consent-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px 16px 8px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--theme-on-secondary-2);
+
+    i {
+        font-size: 12px;
+        width: 12px;
+        height: 12px;
+    }
+
+    .consent-withdraw-link {
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        font-size: inherit;
+        color: var(--theme-grey);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+
+        &:hover {
+            color: var(--primary);
+        }
+    }
+}
+
 .input-top {
     padding: 12px;
 
