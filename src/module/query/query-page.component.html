@@ -35,7 +35,10 @@
                 <button mat-icon-button class="tab-scroll-button right" [class.visible]="canScrollRight" (click)="scrollTabsRight()">
                   <i class="fa-light fa-chevron-right"></i>
                 </button>
-                <button mat-icon-button class="new-query-tab-button" (click)="newQueryTab()" matTooltip="New query tab" [matTooltipShowDelay]="500">
+                <button mat-icon-button class="new-query-tab-button"
+                        (click)="newQueryTab()"
+                        (contextmenu)="openNewTabContextMenu($event)"
+                        matTooltip="New query tab" [matTooltipShowDelay]="500">
                   <i class="fa-light fa-plus"></i>
                 </button>
                 <div class="flex-spacer tabs-spacer"></div>
@@ -247,6 +250,7 @@
                             [graphPercent]="panelSizes[5]" (graphPercentChange)="onPanelResize(5, $event)"
                             [stylesPanePercent]="panelSizes[6]" (stylesPanePercentChange)="onPanelResize(6, $event)"
                             [(maximised)]="graphMaximised"
+                            (canvasElRebuilt)="onGraphCanvasRebuilt($event)"
                             (statusAction)="onGraphStatusAction($event)">
             </ts-graph-canvas>
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'raw'">
@@ -300,6 +304,27 @@
   </article>
 </ts-page-scaffold>
 
+<!-- New-tab (+) button context menu -->
+<div class="query-tab-context-menu-trigger"
+     [style.left.px]="newTabContextMenuPosition.x"
+     [style.top.px]="newTabContextMenuPosition.y"
+     [matMenuTriggerFor]="newTabContextMenu"
+     #newTabContextMenuTrigger="matMenuTrigger">
+</div>
+
+<mat-menu #newTabContextMenu="matMenu" [overlapTrigger]="false">
+  <span class="menu-content">
+    <button mat-menu-item (click)="newQueryTab()">
+      <i class="fa-light fa-plus"></i>
+      <span>New tab</span>
+    </button>
+    <button mat-menu-item (click)="goToSavedQueriesPage()">
+      <i class="fa-light fa-bookmark"></i>
+      <span>Saved queries</span>
+    </button>
+  </span>
+</mat-menu>
+
 <!-- Query tab context menu -->
 <div class="query-tab-context-menu-trigger"
      [style.left.px]="queryTabContextMenuPosition.x"
@@ -319,6 +344,8 @@
       <button mat-menu-item (click)="togglePinQueryTab(tab)">{{ tab?.pinned ? 'Unpin' : 'Pin' }}</button>
       <button mat-menu-item (click)="duplicateQueryTab(tab)">Duplicate</button>
       <button mat-menu-item (click)="openRenameTabDialog(tab)">Rename</button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="saveQueryTab(tab)">Save query</button>
     </span>
   </ng-template>
 </mat-menu>

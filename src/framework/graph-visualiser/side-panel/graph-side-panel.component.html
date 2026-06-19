@@ -1,53 +1,98 @@
-<div class="panel">
-  <!-- Top-level tabs -->
-  <div class="tab-bar">
-    <button class="tab" [class.active]="topTab === 'elements'" (click)="topTab = 'elements'">Elements @if (isHighlightActive) { <span class="highlight-indicator"></span> }</button>
-    <button class="tab" [class.active]="topTab === 'presets'" (click)="topTab = 'presets'">Themes</button>
-    <button class="tab" [class.active]="topTab === 'customise'" (click)="topTab = 'customise'">Customise</button>
-  </div>
+<!-- Inspector + tabbed panel are direct flex children of :host so the host's
+     inline-style flex-direction (set via @HostBinding) is what the child
+     resizable directive reads via getComputedStyle(parent). Keyed on dock so
+     the resizable subtree is rebuilt when the axis flips (the resize directive
+     locks orientation at init). -->
+@if (dock === 'bottom') {
+  <ng-container *ngTemplateOutlet="explorer"></ng-container>
+  <ng-container *ngTemplateOutlet="panel"></ng-container>
+} @else {
+  <ng-container *ngTemplateOutlet="explorer"></ng-container>
+  <ng-container *ngTemplateOutlet="panel"></ng-container>
+}
 
-  <div class="panel-scroll">
-    @if (topTab === 'elements') {
-      <ts-graph-side-panel-elements-tab [visualiser]="visualiser"></ts-graph-side-panel-elements-tab>
-    }
-    @if (topTab === 'presets') {
-      <ts-graph-styles-themes-tab [visualiser]="visualiser"></ts-graph-styles-themes-tab>
-    }
-    @if (topTab === 'customise') {
-      <ts-graph-side-panel-customise-tab [visualiser]="visualiser"></ts-graph-side-panel-customise-tab>
-    }
-  </div>
+<ng-template #explorer>
+  <!-- The dock-side kebab is anchored to the inspector pane's top-right so it
+       sits beside the "Inspector" title regardless of dock orientation (the
+       inspector is full-width when docked right, the left pane when bottom). -->
+  <div class="explorer-pane" resizable [percent]="inspectorPercent" (percentChange)="inspectorPercent = $event">
+    <div class="side-panel-header">
+      <h5 class="explorer-title">Explorer</h5>
+      <button class="dock-kebab" [matMenuTriggerFor]="dockMenu"
+              matTooltip="Dock side" [matTooltipShowDelay]="500">
+        <i class="fa-light fa-ellipsis"></i>
+      </button>
+      <mat-menu #dockMenu="matMenu" class="dock-menu">
+        <button mat-menu-item [class.active]="dock === 'bottom'" (click)="setDock('bottom')">
+          <i class="fa-light fa-window-maximize"></i><span>Dock to bottom</span>
+        </button>
+        <button mat-menu-item [class.active]="dock === 'right'" (click)="setDock('right')">
+          <i class="fa-light fa-sidebar-flip"></i><span>Dock to right</span>
+        </button>
+      </mat-menu>
+    </div>
 
-  <!-- Footer actions (always visible) -->
-  <div class="panel-footer">
-    <div class="footer-toggles">
-      <div class="footer-option">
-        <span class="footer-option-label">Labels in nodes</span>
-        <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
-          <mat-select [value]="labelMode" panelClass="graph-style-select-panel" (selectionChange)="setLabelMode($event.value)">
-            <mat-option value="auto">Visible (auto color)</mat-option>
-            <mat-option value="fixed">Visible (black/white)</mat-option>
-            <mat-option value="hidden">Hidden</mat-option>
-          </mat-select>
-        </mat-form-field>
+    @if (showSelectionModeToggle && hasSelection) {
+      <div class="selection-mode-toggle">
+        <button class="mode-button"
+                [class.active]="selectionMode === 'instances'"
+                (click)="selectionModeChange.emit('instances')">
+          <span>here</span>
+        </button>
+        <button class="mode-button"
+                [class.active]="selectionMode === 'types'"
+                (click)="selectionModeChange.emit('types')">
+          <span>every '{{ currentTypeLabel }}'</span>
+        </button>
       </div>
-      <mat-slide-toggle color="primary" [checked]="showHoverLabel" (change)="toggleShowHoverLabel()" labelPosition="before">
-        Show label on hover
-      </mat-slide-toggle>
-      <mat-slide-toggle color="primary" [checked]="degreeScaling" (change)="toggleDegreeScaling()" labelPosition="before">
-        Scale nodes by connection count
-      </mat-slide-toggle>
-      <mat-slide-toggle color="primary" [checked]="colorEdgesByConstraint" (change)="toggleEdgeColoring()" labelPosition="before">
-        Color edges by constraint
-      </mat-slide-toggle>
+    }
+
+    @if (selectionMode === 'types') {
+      <ts-graph-type-explorer
+                             [selectedType]="selectedTypeForTypeMode"
+                             [run]="run"
+                             [visualiser]="visualiser"/>
+    } @else {
+      <ts-graph-instance-explorer
+                        [type]="selectedType"
+                        [instanceIID]="selectedInstanceIID"
+                        [run]="run"
+                        [visualiser]="visualiser"/>
+    }
+  </div>
+</ng-template>
+
+<ng-template #panel>
+  <div class="panel" resizable [percent]="lowerPanelPercent" (percentChange)="lowerPanelPercent = $event">
+    <!-- Top-level tabs -->
+    <div class="tab-bar">
+      <button class="tab" [class.active]="topTab === 'elements'" (click)="topTab = 'elements'">Elements @if (isHighlightActive) { <span class="highlight-indicator"></span> }</button>
+      <button class="tab" [class.active]="topTab === 'presets'" (click)="topTab = 'presets'">Themes</button>
+      <button class="tab" [class.active]="topTab === 'customise'" (click)="topTab = 'customise'">Customise</button>
     </div>
-    <div class="footer-buttons">
-      <button class="action-button" (click)="reLayout()" matTooltip="Re-randomise positions and re-run layout" [matTooltipShowDelay]="500">
-        <i class="fa-light fa-refresh"></i> Redraw graph
-      </button>
-      <button class="action-button reset" (click)="resetAll()" matTooltip="Reset all styles to defaults" [matTooltipShowDelay]="500">
-        <i class="fa-light fa-arrow-u-turn-up-left"></i> Reset all styles
-      </button>
+
+    <div class="panel-scroll">
+      @if (topTab === 'elements') {
+        <ts-graph-side-panel-elements-tab [visualiser]="visualiser" [run]="run"></ts-graph-side-panel-elements-tab>
+      }
+      @if (topTab === 'presets') {
+        <ts-graph-styles-themes-tab [visualiser]="visualiser"></ts-graph-styles-themes-tab>
+      }
+      @if (topTab === 'customise') {
+        <ts-graph-side-panel-customise-tab [visualiser]="visualiser"></ts-graph-side-panel-customise-tab>
+      }
+    </div>
+
+    <!-- Footer actions (always visible) -->
+    <div class="panel-footer">
+      <div class="footer-buttons">
+        <button class="action-button" (click)="reLayout()" matTooltip="Re-randomise positions and re-run layout" [matTooltipShowDelay]="500">
+          <i class="fa-light fa-refresh"></i> Redraw graph
+        </button>
+        <button class="action-button reset" (click)="resetAll()" matTooltip="Reset all styles to defaults" [matTooltipShowDelay]="500">
+          <i class="fa-light fa-arrow-u-turn-up-left"></i> Reset all styles
+        </button>
+      </div>
     </div>
   </div>
-</div>
+</ng-template>

@@ -1,26 +1,138 @@
-import { Component, inject, Input } from "@angular/core";
-import { MatSelectModule } from "@angular/material/select";
+import { Component, EventEmitter, HostBinding, inject, Input, OnChanges, OnDestroy, Output, SimpleChanges } from "@angular/core";
+import { NgTemplateOutlet } from "@angular/common";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatSlideToggleModule } from "@angular/material/slide-toggle";
-import { GraphStyleService } from "../../../service/graph-style.service";
+import { MatMenuModule } from "@angular/material/menu";
+import { ResizableDirective } from "@hhangular/resizable";
+import { Subscription } from "rxjs";
+import { GraphStyleService, GraphSidePanelDock } from "../../../service/graph-style.service";
+import { RunOutputState } from "../../../service/query-page-state.service";
+import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
+import { SelectionMode } from "../../../service/graph-view-state.service";
 import { GraphVisualiser } from "../engine";
+import { InspectableSelection, TypeSelection } from "../engine/interaction-handler";
 import { ElementsTabComponent } from "./elements-tab.component";
 import { ThemesTabComponent } from "./themes-tab.component";
 import { CustomiseTabComponent } from "./customise-tab.component";
+import { GraphInstanceExplorerComponent } from "../explorer/graph-instance-explorer.component";
+import { GraphTypeExplorerComponent } from "../explorer/graph-type-explorer.component";
 
 @Component({
     selector: "ts-graph-side-panel",
     templateUrl: "graph-side-panel.component.html",
-    styleUrls: ["graph-side-panel.component.scss"],
+    styleUrls: ["graph-side-panel.host.scss", "graph-side-panel.component.scss"],
     imports: [
-        MatSelectModule, MatTooltipModule, MatFormFieldModule, MatSlideToggleModule,
+        NgTemplateOutlet,
+        MatTooltipModule, MatMenuModule,
+        ResizableDirective,
         ElementsTabComponent, ThemesTabComponent, CustomiseTabComponent,
+        GraphInstanceExplorerComponent, GraphTypeExplorerComponent,
     ],
 })
-export class GraphSidePanelComponent {
+export class GraphSidePanelComponent implements OnChanges, OnDestroy {
+
+    // Force the dock-driven layout via inline style. The view-encapsulated SCSS
+    // sets these too, but on tab switch the host's stylesheet sometimes lags one
+    // frame behind the child resizable directive's `ngAfterViewInit`. That
+    // directive calls `getComputedStyle(parent).flexDirection` on the inspector
+    // pane's parent (which is :host now that the Inspector + tabbed panel are
+    // direct flex children again); without the inline style it reads the
+    // browser default "row" and latches into the wrong orientation.
+    @HostBinding("style.flexDirection") get hostFlexDirection(): string {
+        return this.dock === "bottom" ? "row" : "column";
+    }
+    @HostBinding("style.display") readonly hostDisplay = "flex";
+
+    /** Dock class on the host: `.dock-bottom` flips the inner Inspector/tabbed
+     *  split to horizontal; `.dock-right` carries the divider border on the
+     *  left edge. */
+    @HostBinding("class.dock-bottom") get isDockBottom(): boolean { return this.dock === "bottom"; }
+    @HostBinding("class.dock-right") get isDockRight(): boolean { return this.dock === "right"; }
 
     @Input() visualiser: GraphVisualiser | null = null;
+    @Input() run: RunOutputState | null = null;
+    @Input() selectionMode: SelectionMode = "types";
+    /** When true, the inspector header shows the instance/type selection-mode
+     *  toggle. Only the graph-explorer canvas enables it; other canvases
+     *  (query/schema/chat) have no type-vs-instance distinction. */
+    @Input() showSelectionModeToggle = false;
+
+    /** Emitted when the user flips the inspector-header mode toggle. The host
+     *  (graph tab, via the canvas) owns `selectionMode` and applies it. */
+    @Output() selectionModeChange = new EventEmitter<SelectionMode>();
+
+    // Selection state, populated from the visualiser's interaction handler.
+    selectedType: SchemaConcept | null = null;
+    selectedInstanceIID: string | null = null;
+    /** Type currently selected in type-mode (parallel to selectedType /
+     *  selectedInstanceIID for the instance-mode inspector). */
+    selectedTypeForTypeMode: SchemaConcept | null = null;
+
+    // Internal vertical split between Inspector and the tabbed lower pane.
+    inspectorPercent = 50;
+    lowerPanelPercent = 50;
+
+    private schemaState = inject(SchemaState);
+    private selectionSub: Subscription | null = null;
+    private typeSelectionSub: Subscription | null = null;
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes["visualiser"]) {
+            this.selectionSub?.unsubscribe();
+            this.typeSelectionSub?.unsubscribe();
+            this.selectionSub = null;
+            this.typeSelectionSub = null;
+            this.selectedType = null;
+            this.selectedInstanceIID = null;
+            this.selectedTypeForTypeMode = null;
+            const v = this.visualiser;
+            if (v) {
+                this.selectionSub = v.interactionHandler.selection$.subscribe(sel => {
+                    this.applyInstanceSelection(sel);
+                });
+                this.typeSelectionSub = v.interactionHandler.typeSelection$.subscribe(sel => {
+                    this.applyTypeSelection(sel);
+                });
+            }
+        }
+    }
+
+    ngOnDestroy() {
+        this.selectionSub?.unsubscribe();
+        this.typeSelectionSub?.unsubscribe();
+    }
+
+    private applyInstanceSelection(selection: InspectableSelection | null) {
+        if (!selection) {
+            this.selectedType = null;
+            this.selectedInstanceIID = null;
+            return;
+        }
+        const schema = this.schemaState.value$.value;
+        if (!schema) return;
+        const type = selection.kind === "entity"
+            ? schema.entities[selection.typeLabel]
+            : selection.kind === "relation"
+                ? schema.relations[selection.typeLabel]
+                : schema.attributes[selection.typeLabel];
+        if (!type) return;
+        this.selectedType = type;
+        this.selectedInstanceIID = selection.instanceId;
+    }
+
+    private applyTypeSelection(selection: TypeSelection | null) {
+        if (!selection) {
+            this.selectedTypeForTypeMode = null;
+            return;
+        }
+        const schema = this.schemaState.value$.value;
+        if (!schema) return;
+        const map = selection.typeKind === "entityType" ? schema.entities
+                  : selection.typeKind === "relationType" ? schema.relations
+                  : schema.attributes;
+        const type = map[selection.typeLabel];
+        if (!type) return;
+        this.selectedTypeForTypeMode = type;
+    }
 
     styleService = inject(GraphStyleService);
     topTab: "elements" | "presets" | "customise" = "elements";
@@ -29,53 +141,31 @@ export class GraphSidePanelComponent {
         return this.styleService.isHighlightActive();
     }
 
-    // -- Footer controls --
-
-    get colorEdgesByConstraint(): boolean {
-        return this.styleService.colorEdgesByConstraint;
+    /** Whether the active mode currently has a node selected — drives whether
+     *  the here / every-type toggle is shown (it's local to a live selection). */
+    get hasSelection(): boolean {
+        return this.selectionMode === "types"
+            ? this.selectedTypeForTypeMode != null
+            : this.selectedType != null && this.selectedInstanceIID != null;
     }
 
-    toggleEdgeColoring(): void {
-        this.styleService.colorEdgesByConstraint = !this.styleService.colorEdgesByConstraint;
-        this.visualiser?.colorEdgesByConstraintIndex(!this.styleService.colorEdgesByConstraint);
+    /** Type label of the current selection, for the "every '<type>'" toggle. */
+    get currentTypeLabel(): string {
+        return (this.selectionMode === "types" ? this.selectedTypeForTypeMode : this.selectedType)?.label ?? "";
     }
 
-    get labelMode(): "auto" | "fixed" | "hidden" {
-        if (!this.styleService.labelsVisible) return "hidden";
-        return this.styleService.labelColorMode === "fixed" ? "fixed" : "auto";
+
+    // -- Dock side --
+
+    get dock(): GraphSidePanelDock {
+        return this.styleService.sidePanelDock;
     }
 
-    setLabelMode(mode: "auto" | "fixed" | "hidden"): void {
-        if (mode === "hidden") {
-            this.styleService.labelsVisible = false;
-        } else {
-            this.styleService.labelsVisible = true;
-            this.styleService.labelColorMode = mode === "fixed" ? "fixed" : "auto";
-        }
-        this.visualiser?.restoreLabels();
+    setDock(dock: GraphSidePanelDock): void {
+        this.styleService.sidePanelDock = dock;
     }
 
-    get showHoverLabel(): boolean {
-        return this.styleService.showHoverLabel;
-    }
-
-    toggleShowHoverLabel(): void {
-        this.styleService.showHoverLabel = !this.styleService.showHoverLabel;
-        this.visualiser?.restoreLabels();
-    }
-
-    get degreeScaling(): boolean {
-        return this.styleService.degreeScaling;
-    }
-
-    toggleDegreeScaling(): void {
-        this.styleService.degreeScaling = !this.styleService.degreeScaling;
-        if (this.styleService.degreeScaling) {
-            this.visualiser?.applyStructureMode();
-        } else {
-            this.visualiser?.applyStyleUpdate();
-        }
-    }
+    // -- Footer actions --
 
     reLayout(): void {
         this.visualiser?.reLayout();

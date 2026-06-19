@@ -1,10 +1,10 @@
 <div class="detail-panel">
   <!-- Stale data banner -->
-  @if (isDataStale) {
+  @if (state.isDataStale) {
     <div class="stale-data-banner">
       <i class="fa-light fa-clock-rotate-left"></i>
       <span>Data was loaded in a different transaction</span>
-      <button mat-stroked-button (click)="refresh()">
+      <button mat-stroked-button (click)="state.refresh()">
         <i class="fa-light fa-refresh"></i>
         Refresh
       </button>
@@ -31,16 +31,16 @@
     </div>
   }
   <div class="detail-content">
-    @if (needsTransaction) {
+    @if (state.needsTransaction) {
       <div class="transaction-prompt">
         <i class="fa-light fa-lock"></i>
         <p>Open a transaction to explore your data</p>
-        <button mat-stroked-button (click)="openTransactionAndLoad()">
+        <button mat-stroked-button (click)="state.openTransactionAndLoad()">
           <i class="fa-light fa-play"></i>
           Open read transaction
         </button>
       </div>
-    } @else if (loading) {
+    } @else if (state.loading) {
       <div class="loading-container">
         <mat-spinner diameter="40"></mat-spinner>
       </div>
@@ -55,11 +55,11 @@
           <div class="type-row">
             <span class="type-info">
               @if (type.supertype) {
-                <span class="type-label" [ngClass]="typeKindLabel">{{ type.label }}@if (type.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
+                <span class="type-label" [ngClass]="state.typeKindLabel">{{ type.label }}@if (type.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
                 <span class="type-muted">sub {{ type.supertype.label }}</span>
               } @else {
-                <span class="type-muted">{{ typeKindLabel }}</span>
-                <span class="type-label" [ngClass]="typeKindLabel">{{ type.label }}@if (type.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
+                <span class="type-muted">{{ state.typeKindLabel }}</span>
+                <span class="type-label" [ngClass]="state.typeKindLabel">{{ type.label }}@if (type.kind === 'attributeType') {<em class="value-type">, value {{ $any(type).valueType }}</em>}</span>
               }
             </span>
             <button class="open-details-button" (click)="exploreType()">
@@ -78,15 +78,15 @@
             <h6>Links</h6>
           </button>
           @if (linksCollapsed) {
-          } @else if (linksLoading) {
+          } @else if (state.linksLoading) {
             <div class="relations-loading">
               <mat-spinner diameter="24"></mat-spinner>
             </div>
-          } @else if (ownLinks.length === 0) {
+          } @else if (state.ownLinks.length === 0) {
             <p class="text-muted">No links</p>
           } @else {
             <div class="links-list">
-              @for (link of ownLinks; track link.roleLabel + link.playerIID) {
+              @for (link of state.ownLinks; track link.roleLabel + link.playerIID) {
                 <div class="link-card">
                   <div class="link-info">
                     <span class="role-label">{{ link.roleLabel }}</span>
@@ -124,12 +124,12 @@
           <h6>Attributes</h6>
         </button>
         @if (attributesCollapsed) {
-        } @else if (attributes.length === 0) {
+        } @else if (state.attributes.length === 0) {
           <p class="text-muted">No attributes</p>
         } @else {
           <table class="attributes-table">
             <tbody>
-              @for (attr of attributes; track attr.type) {
+              @for (attr of state.attributes; track attr.type) {
                 <tr>
                   <td class="attr-label">{{ attr.type }}<em class="value-type">, value {{ attr.valueType }}</em></td>
                   <td class="attr-value">
@@ -159,11 +159,11 @@
           <h6>Relations</h6>
         </button>
         @if (relationsCollapsed) {
-        } @else if (relationsLoading) {
+        } @else if (state.relationsLoading) {
           <div class="relations-loading">
             <mat-spinner diameter="24"></mat-spinner>
           </div>
-        } @else if (allRelations.length === 0) {
+        } @else if (state.allRelations.length === 0) {
           <p class="text-muted">No relations</p>
         } @else {
           <!-- Filter chips -->
@@ -173,15 +173,15 @@
                 [class.active]="selectedRelationType === null"
                 (click)="selectRelationType(null)">
               All
-              <span class="chip-count">{{ allRelations.length }}</span>
+              <span class="chip-count">{{ state.allRelations.length }}</span>
             </button>
-            @for (relType of relationTypes; track relType) {
+            @for (relType of state.relationTypes; track relType) {
               <button
                   class="filter-chip"
                   [class.active]="selectedRelationType === relType"
                   (click)="selectRelationType(relType)">
                 {{ relType }}
-                <span class="chip-count">{{ getRelationTypeCount(relType) }}</span>
+                <span class="chip-count">{{ state.getRelationTypeCount(relType) }}</span>
               </button>
             }
           </div>
@@ -278,15 +278,15 @@
           <h6>Owners</h6>
         </button>
         @if (ownersCollapsed) {
-        } @else if (ownersLoading) {
+        } @else if (state.ownersLoading) {
           <div class="relations-loading">
             <mat-spinner diameter="24"></mat-spinner>
           </div>
-        } @else if (owners.length === 0) {
+        } @else if (state.owners.length === 0) {
           <p class="text-muted">No owners</p>
         } @else {
           <div class="links-list">
-            @for (owner of owners; track owner.ownerIID) {
+            @for (owner of state.owners; track owner.ownerIID) {
               <div class="link-card">
                 <div class="link-info">
                   <div class="player-details">

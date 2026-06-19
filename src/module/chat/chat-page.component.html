@@ -100,11 +100,11 @@
                 @for (msg of msgs; track trackMessageById($index, msg); let i = $index) {
                   @if (isStreaming && i === msgs!.length - 2) {
                     <div class="streaming-pair">
-                      <ts-chat-message [message]="msgs![msgs!.length - 2]" (runQuery)="onRunQuery($event)" (sendLogToAi)="onSendLogToAi($event)"/>
-                      <ts-chat-message [message]="msgs![msgs!.length - 1]" (runQuery)="onRunQuery($event)" (sendLogToAi)="onSendLogToAi($event)"/>
+                      <ts-chat-message [message]="msgs![msgs!.length - 2]" (runQuery)="onRunQuery($event)" (saveQuery)="onSaveQuery($event)" (sendLogToAi)="onSendLogToAi($event)"/>
+                      <ts-chat-message [message]="msgs![msgs!.length - 1]" (runQuery)="onRunQuery($event)" (saveQuery)="onSaveQuery($event)" (sendLogToAi)="onSendLogToAi($event)"/>
                     </div>
                   } @else if (!(isStreaming && i === msgs!.length - 1)) {
-                    <ts-chat-message [message]="msg" (runQuery)="onRunQuery($event)" (sendLogToAi)="onSendLogToAi($event)"/>
+                    <ts-chat-message [message]="msg" (runQuery)="onRunQuery($event)" (saveQuery)="onSaveQuery($event)" (sendLogToAi)="onSendLogToAi($event)"/>
                   }
                 }
 

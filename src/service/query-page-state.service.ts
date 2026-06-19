@@ -1152,7 +1152,7 @@ function compareCells(a: string | undefined, b: string | undefined): number {
     return a.localeCompare(b);
 }
 
-type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noAnswers" | "error" | "multiQuery";
+export type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noQueryAnswers" | "noInstancesFound" | "error" | "multiQuery";
 
 export class GraphOutputState {
 
@@ -1164,6 +1164,12 @@ export class GraphOutputState {
     private _preservedGraph: Graph | null = null;
     private _preservedCamera: { x: number; y: number; ratio: number; angle: number } | null = null;
     private _pendingResponses: ApiResponse<QueryResponse>[] = [];
+    /** Display-attribute responses recorded *before* the visualiser exists.
+     *  Drained into the visualiser as soon as `pushInternal` constructs it. */
+    private _pendingDisplayAttrs: Array<{ res: ApiResponse<QueryResponse>; ownerVar: string; attrVar: string }> = [];
+    /** Pre-visualiser buffer for the label override map (same pattern as
+     *  display-attrs). Drained into the visualiser as soon as it's created. */
+    private _pendingLabelOverrides: Map<string, string> | null = null;
     private _styleService: GraphStyleService;
 
     constructor(styleService: GraphStyleService) {
@@ -1193,6 +1199,29 @@ export class GraphOutputState {
         this.pushInternal(res);
     }
 
+    /** Forward a display-attribute response to the visualiser, or buffer it
+     *  if the visualiser hasn't been constructed yet (instance push hasn't
+     *  fired). Buffered records are replayed before any instance build runs. */
+    recordDisplayAttributes(res: ApiResponse<QueryResponse>, ownerVar: string, attrVar: string = "a"): void {
+        if (this.visualiser) {
+            this.visualiser.recordDisplayAttributes(res, ownerVar, attrVar);
+            this.visualiser.refreshLabels();
+        } else {
+            this._pendingDisplayAttrs.push({ res, ownerVar, attrVar });
+        }
+    }
+
+    /** Apply the full per-type label override map to the visualiser, or buffer
+     *  it if the visualiser doesn't exist yet (so the very first build's
+     *  labels reflect persisted user overrides). */
+    applyLabelOverrides(overrides: Map<string, string>): void {
+        if (this.visualiser) {
+            this.visualiser.applyLabelOverrides(overrides);
+        } else {
+            this._pendingLabelOverrides = new Map(overrides);
+        }
+    }
+
     private pushInternal(res: ApiResponse<QueryResponse>) {
         if (isApiErrorResponse(res)) {
             this.status = "error";
@@ -1205,6 +1234,18 @@ export class GraphOutputState {
             const sigma = createSigmaRenderer(this._canvasEl!, defaultSigmaSettings as any, graph);
             const layout = Layouts.createD3ForceSupervisor(graph);
             this.visualiser = new GraphVisualiser(graph, sigma, layout, this._styleService);
+            // Replay any display-attribute responses that arrived before the
+            // visualiser existed so the imminent build picks up correct labels.
+            if (this._pendingDisplayAttrs.length > 0) {
+                for (const p of this._pendingDisplayAttrs) {
+                    this.visualiser.recordDisplayAttributes(p.res, p.ownerVar, p.attrVar);
+                }
+                this._pendingDisplayAttrs = [];
+            }
+            if (this._pendingLabelOverrides) {
+                this.visualiser.applyLabelOverrides(this._pendingLabelOverrides);
+                this._pendingLabelOverrides = null;
+            }
         }
 
         switch (res.ok.answerType) {
@@ -1222,7 +1263,14 @@ export class GraphOutputState {
                     }
                 }
                 this.visualiser.colorEdgesByConstraintIndex(!this._styleService.colorEdgesByConstraint);
-                this.status = "ok";
+                // A 0-answer result only means "no answers" for the *initial*
+                // query. For an additive expand (e.g. "load attributes here" on
+                // an instance that happens to have none) the follow-up fetch
+                // legitimately returns nothing — keep the existing graph and its
+                // "ok" status rather than blanking the canvas with the misleading
+                // "Query completed. No answers were returned." overlay.
+                if (res.ok.answers.length > 0) this.status = "ok";
+                else if (this.visualiser.graph.order === 0) this.status = "noQueryAnswers";
                 break;
             }
             case "conceptDocuments": {

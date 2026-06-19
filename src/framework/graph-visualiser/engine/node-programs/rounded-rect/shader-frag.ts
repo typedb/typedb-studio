@@ -12,7 +12,7 @@ uniform float u_correctionRatio;
 uniform float u_sizeRatio;
 
 const float CORNER_RADIUS = 0.25;
-const float BORDER_ABSOLUTE = 1.2;
+const float BORDER_ABSOLUTE = 0.8;
 const vec4 transparent = vec4(0.0, 0.0, 0.0, 0.0);
 
 float sdRoundedRect(vec2 p, vec2 halfSize, float r) {

@@ -32,6 +32,8 @@ import { ChatState } from "../../service/chat-state.service";
 import { DriverState } from "../../service/driver-state.service";
 import { QueryPageState } from "../../service/query-page-state.service";
 import { QueryTab, QueryTabsState } from "../../service/query-tabs-state.service";
+import { SavedQueriesState, isDefaultQueryTabName } from "../../service/saved-queries-state.service";
+import { SaveQueryDialogComponent, SaveQueryDialogData } from "../saved-queries/save-query-dialog/save-query-dialog.component";
 import { RunOutputState } from "../../service/query-page-state.service";
 import { QueryExportService, SerializedOutput } from "../../service/query-export.service";
 import { SnackbarService } from "../../service/snackbar.service";
@@ -68,6 +70,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     @ViewChildren(GraphCanvasComponent) graphCanvasComponents!: QueryList<GraphCanvasComponent>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     @ViewChild("queryTabContextMenuTrigger") queryTabContextMenuTrigger!: MatMenuTrigger;
+    @ViewChild("newTabContextMenuTrigger") newTabContextMenuTrigger!: MatMenuTrigger;
     @ViewChild("runTabContextMenuTrigger") runTabContextMenuTrigger!: MatMenuTrigger;
     @ViewChild("tabsScrollContainer") tabsScrollContainer?: ElementRef<HTMLElement>;
     @ViewChild("runTabsScrollContainer") runTabsScrollContainer?: ElementRef<HTMLElement>;
@@ -81,6 +84,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     private snackbar = inject(SnackbarService);
     private dialog = inject(MatDialog);
     private router = inject(Router);
+    private savedQueries = inject(SavedQueriesState);
 
     // Query tab context menu state
     queryTabContextMenuPosition = { x: 0, y: 0 };
@@ -91,6 +95,9 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     runTabContextMenuPosition = { x: 0, y: 0 };
     runTabContextMenuRun: RunOutputState | null = null;
     runTabContextMenuTabIndex = 0;
+
+    // (+) button context menu state
+    newTabContextMenuPosition = { x: 0, y: 0 };
 
     graphMaximised = false;
 
@@ -313,6 +320,15 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
         if (action === "viewLog") this.state.outputTypeControl.patchValue("log");
     }
 
+    /** The graph canvas rebuilt its host element (dock axis flipped). The old
+     *  element is now detached, so re-home the current run's renderer onto the
+     *  new one — otherwise this run and all future ones render onto a dead node
+     *  and nothing appears. */
+    onGraphCanvasRebuilt(el: HTMLElement) {
+        this.canvasEl = el;
+        this.state.setGraphCanvasEl(el);
+    }
+
     runQuery() {
         this.state.runCurrentTabQuery();
     }
@@ -329,6 +345,19 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     newQueryTab() {
         this.queryTabsState.newTab();
         this.scrollTabsToEnd();
+    }
+
+    /** Right-click on the (+) button — pops a small menu with "Open empty
+     *  tab" (same as left-click) and a shortcut to the Saved Queries page. */
+    openNewTabContextMenu(event: MouseEvent) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.newTabContextMenuPosition = { x: event.clientX, y: event.clientY };
+        this.newTabContextMenuTrigger.openMenu();
+    }
+
+    goToSavedQueriesPage() {
+        this.router.navigate(["/saved-queries"]);
     }
 
     private scrollTabsToEnd() {
@@ -410,6 +439,40 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
 
     duplicateQueryTab(tab: QueryTab) {
         this.queryTabsState.duplicateTab(tab);
+    }
+
+    /**
+     * Snapshot the tab's current query text and persist it under a name.
+     * If the tab still has its auto-generated "Query N" name we prompt the
+     * user first; otherwise we save under the existing tab name directly.
+     */
+    saveQueryTab(tab: QueryTab) {
+        const query = this.queryTabsState.getTabControl(tab).value;
+        if (!query || !query.trim()) {
+            this.snackbar.warn("Tab is empty — nothing to save");
+            return;
+        }
+        const commit = (name: string) => {
+            this.savedQueries.add(name, query);
+            this.snackbar.success(`Saved "${name}"`);
+        };
+        if (!isDefaultQueryTabName(tab.name)) {
+            commit(tab.name);
+            return;
+        }
+        const ref = this.dialog.open(SaveQueryDialogComponent, {
+            data: { suggestedName: "" } as SaveQueryDialogData,
+            width: "400px",
+        });
+        ref.afterClosed().subscribe((name: string | undefined) => {
+            if (!name) return;
+            // Mirror the chosen name onto the tab itself: the user just gave
+            // this query a meaningful identity, and leaving the tab labelled
+            // "Query 7" would be a UX disconnect (and force them through the
+            // dialog again if they re-save later).
+            this.queryTabsState.renameTab(tab, name);
+            commit(name);
+        });
     }
 
     // Run tab methods

@@ -203,6 +203,9 @@ export interface PersistedBreadcrumbItem {
 export interface PersistedTypeTableTab {
     kind: "type-table";
     typeLabel: string;
+    /** Set for kind tables (all instances of a root kind). When present the tab
+     *  is rebuilt via a synthetic kind concept rather than a schema type lookup. */
+    rootKind?: "entity" | "relation" | "attribute";
     typeqlFilter?: string;
     breadcrumbs?: PersistedBreadcrumbItem[];
     pinned?: boolean;
@@ -316,6 +319,73 @@ class QueryTabs {
 
     setTabs(tabs: PersistedQueryTab[], selectedTabIndex: number): StorageWriteResult {
         return this.writeStorage({ tabs, selectedTabIndex });
+    }
+}
+
+const SAVED_QUERIES = "savedQueries";
+
+export interface PersistedSavedQuery {
+    id: string;
+    name: string;
+    query: string;
+    /** ms since epoch — used for default ordering (newest first). */
+    savedAt: number;
+}
+
+interface SavedQueriesData {
+    queries: PersistedSavedQuery[];
+}
+
+const INITIAL_SAVED_QUERIES: SavedQueriesData = { queries: [] };
+
+function parseSavedQueriesData(obj: Object | null): SavedQueriesData {
+    return Object.assign({}, INITIAL_SAVED_QUERIES, obj) as SavedQueriesData;
+}
+
+export class SavedQueries {
+    constructor(private storage: StorageService) {
+        if (this.storage.isAccessible && this.readStorage() == null) {
+            this.writeStorage(INITIAL_SAVED_QUERIES);
+        }
+    }
+
+    private readStorage(): SavedQueriesData {
+        if (!this.storage.isAccessible) return { ...INITIAL_SAVED_QUERIES };
+        return this.storage.read<SavedQueriesData>(SAVED_QUERIES, parseSavedQueriesData);
+    }
+
+    private writeStorage(data: SavedQueriesData): StorageWriteResult {
+        return this.storage.write(SAVED_QUERIES, data);
+    }
+
+    list(): PersistedSavedQuery[] {
+        return [...this.readStorage().queries];
+    }
+
+    add(name: string, query: string): PersistedSavedQuery {
+        const data = this.readStorage();
+        const entry: PersistedSavedQuery = {
+            id: crypto.randomUUID(),
+            name,
+            query,
+            savedAt: Date.now(),
+        };
+        data.queries.push(entry);
+        this.writeStorage(data);
+        return entry;
+    }
+
+    remove(id: string): StorageWriteResult {
+        const data = this.readStorage();
+        data.queries = data.queries.filter(q => q.id !== id);
+        return this.writeStorage(data);
+    }
+
+    rename(id: string, name: string): StorageWriteResult {
+        const data = this.readStorage();
+        const q = data.queries.find(x => x.id === id);
+        if (q) q.name = name;
+        return this.writeStorage(data);
     }
 }
 
@@ -595,6 +665,67 @@ class PanelLayout {
     }
 }
 
+const NODE_LABEL_PREFS = "nodeLabelPrefs";
+
+interface NodeLabelPrefsData {
+    /** Per-database, per-type override. Value is the attribute type label to
+     *  use as the instance's display label; absence means "let the heuristic
+     *  choose". Kept here rather than under graph style so "Reset all styles"
+     *  doesn't wipe the user's labelling choices. */
+    databases: {
+        [databaseName: string]: {
+            [typeLabel: string]: string;
+        };
+    };
+}
+
+const INITIAL_NODE_LABEL_PREFS: NodeLabelPrefsData = { databases: {} };
+
+function parseNodeLabelPrefs(obj: Object | null): NodeLabelPrefsData {
+    const merged = Object.assign({}, INITIAL_NODE_LABEL_PREFS, obj) as NodeLabelPrefsData;
+    if (!merged.databases) merged.databases = {};
+    return merged;
+}
+
+export class NodeLabelPrefs {
+    constructor(private storage: StorageService) {
+        if (this.storage.isAccessible && this.readStorage() == null) {
+            this.writeStorage(INITIAL_NODE_LABEL_PREFS);
+        }
+    }
+
+    private readStorage(): NodeLabelPrefsData {
+        if (!this.storage.isAccessible) return { ...INITIAL_NODE_LABEL_PREFS };
+        return this.storage.read<NodeLabelPrefsData>(NODE_LABEL_PREFS, parseNodeLabelPrefs);
+    }
+
+    private writeStorage(data: NodeLabelPrefsData): StorageWriteResult {
+        return this.storage.write(NODE_LABEL_PREFS, data);
+    }
+
+    /** Read the override for one type. `null` means "auto" (no override). */
+    get(database: string, typeLabel: string): string | null {
+        const data = this.readStorage();
+        return data.databases[database]?.[typeLabel] ?? null;
+    }
+
+    /** Read every override for a database as a fresh Map. */
+    getAll(database: string): Map<string, string> {
+        const data = this.readStorage();
+        const perDb = data.databases[database] ?? {};
+        return new Map(Object.entries(perDb));
+    }
+
+    /** Set or clear the override for one type. Passing `null` clears it. */
+    set(database: string, typeLabel: string, attrTypeLabel: string | null): StorageWriteResult {
+        const data = this.readStorage();
+        if (!data.databases[database]) data.databases[database] = {};
+        if (attrTypeLabel == null) delete data.databases[database][typeLabel];
+        else data.databases[database][typeLabel] = attrTypeLabel;
+        return this.writeStorage(data);
+    }
+}
+
 @Injectable({
     providedIn: "root",
 })
@@ -608,8 +739,10 @@ export class AppData {
     readonly preferences = new Preferences(this.storage);
     readonly dataExplorerTabs = new DataExplorerTabs(this.storage);
     readonly queryTabs = new QueryTabs(this.storage);
+    readonly savedQueries = new SavedQueries(this.storage);
     readonly chatConversations = new ChatConversations(this.storage);
     readonly panelLayout = new PanelLayout(this.storage);
+    readonly nodeLabelPrefs = new NodeLabelPrefs(this.storage);
 
     constructor(private storage: StorageService) {
     }

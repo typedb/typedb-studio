@@ -22,7 +22,7 @@ import { RouterLink } from "@angular/router";
 import { Subject, Subscription, combineLatest } from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, take } from "rxjs/operators";
 import { TypeTableTab, DataEditorState, BreadcrumbItem } from "../../../service/data-editor-state.service";
-import { SchemaConcept } from "../../../service/schema-state.service";
+import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { ApiResponse, Attribute, Concept, ConceptRow, ConceptRowAnswer, isApiErrorResponse, QueryResponse } from "@typedb/driver-http";
 import { SnackbarService } from "../../../service/snackbar.service";
@@ -127,6 +127,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         private driver: DriverState,
         private dataEditorState: DataEditorState,
         private snackbar: SnackbarService,
+        private schemaState: SchemaState,
     ) {}
 
     ngOnInit() {
@@ -412,7 +413,13 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
                 }
             }
 
-            const query = `match $instance isa ${this.tab.type.label}; ${tabFilterClause}${filterClause}reduce $count = count;`;
+            // The kind matcher binds $y across the supertype chain, so collapse
+            // to distinct instances before counting; a plain type match is 1:1.
+            const isaSegment = this.tab.rootKind
+                ? `$instance isa $y; ${this.tab.rootKind} $y;`
+                : `$instance isa ${this.tab.type.label};`;
+            const distinctSegment = this.tab.rootKind ? `select $instance; distinct; ` : "";
+            const query = `match ${isaSegment} ${tabFilterClause}${filterClause}${distinctSegment}reduce $count = count;`;
 
             this.driver.query(query).subscribe({
                 next: (res: ApiResponse<QueryResponse>) => {
@@ -600,13 +607,18 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         if (this.dataSource.length === 0) return;
 
         const attrType = this.tab.type;
-        const valueType = (attrType as any).valueType;
+        const tabValueType = (attrType as any).valueType;
 
-        // Build query to count owners for all attribute values in current page
-        // Each branch binds its own $attr so we can match the value back to the row
+        // Build query to count owners for all attribute values in current page.
+        // Each branch binds its own $attr so we can match the value back to the row.
+        // For a kind table the rows span many attribute types, so we constrain by
+        // each row's *own* type label/value rather than the tab's synthetic
+        // "attribute" placeholder (which is a reserved keyword and can't be an isa target).
         const valueBranches = this.dataSource.map(row => {
+            const rowType = this.tab.rootKind ? (row["%type"] as string) : attrType.label;
+            const valueType = this.tab.rootKind ? ((row["%valueType"] as string) ?? tabValueType) : tabValueType;
             const formattedValue = this.formatAttributeValueForQuery(row["%iid"], valueType);
-            return `{ $owner has $attr; $attr isa ${attrType.label}; $attr == ${formattedValue}; }`;
+            return `{ $owner has $attr; $attr isa ${rowType}; $attr == ${formattedValue}; }`;
         }).join(" or ");
 
         const query = `match ${valueBranches};`;
@@ -797,9 +809,19 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
      *
      * When there are no attribute columns, we skip the second match entirely.
      */
-    private buildInstanceQuery(offset: number, limit: number): string {
-        const type = this.tab.type;
+    /**
+     * The `match` line(s) selecting `$instance`. For a single type that's
+     * `$instance isa <label>;`. For a kind table it's the kind matcher
+     * `$instance isa $y; <kind> $y;` (mirrors graph-view's kindInstancesQuery).
+     * `$y` is never projected, so callers' `select $instance` stays valid.
+     */
+    private isaClause(): string {
+        return this.tab.rootKind
+            ? `$instance isa $y;\n    ${this.tab.rootKind} $y;`
+            : `$instance isa ${this.tab.type.label};`;
+    }
 
+    private buildInstanceQuery(offset: number, limit: number): string {
         // User filter - search in all text attributes
         let filterClause = "";
         if (this.filterText) {
@@ -840,7 +862,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         if (sortByAttribute) {
             // When sorting by attribute, include it in first match, use distinct before pagination
             return `match
-    $instance isa ${type.label};
+    ${this.isaClause()}
     ${tabFilterLine}${filterLine}try { $instance has ${this.sortColumn} $${this.sortColumn}; };
 sort $${this.sortColumn} ${this.sortDirection};
 select $instance;
@@ -849,15 +871,24 @@ offset ${offset}; limit ${limit};${secondMatch}`.trim();
         } else if (needsDistinct) {
             // Filtering without sort - need distinct to deduplicate instances matching multiple attrs
             return `match
-    $instance isa ${type.label};
+    ${this.isaClause()}
     ${tabFilterLine}${filterLine}
+select $instance;
+distinct;
+offset ${offset}; limit ${limit};${secondMatch}`.trim();
+        } else if (this.tab.rootKind) {
+            // Kind table, no filter/sort: the kind matcher binds $y across the
+            // supertype chain, so dedupe instances with distinct before paging.
+            return `match
+    ${this.isaClause()}
+    ${tabFilterLine}
 select $instance;
 distinct;
 offset ${offset}; limit ${limit};${secondMatch}`.trim();
         } else {
             // Default sort (by IID) without filter - simple first match is stable
             return `match
-    $instance isa ${type.label};
+    ${this.isaClause()}
     ${tabFilterLine}
 offset ${offset}; limit ${limit};${secondMatch}`.trim();
         }
@@ -867,8 +898,6 @@ offset ${offset}; limit ${limit};${secondMatch}`.trim();
      * Build query for attribute types (single match - no two-match approach needed).
      */
     private buildAttributeTypeQuery(offset: number, limit: number): string {
-        const type = this.tab.type;
-
         // Filter on the attribute value
         let filterClause = "";
         if (this.filterText) {
@@ -879,11 +908,15 @@ offset ${offset}; limit ${limit};${secondMatch}`.trim();
         const tabFilterLine = tabFilter ? `${tabFilter}\n    ` : "";
         const filterLine = filterClause ? `${filterClause}\n    ` : "";
 
+        // Kind table over all attributes binds $y across the type chain, so
+        // dedupe before paging (each attribute instance is identified by value).
+        const distinctLine = this.tab.rootKind ? `distinct;\n` : "";
+
         return `match
-    $instance isa ${type.label};
+    ${this.isaClause()}
     ${tabFilterLine}${filterLine}
 select $instance;
-offset ${offset}; limit ${limit};`.trim();
+${distinctLine}offset ${offset}; limit ${limit};`.trim();
     }
 
     private readonly MAX_DISPLAY_LENGTH = 50;
@@ -984,11 +1017,25 @@ offset ${offset}; limit ${limit};`.trim();
     }
 
     onRowClick(row: InstanceRow) {
+        // For a kind table the rows belong to many real types, so resolve the
+        // row's own type for the detail header + breadcrumb. Falls back to the
+        // tab's (synthetic) type if the schema lookup misses.
+        const rowType = this.tab.rootKind ? this.resolveRowType(row) : null;
+        const type = rowType ?? this.tab.type;
         // Create breadcrumb back to this table
         const breadcrumbs: BreadcrumbItem[] = [
-            { kind: "type-table", typeLabel: this.tab.type.label, typeKind: this.tab.type.kind }
+            { kind: "type-table", typeLabel: type.label, typeKind: type.kind }
         ];
-        this.dataEditorState.openInstanceDetail(this.tab.type, row["%iid"], breadcrumbs);
+        this.dataEditorState.openInstanceDetail(type, row["%iid"], breadcrumbs);
+    }
+
+    /** Look up a row's concrete schema type by its `%type` label (kind tables). */
+    private resolveRowType(row: InstanceRow): SchemaConcept | null {
+        const label = row["%type"] as string | undefined;
+        if (!label) return null;
+        const schema = this.schemaState.value$.value;
+        if (!schema) return null;
+        return schema.entities[label] ?? schema.relations[label] ?? schema.attributes[label] ?? null;
     }
 
     onPageChange(event: any) {

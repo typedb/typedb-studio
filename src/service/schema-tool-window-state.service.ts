@@ -100,6 +100,12 @@ export class SchemaToolWindowState {
     rootNodesCollapsed: Record<SchemaTreeRootNode["label"], boolean> = this.appData.viewState.schemaToolWindowState().rootNodesCollapsed;
     highlightedConceptLabel$ = new BehaviorSubject<string | null>(null);
 
+    /** Live search query that filters the tree to concept nodes whose label
+     *  contains it (case-insensitive). Setting an empty string disables the
+     *  filter and restores the user's existing expansion state — the search
+     *  overlay never mutates `expandedKeys`. */
+    searchQuery$ = new BehaviorSubject<string>("");
+
     /** Keys of currently-expanded nodes. */
     private expandedKeys = new Set<string>();
 
@@ -111,6 +117,9 @@ export class SchemaToolWindowState {
             this.buildView();
         });
         this.linksVisibility$.subscribe(() => {
+            this.rebuildFlatNodes();
+        });
+        this.searchQuery$.subscribe(() => {
             this.rebuildFlatNodes();
         });
     }
@@ -150,7 +159,48 @@ export class SchemaToolWindowState {
     }
 
     private rebuildFlatNodes() {
+        const query = this.searchQuery$.value.trim().toLowerCase();
+        const searchActive = query.length > 0;
         const flat: FlatSchemaTreeNode[] = [];
+
+        if (searchActive) {
+            // Search mode. Only concept nodes are matched (per spec — "we
+            // only search types, not capabilities like owns"). A subtree is
+            // kept iff it contains at least one matching concept; matching
+            // ancestors auto-expand so the path to every match is revealed.
+            // Link nodes are filtered out entirely.
+            const matchesQuery = (node: SchemaTreeNode): boolean =>
+                node.nodeKind === "concept" && node.concept.label.toLowerCase().includes(query);
+
+            const subtreeHasMatch = new Map<string, boolean>();
+            const computeHasMatch = (node: SchemaTreeNode): boolean => {
+                const cached = subtreeHasMatch.get(node.key);
+                if (cached !== undefined) return cached;
+                if (node.nodeKind === "link") { subtreeHasMatch.set(node.key, false); return false; }
+                let any = matchesQuery(node);
+                for (const child of node.children ?? []) {
+                    if (computeHasMatch(child)) any = true;
+                }
+                subtreeHasMatch.set(node.key, any);
+                return any;
+            };
+            for (const root of this.dataSource$.value) computeHasMatch(root);
+
+            const visit = (node: SchemaTreeNode, level: number) => {
+                if (node.nodeKind === "link") return;
+                if (!subtreeHasMatch.get(node.key)) return;
+                const keptChildren = (node.children ?? []).filter(c =>
+                    c.nodeKind !== "link" && (subtreeHasMatch.get(c.key) ?? false));
+                const expandable = keptChildren.length > 0;
+                flat.push({ node, level, expandable, expanded: expandable });
+                for (const child of keptChildren) visit(child, level + 1);
+            };
+            for (const root of this.dataSource$.value) visit(root, 0);
+            this.flatNodes$.next(flat);
+            return;
+        }
+
+        // Non-search: original behaviour, driven by the user's expandedKeys.
         const visit = (node: SchemaTreeNode, level: number) => {
             const children = this.visibleChildren(node);
             const expandable = children.length > 0;

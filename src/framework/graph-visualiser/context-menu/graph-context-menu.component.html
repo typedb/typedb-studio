@@ -1,0 +1,117 @@
+<div class="context-menu-trigger"
+     [style.left.px]="triggerPosition.x"
+     [style.top.px]="triggerPosition.y"
+     [matMenuTriggerFor]="menu"
+     #trigger="matMenuTrigger">
+</div>
+
+<!--
+  Single menu with up to three sections — Load relations, Load links (role
+  players, relation targets only), then Load attributes — each introduced by a
+  sticky group header. Each row carries the same two scope-chip click targets
+  (here / every '<type>'). Plain <div> rows so the row itself is never a click
+  target; stopPropagation on chip clicks keeps mat-menu from interpreting them
+  as row activation.
+-->
+<mat-menu #menu="matMenu" [overlapTrigger]="false" class="scoped-action-menu">
+  <!--
+    `(click)="$event.stopPropagation()"` on the wrapper keeps the menu from
+    closing when a drag-text-select on the node label header ends — the
+    completing click would otherwise bubble up to mat-menu's outside-click
+    handler. Same trick the connection widget uses.
+  -->
+  <span class="menu-content" (click)="$event.stopPropagation()">
+  @if (target && !isAttributeTarget) {
+    <aside class="node-label">{{ nodeLabel }}</aside>
+    <mat-divider/>
+    @if (hasRelations) {
+      <div class="section-header">Load relations</div>
+      <div class="scope-row">
+        <span class="scope-row-label">*</span>
+        <button class="scope-chip scope-chip--relation"
+                [class.loaded]="allRelationsLoadedHere"
+                (click)="$event.stopPropagation(); toggleAllRelations('instance')">here</button>
+        <button class="scope-chip scope-chip--relation"
+                [class.loaded]="allRelationsLoaded"
+                (click)="$event.stopPropagation(); toggleAllRelations('type')">every '{{ typeChipLabel }}'</button>
+      </div>
+      @for (row of relationRows; track row.label) {
+        <div class="scope-row">
+          <span class="scope-row-label">{{ row.label }}</span>
+          <button class="scope-chip scope-chip--relation"
+                  [class.loaded]="isRelationLoadedHere(row)"
+                  (click)="$event.stopPropagation(); toggleRelation(row, 'instance')">here</button>
+          <button class="scope-chip scope-chip--relation"
+                  [class.loaded]="isRelationLoaded(row)"
+                  (click)="$event.stopPropagation(); toggleRelation(row, 'type')">every '{{ typeChipLabel }}'</button>
+        </div>
+      }
+    }
+    @if (hasRelations && hasRoles) {
+      <mat-divider></mat-divider>
+    }
+    @if (hasRoles) {
+      <div class="section-header">Load links</div>
+      <div class="scope-row">
+        <span class="scope-row-label">*</span>
+        <button class="scope-chip scope-chip--role"
+                [class.loaded]="allRolesLoadedHere"
+                (click)="$event.stopPropagation(); toggleAllRoles('instance')">here</button>
+        <button class="scope-chip scope-chip--role"
+                [class.loaded]="allRolesLoaded"
+                (click)="$event.stopPropagation(); toggleAllRoles('type')">every '{{ typeChipLabel }}'</button>
+      </div>
+      @for (row of roleRows; track row.label) {
+        <div class="scope-row">
+          <span class="scope-row-label">{{ row.shortName }}</span>
+          <button class="scope-chip scope-chip--role"
+                  [class.loaded]="isRoleLoadedHere(row)"
+                  (click)="$event.stopPropagation(); toggleRole(row, 'instance')">here</button>
+          <button class="scope-chip scope-chip--role"
+                  [class.loaded]="isRoleLoaded(row)"
+                  (click)="$event.stopPropagation(); toggleRole(row, 'type')">every '{{ typeChipLabel }}'</button>
+        </div>
+      }
+    }
+    @if ((hasRelations || hasRoles) && hasAttributes) {
+      <mat-divider></mat-divider>
+    }
+    @if (hasAttributes) {
+      <div class="section-header">Load attributes</div>
+      <div class="scope-row">
+        <span class="scope-row-label">*</span>
+        <button class="scope-chip scope-chip--attribute"
+                [class.loaded]="allAttributesLoadedHere"
+                (click)="$event.stopPropagation(); toggleAllAttributes('instance')">here</button>
+        <button class="scope-chip scope-chip--attribute"
+                [class.loaded]="allAttributesLoaded"
+                (click)="$event.stopPropagation(); toggleAllAttributes('type')">every '{{ typeChipLabel }}'</button>
+      </div>
+      @for (row of attributeRows; track row.label) {
+        <div class="scope-row">
+          <span class="scope-row-label">{{ row.label }}</span>
+          <button class="scope-chip scope-chip--attribute"
+                  [class.loaded]="isAttributeLoadedHere(row)"
+                  (click)="$event.stopPropagation(); toggleAttribute(row, 'instance')">here</button>
+          <button class="scope-chip scope-chip--attribute"
+                  [class.loaded]="isAttributeLoaded(row)"
+                  (click)="$event.stopPropagation(); toggleAttribute(row, 'type')">every '{{ typeChipLabel }}'</button>
+        </div>
+      }
+    }
+
+    <!-- Per-type colour: a restricted swatch palette, applied to every node of
+         the target's type. The selected swatch (if any) gets a ring. -->
+    <mat-divider></mat-divider>
+    <div class="colour-swatches">
+      @for (hex of colorSwatches; track hex) {
+        <button class="colour-swatch"
+                [class.selected]="isColorSelected(hex)"
+                [style.background]="hex"
+                [style.color]="hex"
+                (click)="$event.stopPropagation(); setNodeColor(hex)"></button>
+      }
+    </div>
+  }
+  </span>
+</mat-menu>

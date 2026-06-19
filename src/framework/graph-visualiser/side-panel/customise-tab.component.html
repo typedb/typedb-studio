@@ -23,6 +23,47 @@
             <span class="angle-value">{{ fillOpacityPercent }}%</span>
           </div>
         </div>
+
+        <div class="style-row">
+          <span class="style-label">Labels in nodes</span>
+          <div class="style-controls">
+            <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
+              <mat-select [value]="labelMode" panelClass="graph-style-select-panel" (selectionChange)="setLabelMode($event.value)">
+                <mat-option value="auto">Visible (auto color)</mat-option>
+                <mat-option value="fixed">Visible (black/white)</mat-option>
+                <mat-option value="hidden">Hidden</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="style-row">
+          <span class="style-label">Show label on hover</span>
+          <div class="style-controls">
+            <mat-slide-toggle color="primary" [checked]="showHoverLabel" (change)="toggleShowHoverLabel()"></mat-slide-toggle>
+          </div>
+        </div>
+
+        <div class="style-row">
+          <span class="style-label">Scale nodes by link count</span>
+          <div class="style-controls">
+            <mat-slide-toggle color="primary" [checked]="degreeScaling" (change)="toggleDegreeScaling()"></mat-slide-toggle>
+          </div>
+        </div>
+
+        <div class="style-row">
+          <span class="style-label">Color edges by constraint</span>
+          <div class="style-controls">
+            <mat-slide-toggle color="primary" [checked]="colorEdgesByConstraint" (change)="toggleEdgeColoring()"></mat-slide-toggle>
+          </div>
+        </div>
+
+        <div class="style-row">
+          <span class="style-label">Curve edges</span>
+          <div class="style-controls">
+            <mat-slide-toggle color="primary" [checked]="edgesCurvedByDefault" (change)="toggleEdgesCurved()"></mat-slide-toggle>
+          </div>
+        </div>
       }
 
       <!-- Kinds section -->
@@ -163,6 +204,23 @@
         <h6>Edges</h6>
       </button>
       @if (!edgesCollapsed) {
+        <div class="style-row">
+          <div class="type-label-row">
+            <span class="style-label">All edges</span>
+            @if (hasDefaultEdgeColorOverride) {
+              <button class="clear-button" (click)="clearDefaultEdgeColor()" matTooltip="Reset to default" [matTooltipShowDelay]="500">
+                <i class="fa-light fa-arrow-u-turn-up-left"></i>
+              </button>
+            }
+          </div>
+          <div class="style-controls">
+            <span matTooltip="Color for all edges without their own colour" [matTooltipShowDelay]="500">
+              <input type="color" class="color-input"
+                     [value]="getDefaultEdgeColor()"
+                     (input)="setDefaultEdgeColor($any($event.target).value)">
+            </span>
+          </div>
+        </div>
         @for (row of edgeLabels; track row.tag) {
           <div class="style-row">
             <div class="type-label-row">
@@ -254,6 +312,7 @@
   @switch (shapeValue) {
     @case ('rounded-rect') { <svg class="shape-icon" viewBox="0 0 24 14"><rect x="1" y="2" width="22" height="10" rx="2.5" fill="currentColor"/></svg> }
     @case ('diamond') { <svg class="shape-icon" viewBox="0 0 24 14"><polygon points="12,1 23,7 12,13 1,7" fill="currentColor"/></svg> }
+    @case ('hexagon') { <svg class="shape-icon" viewBox="0 0 24 14"><polygon points="12,1 22,4.5 22,9.5 12,13 2,9.5 2,4.5" fill="currentColor"/></svg> }
     @case ('ellipse') { <svg class="shape-icon" viewBox="0 0 24 14"><ellipse cx="12" cy="7" rx="10" ry="5.5" fill="currentColor"/></svg> }
   }
 </ng-template>

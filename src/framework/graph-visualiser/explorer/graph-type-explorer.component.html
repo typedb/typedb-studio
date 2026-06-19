@@ -1,0 +1,120 @@
+<div class="explorer-panel">
+  @if (!hasSelection) {
+    <div class="explorer-placeholder">
+      <i class="fa-light fa-shapes"></i>
+      <p>No type selected</p>
+      <p class="placeholder-hint">Click a node in the graph to explore its type</p>
+    </div>
+  } @else {
+    <div class="detail-panel explorer-detail">
+      <div class="detail-content">
+
+        <!-- Type row (no collapsible heading, same shape as instance inspector) -->
+        <div class="detail-section type-section">
+          <div class="type-row">
+            <span class="type-info">
+              @if (selectedType!.supertype) {
+                <span class="type-label" [ngClass]="typeKindLabel">{{ selectedType!.label }}@if (selectedType!.kind === 'attributeType') {<em class="value-type">, value {{ $any(selectedType).valueType }}</em>}</span>
+                <span class="type-muted">sub {{ selectedType!.supertype.label }}</span>
+              } @else {
+                <span class="type-muted">{{ typeKindLabel }}</span>
+                <span class="type-label" [ngClass]="typeKindLabel">{{ selectedType!.label }}@if (selectedType!.kind === 'attributeType') {<em class="value-type">, value {{ $any(selectedType).valueType }}</em>}</span>
+              }
+            </span>
+            <span class="instance-count">{{ instanceCount }} in graph</span>
+          </div>
+        </div>
+
+        @if (supportsConnections) {
+          @if (selectedType!.kind === 'relationType' && roleChips.length > 0) {
+            <div class="detail-section">
+              <h6 class="section-title">Links</h6>
+              <div class="connection-chips">
+                <button class="connection-chip role all-chip"
+                        [class.loaded]="allRolesLoaded"
+                        [disabled]="allRolesLoaded"
+                        matTooltip="Load all roles" [matTooltipShowDelay]="500"
+                        (click)="loadAllRoles()">
+                  *
+                </button>
+                @for (row of roleChips; track row.label) {
+                  <button class="connection-chip role"
+                          [class.loaded]="isRoleLoaded(row)"
+                          (click)="toggleRoleChip(row)">
+                    {{ row.shortName }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="detail-section">
+            <h6 class="section-title">Attributes</h6>
+            @if (attributeChips.length === 0) {
+              <p class="text-muted">This type owns no attributes.</p>
+            } @else {
+              <div class="connection-chips">
+                <button class="connection-chip attribute all-chip"
+                        [class.loaded]="allAttributesLoaded"
+                        [disabled]="allAttributesLoaded"
+                        matTooltip="Load all attributes" [matTooltipShowDelay]="500"
+                        (click)="loadAllAttributes()">
+                  *
+                </button>
+                @for (row of attributeChips; track row.label) {
+                  <button class="connection-chip attribute"
+                          [class.loaded]="isAttributeLoaded(row)"
+                          (click)="toggleAttributeChip(row)">
+                    {{ row.label }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="detail-section">
+            <h6 class="section-title">Relations</h6>
+            @if (relationChips.length === 0) {
+              <p class="text-muted">This type plays no roles.</p>
+            } @else {
+              <div class="connection-chips">
+                <button class="connection-chip relation all-chip"
+                        [class.loaded]="allRelationsLoaded"
+                        [disabled]="allRelationsLoaded"
+                        matTooltip="Load all relations" [matTooltipShowDelay]="500"
+                        (click)="loadAllRelations()">
+                  *
+                </button>
+                @for (row of relationChips; track row.label) {
+                  <button class="connection-chip relation"
+                          [class.loaded]="isRelationLoaded(row)"
+                          (click)="toggleRelationChip(row)">
+                    {{ row.label }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="detail-section">
+            <h6 class="section-title">Display Settings</h6>
+            <div class="display-setting-row">
+              <span class="display-setting-label">Display attribute</span>
+              <mat-form-field subscriptSizing="dynamic" class="display-setting-select">
+                <mat-select [value]="currentLabelOverride"
+                            panelClass="graph-style-select-panel"
+                            (selectionChange)="onLabelOverrideChange($event.value)">
+                  <mat-option value="">(auto)</mat-option>
+                  @for (attr of attributeChips; track attr.label) {
+                    <mat-option [value]="attr.label">{{ attr.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+</div>

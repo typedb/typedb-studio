@@ -1,0 +1,246 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "colors";
+@use "shapes";
+
+// Override the absolute positioning that the data-side inspector applies via
+// :host. Inside the side panel we live in a flex column and need to honor the
+// parent's allocated height.
+:host {
+    display: block;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: static;
+    inset: auto;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+}
+
+.explorer-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.explorer-title-bar {
+    display: flex;
+    align-items: center;
+    // Match the height of the tab bar in the customise/elements area
+    // (8px vertical padding + 13px line + 2px active underline ≈ 35px).
+    height: 35px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--theme-secondary-deep-grey);
+    flex-shrink: 0;
+
+    h5 {
+        margin: 0;
+    }
+}
+
+.explorer-placeholder {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px;
+    color: var(--theme-grey);
+    text-align: center;
+
+    > i {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
+
+    p {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .placeholder-hint {
+        font-size: 12px;
+        opacity: 0.75;
+    }
+}
+
+.explorer-detail {
+    flex: 1;
+    min-height: 0; // allow inner overflow to scroll
+    position: relative;
+}
+
+.instance-iid {
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    color: var(--theme-grey);
+    margin-left: auto;
+    user-select: text;
+}
+
+// Per-row "Add to graph" affordance next to each attribute type label in the
+// Attributes table. Icon-only; matches the framed look of `.add-to-graph-button`
+// (background + border) but in a compact square instead of a wide pill.
+//
+// Positioned absolutely against the cell so it sits flush against the right
+// edge regardless of how short the type label is — the cell reserves a
+// right-padding track for it (see `.attr-label` in the shared SCSS).
+// "Reveal in graph" for the inspected instance itself, under its IID.
+.reveal-self {
+    margin-top: 8px;
+}
+
+// In role-player details, stack the IID under the type (rather than beside it)
+// so the link-info column stays narrow and leaves more width for the attribute
+// list to its right.
+.link-info {
+    min-width: 0;
+
+    .player-details {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1px;
+    }
+}
+
+.add-attr-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: var(--theme-secondary-purple);
+    border: 1px solid var(--theme-secondary-deep-grey);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--theme-grey);
+    transition: background-color 0.15s ease;
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+
+    &:hover {
+        background: var(--theme-secondary-mid-deep-grey);
+    }
+
+    // All three properties must be overridden together (see AGENTS.md CSS
+    // pitfall about icon sizing in buttons).
+    i {
+        font-size: 11px;
+        width: 11px;
+        height: 11px;
+        line-height: 1;
+    }
+}
+
+// Relation-card header: type + IID on the left, action buttons on the right.
+// The two groups wrap independently, so when the pane is too narrow to hold the
+// actions beside the title they drop onto their own left-aligned line below it.
+.relation-card-header {
+    flex-wrap: wrap;
+    // `gap` is the base's 10px — but that doubles as the row gap once we wrap,
+    // bulking up the two-row header. Use a tight row gap, keep the column gap.
+    row-gap: 4px;
+
+    // Title group (type + IID) takes the row's slack and keeps a sensible
+    // minimum width, so the actions group wraps below it rather than crushing
+    // it. `flex-basis: auto` keeps the basis content-sized (not a tall box);
+    // `min-width` is the wrap threshold.
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1 1 auto;
+        min-width: 160px;
+    }
+
+    .relation-iid {
+        flex: 0 1 auto;
+        min-width: 0;
+    }
+}
+
+// The two relation actions ("Add to graph"/"Reveal" + "Add all to graph") sit
+// adjacent. They stay beside the title while there's room and, when wrapped to
+// their own line, are left-aligned (default flex-start) — under the IID.
+.header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+
+    .open-details-button {
+        margin-top: 0;
+        flex-shrink: 0;
+    }
+}
+
+// Keep the role-player meta on one line — type label with the IID to its right.
+// The shared base stacks these into a column under its < 300px container query,
+// but the narrow explorer pane otherwise loses the side-by-side layout.
+.link-info .player-details {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.section-bulk-action {
+    display: flex;
+    justify-content: flex-start;
+    padding: 4px 0 16px;
+
+    // Attributes section sits directly above the attributes table which
+    // already provides its own row spacing, so the bulk-action button
+    // doesn't need as much breathing room below.
+    &--tight {
+        padding-bottom: 8px;
+    }
+}
+
+.add-to-graph-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    min-height: 28px;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--theme-grey);
+    background: var(--theme-secondary-purple);
+    border: 1px solid var(--theme-secondary-deep-grey);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    // Match `.open-details-button` ("Add to graph") hover behaviour — just nudge
+    // the background a touch darker; no green border or text colour change.
+    &:hover {
+        background: var(--theme-secondary-mid-deep-grey);
+    }
+
+    // All three properties must be overridden together — base.scss sets a
+    // global `i { width: 16px; height: 16px; font-size: 16px }`, so setting
+    // only font-size leaves the 16px box dimensions and pushes the glyph
+    // off-center against the button's text baseline.
+    i {
+        font-size: 12px;
+        width: 12px;
+        height: 12px;
+        line-height: 1;
+    }
+
+    // Compact icon-only variant (used per-row)
+    &:not(:has(:not(i))) {
+        padding: 4px 6px;
+    }
+}
+

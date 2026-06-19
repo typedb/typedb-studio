@@ -23,24 +23,34 @@ export class ThemesTabComponent {
     appliedPreset: string | null = null;
     private appliedTimer: ReturnType<typeof setTimeout> | null = null;
 
-    applyPreset(preset: "default" | "structure" | "uniform" | "classic" | "grayscale"): void {
+    applyPreset(preset: "default" | "cal" | "structure" | "uniform" | "classic" | "grayscale"): void {
         if (preset === "default") {
             this.styleService.applyDefaultPreset();
             this.visualiser?.restoreLabels();
             this.visualiser?.applyEdgeStyleUpdate();
+            this.visualiser?.applyEdgeCurvature();
             this.visualiser?.colorEdgesByConstraintIndex(true);
+        } else if (preset === "cal") {
+            this.styleService.applyCalAestheticsPreset();
+            this.visualiser?.restoreLabels();
+            this.visualiser?.applyEdgeStyleUpdate();
+            this.visualiser?.applyEdgeCurvature();
         } else if (preset === "structure") {
             this.styleService.applyStructurePreset();
             this.visualiser?.applyStructureMode();
+            this.visualiser?.applyEdgeCurvature();
         } else if (preset === "uniform") {
             this.styleService.applyUniformPreset();
             this.visualiser?.restoreLabels();
+            this.visualiser?.applyEdgeCurvature();
         } else if (preset === "classic") {
             this.styleService.applyClassicPreset();
             this.visualiser?.restoreLabels();
+            this.visualiser?.applyEdgeCurvature();
         } else if (preset === "grayscale") {
             this.styleService.applyGrayscalePreset();
             this.visualiser?.restoreLabels();
+            this.visualiser?.applyEdgeCurvature();
         }
         if (this.appliedTimer) clearTimeout(this.appliedTimer);
         this.appliedPreset = preset;

@@ -52,6 +52,7 @@
                   [style.--chip-color]="getTypeColor(row.typeLabel, row.kind)"
                   (click)="toggleHighlightType(row.typeLabel)"
                   (dblclick)="soloHighlightType(row.typeLabel)"
+                  (contextmenu)="onTypeChipContextMenu($event, row)"
                   (mouseenter)="onChipHoverType(row.typeLabel)"
                   (mouseleave)="onChipHoverEnd()">
             {{ row.typeLabel }}
@@ -90,3 +91,18 @@
     </div>
   </div>
 </div>
+
+<div class="type-context-menu-trigger"
+     [style.left.px]="typeMenuPosition.x"
+     [style.top.px]="typeMenuPosition.y"
+     [matMenuTriggerFor]="typeContextMenu"
+     #typeContextMenuTrigger="matMenuTrigger">
+</div>
+
+<mat-menu #typeContextMenu="matMenu" [overlapTrigger]="false">
+  @if (typeMenuTarget) {
+    <span class="menu-group-label">All '{{ typeMenuTarget.typeLabel }}' instances ({{ getTypeCount(typeMenuTarget.typeLabel) }})</span>
+    <button mat-menu-item (click)="loadLinksForAllOfType()">Load links</button>
+    <button mat-menu-item (click)="loadAttributesForAllOfType()">Load attributes</button>
+  }
+</mat-menu>

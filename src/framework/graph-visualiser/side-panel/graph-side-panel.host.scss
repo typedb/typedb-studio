@@ -1,0 +1,47 @@
+// :host rules for ts-graph-side-panel ONLY. Kept in a separate file because
+// the tab components (elements-tab, themes-tab, customise-tab) share
+// graph-side-panel.component.scss as their styleUrls, so any `:host` rule
+// in that shared file would also be re-emitted with each tab's encapsulation
+// ID and override the tab host's default `display: inline`. That broke
+// scroll: the tabs ended up as `display: flex; height: 100%; overflow: hidden`
+// (from the leaked :host rule), so their inner content was clipped instead
+// of overflowing .panel-scroll. Keep this file unshared.
+
+:host {
+  display: flex !important;
+  position: relative;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  white-space: normal !important;
+  font-weight: var(--font-weight-regular);
+  background: var(--theme-deep-purple);
+  gap: 0 !important;
+
+  // Default flex-direction is column (right dock). The component sets the
+  // axis-flipping inline style via @HostBinding so the child resizable
+  // directive reads the right orientation when it inits.
+  flex-direction: column !important;
+  &.dock-bottom { flex-direction: row !important; }
+
+  // Divider border on the edge facing the canvas, per dock side.
+  &.dock-right  { border-left: 1px solid var(--theme-secondary-deep-grey); }
+  &.dock-bottom { border-top: 1px solid var(--theme-secondary-deep-grey); }
+}
+
+// Drag-handle styling for the Inspector/tabbed-panel split. The handle's
+// orientation comes from the resize directive based on the parent's
+// flex-direction (which is :host now).
+:host ::ng-deep > app-drag-handle[direction="vertical"] {
+  height: 5px;
+  margin-top: -2px;
+  margin-bottom: -3px;
+  z-index: 2;
+}
+:host ::ng-deep > app-drag-handle[direction="horizontal"] {
+  width: 5px;
+  margin-left: -2px;
+  margin-right: -3px;
+  z-index: 2;
+}

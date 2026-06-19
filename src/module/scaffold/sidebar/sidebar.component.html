@@ -29,20 +29,15 @@
   <ts-sidebar-link [matTooltip]="collapsed ? 'Agent mode' : ''" matTooltipPosition="right" link="/agent-mode" domain="chat" idSuffix="chat">
     <i class="fa-light fa-sparkles"></i>@if (!collapsed) { <span>Agent mode</span> }
   </ts-sidebar-link>
-<!--  <ts-sidebar-link [matTooltip]="collapsed ? 'Explore' : ''" matTooltipPosition="right" link="/explore" domain="explore" idSuffix="explore">-->
-<!--    <i class="fa-light fa-diagram-project"></i>@if (!collapsed) { <span>Explore</span> }-->
-<!--  </ts-sidebar-link>-->
   <ts-sidebar-link [matTooltip]="collapsed ? 'Schema' : ''" matTooltipPosition="right" link="/schema" domain="schema" idSuffix="schema">
     <i class="fa-light fa-vector-square"></i>@if (!collapsed) { <span>Schema</span> }
   </ts-sidebar-link>
   <ts-sidebar-link [matTooltip]="collapsed ? 'Data' : ''" matTooltipPosition="right" link="/data" domain="data" idSuffix="data">
     <i class="fa-light fa-table"></i>@if (!collapsed) { <span>Data</span> }
   </ts-sidebar-link>
-  <!-- TEMP: Graph explorer sidebar entry hidden. The /graph route and all supporting code remain
-       intact — re-enable by uncommenting this link. -->
-  <!-- <ts-sidebar-link [matTooltip]="collapsed ? 'Graph' : ''" matTooltipPosition="right" link="/graph" domain="graph-view" idSuffix="graph-view">
-    <i class="fa-light fa-circle-nodes"></i>@if (!collapsed) { <span>Graph</span> }
-  </ts-sidebar-link> -->
+  <ts-sidebar-link [matTooltip]="collapsed ? 'Graph' : ''" matTooltipPosition="right" link="/graph" domain="graph-view" idSuffix="graph-view">
+    <i class="fa-light fa-chart-network"></i>@if (!collapsed) { <span>Graph</span> }
+  </ts-sidebar-link>
 
   <mat-divider></mat-divider>
 
@@ -51,6 +46,9 @@
   </ts-sidebar-link>
   <ts-sidebar-link [matTooltip]="collapsed ? 'Query history' : ''" matTooltipPosition="right" link="/history" domain="query-history" idSuffix="query-history">
     <i class="fa-light fa-clock-rotate-left"></i>@if (!collapsed) { <span>Query history</span> }
+  </ts-sidebar-link>
+  <ts-sidebar-link [matTooltip]="collapsed ? 'Saved queries' : ''" matTooltipPosition="right" link="/saved-queries" domain="saved-queries" idSuffix="saved-queries">
+    <i class="fa-light fa-bookmark"></i>@if (!collapsed) { <span>Saved queries</span> }
   </ts-sidebar-link>
 
   <mat-divider></mat-divider>

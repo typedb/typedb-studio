@@ -6,22 +6,29 @@ import { TypeQLAutocompleteSchema } from "./typeQLAutocompleteSchema";
 import {climbTill, nodesWithPath} from "./navigation";
 
 function findIsaConstraintLabelsForVar(context: CompletionContext, parseAt: SyntaxNode): string[] {
-    let parentStatementThing = climbTill(parseAt, tokens.StatementThing)!;
-    let varNode = parentStatementThing.getChild(tokens.VAR)!;
-    let varName = context.state.sliceDoc(varNode.from, varNode.to);
-    let pipelineNode = climbTill(parentStatementThing, tokens.Pipeline)!;
+    // Mid-typing the parse tree is often incomplete (no StatementThing
+    // ancestor, no VAR child, etc). Each guard replaces a `!` non-null
+    // assertion that was throwing `can't access property 'from'` when the
+    // user typed something the parser couldn't yet resolve — confirmed
+    // repro: `match $r (t`, backspace, then `t` triggers the path with
+    // a StatementThing whose VAR child is missing.
+    const parentStatementThing = climbTill(parseAt, tokens.StatementThing);
+    if (!parentStatementThing) return [];
+    const varNode = parentStatementThing.getChild(tokens.VAR);
+    if (!varNode) return [];
+    const varName = context.state.sliceDoc(varNode.from, varNode.to);
+    const pipelineNode = climbTill(parentStatementThing, tokens.Pipeline);
+    if (!pipelineNode) return [];
     // TODO: Maybe consider disjunctions?
-    let statements = nodesWithPath(pipelineNode, [tokens.QueryStage, tokens.ClauseMatch, tokens.Patterns, tokens.Pattern, tokens.Statement, tokens.StatementThing]);
-    let relevantStatementThings = statements
-        .filter(n => {
-            let otherVarNode = n.getChild(tokens.VAR)!;
-            return context.state.sliceDoc(otherVarNode.from, otherVarNode.to) == varName;
-        });
-    let possibleLabels = relevantStatementThings
+    const statements = nodesWithPath(pipelineNode, [tokens.QueryStage, tokens.ClauseMatch, tokens.Patterns, tokens.Pattern, tokens.Statement, tokens.StatementThing]);
+    const relevantStatementThings = statements.filter(n => {
+        const otherVarNode = n.getChild(tokens.VAR);
+        if (!otherVarNode) return false;
+        return context.state.sliceDoc(otherVarNode.from, otherVarNode.to) == varName;
+    });
+    return relevantStatementThings
         .flatMap(n => nodesWithPath(n, [tokens.ThingConstraintList, tokens.ThingConstraint, tokens.IsaConstraint, tokens.TypeRef]))
         .map(n => context.state.sliceDoc(n.from, n.to));
-    // console.log(parentStatementThing, varNode, varName, pipelineNode, statements, relevantStatementThings, possibleLabels);
-    return possibleLabels;
 }
 
 function suggestAttributeTypeForHas(context: CompletionContext, tree: Tree, parseAt: SyntaxNode, climbedTo: SyntaxNode, prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {

@@ -1,4 +1,20 @@
-<div class="graph-canvas-container" [class.maximised]="maximised">
+<!-- Outer split keyed on the dock axis (row vs column). The resize directive
+     locks its handle orientation at init, so the resizable subtree is rebuilt
+     when the axis flips (bottom ⇆ right); the canvas then re-attaches its sigma
+     renderer (preserving graph + camera). -->
+<div class="graph-canvas-container"
+     [class.maximised]="maximised"
+     [class.dock-bottom]="dock === 'bottom'">
+  @if (isVertical) {
+    <ng-container *ngTemplateOutlet="canvasPane"></ng-container>
+    <ng-container *ngTemplateOutlet="sidePanel"></ng-container>
+  } @else {
+    <ng-container *ngTemplateOutlet="canvasPane"></ng-container>
+    <ng-container *ngTemplateOutlet="sidePanel"></ng-container>
+  }
+</div>
+
+<ng-template #canvasPane>
   <div class="graph-split-left" resizable [percent]="graphPercent" (percentChange)="graphPercentChange.emit($event)">
     <div class="canvas-element" #canvasEl></div>
 
@@ -34,7 +50,11 @@
       <i class="fa-light" [class.fa-expand]="!maximised" [class.fa-compress]="maximised"></i>
     </button>
 
-    <ts-graph-zoom-controls [visualiser]="visualiser" [queryRunning]="queryRunning"/>
+    <ts-graph-zoom-controls [visualiser]="visualiser" [queryRunning]="queryRunning"
+                            [hasChanges]="hasChanges"
+                            (resetChangesClicked)="resetChangesClicked.emit()"/>
+
+    <ts-graph-context-menu [visualiser]="visualiser" [run]="run"/>
 
     @switch (status) {
       @case ("error") {
@@ -56,15 +76,25 @@
       @case ("answerOutputDisabled") {
         <p class="status-text">Query completed. Answer output is disabled.</p>
       }
-      @case ("noAnswers") {
+      @case ("noQueryAnswers") {
         <p class="status-text">Query completed. No answers were returned.</p>
+      }
+      @case ("noInstancesFound") {
+        <p class="status-text">No instances were found.</p>
       }
       @case ("multiQuery") {
         <p class="status-text">Graph view is not available for multi-query results. <a (click)="statusAction.emit('viewLog')">View results in log</a></p>
       }
     }
   </div>
-  <ts-graph-side-panel resizable [percent]="stylesPanePercent"
-                       (percentChange)="stylesPanePercentChange.emit($event)"
-                       [visualiser]="visualiser"/>
-</div>
+</ng-template>
+
+<ng-template #sidePanel>
+  <ts-graph-side-panel resizable [percent]="sidePanelPercent"
+                       (percentChange)="onSidePanelPercentChange($event)"
+                       [visualiser]="visualiser"
+                       [run]="run"
+                       [selectionMode]="selectionMode ?? 'types'"
+                       [showSelectionModeToggle]="selectionMode != null"
+                       (selectionModeChange)="selectionModeChange.emit($event)"/>
+</ng-template>

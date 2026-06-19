@@ -20,6 +20,7 @@
     <div class="empty-schema-content">
       <p>This is an empty database with no schema defined.</p>
       <ul>
+        <li><a (click)="openLoadSampleDatasetDialog()">Load sample dataset</a></li>
         <li><a href="https://typedb.com/docs/home/get-started/schema" target="_blank">Learn about schemas</a></li>
         @if (!router.url.startsWith('/query')) {
           <li><a routerLink="/query">Open query editor</a></li>
@@ -31,6 +32,26 @@
     </div>
   </div>
 }
+@if (searchOpen) {
+  <div class="schema-search-overlay" [class.no-results]="searchHasNoResults">
+    <i class="fa-light fa-magnifying-glass"></i>
+    <input #searchInput type="text" class="schema-search-input"
+           placeholder="Search types..."
+           [value]="state.searchQuery$.value"
+           (input)="onSearchInput($any($event.target).value)"
+           (keydown)="onSearchKeydown($event)" />
+    @if (state.searchQuery$.value) {
+      <!-- mousedown.preventDefault stops the input losing focus when the X
+           is clicked, which would otherwise fire blur right before click. -->
+      <button class="schema-search-clear"
+              (mousedown)="$event.preventDefault()"
+              (click)="clearSearch()"
+              aria-label="Clear search">
+        <i class="fa-light fa-xmark"></i>
+      </button>
+    }
+  </div>
+}
 <div class="schema-container" [hidden]="state.isEmpty$ | async" [class]="state.viewMode$.value" detectScroll>
   <cdk-virtual-scroll-viewport itemSize="32" minBufferPx="240" maxBufferPx="480" class="schema-virtual-scroll">
     <div *cdkVirtualFor="let flat of (state.flatNodes$ | async); trackBy: trackByFlatNode"
@@ -40,7 +61,7 @@
          [class.clickable]="flat.node.clickable"
          [style.padding-left.px]="flat.level * 16"
          (click)="onRowClick(flat, $event)"
-         (contextmenu)="flat.node.nodeKind === 'concept' && openConceptContextMenu($event, $any(flat.node).concept)">
+         (contextmenu)="onRowContextMenu(flat, $event)">
       <button matIconButton class="expand-button"
               [disabled]="!flat.expandable"
               (click)="onExpandClick(flat, $event)">
@@ -51,7 +72,7 @@
       <div class="tree-node-content">
         @switch (flat.node.nodeKind) {
           @case ("root") {
-            <div class="root-node">{{ $any(flat.node).label }}</div>
+            <div class="root-node">{{ rootDisplayLabel($any(flat.node).label) }}</div>
           }
           @case ("concept") {
             {{ $any(flat.node).concept.label }}@if ($any(flat.node).concept.kind === "attributeType") {<em class="text-muted">, value {{ $any(flat.node).concept.valueType }}</em>}
@@ -74,6 +95,11 @@
 
 <mat-menu #actionsMenu="matMenu">
   <span class="menu-content">
+    <button mat-menu-item (click)="openSearch()">
+      <i class="fa-light fa-magnifying-glass"></i>
+      <span>Find</span>
+    </button>
+    <mat-divider></mat-divider>
     <button mat-menu-item (click)="state.expandAll()">
       <i class="fa-light fa-arrows-from-line"></i>
       <span>Expand all</span>
@@ -92,10 +118,12 @@
       <span>Hierarchical view</span>
     </button>
     <mat-divider></mat-divider>
-    <button mat-menu-item (click)="state.toggleLinksVisibility('sub')">
-      <i class="fa-light fa-check" [class.invisible]="!state.linksVisibility$.value.sub"></i>
-      <span>Show sub in flat view</span>
-    </button>
+    @if (state.viewMode$.value === 'flat') {
+      <button mat-menu-item (click)="state.toggleLinksVisibility('sub')">
+        <i class="fa-light fa-check" [class.invisible]="!state.linksVisibility$.value.sub"></i>
+        <span>Show sub</span>
+      </button>
+    }
     <button mat-menu-item (click)="state.toggleLinksVisibility('owns')">
       <i class="fa-light fa-check" [class.invisible]="!state.linksVisibility$.value.owns"></i>
       <span>Show owns</span>
@@ -136,16 +164,39 @@
   <ng-template matMenuContent let-concept="concept">
     <span class="menu-content">
       <button mat-menu-item (click)="copyTypeLabel(concept)">Copy type label</button>
+      <mat-divider></mat-divider>
       @if (mode === 'data') {
         <button mat-menu-item (click)="openDataTab(concept)">Load instances</button>
-      } @else if (mode !== 'graph-view') {
+      } @else if (mode === 'graph-view') {
+        <button mat-menu-item (click)="openGraphTabInstancesOnly(concept)">Load instances</button>
+        @if (concept.kind !== 'attributeType') {
+          <button mat-menu-item (click)="openGraphTabWithLinks(concept)">Load instances and links</button>
+          <button mat-menu-item (click)="openGraphTabWithAttributes(concept)">Load instances and attributes</button>
+        }
+      } @else {
         <button mat-menu-item (click)="loadInstances(concept)">Load instances</button>
       }
+    </span>
+  </ng-template>
+</mat-menu>
+
+<!-- Root-kind context menu trigger -->
+<div class="concept-context-menu-trigger"
+     [style.left.px]="rootContextMenuPosition.x"
+     [style.top.px]="rootContextMenuPosition.y"
+     [matMenuTriggerFor]="rootContextMenu"
+     #rootContextMenuTrigger="matMenuTrigger">
+</div>
+
+<mat-menu #rootContextMenu="matMenu" [overlapTrigger]="false">
+  <ng-template matMenuContent let-rootKind="rootKind">
+    <span class="menu-content">
       @if (mode === 'graph-view') {
-        <button mat-menu-item (click)="openGraphTabWithConnections(concept)">Load instances and connections</button>
-        @if (concept.kind !== 'attributeType') {
-          <button mat-menu-item (click)="openGraphTabAttrsOnly(concept)">Load instances and attributes</button>
-        }
+        <button mat-menu-item (click)="openGraphKindTab(rootKind)">Load instances</button>
+      } @else if (mode === 'data') {
+        <button mat-menu-item (click)="openDataKindTab(rootKind)">Load instances</button>
+      } @else {
+        <button mat-menu-item (click)="loadKindInstances(rootKind)">Load instances</button>
       }
     </span>
   </ng-template>

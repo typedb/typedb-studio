@@ -4,7 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Component, ElementRef, EventEmitter, HostBinding, Input, OnDestroy, Output, ViewChild, AfterViewInit } from "@angular/core";
+import { Component, ElementRef, EventEmitter, HostBinding, Input, OnDestroy, Output, ViewChild, AfterViewInit, AfterViewChecked } from "@angular/core";
+import { NgTemplateOutlet } from "@angular/common";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatMenuModule } from "@angular/material/menu";
 
@@ -13,28 +14,58 @@ import { Subscription } from "rxjs";
 import { GraphPngExportMode, GraphVisualiser } from "../engine";
 import { GraphZoomControlsComponent } from "./zoom-controls/graph-zoom-controls.component";
 import { GraphSidePanelComponent } from "../side-panel/graph-side-panel.component";
+import { GraphContextMenuComponent } from "../context-menu/graph-context-menu.component";
 import { GraphStyleService, buildBackgroundCSS } from "../../../service/graph-style.service";
+import { RunOutputState } from "../../../service/query-page-state.service";
+import { SelectionMode } from "../../../service/graph-view-state.service";
 
-export type GraphCanvasStatus = "ok" | "running" | "noAnswers" | "error" | "graphlessQueryType" | "answerOutputDisabled" | "multiQuery" | "emptySchema";
+export type GraphCanvasStatus = "ok" | "running" | "noQueryAnswers" | "noInstancesFound" | "error" | "graphlessQueryType" | "answerOutputDisabled" | "multiQuery" | "emptySchema";
 export type GraphCanvasStatusAction = "viewLog";
 
 @Component({
     selector: "ts-graph-canvas",
     templateUrl: "graph-canvas.component.html",
     styleUrls: ["graph-canvas.component.scss"],
-    imports: [MatTooltipModule, MatMenuModule, ResizableDirective, GraphZoomControlsComponent, GraphSidePanelComponent],
+    imports: [NgTemplateOutlet, MatTooltipModule, MatMenuModule, ResizableDirective, GraphZoomControlsComponent, GraphSidePanelComponent, GraphContextMenuComponent],
 })
-export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
+export class GraphCanvasComponent implements AfterViewInit, AfterViewChecked, OnDestroy {
     @Input() visualiser: GraphVisualiser | null = null;
     @Input() status: GraphCanvasStatus = "ok";
     @Input() graphPercent = 75;
     @Input() stylesPanePercent = 25;
     @Input() maximised = false;
 
+    /** Side-panel size when docked bottom. Kept separate from
+     *  `stylesPanePercent` (the right-dock width) because a width-tuned value
+     *  is too short as a height — bottom defaults taller. */
+    private bottomPanePercent = 45;
+    /** The run that owns this canvas's graph. Passed through to the side panel
+     *  so the Inspector knows where to push instances/attributes/links. */
+    @Input() run: RunOutputState | null = null;
+    /** True if the parent surface tracks a "Reset changes" capability and the
+     *  graph currently has something to reset (e.g. a graph-view tab whose
+     *  contents have diverged from the initial query). Drives the
+     *  reset-changes button's enabled state in the zoom-controls panel. */
+    @Input() hasChanges = false;
+    /** When non-null, an in-canvas toggle is shown for switching between
+     *  type-selection and instance-selection modes. Null hides the toggle
+     *  (e.g. for canvas usages that don't have a type/instance distinction
+     *  like chat output). */
+    @Input() selectionMode: SelectionMode | null = null;
+
     @Output() maximisedChange = new EventEmitter<boolean>();
     @Output() graphPercentChange = new EventEmitter<number>();
     @Output() stylesPanePercentChange = new EventEmitter<number>();
     @Output() statusAction = new EventEmitter<GraphCanvasStatusAction>();
+    @Output() resetChangesClicked = new EventEmitter<void>();
+    @Output() selectionModeChange = new EventEmitter<SelectionMode>();
+    /** Fires when the `#canvasEl` host node is rebuilt (dock axis flip rebuilds
+     *  the resizable subtree). Surfaces are responsible for re-homing their
+     *  sigma renderer onto the new element. The internal `[run]`-driven path in
+     *  `ngAfterViewChecked` already handles this for the graph page; the query
+     *  page (which doesn't pass `[run]`) listens to this instead. Emits the new
+     *  element. */
+    @Output() canvasElRebuilt = new EventEmitter<HTMLElement>();
 
     get queryRunning() { return this.status === "running"; }
 
@@ -53,8 +84,52 @@ export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
         this.updateControlTheme();
     }
 
+    /** The canvas element currently hosting the sigma renderer. When the dock
+     *  axis flips, the `@if` rebuilds `.canvas-element`, so we detect the new
+     *  node here and move the renderer onto it (preserving graph + camera). */
+    private attachedCanvasEl: HTMLElement | null = null;
+
     ngAfterViewInit() {
         this.applyBackground();
+    }
+
+    ngAfterViewChecked() {
+        const el = this.canvasElRef?.nativeElement ?? null;
+        if (el && el !== this.attachedCanvasEl && this.attachedCanvasEl !== null) {
+            // The host element was rebuilt (dock axis changed). Re-home the
+            // renderer onto the new node.
+            this.attachedCanvasEl = el;
+            if (this.run) {
+                // Graph page: this canvas owns its run, so re-home here.
+                // GraphOutputState.attach/detach preserves the graph and
+                // restores the camera, so no graph state is lost. Deferred via
+                // setTimeout so detach() (which sets visualiser=null) doesn't
+                // mutate parent-read state inside the same CD cycle and trip
+                // ExpressionChangedAfterItHasBeenCheckedError on GraphTabComponent.
+                const run = this.run;
+                setTimeout(() => {
+                    run.graph.detach();
+                    run.graph.attach(el);
+                    this.applyBackground();
+                    // Use run.graph.visualiser, not this.visualiser: the @Input
+                    // hasn't been re-checked yet, so this.visualiser still points
+                    // at the destroyed pre-detach instance.
+                    run.graph.visualiser?.sigma.resize();
+                    run.graph.visualiser?.sigma.refresh();
+                });
+            } else {
+                // Query page (and other run-less surfaces): the parent manages
+                // attach/detach centrally, so hand it the new element. Deferred
+                // for the same CD-safety reason as above.
+                setTimeout(() => {
+                    this.applyBackground();
+                    this.canvasElRebuilt.emit(el);
+                });
+            }
+        } else if (el && this.attachedCanvasEl === null) {
+            // First view-check after the parent's initial attach(); record it.
+            this.attachedCanvasEl = el;
+        }
     }
 
     ngOnDestroy() {
@@ -83,6 +158,31 @@ export class GraphCanvasComponent implements AfterViewInit, OnDestroy {
 
     get canvasEl(): HTMLElement | undefined {
         return this.canvasElRef?.nativeElement;
+    }
+
+    /** Which edge the side panel docks to (graph-wide, persisted). */
+    get dock() {
+        return this.styleService.sidePanelDock;
+    }
+
+    /** True when the outer split stacks vertically (panel docked bottom). */
+    get isVertical(): boolean {
+        return this.dock === "bottom";
+    }
+
+    /** Side-panel size for the current dock (height for bottom, width for right). */
+    get sidePanelPercent(): number {
+        return this.isVertical ? this.bottomPanePercent : this.stylesPanePercent;
+    }
+
+    /** Persist a side-panel resize against the right dock-orientation slot. */
+    onSidePanelPercentChange(percent: number): void {
+        if (this.isVertical) {
+            this.bottomPanePercent = percent;
+        } else {
+            this.stylesPanePercent = percent;
+            this.stylesPanePercentChange.emit(percent);
+        }
     }
 
     toggleMaximised() {

@@ -1,7 +1,8 @@
 import { Injectable, OnDestroy } from "@angular/core";
 import { BehaviorSubject, Subscription } from "rxjs";
+import chroma from "chroma-js";
 import { VertexKind } from "@typedb/graph-utils";
-import { GraphStyles, defaultEdgeLabelColors, defaultQueryStyleParams } from "../framework/graph-visualiser/engine/styles";
+import { GraphStyles, defaultEdgeLabelColors, defaultQueryStyleParams, calAestheticsKindStyles } from "../framework/graph-visualiser/engine/styles";
 import { ThemeService } from "./theme.service";
 
 export interface NodeStyle {
@@ -62,18 +63,27 @@ export function buildBackgroundCSS(bg: GraphBackground): BackgroundCSS {
     }
 }
 
+/** Which edge of the graph canvas the side panel docks to. */
+export type GraphSidePanelDock = "bottom" | "right";
+
 export interface CustomPreset {
     name: string;
     description: string;
     kindStyles: Record<string, PartialNodeStyle>;
     typeStyles: Record<string, PartialNodeStyle>;
     edgeLabelColors: Record<string, string>;
+    /** Optional: colour for edges without a per-label override. */
+    defaultEdgeColor?: string | null;
     colorEdgesByConstraint: boolean;
     labelColorMode?: "auto" | "border" | "fixed";
     labelUseBorderColor?: boolean; // legacy, for backwards compat
     labelsVisible: boolean;
     showHoverLabel: boolean;
     degreeScaling: boolean;
+    /** Optional: edges curved by default. */
+    edgesCurvedByDefault?: boolean;
+    /** Optional: node fill opacity (0–1). */
+    fillOpacity?: number;
     background: GraphBackground;
 }
 
@@ -113,6 +123,9 @@ export class GraphStyleService implements OnDestroy {
     private _kindStyles: Record<string, PartialNodeStyle> = {};
     private _typeStyles: Record<string, PartialNodeStyle> = {};
     private _edgeLabelColors: Record<string, string> = {};
+    /** User override for the colour of every edge that has no per-label colour
+     *  of its own. Null → fall back to the built-in default edge colour. */
+    private _defaultEdgeColor: string | null = null;
     private _colorEdgesByConstraint = false;
     private _labelColorMode: "auto" | "border" | "fixed" = "auto";
     private _highlightedKinds = new Set<VertexKind>();
@@ -128,7 +141,9 @@ export class GraphStyleService implements OnDestroy {
     private _labelsVisible = true;
     private _showHoverLabel = true;
     private _degreeScaling = false;
+    private _edgesCurvedByDefault = false;
     private _fillOpacity = 0.25;
+    private _sidePanelDock: GraphSidePanelDock = "right";
     private _background: GraphBackground = { ...DEFAULT_BACKGROUND };
 
     private _customPresets: CustomPreset[] = [];
@@ -278,7 +293,28 @@ export class GraphStyleService implements OnDestroy {
     getEdgeLabelColor(tag: string): string {
         return this._edgeLabelColors[tag]
             ?? defaultEdgeLabelColors[tag]
-            ?? defaultQueryStyleParams.edgeColor.hex();
+            ?? this.defaultEdgeColor;
+    }
+
+    /** Colour used for any edge without its own per-label override. */
+    get defaultEdgeColor(): string {
+        return this._defaultEdgeColor ?? defaultQueryStyleParams.edgeColor.hex();
+    }
+
+    set defaultEdgeColor(color: string) {
+        this._defaultEdgeColor = color;
+        this.save();
+        this.styles$.next();
+    }
+
+    get hasDefaultEdgeColorOverride(): boolean {
+        return this._defaultEdgeColor != null;
+    }
+
+    clearDefaultEdgeColor(): void {
+        this._defaultEdgeColor = null;
+        this.save();
+        this.styles$.next();
     }
 
     setEdgeLabelColor(tag: string, color: string): void {
@@ -344,6 +380,8 @@ export class GraphStyleService implements OnDestroy {
             vertexTypeShapes: Object.keys(vertexTypeShapes).length ? vertexTypeShapes : undefined,
             vertexTypeWidths: Object.keys(vertexTypeWidths).length ? vertexTypeWidths : undefined,
             vertexTypeHeights: Object.keys(vertexTypeHeights).length ? vertexTypeHeights : undefined,
+            edgeColor: chroma(this.defaultEdgeColor),
+            edgesCurvedByDefault: this._edgesCurvedByDefault,
             edgeLabelColors: this.getResolvedEdgeLabelColors(),
         };
     }
@@ -478,10 +516,28 @@ export class GraphStyleService implements OnDestroy {
         this.styles$.next();
     }
 
+    get sidePanelDock(): GraphSidePanelDock { return this._sidePanelDock; }
+
+    set sidePanelDock(value: GraphSidePanelDock) {
+        this._sidePanelDock = value;
+        this.save();
+        this.styles$.next();
+    }
+
     get degreeScaling(): boolean { return this._degreeScaling; }
 
     set degreeScaling(value: boolean) {
         this._degreeScaling = value;
+        this.save();
+        this.styles$.next();
+    }
+
+    /** When true, edges are drawn curved by default (parallel edges fan out);
+     *  when false, single edges are straight. */
+    get edgesCurvedByDefault(): boolean { return this._edgesCurvedByDefault; }
+
+    set edgesCurvedByDefault(value: boolean) {
+        this._edgesCurvedByDefault = value;
         this.save();
         this.styles$.next();
     }
@@ -511,6 +567,7 @@ export class GraphStyleService implements OnDestroy {
         this._labelsVisible = false;
         this._showHoverLabel = true;
         this._degreeScaling = true;
+        this._edgesCurvedByDefault = false;
         this._activePreset = "structure";
         this.save();
         this.styles$.next();
@@ -525,6 +582,7 @@ export class GraphStyleService implements OnDestroy {
         this._labelsVisible = true;
         this._showHoverLabel = true;
         this._degreeScaling = false;
+        this._edgesCurvedByDefault = false;
         this._activePreset = "uniform";
         this.save();
         this.styles$.next();
@@ -542,6 +600,7 @@ export class GraphStyleService implements OnDestroy {
         this._labelsVisible = true;
         this._showHoverLabel = true;
         this._degreeScaling = false;
+        this._edgesCurvedByDefault = false;
         this._activePreset = "classic";
         this.save();
         this.styles$.next();
@@ -570,7 +629,31 @@ export class GraphStyleService implements OnDestroy {
         this._labelsVisible = true;
         this._showHoverLabel = true;
         this._degreeScaling = false;
+        this._edgesCurvedByDefault = false;
         this._activePreset = "grayscale";
+        this.save();
+        this.styles$.next();
+    }
+
+    applyCalAestheticsPreset(): void {
+        for (const kind of ALL_KINDS) {
+            const s = calAestheticsKindStyles[kind];
+            if (s) {
+                this._kindStyles[kind] = { color: s.color, shape: s.shape, width: s.width, height: s.height };
+            } else {
+                const color = defaultQueryStyleParams.vertexBorderColors[kind];
+                this._kindStyles[kind] = { color, shape: "ellipse", width: 56, height: 24 };
+            }
+        }
+        this._labelColorMode = "auto";
+        this._labelsVisible = true;
+        this._showHoverLabel = true;
+        this._degreeScaling = false;
+        this._edgesCurvedByDefault = true;
+        this._fillOpacity = 0.1;
+        // The theme ships with the (darker) dots background.
+        this._background = { type: "dots", color1: "#0e0e0e", color2: "#3a3848", gradientAngle: DEFAULT_BACKGROUND.gradientAngle };
+        this._activePreset = "cal";
         this.save();
         this.styles$.next();
     }
@@ -587,11 +670,17 @@ export class GraphStyleService implements OnDestroy {
         this._kindStyles = {};
         this._typeStyles = {};
         this._edgeLabelColors = {};
+        this._defaultEdgeColor = null;
         this._labelColorMode = "auto";
         this._colorEdgesByConstraint = false;
         this._labelsVisible = true;
         this._showHoverLabel = true;
         this._degreeScaling = false;
+        this._edgesCurvedByDefault = false;
+        // Default matches the field initializer and the persisted-state
+        // fallback below — without this line the customise slider stayed
+        // wherever the user last left it after Reset all.
+        this._fillOpacity = 0.25;
         this._activePreset = null;
         this.save();
         this.styles$.next();
@@ -610,11 +699,14 @@ export class GraphStyleService implements OnDestroy {
             kindStyles: structuredClone(this._kindStyles),
             typeStyles: structuredClone(this._typeStyles),
             edgeLabelColors: { ...this._edgeLabelColors },
+            defaultEdgeColor: this._defaultEdgeColor,
             colorEdgesByConstraint: this._colorEdgesByConstraint,
             labelColorMode: this._labelColorMode,
             labelsVisible: this._labelsVisible,
             showHoverLabel: this._showHoverLabel,
             degreeScaling: this._degreeScaling,
+            edgesCurvedByDefault: this._edgesCurvedByDefault,
+            fillOpacity: this._fillOpacity,
             background: { ...this._background },
         };
         const idx = this._customPresets.findIndex(p => p.name === name);
@@ -632,11 +724,14 @@ export class GraphStyleService implements OnDestroy {
         this._kindStyles = structuredClone(preset.kindStyles);
         this._typeStyles = structuredClone(preset.typeStyles);
         this._edgeLabelColors = { ...preset.edgeLabelColors };
+        this._defaultEdgeColor = preset.defaultEdgeColor ?? null;
         this._colorEdgesByConstraint = preset.colorEdgesByConstraint;
         this._labelColorMode = preset.labelColorMode ?? (preset.labelUseBorderColor ? "auto" : "fixed");
         this._labelsVisible = preset.labelsVisible;
         this._showHoverLabel = preset.showHoverLabel;
         this._degreeScaling = preset.degreeScaling;
+        this._edgesCurvedByDefault = preset.edgesCurvedByDefault ?? false;
+        if (preset.fillOpacity != null) this._fillOpacity = preset.fillOpacity;
         this._activePreset = `custom:${name}`;
         this.save();
         this.styles$.next();
@@ -690,13 +785,16 @@ export class GraphStyleService implements OnDestroy {
                 kindStyles: this._kindStyles,
                 typeStyles: this._typeStyles,
                 edgeLabelColors: this._edgeLabelColors,
+                defaultEdgeColor: this._defaultEdgeColor,
                 colorEdgesByConstraint: this._colorEdgesByConstraint,
                 labelColorMode: this._labelColorMode,
                 activePreset: this._activePreset,
                 labelsVisible: this._labelsVisible,
                 showHoverLabel: this._showHoverLabel,
                 degreeScaling: this._degreeScaling,
+                edgesCurvedByDefault: this._edgesCurvedByDefault,
                 fillOpacity: this._fillOpacity,
+                sidePanelDock: this._sidePanelDock,
                 background: this._background,
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -713,13 +811,16 @@ export class GraphStyleService implements OnDestroy {
                 this._kindStyles = migrateStyles(data.kindStyles ?? {});
                 this._typeStyles = migrateStyles(data.typeStyles ?? {});
                 this._edgeLabelColors = data.edgeLabelColors ?? {};
+                this._defaultEdgeColor = data.defaultEdgeColor ?? null;
                 this._colorEdgesByConstraint = data.colorEdgesByConstraint ?? false;
                 this._labelColorMode = data.labelColorMode ?? (data.labelUseBorderColor === false ? "fixed" : "auto");
                 this._activePreset = data.activePreset ?? null;
                 this._labelsVisible = data.labelsVisible ?? true;
                 this._showHoverLabel = data.showHoverLabel ?? true;
                 this._degreeScaling = data.degreeScaling ?? false;
+                this._edgesCurvedByDefault = data.edgesCurvedByDefault ?? false;
                 this._fillOpacity = data.fillOpacity ?? 0.25;
+                this._sidePanelDock = data.sidePanelDock ?? "right";
                 if (data.background) this._background = { ...DEFAULT_BACKGROUND, ...data.background };
             }
         } catch (e) {

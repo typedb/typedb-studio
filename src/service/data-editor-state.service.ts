@@ -10,10 +10,15 @@ import { SchemaConcept, SchemaState } from "./schema-state.service";
 import { AppData, PersistedDataTab } from "./app-data.service";
 import { DriverState } from "./driver-state.service";
 import { SnackbarService } from "./snackbar.service";
+import { RootKind } from "./graph-view-state.service";
 
 export interface TypeTableTab {
     kind: "type-table";
     type: SchemaConcept;
+    /** When set, the tab lists *all* instances of a root kind rather than a
+     *  single type. `type` is a synthetic placeholder whose `.subtypes` carry
+     *  the kind's types so attribute-column collection still works. */
+    rootKind?: RootKind;
     totalCount: number;
     selectedInstanceIID: string | null;
     typeqlFilter?: string;
@@ -112,6 +117,7 @@ export class DataEditorState {
                 return {
                     kind: "type-table" as const,
                     typeLabel: tab.type.label,
+                    rootKind: tab.rootKind,
                     typeqlFilter: tab.typeqlFilter,
                     breadcrumbs: tab.breadcrumbs,
                     pinned: tab.pinned,
@@ -181,6 +187,22 @@ export class DataEditorState {
         };
 
         for (const persistedTab of saved.tabs) {
+            // Kind tables aren't backed by a single schema type — rebuild them
+            // from a synthetic kind concept before the per-type lookup below.
+            if (persistedTab.kind === "type-table" && persistedTab.rootKind) {
+                restoredTabs.push({
+                    kind: "type-table",
+                    type: this.buildKindConcept(persistedTab.rootKind),
+                    rootKind: persistedTab.rootKind,
+                    totalCount: 0,
+                    selectedInstanceIID: null,
+                    typeqlFilter: persistedTab.typeqlFilter,
+                    breadcrumbs: convertBreadcrumbs(persistedTab.breadcrumbs),
+                    pinned: persistedTab.pinned,
+                });
+                continue;
+            }
+
             // Look up the type in the schema
             const type = schema.entities[persistedTab.typeLabel] ||
                          schema.relations[persistedTab.typeLabel] ||
@@ -247,6 +269,54 @@ export class DataEditorState {
             this.openTabs$.next([...tabs, newTab]);
             this.selectedTabIndex$.next(tabs.length);
         }
+    }
+
+    /**
+     * Open (or focus) a table listing every instance of a root kind
+     * (entity / relation / attribute). Mirrors `openTypeTab` but builds a
+     * synthetic kind concept; dedup is keyed on `rootKind` (not label) so it
+     * never collides with a real type that happens to be named "entity" etc.
+     */
+    openKindTab(rootKind: RootKind) {
+        const tabs = this.openTabs$.value;
+        const existing = tabs.find(t => t.kind === "type-table" && t.rootKind === rootKind && !t.typeqlFilter);
+        if (existing) {
+            this.selectedTabIndex$.next(tabs.indexOf(existing));
+            return;
+        }
+        const newTab: TypeTableTab = {
+            kind: "type-table",
+            type: this.buildKindConcept(rootKind),
+            rootKind,
+            totalCount: 0,
+            selectedInstanceIID: null,
+        };
+        this.openTabs$.next([...tabs, newTab]);
+        this.selectedTabIndex$.next(tabs.length);
+    }
+
+    /**
+     * Synthetic SchemaConcept standing in for a whole root kind. Its `.subtypes`
+     * are populated with the kind's types so the instance table's existing
+     * recursive attribute collection yields the union across the kind.
+     */
+    private buildKindConcept(rootKind: RootKind): SchemaConcept {
+        const schema = this.schemaState.value$.value;
+        const kind = rootKind === "entity" ? "entityType"
+            : rootKind === "relation" ? "relationType" : "attributeType";
+        const subtypes = !schema ? []
+            : rootKind === "entity" ? Object.values(schema.entities)
+            : rootKind === "relation" ? Object.values(schema.relations)
+            : [];
+        return {
+            kind,
+            label: rootKind,
+            subtypes,
+            ownedAttributes: [],
+            playedRoles: [],
+            ...(rootKind === "relation" ? { relatedRoles: [] } : {}),
+            ...(rootKind === "attribute" ? { valueType: "string" } : {}),
+        } as unknown as SchemaConcept;
     }
 
     closeTab(tab: DataTab) {
