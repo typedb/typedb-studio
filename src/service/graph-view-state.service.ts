@@ -167,7 +167,15 @@ export class GraphViewState {
 
         try {
             if (tab.rootKind) {
-                if (tab.rootKind === "attribute") {
+                // Gate the instance query on the kind actually existing in the
+                // live schema — running it against a kind with no types fails
+                // type inference (INF11/QUA1) instead of returning empty. If
+                // there are none, fall through to the empty-graph state below.
+                if (!await this.hasTypesOfKind(tab.rootKind)) {
+                    // No types of this kind exist: show the empty-graph state
+                    // directly rather than running the inference-failing query.
+                    run.graph.status = "noInstancesFound";
+                } else if (tab.rootKind === "attribute") {
                     await this.fetchInstancesOfKind(run, tab.rootKind);
                 } else {
                     // Two-step: fetch instance response without pushing, fetch
@@ -669,6 +677,20 @@ export class GraphViewState {
     }
 
     /**
+     * Probe the live schema for whether any types of `rootKind` exist. Run
+     * before the kind-instances query because that query (`$x isa $y; <kind>
+     * $y;`) fails type inference (INF11/QUA1) when no such types exist, rather
+     * than returning an empty result. This probe pairs no variables across an
+     * `isa`, so it cleanly returns zero rows instead. Querying (not schema
+     * state) keeps it correct even if another user just wrote to the database.
+     */
+    private async hasTypesOfKind(rootKind: RootKind): Promise<boolean> {
+        const res = await this.runQuery(kindTypesQuery(rootKind), 1);
+        if (isApiErrorResponse(res) || res.ok.answerType !== "conceptRows") return false;
+        return res.ok.answers.length > 0;
+    }
+
+    /**
      * Fetch every attribute owned by the given IIDs *off-graph* — the
      * attribute values feed the label heuristic only, no attribute nodes or
      * edges are added to the visualiser. Skipped for attribute kinds (they
@@ -706,6 +728,14 @@ export class GraphViewState {
  *  vertices (no per-subtype-label nodes). */
 export function kindInstancesQuery(rootKind: RootKind): string {
     return `match\n    $x isa $y;\n    ${rootKind} $y;\nselect $x;`;
+}
+
+/** TypeQL that returns every *type* of a root kind. Unlike `kindInstancesQuery`
+ *  this never pairs two unconstrained variables across an `isa`, so when the
+ *  schema has no types of that kind it returns zero rows rather than failing
+ *  type inference (INF11/QUA1). Used to gate the instance query. */
+export function kindTypesQuery(rootKind: RootKind): string {
+    return `match ${rootKind} $x;`;
 }
 
 /** Placeholder SchemaConcept used as `GraphViewTab.type` for kind tabs. Most
