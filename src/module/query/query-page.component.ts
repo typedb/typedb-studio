@@ -320,6 +320,15 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
         if (action === "viewLog") this.state.outputTypeControl.patchValue("log");
     }
 
+    /** The graph canvas rebuilt its host element (dock axis flipped). The old
+     *  element is now detached, so re-home the current run's renderer onto the
+     *  new one — otherwise this run and all future ones render onto a dead node
+     *  and nothing appears. */
+    onGraphCanvasRehomed(el: HTMLElement) {
+        this.canvasEl = el;
+        this.state.setGraphCanvasEl(el);
+    }
+
     runQuery() {
         this.state.runCurrentTabQuery();
     }

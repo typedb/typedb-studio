@@ -59,6 +59,13 @@ export class GraphCanvasComponent implements AfterViewInit, AfterViewChecked, On
     @Output() statusAction = new EventEmitter<GraphCanvasStatusAction>();
     @Output() resetChangesClicked = new EventEmitter<void>();
     @Output() selectionModeChange = new EventEmitter<SelectionMode>();
+    /** Fires when the `#canvasEl` host node is rebuilt (dock axis flip rebuilds
+     *  the resizable subtree). Surfaces are responsible for re-homing their
+     *  sigma renderer onto the new element. The internal `[run]`-driven path in
+     *  `ngAfterViewChecked` already handles this for the graph page; the query
+     *  page (which doesn't pass `[run]`) listens to this instead. Emits the new
+     *  element. */
+    @Output() canvasElRehomed = new EventEmitter<HTMLElement>();
 
     get queryRunning() { return this.status === "running"; }
 
@@ -88,25 +95,37 @@ export class GraphCanvasComponent implements AfterViewInit, AfterViewChecked, On
 
     ngAfterViewChecked() {
         const el = this.canvasElRef?.nativeElement ?? null;
-        if (el && el !== this.attachedCanvasEl && this.attachedCanvasEl !== null && this.run) {
+        if (el && el !== this.attachedCanvasEl && this.attachedCanvasEl !== null) {
             // The host element was rebuilt (dock axis changed). Re-home the
-            // renderer; GraphOutputState.attach/detach preserves the graph and
-            // restores the camera, so no graph state is lost. Deferred via
-            // setTimeout so detach() (which sets visualiser=null) doesn't
-            // mutate parent-read state inside the same CD cycle and trip
-            // ExpressionChangedAfterItHasBeenCheckedError on GraphTabComponent.
-            const run = this.run;
+            // renderer onto the new node.
             this.attachedCanvasEl = el;
-            setTimeout(() => {
-                run.graph.detach();
-                run.graph.attach(el);
-                this.applyBackground();
-                // Use run.graph.visualiser, not this.visualiser: the @Input
-                // hasn't been re-checked yet, so this.visualiser still points
-                // at the destroyed pre-detach instance.
-                run.graph.visualiser?.sigma.resize();
-                run.graph.visualiser?.sigma.refresh();
-            });
+            if (this.run) {
+                // Graph page: this canvas owns its run, so re-home here.
+                // GraphOutputState.attach/detach preserves the graph and
+                // restores the camera, so no graph state is lost. Deferred via
+                // setTimeout so detach() (which sets visualiser=null) doesn't
+                // mutate parent-read state inside the same CD cycle and trip
+                // ExpressionChangedAfterItHasBeenCheckedError on GraphTabComponent.
+                const run = this.run;
+                setTimeout(() => {
+                    run.graph.detach();
+                    run.graph.attach(el);
+                    this.applyBackground();
+                    // Use run.graph.visualiser, not this.visualiser: the @Input
+                    // hasn't been re-checked yet, so this.visualiser still points
+                    // at the destroyed pre-detach instance.
+                    run.graph.visualiser?.sigma.resize();
+                    run.graph.visualiser?.sigma.refresh();
+                });
+            } else {
+                // Query page (and other run-less surfaces): the parent manages
+                // attach/detach centrally, so hand it the new element. Deferred
+                // for the same CD-safety reason as above.
+                setTimeout(() => {
+                    this.applyBackground();
+                    this.canvasElRehomed.emit(el);
+                });
+            }
         } else if (el && this.attachedCanvasEl === null) {
             // First view-check after the parent's initial attach(); record it.
             this.attachedCanvasEl = el;
