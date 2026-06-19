@@ -324,7 +324,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
      *  element is now detached, so re-home the current run's renderer onto the
      *  new one — otherwise this run and all future ones render onto a dead node
      *  and nothing appears. */
-    onGraphCanvasRehomed(el: HTMLElement) {
+    onGraphCanvasRebuilt(el: HTMLElement) {
         this.canvasEl = el;
         this.state.setGraphCanvasEl(el);
     }

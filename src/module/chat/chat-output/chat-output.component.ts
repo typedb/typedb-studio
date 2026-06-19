@@ -143,7 +143,7 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
     /** The graph canvas rebuilt its host element (dock axis flipped). The old
      *  node is now detached, so re-home the current run's renderer onto the new
      *  one — otherwise it renders onto a dead node and nothing appears. */
-    onGraphCanvasRehomed(el: HTMLElement) {
+    onGraphCanvasRebuilt(el: HTMLElement) {
         const run = this.currentRun;
         if (!run) return;
         run.graph.detach();
