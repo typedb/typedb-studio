@@ -138,7 +138,7 @@
                        [visualiser]="currentRun!.graph.visualiser ?? null"
                        [status]="currentRun!.graph.status"
                        [(maximised)]="graphMaximised"
-                       (canvasElRehomed)="onGraphCanvasRehomed($event)"
+                       (canvasElRebuilt)="onGraphCanvasRehomed($event)"
                        (statusAction)="onGraphStatusAction($event)">
       </ts-graph-canvas>
 

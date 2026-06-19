@@ -92,7 +92,7 @@
   // The header bar sits on top (flex: 0 0 auto); the inspector component fills
   // the remaining height below it.
   > ts-graph-type-explorer,
-  > ts-graph-explorer {
+  > ts-graph-instance-explorer {
     flex: 1;
     min-height: 0;
     min-width: 0;

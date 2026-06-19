@@ -13,8 +13,8 @@ import { InspectableSelection, TypeSelection } from "../engine/interaction-handl
 import { ElementsTabComponent } from "./elements-tab.component";
 import { ThemesTabComponent } from "./themes-tab.component";
 import { CustomiseTabComponent } from "./customise-tab.component";
-import { GraphExplorerComponent } from "../inspector/graph-explorer.component";
-import { GraphTypeExplorerComponent } from "../inspector/graph-type-explorer.component";
+import { GraphInstanceExplorerComponent } from "../explorer/graph-instance-explorer.component";
+import { GraphTypeExplorerComponent } from "../explorer/graph-type-explorer.component";
 
 @Component({
     selector: "ts-graph-side-panel",
@@ -25,7 +25,7 @@ import { GraphTypeExplorerComponent } from "../inspector/graph-type-explorer.com
         MatTooltipModule, MatMenuModule,
         ResizableDirective,
         ElementsTabComponent, ThemesTabComponent, CustomiseTabComponent,
-        GraphExplorerComponent, GraphTypeExplorerComponent,
+        GraphInstanceExplorerComponent, GraphTypeExplorerComponent,
     ],
 })
 export class GraphSidePanelComponent implements OnChanges, OnDestroy {

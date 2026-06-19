@@ -52,7 +52,7 @@ function isRoleType(concept: Concept | undefined): concept is RoleType {
 }
 
 /**
- * View-model backing the Instance Details panel — fetches and exposes the
+ * State backing the Instance Details panel — fetches and exposes the
  * attribute / relation / owner data for a single instance. Designed to be
  * provided per-component (not in root) so each panel gets its own state.
  *
@@ -60,7 +60,7 @@ function isRoleType(concept: Concept | undefined): concept is RoleType {
  * will call `ngOnDestroy` when the host component is destroyed.
  */
 @Injectable()
-export class InstanceDetailViewModel implements OnDestroy {
+export class InstanceDetailState implements OnDestroy {
 
     private driver = inject(DriverState);
     private snackbar = inject(SnackbarService);

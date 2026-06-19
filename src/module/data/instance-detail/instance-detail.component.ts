@@ -13,13 +13,13 @@ import { Clipboard } from "@angular/cdk/clipboard";
 import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { BreadcrumbItem, DataEditorState } from "../../../service/data-editor-state.service";
-import { InstanceDetailViewModel, LinkData, OwnerData, RelationInstanceData } from "../../../service/instance-detail-view-model.service";
+import { InstanceDetailState, LinkData, OwnerData, RelationInstanceData } from "../../../service/instance-detail-state.service";
 
 @Component({
     selector: "ts-instance-detail",
     templateUrl: "./instance-detail.component.html",
     styleUrls: ["./instance-detail.component.scss"],
-    providers: [InstanceDetailViewModel],
+    providers: [InstanceDetailState],
     imports: [
         CommonModule,
         MatProgressSpinnerModule,
@@ -32,7 +32,7 @@ export class InstanceDetailComponent implements OnInit {
     @Input({ required: true }) instanceIID!: string;
     @Input() breadcrumbs: BreadcrumbItem[] = [];
 
-    vm = inject(InstanceDetailViewModel);
+    state = inject(InstanceDetailState);
 
     // Per-component UI state
     selectedRelationType: string | null = null; // null = "All"
@@ -48,12 +48,12 @@ export class InstanceDetailComponent implements OnInit {
     private dataEditorState = inject(DataEditorState);
 
     ngOnInit() {
-        this.vm.initialize(this.type, this.instanceIID);
+        this.state.initialize(this.type, this.instanceIID);
     }
 
     get filteredRelations(): RelationInstanceData[] {
-        if (this.selectedRelationType === null) return this.vm.allRelations;
-        return this.vm.allRelations.filter(r => r.relationTypeLabel === this.selectedRelationType);
+        if (this.selectedRelationType === null) return this.state.allRelations;
+        return this.state.allRelations.filter(r => r.relationTypeLabel === this.selectedRelationType);
     }
 
     selectRelationType(type: string | null) {

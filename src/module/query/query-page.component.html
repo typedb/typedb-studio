@@ -250,7 +250,7 @@
                             [graphPercent]="panelSizes[5]" (graphPercentChange)="onPanelResize(5, $event)"
                             [stylesPanePercent]="panelSizes[6]" (stylesPanePercentChange)="onPanelResize(6, $event)"
                             [(maximised)]="graphMaximised"
-                            (canvasElRehomed)="onGraphCanvasRehomed($event)"
+                            (canvasElRebuilt)="onGraphCanvasRehomed($event)"
                             (statusAction)="onGraphStatusAction($event)">
             </ts-graph-canvas>
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'raw'">

@@ -65,7 +65,7 @@ export class GraphCanvasComponent implements AfterViewInit, AfterViewChecked, On
      *  `ngAfterViewChecked` already handles this for the graph page; the query
      *  page (which doesn't pass `[run]`) listens to this instead. Emits the new
      *  element. */
-    @Output() canvasElRehomed = new EventEmitter<HTMLElement>();
+    @Output() canvasElRebuilt = new EventEmitter<HTMLElement>();
 
     get queryRunning() { return this.status === "running"; }
 
@@ -123,7 +123,7 @@ export class GraphCanvasComponent implements AfterViewInit, AfterViewChecked, On
                 // for the same CD-safety reason as above.
                 setTimeout(() => {
                     this.applyBackground();
-                    this.canvasElRehomed.emit(el);
+                    this.canvasElRebuilt.emit(el);
                 });
             }
         } else if (el && this.attachedCanvasEl === null) {

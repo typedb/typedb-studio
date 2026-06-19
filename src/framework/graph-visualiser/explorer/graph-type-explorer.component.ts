@@ -37,7 +37,7 @@ interface RoleChipRow {
 
 /**
  * Right-pane explorer for **type-level** exploration. Counterpart to
- * `GraphExplorerComponent`. The `GraphSidePanelComponent` swaps between the
+ * `GraphInstanceExplorerComponent`. The `GraphSidePanelComponent` swaps between the
  * two based on the tab's `selectionMode`.
  *
  * F4 wires the chip discovery + load actions. Each chip toggles a sticky

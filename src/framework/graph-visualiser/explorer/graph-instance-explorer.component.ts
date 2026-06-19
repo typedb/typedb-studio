@@ -13,7 +13,7 @@ import { Clipboard } from "@angular/cdk/clipboard";
 import { GraphViewState } from "../../../service/graph-view-state.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
 import { SchemaConcept, SchemaRelation, SchemaRole } from "../../../service/schema-state.service";
-import { AttributeData, InstanceDetailViewModel, LinkData, RelationInstanceData } from "../../../service/instance-detail-view-model.service";
+import { AttributeData, InstanceDetailState, LinkData, RelationInstanceData } from "../../../service/instance-detail-state.service";
 import { GraphVisualiser } from "../engine";
 
 /** Sticky-state key for "this instance's link to a specific relation instance
@@ -32,17 +32,17 @@ function linkInstanceKey(relationIID: string, playerIID: string): string {
 }
 
 @Component({
-    selector: "ts-graph-explorer",
-    templateUrl: "./graph-explorer.component.html",
+    selector: "ts-graph-instance-explorer",
+    templateUrl: "./graph-instance-explorer.component.html",
     styleUrls: [
         // Reuse the data-side inspector's section/card/attribute styling so we
         // don't duplicate ~600 lines of SCSS. Angular's view encapsulation
         // keeps them scoped to this component. Listed first so the
-        // graph-explorer's own SCSS (below) wins on the :host overrides.
+        // explorer's own SCSS (below) wins on the :host overrides.
         "../../../module/data/instance-detail/instance-detail.component.scss",
-        "./graph-explorer.component.scss",
+        "./graph-instance-explorer.component.scss",
     ],
-    providers: [InstanceDetailViewModel],
+    providers: [InstanceDetailState],
     imports: [
         CommonModule,
         MatProgressSpinnerModule,
@@ -50,14 +50,14 @@ function linkInstanceKey(relationIID: string, playerIID: string): string {
         MatTooltipModule,
     ],
 })
-export class GraphExplorerComponent implements OnChanges {
+export class GraphInstanceExplorerComponent implements OnChanges {
     @Input() type: SchemaConcept | null = null;
     @Input() instanceIID: string | null = null;
     @Input() run: RunOutputState | null = null;
     @Input() visualiser: GraphVisualiser | null = null;
 
-    vm = inject(InstanceDetailViewModel);
-    // null when no selection — only valid to access vm.* fields when this is true
+    state = inject(InstanceDetailState);
+    // null when no selection — only valid to access state.* fields when this is true
     get hasSelection(): boolean { return !!(this.type && this.instanceIID); }
 
     selectedRelationType: string | null = null;
@@ -72,13 +72,13 @@ export class GraphExplorerComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges) {
         if ((changes["type"] || changes["instanceIID"]) && this.type && this.instanceIID) {
             this.selectedRelationType = null;
-            this.vm.initialize(this.type, this.instanceIID);
+            this.state.initialize(this.type, this.instanceIID);
         }
     }
 
     get filteredRelations(): RelationInstanceData[] {
-        if (this.selectedRelationType === null) return this.vm.allRelations;
-        return this.vm.allRelations.filter(r => r.relationTypeLabel === this.selectedRelationType);
+        if (this.selectedRelationType === null) return this.state.allRelations;
+        return this.state.allRelations.filter(r => r.relationTypeLabel === this.selectedRelationType);
     }
 
     selectRelationType(type: string | null) {
@@ -214,7 +214,7 @@ export class GraphExplorerComponent implements OnChanges {
      *  role in, in one fetch — the per-card "Add all to graph" affordance. */
     addAllRelationsOfType(relationTypeLabel: string) {
         if (!this.run || !this.type || !this.instanceIID) return;
-        const ofType = this.vm.allRelations.filter(r => r.relationTypeLabel === relationTypeLabel);
+        const ofType = this.state.allRelations.filter(r => r.relationTypeLabel === relationTypeLabel);
         this.visualiser?.freezeViewport();
         this.graphViewState
             .fetchRelationsOfTypeForPlayers(this.run, this.type, [this.instanceIID], relationTypeLabel)
@@ -235,7 +235,7 @@ export class GraphExplorerComponent implements OnChanges {
     /** True once every relation of `relationTypeLabel` for the current instance
      *  has been added — hides the per-card "Add all to graph" button. */
     allRelationsOfTypeAdded(relationTypeLabel: string): boolean {
-        const ofType = this.vm.allRelations.filter(r => r.relationTypeLabel === relationTypeLabel);
+        const ofType = this.state.allRelations.filter(r => r.relationTypeLabel === relationTypeLabel);
         return ofType.length > 0 && ofType.every(r => this.isRelationAdded(r));
     }
 
@@ -243,7 +243,7 @@ export class GraphExplorerComponent implements OnChanges {
      *  relation instances have been individually added — keeping the context
      *  menu's per-type relation chip in sync with individual Explorer adds. */
     private maybeMarkRelationTypeLoaded(relationTypeLabel: string): void {
-        const ofType = this.vm.allRelations.filter(r => r.relationTypeLabel === relationTypeLabel);
+        const ofType = this.state.allRelations.filter(r => r.relationTypeLabel === relationTypeLabel);
         if (ofType.length > 0 && ofType.every(r => this.isRelationAdded(r))) {
             this.markInstanceLoaded(relationTypeLabel);
         }
