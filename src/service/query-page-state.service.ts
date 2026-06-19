@@ -1263,7 +1263,14 @@ export class GraphOutputState {
                     }
                 }
                 this.visualiser.colorEdgesByConstraintIndex(!this._styleService.colorEdgesByConstraint);
-                this.status = res.ok.answers.length > 0 ? "ok" : "noQueryAnswers";
+                // A 0-answer result only means "no answers" for the *initial*
+                // query. For an additive expand (e.g. "load attributes here" on
+                // an instance that happens to have none) the follow-up fetch
+                // legitimately returns nothing — keep the existing graph and its
+                // "ok" status rather than blanking the canvas with the misleading
+                // "Query completed. No answers were returned." overlay.
+                if (res.ok.answers.length > 0) this.status = "ok";
+                else if (this.visualiser.graph.order === 0) this.status = "noQueryAnswers";
                 break;
             }
             case "conceptDocuments": {
