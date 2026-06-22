@@ -484,65 +484,59 @@ workflows:
               only: [banana]
   release:
     jobs:
-      # ============================================================================
-      # TEMPORARY: the platforms below already succeeded in the prior release run, so
-      # they are disabled to re-run only mac-x86_64 + deploy-github and complete the
-      # release. TO REVERT: uncomment every job below, restore deploy-github's full
-      # `requires` list, and delete this banner.
-      # ============================================================================
-#      - deploy-linux-arm64-release:
-#          filters:
-#            branches:
-#              only: master
-#      - deploy-linux-x86_64-release:
-#          filters:
-#            branches:
-#              only: master
-#      - deploy-mac-arm64-release:
-#          filters:
-#            branches:
-#              only: master
+      - deploy-linux-arm64-release:
+          filters:
+            branches:
+              only: master
+      - deploy-linux-x86_64-release:
+          filters:
+            branches:
+              only: master
+      - deploy-mac-arm64-release:
+          filters:
+            branches:
+              only: master
       - deploy-mac-x86_64-release:
           filters:
             branches:
               only: master
-#      - deploy-windows-x86_64-release:
-#          filters:
-#            branches:
-#              only: master
+      - deploy-windows-x86_64-release:
+          filters:
+            branches:
+              only: master
       - deploy-github:
           filters:
             branches:
               only: master
           requires:
-#            - deploy-linux-arm64-release
-#            - deploy-linux-x86_64-release
-#            - deploy-mac-arm64-release
+            - deploy-linux-arm64-release
+            - deploy-linux-x86_64-release
+            - deploy-mac-arm64-release
             - deploy-mac-x86_64-release
-#            - deploy-windows-x86_64-release
-#      - deploy-apt-arm64-release:
-#          filters:
-#            branches:
-#              only: watermelon
-#          requires:
-#            - deploy-linux-arm64-release
-#      - deploy-apt-x86_64-release:
-#          filters:
-#            branches:
-#              only: watermelon
-#          requires:
-#            - deploy-linux-x86_64-release
-#      - deploy-brew:
-#          filters:
-#            branches:
-#              only: watermelon
-#          requires:
-#            - deploy-mac-arm64-release
-#            - deploy-mac-x86_64-release
-#      - release-cleanup:
-#          filters:
-#            branches:
-#              only: watermelon
-#          requires:
-#            - deploy-github
-#            - deploy-brew
+            - deploy-windows-x86_64-release
+      - deploy-apt-arm64-release:
+          filters:
+            branches:
+              only: watermelon
+          requires:
+            - deploy-linux-arm64-release
+      - deploy-apt-x86_64-release:
+          filters:
+            branches:
+              only: watermelon
+          requires:
+            - deploy-linux-x86_64-release
+      - deploy-brew:
+          filters:
+            branches:
+              only: watermelon
+          requires:
+            - deploy-mac-arm64-release
+            - deploy-mac-x86_64-release
+      - release-cleanup:
+          filters:
+            branches:
+              only: watermelon
+          requires:
+            - deploy-github
+            - deploy-brew
