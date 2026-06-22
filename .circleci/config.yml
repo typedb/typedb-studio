@@ -60,10 +60,6 @@ commands:
           sudo mv "bazelisk-darwin-<<parameters.bazel-arch>>" /usr/local/bin/bazel
           chmod a+x /usr/local/bin/bazel
 
-  install-brew-rosetta:
-    steps:
-      - run: arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
   restore-npm-cache:
     steps:
       - restore_cache:
@@ -105,8 +101,14 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          brew install python@3.11
-          export PATH="$(brew --prefix python@3.11)/libexec/bin:$PATH"
+          # Newer Homebrew formulae (ca-certificates/openssl@3/python@3.11) can fail their
+          # post-install step on the CI image and make `brew install` exit non-zero, aborting the
+          # job. The pour itself succeeds, so tolerate the post-install failure and use the
+          # versioned binary directly (independent of the libexec/bin post-install symlinks).
+          brew install python@3.11 || brew postinstall python@3.11 || true
+          PYDIR="$(brew --prefix python@3.11)"
+          export PATH="$PYDIR/bin:$PYDIR/libexec/bin:$PATH"
+          export PYTHON="$PYDIR/bin/python3.11"
           nvm install 22
           nvm use 22
           corepack enable
@@ -128,8 +130,14 @@ commands:
       - run: |
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          brew install python@3.11
-          export PATH="$(brew --prefix python@3.11)/libexec/bin:$PATH"
+          # Newer Homebrew formulae (ca-certificates/openssl@3/python@3.11) can fail their
+          # post-install step on the CI image and make `brew install` exit non-zero, aborting the
+          # job. The pour itself succeeds, so tolerate the post-install failure and use the
+          # versioned binary directly (independent of the libexec/bin post-install symlinks).
+          brew install python@3.11 || brew postinstall python@3.11 || true
+          PYDIR="$(brew --prefix python@3.11)"
+          export PATH="$PYDIR/bin:$PYDIR/libexec/bin:$PATH"
+          export PYTHON="$PYDIR/bin/python3.11"
           nvm install 22
           nvm use 22
           corepack enable
@@ -265,7 +273,6 @@ jobs:
       - checkout
       - fetch-submodules
       - macos/install-rosetta
-      - install-brew-rosetta
       - install-bazel-mac:
           bazel-arch: amd64
       - install-deps-npm
@@ -348,7 +355,6 @@ jobs:
       - checkout
       - fetch-submodules
       - macos/install-rosetta
-      - install-brew-rosetta
       - install-bazel-mac:
           bazel-arch: amd64
       - install-deps-npm
