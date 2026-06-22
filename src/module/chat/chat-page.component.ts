@@ -20,11 +20,15 @@ import { ResizableDirective } from "@hhangular/resizable";
 import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { SchemaToolWindowComponent } from "../schema/tool-window/schema-tool-window.component";
-import { ChatMessageComponent, RunQueryEvent } from "./chat-message/chat-message.component";
+import { ChatMessageComponent, RunQueryEvent, SaveQueryEvent } from "./chat-message/chat-message.component";
+import { SavedQueriesState } from "../../service/saved-queries-state.service";
+import { SnackbarService } from "../../service/snackbar.service";
+import { SaveQueryDialogComponent, SaveQueryDialogData } from "../saved-queries/save-query-dialog/save-query-dialog.component";
 import { ChatMessageData, ChatState, ConversationSummary } from "../../service/chat-state.service";
 import { DriverState } from "../../service/driver-state.service";
 import { HistoryWindowState } from "../../service/query-page-state.service";
 import { AppData } from "../../service/app-data.service";
+import { AiConsentState } from "../../service/ai-consent-state.service";
 import { DatabaseCreateDialogComponent } from "../database/create-dialog/database-create-dialog.component";
 import { DatabaseSelectDialogComponent } from "../database/select-dialog/database-select-dialog.component";
 import { HistoryPaneComponent } from "../query-history/history-pane/history-pane.component";
@@ -74,8 +78,20 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
         private appData: AppData,
         private dialog: MatDialog,
         private zone: NgZone,
+        private savedQueries: SavedQueriesState,
+        private snackbar: SnackbarService,
+        public aiConsent: AiConsentState,
     ) {
         this.history = new HistoryWindowState(driver);
+    }
+
+    /** Run an AI action only after consent. Opens the lazy opt-in modal on first
+     *  use; silently no-ops if the user declines. All chat send paths funnel
+     *  through here so nothing reaches the AI backend without opt-in. */
+    private withConsent(action: () => void): void {
+        this.aiConsent.requireConsent().then(granted => {
+            if (granted) this.zone.run(action);
+        });
     }
 
     ngOnInit() {
@@ -192,11 +208,13 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     onSubmit(event: Event): void {
         event.preventDefault();
         if (this.handleSlashCommand()) return;
-        if (this.state.isProcessing$.value) {
-            this.state.cancelStream();
-        }
-        this.state.submitPrompt();
-        this.scheduleScrollToLastUserMessage();
+        this.withConsent(() => {
+            if (this.state.isProcessing$.value) {
+                this.state.cancelStream();
+            }
+            this.state.submitPrompt();
+            this.scheduleScrollToLastUserMessage();
+        });
     }
 
     onInputKeyDownEnter(event: KeyboardEvent): void {
@@ -207,13 +225,15 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
                 this.historyDraft = "";
                 return;
             }
-            if (this.state.isProcessing$.value) {
-                this.state.cancelStream();
-            }
-            this.state.submitPrompt();
             this.historyIndex = -1;
             this.historyDraft = "";
-            this.scheduleScrollToLastUserMessage();
+            this.withConsent(() => {
+                if (this.state.isProcessing$.value) {
+                    this.state.cancelStream();
+                }
+                this.state.submitPrompt();
+                this.scheduleScrollToLastUserMessage();
+            });
         }
     }
 
@@ -279,17 +299,43 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
         });
     }
 
+    /**
+     * Saves a query from an AI-generated code block. Agent Mode has no tab
+     * name to fall back on, so we always prompt: the dialog opens with an
+     * empty suggested name and the user picks something meaningful before
+     * the query lands in the saved-queries list.
+     */
+    onSaveQuery(event: SaveQueryEvent): void {
+        if (!event.query?.trim()) {
+            this.snackbar.warn("Empty query — nothing to save");
+            return;
+        }
+        const ref = this.dialog.open(SaveQueryDialogComponent, {
+            data: { suggestedName: "" } as SaveQueryDialogData,
+            width: "400px",
+        });
+        ref.afterClosed().subscribe((name: string | undefined) => {
+            if (!name) return;
+            this.savedQueries.add(name, event.query);
+            this.snackbar.success(`Saved "${name}"`);
+        });
+    }
+
     onSendLogToAi(logText: string): void {
-        this.state.promptControl.setValue(logText);
-        this.state.submitPrompt();
-        this.scheduleScrollToLastUserMessage();
+        this.withConsent(() => {
+            this.state.promptControl.setValue(logText);
+            this.state.submitPrompt();
+            this.scheduleScrollToLastUserMessage();
+        });
     }
 
     /** Re-runs a query from the History pane by feeding it into the chat prompt. */
     onRunHistoryQuery(query: string) {
-        this.state.promptControl.setValue(query);
-        this.state.submitPrompt();
-        setTimeout(() => this.scrollToBottom());
+        this.withConsent(() => {
+            this.state.promptControl.setValue(query);
+            this.state.submitPrompt();
+            setTimeout(() => this.scrollToBottom());
+        });
     }
 
     onPanelResize(index: number, percent: number) {
@@ -306,7 +352,7 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
     }
 
     compactChat(): void {
-        this.state.compactConversation();
+        this.withConsent(() => this.state.compactConversation());
     }
 
     get selectedConversationTitle(): string {

@@ -1,5 +1,10 @@
-import { Component, DoCheck, inject, Input, OnChanges, SimpleChanges } from "@angular/core";
+import { Component, DoCheck, inject, Input, OnChanges, SimpleChanges, ViewChild } from "@angular/core";
+import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { GraphStyleService } from "../../../service/graph-style.service";
+import { GraphViewState } from "../../../service/graph-view-state.service";
+import { RunOutputState } from "../../../service/query-page-state.service";
+import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
+import { SnackbarService } from "../../../service/snackbar.service";
 import { GraphVisualiser } from "../engine";
 import { VertexKind } from "@typedb/graph-utils";
 
@@ -31,14 +36,14 @@ const DISPLAY_EDGE_LABELS: EdgeLabelRow[] = [
 ];
 
 const DISPLAY_KINDS: KindRow[] = [
-    { kind: "entity", label: "Entity" },
-    { kind: "relation", label: "Relation" },
-    { kind: "attribute", label: "Attribute" },
-    { kind: "entityType", label: "Entity Type" },
-    { kind: "relationType", label: "Relation Type" },
-    { kind: "attributeType", label: "Attribute Type" },
-    { kind: "roleType", label: "Role Type" },
-    { kind: "value", label: "Value" },
+    { kind: "entity", label: "entity" },
+    { kind: "relation", label: "relation" },
+    { kind: "attribute", label: "attribute" },
+    { kind: "entityType", label: "entity type" },
+    { kind: "relationType", label: "relation type" },
+    { kind: "attributeType", label: "attribute type" },
+    { kind: "roleType", label: "role type" },
+    { kind: "value", label: "value" },
 ];
 
 const KIND_ORDER: Record<string, number> = Object.fromEntries(DISPLAY_KINDS.map((k, i) => [k.kind, i]));
@@ -48,12 +53,21 @@ function kindOrder(kind: string): number { return KIND_ORDER[kind] ?? Infinity; 
     selector: "ts-graph-side-panel-elements-tab",
     templateUrl: "elements-tab.component.html",
     styleUrls: ["graph-side-panel.component.scss"],
+    imports: [MatMenuModule],
 })
 export class ElementsTabComponent implements OnChanges, DoCheck {
 
     @Input() visualiser: GraphVisualiser | null = null;
+    @Input() run: RunOutputState | null = null;
+
+    @ViewChild("typeContextMenuTrigger", { static: true }) typeContextMenuTrigger!: MatMenuTrigger;
+    typeMenuPosition = { x: 0, y: 0 };
+    typeMenuTarget: TypeRow | null = null;
 
     styleService = inject(GraphStyleService);
+    private graphViewState = inject(GraphViewState);
+    private schemaState = inject(SchemaState);
+    private snackbar = inject(SnackbarService);
 
     readonly displayKinds = DISPLAY_KINDS;
     readonly edgeLabels = DISPLAY_EDGE_LABELS;
@@ -280,5 +294,101 @@ export class ElementsTabComponent implements OnChanges, DoCheck {
         if (!this.styleService.isPreviewActive()) return;
         this.styleService.clearPreview();
         this.visualiser?.sigma.refresh();
+    }
+
+    // -- Type chip context menu ------------------------------------------------
+
+    /**
+     * Right-clicking a type chip opens a menu with "Load links" / "Load
+     * attributes" actions scoped to every instance of that type currently in
+     * the graph. No-op for attribute types (no own links/attributes).
+     */
+    onTypeChipContextMenu(event: MouseEvent, row: TypeRow): void {
+        if (row.kind !== "entity" && row.kind !== "relation"
+            && row.kind !== "entityType" && row.kind !== "relationType") return;
+        event.preventDefault();
+        event.stopPropagation();
+        this.typeMenuPosition = { x: event.clientX, y: event.clientY };
+        this.typeMenuTarget = row;
+        // Setting `_openedBy` to "mouse" makes FocusMonitor suppress the
+        // focus ring on the auto-focused first item — equivalent to opening
+        // the menu via a real click on the trigger.
+        setTimeout(() => {
+            (this.typeContextMenuTrigger as any)._openedBy = "mouse";
+            this.typeContextMenuTrigger.openMenu();
+        });
+    }
+
+    loadLinksForAllOfType(): void {
+        const target = this.typeMenuTarget;
+        if (!target) return;
+        const type = this.lookupType(target);
+        if (!type || type.kind === "attributeType") return;
+        const iids = this.collectInstanceIidsOfType(target.typeLabel);
+        if (iids.length === 0) return;
+        this.runFetch(() => this.graphViewState.fetchLinksOf(this.run!, type, iids));
+    }
+
+    loadAttributesForAllOfType(): void {
+        const target = this.typeMenuTarget;
+        if (!target) return;
+        const type = this.lookupType(target);
+        if (!type || type.kind === "attributeType") return;
+        const iids = this.collectInstanceIidsOfType(target.typeLabel);
+        if (iids.length === 0) return;
+        this.runFetch(() => this.graphViewState.fetchAttributesOf(this.run!, type, iids));
+    }
+
+    private lookupType(row: TypeRow): SchemaConcept | null {
+        const schema = this.schemaState.value$.value;
+        if (!schema) {
+            this.snackbar.errorPersistent("Schema not loaded");
+            return null;
+        }
+        // Type rows from the Elements tab can be tagged with either the
+        // instance kind (entity/relation/attribute) or the type kind
+        // (entityType/...); both should resolve through the same maps.
+        switch (row.kind) {
+            case "entity":
+            case "entityType":
+                return schema.entities[row.typeLabel] ?? null;
+            case "relation":
+            case "relationType":
+                return schema.relations[row.typeLabel] ?? null;
+            case "attribute":
+            case "attributeType":
+                return schema.attributes[row.typeLabel] ?? null;
+            default:
+                return null;
+        }
+    }
+
+    private collectInstanceIidsOfType(typeLabel: string): string[] {
+        if (!this.visualiser) return [];
+        const out: string[] = [];
+        const seen = new Set<string>();
+        this.visualiser.graph.nodes().forEach(key => {
+            try {
+                const concept = this.visualiser!.graph.getNodeAttributes(key)?.["metadata"]?.concept;
+                if (!concept) return;
+                if ((concept.kind === "entity" || concept.kind === "relation")
+                    && concept.type?.label === typeLabel
+                    && concept.iid
+                    && !seen.has(concept.iid)) {
+                    seen.add(concept.iid);
+                    out.push(concept.iid);
+                }
+            } catch { /* missing metadata mid-mutation */ }
+        });
+        return out;
+    }
+
+    private runFetch(op: () => Promise<void>): void {
+        if (!this.run || !this.visualiser) return;
+        this.visualiser.freezeViewport();
+        op().then(() => {
+            this.visualiser?.reheat({ soft: true, preserveCamera: true });
+            this.visualiser?.interactionHandler.recomputeHighlightSet();
+        });
     }
 }

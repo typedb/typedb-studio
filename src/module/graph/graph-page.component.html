@@ -42,7 +42,7 @@
                 <div class="tab-label-container">
                   <span class="tab-label">
                     <i class="tab-type-icon" [ngClass]="getTypeIconClass(tab.type.kind)"></i>
-                    {{ tab.type.label }}@if (tab.attrsOnly) {<span class="tab-mode-suffix"> (attrs)</span>}
+                    {{ tab.type.label }}
                   </span>
                   <button mat-icon-button class="tab-close-button" (click)="closeTab($event, i)">
                     <i class="fa-light fa-xmark"></i>
@@ -58,7 +58,7 @@
         </mat-tab-group>
       } @else {
         <div class="empty-state">
-          <i class="fa-light fa-circle-nodes"></i>
+          <i class="fa-light fa-chart-network"></i>
           <p>Select a type on the left to view a graph of its instances</p>
         </div>
       }

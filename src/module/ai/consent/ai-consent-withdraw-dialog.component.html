@@ -1,0 +1,24 @@
+<tp-modal dialogTitle="Disable AI features" [isBusy]="isSubmitting$ | async">
+  <div class="consent-body">
+    <p class="consent-lead">
+      Are you sure you want to disable AI features?
+    </p>
+    <div class="consent-admonition">
+      <p><i class="fa-light fa-circle-info"></i> <span class="admonition-header">Note</span></p>
+      <p>
+        You will no longer be able to use Agent Mode. You can re-enable it later at any time.
+      </p>
+    </div>
+
+    <mat-checkbox class="consent-checkbox" [(ngModel)]="clearHistory">
+      (Optional) Also delete all chat history from local storage.
+    </mat-checkbox>
+
+    <tp-form-actions
+      submitText="Disable AI features" submitButtonStyle="primary-outline red stroke"
+      buttonIdPrefix="aiConsentWithdraw"
+      [isSubmitting]="isSubmitting$ | async" (submitClick)="confirm()"
+      [cancellable]="true" (cancel)="close()"
+    />
+  </div>
+</tp-modal>

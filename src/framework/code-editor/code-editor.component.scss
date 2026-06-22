@@ -22,12 +22,20 @@
         right: 48px;
     }
 
+    .copy-overlay + .copy-overlay + .copy-overlay {
+        right: 88px;
+    }
+
     &.has-scrollbar .copy-overlay {
         right: 18px;
     }
 
     &.has-scrollbar .copy-overlay + .copy-overlay {
         right: 58px;
+    }
+
+    &.has-scrollbar .copy-overlay + .copy-overlay + .copy-overlay {
+        right: 98px;
     }
 
     // Show overlays on hover

@@ -17,8 +17,9 @@ import { GraphBuilder } from "./graph-builder";
 import { GraphStyles, colorEdgesByConstraintIndex as _colorEdgesByConstraintIndex, colorQuery as _colorQuery } from "./styles";
 import { setUseBorderColorForLabels, setLabelsVisible, setShowHoverLabel } from "./sigma-label-utils";
 import { InteractionHandler, StudioState } from "./interaction-handler";
-import { LayoutWrapper } from "./layout";
+import { LayoutWrapper, LayoutDensity } from "./layout";
 import { createSigmaRenderer, defaultSigmaSettings } from "./sigma-settings";
+import { DisplayAttributeStore, refreshInstanceLabels } from "./instance-label";
 
 export type GraphPngExportMode = "currentView" | "wholeGraph";
 const MAX_EXPORT_DIMENSION = 8192;
@@ -35,7 +36,26 @@ export class GraphVisualiser {
     private settingCameraProgrammatically = false;
     private peakCameraRatio = 0;
     private labelsAutoHidden = false;
+    /**
+     * When set, every layout tick re-projects this world point back to the
+     * current bbox's coordinate space and snaps the camera there. Used by
+     * `reheat({ preserveCamera })` so the camera stays pinned to the world
+     * spot the user was looking at even as the simulation re-positions nodes
+     * and Sigma's bbox shifts under it.
+     */
+    private pinnedCameraWorld: { worldX: number; worldY: number; ratio: number } | null = null;
     private stylesSub!: Subscription;
+    private cameraUpdatedListener: (() => void) | null = null;
+    /** Per-instance attribute values fetched purely to populate the label
+     *  heuristic. Not rendered into the graph — kept off-graph so the user
+     *  still has to opt in to attribute nodes/edges. */
+    private displayAttributes: DisplayAttributeStore = new Map();
+    /** User-set overrides for the instance-label heuristic: typeLabel →
+     *  attribute type label to use as the display value. Loaded from
+     *  `AppData.nodeLabelPrefs` when a tab opens; mutated from the type
+     *  inspector dropdown. Independent of GraphStyleService so "Reset all
+     *  styles" doesn't clear it. */
+    labelOverridesByType: Map<string, string> = new Map();
 
     constructor(public graph: Graph, public sigma: Sigma, public layout: LayoutWrapper, public styleService: GraphStyleService) {
         this.state = { activeQueryDatabase: null };
@@ -45,14 +65,22 @@ export class GraphVisualiser {
         this.interactionHandler.layout = this.layout;
         this.setupReducers();
         this.layout.onTick = () => {
-            if (this.autoZoomEnabled) this.centerCamera();
+            if (this.pinnedCameraWorld) {
+                this.restoreCameraWorld(this.pinnedCameraWorld);
+            } else if (this.autoZoomEnabled) {
+                this.centerCamera();
+            }
         };
-        this.sigma.getCamera().addListener("updated", () => {
+        this.cameraUpdatedListener = () => {
             if (!this.settingCameraProgrammatically) {
                 this.autoZoomEnabled = false;
+                // User took control — release the pin so future Explores don't
+                // snap back to a stale saved position.
+                this.pinnedCameraWorld = null;
             }
             this.updateLabelVisibilityForZoom();
-        });
+        };
+        this.sigma.getCamera().addListener("updated", this.cameraUpdatedListener);
         this.stylesSub = this.styleService.styles$.subscribe(() => {
             this.syncStyles();
             try {
@@ -107,7 +135,7 @@ export class GraphVisualiser {
     }
 
     private setupReducers(): void {
-        const FADE_RATIO = 0.075; // mix 7.5% original color, 92.5% background
+        const FADE_RATIO = 0.15; // mix 15% original color, 85% background
         const PREVIEW_FADE_RATIO = 0.3; // mix 30% original color, 70% background — gentler than the regular fade
 
         const fade = (color: string) => chroma.mix(this.styleService.effectiveBackgroundHex, color, FADE_RATIO).hex();
@@ -121,11 +149,18 @@ export class GraphVisualiser {
             const pa = Math.round(alpha * 255);
             return `#${pr.toString(16).padStart(2, "0")}${pg.toString(16).padStart(2, "0")}${pb.toString(16).padStart(2, "0")}${pa.toString(16).padStart(2, "0")}`;
         };
-        const fadeSoft = buildFadeSoft(0.15);
+        const fadeSoft = buildFadeSoft(0.25);
         const fadeSoftForPreview = buildFadeSoft(0.3);
 
         this.sigma.setSetting("nodeReducer", (node, data) => {
             const state = this.interactionHandler.state;
+            // The node being dragged is lifted above all others so its body,
+            // label, and hover overlay stack as one consistent group on top.
+            // A drag re-indexes every move (x/y are layout-impacting), so this
+            // elevated zIndex propagates to the body draw order, the label
+            // draw order (renderLabels sorts by the same nodeIndices), and to
+            // picking — keeping the dragged node the hovered one throughout.
+            if (node === state.draggedNode) return { ...data, zIndex: 2 };
             let shouldFade = false;
             let isPreviewFade = false;
 
@@ -162,7 +197,10 @@ export class GraphVisualiser {
                 }
             }
 
-            if (!shouldFade) return { ...data, zIndex: 1 };
+            // Lift the hovered node above its peers so body + label come to the
+            // front together (a faded node keeps its blanked label, so there's
+            // nothing to lift — leave it at the normal level).
+            if (!shouldFade) return { ...data, zIndex: node === state.hoveredNode ? 2 : 1 };
             const res = { ...data };
             if (isPreviewFade) {
                 res["color"] = fadeSoftForPreview(data["color"]);
@@ -286,15 +324,162 @@ export class GraphVisualiser {
         this.sigma.refresh();
     }
 
+    /**
+     * Re-apply the curved-vs-straight edge type to every existing edge based on
+     * the current `edgesCurvedByDefault` setting. Parallel edges between the
+     * same pair stay curved (and fanned out) regardless, so they don't overlap.
+     */
+    applyEdgeCurvature(): void {
+        const curvedByDefault = this.styleService.edgesCurvedByDefault;
+        // Count edges per unordered node pair so parallels can be detected.
+        const pairCounts = new Map<string, number>();
+        const pairKey = (a: string, b: string) => a < b ? `${a} ${b}` : `${b} ${a}`;
+        this.graph.forEachEdge((_e, _a, source, target) => {
+            const k = pairKey(source, target);
+            pairCounts.set(k, (pairCounts.get(k) ?? 0) + 1);
+        });
+        const seen = new Map<string, number>();
+        this.graph.forEachEdge((edge, _attrs, source, target) => {
+            const k = pairKey(source, target);
+            const total = pairCounts.get(k) ?? 1;
+            const idx = seen.get(k) ?? 0;
+            seen.set(k, idx + 1);
+            if (total > 1) {
+                // Parallel edges: always curve and fan out.
+                this.graph.setEdgeAttribute(edge, "type", "curved");
+                this.graph.setEdgeAttribute(edge, "curvature", 0.25 * (idx + 1));
+            } else {
+                this.graph.setEdgeAttribute(edge, "type", curvedByDefault ? "curved" : "line");
+                this.graph.setEdgeAttribute(edge, "curvature", 0.25);
+            }
+        });
+        this.sigma.refresh();
+    }
+
     reLayout(): void {
         this.autoZoomEnabled = true;
         this.peakCameraRatio = 0;
+        this.pinnedCameraWorld = null;
+        this.unfreezeViewport();
         this.graph.nodes().forEach(node => {
             this.graph.setNodeAttribute(node, "x", Math.random());
             this.graph.setNodeAttribute(node, "y", Math.random());
         });
+        // Positions are now random — drop the "settled" set so the simulation
+        // starts fresh and doesn't try to anchor new nodes to stale data.
+        this.layout.forgetSettled();
         this.layout.startOrRedraw();
         this.centerCamera();
+    }
+
+    /**
+     * Resume the layout simulation so newly added nodes settle into the
+     * existing graph. Unlike `reLayout`, this preserves current node
+     * positions — the simulation restarts from where things are now.
+     *
+     * - `soft`: use a lower initial alpha + higher alpha decay so the
+     *   simulation perturbs the layout less and settles faster. Good for
+     *   incremental Explore/Add actions where we don't want the existing
+     *   layout to swirl.
+     * - `preserveCamera`: don't re-enable auto-zoom and don't recenter.
+     *   Use when the user has framed the view themselves and an Explore
+     *   shouldn't yank the camera around.
+     */
+    /**
+     * Pin the current bbox so that subsequent graph mutations (new nodes
+     * appearing, simulation re-laying out positions) don't visually shift
+     * the camera: Sigma stores the camera in coords normalized to the bbox,
+     * so an auto-growing bbox makes the same camera state cover more world
+     * space — which looks like a zoom-out. Same trick used in
+     * `onDownNode` when a drag begins. No-op if already pinned.
+     */
+    freezeViewport(): void {
+        if (!this.sigma.getCustomBBox()) {
+            this.sigma.setCustomBBox(this.sigma.getBBox());
+        }
+    }
+
+    /** Release the pinned bbox so Sigma resumes auto-fitting to the graph. */
+    unfreezeViewport(): void {
+        this.sigma.setCustomBBox(null);
+    }
+
+    /**
+     * Capture the camera's current world coordinates + ratio. Combined with
+     * `restoreCameraWorld`, this lets a caller pin the camera to the same
+     * world point across operations that mutate the bbox.
+     */
+    captureCameraWorld(): { worldX: number; worldY: number; ratio: number } {
+        const cam = this.sigma.getCamera().getState();
+        const bbox = this.sigma.getCustomBBox() ?? this.sigma.getBBox();
+        const bboxW = (bbox.x[1] - bbox.x[0]) || 1;
+        const bboxH = (bbox.y[1] - bbox.y[0]) || 1;
+        return {
+            worldX: bbox.x[0] + cam.x * bboxW,
+            worldY: bbox.y[0] + cam.y * bboxH,
+            ratio: cam.ratio,
+        };
+    }
+
+    /** Convert saved world coords back to current-bbox-relative camera state. */
+    restoreCameraWorld(saved: { worldX: number; worldY: number; ratio: number }): void {
+        const bbox = this.sigma.getCustomBBox() ?? this.sigma.getBBox();
+        const bboxW = (bbox.x[1] - bbox.x[0]) || 1;
+        const bboxH = (bbox.y[1] - bbox.y[0]) || 1;
+        const x = (saved.worldX - bbox.x[0]) / bboxW;
+        const y = (saved.worldY - bbox.y[0]) / bboxH;
+        this.settingCameraProgrammatically = true;
+        this.sigma.getCamera().setState({ x, y, ratio: saved.ratio, angle: 0 });
+        this.settingCameraProgrammatically = false;
+    }
+
+    reheat(opts?: { soft?: boolean; preserveCamera?: boolean }): void {
+        if (opts?.preserveCamera) {
+            // Force off — without this, an already-true `autoZoomEnabled`
+            // would have the onTick callback recentering the camera on every
+            // frame as nodes shift around.
+            this.autoZoomEnabled = false;
+            // Pin the camera to the world point it's currently looking at so
+            // the per-tick onTick callback can snap it back there as the
+            // simulation re-positions things and Sigma's bbox shifts.
+            this.pinnedCameraWorld = this.captureCameraWorld();
+        } else {
+            this.autoZoomEnabled = true;
+            this.peakCameraRatio = 0;
+            this.pinnedCameraWorld = null;
+        }
+        if (opts?.soft) {
+            this.layout.start({ initialAlpha: 0.5, alphaDecay: 0.04 });
+        } else {
+            this.layout.start();
+        }
+        if (opts?.preserveCamera) {
+            // An Explore/Add reheat preserves the camera, but the simulation
+            // can still fling the explored node itself out of view as new
+            // neighbours add their forces. Pin that node at its current
+            // position for this run so the new nodes settle around it while it
+            // (and the preserved camera) stay put. `start()` has just rebuilt
+            // the simulation, so the node exists to be fixed; the fix lasts
+            // only for this run (the next simulation is built fresh).
+            this.pinFocusedNodeForReheat();
+        } else {
+            this.centerCamera();
+        }
+    }
+
+    /**
+     * Fix the currently-selected node in the running simulation at its present
+     * position, so a `preserveCamera` reheat grows new nodes around it instead
+     * of letting the explored node drift off-screen. No-op if nothing is
+     * selected or the node has no position yet.
+     */
+    private pinFocusedNodeForReheat(): void {
+        const anchor = this.interactionHandler.state.selectedNode;
+        if (anchor == null || !this.graph.hasNode(anchor)) return;
+        const x = this.graph.getNodeAttribute(anchor, "x");
+        const y = this.graph.getNodeAttribute(anchor, "y");
+        if (x == null || y == null) return;
+        this.layout.fixNode(anchor, x, y);
     }
 
     centerCamera(zoomOutOnly = false): void {
@@ -303,6 +488,12 @@ export class GraphVisualiser {
 
         const { width, height } = this.sigma.getDimensions();
         if (width === 0 || height === 0) return;
+
+        // Reset view should always re-fit the entire graph; clear any pinned
+        // bbox so x/y = 0.5 actually centers on the full extent rather than
+        // on a stale frozen subregion.
+        this.unfreezeViewport();
+        this.pinnedCameraWorld = null;
 
         // Compute graph bounding box in graph coordinates
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -342,13 +533,22 @@ export class GraphVisualiser {
         if (isApiErrorResponse(res)) return;
 
         if (res.ok.answerType === "conceptRows") {
+            // Snapshot whether the graph was empty *before* this push. A
+            // first-time push (e.g. opening a new type tab) gets the full
+            // auto-fit treatment; subsequent incremental pushes (Inspector
+            // Explore/Add actions) leave the camera and layout supervisor
+            // alone so the user's focused view isn't yanked away. The
+            // inspector kicks its own `reheat({ preserveCamera })` after.
+            const wasEmpty = this.graph.order === 0;
             this.state.activeQueryDatabase = database;
-            this.autoZoomEnabled = true;
-            this.peakCameraRatio = 0;
             this.handleQueryResult(res);
             if (this.styleService.degreeScaling) this.applyStyleUpdate();
-            this.layout.startOrRedraw();
-            this.centerCamera();
+            if (wasEmpty && this.graph.order > 0) {
+                this.autoZoomEnabled = true;
+                this.peakCameraRatio = 0;
+                this.layout.startOrRedraw();
+                this.centerCamera();
+            }
         }
     }
 
@@ -359,7 +559,69 @@ export class GraphVisualiser {
             let builder = new GraphBuilder(this.graph, res.ok.query, false, this.structureParams, this.styleParams);
             let answers = buildStructuredAnswers(res.ok as any);
             builder.build(answers);
+            refreshInstanceLabels(this.graph, this.displayAttributes, this.labelOverridesByType);
         }
+    }
+
+    /**
+     * Parse a conceptRows response shaped like `match $owner has $a;` and
+     * record each (owner-iid, attribute-type-label) → value pair in the
+     * off-graph display-attribute store. Used to feed the label heuristic
+     * without ever drawing the attribute nodes/edges.
+     */
+    recordDisplayAttributes(res: ApiResponse<QueryResponse>, ownerVar: string, attrVar: string = "a"): void {
+        if (isApiErrorResponse(res)) return;
+        if (res.ok.answerType !== "conceptRows") return;
+        for (const answer of (res.ok as any).answers) {
+            const data = answer.data as Record<string, any>;
+            const owner = data[ownerVar];
+            const attr = data[attrVar];
+            if (!owner?.iid || !attr || attr.kind !== "attribute") continue;
+            const typeLabel: string | undefined = attr.type?.label;
+            if (!typeLabel) continue;
+            let perOwner = this.displayAttributes.get(owner.iid);
+            if (!perOwner) {
+                perOwner = new Map();
+                this.displayAttributes.set(owner.iid, perOwner);
+            }
+            // Multi-valued attributes: append rather than overwrite so each
+            // (owner, attr-type) pair holds every value the row stream
+            // reports. Dedup happens later at format time.
+            let values = perOwner.get(typeLabel);
+            if (!values) {
+                values = [];
+                perOwner.set(typeLabel, values);
+            }
+            values.push(attr.value);
+        }
+    }
+
+    /** Recompute every entity / relation label from the latest graph state +
+     *  off-graph display-attribute store. Cheap; safe to call after any new
+     *  data arrives. */
+    refreshLabels(): void {
+        refreshInstanceLabels(this.graph, this.displayAttributes, this.labelOverridesByType);
+    }
+
+    /** Replace the full override map (e.g. when loading from AppData). */
+    applyLabelOverrides(overrides: Map<string, string>): void {
+        this.labelOverridesByType = new Map(overrides);
+        this.refreshLabels();
+    }
+
+    /** Set or clear a single type's override and refresh labels. UI hook
+     *  for the type-detail dropdown — persisting to AppData is the caller's
+     *  responsibility. */
+    setLabelOverride(typeLabel: string, attrTypeLabel: string | null): void {
+        if (attrTypeLabel) this.labelOverridesByType.set(typeLabel, attrTypeLabel);
+        else this.labelOverridesByType.delete(typeLabel);
+        this.refreshLabels();
+    }
+
+    /** Drop the off-graph display-attribute store. Used by `resetTab` so a
+     *  reset starts from a clean slate; new fetches will repopulate. */
+    clearDisplayAttributes(): void {
+        this.displayAttributes.clear();
     }
 
     handleExplorationQueryResult(res: ApiResponse<QueryResponse>) {
@@ -369,6 +631,7 @@ export class GraphVisualiser {
             let builder = new GraphBuilder(this.graph, res.ok.query, true, this.structureParams, this.styleParams);
             let answers = buildStructuredAnswers(res.ok as any);
             builder.build(answers);
+            refreshInstanceLabels(this.graph, this.displayAttributes, this.labelOverridesByType);
             if (this.styleService.degreeScaling) this.applyStyleUpdate();
         }
     }
@@ -404,6 +667,317 @@ export class GraphVisualiser {
     clearSearch() {
         if (this.searchMatches == null) return;
         this.searchGraph("");
+    }
+
+    /**
+     * Programmatically select an instance node — equivalent to the user
+     * clicking it: highlight ring, neighbor fade, Inspector update. For
+     * entity/relation nodes we match by IID; for attributes we match by
+     * (typeLabel, value). No-op if the node isn't in the graph yet.
+     */
+    selectInstance(kind: "entity" | "relation" | "attribute", typeLabel: string, instanceId: string): void {
+        const nodeKey = this.findInstanceNode(kind, typeLabel, instanceId);
+        if (nodeKey == null) return;
+        this.interactionHandler.selectNode(nodeKey);
+    }
+
+    /**
+     * Focus an instance even when the panel is in type-selection mode — used
+     * by the context-menu / inspector "load connections" actions to make the
+     * just-touched instance the highlight focus regardless of the current
+     * selection mode. No-op if the instance isn't in the graph.
+     */
+    focusInstance(kind: "entity" | "relation" | "attribute", typeLabel: string, instanceId: string): void {
+        const nodeKey = this.findInstanceNode(kind, typeLabel, instanceId);
+        if (nodeKey == null) return;
+        this.interactionHandler.focusInstance(nodeKey);
+    }
+
+    /**
+     * Highlight every instance of `typeLabel` — the type-scope counterpart to
+     * `focusInstance`. Used after a context-menu "every '<type>'" load so the
+     * highlight spans all instances the connections were loaded for. Resolves a
+     * representative node (the given instance) to read the type from. No-op if
+     * that instance isn't in the graph.
+     */
+    focusType(kind: "entity" | "relation" | "attribute", typeLabel: string, instanceId: string): void {
+        const nodeKey = this.findInstanceNode(kind, typeLabel, instanceId);
+        if (nodeKey == null) return;
+        this.interactionHandler.focusType(nodeKey);
+    }
+
+    /** Whether a node is currently selected (drives whether a context-menu
+     *  load should preserve the panel's selection or take focus itself). */
+    get hasActiveSelection(): boolean {
+        return this.interactionHandler.state.selectedNode != null
+            || this.interactionHandler.selectedTypeLabel != null;
+    }
+
+    /** Recompute the highlight set against the current selection — lights up
+     *  any newly-loaded neighbours without changing what the panel inspects. */
+    refreshHighlight(): void {
+        this.interactionHandler.recomputeHighlightSet();
+    }
+
+    /**
+     * Set the secondary highlight anchors by instance identity (kind +
+     * typeLabel + iid/value) — used by the Inspector to keep every step in
+     * its breadcrumb trail visually lit alongside the current selection.
+     * Entries that don't map to a graph node are silently dropped.
+     */
+    setHighlightAnchorsByInstance(specs: { kind: "entity" | "relation" | "attribute"; typeLabel: string; instanceId: string }[]): void {
+        const keys = new Set<string>();
+        for (const spec of specs) {
+            const key = this.findInstanceNode(spec.kind, spec.typeLabel, spec.instanceId);
+            if (key != null) keys.add(key);
+        }
+        this.interactionHandler.setSecondaryAnchors(keys);
+    }
+
+    /**
+     * Pan + zoom the camera to enclose the current selection (selected node +
+     * its highlighted neighbors). No-op if nothing is selected. Mirrors the
+     * bbox-fitting math of `focusSearchMatches`.
+     */
+    focusSelection(): void {
+        const handler = this.interactionHandler;
+        const selectedNode = handler.state.selectedNode;
+        if (selectedNode == null) return;
+
+        const { width, height } = this.sigma.getDimensions();
+        if (width === 0 || height === 0) return;
+
+        const nodes = new Set<string>([selectedNode]);
+        handler.state.selectedNeighbors?.forEach(n => nodes.add(n));
+
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        nodes.forEach(node => {
+            try {
+                const attrs = this.graph.getNodeAttributes(node);
+                if (attrs.x == null || attrs.y == null) return;
+                minX = Math.min(minX, attrs.x);
+                maxX = Math.max(maxX, attrs.x);
+                minY = Math.min(minY, attrs.y);
+                maxY = Math.max(maxY, attrs.y);
+            } catch { /* missing metadata mid-mutation */ }
+        });
+        if (!isFinite(minX)) return;
+
+        const graphWidth = maxX - minX || 1;
+        const graphHeight = maxY - minY || 1;
+        const padding = 1.3;
+        const rawRatio = Math.max(graphWidth / width, graphHeight / height) * padding;
+        const ratio = Math.max(Math.min(rawRatio, 20), 1);
+
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const bbox = this.sigma.getCustomBBox() || this.sigma.getBBox();
+        const x = (centerX - bbox.x[0]) / (bbox.x[1] - bbox.x[0]) || 0.5;
+        const y = (centerY - bbox.y[0]) / (bbox.y[1] - bbox.y[0]) || 0.5;
+
+        // Focus is establishing a new framing — drop any prior world pin so
+        // the next onTick doesn't snap us back somewhere else.
+        this.autoZoomEnabled = false;
+        this.pinnedCameraWorld = null;
+        this.settingCameraProgrammatically = true;
+        this.sigma.getCamera().setState({ x, y, ratio, angle: 0 });
+        this.settingCameraProgrammatically = false;
+    }
+
+    /**
+     * Pan + zoom the camera to enclose the given graph nodes, without changing
+     * the current selection — used by the Explorer's "Reveal in graph" buttons
+     * to show where an already-loaded relation / attribute sits. No-op if none
+     * of the nodes are in the graph (or have no position yet).
+     */
+    revealNodes(nodeKeys: string[]): void {
+        const { width, height } = this.sigma.getDimensions();
+        if (width === 0 || height === 0) return;
+
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (const node of nodeKeys) {
+            if (!this.graph.hasNode(node)) continue;
+            try {
+                const attrs = this.graph.getNodeAttributes(node);
+                if (attrs.x == null || attrs.y == null) continue;
+                minX = Math.min(minX, attrs.x);
+                maxX = Math.max(maxX, attrs.x);
+                minY = Math.min(minY, attrs.y);
+                maxY = Math.max(maxY, attrs.y);
+            } catch { /* missing metadata mid-mutation */ }
+        }
+        if (!isFinite(minX)) return;
+
+        const graphWidth = maxX - minX || 1;
+        const graphHeight = maxY - minY || 1;
+        const padding = 1.6;
+        const rawRatio = Math.max(graphWidth / width, graphHeight / height) * padding;
+        const ratio = Math.max(Math.min(rawRatio, 20), 1);
+
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const bbox = this.sigma.getCustomBBox() || this.sigma.getBBox();
+        const x = (centerX - bbox.x[0]) / (bbox.x[1] - bbox.x[0]) || 0.5;
+        const y = (centerY - bbox.y[0]) / (bbox.y[1] - bbox.y[0]) || 0.5;
+
+        this.autoZoomEnabled = false;
+        this.pinnedCameraWorld = null;
+        this.settingCameraProgrammatically = true;
+        this.sigma.getCamera().setState({ x, y, ratio, angle: 0 });
+        this.settingCameraProgrammatically = false;
+    }
+
+    /** Resolve the graph node key for an instance (entity/relation by IID,
+     *  attribute by type+value), or null if it isn't in the graph. */
+    instanceNodeKey(kind: "entity" | "relation" | "attribute", typeLabel: string, instanceId: string): string | null {
+        return this.findInstanceNode(kind, typeLabel, instanceId);
+    }
+
+    /** Resolve a graph node by entity/relation IID without needing its kind —
+     *  used to reveal a role-player whose kind isn't known at the call site. */
+    nodeKeyByIid(iid: string): string | null {
+        let found: string | null = null;
+        this.graph.nodes().forEach(node => {
+            if (found != null) return;
+            try {
+                const concept = this.graph.getNodeAttributes(node)?.["metadata"]?.concept as any;
+                if ((concept?.kind === "entity" || concept?.kind === "relation") && concept.iid === iid) {
+                    found = node;
+                }
+            } catch { /* missing metadata mid-mutation */ }
+        });
+        return found;
+    }
+
+    /** Node keys of every attribute of `attrTypeLabel` owned by the given
+     *  entity/relation instance currently in the graph. */
+    attributeNodeKeysOf(ownerKind: "entity" | "relation", ownerTypeLabel: string, ownerIID: string, attrTypeLabel: string): string[] {
+        const ownerKey = this.findInstanceNode(ownerKind, ownerTypeLabel, ownerIID);
+        if (ownerKey == null) return [];
+        const out: string[] = [];
+        this.graph.forEachOutNeighbor(ownerKey, (neighborKey: string) => {
+            try {
+                const c = this.graph.getNodeAttributes(neighborKey)?.["metadata"]?.concept as any;
+                if (c?.kind === "attribute" && c.type?.label === attrTypeLabel) out.push(neighborKey);
+            } catch { /* missing metadata mid-mutation */ }
+        });
+        return out;
+    }
+
+    // -- Unloading connections (the inverse of the context-menu "load" actions).
+    //    Each drops the nodes matching the connection criteria — graphology's
+    //    dropNode removes their incident edges too — then reheats so the graph
+    //    settles back without them. Scoped to in-graph instances of the source
+    //    type so only what that connection pulled in is removed. --
+
+    /** Set of node keys for in-graph entity/relation instances of `typeLabel`. */
+    private instanceNodesOfType(typeLabel: string): Set<string> {
+        const set = new Set<string>();
+        this.graph.nodes().forEach(node => {
+            try {
+                const c = this.graph.getNodeAttributes(node)?.["metadata"]?.concept as any;
+                if ((c?.kind === "entity" || c?.kind === "relation") && c.type?.label === typeLabel) set.add(node);
+            } catch { /* missing metadata mid-mutation */ }
+        });
+        return set;
+    }
+
+    private conceptOf(node: string): any | null {
+        try { return this.graph.getNodeAttributes(node)?.["metadata"]?.concept ?? null; }
+        catch { return null; }
+    }
+
+    /** Drop the given nodes (and their incident edges) and recompute the
+     *  highlight set. Does NOT reheat — the caller reheats once after a batch of
+     *  unloads (see the context menu's `unloadConnections`). */
+    private dropNodes(nodeKeys: Iterable<string>): void {
+        let dropped = 0;
+        for (const key of nodeKeys) {
+            if (this.graph.hasNode(key)) { this.graph.dropNode(key); dropped++; }
+        }
+        if (dropped > 0) this.interactionHandler.recomputeHighlightSet();
+    }
+
+    /** The source node set for an unload: every in-graph instance of the type
+     *  ("type" scope) or just the one clicked instance node ("instance" scope). */
+    private unloadSources(scope: "type" | "instance", typeLabel: string, kind: "entity" | "relation" | "attribute", instanceId: string): Set<string> {
+        if (scope === "type") return this.instanceNodesOfType(typeLabel);
+        const node = this.findInstanceNode(kind, typeLabel, instanceId);
+        return node ? new Set([node]) : new Set();
+    }
+
+    /** Drop every attribute node of `attrTypeLabel` adjacent to a source node. */
+    private unloadAttributeFrom(sources: Set<string>, attrTypeLabel: string): void {
+        const targets = new Set<string>();
+        sources.forEach(src => {
+            if (!this.graph.hasNode(src)) return;
+            this.graph.forEachNeighbor(src, (n: string) => {
+                const c = this.conceptOf(n);
+                if (c?.kind === "attribute" && c.type?.label === attrTypeLabel) targets.add(n);
+            });
+        });
+        this.dropNodes(targets);
+    }
+
+    /** Drop every relation node of `relationTypeLabel` adjacent to a source node. */
+    private unloadRelationFrom(sources: Set<string>, relationTypeLabel: string): void {
+        const targets = new Set<string>();
+        sources.forEach(src => {
+            if (!this.graph.hasNode(src)) return;
+            this.graph.forEachNeighbor(src, (n: string) => {
+                const c = this.conceptOf(n);
+                if (c?.kind === "relation" && c.type?.label === relationTypeLabel) targets.add(n);
+            });
+        });
+        this.dropNodes(targets);
+    }
+
+    /** Drop the player nodes reached from a source node via a `roleShortName` edge. */
+    private unloadRoleFrom(sources: Set<string>, roleShortName: string): void {
+        const targets = new Set<string>();
+        sources.forEach(src => {
+            if (!this.graph.hasNode(src)) return;
+            this.graph.forEachEdge(src, (_edge: string, attrs: any, source: string, target: string) => {
+                const tag = attrs?.metadata?.dataEdge?.tag;
+                const roleLabel = typeof tag === "string" ? tag.split(":").at(-1) : tag;
+                const other = source === src ? target : source;
+                if (roleLabel === roleShortName && other !== src) targets.add(other);
+            });
+        });
+        this.dropNodes(targets);
+    }
+
+    unloadAttribute(scope: "type" | "instance", sourceKind: "entity" | "relation" | "attribute", sourceTypeLabel: string, sourceId: string, attrTypeLabel: string): void {
+        this.unloadAttributeFrom(this.unloadSources(scope, sourceTypeLabel, sourceKind, sourceId), attrTypeLabel);
+    }
+
+    unloadRelation(scope: "type" | "instance", sourceKind: "entity" | "relation" | "attribute", sourceTypeLabel: string, sourceId: string, relationTypeLabel: string): void {
+        this.unloadRelationFrom(this.unloadSources(scope, sourceTypeLabel, sourceKind, sourceId), relationTypeLabel);
+    }
+
+    unloadRole(scope: "type" | "instance", sourceKind: "entity" | "relation" | "attribute", sourceTypeLabel: string, sourceId: string, roleShortName: string): void {
+        this.unloadRoleFrom(this.unloadSources(scope, sourceTypeLabel, sourceKind, sourceId), roleShortName);
+    }
+
+    private findInstanceNode(kind: "entity" | "relation" | "attribute", typeLabel: string, instanceId: string): string | null {
+        let found: string | null = null;
+        this.graph.nodes().forEach(node => {
+            if (found != null) return;
+            try {
+                const concept = this.graph.getNodeAttributes(node)?.["metadata"]?.concept;
+                if (!concept) return;
+                if (kind === "attribute") {
+                    if (concept.kind === "attribute"
+                        && concept.type?.label === typeLabel
+                        && String(concept.value) === instanceId) {
+                        found = node;
+                    }
+                } else if (concept.kind === kind && concept.iid === instanceId) {
+                    found = node;
+                }
+            } catch { /* missing metadata mid-mutation */ }
+        });
+        return found;
     }
 
     focusSearchMatches(): void {
@@ -490,6 +1064,9 @@ export class GraphVisualiser {
             const metadata = this.graph.getEdgeAttributes(edgeKey).metadata;
             this.graph.setEdgeAttribute(edgeKey, "label", metadata?.dataEdge?.tag ?? "");
         });
+        // The loop above resets every node to its basic type label; re-run the
+        // heuristic so entity/relation instances keep their enriched labels.
+        refreshInstanceLabels(this.graph, this.displayAttributes, this.labelOverridesByType);
         this.sigma.refresh();
     }
 
@@ -507,6 +1084,22 @@ export class GraphVisualiser {
 
     stopLayout(): void {
         this.layout.stop();
+    }
+
+    /**
+     * Set the graph's node-spacing density (spacious / default / compact),
+     * which retunes the layout's centering gravity and reheats. The camera is
+     * deliberately left untouched — no auto-zoom and no recenter — so the
+     * user's current view stays fixed while the nodes re-space.
+     */
+    setLayoutDensity(mode: LayoutDensity): void {
+        this.autoZoomEnabled = false;
+        this.layout.setDensity(mode);
+    }
+
+    /** The currently-applied node-spacing density (for the controls' menu). */
+    get layoutDensity(): LayoutDensity {
+        return this.layout.density;
     }
 
     /**
@@ -651,6 +1244,16 @@ export class GraphVisualiser {
 
     destroy() {
         this.stylesSub.unsubscribe();
+        // Stop the layout sim and detach our onTick before killing sigma —
+        // otherwise the rAF tick keeps mutating the graph and calling
+        // centerCamera() on the dead sigma, which schedules renders that
+        // crash inside process() (empty nodePrograms / nodeDataCache).
+        this.layout.stop();
+        this.layout.onTick = null;
+        if (this.cameraUpdatedListener) {
+            this.sigma.getCamera().removeListener("updated", this.cameraUpdatedListener);
+            this.cameraUpdatedListener = null;
+        }
         // Force-lose WebGL contexts before killing sigma so the browser
         // reclaims context slots immediately instead of waiting for GC.
         const container = this.sigma.getContainer();

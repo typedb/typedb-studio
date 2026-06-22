@@ -1,0 +1,15 @@
+<ts-page-scaffold pageAvailability="ready">
+  <mat-divider/>
+  <article>
+    <div class="card-header">
+      <h1>Saved queries</h1>
+    </div>
+    <div class="saved-pane-container">
+      <div class="saved-pane-inner">
+        <ts-saved-queries-pane
+          (runSavedQuery)="onRunSavedQuery($event)"
+          (openSavedQuery)="onOpenSavedQuery($event)"/>
+      </div>
+    </div>
+  </article>
+</ts-page-scaffold>

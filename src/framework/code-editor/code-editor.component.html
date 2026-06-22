@@ -6,3 +6,6 @@
 <div class="copy-overlay" [class.visible]="runOverlayVisible" (click)="onCopyButtonClick()">
   <i [class]="copied ? 'fal fa-check' : 'fal fa-copy'"></i>
 </div>
+<div class="copy-overlay save-overlay" [class.visible]="saveOverlayVisible" (click)="onSaveButtonClick()">
+  <i [class]="saved ? 'fal fa-check' : 'fal fa-bookmark'"></i>
+</div>

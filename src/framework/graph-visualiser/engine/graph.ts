@@ -33,6 +33,9 @@ export interface EdgeAttributes {
     color: string;
     size: number;
     type: string;
+    /** Bend amount read by the curved-edge program; larger fans parallel
+     *  edges further apart. */
+    curvature?: number;
     metadata: EdgeMetadata;
 }
 

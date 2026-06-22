@@ -17,6 +17,12 @@ export interface RunQueryEvent {
     query: string;
 }
 
+export interface SaveQueryEvent {
+    messageId: string;
+    blockIndex: number;
+    query: string;
+}
+
 @Component({
     selector: "ts-chat-message",
     templateUrl: "./chat-message.component.html",
@@ -31,10 +37,19 @@ export interface RunQueryEvent {
 export class ChatMessageComponent {
     @Input({ required: true }) message!: ChatMessageData;
     @Output() runQuery = new EventEmitter<RunQueryEvent>();
+    @Output() saveQuery = new EventEmitter<SaveQueryEvent>();
     @Output() sendLogToAi = new EventEmitter<string>();
 
     onRunClick(blockIndex: number, query: string): void {
         this.runQuery.emit({
+            messageId: this.message.id,
+            blockIndex,
+            query,
+        });
+    }
+
+    onSaveClick(blockIndex: number, query: string): void {
+        this.saveQuery.emit({
             messageId: this.message.id,
             blockIndex,
             query,

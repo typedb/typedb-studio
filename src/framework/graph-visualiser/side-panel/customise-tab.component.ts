@@ -4,6 +4,7 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
+import { MatSlideToggleModule } from "@angular/material/slide-toggle";
 import { GraphStyleService, GraphBackgroundType, DEFAULT_BACKGROUND } from "../../../service/graph-style.service";
 import { GraphVisualiser } from "../engine";
 import { VertexKind } from "@typedb/graph-utils";
@@ -36,19 +37,20 @@ const DISPLAY_EDGE_LABELS: EdgeLabelRow[] = [
 ];
 
 const DISPLAY_KINDS: KindRow[] = [
-    { kind: "entity", label: "Entity" },
-    { kind: "relation", label: "Relation" },
-    { kind: "attribute", label: "Attribute" },
-    { kind: "entityType", label: "Entity Type" },
-    { kind: "relationType", label: "Relation Type" },
-    { kind: "attributeType", label: "Attribute Type" },
-    { kind: "roleType", label: "Role Type" },
-    { kind: "value", label: "Value" },
+    { kind: "entity", label: "entity" },
+    { kind: "relation", label: "relation" },
+    { kind: "attribute", label: "attribute" },
+    { kind: "entityType", label: "entity type" },
+    { kind: "relationType", label: "relation type" },
+    { kind: "attributeType", label: "attribute type" },
+    { kind: "roleType", label: "role type" },
+    { kind: "value", label: "value" },
 ];
 
 export const AVAILABLE_SHAPES = [
     { value: "rounded-rect", label: "Rectangle" },
     { value: "diamond", label: "Diamond" },
+    { value: "hexagon", label: "Hexagon" },
     { value: "ellipse", label: "Ellipse" },
 ];
 
@@ -62,7 +64,7 @@ function kindOrder(kind: string): number { return KIND_ORDER[kind] ?? Infinity; 
     imports: [
         CommonModule,
         MatSelectModule, MatTooltipModule,
-        MatFormFieldModule, MatInputModule,
+        MatFormFieldModule, MatInputModule, MatSlideToggleModule,
     ],
 })
 export class CustomiseTabComponent implements OnChanges {
@@ -262,6 +264,27 @@ export class CustomiseTabComponent implements OnChanges {
         this.visualiser?.applyEdgeStyleUpdate();
     }
 
+    // -- Default ("all") edge color: applies to every edge without its own
+    //    per-label override. --
+
+    getDefaultEdgeColor(): string {
+        return this.styleService.defaultEdgeColor;
+    }
+
+    setDefaultEdgeColor(color: string): void {
+        this.styleService.defaultEdgeColor = color;
+        this.visualiser?.applyEdgeStyleUpdate();
+    }
+
+    get hasDefaultEdgeColorOverride(): boolean {
+        return this.styleService.hasDefaultEdgeColorOverride;
+    }
+
+    clearDefaultEdgeColor(): void {
+        this.styleService.clearDefaultEdgeColor();
+        this.visualiser?.applyEdgeStyleUpdate();
+    }
+
     // -- Background --
 
     get backgroundType(): GraphBackgroundType { return this.styleService.background.type; }
@@ -273,9 +296,9 @@ export class CustomiseTabComponent implements OnChanges {
         if (type === "default") {
             this.styleService.updateBackground({ type });
         } else if (type === "grid") {
-            this.styleService.updateBackground({ type, color1: "#0e0e0e", color2: "#232135" });
+            this.styleService.updateBackground({ type, color1: "#0e0e0e", color2: "#1a1928" });
         } else if (type === "dots") {
-            this.styleService.updateBackground({ type, color1: "#0e0e0e", color2: "#4e4b63" });
+            this.styleService.updateBackground({ type, color1: "#0e0e0e", color2: "#3a3848" });
         } else if (type === "party") {
             this.styleService.updateBackground({ type, color1: "#1a2766", color2: "#cc3344" });
         } else {
@@ -290,6 +313,64 @@ export class CustomiseTabComponent implements OnChanges {
     setFillOpacityPercent(percent: number): void {
         this.styleService.fillOpacity = percent / 100;
         this.applyStyles();
+    }
+
+    // -- Settings: node label / scaling / edge coloring (moved here from the
+    //    side-panel footer so all graph-wide settings live in one place). --
+
+    get labelMode(): "auto" | "fixed" | "hidden" {
+        if (!this.styleService.labelsVisible) return "hidden";
+        return this.styleService.labelColorMode === "fixed" ? "fixed" : "auto";
+    }
+
+    setLabelMode(mode: "auto" | "fixed" | "hidden"): void {
+        if (mode === "hidden") {
+            this.styleService.labelsVisible = false;
+        } else {
+            this.styleService.labelsVisible = true;
+            this.styleService.labelColorMode = mode === "fixed" ? "fixed" : "auto";
+        }
+        this.visualiser?.restoreLabels();
+    }
+
+    get showHoverLabel(): boolean {
+        return this.styleService.showHoverLabel;
+    }
+
+    toggleShowHoverLabel(): void {
+        this.styleService.showHoverLabel = !this.styleService.showHoverLabel;
+        this.visualiser?.restoreLabels();
+    }
+
+    get degreeScaling(): boolean {
+        return this.styleService.degreeScaling;
+    }
+
+    toggleDegreeScaling(): void {
+        this.styleService.degreeScaling = !this.styleService.degreeScaling;
+        if (this.styleService.degreeScaling) {
+            this.visualiser?.applyStructureMode();
+        } else {
+            this.visualiser?.applyStyleUpdate();
+        }
+    }
+
+    get colorEdgesByConstraint(): boolean {
+        return this.styleService.colorEdgesByConstraint;
+    }
+
+    toggleEdgeColoring(): void {
+        this.styleService.colorEdgesByConstraint = !this.styleService.colorEdgesByConstraint;
+        this.visualiser?.colorEdgesByConstraintIndex(!this.styleService.colorEdgesByConstraint);
+    }
+
+    get edgesCurvedByDefault(): boolean {
+        return this.styleService.edgesCurvedByDefault;
+    }
+
+    toggleEdgesCurved(): void {
+        this.styleService.edgesCurvedByDefault = !this.styleService.edgesCurvedByDefault;
+        this.visualiser?.applyEdgeCurvature();
     }
 
     setBackgroundColor1(color1: string): void {

@@ -1,15 +1,139 @@
 
 @use "typography";
 
-:host {
+// NOTE: this SCSS file is shared as styleUrls by graph-side-panel and the
+// three tab components (elements-tab, themes-tab, customise-tab). Any `:host`
+// rule here would be re-emitted under each tab's encapsulation ID and leak
+// onto every tab's host. Side-panel's :host styles live in
+// graph-side-panel.host.scss, which only graph-side-panel imports.
+
+// Inspector-pane header: the "Explorer" title on the left, the dock-side kebab
+// on the right.
+.side-panel-header {
+  flex: 0 0 auto;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px 0 16px;
+  border-bottom: 1px solid var(--theme-secondary-deep-grey);
+
+  .explorer-title {
+    margin: 0;
+  }
+}
+
+.dock-kebab {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--theme-secondary-light-grey);
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  border-radius: 3px;
+
+  &:hover {
+    color: var(--theme-white);
+    background: var(--theme-purple);
+  }
+}
+
+// Segmented instance/type toggle in the inspector body, just below the header.
+// The active segment gets the green-tinted treatment used elsewhere for the
+// chosen mode so it's obvious which is selected.
+.selection-mode-toggle {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+
+  .mode-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: none;
+    border: 1px solid var(--theme-secondary-deep-grey);
+    border-radius: 6px;
+    padding: 5px 8px;
+    cursor: pointer;
+    color: var(--theme-secondary-light-grey);
+    font-size: 12px;
+    line-height: 1;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+
+    i { font-size: 12px; width: 12px; height: 12px; }
+
+    &:hover:not(.active) { color: var(--theme-white); }
+
+    // Active mode: a neutral purple-grey fill + border, both lighter than the
+    // resting chip (deep-grey border / panel bg), so the chosen segment reads
+    // as raised without picking up a kind colour.
+    &.active {
+      background: var(--theme-secondary-mid-deep-grey);
+      border-color: var(--theme-secondary-grey);
+      color: var(--theme-white);
+    }
+  }
+}
+
+.explorer-pane {
+  position: relative;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-width: 0;
-  white-space: normal !important;
-  font-weight: var(--font-weight-regular);
-  background: var(--theme-deep-purple);
-  border-left: 1px solid var(--theme-secondary-deep-grey);
+  // !important — see .panel comment above; same resizable-inline-`unset` issue.
+  min-height: 0 !important;
+  min-width: 0 !important;
+  overflow: hidden;
+
+  // The header bar sits on top (flex: 0 0 auto); the inspector component fills
+  // the remaining height below it.
+  > ts-graph-type-explorer,
+  > ts-graph-instance-explorer {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+}
+
+// Divider between inspector and panel: bottom border in column (right-dock)
+// mode, right border in row (bottom-dock) mode.
+:host(.dock-right)  > .explorer-pane { border-bottom: 1px solid var(--theme-secondary-dark-grey); }
+:host(.dock-bottom) > .explorer-pane { border-right: 1px solid var(--theme-secondary-dark-grey); }
+
+// Invisible trigger fixed-positioned at the right-click coords; the mat-menu
+// opens relative to it. Used by Elements-tab type chips.
+.type-context-menu-trigger {
+  position: fixed;
+  width: 0;
+  height: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+// Dock-side menu: highlight the currently-active dock option and give each
+// item a leading icon gap.
+::ng-deep .dock-menu .mat-mdc-menu-item {
+  i { margin-right: 8px; width: 14px; text-align: center; }
+  &.active {
+    color: var(--theme-green);
+    i { color: var(--theme-green); }
+  }
+}
+
+// Section label inside the type chip mat-menu — non-interactive header.
+::ng-deep .mat-mdc-menu-panel .menu-group-label {
+  display: block;
+  padding: 8px 16px 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--theme-secondary-light-grey);
 }
 
 :host ::ng-deep .highlight-chip,
@@ -22,7 +146,14 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-height: 0;
+  // !important because the resizable directive writes inline
+  // `min-height: unset` / `min-width: unset` on its host element, which
+  // resolves to the flex default `auto` and stops the panel from shrinking
+  // below its content — which would prevent .panel-scroll from triggering
+  // overflow. Both axes covered because the host flex-direction flips with
+  // dock (column for right, row for bottom).
+  min-height: 0 !important;
+  min-width: 0 !important;
 }
 
 .panel-scroll {
@@ -32,6 +163,20 @@
   min-height: 0;
   scrollbar-width: thin;
   scrollbar-color: var(--theme-secondary-dark-grey) transparent;
+  // The resizable directive on .panel writes inline `white-space: nowrap`
+  // on its host, which cascades into the scroll container. Reset here so
+  // tab content (e.g. theme card descriptions) wraps normally.
+  white-space: normal;
+
+  // The tab components are custom elements (default display: inline), which
+  // prevents the parent scroll container from measuring their block content
+  // correctly. Force them to block so scrollHeight reflects their full
+  // children rather than just the inline box.
+  > ts-graph-side-panel-elements-tab,
+  > ts-graph-styles-themes-tab,
+  > ts-graph-side-panel-customise-tab {
+    display: block;
+  }
 }
 
 .panel-header {
@@ -143,6 +288,11 @@
   align-items: center;
   gap: 8px;
   margin-top: 4px;
+
+  ::ng-deep mat-slide-toggle .mdc-switch {
+    transform: scale(0.85);
+    transform-origin: left center;
+  }
 }
 
 .color-input {
@@ -363,19 +513,6 @@
   border-top: 1px solid var(--theme-secondary-dark-grey);
 }
 
-.footer-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.footer-option-label {
-  font-size: 13px;
-  font-weight: var(--font-weight-regular);
-  color: var(--theme-secondary-light-grey);
-  flex: 1;
-}
-
 .footer-select-field {
   flex: 0 0 auto;
   width: 172px;
@@ -428,34 +565,6 @@
 
     .mat-mdc-select-arrow-wrapper {
       transform: scale(0.85);
-    }
-  }
-}
-
-.footer-toggles {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  ::ng-deep mat-slide-toggle {
-    width: 100%;
-    --mat-slide-toggle-label-text-size: 13px;
-    --mat-slide-toggle-label-text-color: var(--theme-secondary-light-grey);
-    --mat-slide-toggle-label-text-weight: var(--font-weight-regular);
-    --mat-slide-toggle-label-text-font: inherit;
-    --mat-slide-toggle-label-text-tracking: var(--body-letter-spacing);
-
-    .mdc-form-field {
-      width: 100%;
-    }
-
-    .mdc-label {
-      flex: 1;
-    }
-
-    .mdc-switch {
-      transform: scale(0.85);
-      transform-origin: center;
     }
   }
 }

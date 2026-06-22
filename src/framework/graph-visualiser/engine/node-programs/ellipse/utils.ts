@@ -1,7 +1,7 @@
 import { Attributes } from "graphology-types";
 import { Settings } from "sigma/settings";
 import { NodeDisplayData, PartialButFor } from "sigma/types";
-import { drawCenteredNodeLabel, drawExternalNodeLabel, getLabelsVisible, getShowHoverLabel, zoomScaledFontSize } from "../../sigma-label-utils";
+import { drawCenteredNodeLabel, drawClippedNodeLabel, drawExternalNodeLabel, getLabelsVisible, getShowHoverLabel, zoomScaledFontSize } from "../../sigma-label-utils";
 
 export function drawEllipseNodeLabel<
     N extends Attributes = Attributes,
@@ -12,15 +12,7 @@ export function drawEllipseNodeLabel<
     data: PartialButFor<NodeDisplayData, "x" | "y" | "size" | "label" | "color">,
     settings: Settings<N, E, G>,
 ): void {
-    context.save();
-    buildEllipsePath(context, data);
-    context.globalCompositeOperation = "destination-out";
-    context.fillStyle = "#000";
-    context.fill();
-    context.globalCompositeOperation = "source-over";
-    context.clip();
-    drawCenteredNodeLabel<N, E, G>(context, data, settings);
-    context.restore();
+    drawClippedNodeLabel<N, E, G>(context, data, settings, buildEllipsePath);
 }
 
 function buildEllipsePath(

@@ -4,9 +4,29 @@ import { drawStraightEdgeLabel } from "sigma/rendering";
 import { Settings as SigmaSettings } from "sigma/settings";
 import MultiGraph from "graphology";
 import { NodeDiamondProgram } from "./node-programs/diamond";
+import { NodeHexagonProgram } from "./node-programs/hexagon";
 import { NodeRoundedRectangleProgram } from "./node-programs/rounded-rect";
 import { NodeEllipseProgram } from "./node-programs/ellipse";
 import { zoomScaledFontSize } from "./sigma-label-utils";
+
+/**
+ * Best-effort heuristic to tell a physical mouse wheel apart from a trackpad
+ * two-finger swipe. There's no standard API, so we combine the signals that
+ * are reliable per engine:
+ *  - Firefox reports mouse-wheel notches in "lines" (deltaMode 1); trackpads
+ *    (and high-resolution wheels) report pixels (deltaMode 0).
+ *  - Blink/WebKit: a physical wheel notch yields a `wheelDelta` that is a
+ *    multiple of 120, whereas trackpad scrolling produces irregular values.
+ *  - Fallback: a chunky, vertical-only integer delta looks like a wheel.
+ */
+function isMouseWheelEvent(e: WheelEvent): boolean {
+    if (e.deltaMode !== 0) return true;
+    const wheelDelta = (e as any).wheelDeltaY ?? (e as any).wheelDelta;
+    if (typeof wheelDelta === "number" && wheelDelta !== 0) {
+        return Math.abs(wheelDelta) % 120 === 0;
+    }
+    return e.deltaX === 0 && Number.isInteger(e.deltaY) && Math.abs(e.deltaY) >= 50;
+}
 
 function edgeLabelSize(sourceData: any, targetData: any, maxSize: number): number {
     return Math.max(zoomScaledFontSize(sourceData, maxSize), zoomScaledFontSize(targetData, maxSize));
@@ -49,6 +69,7 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
     nodeProgramClasses: {
         "rounded-rect": NodeRoundedRectangleProgram,
         diamond: NodeDiamondProgram,
+        hexagon: NodeHexagonProgram,
         ellipse: NodeEllipseProgram,
     },
     edgeProgramClasses: {
@@ -58,6 +79,23 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
 
 export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: SigmaSettings, graph: MultiGraph): Sigma {
     const renderer = new Sigma(graph, containerEl, sigmaSettings);
+
+    // Defensive heal: sigma occasionally ends up with graphology nodes/edges
+    // that have no entry in its internal data caches. When that happens the
+    // stock `process()` throws on `data.x = attrs.x` (undefined data) on
+    // every frame. We re-index any missing items before delegating to the
+    // original implementation.
+    const originalProcess = (renderer as any).process;
+    (renderer as any).process = function () {
+        this.graph.forEachNode((node: string) => {
+            if (!this.nodeDataCache[node]) this.addNode(node);
+        });
+        this.graph.forEachEdge((edge: string) => {
+            if (!this.edgeDataCache[edge]) this.addEdge(edge);
+        });
+        return originalProcess.call(this);
+    };
+
     // Override renderLabels to sort by zIndex. Each drawLabel erases canvas
     // content in its node's shape area before drawing its label, so front nodes
     // (drawn last) erase back nodes' labels where they overlap.
@@ -72,11 +110,18 @@ export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: Sig
             if (!labelsToDisplay.includes(n)) labelsToDisplay.push(n);
         });
 
-        // Sort by zIndex so higher-zIndex nodes erase and draw on top
+        // Draw labels in the SAME back-to-front order Sigma draws the node
+        // bodies. `nodeIndices` is the draw index Sigma assigns to each body
+        // during indexation (already zIndex-ordered, with graph-insertion order
+        // as the tie-break). Reusing it here keeps a node's body and label one
+        // group for stacking: a node drawn on top both covers the body behind
+        // it AND (via each label's destination-out erase) covers that node's
+        // label. Sorting by zIndex alone tie-broke differently from the bodies,
+        // which let a node's label sit over a neighbour whose body sat over it.
         labelsToDisplay.sort((a: string, b: string) => {
-            const zA = this.nodeDataCache[a]?.zIndex ?? 0;
-            const zB = this.nodeDataCache[b]?.zIndex ?? 0;
-            return zA - zB;
+            const iA = this.nodeIndices[a] ?? 0;
+            const iB = this.nodeIndices[b] ?? 0;
+            return iA - iB;
         });
 
         this.displayedNodeLabels = new Set();
@@ -102,14 +147,28 @@ export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: Sig
         return this;
     };
 
-    // Convert wheel/trackpad scroll from zoom to pan, but let pinch-to-zoom
-    // through (browsers fire pinch gestures as wheel events with ctrlKey set)
+    // Wheel handling:
+    //  - Trackpad two-finger swipe → pan (both axes).
+    //  - Physical mouse wheel → zoom toward the cursor. A mouse wheel only has
+    //    a vertical axis, so panning vertically on it feels wrong; zooming is
+    //    the natural mapping.
+    //  - Pinch-to-zoom (fired as a wheel event with ctrlKey set) is left for
+    //    sigma's own handler.
+    const ZOOM_FACTOR = 1.2;
     const container = renderer.getContainer();
     container.addEventListener("wheel", (e: WheelEvent) => {
         if (e.ctrlKey) return;
         e.preventDefault();
         e.stopPropagation();
         const camera = renderer.getCamera();
+        if (isMouseWheelEvent(e)) {
+            const { ratio } = camera.getState();
+            const newRatio = e.deltaY > 0 ? ratio * ZOOM_FACTOR : ratio / ZOOM_FACTOR;
+            const rect = container.getBoundingClientRect();
+            const target = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            camera.setState(renderer.getViewportZoomedState(target, newRatio));
+            return;
+        }
         const { ratio } = camera.getState();
         const { width, height } = renderer.getDimensions();
         // Convert pixel deltas to graph-coordinate deltas

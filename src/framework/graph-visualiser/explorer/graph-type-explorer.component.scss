@@ -1,0 +1,238 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+// Override the absolute positioning that the data-side inspector applies via
+// :host (we import that SCSS for the shared section/card/attribute styles
+// below). Without these explicit static positions, the type inspector would
+// be pulled out of its flex slot in the side panel.
+:host {
+    display: block;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: static;
+    inset: auto;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+}
+
+.explorer-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.explorer-title-bar {
+    display: flex;
+    align-items: center;
+    // Match the height of the tab bar in the customise/elements area
+    // (8px vertical padding + 13px line + 2px active underline ≈ 35px).
+    height: 35px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--theme-secondary-deep-grey);
+    flex-shrink: 0;
+
+    h5 {
+        margin: 0;
+    }
+}
+
+.explorer-placeholder {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px;
+    color: var(--theme-grey);
+    text-align: center;
+
+    > i {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
+
+    p {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .placeholder-hint {
+        font-size: 12px;
+        opacity: 0.75;
+    }
+}
+
+.explorer-detail {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+}
+
+// Live count of instances of the selected type currently in the graph,
+// shown on the right of the type row.
+.instance-count {
+    font-size: 11px;
+    color: var(--theme-grey);
+    margin-left: auto;
+    user-select: text;
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px;
+    color: var(--theme-grey);
+}
+
+// Pill-style chips for the per-type connection-load toggles. Each chip uses
+// a `--chip-color` set by the variant class (attribute / relation) and the
+// `.loaded` modifier flips the chip to a filled state to indicate the
+// connection's been loaded into the graph.
+.connection-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.connection-chip {
+    --chip-color: var(--theme-secondary-light-grey);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--chip-color);
+    background: transparent;
+    border: 1px solid var(--theme-secondary-deep-grey);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+
+    &.attribute { --chip-color: var(--theme-attribute-blue); }
+    &.relation  { --chip-color: var(--theme-relation-yellow); }
+    &.role      { --chip-color: var(--theme-role-orange); }
+
+    &:hover {
+        border-color: var(--chip-color);
+        color: var(--chip-color);
+    }
+
+    &.loaded {
+        background: color-mix(in srgb, var(--chip-color) 22%, transparent);
+        border-color: var(--chip-color);
+        color: var(--chip-color);
+        cursor: default;
+    }
+
+    // The "*" = load-all chip. Square-ish, bold glyph; when every chip in its
+    // section is loaded it's disabled and shows the same filled state via
+    // `.loaded`, so a disabled all-chip just stops responding to hover.
+    &.all-chip {
+        min-width: 28px;
+        justify-content: center;
+        font-weight: 700;
+        line-height: 1;
+
+        &:disabled {
+            cursor: default;
+            &:hover {
+                border-color: var(--chip-color);
+                color: var(--chip-color);
+            }
+        }
+    }
+}
+
+// One row inside the "Display Settings" section — a left label and a
+// right-aligned compact mat-select. Mirrors the structure used by the side
+// panel footer's settings, so the mat-form-field tightening rules below are
+// the same recipe as `.footer-select-field`.
+.display-setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+// Very-narrow pane: stack the label above its select to keep the trigger
+// from shrinking. Uses the 300px tier of the `instance-detail` container
+// query already declared on the inherited `.detail-panel`.
+@container instance-detail (width < 300px) {
+    .display-setting-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+    }
+    .display-setting-select {
+        width: 100%;
+    }
+}
+
+.display-setting-label {
+    font-size: 12px;
+    color: var(--theme-secondary-light-grey);
+}
+
+.display-setting-select {
+    flex: 0 0 auto;
+    width: 160px;
+
+    --mat-form-field-container-height: 28px;
+    --mat-form-field-container-vertical-padding: 0;
+    --mat-form-field-filled-with-label-container-padding-top: 0;
+    --mat-form-field-filled-with-label-container-padding-bottom: 0;
+    --mdc-filled-text-field-container-color: #{var(--theme-secondary-purple)};
+
+    ::ng-deep {
+        .mat-mdc-text-field-wrapper,
+        .mdc-text-field,
+        .mdc-text-field--filled {
+            padding: 0 8px !important;
+            background: var(--theme-secondary-purple) !important;
+            border-radius: 3px;
+            height: 28px !important;
+            max-height: 28px !important;
+        }
+
+        .mat-mdc-form-field-flex {
+            height: 28px !important;
+            max-height: 28px !important;
+        }
+
+        .mat-mdc-form-field-infix {
+            min-height: 0 !important;
+            height: 28px !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            display: flex;
+            align-items: center;
+            width: auto;
+        }
+
+        .mat-mdc-form-field-subscript-wrapper { display: none; }
+        .mdc-floating-label { display: none; }
+
+        .mat-mdc-select-trigger {
+            height: 28px !important;
+            font-size: 12px;
+            color: var(--theme-white);
+        }
+
+        .mat-mdc-select-value { padding: 0; }
+
+        .mat-mdc-select-arrow-wrapper {
+            transform: scale(0.85);
+        }
+    }
+}

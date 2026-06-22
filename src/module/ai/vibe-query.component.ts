@@ -29,6 +29,7 @@ import { SpinnerComponent } from "../../framework/spinner/spinner.component";
 import { DriverState } from "../../service/driver-state.service";
 import { QueryPageState } from "../../service/query-page-state.service";
 import { VibeQueryState } from "../../service/vibe-query-state.service";
+import { AiConsentState } from "../../service/ai-consent-state.service";
 import { MarkdownComponent } from "ngx-markdown";
 
 @Component({
@@ -49,6 +50,7 @@ export class VibeQueryComponent implements OnInit, AfterViewInit {
     state = inject(VibeQueryState);
     queryPage = inject(QueryPageState);
     driver = inject(DriverState);
+    private aiConsent = inject(AiConsentState);
 
     ngOnInit() {
         this.state.messages$.subscribe(() => {
@@ -76,7 +78,9 @@ export class VibeQueryComponent implements OnInit, AfterViewInit {
     onSubmit(event: Event) {
         event.preventDefault();
         if (this.state.promptControl.value && !this.state.isProcessing$.value && this.driver.database$.value) {
-            this.state.submitPrompt();
+            this.aiConsent.requireConsent().then(granted => {
+                if (granted) this.state.submitPrompt();
+            });
         }
     }
 

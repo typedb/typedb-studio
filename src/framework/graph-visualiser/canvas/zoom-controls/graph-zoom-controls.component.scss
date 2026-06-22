@@ -18,31 +18,10 @@
   border-radius: 6px;
   border: 1px solid var(--gc-border);
   background: var(--gc-bg);
-
-  &:disabled {
-    color: var(--gc-border);
-    cursor: default;
-
-    &:hover {
-      background: var(--gc-bg);
-    }
-  }
 }
 
 .zoom-button.stop-button {
-  border-radius: 6px;
-  border: 1px solid var(--gc-border);
-  background: var(--gc-bg);
   color: var(--theme-red);
-
-  &:disabled {
-    color: var(--gc-border);
-    cursor: default;
-
-    &:hover {
-      background: var(--gc-bg);
-    }
-  }
 }
 
 .zoom-pair {
@@ -66,14 +45,36 @@
   justify-content: center;
   padding: 0;
   font-size: 14px;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
 
   &:hover {
     background: var(--gc-hover-bg);
+  }
+
+  &:disabled {
+    color: var(--gc-border);
+    cursor: default;
+
+    &:hover {
+      background: transparent;
+    }
   }
 }
 
 .divider {
   height: 1px;
   background: var(--gc-border);
+}
+
+// Reserve a fixed left gutter for the check on every density item, so the
+// active item's check doesn't shift the label (inline icons don't get
+// Material's icon-slot gutter). Hidden — not removed — when inactive.
+::ng-deep .density-menu .density-check {
+  width: 14px;
+  margin-right: 8px;
+  font-size: 12px;
+  text-align: center;
+  flex: 0 0 auto;
+
+  &.hidden { visibility: hidden; }
 }

@@ -1,0 +1,189 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+// Invisible trigger element fixed-positioned at the click coordinates; the
+// mat-menu opens relative to its position.
+.context-menu-trigger {
+    position: fixed;
+    width: 0;
+    height: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+// Single context menu with two sections (Load links / Load attributes).
+// Each row has a left label (the action target — "*" for the bulk row, or a
+// specific attribute / relation / role name) and two right-aligned scope
+// chips. Chip click is the actual action; the row itself isn't clickable.
+::ng-deep .mat-mdc-menu-panel.scoped-action-menu {
+    // Cap height so a node with many attribute or relation types scrolls
+    // rather than running off-screen.
+    max-height: 60vh;
+    overflow-y: auto;
+    // Let the panel grow to fit long type labels; cap at viewport width.
+    max-width: 90vw !important;
+
+    // Node label at the top of the menu (the text drawn on the clicked node).
+    // Styled to match the connection widget's server-info aside — colour is
+    // left to inherit from mat-menu so it picks up the same default as the
+    // mat-menu-item rows.
+    .node-label {
+        display: block;
+        margin: 6px 16px;
+        font-size: 12px;
+        font-weight: var(--font-weight-regular);
+        // Keep a long node label from stretching the menu — cap and ellipsize.
+        max-width: 360px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .section-header {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        // Match mat-menu's panel background so the rows underneath don't
+        // bleed through when the header pins.
+        background: var(--mat-menu-container-color, inherit);
+        padding: 8px 16px 4px;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--theme-secondary-light-grey);
+    }
+
+    .scope-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 12px;
+        min-height: 32px;
+        // Row itself is not interactive — only the chips inside it are.
+        cursor: default;
+    }
+
+    .scope-row-label {
+        flex: 1;
+        white-space: nowrap;
+        font-size: 14px;
+        color: var(--mat-menu-item-label-text-color, inherit);
+    }
+
+    // Mirrors the type inspector's `.connection-chip` highlight state: a
+    // per-variant `--chip-color` that the hover state applies to the border and
+    // text (transparent background). Links highlight yellow, attributes blue.
+    .scope-chip {
+        --chip-color: var(--theme-secondary-light-grey);
+        flex: 0 0 auto;
+        padding: 3px 8px;
+        font-size: 12px;
+        font-weight: 500;
+        background: transparent;
+        color: var(--theme-secondary-light-grey);
+        border: 1px solid var(--theme-secondary-deep-grey);
+        border-radius: 3px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+
+        &--relation  { --chip-color: var(--theme-relation-yellow); }
+        &--role      { --chip-color: var(--theme-role-orange); }
+        &--attribute { --chip-color: var(--theme-attribute-blue); }
+
+        &:hover {
+            border-color: var(--chip-color);
+            color: var(--chip-color);
+        }
+
+        // Loaded fill — a connection that's been pulled in. The "every '<type>'"
+        // chips stay clickable in this state to UNLOAD; keep the pointer cursor
+        // and a subtle hover so it reads as actionable.
+        &.loaded {
+            background: color-mix(in srgb, var(--chip-color) 22%, transparent);
+            border-color: var(--chip-color);
+            color: var(--chip-color);
+
+            &:hover {
+                background: color-mix(in srgb, var(--chip-color) 34%, transparent);
+            }
+        }
+
+        &:focus-visible {
+            outline: 1px solid var(--theme-secondary-light-grey);
+            outline-offset: 1px;
+        }
+    }
+
+    // Per-type colour picker: a row of filled circles. The selected swatch
+    // gets a ring (a gap + outline ring in its own colour).
+    .colour-swatches {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 16px 8px;
+        margin-top: 6px;
+        // Cap to 8 swatches per row (18px each + 8px gaps + 16px side padding),
+        // so the 12 colours wrap to 8 + 4 without stretching the menu wide.
+        max-width: calc(8 * 18px + 7 * 8px + 32px);
+    }
+
+    // Slim reset icon at the end of the swatch row — reverts the per-type
+    // colour override (mirrors the customiser's per-type undo button).
+    .swatch-reset {
+        // Sized to occupy the same footprint as a swatch so it sits flush in
+        // the row (the flex gap provides the spacing), rather than being pushed
+        // to the far end.
+        flex: 0 0 auto;
+        width: 18px;
+        height: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--theme-secondary-light-grey);
+        cursor: pointer;
+
+        i {
+            // All three needed — the global `i` rule forces a 16px box otherwise.
+            font-size: 12px;
+            width: 12px;
+            height: 12px;
+        }
+
+        &:hover { color: #ff8080; }
+    }
+
+    .colour-swatch {
+        flex: 0 0 auto;
+        width: 18px;
+        height: 18px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        // Ring (when selected) is drawn with box-shadow: a background-coloured
+        // gap then a ring in the swatch's own colour.
+        box-shadow: none;
+        transition: box-shadow 0.12s ease, transform 0.12s ease;
+
+        &:hover {
+            transform: scale(1.12);
+        }
+
+        &.selected {
+            box-shadow:
+                0 0 0 2px var(--mat-menu-container-color, var(--theme-deep-purple)),
+                0 0 0 3.5px currentColor;
+            // `currentColor` for the ring = the swatch's own colour.
+            color: inherit;
+        }
+    }
+}

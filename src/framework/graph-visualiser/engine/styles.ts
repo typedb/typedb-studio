@@ -29,6 +29,9 @@ export interface GraphStyles {
     edgeLabelColors?: Record<string, string>,
     edgeHighlightColor: Color;
     edgeSize: number
+    /** When true, all edges are curved by default (parallel edges fan out);
+     *  when false/undefined, single edges are straight. */
+    edgesCurvedByDefault?: boolean;
 
     vertexDefaultLabel: (vertex: StudioDataVertex) => string;
     vertexHoverLabel: (vertex: StudioDataVertex) => string;
@@ -63,6 +66,13 @@ export const darkPalette = {
     blueDark:   "#131d34",
     orangeDark: "#231200",
     purpleGrey: "#5a5670",
+    // Node-kind accents (entity blue / relation green / attribute orange).
+    entityBlue:      "#4d8bff",
+    entityBlueDark:  "#101a33",
+    nodeGreen:     "#3fcf8a",
+    nodeGreenDark: "#0e2a1f",
+    nodeOrange:     "#d09a4a",
+    nodeOrangeDark: "#2a1d0a",
 };
 
 export const lightPalette = {
@@ -93,6 +103,13 @@ export const lightPalette = {
     blueDark:   "#e0eaff",
     orangeDark: "#fae8d0",
     purpleGrey: "#8a86a0",
+    // Node-kind accents (entity blue / relation green / attribute orange).
+    entityBlue:      "#2563eb",
+    entityBlueDark:  "#e3edff",
+    nodeGreen:     "#1aa05f",
+    nodeGreenDark: "#e0f5ea",
+    nodeOrange:     "#9a6a1a",
+    nodeOrangeDark: "#f7ecd8",
 };
 
 export const defaultEdgeLabelColors: Record<string, string> = {};
@@ -253,6 +270,24 @@ export const defaultExplorationQueryStyleParams: GraphStyles = {
     vertexDefaultLabel: defaultQueryStyleParams.vertexDefaultLabel,
     vertexHoverLabel: defaultQueryStyleParams.vertexHoverLabel,
     linksEdgeLabel: defaultQueryStyleParams.linksEdgeLabel,
+};
+
+/**
+ * Per-kind node styling for the "Cal Aesthetics" theme: vibrant blue entities
+ * (circles), green relations (point-up hexagons) and orange attributes (rounded
+ * rectangles). `color` is the single (border) colour in the migrated style
+ * model; the fill is derived from it via fill-opacity.
+ */
+export const calAestheticsKindStyles: Record<string, { color: string; shape: string; width: number; height: number }> = {
+    entity:        { color: darkPalette.entityBlue, shape: "ellipse",      width: 44, height: 44 },
+    relation:      { color: darkPalette.nodeGreen,  shape: "hexagon",      width: 40, height: 40 },
+    attribute:     { color: darkPalette.nodeOrange, shape: "rounded-rect", width: 64, height: 36 },
+    entityType:    { color: darkPalette.entityBlue, shape: "ellipse",      width: 44, height: 44 },
+    relationType:  { color: darkPalette.nodeGreen,  shape: "hexagon",      width: 40, height: 40 },
+    attributeType: { color: darkPalette.nodeOrange, shape: "rounded-rect", width: 64, height: 36 },
+    roleType:      { color: darkPalette.orange,     shape: "ellipse",      width: 56, height: 24 },
+    value:         { color: darkPalette.grey4,      shape: "ellipse",      width: 56, height: 24 },
+    unavailable:   { color: darkPalette.grey3,      shape: "ellipse",      width: 56, height: 24 },
 };
 
 // Constraint colouring

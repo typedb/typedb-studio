@@ -18,9 +18,80 @@
 
     display: flex;
     flex-direction: column;
+    position: relative; // containing block for the absolute search overlay
 
     &:has(.card-header-wrapper) {
         padding: 0;
+    }
+}
+
+// Floating search box that pops into the top-left of the tool window when
+// the user hits Cmd/Ctrl+F (or picks "Find" from the actions menu). It's
+// fully self-contained: typing filters the tree via `state.searchQuery$`,
+// Esc/blur dismisses and clears.
+.schema-search-overlay {
+    position: absolute;
+    top: 32px;
+    left: 16px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px 4px 8px;
+    border: 1px solid var(--theme-secondary-deep-grey);
+    border-radius: 4px;
+    background: var(--theme-secondary-purple);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+    i {
+        font-size: 12px;
+        color: var(--theme-secondary-light-grey);
+    }
+
+    // Filter active but matches nothing — flag the bar so the user notices
+    // their query has no hits rather than mistaking an empty pane for an
+    // empty schema.
+    &.no-results {
+        border-color: var(--theme-red);
+
+        .schema-search-input { color: var(--theme-red); }
+    }
+}
+
+.schema-search-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--theme-white);
+    font-size: 13px;
+    width: 140px;
+
+    &::placeholder {
+        color: var(--theme-secondary-light-grey);
+    }
+}
+
+.schema-search-clear {
+    border: none;
+    background: transparent;
+    color: var(--theme-secondary-light-grey);
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 2px;
+
+    i {
+        font-size: 11px;
+        line-height: 1;
+    }
+
+    &:hover {
+        color: var(--theme-white);
+        background: rgba(255, 255, 255, 0.08);
     }
 }
 
@@ -45,6 +116,7 @@
 
     a {
         color: var(--theme-green);
+        cursor: pointer;
     }
 }
 
@@ -110,8 +182,7 @@
             background-color: var(--theme-light-purple);
         }
 
-        // Coloured shape indicators on leaf (link) rows. Roots no longer carry shapes — feels
-        // cleaner now that the row labels say what they are.
+        // Coloured shape indicators on leaf (link) rows.
         &.link .expand-button::before {
             font-family: "Font Awesome 7 Pro";
             font-weight: 900;
@@ -151,16 +222,6 @@
         }
     }
 
-    &.flat .tree-row.link {
-        margin-left: 16px;
-        padding-left: 16px;
-        padding-right: 8px;
-        border-bottom: 1px solid var(--theme-light-purple);
-        border-left: 1px solid var(--theme-light-purple);
-        border-right: 1px solid var(--theme-light-purple);
-        font-weight: var(--font-weight-light);
-        background: var(--theme-black);
-    }
 }
 
 .menu-content {
