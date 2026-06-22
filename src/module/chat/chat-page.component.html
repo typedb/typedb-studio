@@ -78,17 +78,21 @@
                 </mat-menu>
               </div>
               <div class="flex-spacer"></div>
-              <button mat-stroked-button class="new-chat-btn" [disabled]="(state.messages$ | async)?.length === 0" (click)="onNewConversation()">
-                <i class="fa-light fa-plus"></i>
-                <span>New chat</span>
-              </button>
-              <div class="row-limit-control">
-                <label>Limit query results:</label>
-                <mat-select [formControl]="state.rowLimitControl" panelClass="row-limit-panel">
-                  @for (option of state.rowLimitOptions; track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                  }
-                </mat-select>
+              <!-- New chat + row limit form one flex item so they wrap together
+                   (rather than splitting across lines) when the header wraps. -->
+              <div class="header-actions">
+                <button mat-stroked-button class="new-chat-btn" [disabled]="(state.messages$ | async)?.length === 0" (click)="onNewConversation()">
+                  <i class="fa-light fa-plus"></i>
+                  <span>New chat</span>
+                </button>
+                <div class="row-limit-control">
+                  <label>Limit query results:</label>
+                  <mat-select [formControl]="state.rowLimitControl" panelClass="row-limit-panel">
+                    @for (option of state.rowLimitOptions; track option.value) {
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </div>
               </div>
             </div>
 

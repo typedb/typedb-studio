@@ -106,6 +106,7 @@
 .chat-header {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 12px;
     padding: 8px 16px;
     border-bottom: 1px solid var(--bg4);
@@ -116,6 +117,15 @@
         display: flex;
         align-items: center;
         gap: 4px;
+    }
+
+    // New chat + row limit grouped so they wrap together; the group itself can
+    // also wrap its two controls onto separate lines when space is tight.
+    .header-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
     }
 
     .row-limit-control {
