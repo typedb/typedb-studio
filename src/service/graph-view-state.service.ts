@@ -515,11 +515,11 @@ export class GraphViewState {
         // template is batched separately and runs in parallel.
         const groups = await Promise.all([
             this.runIidBatchedHarvesting(run, sourceIids, playerVar, rowLimit * 50,
-                branches => `match ${branches}; $r isa ${relationTypeLabel}; $r links ($role: $${playerVar});`,
-                ["r"]),
+                branches => `match ${branches}; $rel isa ${relationTypeLabel}; $rel links ($role: $${playerVar});`,
+                ["rel"]),
             this.runIidBatchedHarvesting(run, sourceIids, playerVar, rowLimit * 50,
-                branches => `match ${branches}; $r isa ${relationTypeLabel}; $r links ($role1: $${playerVar}); $r links ($role2: $other);`,
-                ["r", "other"]),
+                branches => `match ${branches}; $rel isa ${relationTypeLabel}; $rel links ($role1: $${playerVar}); $rel links ($role2: $other);`,
+                ["rel", "other"]),
         ]);
         const harvest = new Set<string>();
         groups.forEach(s => s.forEach(iid => harvest.add(iid)));
