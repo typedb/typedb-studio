@@ -240,6 +240,19 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         this.visualiser?.applyStyleUpdate();
     }
 
+    /** True when the target's type has a colour override to reset. */
+    get hasTypeColorOverride(): boolean {
+        return this.currentTypeColor != null;
+    }
+
+    /** Revert the per-type colour override back to the default — the colour
+     *  counterpart to the customiser's per-type undo button. */
+    resetNodeColor(): void {
+        if (!this.target) return;
+        this.styleService.setTypeStyle(this.target.typeLabel, { color: undefined });
+        this.visualiser?.applyStyleUpdate();
+    }
+
     // -- Loaded state --
     //
     // Two parallel sticky states, both per-tab:

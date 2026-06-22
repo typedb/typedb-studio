@@ -111,6 +111,12 @@
                 [style.color]="hex"
                 (click)="$event.stopPropagation(); setNodeColor(hex)"></button>
       }
+      @if (hasTypeColorOverride) {
+        <button class="swatch-reset" matTooltip="Reset colour" [matTooltipShowDelay]="500"
+                (click)="$event.stopPropagation(); resetNodeColor()">
+          <i class="fa-light fa-arrow-u-turn-up-left"></i>
+        </button>
+      }
     </div>
   }
   </span>

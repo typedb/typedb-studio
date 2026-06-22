@@ -133,6 +133,34 @@
         max-width: calc(8 * 18px + 7 * 8px + 32px);
     }
 
+    // Slim reset icon at the end of the swatch row — reverts the per-type
+    // colour override (mirrors the customiser's per-type undo button).
+    .swatch-reset {
+        // Sized to occupy the same footprint as a swatch so it sits flush in
+        // the row (the flex gap provides the spacing), rather than being pushed
+        // to the far end.
+        flex: 0 0 auto;
+        width: 18px;
+        height: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--theme-secondary-light-grey);
+        cursor: pointer;
+
+        i {
+            // All three needed — the global `i` rule forces a 16px box otherwise.
+            font-size: 12px;
+            width: 12px;
+            height: 12px;
+        }
+
+        &:hover { color: #ff8080; }
+    }
+
     .colour-swatch {
         flex: 0 0 auto;
         width: 18px;
