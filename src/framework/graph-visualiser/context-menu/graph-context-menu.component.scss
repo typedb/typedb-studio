@@ -35,6 +35,11 @@
         margin: 6px 16px;
         font-size: 12px;
         font-weight: var(--font-weight-regular);
+        // Keep a long node label from stretching the menu — cap and ellipsize.
+        max-width: 360px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .section-header {
