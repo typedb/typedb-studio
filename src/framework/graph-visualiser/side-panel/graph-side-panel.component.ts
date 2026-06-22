@@ -6,7 +6,7 @@ import { ResizableDirective } from "@hhangular/resizable";
 import { Subscription } from "rxjs";
 import { GraphStyleService, GraphSidePanelDock } from "../../../service/graph-style.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
-import { SchemaConcept, SchemaState } from "../../../service/schema-state.service";
+import { SchemaConcept, SchemaRole, SchemaState } from "../../../service/schema-state.service";
 import { SelectionMode } from "../../../service/graph-view-state.service";
 import { GraphVisualiser } from "../engine";
 import { InspectableSelection, TypeSelection } from "../engine/interaction-handler";
@@ -67,8 +67,10 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
     selectedType: SchemaConcept | null = null;
     selectedInstanceIID: string | null = null;
     /** Type currently selected in type-mode (parallel to selectedType /
-     *  selectedInstanceIID for the instance-mode inspector). */
-    selectedTypeForTypeMode: SchemaConcept | null = null;
+     *  selectedInstanceIID for the instance-mode inspector). Includes role
+     *  types, which aren't `SchemaConcept`s (no own attributes/subtypes) but
+     *  are still inspectable as a label + kind. */
+    selectedTypeForTypeMode: SchemaConcept | SchemaRole | null = null;
 
     // Internal vertical split between Inspector and the tabbed lower pane.
     inspectorPercent = 50;
@@ -125,6 +127,14 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
     private applyTypeSelection(selection: TypeSelection | null) {
         if (!selection) {
             this.selectedTypeForTypeMode = null;
+            return;
+        }
+        // Role types aren't keyed in the schema maps (they live under their
+        // relation's `relatedRoles`), but a role concept is just a kind + label,
+        // so synthesise one straight from the selection — enough for the
+        // explorer to show "role <label>".
+        if (selection.typeKind === "roleType") {
+            this.selectedTypeForTypeMode = { kind: "roleType", label: selection.typeLabel };
             return;
         }
         const schema = this.schemaState.value$.value;

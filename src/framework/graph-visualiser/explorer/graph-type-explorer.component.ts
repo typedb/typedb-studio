@@ -61,7 +61,7 @@ interface RoleChipRow {
     imports: [CommonModule, MatFormFieldModule, MatSelectModule, MatTooltipModule],
 })
 export class GraphTypeExplorerComponent implements DoCheck {
-    @Input() selectedType: SchemaConcept | null = null;
+    @Input() selectedType: SchemaConcept | SchemaRole | null = null;
     @Input() run: RunOutputState | null = null;
     @Input() visualiser: GraphVisualiser | null = null;
     /** True when this explorer is showing the schema visualiser's graph (type
@@ -93,8 +93,16 @@ export class GraphTypeExplorerComponent implements DoCheck {
             case "entityType":    return "entity";
             case "relationType":  return "relation";
             case "attributeType": return "attribute";
+            case "roleType":      return "role";
             default: return "";
         }
+    }
+
+    /** Supertype label of the selected type, or null. Roles (and types without
+     *  a supertype) return null. Centralised here so the template doesn't have
+     *  to reach into `.supertype`, which doesn't exist on every union member. */
+    get supertypeLabel(): string | null {
+        return (this.selectedType as { supertype?: { label?: string } } | null)?.supertype?.label ?? null;
     }
 
     /** Whether the source type can have its own attributes / relations
@@ -102,6 +110,15 @@ export class GraphTypeExplorerComponent implements DoCheck {
      *  inverted — they're owned, not owning). */
     get supportsConnections(): boolean {
         return this.selectedType?.kind === "entityType" || this.selectedType?.kind === "relationType";
+    }
+
+    /** Selected type narrowed to a connectable `SchemaConcept` (entity / relation
+     *  / attribute), or null for role types. The connection-loading actions
+     *  below only run when `supportsConnections` is true, so this is always
+     *  non-null there — it just lets the calls type-check against the widened
+     *  `selectedType` (which now also admits role types). */
+    private get connectableType(): SchemaConcept | null {
+        return this.selectedType && this.selectedType.kind !== "roleType" ? this.selectedType : null;
     }
 
     ngDoCheck(): void {
@@ -206,7 +223,7 @@ export class GraphTypeExplorerComponent implements DoCheck {
         }
         this.visualiser.freezeViewport();
         this.graphViewState
-            .fetchAttributesOfTypeFor(this.run, this.selectedType, iids, row.label)
+            .fetchAttributesOfTypeFor(this.run, this.connectableType!, iids, row.label)
             .then(() => {
                 this.visualiser?.reheat({ soft: true, preserveCamera: true });
                 this.visualiser?.interactionHandler.recomputeHighlightSet();
@@ -224,7 +241,7 @@ export class GraphTypeExplorerComponent implements DoCheck {
         }
         this.visualiser.freezeViewport();
         this.graphViewState
-            .fetchRolePlayersOfTypeFor(this.run, this.selectedType, iids, row.shortName)
+            .fetchRolePlayersOfTypeFor(this.run, this.connectableType!, iids, row.shortName)
             .then(() => {
                 this.visualiser?.reheat({ soft: true, preserveCamera: true });
                 this.visualiser?.interactionHandler.recomputeHighlightSet();
@@ -242,7 +259,7 @@ export class GraphTypeExplorerComponent implements DoCheck {
         }
         this.visualiser.freezeViewport();
         this.graphViewState
-            .fetchRelationsOfTypeForPlayers(this.run, this.selectedType, iids, row.label)
+            .fetchRelationsOfTypeForPlayers(this.run, this.connectableType!, iids, row.label)
             .then(() => {
                 this.visualiser?.reheat({ soft: true, preserveCamera: true });
                 this.visualiser?.interactionHandler.recomputeHighlightSet();
@@ -274,7 +291,7 @@ export class GraphTypeExplorerComponent implements DoCheck {
         if (iids.length === 0) { markAll(); return; }
         // One fetch for every attribute kind in a single pass, then reheat once.
         this.visualiser.freezeViewport();
-        this.graphViewState.fetchAttributesOf(this.run, this.selectedType, iids).then(() => {
+        this.graphViewState.fetchAttributesOf(this.run, this.connectableType!, iids).then(() => {
             this.afterLoadAll(markAll);
         });
     }
@@ -288,7 +305,7 @@ export class GraphTypeExplorerComponent implements DoCheck {
         this.visualiser.freezeViewport();
         // Load each relation kind the type participates in, then reheat once.
         Promise.all(this.relationChips.map(r =>
-            this.graphViewState.fetchRelationsOfTypeForPlayers(this.run!, this.selectedType!, iids, r.label),
+            this.graphViewState.fetchRelationsOfTypeForPlayers(this.run!, this.connectableType!, iids, r.label),
         )).then(() => this.afterLoadAll(markAll));
     }
 
@@ -300,7 +317,7 @@ export class GraphTypeExplorerComponent implements DoCheck {
         if (iids.length === 0) { markAll(); return; }
         this.visualiser.freezeViewport();
         Promise.all(this.roleChips.map(r =>
-            this.graphViewState.fetchRolePlayersOfTypeFor(this.run!, this.selectedType!, iids, r.shortName),
+            this.graphViewState.fetchRolePlayersOfTypeFor(this.run!, this.connectableType!, iids, r.shortName),
         )).then(() => this.afterLoadAll(markAll));
     }
 

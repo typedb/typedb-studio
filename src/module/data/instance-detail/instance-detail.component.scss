@@ -214,6 +214,10 @@
         &.attribute {
             color: var(--theme-attribute-blue);
         }
+
+        &.role {
+            color: var(--theme-role-orange);
+        }
     }
 
     .type-muted {

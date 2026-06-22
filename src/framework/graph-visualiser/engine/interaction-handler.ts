@@ -38,7 +38,7 @@ export interface NodeContextMenuEvent {
 
 /** Emitted when a TYPE is selected in the graph (type-mode click). */
 export interface TypeSelection {
-    typeKind: "entityType" | "relationType" | "attributeType";
+    typeKind: "entityType" | "relationType" | "attributeType" | "roleType";
     typeLabel: string;
 }
 
@@ -300,9 +300,9 @@ export class InteractionHandler {
     /**
      * Pull a `{ typeKind, typeLabel }` pair out of a concept regardless of
      * whether the clicked node is an instance (entity/relation/attribute) or
-     * a schema-type node (entityType/relationType/attributeType).
+     * a schema-type node (entityType/relationType/attributeType/roleType).
      */
-    private extractTypeFromConcept(concept: any): { typeKind: "entityType" | "relationType" | "attributeType"; typeLabel: string } | null {
+    private extractTypeFromConcept(concept: any): { typeKind: "entityType" | "relationType" | "attributeType" | "roleType"; typeLabel: string } | null {
         switch (concept?.kind) {
             case "entity":     return concept.type?.label ? { typeKind: "entityType",    typeLabel: concept.type.label } : null;
             case "relation":   return concept.type?.label ? { typeKind: "relationType",  typeLabel: concept.type.label } : null;
@@ -310,6 +310,7 @@ export class InteractionHandler {
             case "entityType":    return concept.label ? { typeKind: "entityType",    typeLabel: concept.label } : null;
             case "relationType":  return concept.label ? { typeKind: "relationType",  typeLabel: concept.label } : null;
             case "attributeType": return concept.label ? { typeKind: "attributeType", typeLabel: concept.label } : null;
+            case "roleType":      return concept.label ? { typeKind: "roleType",      typeLabel: concept.label } : null;
             default: return null;
         }
     }

@@ -13,9 +13,9 @@
         <div class="detail-section type-section">
           <div class="type-row">
             <span class="type-info">
-              @if (selectedType!.supertype) {
+              @if (supertypeLabel) {
                 <span class="type-label" [ngClass]="typeKindLabel">{{ selectedType!.label }}@if (selectedType!.kind === 'attributeType') {<em class="value-type">, value {{ $any(selectedType).valueType }}</em>}</span>
-                <span class="type-muted">sub {{ selectedType!.supertype.label }}</span>
+                <span class="type-muted">sub {{ supertypeLabel }}</span>
               } @else {
                 <span class="type-muted">{{ typeKindLabel }}</span>
                 <span class="type-label" [ngClass]="typeKindLabel">{{ selectedType!.label }}@if (selectedType!.kind === 'attributeType') {<em class="value-type">, value {{ $any(selectedType).valueType }}</em>}</span>
