@@ -6,15 +6,10 @@
 
 
 
-:host {
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow: hidden;
-}
+// NOTE: `:host` positioning intentionally lives in `instance-detail.host.scss`
+// (imported only by the data-side instance detail) so it doesn't leak into the
+// graph explorer components that share this file for the section/type-row
+// styles. See that file's comment.
 
 .detail-panel {
     display: flex;
@@ -195,8 +190,13 @@
 
     .type-info {
         display: flex;
+        flex-wrap: wrap;
         align-items: baseline;
-        gap: 6px;
+        // Column gap reads like a natural word space between the label,
+        // value-type and supertype; the tighter row gap keeps wrapped lines
+        // close together. flex-wrap lets the tokens drop onto new lines instead
+        // of stretching the panel.
+        gap: 2px 6px;
     }
 
     .type-label {

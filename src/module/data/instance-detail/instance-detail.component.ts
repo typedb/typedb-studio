@@ -18,7 +18,7 @@ import { InstanceDetailState, LinkData, OwnerData, RelationInstanceData } from "
 @Component({
     selector: "ts-instance-detail",
     templateUrl: "./instance-detail.component.html",
-    styleUrls: ["./instance-detail.component.scss"],
+    styleUrls: ["./instance-detail.component.scss", "./instance-detail.host.scss"],
     providers: [InstanceDetailState],
     imports: [
         CommonModule,
