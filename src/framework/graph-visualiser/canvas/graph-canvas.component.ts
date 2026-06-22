@@ -52,6 +52,10 @@ export class GraphCanvasComponent implements AfterViewInit, AfterViewChecked, On
      *  (e.g. for canvas usages that don't have a type/instance distinction
      *  like chat output). */
     @Input() selectionMode: SelectionMode | null = null;
+    /** True for the schema visualiser surface (graphs schema type nodes, not
+     *  data instances). Passed to the side panel so the type explorer hides
+     *  instance-oriented UI (the "N in graph" count and connection chips). */
+    @Input() schemaMode = false;
 
     @Output() maximisedChange = new EventEmitter<boolean>();
     @Output() graphPercentChange = new EventEmitter<number>();

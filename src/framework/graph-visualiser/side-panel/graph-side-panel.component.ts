@@ -55,6 +55,9 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
      *  toggle. Only the graph-explorer canvas enables it; other canvases
      *  (query/schema/chat) have no type-vs-instance distinction. */
     @Input() showSelectionModeToggle = false;
+    /** True for the schema visualiser (graph of type nodes, no instances) —
+     *  passed to the type explorer so it hides instance-oriented UI. */
+    @Input() schemaMode = false;
 
     /** Emitted when the user flips the inspector-header mode toggle. The host
      *  (graph tab, via the canvas) owns `selectionMode` and applies it. */

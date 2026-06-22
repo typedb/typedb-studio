@@ -64,6 +64,10 @@ export class GraphTypeExplorerComponent implements DoCheck {
     @Input() selectedType: SchemaConcept | null = null;
     @Input() run: RunOutputState | null = null;
     @Input() visualiser: GraphVisualiser | null = null;
+    /** True when this explorer is showing the schema visualiser's graph (type
+     *  nodes only). Hides instance-oriented UI — the "N in graph" count and the
+     *  connection-loading chips — which are meaningless without data instances. */
+    @Input() schemaMode = false;
 
     /** Live count of instances of `selectedType` currently in the graph. */
     instanceCount = 0;

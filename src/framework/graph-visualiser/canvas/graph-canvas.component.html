@@ -96,5 +96,6 @@
                        [run]="run"
                        [selectionMode]="selectionMode ?? 'types'"
                        [showSelectionModeToggle]="selectionMode != null"
+                       [schemaMode]="schemaMode"
                        (selectionModeChange)="selectionModeChange.emit($event)"/>
 </ng-template>

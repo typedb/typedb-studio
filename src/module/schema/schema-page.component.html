@@ -35,6 +35,7 @@
                          [class.invisible]="(driver.status$ | async) === 'disconnected' || !(driver.database$ | async)"
                          [visualiser]="state.visualiser.visualiser"
                          [status]="state.visualiser.status"
+                         [schemaMode]="true"
                          [graphPercent]="panelSizes[2]" (graphPercentChange)="onPanelResize(2, $event)"
                          [stylesPanePercent]="panelSizes[3]" (stylesPanePercentChange)="onPanelResize(3, $event)"
                          [(maximised)]="graphMaximised"

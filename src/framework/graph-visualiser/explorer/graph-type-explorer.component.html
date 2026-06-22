@@ -21,11 +21,20 @@
                 <span class="type-label" [ngClass]="typeKindLabel">{{ selectedType!.label }}@if (selectedType!.kind === 'attributeType') {<em class="value-type">, value {{ $any(selectedType).valueType }}</em>}</span>
               }
             </span>
-            <span class="instance-count">{{ instanceCount }} in graph</span>
+            <!-- "N in graph" counts data instances of the type. The schema
+                 visualiser graphs only type nodes, so it would always read
+                 "0 in graph" — confusing when you're there to look at schema,
+                 not data. Hidden in that mode. -->
+            @if (!schemaMode) {
+              <span class="instance-count">{{ instanceCount }} in graph</span>
+            }
           </div>
         </div>
 
-        @if (supportsConnections) {
+        <!-- The connection chips + display settings all load / restyle data
+             instances, which is meaningless in the schema visualiser — there we
+             show just the type + supertype row above. -->
+        @if (supportsConnections && !schemaMode) {
           @if (selectedType!.kind === 'relationType' && roleChips.length > 0) {
             <div class="detail-section">
               <h6 class="section-title">Links</h6>
