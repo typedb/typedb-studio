@@ -122,6 +122,32 @@ export type LayoutDensity = "spacious" | "default" | "compact";
 /** Persistent gravity multiplier per density mode. "default" is 1.5× the base
  *  gravity; "compact" is 4× the base and "spacious" is the default / 3. */
 export const DEFAULT_GRAVITY_MULTIPLIER = 1.5;
+
+/**
+ * Early-stop thresholds for the force sim. d3 keeps ticking until alpha decays
+ * to alphaMin, but alpha decays exponentially — so the run has a long tail
+ * (several seconds) where alpha is still above alphaMin yet every node is
+ * effectively stationary. Each of those tail ticks re-renders the whole graph
+ * (every label repainted), which is pure waste. Instead we stop once the
+ * fastest-moving node has been below SETTLE_MAX_VELOCITY (graph units / tick,
+ * i.e. its per-tick displacement) for SETTLE_QUIET_TICKS consecutive ticks —
+ * "nobody is visibly moving any more". The consecutive-tick guard avoids
+ * stopping during a brief lull early in the run when forces momentarily cancel.
+ */
+const SETTLE_MAX_VELOCITY = 0.3;
+const SETTLE_QUIET_TICKS = 5;
+
+/**
+ * Display refresh cap for a running sim. Writing node x/y into the graph is what
+ * makes Sigma re-index and repaint the *entire* graph (a pan, by contrast, only
+ * re-renders with the existing index) — so doing it every animation frame makes
+ * the sim try to fully repaint 60×/s, which a large graph can't sustain. The
+ * physics still ticks every frame; we just push positions to the display at most
+ * this often, so the sim renders at a steady, affordable rate instead of
+ * saturating the main thread. Lower it further if very large graphs still jank.
+ */
+const SIM_DISPLAY_FPS = 30;
+const SIM_MIN_SYNC_INTERVAL_MS = 1000 / SIM_DISPLAY_FPS;
 export const DENSITY_GRAVITY: Record<LayoutDensity, number> = {
     spacious: DEFAULT_GRAVITY_MULTIPLIER / 3,
     default: DEFAULT_GRAVITY_MULTIPLIER,
@@ -384,14 +410,40 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
         this.isRunning = true;
         this.simulation = this.buildSimulation(opts);
         const sim = this.simulation;
+        let quietTicks = 0;
+        let lastSyncMs = -Infinity;
         const tick = () => {
             sim.tick();
-            sim.nodes().forEach(node => {
-                this.graph.setNodeAttribute(node.id, "x", node.x!);
-                this.graph.setNodeAttribute(node.id, "y", node.y!);
-            });
-            this.onTick?.();
-            if (sim.alpha() > sim.alphaMin()) {
+            // Per tick (cheap, no graph writes): find the largest displacement.
+            // d3 sets node.vx/vy to the velocity it just applied, so |v| is how
+            // far the node moved this tick — used for the early-settle check.
+            const nodes = sim.nodes();
+            let maxV2 = 0;
+            for (const node of nodes) {
+                const v2 = (node.vx ?? 0) ** 2 + (node.vy ?? 0) ** 2;
+                if (v2 > maxV2) maxV2 = v2;
+            }
+            quietTicks = maxV2 < SETTLE_MAX_VELOCITY * SETTLE_MAX_VELOCITY ? quietTicks + 1 : 0;
+            // Stop on either d3's own alpha floor OR once everything has been
+            // visually still for a few ticks — the latter cuts the long, dead
+            // alpha tail that re-rendered every label for seconds at no benefit.
+            const settled = !(sim.alpha() > sim.alphaMin() && quietTicks < SETTLE_QUIET_TICKS);
+
+            // Throttle the expensive part — writing positions into the graph,
+            // which triggers Sigma's full re-index + repaint. Physics advances
+            // every frame; the display only updates at SIM_DISPLAY_FPS. Always
+            // sync the final frame so the graph lands on the true end positions.
+            const now = performance.now();
+            if (settled || now - lastSyncMs >= SIM_MIN_SYNC_INTERVAL_MS) {
+                lastSyncMs = now;
+                for (const node of nodes) {
+                    this.graph.setNodeAttribute(node.id, "x", node.x!);
+                    this.graph.setNodeAttribute(node.id, "y", node.y!);
+                }
+                this.onTick?.();
+            }
+
+            if (!settled) {
                 this.animationFrame = requestAnimationFrame(tick);
             } else {
                 this.animationFrame = null;
