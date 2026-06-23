@@ -1,11 +1,11 @@
 <div class="zoom-controls">
   <div class="zoom-pair">
     @if (queryRunning || visualiser?.isLayoutRunning) {
-      <button class="zoom-button stop-button" (click)="stopLayout()" [disabled]="queryRunning" matTooltip="Stop simulation" [matTooltipShowDelay]="500">
+      <button class="zoom-button stop-button" (click)="stopLayout()" [disabled]="queryRunning" matTooltip="Stop simulation" matTooltipPosition="left" [matTooltipShowDelay]="500">
         <i class="fa-light fa-stop"></i>
       </button>
     } @else {
-      <button class="zoom-button" (click)="reLayout()" [disabled]="redrawCooldown" matTooltip="Redraw graph" [matTooltipShowDelay]="500" [matTooltipDisabled]="redrawCooldown">
+      <button class="zoom-button" (click)="reLayout()" [disabled]="redrawCooldown" matTooltip="Redraw graph" matTooltipPosition="left" [matTooltipShowDelay]="500" [matTooltipDisabled]="redrawCooldown">
         <i class="fa-light fa-arrows-rotate"></i>
       </button>
     }
@@ -14,6 +14,7 @@
             (click)="resetChangesClicked.emit()"
             [disabled]="!hasChanges"
             matTooltip="Reset changes"
+            matTooltipPosition="left"
             [matTooltipDisabled]="!hasChanges"
             [matTooltipShowDelay]="500">
       <i class="fa-light fa-rotate-left"></i>
@@ -23,6 +24,7 @@
             [matMenuTriggerFor]="densityMenu"
             [disabled]="!canSetDensity"
             matTooltip="Graph density"
+            matTooltipPosition="left"
             [matTooltipDisabled]="!canSetDensity"
             [matTooltipShowDelay]="500">
       <i class="fa-light fa-line-height"></i>
@@ -43,15 +45,16 @@
   <button class="zoom-button reset-button"
           (click)="resetOrFocus()"
           [matTooltip]="selection ? 'Focus selection' : 'Reset view'"
+          matTooltipPosition="left"
           [matTooltipShowDelay]="500">
     <i class="fa-light fa-crosshairs"></i>
   </button>
   <div class="zoom-pair">
-    <button class="zoom-button" (click)="zoomIn()" matTooltip="Zoom in" [matTooltipShowDelay]="500">
+    <button class="zoom-button" (click)="zoomIn()" matTooltip="Zoom in" matTooltipPosition="left" [matTooltipShowDelay]="500">
       <i class="fa-light fa-plus"></i>
     </button>
     <div class="divider"></div>
-    <button class="zoom-button" (click)="zoomOut()" matTooltip="Zoom out" [matTooltipShowDelay]="500">
+    <button class="zoom-button" (click)="zoomOut()" matTooltip="Zoom out" matTooltipPosition="left" [matTooltipShowDelay]="500">
       <i class="fa-light fa-minus"></i>
     </button>
   </div>

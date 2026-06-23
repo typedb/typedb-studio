@@ -8,12 +8,12 @@ import { LayoutDensity } from "../../engine/layout";
 const ZOOM_FACTOR = 0.7;
 
 @Component({
-    selector: "ts-graph-zoom-controls",
-    templateUrl: "graph-zoom-controls.component.html",
-    styleUrls: ["graph-zoom-controls.component.scss"],
+    selector: "ts-graph-controls",
+    templateUrl: "graph-controls.component.html",
+    styleUrls: ["graph-controls.component.scss"],
     imports: [MatTooltipModule, MatMenuModule, AsyncPipe],
 })
-export class GraphZoomControlsComponent {
+export class GraphControlsComponent {
 
     @Input() visualiser: GraphVisualiser | null = null;
     @Input() queryRunning = false;
