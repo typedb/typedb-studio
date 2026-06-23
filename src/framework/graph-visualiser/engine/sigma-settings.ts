@@ -1,4 +1,4 @@
-import { createEdgeCurveProgram, createDrawCurvedEdgeLabel, DEFAULT_EDGE_CURVE_PROGRAM_OPTIONS } from "@sigma/edge-curve";
+import { createEdgeCurveProgram } from "@sigma/edge-curve";
 import Sigma from "sigma";
 import { drawStraightEdgeLabel } from "sigma/rendering";
 import { Settings as SigmaSettings } from "sigma/settings";
@@ -38,15 +38,16 @@ function scaledDrawStraightEdgeLabel(context: CanvasRenderingContext2D, edgeData
     drawStraightEdgeLabel(context, edgeData, sourceData, targetData, { ...settings, edgeLabelSize: scaledSize });
 }
 
-const defaultDrawCurvedLabel = createDrawCurvedEdgeLabel(DEFAULT_EDGE_CURVE_PROGRAM_OPTIONS as any);
+// Curved edges keep their (cheap, 6-vertex shader) curved *bodies*, but draw
+// their labels with the straight-edge renderer. The stock curved-label renderer
+// lays text along the bezier by calling measureText AND save/rotate/fillText/
+// restore *per character*, per edge, every frame — confirmed (by A/B test) to be
+// the decisive cost that made a label-heavy, curve-heavy theme (e.g. Cal
+// Aesthetics) crawl during a sim. A straight label at the edge midpoint reads
+// fine, keeps the curved body, and costs a fraction.
 const ScaledEdgeCurveProgram = createEdgeCurveProgram({
     drawLabel(context, edgeData, sourceData, targetData, settings) {
-        const scaledSize = edgeLabelSize(sourceData, targetData, settings.edgeLabelSize);
-        if (scaledSize < 3) return;
-        defaultDrawCurvedLabel(
-            context, edgeData, sourceData, targetData,
-            { ...settings, edgeLabelSize: scaledSize },
-        );
+        scaledDrawStraightEdgeLabel(context, edgeData, sourceData, targetData, settings);
     },
 });
 
@@ -62,6 +63,10 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
         color: `#958fa8`,
     },
     zIndex: true,
+    // Show every on-screen node's label (no grid culling). Sigma's density
+    // culling keeps only the largest label per fixed *screen-space* cell, which
+    // makes labels flicker in/out as nodes slide across cell boundaries while
+    // panning/zooming — so it can't be used for a stable, readable graph view.
     labelRenderedSizeThreshold: 0,
     labelDensity: Infinity,
     defaultDrawEdgeLabel: scaledDrawStraightEdgeLabel as any,
