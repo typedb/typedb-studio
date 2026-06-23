@@ -13,7 +13,7 @@ import { getTypeLabel, DataVertex } from "@typedb/graph-utils";
 import { buildStructuredAnswers } from "@typedb/graph-utils";
 import { AnalyzedPipelineBackCompat } from "./types";
 import { Graph, GraphBuilderStructureParams, defaultStructureParams } from "./graph";
-import { GraphBuilder } from "./graph-builder";
+import { GraphBuilder, EDGE_CURVATURE } from "./graph-builder";
 import { GraphStyles, colorEdgesByConstraintIndex as _colorEdgesByConstraintIndex, colorQuery as _colorQuery } from "./styles";
 import { setUseBorderColorForLabels, setLabelsVisible, setShowHoverLabel } from "./sigma-label-utils";
 import { InteractionHandler, StudioState } from "./interaction-handler";
@@ -23,6 +23,17 @@ import { DisplayAttributeStore, refreshInstanceLabels } from "./instance-label";
 
 export type GraphPngExportMode = "currentView" | "wholeGraph";
 const MAX_EXPORT_DIMENSION = 8192;
+
+/**
+ * Minimum fractional change in the auto-fit camera ratio before the per-tick
+ * sim re-fit actually moves the camera. The force sim re-fits every tick, and
+ * any ratio change rescales every label's font size — which rebuilds the glyph
+ * atlas and makes each tick paint like a (slow) zoom instead of a (fast) pan.
+ * Holding the ratio until the fit drifts past this threshold keeps the font
+ * size — and the cached atlas — stable across runs of ticks. Only applied to
+ * the per-tick auto-fit; explicit fits (Reset view, etc.) always apply.
+ */
+const AUTO_FIT_MIN_RATIO_CHANGE = 0.04;
 
 export class GraphVisualiser {
     interactionHandler: InteractionHandler;
@@ -46,6 +57,8 @@ export class GraphVisualiser {
     private pinnedCameraWorld: { worldX: number; worldY: number; ratio: number } | null = null;
     private stylesSub!: Subscription;
     private cameraUpdatedListener: (() => void) | null = null;
+    /** Teardown callbacks for the WebGL stale-frame recovery listeners. */
+    private contextGuardCleanups: (() => void)[] = [];
     /** Per-instance attribute values fetched purely to populate the label
      *  heuristic. Not rendered into the graph — kept off-graph so the user
      *  still has to opt in to attribute nodes/edges. */
@@ -68,7 +81,7 @@ export class GraphVisualiser {
             if (this.pinnedCameraWorld) {
                 this.restoreCameraWorld(this.pinnedCameraWorld);
             } else if (this.autoZoomEnabled) {
-                this.centerCamera();
+                this.centerCamera(false, AUTO_FIT_MIN_RATIO_CHANGE);
             }
         };
         this.cameraUpdatedListener = () => {
@@ -81,6 +94,7 @@ export class GraphVisualiser {
             this.updateLabelVisibilityForZoom();
         };
         this.sigma.getCamera().addListener("updated", this.cameraUpdatedListener);
+        this.setupContextRecoveryGuards();
         this.stylesSub = this.styleService.styles$.subscribe(() => {
             this.syncStyles();
             try {
@@ -90,13 +104,53 @@ export class GraphVisualiser {
         });
     }
 
+    /**
+     * The graph renders on a WebGL layer (Sigma) composited by the OS webview.
+     * On some GPUs/drivers a stale or uninitialised drawing buffer can survive
+     * across a sleep/wake, GPU memory-pressure event, or context loss/restore,
+     * showing up as a garbage frame (classically a flat red field with ghost
+     * geometry from an earlier frame). It persists until the next real paint —
+     * which is why hovering/panning makes it vanish.
+     *
+     * These guards force a fresh render whenever the app regains focus or
+     * visibility, and when a lost GL context is restored, so a stale frame
+     * self-corrects without the user having to interact with the canvas.
+     */
+    private setupContextRecoveryGuards(): void {
+        const repaint = () => {
+            try {
+                this.sigma.refresh();
+            } catch (_) { /* sigma not renderable (hidden tab / lost context) */ }
+        };
+        const onFocus = () => repaint();
+        const onVisible = () => { if (!document.hidden) repaint(); };
+        window.addEventListener("focus", onFocus);
+        document.addEventListener("visibilitychange", onVisible);
+        this.contextGuardCleanups.push(
+            () => window.removeEventListener("focus", onFocus),
+            () => document.removeEventListener("visibilitychange", onVisible),
+        );
+
+        this.sigma.getContainer().querySelectorAll("canvas").forEach(canvas => {
+            const onRestored = () => repaint();
+            canvas.addEventListener("webglcontextrestored", onRestored);
+            this.contextGuardCleanups.push(
+                () => canvas.removeEventListener("webglcontextrestored", onRestored),
+            );
+        });
+    }
+
     private syncStyles(): GraphStyles {
         setUseBorderColorForLabels(this.styleService.labelUseBorderColor);
         // User explicitly changed label visibility — reset auto-hide state
         this.labelsAutoHidden = false;
         setLabelsVisible(this.styleService.labelsVisible);
         setShowHoverLabel(this.styleService.showHoverLabel);
-        this.sigma.setSetting("renderEdgeLabels", this.styleService.labelsVisible);
+        // Edge labels are controlled independently of node labels — they are by
+        // far the most expensive thing to render during a sim (one per visible
+        // edge, every frame), so letting users turn them off without losing node
+        // labels is the main performance lever for dense / curve-heavy graphs.
+        this.sigma.setSetting("renderEdgeLabels", this.styleService.edgeLabelsVisible);
         this.styleParams = this.styleService.toGraphStyles();
         if (this.interactionHandler) {
             this.interactionHandler.styleParams = this.styleParams;
@@ -111,8 +165,8 @@ export class GraphVisualiser {
      * drawing thousands of text strings every frame.
      */
     private updateLabelVisibilityForZoom(): void {
-        // Only auto-hide when the user hasn't explicitly turned labels off
-        if (!this.styleService.labelsVisible) return;
+        // Nothing to auto-hide if the user has both label kinds turned off.
+        if (!this.styleService.labelsVisible && !this.styleService.edgeLabelsVisible) return;
 
         const elementCount = this.graph.order + this.graph.size; // nodes + edges
         const ratio = this.sigma.getCamera().ratio;
@@ -123,15 +177,12 @@ export class GraphVisualiser {
         const zoomThreshold = Math.max(4, ELEMENT_THRESHOLD * 10 / elementCount);
         const shouldHide = elementCount > ELEMENT_THRESHOLD && ratio > zoomThreshold;
 
-        if (shouldHide && !this.labelsAutoHidden) {
-            this.labelsAutoHidden = true;
-            setLabelsVisible(false);
-            this.sigma.setSetting("renderEdgeLabels", false);
-        } else if (!shouldHide && this.labelsAutoHidden) {
-            this.labelsAutoHidden = false;
-            setLabelsVisible(true);
-            this.sigma.setSetting("renderEdgeLabels", true);
-        }
+        if (shouldHide === this.labelsAutoHidden) return; // no change
+        this.labelsAutoHidden = shouldHide;
+        // Auto-hide each label kind only if the user has it on in the first
+        // place, so the zoom heuristic never re-shows labels they disabled.
+        if (this.styleService.labelsVisible) setLabelsVisible(!shouldHide);
+        if (this.styleService.edgeLabelsVisible) this.sigma.setSetting("renderEdgeLabels", !shouldHide);
     }
 
     private setupReducers(): void {
@@ -347,10 +398,10 @@ export class GraphVisualiser {
             if (total > 1) {
                 // Parallel edges: always curve and fan out.
                 this.graph.setEdgeAttribute(edge, "type", "curved");
-                this.graph.setEdgeAttribute(edge, "curvature", 0.25 * (idx + 1));
+                this.graph.setEdgeAttribute(edge, "curvature", EDGE_CURVATURE * (idx + 1));
             } else {
                 this.graph.setEdgeAttribute(edge, "type", curvedByDefault ? "curved" : "line");
-                this.graph.setEdgeAttribute(edge, "curvature", 0.25);
+                this.graph.setEdgeAttribute(edge, "curvature", EDGE_CURVATURE);
             }
         });
         this.sigma.refresh();
@@ -482,7 +533,7 @@ export class GraphVisualiser {
         this.layout.fixNode(anchor, x, y);
     }
 
-    centerCamera(zoomOutOnly = false): void {
+    centerCamera(zoomOutOnly = false, minRatioChangeFraction = 0): void {
         const nodes = this.graph.nodes();
         if (nodes.length === 0) return;
 
@@ -521,6 +572,18 @@ export class GraphVisualiser {
             this.sigma.getCamera().setState({ x: 0.5, y: 0.5, ratio: this.peakCameraRatio, angle: 0 });
             this.settingCameraProgrammatically = false;
             return;
+        }
+
+        // Skip imperceptible per-tick auto-fit nudges so the camera ratio — and
+        // therefore the label font size and its cached glyph atlas — stays put
+        // across runs of sim ticks, instead of rescaling (and rebuilding the
+        // atlas) every frame. The camera snaps once the fit drifts past the
+        // threshold. Explicit fits pass 0 and always apply.
+        if (minRatioChangeFraction > 0) {
+            const currentRatio = this.sigma.getCamera().getState().ratio;
+            if (currentRatio > 0 && Math.abs(ratio - currentRatio) / currentRatio < minRatioChangeFraction) {
+                return;
+            }
         }
         this.peakCameraRatio = ratio;
 
@@ -1244,6 +1307,8 @@ export class GraphVisualiser {
 
     destroy() {
         this.stylesSub.unsubscribe();
+        this.contextGuardCleanups.forEach(fn => fn());
+        this.contextGuardCleanups = [];
         // Stop the layout sim and detach our onTick before killing sigma —
         // otherwise the rAF tick keeps mutating the graph and calling
         // centerCamera() on the dead sigma, which schedules renders that
