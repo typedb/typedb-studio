@@ -78,6 +78,8 @@ export interface CustomPreset {
     labelColorMode?: "auto" | "border" | "fixed";
     labelUseBorderColor?: boolean; // legacy, for backwards compat
     labelsVisible: boolean;
+    /** Optional (back-compat): edge label visibility, independent of node labels. */
+    edgeLabelsVisible?: boolean;
     showHoverLabel: boolean;
     degreeScaling: boolean;
     /** Optional: edges curved by default. */
@@ -139,6 +141,7 @@ export class GraphStyleService implements OnDestroy {
     private _previewedEdge: string | null = null;
     private _activePreset: string | null = null;
     private _labelsVisible = true;
+    private _edgeLabelsVisible = true;
     private _showHoverLabel = true;
     private _degreeScaling = false;
     private _edgesCurvedByDefault = false;
@@ -550,6 +553,14 @@ export class GraphStyleService implements OnDestroy {
         this.styles$.next();
     }
 
+    get edgeLabelsVisible(): boolean { return this._edgeLabelsVisible; }
+
+    set edgeLabelsVisible(value: boolean) {
+        this._edgeLabelsVisible = value;
+        this.save();
+        this.styles$.next();
+    }
+
     get showHoverLabel(): boolean { return this._showHoverLabel; }
 
     set showHoverLabel(value: boolean) {
@@ -674,6 +685,7 @@ export class GraphStyleService implements OnDestroy {
         this._labelColorMode = "auto";
         this._colorEdgesByConstraint = false;
         this._labelsVisible = true;
+        this._edgeLabelsVisible = true;
         this._showHoverLabel = true;
         this._degreeScaling = false;
         this._edgesCurvedByDefault = false;
@@ -703,6 +715,7 @@ export class GraphStyleService implements OnDestroy {
             colorEdgesByConstraint: this._colorEdgesByConstraint,
             labelColorMode: this._labelColorMode,
             labelsVisible: this._labelsVisible,
+            edgeLabelsVisible: this._edgeLabelsVisible,
             showHoverLabel: this._showHoverLabel,
             degreeScaling: this._degreeScaling,
             edgesCurvedByDefault: this._edgesCurvedByDefault,
@@ -728,6 +741,7 @@ export class GraphStyleService implements OnDestroy {
         this._colorEdgesByConstraint = preset.colorEdgesByConstraint;
         this._labelColorMode = preset.labelColorMode ?? (preset.labelUseBorderColor ? "auto" : "fixed");
         this._labelsVisible = preset.labelsVisible;
+        this._edgeLabelsVisible = preset.edgeLabelsVisible ?? true;
         this._showHoverLabel = preset.showHoverLabel;
         this._degreeScaling = preset.degreeScaling;
         this._edgesCurvedByDefault = preset.edgesCurvedByDefault ?? false;
@@ -790,6 +804,7 @@ export class GraphStyleService implements OnDestroy {
                 labelColorMode: this._labelColorMode,
                 activePreset: this._activePreset,
                 labelsVisible: this._labelsVisible,
+                edgeLabelsVisible: this._edgeLabelsVisible,
                 showHoverLabel: this._showHoverLabel,
                 degreeScaling: this._degreeScaling,
                 edgesCurvedByDefault: this._edgesCurvedByDefault,
@@ -816,6 +831,7 @@ export class GraphStyleService implements OnDestroy {
                 this._labelColorMode = data.labelColorMode ?? (data.labelUseBorderColor === false ? "fixed" : "auto");
                 this._activePreset = data.activePreset ?? null;
                 this._labelsVisible = data.labelsVisible ?? true;
+                this._edgeLabelsVisible = data.edgeLabelsVisible ?? true;
                 this._showHoverLabel = data.showHoverLabel ?? true;
                 this._degreeScaling = data.degreeScaling ?? false;
                 this._edgesCurvedByDefault = data.edgesCurvedByDefault ?? false;

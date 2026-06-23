@@ -318,18 +318,21 @@ export class CustomiseTabComponent implements OnChanges {
     // -- Settings: node label / scaling / edge coloring (moved here from the
     //    side-panel footer so all graph-wide settings live in one place). --
 
-    get labelMode(): "auto" | "fixed" | "hidden" {
-        if (!this.styleService.labelsVisible) return "hidden";
+    get nodeLabelsVisible(): boolean {
+        return this.styleService.labelsVisible;
+    }
+
+    toggleNodeLabels(): void {
+        this.styleService.labelsVisible = !this.styleService.labelsVisible;
+        this.visualiser?.restoreLabels();
+    }
+
+    get nodeLabelColor(): "auto" | "fixed" {
         return this.styleService.labelColorMode === "fixed" ? "fixed" : "auto";
     }
 
-    setLabelMode(mode: "auto" | "fixed" | "hidden"): void {
-        if (mode === "hidden") {
-            this.styleService.labelsVisible = false;
-        } else {
-            this.styleService.labelsVisible = true;
-            this.styleService.labelColorMode = mode === "fixed" ? "fixed" : "auto";
-        }
+    setNodeLabelColor(mode: "auto" | "fixed"): void {
+        this.styleService.labelColorMode = mode;
         this.visualiser?.restoreLabels();
     }
 
@@ -339,6 +342,15 @@ export class CustomiseTabComponent implements OnChanges {
 
     toggleShowHoverLabel(): void {
         this.styleService.showHoverLabel = !this.styleService.showHoverLabel;
+        this.visualiser?.restoreLabels();
+    }
+
+    get edgeLabelsVisible(): boolean {
+        return this.styleService.edgeLabelsVisible;
+    }
+
+    toggleEdgeLabels(): void {
+        this.styleService.edgeLabelsVisible = !this.styleService.edgeLabelsVisible;
         this.visualiser?.restoreLabels();
     }
 
