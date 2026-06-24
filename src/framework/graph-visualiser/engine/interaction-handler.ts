@@ -104,6 +104,15 @@ export class InteractionHandler {
      */
     private secondaryAnchors: Set<string> = new Set();
 
+    /**
+     * Viewport position where the current node-press started. A drag only
+     * actually moves the node once the pointer travels past DRAG_THRESHOLD_PX
+     * from here — so the tiny jitter in a fast click no longer nudges the node
+     * (which previously swallowed the click as a "drag").
+     */
+    private pressViewport: { x: number; y: number } | null = null;
+    private static readonly DRAG_THRESHOLD_PX = 5;
+
     constructor(public graph: MultiGraph, public renderer: Sigma, private studioState: StudioState, public styleParams: GraphStyles, public styleService?: GraphStyleService) {
         this.state = {
             draggedNode : null,
@@ -178,6 +187,10 @@ export class InteractionHandler {
         if (button != null && button !== 0) return;
         const node = event.node;
         this.state.draggedNode = node;
+        // Remember where the press began and reset the drag flag; the node won't
+        // actually move until the pointer passes the drag threshold (see onMoveBody).
+        this.pressViewport = { x: (event.event as any)?.x ?? 0, y: (event.event as any)?.y ?? 0 };
+        this.state.didDrag = false;
         const original = this.graph.getNodeAttribute(node, "_originalColor") ?? this.graph.getNodeAttribute(node, "color");
         this.graph.setNodeAttribute(node, "color", chroma(original).darken(0.9).hex());
         const attrs = this.graph.getNodeAttributes(node);
@@ -192,17 +205,28 @@ export class InteractionHandler {
         let mouseCoords = event.event;
         if (this.state.draggedNode == null) return;
 
-        // Get new position of node
+        // Suppress camera panning for the whole gesture while a node is held —
+        // but don't actually move the node until the pointer has travelled past
+        // the drag threshold from the press point. Below the threshold this is a
+        // click (with minor jitter), not a drag, so the node must stay put and
+        // didDrag must stay false so onClickNode still selects it.
+        mouseCoords.preventSigmaDefault();
+        mouseCoords.original.preventDefault();
+        mouseCoords.original.stopPropagation();
+
+        if (!this.state.didDrag && this.pressViewport != null) {
+            const dx = mouseCoords.x - this.pressViewport.x;
+            const dy = mouseCoords.y - this.pressViewport.y;
+            const threshold = InteractionHandler.DRAG_THRESHOLD_PX;
+            if (dx * dx + dy * dy < threshold * threshold) return;
+        }
+
+        // Past the threshold (or already dragging): move the node.
         const pos = this.renderer.viewportToGraph(mouseCoords);
         this.graph.setNodeAttribute(this.state.draggedNode, "x", pos.x);
         this.graph.setNodeAttribute(this.state.draggedNode, "y", pos.y);
         this.layout?.fixNode(this.state.draggedNode, pos.x, pos.y);
         this.state.didDrag = true;
-
-        // Prevent sigma to move camera:
-        mouseCoords.preventSigmaDefault();
-        mouseCoords.original.preventDefault();
-        mouseCoords.original.stopPropagation();
     }
 
     onUpNode(_event: SigmaNodeEventPayload) {
