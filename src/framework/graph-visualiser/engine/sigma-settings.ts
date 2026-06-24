@@ -1,6 +1,7 @@
 import { createEdgeCurveProgram } from "@sigma/edge-curve";
 import Sigma from "sigma";
 import { drawStraightEdgeLabel } from "sigma/rendering";
+import { EDGE_CURVATURE } from "./graph-builder";
 import { Settings as SigmaSettings } from "sigma/settings";
 import MultiGraph from "graphology";
 import { NodeDiamondProgram } from "./node-programs/diamond";
@@ -39,15 +40,35 @@ function scaledDrawStraightEdgeLabel(context: CanvasRenderingContext2D, edgeData
 }
 
 // Curved edges keep their (cheap, 6-vertex shader) curved *bodies*, but draw
-// their labels with the straight-edge renderer. The stock curved-label renderer
-// lays text along the bezier by calling measureText AND save/rotate/fillText/
+// their labels with the straight-edge renderer instead of the stock curved one,
+// which lays text along the bezier via measureText + save/rotate/fillText/
 // restore *per character*, per edge, every frame — confirmed (by A/B test) to be
 // the decisive cost that made a label-heavy, curve-heavy theme (e.g. Cal
-// Aesthetics) crawl during a sim. A straight label at the edge midpoint reads
-// fine, keeps the curved body, and costs a fraction.
+// Aesthetics) crawl during a sim.
+//
+// The straight renderer draws at the *chord* midpoint, but a curved edge bulges
+// away from the chord, so the label ends up off the visible arc. We shift the
+// label onto the arc apex first: the bezier midpoint (t=0.5) sits at
+// `chordMidpoint + 0.5 * curvature * perpendicular(target - source)`, matching
+// where the stock curved-label renderer used to anchor it. One translate, then
+// a single straight label — cheap, and back on the curve.
+function scaledDrawCurvedEdgeLabel(context: CanvasRenderingContext2D, edgeData: any, sourceData: any, targetData: any, settings: any): void {
+    const scaledSize = edgeLabelSize(sourceData, targetData, settings.edgeLabelSize);
+    if (scaledSize < 3) return;
+    const curvature = typeof edgeData.curvature === "number" ? edgeData.curvature : EDGE_CURVATURE;
+    const dx = targetData.x - sourceData.x;
+    const dy = targetData.y - sourceData.y;
+    // perpendicular(dx, dy) = (dy, -dx), magnitude = edge length → this offset is
+    // 0.5 * curvature * length toward the arc apex.
+    context.save();
+    context.translate(0.5 * curvature * dy, -0.5 * curvature * dx);
+    drawStraightEdgeLabel(context, edgeData, sourceData, targetData, { ...settings, edgeLabelSize: scaledSize });
+    context.restore();
+}
+
 const ScaledEdgeCurveProgram = createEdgeCurveProgram({
     drawLabel(context, edgeData, sourceData, targetData, settings) {
-        scaledDrawStraightEdgeLabel(context, edgeData, sourceData, targetData, settings);
+        scaledDrawCurvedEdgeLabel(context, edgeData, sourceData, targetData, settings);
     },
 });
 
