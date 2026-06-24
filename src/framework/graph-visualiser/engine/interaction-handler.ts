@@ -104,6 +104,15 @@ export class InteractionHandler {
      */
     private secondaryAnchors: Set<string> = new Set();
 
+    /**
+     * Viewport position where the current node-press started. A drag only
+     * actually moves the node once the pointer travels past DRAG_THRESHOLD_PX
+     * from here — so the tiny jitter in a fast click no longer nudges the node
+     * (which previously swallowed the click as a "drag").
+     */
+    private pressViewport: { x: number; y: number } | null = null;
+    private static readonly DRAG_THRESHOLD_PX = 5;
+
     constructor(public graph: MultiGraph, public renderer: Sigma, private studioState: StudioState, public styleParams: GraphStyles, public styleService?: GraphStyleService) {
         this.state = {
             draggedNode : null,
@@ -178,10 +187,15 @@ export class InteractionHandler {
         if (button != null && button !== 0) return;
         const node = event.node;
         this.state.draggedNode = node;
+        // Remember where the press began and reset the drag flag; the node won't
+        // actually move until the pointer passes the drag threshold (see onMoveBody).
+        this.pressViewport = { x: (event.event as any)?.x ?? 0, y: (event.event as any)?.y ?? 0 };
+        this.state.didDrag = false;
         const original = this.graph.getNodeAttribute(node, "_originalColor") ?? this.graph.getNodeAttribute(node, "color");
         this.graph.setNodeAttribute(node, "color", chroma(original).darken(0.9).hex());
-        const attrs = this.graph.getNodeAttributes(node);
-        this.layout?.fixNode(node, attrs["x"], attrs["y"]);
+        // Don't fix the node on press — only once a real drag starts (see
+        // onMoveBody). Fixing here would let a plain click unintentionally
+        // unpin a previously-pinned node via the release path.
         if (!this.renderer.getCustomBBox()) {
             this.renderer.setCustomBBox(this.renderer.getBBox());
         }
@@ -192,37 +206,75 @@ export class InteractionHandler {
         let mouseCoords = event.event;
         if (this.state.draggedNode == null) return;
 
-        // Get new position of node
+        // Suppress camera panning for the whole gesture while a node is held —
+        // but don't actually move the node until the pointer has travelled past
+        // the drag threshold from the press point. Below the threshold this is a
+        // click (with minor jitter), not a drag, so the node must stay put and
+        // didDrag must stay false so onClickNode still selects it.
+        mouseCoords.preventSigmaDefault();
+        mouseCoords.original.preventDefault();
+        mouseCoords.original.stopPropagation();
+
+        if (!this.state.didDrag && this.pressViewport != null) {
+            const dx = mouseCoords.x - this.pressViewport.x;
+            const dy = mouseCoords.y - this.pressViewport.y;
+            const threshold = InteractionHandler.DRAG_THRESHOLD_PX;
+            if (dx * dx + dy * dy < threshold * threshold) return;
+        }
+
+        // First real movement past the threshold: hold the camera still (the
+        // reheat below makes onTick fire, which would otherwise recenter the
+        // view) and reheat the simulation so the dragged, cursor-fixed node
+        // shoves its neighbours out of the way.
+        if (!this.state.didDrag) {
+            this.state.didDrag = true;
+            this.visualiser?.holdCameraForDrag();
+            this.layout?.startDrag?.();
+        }
+
+        // Move the node — fixNode holds it under the cursor; the warm sim pushes
+        // everyone else around it.
         const pos = this.renderer.viewportToGraph(mouseCoords);
         this.graph.setNodeAttribute(this.state.draggedNode, "x", pos.x);
         this.graph.setNodeAttribute(this.state.draggedNode, "y", pos.y);
         this.layout?.fixNode(this.state.draggedNode, pos.x, pos.y);
-        this.state.didDrag = true;
-
-        // Prevent sigma to move camera:
-        mouseCoords.preventSigmaDefault();
-        mouseCoords.original.preventDefault();
-        mouseCoords.original.stopPropagation();
     }
 
     onUpNode(_event: SigmaNodeEventPayload) {
-        if (this.state.draggedNode != null) {
-            this.layout?.unfixNode(this.state.draggedNode);
-            const original = this.graph.getNodeAttribute(this.state.draggedNode, "_originalColor");
+        const node = this.state.draggedNode;
+        if (node != null) {
+            this.releaseDrag(node);
+            const original = this.graph.getNodeAttribute(node, "_originalColor");
             if (original) {
-                this.graph.setNodeAttribute(this.state.draggedNode, "color", chroma(original).darken(0.3).hex());
+                this.graph.setNodeAttribute(node, "color", chroma(original).darken(0.3).hex());
             }
             this.state.draggedNode = null;
         }
     }
 
+    /**
+     * End of a node press. If it was a real drag, anchor the node where it
+     * landed (so it stays put and later drags of other nodes won't push it) and
+     * let the simulation cool. A plain click does nothing here — the node was
+     * never fixed (see onDownNode), so any existing pin is left untouched.
+     */
+    private releaseDrag(node: string): void {
+        if (this.state.didDrag) {
+            const x = this.graph.getNodeAttribute(node, "x");
+            const y = this.graph.getNodeAttribute(node, "y");
+            this.layout?.pinNode?.(node, x, y);
+            this.layout?.endDrag?.();
+        }
+    }
+
     onUpStage(_event: SigmaEventPayload) {
-        if (this.state.draggedNode != null) {
-            this.layout?.unfixNode(this.state.draggedNode);
-            const original = this.graph.getNodeAttribute(this.state.draggedNode, "_originalColor");
+        const node = this.state.draggedNode;
+        if (node != null) {
+            this.releaseDrag(node);
+            const original = this.graph.getNodeAttribute(node, "_originalColor");
             if (original) {
-                this.graph.setNodeAttribute(this.state.draggedNode, "color", original);
-                this.graph.removeNodeAttribute(this.state.draggedNode, "_originalColor");
+                this.graph.setNodeAttribute(node, "color", original);
+                this.graph.removeNodeAttribute(node, "_originalColor");
             }
             this.state.draggedNode = null;
         }

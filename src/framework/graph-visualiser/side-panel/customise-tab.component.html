@@ -25,15 +25,30 @@
         </div>
 
         <div class="style-row">
-          <span class="style-label">Labels in nodes</span>
+          <span class="style-label">Node labels</span>
           <div class="style-controls">
-            <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
-              <mat-select [value]="labelMode" panelClass="graph-style-select-panel" (selectionChange)="setLabelMode($event.value)">
-                <mat-option value="auto">Visible (auto color)</mat-option>
-                <mat-option value="fixed">Visible (black/white)</mat-option>
-                <mat-option value="hidden">Hidden</mat-option>
-              </mat-select>
-            </mat-form-field>
+            <mat-slide-toggle color="primary" [checked]="nodeLabelsVisible" (change)="toggleNodeLabels()"></mat-slide-toggle>
+          </div>
+        </div>
+
+        @if (nodeLabelsVisible) {
+          <div class="style-row">
+            <span class="style-label">Node label color</span>
+            <div class="style-controls">
+              <mat-form-field class="footer-select-field" subscriptSizing="dynamic">
+                <mat-select [value]="nodeLabelColor" panelClass="graph-style-select-panel" (selectionChange)="setNodeLabelColor($event.value)">
+                  <mat-option value="auto">Auto</mat-option>
+                  <mat-option value="fixed">Black / white</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+        }
+
+        <div class="style-row">
+          <span class="style-label">Edge labels</span>
+          <div class="style-controls">
+            <mat-slide-toggle color="primary" [checked]="edgeLabelsVisible" (change)="toggleEdgeLabels()"></mat-slide-toggle>
           </div>
         </div>
 

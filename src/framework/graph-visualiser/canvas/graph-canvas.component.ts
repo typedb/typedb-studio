@@ -12,7 +12,7 @@ import { MatMenuModule } from "@angular/material/menu";
 import { ResizableDirective } from "@hhangular/resizable";
 import { Subscription } from "rxjs";
 import { GraphPngExportMode, GraphVisualiser } from "../engine";
-import { GraphZoomControlsComponent } from "./zoom-controls/graph-zoom-controls.component";
+import { GraphControlsComponent } from "./graph-controls/graph-controls.component";
 import { GraphSidePanelComponent } from "../side-panel/graph-side-panel.component";
 import { GraphContextMenuComponent } from "../context-menu/graph-context-menu.component";
 import { GraphStyleService, buildBackgroundCSS } from "../../../service/graph-style.service";
@@ -26,7 +26,7 @@ export type GraphCanvasStatusAction = "viewLog";
     selector: "ts-graph-canvas",
     templateUrl: "graph-canvas.component.html",
     styleUrls: ["graph-canvas.component.scss"],
-    imports: [NgTemplateOutlet, MatTooltipModule, MatMenuModule, ResizableDirective, GraphZoomControlsComponent, GraphSidePanelComponent, GraphContextMenuComponent],
+    imports: [NgTemplateOutlet, MatTooltipModule, MatMenuModule, ResizableDirective, GraphControlsComponent, GraphSidePanelComponent, GraphContextMenuComponent],
 })
 export class GraphCanvasComponent implements AfterViewInit, AfterViewChecked, OnDestroy {
     @Input() visualiser: GraphVisualiser | null = null;

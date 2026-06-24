@@ -1,5 +1,7 @@
 import { getVariableName, ConstraintVertexAny } from "@typedb/driver-http";
-import { DEFAULT_EDGE_CURVATURE } from "@sigma/edge-curve";
+
+/** Curvature applied to curved edges (Sigma's stock default). */
+export const EDGE_CURVATURE = 0.25;
 import {
     AbstractGraphBuilder,
     StructuredAnswer, DataConstraintAny, DataVertex, getTypeLabel,
@@ -113,7 +115,7 @@ export class GraphBuilder extends AbstractGraphBuilder {
             // (parallel edges between the same pair are still curved — see
             // createEdge — so they don't overlap).
             type: curved ? "curved" : "line",
-            curvature: DEFAULT_EDGE_CURVATURE,
+            curvature: EDGE_CURVATURE,
             metadata: metadata,
         }
     }
@@ -144,7 +146,7 @@ export class GraphBuilder extends AbstractGraphBuilder {
             const parallelCount = this.countEdgesBetween(from, to);
             if (parallelCount > 0) {
                 attributes.type = "curved";
-                attributes.curvature = DEFAULT_EDGE_CURVATURE * (parallelCount + 1);
+                attributes.curvature = EDGE_CURVATURE * (parallelCount + 1);
             }
             this.graph.addDirectedEdgeWithKey(edgeKey, from, to, attributes);
         }
