@@ -25,6 +25,11 @@ export interface GraphBackground {
     color1: string;
     color2: string;
     gradientAngle: number;
+    /** When true, the base colour follows the app theme (`--theme-black`)
+     *  instead of the fixed `color1` — so a patterned background (e.g. the dots
+     *  used by Cal Aesthetics) still flips light/dark with the theme, the same
+     *  way `type: "default"` does. */
+    themed?: boolean;
 }
 
 export const DEFAULT_BACKGROUND: GraphBackground = {
@@ -41,25 +46,27 @@ export interface BackgroundCSS {
 }
 
 export function buildBackgroundCSS(bg: GraphBackground): BackgroundCSS {
+    // Theme-adaptive base: follows the app theme like `type: "default"` does.
+    const base = bg.themed ? "var(--theme-black)" : bg.color1;
     switch (bg.type) {
         case "default":
             return { color: "var(--theme-black)", image: "none", size: "" };
         case "solid":
-            return { color: bg.color1, image: "none", size: "" };
+            return { color: base, image: "none", size: "" };
         case "gradient":
-            return { color: bg.color1, image: `linear-gradient(${bg.gradientAngle}deg, ${bg.color1}, ${bg.color2})`, size: "" };
+            return { color: base, image: `linear-gradient(${bg.gradientAngle}deg, ${base}, ${bg.color2})`, size: "" };
         case "grid":
             return {
-                color: bg.color1,
+                color: base,
                 image: `repeating-linear-gradient(0deg, transparent, transparent 29px, ${bg.color2} 29px, ${bg.color2} 30px), repeating-linear-gradient(90deg, transparent, transparent 29px, ${bg.color2} 29px, ${bg.color2} 30px)`,
                 size: "",
             };
         case "dots":
-            return { color: bg.color1, image: `radial-gradient(${bg.color2} 1px, transparent 1px)`, size: "20px 20px" };
+            return { color: base, image: `radial-gradient(${bg.color2} 1px, transparent 1px)`, size: "20px 20px" };
         case "party":
-            return { color: bg.color1, image: "none", size: "" };
+            return { color: base, image: "none", size: "" };
         default:
-            return { color: bg.color1, image: "none", size: "" };
+            return { color: base, image: "none", size: "" };
     }
 }
 
@@ -158,7 +165,10 @@ export class GraphStyleService implements OnDestroy {
         this.load();
         this.loadCustomPresets();
         this.themeSubscription = this.themeService.effectiveTheme$.subscribe(() => {
-            if (this._background.type === "default") {
+            // Re-emit so the JS-derived colours (node fills, label contrast) are
+            // recomputed for the new theme — needed for any theme-adaptive
+            // background, not just the plain "default" one.
+            if (this._background.type === "default" || this._background.themed) {
                 this.styles$.next();
             }
         });
@@ -170,7 +180,7 @@ export class GraphStyleService implements OnDestroy {
 
     get effectiveBackgroundHex(): string {
         const bg = this._background;
-        if (bg.type === "default") {
+        if (bg.type === "default" || bg.themed) {
             return getComputedStyle(document.documentElement).getPropertyValue("--theme-black").trim();
         }
         return bg.color1; // solid, gradient, grid, dots, party — color1 is always the base
@@ -506,7 +516,10 @@ export class GraphStyleService implements OnDestroy {
     }
 
     updateBackground(partial: Partial<GraphBackground>): void {
-        this._background = { ...this._background, ...partial };
+        // A manual background change (type/colour/angle from the UI) is a fixed
+        // choice, so clear the theme-adaptive flag unless the caller re-asserts
+        // it. Presets that want a themed base set `_background` directly.
+        this._background = { ...this._background, themed: false, ...partial };
         this.save();
         this.styles$.next();
     }
@@ -662,8 +675,9 @@ export class GraphStyleService implements OnDestroy {
         this._degreeScaling = false;
         this._edgesCurvedByDefault = true;
         this._fillOpacity = 0.1;
-        // The theme ships with the (darker) dots background.
-        this._background = { type: "dots", color1: "#0e0e0e", color2: "#3a3848", gradientAngle: DEFAULT_BACKGROUND.gradientAngle };
+        // Dots pattern, but with a theme-adaptive base so it flips light/dark
+        // with the app theme (the dot colour reads on both).
+        this._background = { type: "dots", themed: true, color1: "#0e0e0e", color2: "#3a3848", gradientAngle: DEFAULT_BACKGROUND.gradientAngle };
         this._activePreset = "cal";
         this.save();
         this.styles$.next();
