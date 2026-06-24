@@ -456,6 +456,19 @@ export class GraphVisualiser {
     }
 
     /**
+     * Hold the camera still for the duration of a node drag. Dragging now
+     * reheats the simulation (so neighbours move out of the way), which makes
+     * the per-tick `onTick` fire — without this it would auto-recenter/zoom and
+     * the view would lurch mid-drag. Freezes the bbox, turns off auto-zoom, and
+     * pins the camera to its current world point so `onTick` snaps it back.
+     */
+    holdCameraForDrag(): void {
+        this.autoZoomEnabled = false;
+        this.freezeViewport();
+        this.pinnedCameraWorld = this.captureCameraWorld();
+    }
+
+    /**
      * Capture the camera's current world coordinates + ratio. Combined with
      * `restoreCameraWorld`, this lets a caller pin the camera to the same
      * world point across operations that mutate the bbox.
