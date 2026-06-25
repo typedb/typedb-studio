@@ -328,7 +328,6 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                 state => state.fetchAttributesOf(this.run!, type, iids),
                 scope,
                 () => this.attributeRows.forEach(r => this.markConnForScope(r.label, scope)),
-                this.noResultMessage(scope, "attributes"),
             );
         }, scope);
     }
@@ -340,7 +339,6 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                 state => state.fetchAttributesOfTypeFor(this.run!, type, iids, row.label),
                 scope,
                 () => this.markConnForScope(row.label, scope),
-                this.noResultMessage(scope, `'${row.label}' attributes`),
             );
         }, scope);
     }
@@ -353,7 +351,6 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                     state.fetchRelationsOfTypeForPlayers(this.run!, type, iids, r.label))).then(() => {}),
                 scope,
                 () => this.relationRows.forEach(r => this.markConnForScope(r.label, scope)),
-                this.noResultMessage(scope, "relations"),
             );
         }, scope);
     }
@@ -367,7 +364,6 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                     state.fetchRolePlayersOfTypeFor(this.run!, type, iids, r.shortName))).then(() => {}),
                 scope,
                 () => this.roleRows.forEach(r => this.markConnForScope(r.label, scope)),
-                this.noResultMessage(scope, "role players"),
             );
         }, scope);
     }
@@ -379,7 +375,6 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                 state => state.fetchRelationsOfTypeForPlayers(this.run!, type, iids, row.label),
                 scope,
                 () => this.markConnForScope(row.label, scope),
-                this.noResultMessage(scope, `'${row.label}' relations`),
             );
         }, scope);
     }
@@ -392,7 +387,6 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
                 state => state.fetchRolePlayersOfTypeFor(this.run!, type, iids, row.shortName),
                 scope,
                 () => this.markConnForScope(row.label, scope),
-                this.noResultMessage(scope, `'${row.label}' role players`),
             );
         }, scope);
     }
@@ -556,31 +550,24 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         return out;
     }
 
-    /** Snackbar text for an additive load that found nothing to add, e.g.
-     *  "This 'person' has no 'name' attributes" (instance scope) or
-     *  "'person' has no relations" (type scope). */
-    private noResultMessage(scope: Scope, what: string): string {
-        const label = this.target?.typeLabel ? `'${this.target.typeLabel}'` : "this type";
-        return scope === "type"
-            ? `${label} has no ${what}`
-            : `This ${label} has no ${what}`;
-    }
-
-    private runFetch(op: (state: GraphViewState) => Promise<void>, scope: Scope, markLoaded?: () => void, noResultMessage?: string): void {
+    private runFetch(op: (state: GraphViewState) => Promise<void>, scope: Scope, markLoaded?: () => void): void {
         if (!this.run || !this.visualiser || !this.target) return;
         // No transaction in manual mode: prompt to open one and abort, leaving
         // the current graph untouched (rather than running an illegal query).
         if (!this.graphViewState.guardExploration()) return;
         const target = this.target;
         const orderBefore = this.visualiser.graph.order;
+        const sizeBefore = this.visualiser.graph.size;
         this.visualiser.freezeViewport();
         op(this.graphViewState).then(() => {
-            // An additive load that brought in no new nodes (e.g. the instance
-            // has none of the requested connections) leaves the graph visually
-            // unchanged. Without feedback the action looks broken, so surface a
-            // transient note instead of silently doing nothing.
-            if (this.visualiser!.graph.order === orderBefore && noResultMessage) {
-                this.snackbar.info(noResultMessage);
+            const changed = this.visualiser!.graph.order !== orderBefore
+                || this.visualiser!.graph.size !== sizeBefore;
+            // Nothing new reached the graph (the requested connections were
+            // already loaded, or there are none) — there's no layout to settle,
+            // so skip the reheat and report it. We can't tell "already loaded"
+            // from "doesn't exist" here, so state only what's certain.
+            if (!changed) {
+                this.snackbar.info("No new edges or nodes added");
             }
             // A context-menu load is additive: keep whatever the panel is
             // currently inspecting rather than yanking it to the right-clicked
@@ -595,7 +582,10 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
             } else {
                 this.visualiser?.focusInstance(target.kind, target.typeLabel, target.instanceId);
             }
-            this.visualiser?.reheat({ soft: true, preserveCamera: true });
+            // Re-run the layout whenever the graph gained nodes or edges, so it
+            // can settle the new structure (new edges pull their endpoints too).
+            // When nothing changed, skip it rather than jostle the graph.
+            if (changed) this.visualiser?.reheat({ soft: true, preserveCamera: true });
             // Record the load so the relevant chips show the sticky "loaded"
             // fill next time the menu opens (and, for "type" scope, stay in
             // sync with the type-details inspector, which reads the same state).
