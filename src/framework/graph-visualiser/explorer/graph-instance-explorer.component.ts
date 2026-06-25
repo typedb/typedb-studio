@@ -93,6 +93,7 @@ export class GraphInstanceExplorerComponent implements OnChanges {
 
     addAllAttributes() {
         if (!this.run || !this.type || !this.instanceIID) return;
+        if (!this.graphViewState.guardExploration()) return;
         this.visualiser?.freezeViewport();
         this.graphViewState
             .fetchAttributesOf(this.run, this.type, [this.instanceIID])
@@ -111,6 +112,7 @@ export class GraphInstanceExplorerComponent implements OnChanges {
     /** Add only the attributes of a specific type (one row in the Attributes table). */
     addAttribute(attr: AttributeData) {
         if (!this.run || !this.type || !this.instanceIID) return;
+        if (!this.graphViewState.guardExploration()) return;
         this.visualiser?.freezeViewport();
         this.graphViewState
             .fetchAttributesOfTypeFor(this.run, this.type, [this.instanceIID], attr.type)
@@ -139,6 +141,7 @@ export class GraphInstanceExplorerComponent implements OnChanges {
 
     addAllRelations() {
         if (!this.run || !this.type || !this.instanceIID) return;
+        if (!this.graphViewState.guardExploration()) return;
         this.visualiser?.freezeViewport();
         this.graphViewState
             .fetchLinksOf(this.run, this.type, [this.instanceIID])
@@ -186,6 +189,7 @@ export class GraphInstanceExplorerComponent implements OnChanges {
      *  keeping the current instance selected rather than navigating to it. */
     addRelation(rel: RelationInstanceData) {
         if (!this.run || this.isRelationAdded(rel)) return;
+        if (!this.graphViewState.guardExploration()) return;
         this.visualiser?.freezeViewport();
         this.graphViewState
             .fetchRelation(this.run, rel.relationIID)
@@ -214,6 +218,7 @@ export class GraphInstanceExplorerComponent implements OnChanges {
      *  role in, in one fetch — the per-card "Add all to graph" affordance. */
     addAllRelationsOfType(relationTypeLabel: string) {
         if (!this.run || !this.type || !this.instanceIID) return;
+        if (!this.graphViewState.guardExploration()) return;
         const ofType = this.state.allRelations.filter(r => r.relationTypeLabel === relationTypeLabel);
         this.visualiser?.freezeViewport();
         this.graphViewState

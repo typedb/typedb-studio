@@ -9,7 +9,6 @@
     <div class="detail-panel explorer-detail">
       @if (state.isDataStale) {
         <div class="stale-data-banner">
-          <i class="fa-light fa-clock-rotate-left"></i>
           <span>Data was loaded in a different transaction</span>
           <button mat-stroked-button (click)="state.refresh()">
             <i class="fa-light fa-refresh"></i>

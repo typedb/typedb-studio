@@ -1152,7 +1152,7 @@ function compareCells(a: string | undefined, b: string | undefined): number {
     return a.localeCompare(b);
 }
 
-export type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noQueryAnswers" | "noInstancesFound" | "error" | "multiQuery";
+export type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noQueryAnswers" | "noInstancesFound" | "error" | "multiQuery" | "needsTransaction";
 
 export class GraphOutputState {
 

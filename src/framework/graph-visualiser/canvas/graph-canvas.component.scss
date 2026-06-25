@@ -80,6 +80,9 @@
 
 .graph-split-left {
     position: relative;
+    // Query container so overlays (e.g. the transaction prompt) can respond to
+    // the graph area's own width rather than the viewport.
+    container-type: inline-size;
     overflow: hidden;
     flex: 1;
     // Min sizing on both axes so the canvas shrinks rather than overflowing
@@ -254,6 +257,61 @@
         ul {
             margin: 0;
             padding-left: 1.25rem;
+        }
+    }
+
+    // "Open a transaction to explore your data" prompt — mirrors the data
+    // explorer's transaction prompt so the two surfaces feel consistent.
+    &.transaction-prompt {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        // Opaque card so the canvas's dotted/patterned background doesn't show
+        // through the buttons and icon. Fixed width (sized to its content) so it
+        // doesn't track the graph area — otherwise the buttons wrap to two lines
+        // in a narrow panel.
+        width: max-content;
+        max-width: none;
+        padding: 32px 40px;
+        background: var(--gc-bg);
+        border: 1px solid var(--gc-border);
+        border-radius: 12px;
+
+        // Once the buttons stack (narrow pane), let the card fit the pane rather
+        // than overflow it — text wraps instead.
+        @container (max-width: 500px) {
+            max-width: calc(100% - 48px);
+        }
+
+        // The global `i` rule forces 16px, so set all three to enlarge the lock.
+        i.fa-lock {
+            font-size: 48px;
+            width: 48px;
+            height: 48px;
+        }
+
+        p {
+            margin: 0;
+        }
+
+        .prompt-actions {
+            display: flex;
+            gap: 12px;
+
+            // Below the row card's width, stack the buttons so they don't wrap
+            // (queries the graph canvas pane width via its container context).
+            @container (max-width: 500px) {
+                flex-direction: column;
+                align-self: stretch;
+            }
+
+            button i {
+                font-size: 14px;
+                width: auto;
+                height: auto;
+                margin-right: 4px;
+            }
         }
     }
 }

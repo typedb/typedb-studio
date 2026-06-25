@@ -8,6 +8,7 @@ import { Injectable, inject } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
 import { ApiResponse, isApiErrorResponse, QueryResponse } from "@typedb/driver-http";
 import { DriverState } from "./driver-state.service";
+import { SnackbarService } from "./snackbar.service";
 import { SchemaConcept } from "./schema-state.service";
 import { GraphStyleService } from "./graph-style.service";
 import { AppData } from "./app-data.service";
@@ -71,6 +72,7 @@ export class GraphViewState {
     private driver = inject(DriverState);
     private graphStyleService = inject(GraphStyleService);
     private appData = inject(AppData);
+    private snackbar = inject(SnackbarService);
 
     openTabs$ = new BehaviorSubject<GraphViewTab[]>([]);
     selectedTabIndex$ = new BehaviorSubject<number>(0);
@@ -84,6 +86,63 @@ export class GraphViewState {
             this.openTabs$.next([]);
             this.selectedTabIndex$.next(0);
         });
+        // When a transaction becomes available (manual tx opened, or auto mode
+        // turned on), load any tab that was blocked on it — see the
+        // "needsTransaction" prompt path in runInitialFetches.
+        this.driver.transaction$.subscribe(() => this.loadPendingTabs());
+        this.driver.autoTransactionEnabled$.subscribe(() => this.loadPendingTabs());
+    }
+
+    /** Manual mode with no open transaction — graph queries would fail, so we
+     *  show the "open a transaction" prompt instead of running them. */
+    private requiresTransaction(): boolean {
+        return !this.driver.autoTransactionEnabled$.value && !this.driver.transactionOpen;
+    }
+
+    /**
+     * Guard for *in-place* exploration actions (context-menu loads, explorer
+     * chips, node expansion). Unlike opening a fresh tab, these mutate an
+     * already-loaded graph, so we don't replace it with the prompt screen —
+     * instead, when there's no transaction, we surface a non-destructive
+     * snackbar offering to open one and return false so the caller aborts (the
+     * graph is left untouched). Returns true when a transaction is available.
+     */
+    guardExploration(): boolean {
+        if (!this.requiresTransaction()) return true;
+        // Persistent (not the default 4s) — the toast carries an "Open read
+        // transaction" action the user needs time to read and click.
+        this.snackbar.warnPersistent("Open a transaction in order to explore your data", {
+            data: {
+                message: "Open a transaction in order to explore your data",
+                status: "warn",
+                action: {
+                    label: "Open read transaction",
+                    callback: () => this.driver.openTransaction("read").subscribe(),
+                },
+            },
+        });
+        return false;
+    }
+
+    /** Re-run the initial load for any tab currently showing the
+     *  "needsTransaction" prompt, now that a transaction is available. */
+    private loadPendingTabs(): void {
+        if (this.requiresTransaction()) return;
+        for (const tab of this.openTabs$.value) {
+            if (tab.run.graph.status === "needsTransaction") {
+                void this.runInitialFetches(tab, tab.type, tab.initialOptions, true);
+            }
+        }
+    }
+
+    /** Open a read transaction — invoked from the graph's transaction prompt. */
+    openReadTransaction(): void {
+        this.driver.openTransaction("read").subscribe();
+    }
+
+    /** Switch the driver to auto-transaction mode — from the transaction prompt. */
+    switchToAutoMode(): void {
+        this.driver.transactionControls.controls.operationMode.setValue("auto");
     }
 
     /**
@@ -153,6 +212,14 @@ export class GraphViewState {
      */
     private async runInitialFetches(tab: GraphViewTab, type: SchemaConcept, options: OpenTypeTabOptions, isNew: boolean): Promise<void> {
         const run = tab.run;
+        // In manual mode with no open transaction, queries can't run — show the
+        // "open a transaction to explore your data" prompt (the canvas renders
+        // this status) instead of firing a query that throws. The tab reloads
+        // automatically once a transaction opens (see loadPendingTabs).
+        if (this.requiresTransaction()) {
+            run.graph.status = "needsTransaction";
+            return;
+        }
         run.graph.status = "running";
         const databaseName = this.driver.requireDatabase().name;
         run.graph.database = databaseName;

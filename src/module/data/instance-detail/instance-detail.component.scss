@@ -23,22 +23,31 @@
 
 .stale-data-banner {
     display: flex;
+    flex-wrap: wrap;        // button drops below the message when it can't fit
     align-items: center;
-    gap: 12px;
+    gap: 8px 12px;
     padding: 8px 16px;
     background: var(--theme-secondary-dark-yellow);
     font-size: 13px;
     flex-shrink: 0;
+    // The resizable host (`.explorer-pane`) sets an inline `white-space: nowrap`
+    // that inherits down and blocks the message from wrapping. Reset it here (a
+    // direct rule overrides the inherited inline value).
+    white-space: normal;
 
     > i {
         font-size: 16px;
     }
 
     span {
-        flex: 1;
+        // Content-sized so the button sits inline after the text on a wide
+        // panel; min-width:0 lets it shrink and word-wrap as the panel narrows,
+        // and the button wraps below once there's no room beside it.
+        min-width: 0;
     }
 
     button {
+        flex: 0 0 auto;
         display: flex;
         align-items: center;
         gap: 6px;

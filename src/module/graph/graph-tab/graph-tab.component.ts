@@ -81,5 +81,7 @@ export class GraphTabComponent implements AfterViewInit, OnDestroy {
 
     onGraphStatusAction(action: string) {
         if (action === "viewLog") this.router.navigate(["/history"]);
+        else if (action === "openTransaction") this.graphViewState.openReadTransaction();
+        else if (action === "switchToAuto") this.graphViewState.switchToAutoMode();
     }
 }
