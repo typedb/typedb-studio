@@ -85,6 +85,22 @@
       @case ("multiQuery") {
         <p class="status-text">Graph view is not available for multi-query results. <a (click)="statusAction.emit('viewLog')">View results in log</a></p>
       }
+      @case ("needsTransaction") {
+        <div class="status-text transaction-prompt">
+          <i class="fa-light fa-lock"></i>
+          <p>Open a transaction to explore your data</p>
+          <div class="prompt-actions">
+            <button mat-stroked-button (click)="statusAction.emit('openTransaction')">
+              <i class="fa-light fa-play"></i>
+              Open read transaction
+            </button>
+            <button mat-stroked-button (click)="statusAction.emit('switchToAuto')">
+              <i class="fa-light fa-shuffle"></i>
+              Switch to auto mode
+            </button>
+          </div>
+        </div>
+      }
     }
   </div>
 </ng-template>

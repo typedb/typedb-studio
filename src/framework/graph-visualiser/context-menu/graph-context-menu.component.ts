@@ -568,6 +568,9 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
 
     private runFetch(op: (state: GraphViewState) => Promise<void>, scope: Scope, markLoaded?: () => void, noResultMessage?: string): void {
         if (!this.run || !this.visualiser || !this.target) return;
+        // No transaction in manual mode: prompt to open one and abort, leaving
+        // the current graph untouched (rather than running an illegal query).
+        if (!this.graphViewState.guardExploration()) return;
         const target = this.target;
         const orderBefore = this.visualiser.graph.order;
         this.visualiser.freezeViewport();

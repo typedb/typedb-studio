@@ -215,6 +215,7 @@ export class GraphTypeExplorerComponent implements DoCheck {
     toggleAttributeChip(row: AttributeChipRow): void {
         if (!this.selectedType || !this.run || !this.visualiser) return;
         if (this.isAttributeLoaded(row)) return; // sticky: re-toggle is no-op
+        if (!this.graphViewState.guardExploration()) return;
         const iids = this.collectInstanceIidsOfType(this.selectedType.label);
         if (iids.length === 0) {
             // Still mark loaded so the chip reflects the intent; nothing to fetch.
@@ -234,6 +235,7 @@ export class GraphTypeExplorerComponent implements DoCheck {
     toggleRoleChip(row: RoleChipRow): void {
         if (!this.selectedType || !this.run || !this.visualiser) return;
         if (this.isRoleLoaded(row)) return; // sticky
+        if (!this.graphViewState.guardExploration()) return;
         const iids = this.collectInstanceIidsOfType(this.selectedType.label);
         if (iids.length === 0) {
             this.graphViewState.markConnectionLoaded(this.run, this.selectedType.label, row.label);
@@ -252,6 +254,7 @@ export class GraphTypeExplorerComponent implements DoCheck {
     toggleRelationChip(row: RelationChipRow): void {
         if (!this.selectedType || !this.run || !this.visualiser) return;
         if (this.isRelationLoaded(row)) return; // sticky
+        if (!this.graphViewState.guardExploration()) return;
         const iids = this.collectInstanceIidsOfType(this.selectedType.label);
         if (iids.length === 0) {
             this.graphViewState.markConnectionLoaded(this.run, this.selectedType.label, row.label);
@@ -285,6 +288,7 @@ export class GraphTypeExplorerComponent implements DoCheck {
 
     loadAllAttributes(): void {
         if (!this.selectedType || !this.run || !this.visualiser || this.allAttributesLoaded) return;
+        if (!this.graphViewState.guardExploration()) return;
         const iids = this.collectInstanceIidsOfType(this.selectedType.label);
         const markAll = () => this.attributeChips.forEach(r =>
             this.graphViewState.markConnectionLoaded(this.run!, this.selectedType!.label, r.label));
@@ -298,6 +302,7 @@ export class GraphTypeExplorerComponent implements DoCheck {
 
     loadAllRelations(): void {
         if (!this.selectedType || !this.run || !this.visualiser || this.allRelationsLoaded) return;
+        if (!this.graphViewState.guardExploration()) return;
         const iids = this.collectInstanceIidsOfType(this.selectedType.label);
         const markAll = () => this.relationChips.forEach(r =>
             this.graphViewState.markConnectionLoaded(this.run!, this.selectedType!.label, r.label));
@@ -311,6 +316,7 @@ export class GraphTypeExplorerComponent implements DoCheck {
 
     loadAllRoles(): void {
         if (!this.selectedType || !this.run || !this.visualiser || this.allRolesLoaded) return;
+        if (!this.graphViewState.guardExploration()) return;
         const iids = this.collectInstanceIidsOfType(this.selectedType.label);
         const markAll = () => this.roleChips.forEach(r =>
             this.graphViewState.markConnectionLoaded(this.run!, this.selectedType!.label, r.label));
