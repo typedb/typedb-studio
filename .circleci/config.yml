@@ -485,11 +485,11 @@ workflows:
       - deploy-mac-arm64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [banana, mac-signing-test]
       - deploy-mac-x86_64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [banana, mac-signing-test]
       - deploy-windows-x86_64-snapshot:
           filters:
             branches:
