@@ -7,11 +7,9 @@ load("@typedb_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 load("@typedb_bazel_distribution//common:rules.bzl", "assemble_targz", "unzip_file", "checksum")
 load("@typedb_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@typedb_bazel_distribution//apt:rules.bzl", "deploy_apt")
-load("@io_bazel_rules_kotlin//kotlin/internal:toolchains.bzl", "define_kt_toolchain")
 load("@typedb_bazel_distribution//artifact:rules.bzl", "artifact_extractor", "deploy_artifact")
 load("@typedb_bazel_distribution//platform:constraints.bzl", "constraint_linux_arm64", "constraint_linux_x86_64",
      "constraint_mac_arm64", "constraint_mac_x86_64", "constraint_win_x86_64")
-load("@io_bazel_rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
 
 package(default_visibility = ["//test/integration:__subpackages__"])
 
@@ -65,13 +63,6 @@ genrule(
     """,
     tags = ["local"],
     target_compatible_with = constraint_win_x86_64,
-)
-
-define_kt_toolchain(
-    name = "kotlin_toolchain_strict_deps",
-    api_version = "1.7",
-    language_version = "1.7",
-    experimental_strict_kotlin_deps = "error",
 )
 
 assemble_files = {
@@ -191,18 +182,18 @@ checkstyle_test(
     name = "checkstyle",
     include = glob([
         "*",
-        ".factory/*",
         ".circleci/**",
     ]),
     exclude = glob([
         "*.md",
-        ".bazelversion",
         ".circleci/windows/*",
+    ]) + [
+        ".bazelversion",
         "LICENSE",
         "VERSION",
         ".bazel-cache-credential.json",
         ".bazel-remote-cache.rc"
-    ]),
+    ],
     license_type = "mpl-header",
 )
 
