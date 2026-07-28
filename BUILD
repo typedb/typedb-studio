@@ -4,7 +4,7 @@
 
 load("@typedb_dependencies//distribution:deployment.bzl", "deployment")
 load("@typedb_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@typedb_bazel_distribution//common:rules.bzl", "assemble_targz", "unzip_file", "checksum")
+load("@typedb_bazel_distribution//common:rules.bzl", "assemble_targz", "keychain_setup", "unzip_file", "checksum")
 load("@typedb_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@typedb_bazel_distribution//apt:rules.bzl", "deploy_apt")
 load("@typedb_bazel_distribution//artifact:rules.bzl", "artifact_extractor", "deploy_artifact")
