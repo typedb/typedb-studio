@@ -99,6 +99,8 @@ commands:
         type: string
     steps:
       - run: |
+          # Rename from TypeDB convention to tauri convention
+          export APPLE_PASSWORD=$APPLE_ID_PASSWORD
           if [ -z "${APPLE_ID}" ] || [ -z "${APPLE_PASSWORD}" ] || [ -z "${APPLE_TEAM_ID}" ]; then
             echo "Error: APPLE_ID, APPLE_TEAM_ID, APPLE_PASSWORD must be set to notarize"
             exit 1
@@ -136,6 +138,8 @@ commands:
         type: string
     steps:
       - run: |
+          # Rename from TypeDB convention to tauri convention
+          export APPLE_PASSWORD=$APPLE_ID_PASSWORD
           if [ -z "${APPLE_ID}" ] || [ -z "${APPLE_PASSWORD}" ] || [ -z "${APPLE_TEAM_ID}" ]; then
             echo "Error: APPLE_ID, APPLE_TEAM_ID, APPLE_PASSWORD must be set to notarize"
             exit 1
