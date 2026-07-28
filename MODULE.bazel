@@ -1,0 +1,33 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+module(
+    name = "typedb_studio",
+    version = "0.0.0",
+    compatibility_level = 1,
+)
+
+bazel_dep(name = "platforms", version = "0.0.10")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "rules_pkg", version = "1.0.1")
+
+################################
+# Load @typedb_dependencies #
+################################
+bazel_dep(name = "typedb_dependencies", version = "0.0.0")
+git_override(
+    module_name = "typedb_dependencies",
+    remote = "https://github.com/typedb/dependencies",
+    commit = "a5c51254088f343fb8b6a9668eaf99b35503dad4",
+)
+
+######################################
+# Load @typedb_bazel_distribution #
+######################################
+bazel_dep(name = "typedb_bazel_distribution", version = "0.0.0")
+git_override(
+    module_name = "typedb_bazel_distribution",
+    remote = "https://github.com/typedb/bazel-distribution",
+    commit = "dd811cf28715bbce8374e5e0f9defaf772e7dd36",
+)
