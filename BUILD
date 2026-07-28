@@ -188,7 +188,7 @@ alias(
 
 keychain_setup(
     name = "setup-mac-signing-keychain",
-    keychain_name = "typedb-apple-signing-keychain",
+    keychain_name = "typedb-studio-apple-signing-keychain",
 
     signing_identities = ":developer-id-certs",
     signing_identities_password_env = "APPLE_SIGNING_IDENTITIES_PASSWORD",
@@ -196,8 +196,7 @@ keychain_setup(
     partition_list = "apple-tool:,apple:,codesign:",
     trusted_apps = ["/usr/bin/codesign", "/usr/bin/productsign"],
 
-    # This is the app-specific one that looks like: xxxx-xxxx-xxxx-xxxx .
-    passwords = ["bot@vaticle.com:APPLE_NOTARIZATION_PASSWORD"],
+    passwords = [],
 )
 
 checkstyle_test(
