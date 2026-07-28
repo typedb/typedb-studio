@@ -39,7 +39,7 @@
       }
     },
     "macOS": {
-      "signingIdentity": "-"
+      "signingIdentity": "Developer ID Application: Vaticle LTD (RHKH8FP9SX)"
     }
   }
 }
