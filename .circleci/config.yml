@@ -457,31 +457,31 @@ workflows:
       - deploy-linux-arm64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [banana, move-to-bzlmod-test]
       - deploy-linux-x86_64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [banana, move-to-bzlmod-test]
       - deploy-mac-arm64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [banana, move-to-bzlmod-test]
       - deploy-mac-x86_64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [banana, move-to-bzlmod-test]
       - deploy-windows-x86_64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [banana, move-to-bzlmod-test]
       - deploy-apt-arm64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [banana, move-to-bzlmod-test]
       - deploy-apt-x86_64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [banana, move-to-bzlmod-test]
   release:
     jobs:
       - deploy-linux-arm64-release:
