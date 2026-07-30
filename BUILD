@@ -184,6 +184,7 @@ deploy_apt(
 alias(
     name = "developer-id-certs",
     actual = "@vaticle_developer_id_combined//file",
+    tags = ["manual"],
 )
 
 keychain_setup(
@@ -197,6 +198,7 @@ keychain_setup(
     trusted_apps = ["/usr/bin/codesign", "/usr/bin/productsign"],
 
     passwords = [],
+    tags = ["manual"],
 )
 
 checkstyle_test(
