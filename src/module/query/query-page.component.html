@@ -192,7 +192,7 @@
                             <div class="status-text-inline"><p class="status-text">Running...</p></div>
                           }
                           @case ("answerlessQueryType") {
-                            <div class="status-text-inline"><p class="status-text">No answers for this query type.</p></div>
+                            <div class="status-text-inline"><p class="status-text">No answers for this query type. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p></div>
                           }
                           @case ("answerOutputDisabled") {
                             <div class="status-text-inline"><p class="status-text">Answer output is currently disabled.</p></div>
@@ -228,7 +228,7 @@
                       <div class="status-text-container"><p class="status-text">Running query. Answers will be displayed here when they are ready.</p></div>
                     }
                     @case ("answerlessQueryType") {
-                      <div class="status-text-container"><p class="status-text">Query completed successfully. This query type does not return answers.</p></div>
+                      <div class="status-text-container"><p class="status-text">Query completed successfully. This query type does not return answers. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p></div>
                     }
                     @case ("answerOutputDisabled") {
                       <div class="status-text-container"><p class="status-text">Query completed successfully. Answer output is currently disabled.</p></div>

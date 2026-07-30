@@ -1,0 +1,13 @@
+<h2 mat-dialog-title>Query</h2>
+<div mat-dialog-content class="query-content">
+  <div class="query-box">
+    <tp-static-code [code]="data.query"/>
+  </div>
+</div>
+<div mat-dialog-actions class="query-actions">
+  <button mat-stroked-button (click)="copyToClipboard()">
+    <i class="fa-light" [class.fa-copy]="!copied" [class.fa-check]="copied"></i>
+    Copy query
+  </button>
+  <button mat-stroked-button (click)="close()">Close</button>
+</div>

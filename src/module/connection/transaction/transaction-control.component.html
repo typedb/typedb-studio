@@ -24,6 +24,10 @@
   <button mat-button (click)="commit()" class="commit-btn" [disabled]="(commitButtonDisabled$ | async) ?? true">
     Commit
   </button>
+  <button mat-button (click)="rollback()" class="rollback-btn" [disabled]="(rollbackButtonDisabled$ | async) ?? true"
+          matTooltip="Discard uncommitted changes without closing the transaction" [matTooltipShowDelay]="500">
+    Rollback
+  </button>
 }
 
 @if (closeButtonVisible$ | async) {

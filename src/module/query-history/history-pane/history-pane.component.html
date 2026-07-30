@@ -33,7 +33,8 @@
           </aside>
           @if (isQueryRun(entry)) {
             <div class="history-code-editor">
-              <tp-code-editor [formControlProp]="getHistoryEntryControl(entry)" [runOverlayVisible]="true" (runButtonClick)="onRunHistoryQuery(entry)"/>
+              <tp-static-code [code]="$any(entry).query" [runOverlayVisible]="true" (runButtonClick)="onRunHistoryQuery($any(entry))"
+                              [expandOverlayVisible]="true" (expandButtonClick)="openQueryText($any(entry))"/>
             </div>
           }
         </li>

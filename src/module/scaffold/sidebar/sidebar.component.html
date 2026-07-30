@@ -56,6 +56,9 @@
   <ts-sidebar-link [matTooltip]="collapsed ? 'App info' : ''" matTooltipPosition="right" (click)="showAppInfoDialog()" domain="app-info" idSuffix="app-info">
     <i class="fa-light fa-info-circle"></i>@if (!collapsed) { <span>App info</span> }
   </ts-sidebar-link>
+  <ts-sidebar-link [external]="true" [matTooltip]="collapsed ? 'Report an issue' : ''" matTooltipPosition="right" link="https://github.com/typedb/typedb-studio/issues/new" domain="report-issue" idSuffix="report-issue">
+    <i class="fa-light fa-bug"></i>@if (!collapsed) { <span>Report an issue</span> }
+  </ts-sidebar-link>
 
   <div class="flex-spacer"></div>
 

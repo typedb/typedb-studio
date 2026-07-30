@@ -24,10 +24,14 @@ ol {
 
 ol li {
     margin-top: 8px;
+    // Skip layout/paint for offscreen entries — history lists can grow very long.
+    content-visibility: auto;
+    contain-intrinsic-size: auto 150px;
 
     aside {
         display: flex;
-        align-items: center;
+        // First-line alignment so a wrapped label doesn't push time/status out of line.
+        align-items: flex-start;
         min-width: 0;
 
         .bullet {
@@ -40,9 +44,8 @@ ol li {
         }
 
         .transaction-operation-type {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            white-space: normal;
+            overflow-wrap: anywhere;
             min-width: 0;
         }
 
@@ -81,22 +84,12 @@ ol li {
     overflow: hidden;
     position: relative;
 
-    tp-code-editor {
+    tp-static-code {
         display: block;
 
-        ::ng-deep code-editor {
-            .cm-editor {
-                max-height: 120px;
-                overflow: auto;
-            }
-
-            .cm-scroller {
-                overflow: auto;
-            }
-
-            .cm-content {
-                min-height: 56px;
-            }
+        ::ng-deep pre {
+            max-height: 120px;
+            min-height: 56px;
         }
     }
 }

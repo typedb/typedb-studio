@@ -707,6 +707,7 @@ export class GraphStyleService implements OnDestroy {
         // fallback below — without this line the customise slider stayed
         // wherever the user last left it after Reset all.
         this._fillOpacity = 0.25;
+        this._background = { ...DEFAULT_BACKGROUND };
         this._activePreset = null;
         this.save();
         this.styles$.next();

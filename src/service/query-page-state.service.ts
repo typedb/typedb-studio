@@ -926,10 +926,9 @@ export class LogOutputState {
                 const answers = res.ok.answers;
 
                 if (answers.length) {
-                    const varNames = Object.keys(answers[0]).sort();
-                    if (varNames.length) {
-                        const columnNames = Object.keys(answers[0].data);
-                        const variableColumnWidth = columnNames.length > 0 ? Math.max(...columnNames.map(s => s.length)) : 0;
+                    const columnNames = Object.keys(answers[0].data);
+                    if (columnNames.length) {
+                        const variableColumnWidth = Math.max(...columnNames.map(s => s.length));
                         answers.forEach((rowAnswer, idx) => {
                             if (idx == 0) lines.push(this.lineDashSeparator(variableColumnWidth));
                             lines.push(this.conceptRowDisplayString(rowAnswer.data, variableColumnWidth))
@@ -967,7 +966,13 @@ export class LogOutputState {
 
     private conceptDocumentDisplayString(document: ConceptDocument): string {
         try {
-            return JSON.stringify(document, null, 2);
+            // Sort keys recursively so every document prints its keys in the same
+            // order — the server does not guarantee a consistent order per answer.
+            return JSON.stringify(document, (_key, value) =>
+                (value !== null && typeof value === "object" && !Array.isArray(value))
+                    ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)))
+                    : value,
+                2);
         } catch (err) {
             return `Error trying to print JSON: ${err}`;
         }

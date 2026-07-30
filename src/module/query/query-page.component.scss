@@ -655,7 +655,9 @@ button {
 }
 
 .multi-query-table-section {
-    flex: 1;
+    // Content-sized, stacked from the top. `flex: 1` here (and on the table) made the
+    // sections split the viewport evenly and stretched the extra height into table rows.
+    flex: none;
     display: flex;
     flex-direction: column;
     min-height: 120px;
@@ -663,10 +665,6 @@ button {
 
     &:last-child {
         border-bottom: none;
-    }
-
-    table {
-        flex: 1;
     }
 }
 

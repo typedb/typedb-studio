@@ -107,6 +107,10 @@ import { Subscription } from "rxjs";
         this.themeSubscription?.unsubscribe();
     }
 
+    focus() {
+        this.codeEditor?.view?.focus();
+    }
+
     async onRunButtonClick() {
         this.ran = true;
 

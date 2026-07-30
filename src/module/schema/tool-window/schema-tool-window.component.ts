@@ -293,13 +293,24 @@ export class SchemaToolWindowComponent {
 
     loadInstances(concept: SchemaConcept) {
         const typeLabel = concept.label;
-        const query = `match $x isa ${typeLabel}; fetch { $x.* };`;
+        const query = this.instancesQuery(concept);
         this.router.navigate(["/query"]).then(() => {
             const tab = this.queryTabsState.newTab();
             this.queryTabsState.renameTab(tab, `${typeLabel} instances`);
             this.queryTabsState.getTabControl(tab).setValue(query);
             this.queryPageState.runQuery(query);
         });
+    }
+
+    /** `fetch { $x.* }` prints empty documents for instances that own no attributes,
+     *  which makes it a poor default for relations (whose defining content is their
+     *  role players) and attributes (which cannot own attributes at all). */
+    private instancesQuery(concept: SchemaConcept): string {
+        switch (concept.kind) {
+            case "relationType": return `match $x isa ${concept.label}, links ($role: $player);`;
+            case "attributeType": return `match $x isa ${concept.label};`;
+            default: return `match $x isa ${concept.label}; fetch { $x.* };`;
+        }
     }
 
     openDataTab(concept: SchemaConcept) {

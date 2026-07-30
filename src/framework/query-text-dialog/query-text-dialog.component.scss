@@ -1,0 +1,34 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+:host {
+    display: block;
+}
+
+.query-content {
+    padding-top: 16px;
+
+    .query-box {
+        border: 1px solid var(--theme-secondary-deep-grey);
+        border-radius: 4px;
+        overflow: hidden;
+
+        tp-static-code ::ng-deep pre {
+            max-height: 480px;
+        }
+    }
+}
+
+.query-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 16px;
+
+    button i {
+        margin-right: 6px;
+    }
+}

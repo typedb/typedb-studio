@@ -5,7 +5,7 @@
  */
 
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, concatMap, concatWith, defer, distinctUntilChanged, filter, finalize, from, ignoreElements, map, Observable, of, shareReplay, startWith, Subject, switchMap, takeUntil, tap, throwError } from "rxjs";
+import { BehaviorSubject, catchError, concatMap, concatWith, defer, distinctUntilChanged, filter, finalize, from, ignoreElements, map, Observable, of, shareReplay, skip, startWith, Subject, switchMap, takeUntil, tap, throwError } from "rxjs";
 import { v4 as uuid } from "uuid";
 import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
 import { ConnectionConfig, databasesSortedByName } from "../concept/connection";
@@ -81,6 +81,21 @@ export class DriverState {
 
     constructor(private appData: AppData, private formBuilder: FormBuilder, private queryTypeDetector: QueryTypeDetector) {
         (window as any)["driverState"] = this;
+        // These side-effects live here (not in TransactionControlComponent) because that
+        // component is recreated on every page navigation: its ngOnInit-time subscriptions
+        // received the shareReplay'd current value and closed the open transaction on every
+        // page mount. skip(1) ignores the startWith/replayed initial value so only real
+        // user-driven changes close the transaction.
+        this.transactionTypeChanges$.pipe(skip(1)).subscribe(() => {
+            // TODO: confirm before closing with uncommitted changes
+            this.closeTransaction().subscribe();
+        });
+        this.transactionOperationModeChanges$.pipe(skip(1)).subscribe((operationMode) => {
+            // TODO: confirm before closing with uncommitted changes
+            this.closeTransaction().subscribe();
+            this.autoTransactionEnabled$.next(operationMode === "auto");
+            this.appData.preferences.setTransactionMode(operationMode);
+        });
     }
 
     get status$(): Observable<DriverStatus> {
@@ -307,6 +322,30 @@ export class DriverState {
                 this._transaction$.next(null);
                 if (isApiErrorResponse(res)) throw res.err;
                 if (transactionType === "schema") this.schemaCommitted$.next();
+            }),
+            takeUntil(this._stopSignal$),
+            catchError((err) => {
+                this.updateActionResultUnexpectedError(action, err);
+                return throwError(() => err);
+            }),
+        ), lockId);
+    }
+
+    /** Discard the open transaction's uncommitted changes; the transaction stays open. */
+    rollbackTransaction(lockId = uuid()) {
+        const transactionId = this.requireTransaction().id;
+        const action = transactionOperationActionOf("rollback");
+        this._actionLog$.next(action);
+        const driver = this.requireDriver();
+        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.rollbackTransaction(transactionId)).pipe(
+            tap((res) => {
+                this.updateActionResult(action, res);
+                if (isApiErrorResponse(res)) throw res.err;
+                const tx = this._transaction$.value;
+                if (tx) {
+                    tx.queryRuns.length = 0;
+                    this._transaction$.next(tx);
+                }
             }),
             takeUntil(this._stopSignal$),
             catchError((err) => {
