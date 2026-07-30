@@ -124,7 +124,31 @@ function suggestDefinedKeywords(_context: CompletionContext, _tree: Tree, _parse
 }
 
 function suggestPipelineStages(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], _schema: TypeQLAutocompleteSchema): Completion[] {
-    return ["match", "insert", "delete", "update", "put", "select", "reduce", "sort", "limit", "offset", "end"].map((keyword) => suggest("keyword", keyword, 1))
+    return ["match", "fetch", "insert", "delete", "update", "put", "select", "reduce", "sort", "limit", "offset", "require", "distinct", "end"].map((keyword) => suggest("keyword", keyword, 1))
+}
+
+function suggestComparisonKeywords(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], _schema: TypeQLAutocompleteSchema): Completion[] {
+    return ["contains", "like"].map((keyword) => {
+        return {
+            label: keyword,
+            type: "keyword",
+            apply: keyword,
+            info: "Comparison operator",
+        };
+    });
+}
+
+function suggestFunctionNames(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], schema: TypeQLAutocompleteSchema): Completion[] {
+    return schema.functions().map((fn) => {
+        return {
+            label: fn.name,
+            type: "function",
+            apply: fn.name,
+            detail: "()",
+            info: fn.signature,
+            boost: 5,
+        };
+    });
 }
 
 function suggestKinds(_context: CompletionContext, _tree: Tree, _parseAt: SyntaxNode, _climbedTo: SyntaxNode, _prefix: NodeType[], _schema: TypeQLAutocompleteSchema): Completion[] {
@@ -154,10 +178,10 @@ export const SUGGESTION_MAP: SuggestionMap<TypeQLAutocompleteSchema> = {
         {suffixes: [[tokens.COLON]], suggestions: [suggestVariablesAt10]},
     ],
     [tokens.Statement]: [
-        { suffixes: SUFFIX_VAR_OR_COMMA, suggestions: [suggestThingConstraintKeywords, suggestTypeConstraintKeywords] },
+        { suffixes: SUFFIX_VAR_OR_COMMA, suggestions: [suggestThingConstraintKeywords, suggestTypeConstraintKeywords, suggestComparisonKeywords] },
         { suffixes: [[tokens.HAS]], suggestions: [suggestAttributeTypeForHas, suggestVariablesAtMinus10] },
         { suffixes: [[tokens.ISA]], suggestions: [suggestThingTypeLabels, suggestVariablesAtMinus10] },
-        { suffixes: [[tokens.HAS, tokens.TypeRef], [tokens.ISA, tokens.TypeRef]], suggestions: [suggestVariablesAtMinus10] },
+        { suffixes: [[tokens.HAS, tokens.TypeRef], [tokens.ISA, tokens.TypeRef]], suggestions: [suggestComparisonKeywords, suggestVariablesAtMinus10] },
         { suffixes: [[tokens.SEMICOLON, tokens.TypeRef]], suggestions: [suggestTypeConstraintKeywords] },
         { suffixes: [[tokens.OWNS]], suggestions: [suggestAttributeTypeLabels, suggestVariablesAtMinus10] },
         { suffixes: [[tokens.SUB]], suggestions: [suggestThingTypeLabels, suggestVariablesAtMinus10] },
@@ -169,6 +193,9 @@ export const SUGGESTION_MAP: SuggestionMap<TypeQLAutocompleteSchema> = {
         { suffixes: [[tokens.MATCH]], suggestions: [suggestNestedPatterns, suggestVariablesAt10, suggestThingTypeLabels ] },
     ],
     [tokens.ClauseInsert]: SUGGESTION_GROUP_FOR_THING_STATEMENTS,
+    [tokens.StatementAssignment]: [
+        { suffixes: [[tokens.ASSIGN], [tokens.IN]], suggestions: [suggestFunctionNames, suggestVariablesAtMinus10] },
+    ],
     [tokens.QueryFile]: [
         { suffixes: [[]], suggestions: [suggestDefinedKeywords, suggestPipelineStages] },
     ],
