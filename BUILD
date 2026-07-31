@@ -4,7 +4,7 @@
 
 load("@typedb_dependencies//distribution:deployment.bzl", "deployment")
 load("@typedb_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
-load("@typedb_bazel_distribution//common:rules.bzl", "assemble_targz", "unzip_file", "checksum")
+load("@typedb_bazel_distribution//common:rules.bzl", "assemble_targz", "keychain_setup", "unzip_file", "checksum")
 load("@typedb_bazel_distribution//brew:rules.bzl", "deploy_brew")
 load("@typedb_bazel_distribution//apt:rules.bzl", "deploy_apt")
 load("@typedb_bazel_distribution//artifact:rules.bzl", "artifact_extractor", "deploy_artifact")
@@ -176,6 +176,29 @@ deploy_apt(
     target = ":native-artifact-linux-arm64-deb",
     snapshot = deployment['apt']['snapshot']['upload'],
     release = deployment['apt']['release']['upload'],
+)
+
+
+# Mac signing toolchain
+# Signed mac installer
+alias(
+    name = "developer-id-certs",
+    actual = "@vaticle_developer_id_combined//file",
+    tags = ["manual"],
+)
+
+keychain_setup(
+    name = "setup-mac-signing-keychain",
+    keychain_name = "typedb-studio-apple-signing-keychain",
+
+    signing_identities = ":developer-id-certs",
+    signing_identities_password_env = "APPLE_SIGNING_IDENTITIES_PASSWORD",
+
+    partition_list = "apple-tool:,apple:,codesign:",
+    trusted_apps = ["/usr/bin/codesign", "/usr/bin/productsign"],
+
+    passwords = [],
+    tags = ["manual"],
 )
 
 checkstyle_test(
