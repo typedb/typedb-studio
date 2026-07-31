@@ -966,13 +966,7 @@ export class LogOutputState {
 
     private conceptDocumentDisplayString(document: ConceptDocument): string {
         try {
-            // Sort keys recursively so every document prints its keys in the same
-            // order — the server does not guarantee a consistent order per answer.
-            return JSON.stringify(document, (_key, value) =>
-                (value !== null && typeof value === "object" && !Array.isArray(value))
-                    ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)))
-                    : value,
-                2);
+            return JSON.stringify(document, null, 2);
         } catch (err) {
             return `Error trying to print JSON: ${err}`;
         }

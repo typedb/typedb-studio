@@ -5,9 +5,7 @@
  */
 
 import { Component } from "@angular/core";
-import { Router } from "@angular/router";
 import { MatDividerModule } from "@angular/material/divider";
-import { QueryRunAction } from "../../concept/action";
 import { QueryPageState } from "../../service/query-page-state.service";
 import { PageScaffoldComponent } from "../scaffold/page/page-scaffold.component";
 import { HistoryPaneComponent } from "./history-pane/history-pane.component";
@@ -19,10 +17,5 @@ import { HistoryPaneComponent } from "./history-pane/history-pane.component";
     imports: [MatDividerModule, PageScaffoldComponent, HistoryPaneComponent],
 })
 export class QueryHistoryPageComponent {
-    constructor(public queryPageState: QueryPageState, private router: Router) {}
-
-    onRunHistoryQuery(entry: QueryRunAction) {
-        this.queryPageState.runQuery(entry.query);
-        this.router.navigate(["/query"]);
-    }
+    constructor(public queryPageState: QueryPageState) {}
 }

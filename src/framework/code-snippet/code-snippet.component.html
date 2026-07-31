@@ -14,9 +14,4 @@
       <pre><code [class]="snippet.language ? 'language-' + snippet.language : undefined" [innerHTML]="snippet.code"></code></pre>
     </div>
   </div>
-
-  <!-- Outside the scroll container so it stays pinned to the visible corner -->
-  <div class="copy-overlay visible" (click)="copyCode()">
-    <i [class]="copied ? 'fal fa-check' : 'fal fa-copy'"></i>
-  </div>
 </div>

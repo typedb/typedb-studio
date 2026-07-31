@@ -7,6 +7,7 @@
 import { Component, Inject } from "@angular/core";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { MatButtonModule } from "@angular/material/button";
+import { ModalComponent } from "../modal";
 import { StaticCodeComponent } from "../code-editor/static-code.component";
 
 export interface QueryTextDialogData {
@@ -17,7 +18,7 @@ export interface QueryTextDialogData {
     selector: "tp-query-text-dialog",
     templateUrl: "./query-text-dialog.component.html",
     styleUrls: ["./query-text-dialog.component.scss"],
-    imports: [MatButtonModule, StaticCodeComponent],
+    imports: [ModalComponent, MatButtonModule, StaticCodeComponent],
 })
 export class QueryTextDialogComponent {
     copied = false;

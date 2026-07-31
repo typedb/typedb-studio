@@ -33,7 +33,7 @@
           </aside>
           @if (isQueryRun(entry)) {
             <div class="history-code-editor">
-              <tp-static-code [code]="$any(entry).query" [runOverlayVisible]="true" (runButtonClick)="onRunHistoryQuery($any(entry))"
+              <tp-static-code [code]="$any(entry).query" [copyOverlayVisible]="true"
                               [expandOverlayVisible]="true" (expandButtonClick)="openQueryText($any(entry))"/>
             </div>
           }

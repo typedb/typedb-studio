@@ -15,3 +15,24 @@ tp-modal ::ng-deep .mat-mdc-dialog-content {
     display: flex;
     flex-direction: column;
 }
+
+// The snippet's own :host sets height: 100%, which fills the dialog content and
+// pushes the action buttons below the fold. Let it flex-shrink instead so the
+// buttons are always in view; the snippet scrolls internally.
+tp-code-snippet.schema-text-box {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+    flex-shrink: 0;
+
+    button i {
+        margin-right: 6px;
+    }
+}

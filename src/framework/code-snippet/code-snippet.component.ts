@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Input, NgZone, OnChanges, signal, ViewChild } from "@angular/core";
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, NgZone, OnChanges, signal, ViewChild } from "@angular/core";
 
 import Prism from "prismjs";
 import { initCustomScrollbars } from "typedb-web-common/lib";
@@ -49,7 +49,7 @@ export class CodeSnippetComponent implements AfterViewInit, OnChanges {
         ).keys()].map((n) => n + 1)
     }
 
-    constructor(private ngZone: NgZone, private elementRef: ElementRef) {
+    constructor(private ngZone: NgZone, private elementRef: ElementRef, private cdr: ChangeDetectorRef) {
     }
 
     ngAfterViewInit() {
@@ -69,11 +69,15 @@ export class CodeSnippetComponent implements AfterViewInit, OnChanges {
     async copyCode() {
         try {
             await navigator.clipboard.writeText(this.snippet.code);
+            // OnPush: `copied` changes happen after an await / in a timeout, so the view
+            // must be marked dirty explicitly or the icon lags one interaction behind.
             this.copied = true;
-            
+            this.cdr.markForCheck();
+
             // Reset copied state after 3 seconds
             setTimeout(() => {
                 this.copied = false;
+                this.cdr.markForCheck();
             }, 3000);
         } catch (err) {
             console.error('Failed to copy code:', err);

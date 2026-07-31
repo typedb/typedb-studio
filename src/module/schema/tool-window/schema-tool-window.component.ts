@@ -330,7 +330,12 @@ export class SchemaToolWindowComponent {
     }
 
     loadKindInstances(rootKind: RootKind) {
-        const query = kindInstancesQuery(rootKind);
+        // For relations, include role players — mirrors instancesQuery's per-type
+        // treatment. kindInstancesQuery itself stays as-is: the graph view relies
+        // on its exact shape.
+        const query = rootKind === "relation"
+            ? `match\n    $x isa $y;\n    relation $y;\n    $x links ($role: $player);`
+            : kindInstancesQuery(rootKind);
         const title = `${rootKind} instances`;
         this.router.navigate(["/query"]).then(() => {
             const tab = this.queryTabsState.newTab();

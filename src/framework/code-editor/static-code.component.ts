@@ -4,10 +4,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from "@angular/core";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { classHighlighter, highlightCode } from "@lezer/highlight";
-import { parser } from "../codemirror-lang-typeql/generated/typeql.grammar.generated";
+import { TypeQLLanguage } from "../codemirror-lang-typeql";
 
 /**
  * Read-only, statically highlighted TypeQL code block. Unlike CodeEditorComponent,
@@ -20,28 +20,39 @@ import { parser } from "../codemirror-lang-typeql/generated/typeql.grammar.gener
     standalone: true,
     imports: [MatTooltipModule],
 })
-export class StaticCodeComponent implements OnChanges {
+export class StaticCodeComponent implements OnChanges, AfterViewInit {
 
     @Input({ required: true }) code!: string;
-    @Input() runOverlayVisible = false;
-    @Output() runButtonClick = new EventEmitter<void>();
+    @Input() copyOverlayVisible = false;
     @Input() expandOverlayVisible = false;
     @Output() expandButtonClick = new EventEmitter<void>();
 
-    @ViewChild("codeEl", { static: true }) private codeEl!: ElementRef<HTMLElement>;
+    @ViewChild("codeEl", { static: true }) private codeEl?: ElementRef<HTMLElement>;
 
-    ran = false;
     copied = false;
+    private renderedCode: string | null = null;
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes["code"]) this.render();
+        if (changes["code"]) this.renderIfReady();
     }
 
-    private render() {
+    ngAfterViewInit() {
+        this.renderIfReady();
+    }
+
+    private renderIfReady() {
+        // The first ngOnChanges can fire before the view (and #codeEl) exists;
+        // ngAfterViewInit covers that case.
+        if (!this.codeEl) return;
+        const code = this.code ?? "";
+        if (code === this.renderedCode) return;
+        this.renderedCode = code;
+
         const el = this.codeEl.nativeElement;
         el.textContent = "";
-        const code = this.code ?? "";
-        highlightCode(code, parser.parse(code), classHighlighter,
+        // TypeQLLanguage.parser carries the styleTags metadata — the raw generated
+        // parser does not, and produces zero highlight classes.
+        highlightCode(code, TypeQLLanguage.parser.parse(code), classHighlighter,
             (text, classes) => {
                 if (classes) {
                     const span = document.createElement("span");
@@ -54,12 +65,6 @@ export class StaticCodeComponent implements OnChanges {
             },
             () => el.appendChild(document.createTextNode("\n")),
         );
-    }
-
-    onRunButtonClick() {
-        this.ran = true;
-        this.runButtonClick.emit();
-        setTimeout(() => { this.ran = false; }, 3000);
     }
 
     async onCopyButtonClick() {

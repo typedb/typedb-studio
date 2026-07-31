@@ -91,6 +91,11 @@ export class SchemaState {
         this.driver.schemaCommitted$.subscribe(() => {
             this.refresh();
         });
+        // Uncommitted schema edits in an open manual transaction (and their discard on
+        // rollback/close) — refresh reads through the open transaction, so it sees them.
+        this.driver.schemaChanged$.subscribe(() => {
+            this.refresh();
+        });
         this.queryResponses$.subscribe(data => {
             this.push(data);
         });

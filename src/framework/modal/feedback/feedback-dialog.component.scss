@@ -8,23 +8,17 @@
     display: block;
 }
 
-.query-box {
-    border: 1px solid var(--theme-secondary-deep-grey);
-    border-radius: 4px;
-    overflow: hidden;
-
-    tp-static-code ::ng-deep pre {
-        max-height: 480px;
-    }
+p {
+    max-width: 480px;
 }
 
 .dialog-actions {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    margin-top: 16px;
+    margin-top: 24px;
 
-    button i {
+    tp-button i {
         margin-right: 6px;
     }
 }

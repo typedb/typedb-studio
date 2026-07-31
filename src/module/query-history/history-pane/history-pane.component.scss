@@ -32,6 +32,7 @@ ol li {
         display: flex;
         // First-line alignment so a wrapped label doesn't push time/status out of line.
         align-items: flex-start;
+        flex-wrap: wrap;
         min-width: 0;
 
         .bullet {
@@ -73,6 +74,21 @@ ol li {
                     cursor: pointer;
                 }
             }
+        }
+    }
+}
+
+// Narrow pane: keep "time … status" on one line and move the action description
+// onto its own full-width line below, instead of squeezing everything onto one line.
+@container (max-width: 280px) {
+    ol li aside {
+        .bullet {
+            display: none;
+        }
+
+        .transaction-operation-type {
+            order: 10;
+            flex-basis: 100%;
         }
     }
 }

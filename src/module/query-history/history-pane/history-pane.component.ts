@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { Component, Input } from "@angular/core";
 import { DatePipe } from "@angular/common";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatDialog } from "@angular/material/dialog";
@@ -24,7 +24,6 @@ import { HistoryWindowState } from "../../../service/query-page-state.service";
 })
 export class HistoryPaneComponent {
     @Input({ required: true }) history!: HistoryWindowState;
-    @Output() runHistoryQuery = new EventEmitter<QueryRunAction>();
 
     private truncationState = new WeakMap<HTMLElement, boolean>();
 
@@ -32,10 +31,6 @@ export class HistoryPaneComponent {
     readonly isTransactionOperation = isTransactionOperation;
 
     constructor(private dialog: MatDialog) {}
-
-    onRunHistoryQuery(entry: QueryRunAction) {
-        this.runHistoryQuery.emit(entry);
-    }
 
     transactionOperationString(action: TransactionOperationAction) {
         switch (action.operation) {

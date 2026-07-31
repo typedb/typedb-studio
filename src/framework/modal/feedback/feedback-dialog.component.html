@@ -1,0 +1,20 @@
+<tp-modal dialogTitle="Feedback">
+  <p>
+    Found a bug, have an idea to improve TypeDB, or just want to share your thoughts?
+    We'd love to hear from you. You can talk to us on Discord or open a GitHub issue.
+  </p>
+  <div class="dialog-actions">
+    <a target="_blank" href="https://typedb.com/discord" (click)="dialogRef.close()">
+      <tp-button buttonStyle="primary-outline white stroke" buttonId="feedbackDialogDiscord">
+        <i class="fa-brands fa-discord"></i>
+        Talk to us on Discord
+      </tp-button>
+    </a>
+    <a target="_blank" href="https://github.com/typedb/typedb-studio/issues/new" (click)="dialogRef.close()">
+      <tp-button buttonStyle="primary-outline green stroke" buttonId="feedbackDialogGithub">
+        <i class="fa-brands fa-github"></i>
+        Open a GitHub issue
+      </tp-button>
+    </a>
+  </div>
+</tp-modal>
