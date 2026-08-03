@@ -88,11 +88,19 @@ export function parseConnectionStringOrNull(rawValue: string): (DriverParams & {
 }
 
 function parseConnectionHostAndPathOrNull(rawValue: string): ConnectionParams | null {
-    const [auth, connection] = rawValue.split(`@`, 2) as [string, string?];
-    if (!connection?.length) return null;
+    const queryStart = rawValue.indexOf(`?`);
+    const authSearchRegion = queryStart === -1 ? rawValue : rawValue.substring(0, queryStart);
+    const authDelimiter = authSearchRegion.lastIndexOf(`@`);
+    if (authDelimiter === -1) return null;
+    const auth = rawValue.substring(0, authDelimiter);
+    const connection = rawValue.substring(authDelimiter + 1);
+    if (!connection.length) return null;
 
-    const [usernameRaw, passwordRaw] = auth.split(`:`, 2) as [string, string?];
-    if (!passwordRaw?.length) return null;
+    const credentialDelimiter = auth.indexOf(`:`);
+    if (credentialDelimiter === -1) return null;
+    const usernameRaw = auth.substring(0, credentialDelimiter);
+    const passwordRaw = auth.substring(credentialDelimiter + 1);
+    if (!passwordRaw.length) return null;
     let username: string, password: string;
     try {
         username = decodeURIComponent(usernameRaw);
@@ -101,11 +109,6 @@ function parseConnectionHostAndPathOrNull(rawValue: string): ConnectionParams | 
         return null;
     }
 
-    // Find the first "/" or "?" after the LAST protocol separator — each
-    // comma-separated address carries its own scheme ("http://a,http://b/db"),
-    // so searching after the first one would cut the list at the second
-    // address's "//" and mangle it. (Iterative rather than a lookbehind regex
-    // for Safari compatibility.)
     const protocolPattern = /:\/\/|\/\//g;
     let searchStart = 0;
     let protocolMatch: RegExpExecArray | null;
@@ -114,7 +117,7 @@ function parseConnectionHostAndPathOrNull(rawValue: string): ConnectionParams | 
     }
     const slashIndex = connection.indexOf('/', searchStart);
     const queryIndex = connection.indexOf('?', searchStart);
-    // Find the first delimiter (/ or ?) after the protocol, preferring the earlier one
+
     const delimiterIndex = slashIndex === -1 ? queryIndex
         : queryIndex === -1 ? slashIndex
         : Math.min(slashIndex, queryIndex);
@@ -125,8 +128,6 @@ function parseConnectionHostAndPathOrNull(rawValue: string): ConnectionParams | 
     const addresses = addressesRaw.split(`,`);
     if (!addresses.length) return null;
 
-    // pathAndQuery may start with "/" (path) or "?" (query only)
-    // Strip leading "/" if present, then split on "?"
     const normalized = pathAndQuery?.startsWith('/') ? pathAndQuery.substring(1) : pathAndQuery;
     const [pathname, query] = normalized?.length ? normalized.split(`?`, 2) : [undefined, undefined];
     const database = pathname?.length ? pathname : undefined;
