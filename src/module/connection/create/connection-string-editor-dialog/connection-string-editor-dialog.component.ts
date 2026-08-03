@@ -16,11 +16,15 @@ import { FormActionsComponent, FormComponent, FormInputComponent, requiredValida
 import { ModalComponent } from "../../../../framework/modal";
 import { connectionString } from "../../../../concept/connection";
 
+function splitAddresses(value: string): string[] {
+    return value.split(",").map(x => x.trim()).filter(x => x.length > 0);
+}
+
 const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
     const value = control.value;
     if (!value) return null; // Let requiredValidator handle empty
-    if (!value.startsWith(`http://`) && !value.startsWith(`https://`)) {
-        return { errorText: `Please specify http:// or https://` };
+    if (splitAddresses(value).some(x => !x.startsWith(`http://`) && !x.startsWith(`https://`))) {
+        return { errorText: `Please specify http:// or https:// (for each address)` };
     }
     return null;
 };
@@ -59,7 +63,7 @@ export class ConnectionStringEditorDialogComponent {
         if (!address || !username) return "";
         const displayPassword = this.previewRevealed ? (password || "") : "••••••••";
         return connectionString({
-            addresses: [address],
+            addresses: splitAddresses(address),
             username: username,
             password: displayPassword,
             database: database || undefined,
@@ -71,7 +75,7 @@ export class ConnectionStringEditorDialogComponent {
         const { address, username, password, database, name } = this.form.value;
         if (!address || !username) return "";
         return connectionString({
-            addresses: [address],
+            addresses: splitAddresses(address),
             username: username,
             password: password || "",
             database: database || undefined,

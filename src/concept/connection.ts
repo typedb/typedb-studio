@@ -101,9 +101,17 @@ function parseConnectionHostAndPathOrNull(rawValue: string): ConnectionParams | 
         return null;
     }
 
-    // Safari-compatible: find first "/" or "?" not part of "://" or "//"
-    const protocolMatch = connection.match(/:\/\/|\/\//);
-    const searchStart = protocolMatch ? (protocolMatch.index! + protocolMatch[0].length) : 0;
+    // Find the first "/" or "?" after the LAST protocol separator — each
+    // comma-separated address carries its own scheme ("http://a,http://b/db"),
+    // so searching after the first one would cut the list at the second
+    // address's "//" and mangle it. (Iterative rather than a lookbehind regex
+    // for Safari compatibility.)
+    const protocolPattern = /:\/\/|\/\//g;
+    let searchStart = 0;
+    let protocolMatch: RegExpExecArray | null;
+    while ((protocolMatch = protocolPattern.exec(connection)) !== null) {
+        searchStart = protocolMatch.index + protocolMatch[0].length;
+    }
     const slashIndex = connection.indexOf('/', searchStart);
     const queryIndex = connection.indexOf('?', searchStart);
     // Find the first delimiter (/ or ?) after the protocol, preferring the earlier one

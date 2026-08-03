@@ -151,6 +151,19 @@ export class DriverState {
         else throw new Error(INTERNAL_ERROR);
     }
 
+    /** The origin the driver is currently talking to. The driver switches origin
+     *  internally on cluster failover / leader redirect (HTTP 421); the field is
+     *  private in its typings, so read it dynamically. */
+    get currentAddress(): string | null {
+        return this.driver ? (this.driver as any).currentOrigin ?? null : null;
+    }
+
+    /** Cluster topology as reported by the connected server (`/v1/servers`). */
+    getServers() {
+        const driver = this.requireDriver();
+        return fromPromiseWithRetry(() => driver.getServers());
+    }
+
     tryConnect(config: ConnectionConfig): Observable<ConnectionConfig> {
         const lockId = uuid();
         return this.tryUseWriteLock(() => {

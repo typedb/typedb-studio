@@ -18,7 +18,7 @@ import { DriverParams, isApiErrorResponse, isBasicParams } from "@typedb/driver-
 import { CONNECTION_STRING_PLACEHOLDER, ConnectionConfig, connectionString, parseConnectionStringOrNull } from "../../../concept/connection";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 import { INTERNAL_ERROR } from "../../../framework/util/strings";
-import { ADDRESS, NAME, USERNAME } from "../../../framework/util/url-params";
+import { addressesFromParams, NAME, USERNAME } from "../../../framework/util/url-params";
 import { AppData } from "../../../service/app-data.service";
 import { DriverState } from "../../../service/driver-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
@@ -39,10 +39,37 @@ const connectionStringValidator: ValidatorFn = (control: AbstractControl<string>
     return null;
 };
 
+function splitAddresses(value: string): string[] {
+    return value.split(",").map(x => x.trim()).filter(x => x.length > 0);
+}
+
+/** One entry of the address field: either a plain address, or a translated
+ *  `external;internal` pair. Returns null if malformed. */
+interface AddressEntry { external: string; internal?: string }
+
+function parseAddressEntry(entry: string): AddressEntry | null {
+    const parts = entry.split(";").map(x => x.trim());
+    if (parts.length > 2 || !parts[0].length) return null;
+    if (parts.length === 2 && !parts[1].length) return null;
+    return { external: parts[0], internal: parts[1] };
+}
+
+function parseAddressEntries(value: string): AddressEntry[] | null {
+    const entries = splitAddresses(value).map(parseAddressEntry);
+    if (entries.some(x => x == null)) return null;
+    return entries as AddressEntry[];
+}
+
 const addressValidator: ValidatorFn = (control: AbstractControl<string>) => {
-    const value = control.value;
-    if (!value.startsWith(`http://`) && !value.startsWith(`https://`)) {
-        return { errorText: `Please specify http:// or https://` };
+    const entries = parseAddressEntries(control.value);
+    if (entries == null) return { errorText: `Invalid address format` };
+    if (!entries.length) return { errorText: `Please specify an address` };
+    if (entries.some(x => !x.external.startsWith(`http://`) && !x.external.startsWith(`https://`))) {
+        return { errorText: `Please specify http:// or https:// (for each address)` };
+    }
+    const translatedCount = entries.filter(x => x.internal != null).length;
+    if (translatedCount !== 0 && translatedCount !== entries.length) {
+        return { errorText: `Either all addresses or none must be 'external;internal' pairs` };
     }
     return null;
 }
@@ -103,7 +130,8 @@ export class ConnectionCreatorComponent {
         url: ["", [requiredValidator, connectionStringValidator]],
         saveConnectionDetails: [false, [requiredValidator]],
     });
-    // TODO: support multiple addresses
+    // Multiple addresses (cluster nodes) are comma-separated; the driver fails over
+    // between them and follows leader redirects automatically.
     readonly advancedForm = this.formBuilder.group({
         address: ["", [requiredValidator, addressValidator]],
         username: ["", [requiredValidator]],
@@ -141,12 +169,15 @@ export class ConnectionCreatorComponent {
             // live session pre-fills with the current target.
             const current = this.driver.connection$.value;
             const currentAddress = current
-                ? (isBasicParams(current.params) ? current.params.addresses[0] : current.params.translatedAddresses[0]?.external) ?? null
+                ? (isBasicParams(current.params)
+                    ? current.params.addresses.join(",")
+                    : current.params.translatedAddresses.map(x => `${x.external};${x.internal}`).join(",")) ?? null
                 : null;
             const currentUsername = current?.params.username ?? null;
 
+            const paramAddresses = addressesFromParams(params);
             this.advancedForm.patchValue({
-                address: params.get(ADDRESS) ?? currentAddress ?? ``,
+                address: (paramAddresses.length ? paramAddresses.join(",") : null) ?? currentAddress ?? ``,
                 username: params.get(USERNAME) ?? currentUsername ?? ``,
             });
         });
@@ -160,7 +191,9 @@ export class ConnectionCreatorComponent {
             map(params => params!)
         ).subscribe((params) => {
             this.advancedForm.patchValue({
-                address: isBasicParams(params) ? params.addresses[0] : params.translatedAddresses[0].external,
+                address: isBasicParams(params)
+                    ? params.addresses.join(",")
+                    : params.translatedAddresses.map(x => `${x.external};${x.internal}`).join(","),
                 username: params.username,
                 password: params.password,
             }, { emitEvent: false });
@@ -170,15 +203,20 @@ export class ConnectionCreatorComponent {
     private updateUrlOnAdvancedConfigChanges() {
         this.advancedForm.valueChanges.pipe(
             map((value) => {
+                const entries = parseAddressEntries(value.address || "") ?? [];
+                const username = value.username || "";
+                const password = value.password || "";
+                if (entries.length && entries.every(x => x.internal != null)) {
+                    return {
+                        translatedAddresses: entries.map(x => ({ external: x.external, internal: x.internal! })),
+                        username, password,
+                    } as DriverParams;
+                }
                 const params: DriverParams = {
-                    addresses: [value.address || ""],
-                    username: value.username || "",
-                    password: value.password || "",
+                    addresses: entries.length ? entries.map(x => x.external) : [""],
+                    username, password,
                 };
                 return params;
-            }),
-            tap((params) => {
-                if (!params.addresses[0]?.length || !params.username) return;
             }),
             map((params) => connectionString(params)),
         ).subscribe(url => {
@@ -193,7 +231,9 @@ export class ConnectionCreatorComponent {
     get addressWarnings(): string | null {
         const address = this.advancedForm.controls.address.value;
         if (!address || this.advancedForm.controls.address.invalid || !this.addressBlurred) return null;
-        return this.buildWarnings(address);
+        // Warnings concern what the browser actually contacts — the external addresses.
+        const entries = parseAddressEntries(address) ?? [];
+        return this.buildWarnings(entries.map(x => x.external));
     }
 
     get connectionStringWarnings(): string | null {
@@ -203,15 +243,17 @@ export class ConnectionCreatorComponent {
         if (!params) return null;
         const addresses = isBasicParams(params) ? params.addresses : params.translatedAddresses.map(x => x.external);
         if (addresses.length === 0) return null;
-        return this.buildWarnings(addresses[0]);
+        return this.buildWarnings(addresses);
     }
 
-    private buildWarnings(address: string): string | null {
-        const warnings: string[] = [];
-        if (isMixedContent(address)) warnings.push("Many browsers block HTTP (insecure) connections. Consider setting up TLS or using TypeDB Studio Desktop.");
-        if (/:1729\b/.test(address)) warnings.push("Port 1729 is the gRPC port - TypeDB Studio uses HTTP, by default on port 8000.");
-        else if (!addressHasPort(address)) warnings.push("No port specified - will use default (80 for http, 443 for https).");
-        return warnings.length > 0 ? warnings.join(" ") : null;
+    private buildWarnings(addresses: string[]): string | null {
+        const warnings = new Set<string>();
+        for (const address of addresses) {
+            if (isMixedContent(address)) warnings.add("Many browsers block HTTP (insecure) connections. Consider setting up TLS or using TypeDB Studio Desktop.");
+            if (/:1729\b/.test(address)) warnings.add("Port 1729 is the gRPC port - TypeDB Studio uses HTTP, by default on port 8000.");
+            else if (!addressHasPort(address)) warnings.add("No port specified - will use default (80 for http, 443 for https).");
+        }
+        return warnings.size > 0 ? [...warnings].join(" ") : null;
     }
 
     private buildConnectionConfigOrNull(): ConnectionConfig | null {
