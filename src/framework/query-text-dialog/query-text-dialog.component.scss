@@ -23,6 +23,10 @@
     justify-content: flex-end;
     gap: 12px;
     margin-top: 16px;
+    // Material buttons carry a 48px absolutely-positioned touch target centered on
+    // the 32px button — it spills 8px below the row. Without this padding that
+    // invisible spill overflows mat-dialog-content and shows a phantom scrollbar.
+    padding-bottom: 12px;
 
     button i {
         margin-right: 6px;
