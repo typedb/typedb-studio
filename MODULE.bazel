@@ -1,0 +1,41 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+module(
+    name = "typedb_studio",
+    version = "0.0.0",
+    compatibility_level = 1,
+)
+
+bazel_dep(name = "platforms", version = "0.0.10")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "rules_pkg", version = "1.0.1")
+
+################################
+# Load @typedb_dependencies #
+################################
+bazel_dep(name = "typedb_dependencies", version = "0.0.0")
+git_override(
+    module_name = "typedb_dependencies",
+    remote = "https://github.com/typedb/dependencies",
+    commit = "a5c51254088f343fb8b6a9668eaf99b35503dad4",
+)
+
+######################################
+# Load @typedb_bazel_distribution #
+######################################
+bazel_dep(name = "typedb_bazel_distribution", version = "0.0.0")
+git_override(
+    module_name = "typedb_bazel_distribution",
+    remote = "https://github.com/typedb/bazel-distribution",
+    commit = "8756119e8ad5cd52d8a25f0d0204d6ff29dccebf",
+)
+
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+http_file(
+    name = "vaticle_developer_id_combined",
+    url = "https://repo.typedb.com/basic/private-tools/raw/files/VaticleDeveloperIDCombined.p12",
+    sha256 = "e6da59e0698ea876c89ac2a19c87ac6e6936df98ee5df31d8895a09ef26b15c7",
+    downloaded_file_path = "VaticleDeveloperIDCombined.p12",
+)

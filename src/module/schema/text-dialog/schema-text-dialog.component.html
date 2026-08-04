@@ -2,5 +2,12 @@
 <tp-modal [dialogTitle]="title" [isBusy]="!schemaTextSnippet">
   @if (schemaTextSnippet) {
     <tp-code-snippet [snippet]="schemaTextSnippet" language="typeql" class="schema-text-box"/>
+    <div class="dialog-actions">
+      <button mat-stroked-button (click)="copySchemaText()">
+        <i class="fa-light" [class.fa-copy]="!copied" [class.fa-check]="copied"></i>
+        Copy schema text
+      </button>
+      <button mat-stroked-button (click)="close()">Close</button>
+    </div>
   }
 </tp-modal>

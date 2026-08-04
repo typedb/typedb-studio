@@ -48,22 +48,16 @@ export class TransactionControlComponent {
     commitButtonVisible$ = combineLatest([this.driver.transactionTypeChanges$, this.driver.transactionOperationModeChanges$]).pipe(
         map(([type, mode]) => type !== "read" && mode === "manual")
     );
+    rollbackButtonDisabled$ = this.commitButtonDisabled$;
     closeButtonVisible$ = this.openButtonVisible$;
 
+    // Close-on-type-change and mode-change side-effects live in DriverState: this component
+    // is recreated on every page navigation, so component-level subscriptions to the
+    // shareReplay'd streams used to close the open transaction on every page mount.
     constructor(public driver: DriverState, private formBuilder: FormBuilder, private snackbar: SnackbarService, private appData: AppData, private dialog: MatDialog) {
         this.transactionConfigDisabled$.subscribe((disabled) => {
             if (disabled) this.driver.transactionControls.disable();
             else this.driver.transactionControls.enable();
-        });
-        this.driver.transactionTypeChanges$.subscribe((type) => {
-            // TODO: confirm before closing with uncommitted changes
-            this.driver.closeTransaction().subscribe();
-        });
-        this.driver.transactionOperationModeChanges$.subscribe((operationMode) => {
-            // TODO: confirm before closing with uncommitted changes
-            this.driver.closeTransaction().subscribe();
-            this.driver.autoTransactionEnabled$.next(operationMode === "auto");
-            this.appData.preferences.setTransactionMode(operationMode);
         });
     }
 
@@ -104,6 +98,20 @@ export class TransactionControlComponent {
                     msg = err?.message ?? err?.toString() ?? `Unknown error`;
                 }
                 this.snackbar.errorPersistent(`Error: ${msg}\nCaused: Failed to commit transaction.`);
+            }
+        });
+    }
+
+    rollback() {
+        this.driver.rollbackTransaction().subscribe({
+            error: (err) => {
+                let msg = ``;
+                if (typeof err === "object" && "err" in err && err.err?.message) {
+                    msg = err.err.message;
+                } else {
+                    msg = err?.message ?? err?.toString() ?? `Unknown error`;
+                }
+                this.snackbar.errorPersistent(`Error: ${msg}\nCaused: Failed to rollback transaction.`);
             }
         });
     }

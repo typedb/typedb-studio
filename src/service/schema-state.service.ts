@@ -19,7 +19,7 @@ import { Layouts } from "../framework/graph-visualiser/engine/layout";
 import { DriverState } from "./driver-state.service";
 import { GraphStyleService } from "./graph-style.service";
 import { SnackbarService } from "./snackbar.service";
-import {updateAutocomleteSchemaFromDB} from "../framework/codemirror-lang-typeql";
+import {updateAutocomleteSchemaFromDB, updateAutocompleteFunctionsFromSchemaText} from "../framework/codemirror-lang-typeql";
 
 const NO_SERVER_CONNECTED = `No server connected`;
 const NO_DATABASE_SELECTED = `No database selected`;
@@ -91,14 +91,32 @@ export class SchemaState {
         this.driver.schemaCommitted$.subscribe(() => {
             this.refresh();
         });
+        // Uncommitted schema edits in an open manual transaction (and their discard on
+        // rollback/close) — refresh reads through the open transaction, so it sees them.
+        this.driver.schemaChanged$.subscribe(() => {
+            this.refresh();
+        });
         this.queryResponses$.subscribe(data => {
             this.push(data);
         });
         this.value$.subscribe(schema => {
             if (schema != null) {
                 updateAutocomleteSchemaFromDB(schema)
+                this.refreshAutocompleteFunctions();
             }
         })
+    }
+
+    /** Function definitions aren't visible to the schema concept queries — they only
+     *  exist in the database's schema text, so fetch that separately. */
+    private refreshAutocompleteFunctions() {
+        try {
+            this.driver.getDatabaseSchemaText().subscribe(res => {
+                if (!isApiErrorResponse(res)) updateAutocompleteFunctionsFromSchemaText(res.ok);
+            });
+        } catch (e) {
+            // No driver/database (e.g. disconnected mid-refresh) — keep existing completions.
+        }
     }
 
     refresh() {

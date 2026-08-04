@@ -99,8 +99,17 @@ commands:
         type: string
     steps:
       - run: |
+          # Rename from TypeDB convention to tauri convention
+          export APPLE_PASSWORD=$APPLE_ID_PASSWORD
+          if [ -z "${APPLE_ID}" ] || [ -z "${APPLE_PASSWORD}" ] || [ -z "${APPLE_TEAM_ID}" ]; then
+            echo "Error: APPLE_ID, APPLE_TEAM_ID, APPLE_PASSWORD must be set to notarize"
+            exit 1
+          fi
+          export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          bazel run @typedb_dependencies//distribution/artifact:create-netrc
           # Newer Homebrew formulae (ca-certificates/openssl@3/python@3.11) can fail their
           # post-install step on the CI image and make `brew install` exit non-zero, aborting the
           # job. The pour itself succeeds, so tolerate the post-install failure and use the
@@ -115,9 +124,10 @@ commands:
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
           rustup target add <<parameters.target-triple>>
-          npx tauri build --target <<parameters.target-triple>>
           # --define version doesn't seem to work, so we just write it into the VERSION file.
           git rev-parse HEAD > VERSION
+          bazel run --define version=$(git rev-parse HEAD) //:setup-mac-signing-keychain
+          npx tauri build --target <<parameters.target-triple>>
           bazel run --define version=$(git rev-parse HEAD) //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
 
   deploy-mac-release:
@@ -128,8 +138,17 @@ commands:
         type: string
     steps:
       - run: |
+          # Rename from TypeDB convention to tauri convention
+          export APPLE_PASSWORD=$APPLE_ID_PASSWORD
+          if [ -z "${APPLE_ID}" ] || [ -z "${APPLE_PASSWORD}" ] || [ -z "${APPLE_TEAM_ID}" ]; then
+            echo "Error: APPLE_ID, APPLE_TEAM_ID, APPLE_PASSWORD must be set to notarize"
+            exit 1
+          fi
+          export ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
+          export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
+          bazel run@typedb_dependencies//distribution/artifact:create-netrc
           # Newer Homebrew formulae (ca-certificates/openssl@3/python@3.11) can fail their
           # post-install step on the CI image and make `brew install` exit non-zero, aborting the
           # job. The pour itself succeeds, so tolerate the post-install failure and use the
@@ -144,6 +163,7 @@ commands:
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
           rustup target add <<parameters.target-triple>>
+          bazel run //:setup-mac-signing-keychain
           npx tauri build --target <<parameters.target-triple>>
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- release
 

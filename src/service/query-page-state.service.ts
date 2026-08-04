@@ -926,10 +926,9 @@ export class LogOutputState {
                 const answers = res.ok.answers;
 
                 if (answers.length) {
-                    const varNames = Object.keys(answers[0]).sort();
-                    if (varNames.length) {
-                        const columnNames = Object.keys(answers[0].data);
-                        const variableColumnWidth = columnNames.length > 0 ? Math.max(...columnNames.map(s => s.length)) : 0;
+                    const columnNames = Object.keys(answers[0].data);
+                    if (columnNames.length) {
+                        const variableColumnWidth = Math.max(...columnNames.map(s => s.length));
                         answers.forEach((rowAnswer, idx) => {
                             if (idx == 0) lines.push(this.lineDashSeparator(variableColumnWidth));
                             lines.push(this.conceptRowDisplayString(rowAnswer.data, variableColumnWidth))

@@ -19,6 +19,9 @@
     width: 100%;
     height: 100%;
     background: var(--body-background);
+    // Anchor for the copy overlay: keeps it pinned at the visible top-right
+    // rather than scrolling away with .cs-scrollable-content.
+    position: relative;
 }
 
 .cs-scrollable-content {

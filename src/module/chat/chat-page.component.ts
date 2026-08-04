@@ -329,15 +329,6 @@ export class ChatPageComponent implements OnInit, AfterViewInit {
         });
     }
 
-    /** Re-runs a query from the History pane by feeding it into the chat prompt. */
-    onRunHistoryQuery(query: string) {
-        this.withConsent(() => {
-            this.state.promptControl.setValue(query);
-            this.state.submitPrompt();
-            setTimeout(() => this.scrollToBottom());
-        });
-    }
-
     onPanelResize(index: number, percent: number) {
         this.panelSizes[index] = percent;
         this.appData.panelLayout.set("chat", [...this.panelSizes]);

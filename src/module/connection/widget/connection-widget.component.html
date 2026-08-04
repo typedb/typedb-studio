@@ -1,7 +1,7 @@
 <div [ngClass]="rootNgClass$ | async">
   <div class="connection-area" (mouseenter)="onConnectionAreaMouseEnter()" (mouseleave)="onConnectionAreaMouseLeave()">
     <button #connectionMenuTrigger="matMenuTrigger" [matTooltip]="connectionTooltip" matTooltipPosition="below"
-            [matMenuTriggerFor]="connectionMenuRef">
+            [matMenuTriggerFor]="connectionMenuRef" (menuOpened)="onConnectionMenuOpened()">
       <i class="fa-light fa-server"></i>
       <span class="connection-text"> {{ connectionText$ | async }}</span>
       <i class="ts-beacon fa-solid fa-circle" [class]="connectionBeaconStatusClass$ | async" [matTooltip]="(connectionBeaconTooltip$ | async) || ''" matTooltipPosition="below" [matTooltipShowDelay]="500"></i>
@@ -35,6 +35,23 @@
     @if (connection) {
       <mat-divider/>
       <aside>User: {{ connection.params.username }}</aside>
+      @if (servers.length) {
+        <mat-divider/>
+        <aside>Cluster nodes</aside>
+        @for (server of servers; track $index) {
+          <div class="cluster-node" [class.active]="isActiveServer(server)"
+               [matTooltip]="isActiveServer(server) ? 'Currently connected to this node' : ''" [matTooltipShowDelay]="500">
+            <i class="fa-light" [class.fa-circle-check]="isActiveServer(server)" [class.fa-server]="!isActiveServer(server)"></i>
+            <span class="cluster-node-address">{{ server.address ?? 'unknown address' }}</span>
+            @if (serverRoleLabel(server); as role) {
+              <span class="cluster-node-role">{{ role }}</span>
+            }
+          </div>
+        }
+      } @else if (currentAddress) {
+        <mat-divider/>
+        <aside>Node: {{ currentAddress }}</aside>
+      }
       <mat-divider/>
       <button mat-menu-item (click)="signOut(); connectionMenuTrigger.closeMenu()"><i class="fa-light fa-sign-out"></i><span>Sign out</span></button>
     }

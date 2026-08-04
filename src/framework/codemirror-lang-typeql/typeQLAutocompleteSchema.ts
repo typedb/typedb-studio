@@ -17,9 +17,29 @@ function extractText(text: string, from: number, to: number): string {
     return text.slice(from, to);
 }
 
+export interface TypeQLFunction {
+    name: string;
+    signature: string;
+}
+
+/** Extract `fun` definition signatures from TypeQL text (schema text or editor contents). */
+export function parseFunctionsFromTypeQL(text: string): TypeQLFunction[] {
+    const functions: TypeQLFunction[] = [];
+    const pattern = /\bfun\s+([A-Za-z_][A-Za-z0-9_-]*)\s*\(([^)]*)\)\s*(->\s*[^:]+)?:/g;
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(text)) !== null) {
+        const args = match[2].replace(/\s+/g, " ").trim();
+        const output = match[3] ? ` ${match[3].replace(/\s+/g, " ").trim()}` : "";
+        functions.push({ name: match[1], signature: `fun ${match[1]}(${args})${output}` });
+    }
+    return functions;
+}
+
 export class TypeQLAutocompleteSchema {
     fromDB: Schema;
     fromEditor: Schema; // Partial because we don't care about subtypes, supertype or valueType
+    private dbFunctions: TypeQLFunction[] = [];
+    private editorFunctions: TypeQLFunction[] = [];
 
     constructor(fromDB: Schema, fromEditor: Schema) {
         this.fromDB = fromDB;
@@ -30,8 +50,19 @@ export class TypeQLAutocompleteSchema {
         this.fromDB = fromDB;
     }
 
+    updateDBFunctions(functions: TypeQLFunction[]): void {
+        this.dbFunctions = functions;
+    }
+
     mayUpdateFromEditorState(context: CompletionContext, tree: Tree): void {
-        this.fromEditor = buildSchemafromTypeQL(context.state.sliceDoc(), tree);
+        const text = context.state.sliceDoc();
+        this.fromEditor = buildSchemafromTypeQL(text, tree);
+        this.editorFunctions = parseFunctionsFromTypeQL(text);
+    }
+
+    functions(): TypeQLFunction[] {
+        const editorOnly = this.editorFunctions.filter(f => !this.dbFunctions.some(db => db.name === f.name));
+        return this.dbFunctions.concat(editorOnly);
     }
 
     attributeTypes(): SchemaAttribute[] {

@@ -111,6 +111,37 @@ i.ts-beacon {
         }
     }
 
+    .cluster-node {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 4px 16px;
+        font-size: 13px;
+        color: var(--theme-grey);
+
+        &.active {
+            color: var(--theme-white);
+
+            i {
+                color: var(--theme-green);
+            }
+        }
+
+        .cluster-node-address {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 280px;
+        }
+
+        .cluster-node-role {
+            margin-left: auto;
+            padding-left: 12px;
+            color: var(--theme-secondary-light-grey);
+            font-size: 12px;
+        }
+    }
+
     mat-divider {
         margin: 4px 8px;
     }

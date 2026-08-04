@@ -43,7 +43,7 @@ console.log(`  src-tauri/Cargo.toml -> ${version}`);
 const cargoLockPath = path.join(root, "src-tauri/Cargo.lock");
 let cargoLock = fs.readFileSync(cargoLockPath, "utf8");
 cargoLock = cargoLock.replace(
-  /(name = "typedb-studio"\nversion = ").*(")/,
+  /(name = "typedb-studio"\r?\nversion = ").*(")/,
   `$1${version}$2`
 );
 fs.writeFileSync(cargoLockPath, cargoLock);

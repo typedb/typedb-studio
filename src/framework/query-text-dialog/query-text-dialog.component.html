@@ -1,0 +1,12 @@
+<tp-modal dialogTitle="Query">
+  <div class="query-box">
+    <tp-static-code [code]="data.query"/>
+  </div>
+  <div class="dialog-actions">
+    <button mat-stroked-button (click)="copyToClipboard()">
+      <i class="fa-light" [class.fa-copy]="!copied" [class.fa-check]="copied"></i>
+      Copy query
+    </button>
+    <button mat-stroked-button (click)="close()">Close</button>
+  </div>
+</tp-modal>
