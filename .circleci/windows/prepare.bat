@@ -3,10 +3,6 @@ REM This Source Code Form is subject to the terms of the Mozilla Public
 REM License, v. 2.0. If a copy of the MPL was not distributed with this
 REM file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-REM shorten the workspace name so that we can avoid the long path restriction
-git apply .circleci\windows\short_workspace.patch
-IF %ERRORLEVEL% NEQ 0 EXIT /B %ERRORLEVEL%
-
 REM uninstall Java 12 installed by CircleCI
 choco uninstall openjdk --limit-output --yes --no-progress
 
