@@ -47,7 +47,7 @@ export class Transaction {
 
 export type OperationMode = "auto" | "manual";
 
-export type TransactionOperation = "open" | "commit" | "close";
+export type TransactionOperation = "open" | "commit" | "close" | "rollback";
 
 // export interface TransactionApiJson {
 //     name: string;

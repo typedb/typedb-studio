@@ -4,29 +4,27 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { Component, Input } from "@angular/core";
 import { DatePipe } from "@angular/common";
-import { FormControl } from "@angular/forms";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatDialog } from "@angular/material/dialog";
 import { DriverAction, QueryRunAction, TransactionOperationAction, isQueryRun, isTransactionOperation } from "../../../concept/action";
-import { CodeEditorComponent } from "../../../framework/code-editor/code-editor.component";
+import { StaticCodeComponent } from "../../../framework/code-editor/static-code.component";
 import { SpinnerComponent } from "../../../framework/spinner/spinner.component";
 import { ActionDurationPipe } from "../../../framework/util/action-duration.pipe";
 import { ErrorDetailsDialogComponent } from "../../../framework/error-details-dialog/error-details-dialog.component";
+import { QueryTextDialogComponent } from "../../../framework/query-text-dialog/query-text-dialog.component";
 import { HistoryWindowState } from "../../../service/query-page-state.service";
 
 @Component({
     selector: "ts-history-pane",
     templateUrl: "./history-pane.component.html",
     styleUrls: ["./history-pane.component.scss"],
-    imports: [DatePipe, MatTooltipModule, CodeEditorComponent, SpinnerComponent, ActionDurationPipe],
+    imports: [DatePipe, MatTooltipModule, StaticCodeComponent, SpinnerComponent, ActionDurationPipe],
 })
 export class HistoryPaneComponent {
     @Input({ required: true }) history!: HistoryWindowState;
-    @Output() runHistoryQuery = new EventEmitter<QueryRunAction>();
 
-    private historyEntryControls = new Map<QueryRunAction, FormControl<string>>();
     private truncationState = new WeakMap<HTMLElement, boolean>();
 
     readonly isQueryRun = isQueryRun;
@@ -34,24 +32,12 @@ export class HistoryPaneComponent {
 
     constructor(private dialog: MatDialog) {}
 
-    getHistoryEntryControl(entry: QueryRunAction): FormControl<string> {
-        let control = this.historyEntryControls.get(entry);
-        if (!control) {
-            control = new FormControl(entry.query, { nonNullable: true });
-            this.historyEntryControls.set(entry, control);
-        }
-        return control;
-    }
-
-    onRunHistoryQuery(entry: QueryRunAction) {
-        this.runHistoryQuery.emit(entry);
-    }
-
     transactionOperationString(action: TransactionOperationAction) {
         switch (action.operation) {
             case "open": return "opened transaction";
             case "commit": return action.status === "error" ? "commit failed" : "committed";
             case "close": return "closed transaction";
+            case "rollback": return action.status === "error" ? "rollback failed" : "rolled back transaction";
         }
     }
 
@@ -69,6 +55,13 @@ export class HistoryPaneComponent {
         else if ("err" in entry.result && !!entry.result.err?.message) return entry.result.err.message;
         else if ("message" in entry.result) return entry.result.message as string;
         else return entry.result.toString();
+    }
+
+    openQueryText(entry: QueryRunAction) {
+        this.dialog.open(QueryTextDialogComponent, {
+            data: { query: entry.query },
+            width: "800px",
+        });
     }
 
     openErrorDetails(entry: DriverAction) {

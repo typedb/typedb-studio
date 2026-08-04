@@ -13,9 +13,5 @@
     <div class="cs-code-area">
       <pre><code [class]="snippet.language ? 'language-' + snippet.language : undefined" [innerHTML]="snippet.code"></code></pre>
     </div>
-
-    <div class="copy-overlay visible" (click)="copyCode()">
-      <i [class]="copied ? 'fal fa-check' : 'fal fa-copy'"></i>
-    </div>
   </div>
 </div>

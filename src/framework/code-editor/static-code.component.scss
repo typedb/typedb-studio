@@ -1,0 +1,78 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+// Token colors mirror the CodeMirror themes in theme.ts (basicDark/basicLight
+// highlight styles), keyed by @lezer/highlight's classHighlighter class names.
+
+:host {
+    display: block;
+    position: relative;
+
+    pre {
+        margin: 0;
+        padding: 4px 2px 4px 6px;
+        overflow: auto;
+        font-family: 'Monaco', monospace;
+        font-size: 14px;
+        line-height: 22px;
+        background: #0e0e0e;
+        color: #d7d4e5;
+
+        code {
+            display: block;
+            font: inherit;
+        }
+    }
+
+    // Highlight spans are created imperatively (no Angular scoping attribute),
+    // so these need ::ng-deep to match.
+    ::ng-deep {
+        .tok-keyword, .tok-number { color: #c099f3; }
+        .tok-variableName { color: #55eae2; }
+        .tok-string { color: #ffe4a7; }
+        .tok-bool, .tok-atom { color: #8abeb7; }
+        .tok-heading, .tok-operator { color: #ff7abd; }
+        .tok-className { color: #02dac9; font-style: italic; }
+        .tok-meta { color: #ffa187; }
+        .tok-comment { color: #958fa8; font-style: italic; }
+    }
+
+    .copy-overlay {
+        right: 8px;
+    }
+
+    .copy-overlay + .copy-overlay {
+        right: 48px;
+    }
+
+    .copy-overlay.visible {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    &:hover .copy-overlay.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+:host-context(.theme-light) {
+    pre {
+        background: #fafafa;
+        color: #1a1a2e;
+    }
+
+    ::ng-deep {
+        .tok-keyword, .tok-number { color: #7b44c0; }
+        .tok-variableName { color: #007a6e; }
+        .tok-string { color: #8a6d10; }
+        .tok-bool, .tok-atom { color: #007a6e; }
+        .tok-heading, .tok-operator { color: #c040a0; }
+        .tok-className { color: #008f80; font-style: italic; }
+        .tok-meta { color: #cc5530; }
+        .tok-comment { color: #8a86a0; font-style: italic; }
+    }
+}

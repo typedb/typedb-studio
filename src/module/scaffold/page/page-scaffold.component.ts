@@ -7,8 +7,10 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { NgClass } from "@angular/common";
 import { AfterViewInit, Component, ElementRef, Input, ViewChild } from "@angular/core";
+import { MatDialog } from "@angular/material/dialog";
 import { MatSidenavModule } from "@angular/material/sidenav";
 import { ButtonComponent } from "../../../framework/button/button.component";
+import { FeedbackDialogComponent } from "../../../framework/modal/feedback/feedback-dialog.component";
 import { SpinnerComponent } from "../../../framework/spinner/spinner.component";
 import { AppData } from "../../../service/app-data.service";
 import { ConnectionWidgetComponent } from "../../connection/widget/connection-widget.component";
@@ -40,9 +42,13 @@ export class PageScaffoldComponent implements AfterViewInit {
     condensed = false;
     initializing = true;
 
-    constructor(private appData: AppData) {
+    constructor(private appData: AppData, private dialog: MatDialog) {
         // Disable CSS transitions during initial render to prevent sidebar flicker
         setTimeout(() => this.initializing = false);
+    }
+
+    openFeedbackDialog() {
+        this.dialog.open(FeedbackDialogComponent, { width: "560px" });
     }
 
     ngAfterViewInit() {

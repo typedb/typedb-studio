@@ -12,7 +12,7 @@ import { MatDividerModule } from "@angular/material/divider";
 import { MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
-import { Database } from "@typedb/driver-http";
+import { Database, isOkResponse, Server } from "@typedb/driver-http";
 import { distinctUntilChanged, map } from "rxjs";
 import { DriverState } from "../../../service/driver-state.service";
 import { StartupMessageService } from "../../../service/startup-message.service";
@@ -141,4 +141,41 @@ export class ConnectionWidgetComponent implements OnInit {
     }
 
     onConnectionMenuMouseLeave() {}
+
+    // -- Cluster topology (loaded lazily when the connection menu opens) --
+
+    servers: Server[] = [];
+    currentAddress: string | null = null;
+
+    onConnectionMenuOpened() {
+        this.currentAddress = this.driver.currentAddress;
+        this.servers = [];
+        if (this.currentAddress == null) return;
+        this.driver.getServers().subscribe({
+            next: (res) => {
+                if (isOkResponse(res)) this.servers = res.ok.servers;
+                // Refresh: a failed request may itself have triggered a driver failover.
+                this.currentAddress = this.driver.currentAddress;
+            },
+            error: () => { this.servers = []; },
+        });
+    }
+
+    /** Whether this cluster node is the one the driver is currently talking to. */
+    isActiveServer(server: Server): boolean {
+        if (!this.currentAddress || !server.address) return false;
+        return this.hostPort(server.address) === this.hostPort(this.currentAddress);
+    }
+
+    serverRoleLabel(server: Server): string {
+        return server.replicationStatus?.role ?? "";
+    }
+
+    private hostPort(value: string): string {
+        try {
+            return new URL(value).host;
+        } catch {
+            return value;
+        }
+    }
 }

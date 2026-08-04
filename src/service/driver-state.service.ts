@@ -5,7 +5,7 @@
  */
 
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, concatMap, concatWith, defer, distinctUntilChanged, filter, finalize, from, ignoreElements, map, Observable, of, shareReplay, startWith, Subject, switchMap, takeUntil, tap, throwError } from "rxjs";
+import { BehaviorSubject, catchError, concatMap, concatWith, defer, distinctUntilChanged, filter, finalize, from, ignoreElements, map, Observable, of, shareReplay, skip, startWith, Subject, switchMap, takeUntil, tap, throwError } from "rxjs";
 import { v4 as uuid } from "uuid";
 import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
 import { ConnectionConfig, databasesSortedByName } from "../concept/connection";
@@ -55,6 +55,10 @@ export class DriverState {
     private _stopSignal$ = new Subject<void>();
     /** Emits whenever a schema transaction commits successfully. Consumers (e.g. SchemaState) can react by refreshing. */
     schemaCommitted$ = new Subject<void>();
+    /** Fires when the schema as seen by queries may have changed without a commit:
+     *  a schema query succeeded in an open manual transaction, or such a
+     *  transaction was rolled back / closed (discarding its changes). */
+    schemaChanged$ = new Subject<void>();
 
     private driver?: TypeDBHttpDriver;
 
@@ -81,6 +85,21 @@ export class DriverState {
 
     constructor(private appData: AppData, private formBuilder: FormBuilder, private queryTypeDetector: QueryTypeDetector) {
         (window as any)["driverState"] = this;
+        // These side-effects live here (not in TransactionControlComponent) because that
+        // component is recreated on every page navigation: its ngOnInit-time subscriptions
+        // received the shareReplay'd current value and closed the open transaction on every
+        // page mount. skip(1) ignores the startWith/replayed initial value so only real
+        // user-driven changes close the transaction.
+        this.transactionTypeChanges$.pipe(skip(1)).subscribe(() => {
+            // TODO: confirm before closing with uncommitted changes
+            this.closeTransaction().subscribe();
+        });
+        this.transactionOperationModeChanges$.pipe(skip(1)).subscribe((operationMode) => {
+            // TODO: confirm before closing with uncommitted changes
+            this.closeTransaction().subscribe();
+            this.autoTransactionEnabled$.next(operationMode === "auto");
+            this.appData.preferences.setTransactionMode(operationMode);
+        });
     }
 
     get status$(): Observable<DriverStatus> {
@@ -130,6 +149,19 @@ export class DriverState {
     private requireDriver() {
         if (this.driver) return this.driver;
         else throw new Error(INTERNAL_ERROR);
+    }
+
+    /** The origin the driver is currently talking to. The driver switches origin
+     *  internally on cluster failover / leader redirect (HTTP 421); the field is
+     *  private in its typings, so read it dynamically. */
+    get currentAddress(): string | null {
+        return this.driver ? (this.driver as any).currentOrigin ?? null : null;
+    }
+
+    /** Cluster topology as reported by the connected server (`/v1/servers`). */
+    getServers() {
+        const driver = this.requireDriver();
+        return fromPromiseWithRetry(() => driver.getServers());
     }
 
     tryConnect(config: ConnectionConfig): Observable<ConnectionConfig> {
@@ -316,9 +348,37 @@ export class DriverState {
         ), lockId);
     }
 
+    /** Discard the open transaction's uncommitted changes; the transaction stays open. */
+    rollbackTransaction(lockId = uuid()) {
+        const transactionId = this.requireTransaction().id;
+        const action = transactionOperationActionOf("rollback");
+        this._actionLog$.next(action);
+        const driver = this.requireDriver();
+        return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.rollbackTransaction(transactionId)).pipe(
+            tap((res) => {
+                this.updateActionResult(action, res);
+                if (isApiErrorResponse(res)) throw res.err;
+                const tx = this._transaction$.value;
+                if (tx) {
+                    const hadSchemaChanges = tx.type === "schema" && tx.queryRuns.length > 0;
+                    tx.queryRuns.length = 0;
+                    this._transaction$.next(tx);
+                    if (hadSchemaChanges) this.schemaChanged$.next();
+                }
+            }),
+            takeUntil(this._stopSignal$),
+            catchError((err) => {
+                this.updateActionResultUnexpectedError(action, err);
+                return throwError(() => err);
+            }),
+        ), lockId);
+    }
+
     closeTransaction(lockId = uuid()) {
-        const transactionId = this._transaction$.value?.id;
-        if (transactionId == null) return of({});
+        const transaction = this._transaction$.value;
+        if (transaction == null) return of({});
+        const transactionId = transaction.id;
+        const discardsSchemaChanges = transaction.type === "schema" && transaction.queryRuns.length > 0;
         const driver = this.requireDriver();
         return this.tryUseWriteLock(() => fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).pipe(
             tap((res) => {
@@ -326,6 +386,7 @@ export class DriverState {
                 const lastTx = this.lastTransaction$.value;
                 if (lastTx) { lastTx.closedAtTimestamp = Date.now(); this.lastTransaction$.next(lastTx); }
                 this._transaction$.next(null);
+                if (discardsSchemaChanges) this.schemaChanged$.next();
             }),
             takeUntil(this._stopSignal$),
         ), lockId);
@@ -542,6 +603,11 @@ export class DriverState {
                 const transaction = this.requireTransaction();
                 this._transaction$.next(transaction);
             }),
+            tap((res) => {
+                // Uncommitted schema edits are visible to in-transaction reads, so
+                // let interested views (e.g. the schema tree) refresh through the tx.
+                if (!isApiErrorResponse(res) && res.ok.queryType === "schema") this.schemaChanged$.next();
+            }),
             catchError((err) => {
                 if (queryRunAction) this.updateActionResultUnexpectedError(queryRunAction, err);
                 return throwError(() => err);
@@ -553,6 +619,19 @@ export class DriverState {
     runBackgroundReadQueries(queries: string[], queryOptions?: QueryOptions): Observable<ApiOkResponse<QueryResponse>> {
         const driver = this.requireDriver();
         const databaseName = this.requireDatabase().name;
+        // With a manual transaction open, read through it so its uncommitted changes
+        // (e.g. schema edits) are visible; a fresh read transaction couldn't see them.
+        const openTransaction = this._transaction$.value;
+        if (openTransaction) {
+            return from(queries).pipe(
+                concatMap(x => fromPromiseWithRetry(() => driver.query(openTransaction.id, x, queryOptions)).pipe(
+                    map(x => {
+                        if (isApiErrorResponse(x)) throw x;
+                        else return x;
+                    })
+                )),
+            );
+        }
         return fromPromiseWithRetry(() => driver.openTransaction(databaseName, "read", this.transactionOptions("read"))).pipe(
             switchMap((res) => {
                 if (isApiErrorResponse(res)) throw res.err;

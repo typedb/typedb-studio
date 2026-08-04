@@ -431,7 +431,8 @@ ThingConstraint {
   IsaConstraint |
   IidConstraint |
   HasConstraint |
-  LinksConstraint
+  LinksConstraint |
+  Comparison
 }
 
 IsaConstraint {
@@ -445,6 +446,7 @@ IidConstraint {
 HasConstraint {
   HAS TypeRef VAR |
   HAS TypeRef ValueLiteral |
+  HAS TypeRef Comparison |
   HAS VAR
 }
 

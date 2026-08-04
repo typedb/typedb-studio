@@ -127,6 +127,10 @@ mat-select-trigger {
         color: var(--theme-secondary-deep-green);
     }
 
+    &.rollback-btn:enabled {
+        color: var(--theme-secondary-yellow);
+    }
+
     &.close-btn:enabled {
         background: var(--theme-red);
     }

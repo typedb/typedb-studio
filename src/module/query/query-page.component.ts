@@ -66,6 +66,7 @@ import { HistoryPaneComponent } from "../query-history/history-pane/history-pane
 export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
 
     @ViewChild(CodeEditor) codeEditor!: CodeEditor;
+    @ViewChildren(CodeEditorComponent) codeEditors!: QueryList<CodeEditorComponent>;
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
     @ViewChild("logTextarea") logTextarea?: ElementRef<HTMLTextAreaElement>;
     @ViewChildren(GraphCanvasComponent) graphCanvasComponents!: QueryList<GraphCanvasComponent>;
@@ -347,6 +348,10 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     newQueryTab() {
         this.queryTabsState.newTab();
         this.scrollTabsToEnd();
+        // Wait for the new tab's editor to render before focusing it.
+        setTimeout(() => {
+            this.codeEditors.get(this.queryTabsState.selectedTabIndex$.value)?.focus();
+        });
     }
 
     /** Right-click on the (+) button — pops a small menu with "Open empty

@@ -7,7 +7,7 @@ import { EditorView } from "@codemirror/view";
 import { linter } from '@codemirror/lint'
 import { autocompletion, CompletionContext } from "@codemirror/autocomplete";
 import { NodePrefixAutoComplete } from "./complete"
-import {TypeQLAutocompleteSchema} from "./typeQLAutocompleteSchema";
+import {TypeQLAutocompleteSchema, parseFunctionsFromTypeQL} from "./typeQLAutocompleteSchema";
 import { SUGGESTION_MAP } from "./typeql_suggestions";
 import {Schema} from "../../service/schema-state.service";
 
@@ -58,6 +58,31 @@ export const TypeQLLanguage = LRLanguage.define({
         LET: t.keyword,
         FIRST: t.keyword,
         LAST: t.keyword,
+        IN: t.keyword,
+        AS: t.keyword,
+        OF: t.keyword,
+        IID: t.keyword,
+        RETURN: t.keyword,
+        VALUEKEYWORD: t.keyword,
+        LABELKEYWORD: t.keyword,
+
+        // String comparison operators
+        LIKE: t.operatorKeyword,
+        CONTAINS: t.operatorKeyword,
+
+        // Function names (definitions and calls)
+        "FunctionName/IDENTIFIER/LABEL": t.function(t.variableName),
+        "FunctionSignature/IDENTIFIER/LABEL": t.function(t.variableName),
+
+        // Reducers
+        COUNT: t.function(t.variableName),
+        MAX: t.function(t.variableName),
+        MIN: t.function(t.variableName),
+        MEAN: t.function(t.variableName),
+        MEDIAN: t.function(t.variableName),
+        STD: t.function(t.variableName),
+        SUM: t.function(t.variableName),
+        LIST: t.function(t.variableName),
 
         // Value type names?
 
@@ -156,6 +181,12 @@ export function typeqlAutocompleteExtension() {
 
 export function updateAutocomleteSchemaFromDB(schema: Schema) {
   typeqlAutocomplete.getState().updateFromDB(schema);
+}
+
+/** Update the function-name completions from the database's full schema text
+ *  (the only place `fun` definitions are exposed by the server). */
+export function updateAutocompleteFunctionsFromSchemaText(schemaText: string) {
+  typeqlAutocomplete.getState().updateDBFunctions(parseFunctionsFromTypeQL(schemaText));
 }
 
 // (window as any)._updateSchemaFromDB = updateSchemaFromDB;

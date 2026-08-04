@@ -1,0 +1,12 @@
+<pre><code #codeEl></code></pre>
+@if (copyOverlayVisible) {
+  <div class="copy-overlay visible" (click)="onCopyButtonClick()">
+    <i [class]="copied ? 'fal fa-check' : 'fal fa-copy'"></i>
+  </div>
+}
+@if (expandOverlayVisible) {
+  <div class="copy-overlay visible" (click)="expandButtonClick.emit()"
+       matTooltip="View full query" [matTooltipShowDelay]="500">
+    <i class="fal fa-expand"></i>
+  </div>
+}

@@ -96,8 +96,8 @@ importers:
         specifier: ^2
         version: 2.5.3
       '@typedb/driver-http':
-        specifier: 3.7.0
-        version: 3.7.0
+        specifier: 3.12.1
+        version: 3.12.1
       '@typedb/graph-utils':
         specifier: workspace:*
         version: link:typedb-graph-utils/typescript
@@ -3040,8 +3040,8 @@ packages:
     resolution: {integrity: sha512-UUYHISyhCU3ZgN8yaear3cGATHb3SMuKHsQ/nVbHXcmnBf+LzQ/cQfhNG+rfaSHgqGKNEm2cOCLVLELStUQ1JA==}
     engines: {node: ^18.17.0 || >=20.5.0}
 
-  '@typedb/driver-http@3.7.0':
-    resolution: {integrity: sha512-vFdyq7K/0MCU1QezoL3cJ6BrowG883d9Hvh6rtdgos4yN4qsQFTtLG0pnkA3H+1IENA5YWVq+YKuMfb9gq+Amg==}
+  '@typedb/driver-http@3.12.1':
+    resolution: {integrity: sha512-G0c3U5Qd4XGlfhI9BCW2svDhfOukvcMNN2pD3xfP25XNiGJ9FX3+omLD9vEkXWiJH7Ye10/SLGm3xOvK76viWg==}
 
   '@typedb/driver-http@3.8.1':
     resolution: {integrity: sha512-XDxabZO1wWQLovcAgRojeO1Cs2o7MNwhxmW+v3k//XgdsmzF7lEANG8Wyw2U9w65579M5KLn5AEYxfzl5fnh8g==}
@@ -6036,6 +6036,7 @@ packages:
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   validate-npm-package-license@3.0.4:
@@ -9490,7 +9491,7 @@ snapshots:
       '@tufjs/canonical-json': 2.0.0
       minimatch: 9.0.5
 
-  '@typedb/driver-http@3.7.0': {}
+  '@typedb/driver-http@3.12.1': {}
 
   '@typedb/driver-http@3.8.1': {}
 
