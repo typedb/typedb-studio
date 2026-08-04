@@ -148,7 +148,7 @@ commands:
           export ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
           export DEPLOY_ARTIFACT_USERNAME=$REPO_TYPEDB_USERNAME
           export DEPLOY_ARTIFACT_PASSWORD=$REPO_TYPEDB_PASSWORD
-          bazel run@typedb_dependencies//distribution/artifact:create-netrc
+          bazel run @typedb_dependencies//distribution/artifact:create-netrc
           # Newer Homebrew formulae (ca-certificates/openssl@3/python@3.11) can fail their
           # post-install step on the CI image and make `brew install` exit non-zero, aborting the
           # job. The pour itself succeeds, so tolerate the post-install failure and use the
