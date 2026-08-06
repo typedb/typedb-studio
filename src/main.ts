@@ -24,11 +24,7 @@ import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipDefaultOptions } from "@angular/
 import { MAT_CHECKBOX_DEFAULT_OPTIONS, MatCheckboxDefaultOptions } from "@angular/material/checkbox";
 import Intercom from "@intercom/messenger-js-sdk";
 import { Overlay } from "@angular/cdk/overlay";
-import "posthog-js/dist/recorder";
-import "posthog-js/dist/surveys";
 import "posthog-js/dist/exception-autocapture";
-import "posthog-js/dist/tracing-headers";
-import "posthog-js/dist/web-vitals";
 import "posthog-js/dist/dead-clicks-autocapture";
 import posthog from "posthog-js/dist/module.no-external";
 import { StudioErrorHandler } from "./service/error-handler.service";
