@@ -102,8 +102,8 @@ importers:
         specifier: ^2
         version: 2.5.3
       '@typedb/driver-http':
-        specifier: 3.12.1
-        version: 3.12.1
+        specifier: 3.12.3
+        version: 3.12.3
       '@typedb/graph-utils':
         specifier: workspace:*
         version: link:typedb-graph-utils/typescript
@@ -2977,8 +2977,8 @@ packages:
     resolution: {integrity: sha512-UUYHISyhCU3ZgN8yaear3cGATHb3SMuKHsQ/nVbHXcmnBf+LzQ/cQfhNG+rfaSHgqGKNEm2cOCLVLELStUQ1JA==}
     engines: {node: ^18.17.0 || >=20.5.0}
 
-  '@typedb/driver-http@3.12.1':
-    resolution: {integrity: sha512-G0c3U5Qd4XGlfhI9BCW2svDhfOukvcMNN2pD3xfP25XNiGJ9FX3+omLD9vEkXWiJH7Ye10/SLGm3xOvK76viWg==}
+  '@typedb/driver-http@3.12.3':
+    resolution: {integrity: sha512-SPPGID6zt0vJNJ4VIjEO5pIXWa4iI8k1WbpNyiMQdly+R8PNvXb1xSXzfr9IObn/bKcFx82LQDOls6+eBX8sdw==}
 
   '@typedb/driver-http@3.8.1':
     resolution: {integrity: sha512-XDxabZO1wWQLovcAgRojeO1Cs2o7MNwhxmW+v3k//XgdsmzF7lEANG8Wyw2U9w65579M5KLn5AEYxfzl5fnh8g==}
@@ -9371,7 +9371,7 @@ snapshots:
       '@tufjs/canonical-json': 2.0.0
       minimatch: 9.0.5
 
-  '@typedb/driver-http@3.12.1': {}
+  '@typedb/driver-http@3.12.3': {}
 
   '@typedb/driver-http@3.8.1': {}
 
