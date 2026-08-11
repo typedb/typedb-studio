@@ -5,7 +5,7 @@ TypeDB Studio is hosted on the Web at https://studio.typedb.com.
 Alternatively:
 
 - Install: https://typedb.com/docs/home/install/studio
-- Direct download: https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:3.11.3
+- Direct download: https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:3.12.2
 
 Desktop builds of TypeDB Studio run in the following environments:
 
@@ -20,11 +20,10 @@ Desktop builds of TypeDB Studio run in the following environments:
 
 ### TypeDB server compatibility
 
-TypeDB Studio 3.11.3 is compatible with TypeDB >= 3.3. For older TypeDB versions, enquire on the TypeDB Discord chat server (https://typedb.com/discord).
+TypeDB Studio 3.12.2 is compatible with TypeDB >= 3.3. For older TypeDB versions, enquire on the TypeDB Discord chat server (https://typedb.com/discord).
 
 ---
 
 ## Bugs fixed
 
-- Fix various errors when using Graph Explorer in manual transaction mode
-- Fix a bug where graph exploration would incorrectly pop up "Relation has no players"
+- Fix a bug that could cause TypeDB Studio to fail to connect to clustered TypeDB
