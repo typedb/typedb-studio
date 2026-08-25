@@ -10,9 +10,6 @@ command = "pnpm run build:prod"
 [context.deploy-preview]
 command = "pnpm run build:dev"
 
-[build.environment]
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1317118973443309649/CqydmmRN9Ao1G49fg6QWroNujeoLJm7Qx__bO6gn1yHX9jKHWbQwyV3GMdD9GxzW9FnX"
-
 [[headers]]
 for = "/*"
 
@@ -26,6 +23,3 @@ for = "/*"
 from = "/*"
 to = "/index.html"
 status = 200
-
-[[plugins]]
-package = "netlify-plugin-discord"
