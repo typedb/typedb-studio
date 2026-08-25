@@ -13,12 +13,6 @@ command = "pnpm run build:dev"
 [build.environment]
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1317118973443309649/CqydmmRN9Ao1G49fg6QWroNujeoLJm7Qx__bO6gn1yHX9jKHWbQwyV3GMdD9GxzW9FnX"
 
-# SECURITY HEADERS
-# Studio handles logins and live database connections, so it must never be framed.
-# frame-ancestors is the modern directive; X-Frame-Options is the legacy fallback.
-# Scoped to framing only - no default-src, so script/connection loading is unaffected
-# (Studio connects to arbitrary user-specified TypeDB endpoints).
-
 [[headers]]
 for = "/*"
 
