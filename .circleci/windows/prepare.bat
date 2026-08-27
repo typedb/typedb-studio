@@ -64,20 +64,21 @@ SET AZURE_TENANT_ID=%AZURE_INFRA_TENANT_ID%
 SET AZURE_CLIENT_ID=%AZURE_INFRA_CLIENT_ID%
 SET AZURE_CLIENT_SECRET=%AZURE_INFRA_CLIENT_SECRET%
 
-REM Diagnostic: list every signtool.exe on disk, in case the installer didn't use the
-REM standard Windows Kits layout the narrower lookup below assumes.
+REM Diagnostics: where the signing prerequisites actually landed, in case the installer
+REM didn't use the layout the lookup below (or artifact-signing-cli itself) assumes.
 ECHO --- signtool.exe found under Program Files: ---
 dir /s /b "C:\Program Files\signtool.exe" "C:\Program Files (x86)\signtool.exe" 2>nul
+ECHO --- Azure.CodeSigning.Dlib.dll found under Program Files: ---
+dir /s /b "C:\Program Files\Azure.CodeSigning.Dlib.dll" "C:\Program Files (x86)\Azure.CodeSigning.Dlib.dll" 2>nul
 ECHO --- end listing ---
 
 REM artifact-signing-cli's default SignTool.exe path guess is a hardcoded SDK version, which
-REM won't match whatever the Artifact Signing Client Tools installer actually laid down above.
-REM Locate it explicitly instead of relying on that guess (ascending sort -> last = highest SDK version).
-REM `dir /s` only globs the final path component, not a middle one like "bin\*\x64\..." (that
-REM silently matches nothing rather than erroring) - so list all signtool.exe under bin\ instead
-REM and filter for x64 in a second pass.
+REM won't match whatever the Artifact Signing Client Tools installer actually laid down above,
+REM so locate it explicitly: walk the SDK version folders under bin\ and keep the last one with
+REM an x64\signtool.exe. /o:n sorts ascending, so that's the highest version (dlib needs >= 10.0.26100.0).
+SET "SDK_BIN=C:\Program Files (x86)\Windows Kits\10\bin"
 SET SIGNTOOL_PATH=
-FOR /F "delims=" %%i IN ('dir /s /b /o:n "C:\Program Files (x86)\Windows Kits\10\bin\signtool.exe" 2^>nul ^| findstr /I "\x64\"') DO SET "SIGNTOOL_PATH=%%i"
+FOR /F "delims=" %%d IN ('dir /b /o:n "%SDK_BIN%" 2^>nul') DO IF EXIST "%SDK_BIN%\%%d\x64\signtool.exe" SET "SIGNTOOL_PATH=%SDK_BIN%\%%d\x64\signtool.exe"
 IF "%SIGNTOOL_PATH%"=="" (
   ECHO Error: could not locate signtool.exe under Windows Kits 10 - see listing above for its actual location
   EXIT /b 1
