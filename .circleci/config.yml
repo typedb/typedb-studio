@@ -348,6 +348,9 @@ jobs:
   deploy-windows-x86_64-snapshot:
     executor: win-x86_64
     working_directory: ~/typedb-studio
+    environment:
+      # Dummy version for test snapshots while we validate Windows code signing on development.
+      STUDIO_VERSION: "0.0.1"
     steps:
       - checkout
       - fetch-submodules
@@ -491,9 +494,12 @@ workflows:
             branches:
               only: [banana]
       - deploy-windows-x86_64-snapshot:
+          context: [default]
           filters:
             branches:
-              only: [banana]
+              # Temporarily on development to validate Windows code signing; revert to a
+              # disabled placeholder branch once signing is confirmed working.
+              only: [development]
       - deploy-apt-arm64-snapshot:
           filters:
             branches:
@@ -521,6 +527,7 @@ workflows:
             branches:
               only: master
       - deploy-windows-x86_64-release:
+          context: [default]
           filters:
             branches:
               only: master
