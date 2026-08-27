@@ -35,10 +35,10 @@
         <mat-form-field class="code-text-field">
           <textarea class="output-text-box" [formControl]="currentRun.log.control" readonly matInput></textarea>
         </mat-form-field>
-        <div class="copy-overlay visible" (click)="onAiClick()">
+        <div class="copy-overlay visible" (click)="onAiClick()" matTooltip="Send to AI" matTooltipPosition="below" [matTooltipShowDelay]="500">
           <i [class]="aiSent ? 'fal fa-check' : 'fal fa-wand-magic-sparkles'"></i>
         </div>
-        <div class="copy-overlay visible" (click)="onCopyLogClick()">
+        <div class="copy-overlay visible" (click)="onCopyLogClick()" matTooltip="Copy log" matTooltipPosition="below" [matTooltipShowDelay]="500">
           <i [class]="copied ? 'fal fa-check' : 'fal fa-copy'"></i>
         </div>
       </div>

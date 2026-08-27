@@ -16,13 +16,14 @@ import { search, searchKeymap } from "@codemirror/search";
 import { FormControl, ReactiveFormsModule } from "@angular/forms";
 import { ThemeService } from "../../service/theme.service";
 import { Subscription } from "rxjs";
+import { MatTooltipModule } from "@angular/material/tooltip";
 
 @Component({
     selector: "tp-code-editor",
     templateUrl: "code-editor.component.html",
     styleUrls: ["code-editor.component.scss"],
     standalone: true,
-    imports: [CodeEditor, ReactiveFormsModule],
+    imports: [CodeEditor, ReactiveFormsModule, MatTooltipModule],
     host: {
         '[class.has-scrollbar]': 'hasScrollbar'
     }

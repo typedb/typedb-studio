@@ -1,6 +1,6 @@
 <pre><code #codeEl></code></pre>
 @if (copyOverlayVisible) {
-  <div class="copy-overlay visible" (click)="onCopyButtonClick()">
+  <div class="copy-overlay visible" (click)="onCopyButtonClick()" matTooltip="Copy" [matTooltipShowDelay]="500">
     <i [class]="copied ? 'fal fa-check' : 'fal fa-copy'"></i>
   </div>
 }

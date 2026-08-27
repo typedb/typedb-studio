@@ -1,11 +1,11 @@
 <code-editor [extensions]="extensions"
              [formControl]="formControlProp"/>
-<div class="copy-overlay" [class.visible]="runOverlayVisible" (click)="onRunButtonClick()">
+<div class="copy-overlay" [class.visible]="runOverlayVisible" (click)="onRunButtonClick()" matTooltip="Run" matTooltipPosition="below" [matTooltipShowDelay]="500">
   <i [class]="ran ? 'fal fa-check' : 'fal fa-play'"></i>
 </div>
-<div class="copy-overlay" [class.visible]="runOverlayVisible" (click)="onCopyButtonClick()">
+<div class="copy-overlay" [class.visible]="runOverlayVisible" (click)="onCopyButtonClick()" matTooltip="Copy" matTooltipPosition="below" [matTooltipShowDelay]="500">
   <i [class]="copied ? 'fal fa-check' : 'fal fa-copy'"></i>
 </div>
-<div class="copy-overlay save-overlay" [class.visible]="saveOverlayVisible" (click)="onSaveButtonClick()">
+<div class="copy-overlay save-overlay" [class.visible]="saveOverlayVisible" (click)="onSaveButtonClick()" matTooltip="Save" matTooltipPosition="below" [matTooltipShowDelay]="500">
   <i [class]="saved ? 'fal fa-check' : 'fal fa-bookmark'"></i>
 </div>
