@@ -73,8 +73,11 @@ ECHO --- end listing ---
 REM artifact-signing-cli's default SignTool.exe path guess is a hardcoded SDK version, which
 REM won't match whatever the Artifact Signing Client Tools installer actually laid down above.
 REM Locate it explicitly instead of relying on that guess (ascending sort -> last = highest SDK version).
+REM `dir /s` only globs the final path component, not a middle one like "bin\*\x64\..." (that
+REM silently matches nothing rather than erroring) - so list all signtool.exe under bin\ instead
+REM and filter for x64 in a second pass.
 SET SIGNTOOL_PATH=
-FOR /F "delims=" %%i IN ('dir /s /b /o:n "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" 2^>nul') DO SET "SIGNTOOL_PATH=%%i"
+FOR /F "delims=" %%i IN ('dir /s /b /o:n "C:\Program Files (x86)\Windows Kits\10\bin\signtool.exe" 2^>nul ^| findstr /I "\x64\"') DO SET "SIGNTOOL_PATH=%%i"
 IF "%SIGNTOOL_PATH%"=="" (
   ECHO Error: could not locate signtool.exe under Windows Kits 10 - see listing above for its actual location
   EXIT /b 1
