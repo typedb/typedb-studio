@@ -32,7 +32,7 @@ REM install Microsoft's Artifact Signing Client Tools: bundles the matching Sign
 REM .NET 8 Runtime, VC++ Redistributable, and the Azure.CodeSigning.Dlib plugin that
 REM actually talks to the signing service. See:
 REM https://learn.microsoft.com/en-us/azure/artifact-signing/how-to-signing-integrations
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri 'https://download.microsoft.com/download/70ad2c3b-761f-4aa9-a9de-e7405aa2b4c1/ArtifactSigningClientTools.msi' -OutFile 'ArtifactSigningClientTools.msi'; Start-Process msiexec.exe -Wait -ArgumentList '/I ArtifactSigningClientTools.msi /quiet'; Remove-Item 'ArtifactSigningClientTools.msi'"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri 'https://download.microsoft.com/download/70ad2c3b-761f-4aa9-a9de-e7405aa2b4c1/ArtifactSigningClientTools.msi' -OutFile 'ArtifactSigningClientTools.msi'; $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList '/I ArtifactSigningClientTools.msi /quiet /norestart /log ArtifactSigningInstall.log'; Remove-Item 'ArtifactSigningClientTools.msi' -ErrorAction SilentlyContinue; if ($p.ExitCode -ne 0) { Get-Content 'ArtifactSigningInstall.log' -Tail 100; exit $p.ExitCode }"
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
 
 REM install code-signing tool used by tauri.conf.json's bundle.windows.signCommand
@@ -64,13 +64,19 @@ SET AZURE_TENANT_ID=%AZURE_INFRA_TENANT_ID%
 SET AZURE_CLIENT_ID=%AZURE_INFRA_CLIENT_ID%
 SET AZURE_CLIENT_SECRET=%AZURE_INFRA_CLIENT_SECRET%
 
+REM Diagnostic: list every signtool.exe on disk, in case the installer didn't use the
+REM standard Windows Kits layout the narrower lookup below assumes.
+ECHO --- signtool.exe found under Program Files: ---
+dir /s /b "C:\Program Files\signtool.exe" "C:\Program Files (x86)\signtool.exe" 2>nul
+ECHO --- end listing ---
+
 REM artifact-signing-cli's default SignTool.exe path guess is a hardcoded SDK version, which
 REM won't match whatever the Artifact Signing Client Tools installer actually laid down above.
 REM Locate it explicitly instead of relying on that guess (ascending sort -> last = highest SDK version).
 SET SIGNTOOL_PATH=
 FOR /F "delims=" %%i IN ('dir /s /b /o:n "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" 2^>nul') DO SET "SIGNTOOL_PATH=%%i"
 IF "%SIGNTOOL_PATH%"=="" (
-  ECHO Error: could not locate signtool.exe under Windows Kits 10 after installing Artifact Signing Client Tools
+  ECHO Error: could not locate signtool.exe under Windows Kits 10 - see listing above for its actual location
   EXIT /b 1
 )
 ECHO Using SignTool at %SIGNTOOL_PATH%
