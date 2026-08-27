@@ -62,4 +62,4 @@ IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
 
 REM compile MSI installer using tauri
 CALL pnpm build
-CALL npx tauri build
+CALL npx tauri build --verbose
