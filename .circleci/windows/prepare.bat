@@ -28,9 +28,17 @@ set PATH=%USERPROFILE%\.cargo\bin;%PATH%
 rustup install 1.93.1
 rustup default 1.93.1
 
+REM install Microsoft's Artifact Signing Client Tools: bundles the matching SignTool.exe,
+REM .NET 8 Runtime, VC++ Redistributable, and the Azure.CodeSigning.Dlib plugin that
+REM actually talks to the signing service. See:
+REM https://learn.microsoft.com/en-us/azure/artifact-signing/how-to-signing-integrations
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri 'https://download.microsoft.com/download/70ad2c3b-761f-4aa9-a9de-e7405aa2b4c1/ArtifactSigningClientTools.msi' -OutFile 'ArtifactSigningClientTools.msi'; Start-Process msiexec.exe -Wait -ArgumentList '/I ArtifactSigningClientTools.msi /quiet'; Remove-Item 'ArtifactSigningClientTools.msi'"
+IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
+
 REM install code-signing tool used by tauri.conf.json's bundle.windows.signCommand
-REM (signs via Azure Trusted Signing; auth comes from AZURE_INFRA_TENANT_ID/AZURE_INFRA_CLIENT_ID/AZURE_INFRA_CLIENT_SECRET)
-cargo install trusted-signing-cli --locked
+REM (signs via Azure Artifact Signing; auth comes from AZURE_INFRA_TENANT_ID/AZURE_INFRA_CLIENT_ID/AZURE_INFRA_CLIENT_SECRET)
+REM trusted-signing-cli is deprecated in favor of artifact-signing-cli, matching the Azure service's rename.
+cargo install artifact-signing-cli --locked
 
 REM install node modules
 
@@ -41,8 +49,8 @@ CALL corepack prepare pnpm@10.12.1 --activate
 CALL pnpm config set store-dir .pnpm-store
 CALL pnpm install
 
-REM Azure Trusted Signing credentials must be present, or tauri's signCommand will fail mid-bundle.
-REM Named AZURE_INFRA_* in CircleCI (we have multiple Azure subscriptions); trusted-signing-cli's
+REM Azure Artifact Signing credentials must be present, or tauri's signCommand will fail mid-bundle.
+REM Named AZURE_INFRA_* in CircleCI (we have multiple Azure subscriptions); artifact-signing-cli's
 REM default Azure credential chain only recognizes the SDK-standard AZURE_* names, so rename here.
 IF "%AZURE_INFRA_TENANT_ID%"=="" GOTO :missing_signing_creds
 IF "%AZURE_INFRA_CLIENT_ID%"=="" GOTO :missing_signing_creds
@@ -55,6 +63,17 @@ EXIT /b 1
 SET AZURE_TENANT_ID=%AZURE_INFRA_TENANT_ID%
 SET AZURE_CLIENT_ID=%AZURE_INFRA_CLIENT_ID%
 SET AZURE_CLIENT_SECRET=%AZURE_INFRA_CLIENT_SECRET%
+
+REM artifact-signing-cli's default SignTool.exe path guess is a hardcoded SDK version, which
+REM won't match whatever the Artifact Signing Client Tools installer actually laid down above.
+REM Locate it explicitly instead of relying on that guess (ascending sort -> last = highest SDK version).
+SET SIGNTOOL_PATH=
+FOR /F "delims=" %%i IN ('dir /s /b /o:n "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" 2^>nul') DO SET "SIGNTOOL_PATH=%%i"
+IF "%SIGNTOOL_PATH%"=="" (
+  ECHO Error: could not locate signtool.exe under Windows Kits 10 after installing Artifact Signing Client Tools
+  EXIT /b 1
+)
+ECHO Using SignTool at %SIGNTOOL_PATH%
 
 REM CI jobs may request a throwaway build version (e.g. snapshot testing) via STUDIO_VERSION
 IF NOT "%STUDIO_VERSION%"=="" CALL pnpm set-version %STUDIO_VERSION%

@@ -37,7 +37,7 @@
       "wix": {
         "version": "3.12.2"
       },
-      "signCommand": "trusted-signing-cli -e https://eus.codesigning.azure.net -a typedb-signing -c typedb-public-release %1"
+      "signCommand": "artifact-signing-cli -e https://eus.codesigning.azure.net -a typedb-signing -c typedb-public-release %1"
     },
     "macOS": {
       "signingIdentity": "Developer ID Application: Vaticle LTD (RHKH8FP9SX)"
