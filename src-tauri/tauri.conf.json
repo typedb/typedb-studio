@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "typedb-studio",
+  "productName": "TypeDB Studio",
   "version": "3.12.2",
   "identifier": "com.typedb.studio",
   "build": {
