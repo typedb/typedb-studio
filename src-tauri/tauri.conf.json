@@ -23,6 +23,7 @@
   },
   "bundle": {
     "active": true,
+    "publisher": "TypeDB Ltd",
     "targets": [
       "msi",
       "dmg",
