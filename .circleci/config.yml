@@ -181,6 +181,7 @@ commands:
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
           export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update
           sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
@@ -209,6 +210,7 @@ commands:
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
           export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update
           sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
@@ -235,6 +237,7 @@ commands:
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
           export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update
           sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
@@ -261,6 +264,7 @@ commands:
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
           export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update
           sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
