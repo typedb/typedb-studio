@@ -1,6 +1,6 @@
 [package]
 name = "typedb-studio"
-version = "3.12.2"
+version = "3.13.0"
 description = "Interactive visual environment for building with TypeDB"
 authors = ["TypeDB Ltd <community@typedb.com>"]
 edition = "2021"
