@@ -181,6 +181,9 @@ commands:
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
           export DEBIAN_FRONTEND=noninteractive
+          # us-east-1.ec2.ports.ubuntu.com (baked into the base image's sources.list for
+          # arm64) has had reliability issues in the past
+          sudo sed -i 's|http://[a-z0-9-]*\.ec2\.ports\.ubuntu\.com|http://ports.ubuntu.com|g; s|http://[a-z0-9-]*\.ec2\.archive\.ubuntu\.com|http://archive.ubuntu.com|g' /etc/apt/sources.list
           sudo apt-get update
           sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
@@ -210,6 +213,9 @@ commands:
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
           export DEBIAN_FRONTEND=noninteractive
+          # us-east-1.ec2.ports.ubuntu.com (baked into the base image's sources.list for
+          # arm64) has had reliability issues in the past
+          sudo sed -i 's|http://[a-z0-9-]*\.ec2\.ports\.ubuntu\.com|http://ports.ubuntu.com|g; s|http://[a-z0-9-]*\.ec2\.archive\.ubuntu\.com|http://archive.ubuntu.com|g' /etc/apt/sources.list
           sudo apt-get update
           sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
@@ -237,6 +243,9 @@ commands:
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
           export DEBIAN_FRONTEND=noninteractive
+          # us-east-1.ec2.ports.ubuntu.com (baked into the base image's sources.list for
+          # arm64) has had reliability issues in the past
+          sudo sed -i 's|http://[a-z0-9-]*\.ec2\.ports\.ubuntu\.com|http://ports.ubuntu.com|g; s|http://[a-z0-9-]*\.ec2\.archive\.ubuntu\.com|http://archive.ubuntu.com|g' /etc/apt/sources.list
           sudo apt-get update
           sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
@@ -264,6 +273,9 @@ commands:
           corepack prepare pnpm@10.12.1 --activate
           pnpm build
           export DEBIAN_FRONTEND=noninteractive
+          # us-east-1.ec2.ports.ubuntu.com (baked into the base image's sources.list for
+          # arm64) has had reliability issues in the past
+          sudo sed -i 's|http://[a-z0-9-]*\.ec2\.ports\.ubuntu\.com|http://ports.ubuntu.com|g; s|http://[a-z0-9-]*\.ec2\.archive\.ubuntu\.com|http://archive.ubuntu.com|g' /etc/apt/sources.list
           sudo apt-get update
           sudo apt install -y software-properties-common lsb-release curl
           sudo add-apt-repository ppa:deadsnakes/ppa -y
