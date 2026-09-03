@@ -70,9 +70,15 @@ import { MatTooltipModule } from "@angular/material/tooltip";
         return this.themeService.effectiveTheme$.value === "light" ? basicLight : basicDark;
     }
 
+    /** Cached: a fresh array identity per CD cycle makes <code-editor> fully
+     *  reconfigure on every cycle. `keymap` is init-only as a result. */
+    private _extensions?: Extension[];
     get extensions(): Extension[] {
-        const baseExtensions = [this.themeCompartment.of(this.currentThemeExtension), TypeQL(), typeqlAutocompleteExtension(), this.keymap, search(), keymap.of(searchKeymap)];
-        return this.needsWebKitInputFix ? [...baseExtensions, this.webKitInputFix] : baseExtensions;
+        if (!this._extensions) {
+            const baseExtensions = [this.themeCompartment.of(this.currentThemeExtension), TypeQL(), typeqlAutocompleteExtension(), this.keymap, search(), keymap.of(searchKeymap)];
+            this._extensions = this.needsWebKitInputFix ? [...baseExtensions, this.webKitInputFix] : baseExtensions;
+        }
+        return this._extensions;
     }
 
     ran = false;
