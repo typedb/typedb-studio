@@ -1227,10 +1227,15 @@ export class GraphOutputState {
             return;
         }
 
+        let prebuilt = false;
         if (!this.visualiser) {
             const graph = this._preservedGraph ?? newGraph();
             this._preservedGraph = graph;
-            const sigma = createSigmaRenderer(this._canvasEl!, defaultSigmaSettings as any, graph);
+            // First build goes in while sigma watches an empty placeholder —
+            // sigma's graph-event handlers do synchronous per-element work, so a
+            // large build is much cheaper detached, with one index on attach.
+            const isFirstBuild = graph.order === 0 && res.ok.answerType === "conceptRows";
+            const sigma = createSigmaRenderer(this._canvasEl!, defaultSigmaSettings as any, isFirstBuild ? newGraph() : graph);
             const layout = Layouts.createD3ForceSupervisor(graph);
             this.visualiser = new GraphVisualiser(graph, sigma, layout, this._styleService);
             // Replay any display-attribute responses that arrived before the
@@ -1245,6 +1250,10 @@ export class GraphOutputState {
                 this.visualiser.applyLabelOverrides(this._pendingLabelOverrides);
                 this._pendingLabelOverrides = null;
             }
+            if (isFirstBuild) {
+                this.visualiser.buildDetachedThenAttach(res, this.database!);
+                prebuilt = true;
+            }
         }
 
         switch (res.ok.answerType) {
@@ -1253,7 +1262,7 @@ export class GraphOutputState {
                 break;
             }
             case "conceptRows": {
-                this.visualiser.handleQueryResponse(res, this.database!);
+                if (!prebuilt) this.visualiser.handleQueryResponse(res, this.database!);
                 let highlightedQuery = "";
                 if (QUERY_HIGHLIGHT_DIV_ID != null) {
                     if (res.ok.query) {
