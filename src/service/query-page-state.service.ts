@@ -815,19 +815,57 @@ function stringifyError(err: any): string {
     }
 }
 
+/** Result-size budgets for the log: answers past LOG_RESULT_CHAR_BUDGET of
+ *  formatted text are skipped (with a notice pointing at the table output),
+ *  and at most LOG_MAX_LINES lines are retained. The viewport renders lazily,
+ *  so these bound memory and formatting cost — not the DOM. */
+const LOG_RESULT_CHAR_BUDGET = 20_000_000;
+const LOG_MAX_LINES = 500_000;
+const LOG_TRIMMED_NOTICE = "[… earlier log output trimmed …]";
+
 export class LogOutputState {
 
-    control = new FormControl("", {nonNullable: true});
+    /** One visual line per entry, rendered by a cdk-virtual-scroll viewport so
+     *  only visible lines ever hit the DOM. Mutated in place; consumers that
+     *  need the whole text use `fullText`. */
+    readonly lines: string[] = [];
+    /** cdkVirtualFor doesn't re-diff a same-reference array, so every content
+     *  mutation re-emits here (same array reference — the emission itself is
+     *  the change signal). */
+    readonly lines$ = new BehaviorSubject<string[]>(this.lines);
     /** If true, the viewing component should keep the log scrolled to the bottom as new content arrives.
      *  Flipped to false the first time the user scrolls away from the bottom manually. */
     autoscrollEnabled = true;
     private buffer: string[] = [];
     private flushScheduled = false;
+    /** Index of the live trailing progress line in `lines`, else null. */
+    private flushedProgressIndex: number | null = null;
+    private progressLine: string | null = null;
 
     constructor() {}
 
+    /** Bumped on every content mutation; keys the fullText cache (small logs,
+     *  e.g. the chat output, bind fullText directly in templates). */
+    private version = 0;
+    private fullTextCache: { version: number; text: string } | null = null;
+
+    get fullText(): string {
+        if (this.fullTextCache?.version !== this.version) {
+            this.fullTextCache = { version: this.version, text: this.lines.join(`\n`) };
+        }
+        return this.fullTextCache.text;
+    }
+
     appendLines(...lines: string[]) {
-        this.buffer.push(lines.join(`\n`));
+        this.appendLineArray(lines);
+    }
+
+    appendLineArray(lines: string[]) {
+        // Split multi-line entries: the virtual viewport needs one visual line per item.
+        for (const line of lines) {
+            if (line.includes(`\n`)) for (const part of line.split(`\n`)) this.buffer.push(part);
+            else this.buffer.push(line);
+        }
         this.scheduleFlush();
     }
 
@@ -836,47 +874,47 @@ export class LogOutputState {
         this.scheduleFlush();
     }
 
-    /** Flush buffered lines and/or progress to the FormControl.
+    /** Flush buffered lines and/or progress into `lines`.
      *  Progress is a "sticky-bottom" live-status line: while progress is still updating,
      *  it should always sit at the bottom of the log, with new content sliding in above it.
      *  Once progress stops updating, the last progress line freezes in place as historical
      *  content, and any further appended content (e.g. "Committed.") lands *below* it. */
+    private emitChanged() {
+        this.version++;
+        this.lines$.next(this.lines);
+    }
+
     flush() {
         this.flushScheduled = false;
-        let next = this.control.value;
-
+        const hasChanges = this.progressLine != null || this.buffer.length > 0;
         if (this.progressLine != null) {
-            // Progress is still updating: strip the old trailing progress line so we can
-            // append buffered content above the new progress and re-emit progress at the bottom.
-            if (this.lastFlushedProgressLine != null && next.endsWith(this.lastFlushedProgressLine)) {
-                next = next.slice(0, next.length - this.lastFlushedProgressLine.length);
-            }
-            if (this.buffer.length > 0) {
-                next += this.buffer.join(`\n`) + `\n`;
-                this.buffer.length = 0;
-            }
-            next += this.progressLine;
-            this.lastFlushedProgressLine = this.progressLine;
+            // Progress is still updating: strip the old trailing progress line so buffered
+            // content lands above the re-emitted progress at the bottom.
+            if (this.flushedProgressIndex != null) this.lines.length = this.flushedProgressIndex;
+            this.takeBuffer();
+            this.flushedProgressIndex = this.lines.length;
+            this.lines.push(this.progressLine);
             this.progressLine = null;
         } else if (this.buffer.length > 0) {
             // Progress is no longer updating: any prior progress line is now frozen
-            // historical content. Just append the buffer below it (with a newline if needed).
-            if (this.lastFlushedProgressLine != null && next.endsWith(this.lastFlushedProgressLine)) {
-                next += `\n`;
-            }
-            next += this.buffer.join(`\n`) + `\n`;
-            this.buffer.length = 0;
-            // The progress line is no longer at the very end, so don't try to strip it later.
-            this.lastFlushedProgressLine = null;
+            // historical content; the buffer just lands below it.
+            this.takeBuffer();
+            this.flushedProgressIndex = null;
         }
-
-        if (next !== this.control.value) this.control.patchValue(next);
+        if (this.lines.length > LOG_MAX_LINES) {
+            const removed = this.lines.length - LOG_MAX_LINES;
+            this.lines.splice(0, removed, LOG_TRIMMED_NOTICE);
+            if (this.flushedProgressIndex != null) this.flushedProgressIndex -= removed - 1;
+        }
+        if (hasChanges) this.emitChanged();
     }
 
-    private progressLine: string | null = null;
-    private lastFlushedProgressLine: string | null = null;
+    private takeBuffer() {
+        for (const line of this.buffer) this.lines.push(line);
+        this.buffer.length = 0;
+    }
 
-    /** Set a progress line that overwrites the control value on next flush. */
+    /** Set a progress line that overwrites the trailing progress on next flush. */
     setProgress(line: string) {
         this.progressLine = line;
         this.scheduleFlush();
@@ -886,16 +924,13 @@ export class LogOutputState {
      *  content, so subsequent appends will land below it rather than replacing it. Call this
      *  when progress updates have stopped (e.g. on completion or error). */
     freezeProgress() {
-        const final = this.progressLine ?? this.lastFlushedProgressLine;
-        this.progressLine = null;
-        if (final == null) return;
-        // Strip the old trailing progress text (if any) and re-emit the freshest as frozen content.
-        if (this.lastFlushedProgressLine != null && this.control.value.endsWith(this.lastFlushedProgressLine)) {
-            this.control.patchValue(this.control.value.slice(0, this.control.value.length - this.lastFlushedProgressLine.length) + final + `\n`);
-        } else {
-            this.control.patchValue(this.control.value + final + `\n`);
+        if (this.progressLine != null) {
+            if (this.flushedProgressIndex != null) this.lines.length = this.flushedProgressIndex;
+            this.lines.push(this.progressLine);
+            this.progressLine = null;
+            this.emitChanged();
         }
-        this.lastFlushedProgressLine = null;
+        this.flushedProgressIndex = null;
     }
 
     private scheduleFlush() {
@@ -929,10 +964,11 @@ export class LogOutputState {
                     const columnNames = Object.keys(answers[0].data);
                     if (columnNames.length) {
                         const variableColumnWidth = Math.max(...columnNames.map(s => s.length));
-                        answers.forEach((rowAnswer, idx) => {
-                            if (idx == 0) lines.push(this.lineDashSeparator(variableColumnWidth));
-                            lines.push(this.conceptRowDisplayString(rowAnswer.data, variableColumnWidth))
-                        })
+                        lines.push(this.lineDashSeparator(variableColumnWidth));
+                        const printed = this.pushAnswersWithinBudget(lines, answers, x => this.conceptRowDisplayString(x.data, variableColumnWidth));
+                        if (printed < answers.length) {
+                            lines.push(`… log output truncated: showing first ${printed} of ${answers.length} rows. View the full result in the table output.`);
+                        }
                     } else lines.push(`No columns to show.`);
                 }
 
@@ -946,7 +982,10 @@ export class LogOutputState {
                 else lines.push(`Printing documents...`);
 
                 const answers = res.ok.answers;
-                answers.forEach(x => lines.push(this.conceptDocumentDisplayString(x)));
+                const printed = this.pushAnswersWithinBudget(lines, answers, x => this.conceptDocumentDisplayString(x));
+                if (printed < answers.length) {
+                    lines.push(`… log output truncated: showing first ${printed} of ${answers.length} documents. View the full result in the table output.`);
+                }
 
                 lines.push(`Finished. Total documents: ${answers.length}`);
                 if (resultLimit && answers.length >= resultLimit) lines.push(`Results are limited to ${resultLimit} rows.`);
@@ -960,8 +999,24 @@ export class LogOutputState {
             lines.push(`Committed.`);
         }
 
-        this.appendLines(...lines);
+        this.appendLineArray(lines);
         this.appendBlankLine();
+    }
+
+    /** Print answers until LOG_RESULT_CHAR_BUDGET is spent (always at least
+     *  one); answers past the budget are never even stringified. Returns how
+     *  many were printed. */
+    private pushAnswersWithinBudget<T>(lines: string[], answers: T[], display: (answer: T) => string): number {
+        let budget = LOG_RESULT_CHAR_BUDGET;
+        let printed = 0;
+        for (const answer of answers) {
+            const text = display(answer);
+            budget -= text.length;
+            if (budget < 0 && printed > 0) break;
+            lines.push(text);
+            printed++;
+        }
+        return printed;
     }
 
     private conceptDocumentDisplayString(document: ConceptDocument): string {
@@ -986,7 +1041,11 @@ export class LogOutputState {
     }
 
     clear() {
-        this.control.patchValue(``);
+        this.lines.length = 0;
+        this.buffer.length = 0;
+        this.progressLine = null;
+        this.flushedProgressIndex = null;
+        this.emitChanged();
     }
 }
 

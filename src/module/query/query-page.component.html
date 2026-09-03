@@ -125,9 +125,12 @@
         @if ((driver.status$ | async) === "connected" && (driver.database$ | async) && state.currentTabRuns.length > 0) {
           <div class="answers-outer-container">
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'log'" [class.has-scrollbar]="logHasScrollbar">
-              <mat-form-field class="code-text-field">
-                <textarea #logTextarea class="answers-text-box" [formControl]="state.logOutput.control" (scroll)="onLogScroll()" readonly matInput></textarea>
-              </mat-form-field>
+              <cdk-virtual-scroll-viewport #logViewport itemSize="22" minBufferPx="440" maxBufferPx="880"
+                                           class="answers-text-box log-lines-viewport" (scroll)="onLogScroll()">
+                <!-- Bound as an Observable (no async pipe): emissions re-use the same array
+                     reference, which an unwrapped-value binding would never see as a change. -->
+                <div class="log-line" *cdkVirtualFor="let line of state.logOutput.lines$">{{ line }}</div>
+              </cdk-virtual-scroll-viewport>
               <div class="copy-overlay" [class.visible]="canExportLog()" (click)="sendLogToAi()" matTooltip="Send to AI" matTooltipPosition="below" [matTooltipShowDelay]="500">
                 <i [class]="sentLogToAi ? 'fal fa-check' : 'fal fa-wand-magic-sparkles'"></i>
               </div>
