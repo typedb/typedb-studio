@@ -1003,6 +1003,12 @@ export class TableOutputState {
     private _sortDirection: "" | "asc" | "desc" = "";
     private _columns: string[] = [];
     private _displayedColumns: string[] = [];
+    // Only the current page is emitted to the mat-table: rendering the full
+    // result set (up to 100k rows) creates a DOM so large that every reflow
+    // and change-detection pass afterwards takes seconds.
+    readonly pageSizeOptions = [100, 500, 1000];
+    pageIndex = 0;
+    pageSize = this.pageSizeOptions[0];
 
     constructor() {}
 
@@ -1018,21 +1024,33 @@ export class TableOutputState {
         return this._displayedColumns;
     }
 
+    get totalRows(): number {
+        return this._unsortedRows.length;
+    }
+
     handleMatSortChange(e: { active: string; direction: "" | "asc" | "desc" }) {
         this._sortActive = e.active || null;
         this._sortDirection = e.direction;
+        this.pageIndex = 0;
+        this.emitSortedView();
+    }
+
+    handlePageEvent(e: { pageIndex: number; pageSize: number }) {
+        this.pageIndex = e.pageIndex;
+        this.pageSize = e.pageSize;
         this.emitSortedView();
     }
 
     private emitSortedView() {
+        const start = this.pageIndex * this.pageSize;
         if (!this._sortActive || this._sortDirection === "") {
-            this._data$.next([...this._unsortedRows]);
+            this._data$.next(this._unsortedRows.slice(start, start + this.pageSize));
             return;
         }
         const col = this._sortActive;
         const dir = this._sortDirection === "desc" ? -1 : 1;
         const sorted = [...this._unsortedRows].sort((a, b) => compareCells(a[col], b[col]) * dir);
-        this._data$.next(sorted);
+        this._data$.next(sorted.slice(start, start + this.pageSize));
     }
 
     push(res: ApiResponse<QueryResponse>) {
