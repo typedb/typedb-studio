@@ -9,6 +9,7 @@ import { NodeHexagonProgram } from "./node-programs/hexagon";
 import { NodeRoundedRectangleProgram } from "./node-programs/rounded-rect";
 import { NodeEllipseProgram } from "./node-programs/ellipse";
 import { zoomScaledFontSize } from "./sigma-label-utils";
+import { runOutsideAngularZone } from "./zone-utils";
 
 /**
  * Best-effort heuristic to tell a physical mouse wheel apart from a trackpad
@@ -104,22 +105,30 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
 };
 
 export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: SigmaSettings, graph: MultiGraph): Sigma {
-    const renderer = new Sigma(graph, containerEl, sigmaSettings);
+    // Sigma binds document-level mousemove in its constructor — keep it out of Angular's zone.
+    const renderer = runOutsideAngularZone(() => new Sigma(graph, containerEl, sigmaSettings));
 
     // Defensive heal: sigma occasionally ends up with graphology nodes/edges
     // that have no entry in its internal data caches. When that happens the
     // stock `process()` throws on `data.x = attrs.x` (undefined data) on
     // every frame. We re-index any missing items before delegating to the
     // original implementation.
+    const SLOW_PHASE_LOG_MS = 100;
     const originalProcess = (renderer as any).process;
     (renderer as any).process = function () {
+        const startMs = performance.now();
         this.graph.forEachNode((node: string) => {
             if (!this.nodeDataCache[node]) this.addNode(node);
         });
         this.graph.forEachEdge((edge: string) => {
             if (!this.edgeDataCache[edge]) this.addEdge(edge);
         });
-        return originalProcess.call(this);
+        const result = originalProcess.call(this);
+        const processMs = performance.now() - startMs;
+        if (processMs > SLOW_PHASE_LOG_MS) {
+            console.info(`[graph-vis] sigma process: ${this.graph.order} nodes in ${Math.round(processMs)}ms`);
+        }
+        return result;
     };
 
     // Override renderLabels to sort by zIndex. Each drawLabel erases canvas
@@ -182,7 +191,7 @@ export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: Sig
     //    sigma's own handler.
     const ZOOM_FACTOR = 1.2;
     const container = renderer.getContainer();
-    container.addEventListener("wheel", (e: WheelEvent) => {
+    runOutsideAngularZone(() => container.addEventListener("wheel", (e: WheelEvent) => {
         if (e.ctrlKey) return;
         e.preventDefault();
         e.stopPropagation();
@@ -201,7 +210,7 @@ export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: Sig
         const dx = (e.deltaX * ratio) / width;
         const dy = (e.deltaY * ratio) / height;
         camera.setState({ x: camera.getState().x + dx, y: camera.getState().y - dy });
-    }, { capture: true });
+    }, { capture: true }));
 
     // Override renderHighlightedNodes to only draw hover on the canvas layer,
     // skipping the WebGL re-render which covers our canvas-drawn labels.
