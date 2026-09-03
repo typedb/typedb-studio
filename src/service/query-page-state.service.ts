@@ -1052,9 +1052,9 @@ export class TableOutputState {
                     const varNames = Object.keys(answers[0].data);
                     if (varNames.length) {
                         this.status = "ok";
-                        this.appendColumns(...varNames);
+                        this.appendColumns(varNames);
                         setTimeout(() => {
-                            this.appendConceptRows(...answers.map(x => x.data));
+                            this.appendConceptRows(answers.map(x => x.data));
                         });
                     } else this.status = "noColumns";
                 } else this.status = "noAnswers";
@@ -1075,9 +1075,9 @@ export class TableOutputState {
                     }
                     if (keys.length) {
                         this.status = "ok";
-                        this.appendColumns(...keys);
+                        this.appendColumns(keys);
                         setTimeout(() => {
-                            this.appendRows(...answers.map(answer => Object.fromEntries(Object.entries(answer).map(([k, v]) => [k, JSON.stringify(v)]))));
+                            this.appendRows(answers.map(answer => Object.fromEntries(Object.entries(answer).map(([k, v]) => [k, JSON.stringify(v)]))));
                         });
                     } else this.status = "noColumns";
                 } else this.status = "noAnswers";
@@ -1088,20 +1088,21 @@ export class TableOutputState {
         }
     }
 
-    private appendConceptRows(...rows: ConceptRow[]) {
+    private appendConceptRows(rows: ConceptRow[]) {
         const tableRows: TableRow[] = rows.map(x => Object.fromEntries(Object.entries(x).map(
             ([varName, concept]) => [varName, this.conceptDisplayString(concept)]
         )));
-        this.appendRows(...tableRows);
+        this.appendRows(tableRows);
     }
 
-    private appendColumns(...columns: string[]) {
+    private appendColumns(columns: string[]) {
         this.columns.push(...columns);
         this.displayedColumns.push(...columns);
     }
 
-    private appendRows(...rows: { [column: string]: string }[]) {
-        this._unsortedRows.push(...rows);
+    private appendRows(rows: { [column: string]: string }[]) {
+        // Loop, not push(...rows): spreading >65k rows as arguments overflows the call stack.
+        for (const row of rows) this._unsortedRows.push(row);
         this.emitSortedView();
     }
 
