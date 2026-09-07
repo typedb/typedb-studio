@@ -14,6 +14,11 @@ edition = "2021"
 name = "tauri_app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+# Strip debug symbols from release binaries: shrinks the bundles and avoids the
+# `unstripped-binary-or-object` lintian error on the .deb.
+[profile.release]
+strip = true
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 

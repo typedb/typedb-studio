@@ -37,9 +37,11 @@ genrule(
 
 genrule(
     name = "native-artifact-linux-arm64-deb",
+    srcs = ["scripts/fix-deb-package-name.sh"],
     outs = ["typedb-studio-arm64.deb"],
     cmd = """
         cp src-tauri/target/release/bundle/deb/*.deb "$(OUTS)"
+        bash "$(location scripts/fix-deb-package-name.sh)" "$(OUTS)"
     """,
     tags = ["local"],
     target_compatible_with = constraint_linux_arm64,
@@ -47,9 +49,11 @@ genrule(
 
 genrule(
     name = "native-artifact-linux-x86_64-deb",
+    srcs = ["scripts/fix-deb-package-name.sh"],
     outs = ["typedb-studio-amd64.deb"],
     cmd = """
         cp src-tauri/target/release/bundle/deb/*.deb "$(OUTS)"
+        bash "$(location scripts/fix-deb-package-name.sh)" "$(OUTS)"
     """,
     tags = ["local"],
     target_compatible_with = constraint_linux_x86_64,

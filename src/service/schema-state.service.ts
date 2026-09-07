@@ -439,6 +439,10 @@ export class VisualiserState {
     constructor(private styleService: GraphStyleService) {
         this.canvasEl$.subscribe(el => {
             if (el && this.savedState && this.database) {
+                // The canvas can re-emit while a visualiser is still live (host
+                // remounts); destroy it first or its document-level listeners
+                // leak for the rest of the session.
+                this.destroy();
                 this._status = "ok";
                 const graph = newGraph();
                 const sigma = createSigmaRenderer(el, defaultSigmaSettings as any, graph);
