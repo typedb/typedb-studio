@@ -67,9 +67,9 @@ SET AZURE_CLIENT_SECRET=%AZURE_INFRA_CLIENT_SECRET%
 REM Diagnostics: where the signing prerequisites actually landed, in case the installer
 REM didn't use the layout the lookup below (or artifact-signing-cli itself) assumes.
 ECHO --- signtool.exe found under Program Files: ---
-dir /s /b "C:\Program Files\signtool.exe" "C:\Program Files (x86)\signtool.exe" 2>nul
+dir /s /b "C:\Program Files\signtool.exe" "C:\Program Files (x86)\signtool.exe" 2>nul || VER>nul
 ECHO --- Azure.CodeSigning.Dlib.dll found under Program Files: ---
-dir /s /b "C:\Program Files\Azure.CodeSigning.Dlib.dll" "C:\Program Files (x86)\Azure.CodeSigning.Dlib.dll" 2>nul
+dir /s /b "C:\Program Files\Azure.CodeSigning.Dlib.dll" "C:\Program Files (x86)\Azure.CodeSigning.Dlib.dll" 2>nul || VER>nul
 ECHO --- end listing ---
 
 REM artifact-signing-cli's default SignTool.exe path guess is a hardcoded SDK version, which
@@ -86,8 +86,10 @@ IF "%SIGNTOOL_PATH%"=="" (
 ECHO Using SignTool at %SIGNTOOL_PATH%
 
 REM CI jobs may request a throwaway build version (e.g. snapshot testing) via STUDIO_VERSION
-IF NOT "%STUDIO_VERSION%"=="" CALL pnpm set-version %STUDIO_VERSION%
-IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
+IF NOT "%STUDIO_VERSION%"=="" (
+  CALL pnpm set-version %STUDIO_VERSION%
+  IF ERRORLEVEL 1 EXIT /b 1
+)
 
 REM compile MSI installer using tauri
 CALL pnpm build
