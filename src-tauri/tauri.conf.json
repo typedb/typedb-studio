@@ -47,6 +47,7 @@
     "linux": {
       "deb": {
         "section": "database",
+        "desktopTemplate": "main.desktop",
         "files": {
           "/usr/share/doc/typedb-studio/copyright": "../LICENSE"
         }
