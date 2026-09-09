@@ -20,7 +20,7 @@ import { GraphStyleService, buildBackgroundCSS } from "../../../service/graph-st
 import { RunOutputState } from "../../../service/query-page-state.service";
 import { SelectionMode } from "../../../service/graph-view-state.service";
 
-export type GraphCanvasStatus = "ok" | "running" | "noQueryAnswers" | "noInstancesFound" | "error" | "graphlessQueryType" | "answerOutputDisabled" | "multiQuery" | "emptySchema" | "needsTransaction";
+export type GraphCanvasStatus = "ok" | "running" | "noQueryAnswers" | "noInstancesFound" | "error" | "graphlessQueryType" | "answerOutputDisabled" | "multiQuery" | "emptySchema" | "needsTransaction" | "webglUnavailable";
 export type GraphCanvasStatusAction = "viewLog" | "openTransaction" | "switchToAuto";
 
 @Component({

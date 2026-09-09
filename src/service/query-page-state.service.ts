@@ -9,7 +9,7 @@ import { FormControl } from "@angular/forms";
 import { BehaviorSubject, combineLatest, map, NEVER, Observable, pairwise, shareReplay, startWith, Subject, switchMap, takeUntil } from "rxjs";
 import { DriverAction, queryRunActionOf } from "../concept/action";
 import { GraphVisualiser } from "../framework/graph-visualiser/engine";
-import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/engine/sigma-settings";
+import { createSigmaRenderer, defaultSigmaSettings, WebGLUnavailableError } from "../framework/graph-visualiser/engine/sigma-settings";
 import { newGraph, Graph } from "../framework/graph-visualiser/engine/graph";
 import { Layouts } from "../framework/graph-visualiser/engine/layout";
 import { detectOS } from "../framework/util/os";
@@ -710,9 +710,15 @@ function outputQueryResponseWithAnswers(run: RunOutputState, res: ApiResponse<Qu
     try {
         run.graph.push(res);
     } catch (err) {
-        console.error("[Graph Output Error]", err);
-        run.graph.status = "error";
-        deps.snackbar.errorPersistent(`Failed to render graph visualization: ${err}`);
+        if (err instanceof WebGLUnavailableError) {
+            // Not the user's query's fault and only relevant if they open the
+            // graph view — shown as the graph pane's status, not a snackbar.
+            run.graph.status = "webglUnavailable";
+        } else {
+            console.error("[Graph Output Error]", err);
+            run.graph.status = "error";
+            deps.snackbar.errorPersistent(`Failed to render graph visualization: ${err instanceof Error ? err.message : err}`);
+        }
     }
     run.raw.push(JSON.stringify(res, null, 2));
 }
@@ -1229,7 +1235,7 @@ function compareCells(a: string | undefined, b: string | undefined): number {
     return a.localeCompare(b);
 }
 
-export type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noQueryAnswers" | "noInstancesFound" | "error" | "multiQuery" | "needsTransaction";
+export type GraphOutputStatus = "ok" | "running" | "graphlessQueryType" | "answerOutputDisabled" | "noQueryAnswers" | "noInstancesFound" | "error" | "multiQuery" | "needsTransaction" | "webglUnavailable";
 
 export class GraphOutputState {
 

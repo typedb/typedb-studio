@@ -104,7 +104,26 @@ export const defaultSigmaSettings: Partial<SigmaSettings> = {
     },
 };
 
+/** Thrown when no WebGL context can be created — callers surface this as a
+ *  dedicated graph-pane status rather than an error popup. */
+export class WebGLUnavailableError extends Error {
+    constructor() {
+        super("WebGL is unavailable — it may not be supported, "
+            + "hardware acceleration may be disabled, or too many visualisations are open.");
+    }
+}
+
+/** Sigma needs WebGL; without this probe a missing context surfaces as a
+ *  cryptic `null.blendFunc` TypeError from inside sigma. */
+function assertWebGLAvailable(): void {
+    const probe = document.createElement("canvas");
+    const gl = probe.getContext("webgl2") ?? probe.getContext("webgl") ?? probe.getContext("experimental-webgl");
+    if (!gl) throw new WebGLUnavailableError();
+    (gl as WebGLRenderingContext).getExtension("WEBGL_lose_context")?.loseContext();
+}
+
 export function createSigmaRenderer(containerEl: HTMLElement, sigmaSettings: SigmaSettings, graph: MultiGraph): Sigma {
+    assertWebGLAvailable();
     // Sigma binds document-level mousemove in its constructor — keep it out of Angular's zone.
     const renderer = runOutsideAngularZone(() => new Sigma(graph, containerEl, sigmaSettings));
 
