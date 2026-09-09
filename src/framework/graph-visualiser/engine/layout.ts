@@ -9,7 +9,14 @@ import forceAtlas2, {
 } from "graphology-layout-forceatlas2";
 import FA2LayoutSupervisor from "graphology-layout-forceatlas2/worker";
 import noverlap, {NoverlapLayoutParameters} from "graphology-layout-noverlap";
-import { forceSimulation, forceLink, forceManyBody, forceCollide, forceCenter, forceX, forceY, SimulationNodeDatum, SimulationLinkDatum } from "d3-force";
+import { forceSimulation, forceLink, forceManyBody, forceCollide, forceCenter, forceX, forceY, SimulationLinkDatum } from "d3-force";
+import { runOutsideAngularZone } from "./zone-utils";
+import {
+    buildCollideSimulation, buildForceSimulation, DRAG_ALPHA_TARGET, LayoutWorkerPositionsMsg, LayoutWorkerRequest,
+    LayoutWorkerResponse, SETTLE_MAX_VELOCITY, SETTLE_QUIET_TICKS, SimNode, simSyncIntervalMs,
+} from "./d3-force-common";
+
+type D3Node = SimNode;
 
 export class Layouts {
 
@@ -68,7 +75,7 @@ export class Layouts {
     }
 
     static createD3ForceSupervisor(graph: MultiGraph): LayoutWrapper {
-        return new D3ForceSupervisorWrapper(graph);
+        return new WorkerD3ForceSupervisorWrapper(graph);
     }
 
     static createD3ForceStatic(graph: MultiGraph): LayoutWrapper {
@@ -123,39 +130,17 @@ export type LayoutDensity = "spacious" | "default" | "compact";
  *  gravity; "compact" is 4× the base and "spacious" is the default / 3. */
 export const DEFAULT_GRAVITY_MULTIPLIER = 1.5;
 
-/**
- * Early-stop thresholds for the force sim. d3 keeps ticking until alpha decays
- * to alphaMin, but alpha decays exponentially — so the run has a long tail
- * (several seconds) where alpha is still above alphaMin yet every node is
- * effectively stationary. Each of those tail ticks re-renders the whole graph
- * (every label repainted), which is pure waste. Instead we stop once the
- * fastest-moving node has been below SETTLE_MAX_VELOCITY (graph units / tick,
- * i.e. its per-tick displacement) for SETTLE_QUIET_TICKS consecutive ticks —
- * "nobody is visibly moving any more". The consecutive-tick guard avoids
- * stopping during a brief lull early in the run when forces momentarily cancel.
- */
-const SETTLE_MAX_VELOCITY = 0.3;
-const SETTLE_QUIET_TICKS = 5;
+// Settle/drag/display-sync tuning shared with the layout worker lives in d3-force-common.ts.
 
-/**
- * Display refresh cap for a running sim. Writing node x/y into the graph is what
- * makes Sigma re-index and repaint the *entire* graph (a pan, by contrast, only
- * re-renders with the existing index) — so doing it every animation frame makes
- * the sim try to fully repaint 60×/s, which a large graph can't sustain. The
- * physics still ticks every frame; we just push positions to the display at most
- * this often, so the sim renders at a steady, affordable rate instead of
- * saturating the main thread. Lower it further if very large graphs still jank.
- */
-const SIM_DISPLAY_FPS = 30;
-const SIM_MIN_SYNC_INTERVAL_MS = 1000 / SIM_DISPLAY_FPS;
+/** A physics tick that blocks longer than this yields a proportional number of
+ *  frames (capped) before the next tick, so input and paint get through.
+ *  Main-thread (fallback) wrapper only — the worker has no UI to starve. */
+const SIM_TICK_BUDGET_MS = 8;
+const SIM_MAX_YIELD_FRAMES = 5;
 
-/**
- * Alpha target the (collide-only) drag simulation is held at while a node is
- * being dragged — keeps it warm/ticking so the fixed, cursor-following node
- * resolves overlaps with the nodes it bumps into. On drop we set the target
- * back to 0 so it cools and settles.
- */
-const DRAG_ALPHA_TARGET = 0.3;
+/** How long to wait for the layout worker's "ready" before falling back to the
+ *  main-thread wrapper (worker script load can fail silently in some webviews). */
+const WORKER_READY_TIMEOUT_MS = 3000;
 export const DENSITY_GRAVITY: Record<LayoutDensity, number> = {
     spacious: DEFAULT_GRAVITY_MULTIPLIER / 3,
     default: DEFAULT_GRAVITY_MULTIPLIER,
@@ -223,6 +208,9 @@ export interface LayoutWrapper {
      * don't track per-node settling state.
      */
     forgetSettled(): void;
+
+    /** Release resources beyond stop() (e.g. terminate a layout worker). */
+    destroy?(): void;
 }
 
 type LayoutSupervisor = ForceSupervisor | FA2LayoutSupervisor;
@@ -285,9 +273,64 @@ class LayoutSupervisorWrapper implements LayoutWrapper {
     setDensity(_mode: LayoutDensity): void {}
 }
 
-interface D3Node extends SimulationNodeDatum {
-    id: string;
-    radius: number;
+/**
+ * For each node not yet seen by a previous simulation, look at its graph
+ * neighbors that *have* settled positions and seed this node at their centroid
+ * (with a small jitter to avoid coincident points). New nodes with no settled
+ * neighbors keep whatever initial position the graph builder gave them.
+ */
+function prePositionNewNodes(graph: MultiGraph, settledNodes: Set<string>): void {
+    if (settledNodes.size === 0) return;
+    const jitter = 10;
+    graph.nodes().forEach(key => {
+        if (settledNodes.has(key)) return;
+        let sumX = 0, sumY = 0, count = 0;
+        for (const neighborKey of graph.neighbors(key)) {
+            if (!settledNodes.has(neighborKey)) continue;
+            const attrs = graph.getNodeAttributes(neighborKey);
+            if (attrs["x"] == null || attrs["y"] == null) continue;
+            sumX += attrs["x"];
+            sumY += attrs["y"];
+            count++;
+        }
+        if (count === 0) return; // no anchor; leave the random position alone
+        const cx = sumX / count;
+        const cy = sumY / count;
+        graph.setNodeAttribute(key, "x", cx + (Math.random() - 0.5) * jitter);
+        graph.setNodeAttribute(key, "y", cy + (Math.random() - 0.5) * jitter);
+    });
+}
+
+/** Snapshot graph nodes as plain sim nodes. Pins are re-applied as fx/fy so
+ *  dropped nodes stay anchored; `pinPositions` additionally snaps x/y to the
+ *  pin (full runs do, the drag sim keeps current positions). */
+function collectSimNodes(graph: MultiGraph, pinned: Map<string, { x: number; y: number }>, pinPositions: boolean): SimNode[] {
+    const nodes: SimNode[] = graph.nodes().map(key => {
+        const attrs = graph.getNodeAttributes(key);
+        return {
+            id: key,
+            x: attrs["x"],
+            y: attrs["y"],
+            radius: Math.max(attrs["width"] ?? attrs["size"] ?? 10, attrs["height"] ?? attrs["size"] ?? 10),
+        };
+    });
+    for (const node of nodes) {
+        const pin = pinned.get(node.id);
+        if (pin) {
+            if (pinPositions) { node.x = pin.x; node.y = pin.y; }
+            node.fx = pin.x;
+            node.fy = pin.y;
+        }
+    }
+    return nodes;
+}
+
+function collectSimLinks(graph: MultiGraph, nodes: SimNode[]): { source: number; target: number }[] {
+    const nodeIndex = new Map(nodes.map((n, i) => [n.id, i]));
+    return graph.edges().map(edge => ({
+        source: nodeIndex.get(graph.source(edge))!,
+        target: nodeIndex.get(graph.target(edge))!,
+    }));
 }
 
 class D3ForceSupervisorWrapper implements LayoutWrapper {
@@ -329,35 +372,6 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
         this.graph = graph;
     }
 
-    /**
-     * For each node not yet seen by a previous simulation, look at its
-     * graph neighbors that *have* settled positions and seed this node at
-     * their centroid (with a small jitter to avoid coincident points). New
-     * nodes with no settled neighbors keep whatever initial position the
-     * graph builder gave them.
-     */
-    private prePositionNewNodes(): void {
-        if (this.settledNodes.size === 0) return;
-        const jitter = 10;
-        this.graph.nodes().forEach(key => {
-            if (this.settledNodes.has(key)) return;
-            let sumX = 0, sumY = 0, count = 0;
-            for (const neighborKey of this.graph.neighbors(key)) {
-                if (!this.settledNodes.has(neighborKey)) continue;
-                const attrs = this.graph.getNodeAttributes(neighborKey);
-                if (attrs["x"] == null || attrs["y"] == null) continue;
-                sumX += attrs["x"];
-                sumY += attrs["y"];
-                count++;
-            }
-            if (count === 0) return; // no anchor; leave the random position alone
-            const cx = sumX / count;
-            const cy = sumY / count;
-            this.graph.setNodeAttribute(key, "x", cx + (Math.random() - 0.5) * jitter);
-            this.graph.setNodeAttribute(key, "y", cy + (Math.random() - 0.5) * jitter);
-        });
-    }
-
     forgetSettled(): void {
         this.settledNodes.clear();
         // A fresh layout (Redraw / Reset changes) releases user pins too, so the
@@ -369,79 +383,14 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
     }
 
     private buildSimulation(opts?: LayoutStartOptions): ReturnType<typeof forceSimulation<D3Node>> {
-        this.prePositionNewNodes();
-        const nodes: D3Node[] = this.graph.nodes().map(key => {
-            const attrs = this.graph.getNodeAttributes(key);
-            return {
-                id: key,
-                x: attrs["x"],
-                y: attrs["y"],
-                radius: Math.max(attrs["width"] ?? attrs["size"] ?? 10, attrs["height"] ?? attrs["size"] ?? 10),
-            };
+        prePositionNewNodes(this.graph, this.settledNodes);
+        const nodes = collectSimNodes(this.graph, this.pinned, true);
+        const links = collectSimLinks(this.graph, nodes);
+        return buildForceSimulation(nodes, links, {
+            initialAlpha: opts?.initialAlpha,
+            alphaDecay: opts?.alphaDecay,
+            gravityMultiplier: this.gravityMultiplier * (opts?.gravityMultiplier ?? 1),
         });
-        // Re-apply user pins so dropped nodes stay anchored across rebuilds.
-        for (const node of nodes) {
-            const pin = this.pinned.get(node.id);
-            if (pin) { node.x = pin.x; node.y = pin.y; node.fx = pin.x; node.fy = pin.y; }
-        }
-        const nodeIndex = new Map(nodes.map((n, i) => [n.id, i]));
-        const links: SimulationLinkDatum<D3Node>[] = this.graph.edges().map(edge => ({
-            source: nodeIndex.get(this.graph.source(edge))!,
-            target: nodeIndex.get(this.graph.target(edge))!,
-        }));
-
-        const vertexCount = nodes.length;
-        const edgeCount = links.length;
-        const maxRadius = nodes.reduce((max, n) => Math.max(max, n.radius), 0);
-        const baseCharge = -1500 * (1 + Math.log(1 + edgeCount / (vertexCount + 1)));
-
-        // Compute per-node degree so hubs (cluster centers) repel harder
-        const degree: number[] = new Array(nodes.length).fill(0);
-        links.forEach(l => {
-            degree[l.source as number]++;
-            degree[l.target as number]++;
-        });
-
-        const n = nodes.length;
-        const chargeStrength = -Math.max(50, Math.min(300, n * 2));
-
-        // Detect connected components (islands)
-        const componentOf = new Int32Array(nodes.length).fill(-1);
-        const adj: number[][] = nodes.map(() => []);
-        links.forEach(l => {
-            const s = l.source as number, t = l.target as number;
-            adj[s].push(t);
-            adj[t].push(s);
-        });
-        let componentCount = 0;
-        for (let i = 0; i < nodes.length; i++) {
-            if (componentOf[i] >= 0) continue;
-            const id = componentCount++;
-            const stack = [i];
-            while (stack.length > 0) {
-                const cur = stack.pop()!;
-                if (componentOf[cur] >= 0) continue;
-                componentOf[cur] = id;
-                for (const nb of adj[cur]) {
-                    if (componentOf[nb] < 0) stack.push(nb);
-                }
-            }
-        }
-
-        const gravityStrength = (componentCount > 1 ? 0.06 : 0.02) * this.gravityMultiplier * (opts?.gravityMultiplier ?? 1);
-
-        return forceSimulation(nodes)
-            .force("charge", forceManyBody()
-                .strength(baseCharge))
-                // .distanceMax(maxRadius * 20))
-            .force("link", forceLink(links).distance(maxRadius).strength(1))
-            .force("collide", forceCollide<D3Node>().radius(maxRadius))
-            .force("center", forceCenter(0, 0))
-            .force("x", forceX(0).strength(gravityStrength))
-            .force("y", forceY(0).strength(gravityStrength))
-            .alpha(opts?.initialAlpha ?? 1.0)
-            .alphaDecay(opts?.alphaDecay ?? 0.01)
-            .stop();
     }
 
     start(opts?: LayoutStartOptions) {
@@ -456,8 +405,18 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
     private runLoop(sim: ReturnType<typeof forceSimulation<D3Node>>) {
         let quietTicks = 0;
         let lastSyncMs = -Infinity;
+        let yieldFrames = 0;
+        const simNodeById = new Map(sim.nodes().map(n => [n.id, n]));
+        const syncIntervalMs = simSyncIntervalMs(sim.nodes().length);
         const tick = () => {
+            if (yieldFrames > 0) {
+                yieldFrames--;
+                this.animationFrame = requestAnimationFrame(tick);
+                return;
+            }
+            const tickStartMs = performance.now();
             sim.tick();
+            yieldFrames = Math.min(SIM_MAX_YIELD_FRAMES, Math.floor((performance.now() - tickStartMs) / SIM_TICK_BUDGET_MS));
             // Per tick (cheap, no graph writes): find the largest displacement.
             // d3 sets node.vx/vy to the velocity it just applied, so |v| is how
             // far the node moved this tick — used for the early-settle check.
@@ -481,12 +440,14 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
             // every frame; the display only updates at SIM_DISPLAY_FPS. Always
             // sync the final frame so the graph lands on the true end positions.
             const now = performance.now();
-            if (settled || now - lastSyncMs >= SIM_MIN_SYNC_INTERVAL_MS) {
+            if (settled || now - lastSyncMs >= syncIntervalMs) {
                 lastSyncMs = now;
-                for (const node of nodes) {
-                    this.graph.setNodeAttribute(node.id, "x", node.x!);
-                    this.graph.setNodeAttribute(node.id, "y", node.y!);
-                }
+                // One batched write: a single graphology event (and sigma refresh) instead of two per node.
+                this.graph.updateEachNodeAttributes((id, attrs) => {
+                    const simNode = simNodeById.get(id);
+                    if (simNode) { attrs["x"] = simNode.x!; attrs["y"] = simNode.y!; }
+                    return attrs;
+                }, { attributes: ["x", "y"] });
                 this.onTick?.();
             }
 
@@ -501,7 +462,8 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
                 this.graph.nodes().forEach(key => this.settledNodes.add(key));
             }
         };
-        this.animationFrame = requestAnimationFrame(tick);
+        // Outside Angular's zone, or every frame runs app-wide change detection.
+        this.animationFrame = runOutsideAngularZone(() => requestAnimationFrame(tick));
     }
 
     /**
@@ -514,23 +476,7 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
      * being pushed too.
      */
     private buildDragSimulation(): ReturnType<typeof forceSimulation<D3Node>> {
-        const nodes: D3Node[] = this.graph.nodes().map(key => {
-            const attrs = this.graph.getNodeAttributes(key);
-            return {
-                id: key,
-                x: attrs["x"],
-                y: attrs["y"],
-                radius: Math.max(attrs["width"] ?? attrs["size"] ?? 10, attrs["height"] ?? attrs["size"] ?? 10),
-            };
-        });
-        for (const node of nodes) {
-            const pin = this.pinned.get(node.id);
-            if (pin) { node.fx = pin.x; node.fy = pin.y; }
-        }
-        return forceSimulation(nodes)
-            .force("collide", forceCollide<D3Node>().radius(d => d.radius))
-            .alphaDecay(0.05)
-            .stop();
+        return buildCollideSimulation(collectSimNodes(this.graph, this.pinned, false));
     }
 
     startDrag() {
@@ -607,6 +553,335 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
             d3Node.fx = x;
             d3Node.fy = y;
         }
+    }
+}
+
+/** The builder rewrites `new URL(...)` to the emitted worker chunk's path only
+ *  inside a literal `new Worker(new URL(...))` expression — so capture it via a
+ *  stubbed constructor without spawning anything. */
+function resolveLayoutWorkerScriptUrl(): URL {
+    const g = globalThis as any;
+    const nativeWorker = g.Worker;
+    let captured: URL | null = null;
+    g.Worker = class { constructor(url: URL) { captured = url; } };
+    try {
+        new Worker(new URL("./d3-force-layout.worker", import.meta.url), { type: "module" });
+    } finally {
+        g.Worker = nativeWorker;
+    }
+    return captured!;
+}
+
+let layoutWorkerScript$: Promise<{ blobUrl: string; type: WorkerType }> | null = null;
+
+/** WKWebView (Tauri macOS) doesn't route worker script loads through the
+ *  custom-protocol handler, so `new Worker(chunkUrl)` hangs silently there. A
+ *  main-thread fetch IS intercepted, and a blob: URL then loads in any engine
+ *  (same approach as graphology's layout supervisors). Fetched once per session. */
+function layoutWorkerScript(): Promise<{ blobUrl: string; type: WorkerType }> {
+    if (!layoutWorkerScript$) {
+        const scriptUrl = resolveLayoutWorkerScriptUrl();
+        layoutWorkerScript$ = fetch(scriptUrl).then(resp => {
+            if (!resp.ok) throw new Error(`fetch of ${scriptUrl} failed: HTTP ${resp.status}`);
+            return resp.text();
+        }).then(code => ({
+            blobUrl: URL.createObjectURL(new Blob([code], { type: "text/javascript" })),
+            // The chunk is emitted self-contained; load as classic unless it actually contains module syntax.
+            type: (/^\s*(?:import|export)\b/m.test(code) ? "module" : "classic") as WorkerType,
+        }));
+    }
+    return layoutWorkerScript$;
+}
+
+/** Boot strategy learned this session: "direct" (chunk URL — the only path the
+ *  dev server supports), "blob" (fetched + blob-ified, for webviews that don't
+ *  route worker script loads through their protocol handler), or "none" (both
+ *  failed — go straight to the main-thread fallback, no waiting). */
+type LayoutWorkerBootMode = "direct" | "blob" | "none";
+let layoutWorkerBootMode: LayoutWorkerBootMode | null = null;
+
+function createDirectLayoutWorker(): Worker {
+    return new Worker(new URL("./d3-force-layout.worker", import.meta.url), { type: "module" });
+}
+
+/** Runs the d3-force simulation in a web worker so large layouts never block
+ *  the main thread; positions arrive as transferable Float32Arrays and are
+ *  applied in one batched graph write. Falls back to the in-thread
+ *  D3ForceSupervisorWrapper if the worker fails to boot. */
+class WorkerD3ForceSupervisorWrapper implements LayoutWrapper {
+    onTick: (() => void) | null = null;
+    density: LayoutDensity = "default";
+
+    private graph: MultiGraph;
+    private worker: Worker | null = null;
+    private fallback: D3ForceSupervisorWrapper | null = null;
+    private readyTimeout: ReturnType<typeof setTimeout> | null = null;
+    private settledNodes: Set<string> = new Set();
+    private pinned: Map<string, { x: number; y: number }> = new Map();
+    private gravityMultiplier = DEFAULT_GRAVITY_MULTIPLIER;
+    private _isRunning = false;
+    private runId = 0;
+    /** node id → index into the active run's position buffer. */
+    private runNodeIndex: Map<string, number> = new Map();
+    private destroyed = false;
+    /** Commands issued before the (async) worker boot completes. */
+    private queuedWhileBooting: LayoutWorkerRequest[] = [];
+    /** Latest unapplied positions message — newer messages overwrite older ones
+     *  so a slow main thread renders the freshest state instead of a backlog. */
+    private pendingPositions: LayoutWorkerPositionsMsg | null = null;
+    private applyScheduled = false;
+    private nextApplyEarliestMs = 0;
+    private runSyncIntervalMs = simSyncIntervalMs(0);
+
+    /** Which boot strategy this instance's live worker used. */
+    private bootMode: "direct" | "blob" | null = null;
+
+    constructor(graph: MultiGraph) {
+        this.graph = graph;
+        // Booted (and handlers bound) outside Angular's zone so position
+        // messages don't trigger app-wide change detection.
+        runOutsideAngularZone(() => {
+            if (layoutWorkerBootMode === "none") this.activateFallback();
+            else if (layoutWorkerBootMode === "blob") this.bootBlob();
+            else this.bootDirect();
+        });
+    }
+
+    private bootDirect() {
+        try {
+            this.adoptWorker(createDirectLayoutWorker(), "direct");
+        } catch (err) {
+            console.warn("[graph-vis] layout worker (direct) construction failed:", err);
+            this.workerFailed("direct");
+        }
+    }
+
+    private bootBlob() {
+        layoutWorkerScript().then(script => {
+            if (this.destroyed || this.fallback) return;
+            this.adoptWorker(new Worker(script.blobUrl, { type: script.type }), "blob");
+        }).catch(err => {
+            console.warn("[graph-vis] layout worker (blob) boot failed:", err);
+            this.workerFailed("blob");
+        });
+    }
+
+    private adoptWorker(worker: Worker, mode: "direct" | "blob") {
+        this.bootMode = mode;
+        worker.onmessage = (e: MessageEvent<LayoutWorkerResponse>) => this.onWorkerMessage(e.data);
+        worker.onerror = e => {
+            console.warn(`[graph-vis] layout worker (${mode}) error: ${e.message || e.type} (${e.filename || "?"}:${e.lineno ?? "?"})`);
+            this.workerFailed(mode);
+        };
+        this.worker = worker;
+        this.readyTimeout = setTimeout(() => {
+            console.warn(`[graph-vis] layout worker (${mode}) ready-handshake timed out after ${WORKER_READY_TIMEOUT_MS}ms`);
+            this.workerFailed(mode);
+        }, WORKER_READY_TIMEOUT_MS);
+        // Queued commands are flushed on "ready", so a failed boot can replay
+        // them into the next strategy instead of losing them.
+    }
+
+    /** Escalate: direct → blob → main-thread fallback. */
+    private workerFailed(mode: "direct" | "blob") {
+        this.clearReadyTimeout();
+        this.worker?.terminate();
+        this.worker = null;
+        this.bootMode = null;
+        if (this.destroyed || this.fallback) return;
+        if (mode === "direct") {
+            this.bootBlob();
+        } else {
+            layoutWorkerBootMode = "none";
+            this.activateFallback();
+        }
+    }
+
+    get isRunning(): boolean {
+        return this.fallback ? this.fallback.isRunning : this._isRunning;
+    }
+
+    private clearReadyTimeout() {
+        if (this.readyTimeout != null) {
+            clearTimeout(this.readyTimeout);
+            this.readyTimeout = null;
+        }
+    }
+
+    private activateFallback() {
+        if (this.fallback || this.destroyed) return;
+        console.warn("[graph-vis] layout worker unavailable — simulating on the main thread");
+        this.clearReadyTimeout();
+        this.worker?.terminate();
+        this.worker = null;
+        this.queuedWhileBooting = [];
+        const fallback = new D3ForceSupervisorWrapper(this.graph);
+        fallback.onTick = () => this.onTick?.();
+        for (const [key, pos] of this.pinned) fallback.pinNode(key, pos.x, pos.y);
+        if (this.density !== "default") fallback.setDensity(this.density);
+        this.fallback = fallback;
+        if (this._isRunning) fallback.start();
+    }
+
+    private onWorkerMessage(msg: LayoutWorkerResponse) {
+        if (this.fallback) return;
+        if (msg.type === "ready") {
+            this.clearReadyTimeout();
+            if (layoutWorkerBootMode !== this.bootMode && this.bootMode) {
+                layoutWorkerBootMode = this.bootMode;
+                console.info(`[graph-vis] layout worker booted (${this.bootMode})`);
+            }
+            if (this.worker) {
+                for (const queued of this.queuedWhileBooting) this.worker.postMessage(queued);
+                this.queuedWhileBooting = [];
+            }
+        } else if (msg.type === "positions" && msg.runId === this.runId) {
+            this.pendingPositions = msg;
+            this.scheduleApply();
+        }
+    }
+
+    /** Apply pending positions at a self-limiting pace: after each application
+     *  (a full-graph write + sigma repaint), wait at least 1.5× as long as it
+     *  took — so rendering can't saturate the main thread however large the
+     *  graph or slow the machine. The worker posts freely; stale frames are
+     *  simply skipped. */
+    private scheduleApply() {
+        if (this.applyScheduled || !this.pendingPositions) return;
+        this.applyScheduled = true;
+        const tryApply = () => {
+            if (this.destroyed || this.fallback) { this.applyScheduled = false; return; }
+            if (performance.now() < this.nextApplyEarliestMs) {
+                requestAnimationFrame(tryApply);
+                return;
+            }
+            this.applyScheduled = false;
+            const pending = this.pendingPositions;
+            this.pendingPositions = null;
+            if (!pending || pending.runId !== this.runId) return;
+            const startMs = performance.now();
+            this.applyPositions(pending.positions, pending.settled);
+            const applyMs = performance.now() - startMs;
+            if (applyMs > 100) console.info(`[graph-vis] position sync: ${Math.round(applyMs)}ms`);
+            this.nextApplyEarliestMs = performance.now() + Math.max(this.runSyncIntervalMs, applyMs * 1.5);
+        };
+        requestAnimationFrame(tryApply);
+    }
+
+    private applyPositions(positions: Float32Array, settled: boolean) {
+        const index = this.runNodeIndex;
+        this.graph.updateEachNodeAttributes((id, attrs) => {
+            const i = index.get(id);
+            if (i != null) {
+                attrs["x"] = positions[2 * i];
+                attrs["y"] = positions[2 * i + 1];
+            }
+            return attrs;
+        }, { attributes: ["x", "y"] });
+        this.onTick?.();
+        if (settled) {
+            this._isRunning = false;
+            this.graph.nodes().forEach(key => this.settledNodes.add(key));
+        }
+    }
+
+    private post(msg: LayoutWorkerRequest) {
+        if (this.worker) this.worker.postMessage(msg);
+        else this.queuedWhileBooting.push(msg);
+    }
+
+    private beginRun(nodes: SimNode[]) {
+        this.runId++;
+        this.runNodeIndex = new Map(nodes.map((n, i) => [n.id, i]));
+        this.runSyncIntervalMs = simSyncIntervalMs(nodes.length);
+        this.pendingPositions = null;
+        this._isRunning = true;
+    }
+
+    start(opts?: LayoutStartOptions) {
+        if (this.fallback) return this.fallback.start(opts);
+        prePositionNewNodes(this.graph, this.settledNodes);
+        const nodes = collectSimNodes(this.graph, this.pinned, true);
+        const links = collectSimLinks(this.graph, nodes);
+        this.beginRun(nodes);
+        this.post({
+            type: "run", runId: this.runId, nodes, links,
+            opts: {
+                initialAlpha: opts?.initialAlpha,
+                alphaDecay: opts?.alphaDecay,
+                gravityMultiplier: this.gravityMultiplier * (opts?.gravityMultiplier ?? 1),
+            },
+        });
+    }
+
+    stop() {
+        if (this.fallback) return this.fallback.stop();
+        this._isRunning = false;
+        this.runId++; // discard any in-flight position messages
+        this.post({ type: "stop" });
+    }
+
+    redraw() {
+        this.start();
+    }
+
+    startOrRedraw() {
+        this.start();
+    }
+
+    startDrag() {
+        if (this.fallback) return this.fallback.startDrag();
+        const nodes = collectSimNodes(this.graph, this.pinned, false);
+        this.beginRun(nodes);
+        this.post({ type: "startDrag", runId: this.runId, nodes });
+    }
+
+    endDrag() {
+        if (this.fallback) return this.fallback.endDrag();
+        this.post({ type: "endDrag" });
+    }
+
+    fixNode(nodeKey: string, x: number, y: number): void {
+        if (this.fallback) return this.fallback.fixNode(nodeKey, x, y);
+        this.post({ type: "fixNode", id: nodeKey, x, y });
+    }
+
+    unfixNode(nodeKey: string): void {
+        this.pinned.delete(nodeKey);
+        if (this.fallback) return this.fallback.unfixNode(nodeKey);
+        this.post({ type: "unfixNode", id: nodeKey });
+    }
+
+    pinNode(nodeKey: string, x: number, y: number): void {
+        this.pinned.set(nodeKey, { x, y });
+        if (this.fallback) return this.fallback.pinNode(nodeKey, x, y);
+        this.post({ type: "fixNode", id: nodeKey, x, y });
+    }
+
+    setDensity(mode: LayoutDensity) {
+        if (mode === this.density) return;
+        this.density = mode;
+        this.gravityMultiplier = DENSITY_GRAVITY[mode];
+        if (this.fallback) return this.fallback.setDensity(mode);
+        this.start({ initialAlpha: 0.5, alphaDecay: 0.05 });
+    }
+
+    forgetSettled(): void {
+        this.settledNodes.clear();
+        this.pinned.clear();
+        this.gravityMultiplier = DEFAULT_GRAVITY_MULTIPLIER;
+        this.density = "default";
+        this.fallback?.forgetSettled();
+    }
+
+    destroy(): void {
+        this.destroyed = true;
+        this.clearReadyTimeout();
+        this.worker?.terminate();
+        this.worker = null;
+        this.queuedWhileBooting = [];
+        this.fallback?.stop();
+        this.fallback = null;
     }
 }
 

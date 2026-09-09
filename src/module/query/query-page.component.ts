@@ -15,6 +15,8 @@ import { MatDividerModule } from "@angular/material/divider";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
+import { CdkVirtualScrollViewport, ScrollingModule } from "@angular/cdk/scrolling";
+import { MatPaginatorModule } from "@angular/material/paginator";
 import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
 import { MatTabsModule } from "@angular/material/tabs";
@@ -58,8 +60,8 @@ import { HistoryPaneComponent } from "../query-history/history-pane/history-pane
     imports: [
         RouterLink, AsyncPipe, PageScaffoldComponent, MatDividerModule, MatFormFieldModule, MatIconModule,
         MatInputModule, FormsModule, ReactiveFormsModule, MatButtonToggleModule, ResizableDirective,
-        SpinnerComponent, MatTableModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule,
-        MatMenuModule, MatSelectModule, SchemaToolWindowComponent, CodeEditorComponent,
+        SpinnerComponent, MatTableModule, MatPaginatorModule, MatSortModule, MatTabsModule, MatTooltipModule, MatButtonModule,
+        MatMenuModule, MatSelectModule, ScrollingModule, SchemaToolWindowComponent, CodeEditorComponent,
         GraphCanvasComponent, HistoryPaneComponent,
     ]
 })
@@ -68,7 +70,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     @ViewChild(CodeEditor) codeEditor!: CodeEditor;
     @ViewChildren(CodeEditorComponent) codeEditors!: QueryList<CodeEditorComponent>;
     @ViewChild("articleRef") articleRef!: ElementRef<HTMLElement>;
-    @ViewChild("logTextarea") logTextarea?: ElementRef<HTMLTextAreaElement>;
+    @ViewChild("logViewport") logViewport?: CdkVirtualScrollViewport;
     @ViewChildren(GraphCanvasComponent) graphCanvasComponents!: QueryList<GraphCanvasComponent>;
     @ViewChildren(ResizableDirective) resizables!: QueryList<ResizableDirective>;
     @ViewChild("queryTabContextMenuTrigger") queryTabContextMenuTrigger!: MatMenuTrigger;
@@ -129,7 +131,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     sentLogToAi = false;
     logHasScrollbar = false;
     /** Tracks the log textarea's scrollHeight across change-detection passes, so we know when content has grown. */
-    private lastLogScrollHeight = 0;
+    private lastLogLineCount = 0;
     canScrollLeft = false;
     canScrollRight = false;
     canScrollRunsLeft = false;
@@ -180,16 +182,20 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
             if (value === "graph") {
                 requestAnimationFrame(() => this.state.graphOutput.resize());
             }
+            // The log viewport is [hidden] while another output is selected; a
+            // virtual-scroll viewport measured at display:none renders nothing
+            // until told to re-measure.
+            if (value === "log") {
+                requestAnimationFrame(() => this.logViewport?.checkViewportSize());
+            }
         });
 
-        if (this.logTextarea) {
+        if (this.logViewport) {
+            const el = this.logViewport.elementRef.nativeElement;
             this.logResizeObserver = new ResizeObserver(() => {
-                const el = this.logTextarea?.nativeElement;
-                if (el) {
-                    this.logHasScrollbar = el.scrollHeight > el.clientHeight;
-                }
+                this.logHasScrollbar = el.scrollHeight > el.clientHeight;
             });
-            this.logResizeObserver.observe(this.logTextarea.nativeElement);
+            this.logResizeObserver.observe(el);
         }
 
         if (this.tabsScrollContainer) {
@@ -216,22 +222,24 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     }
 
     ngAfterViewChecked() {
-        const el = this.logTextarea?.nativeElement;
-        if (!el) return;
-        if (el.scrollHeight === this.lastLogScrollHeight) return;
-        this.lastLogScrollHeight = el.scrollHeight;
+        const vp = this.logViewport;
+        if (!vp) return;
+        const lineCount = this.state.logOutput.lines.length;
+        if (lineCount === this.lastLogLineCount) return;
+        this.lastLogLineCount = lineCount;
         if (this.state.logOutput.autoscrollEnabled) {
-            el.scrollTop = el.scrollHeight;
+            vp.scrollTo({ bottom: 0 });
         }
     }
 
     onLogScroll() {
         // If the user (or any scroll) ends up not at the bottom, we stop auto-following new content.
         // Programmatic scrolls in ngAfterViewChecked always land at the bottom, so they pass this check harmlessly.
-        const el = this.logTextarea?.nativeElement;
-        if (!el) return;
-        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 4;
-        this.state.logOutput.autoscrollEnabled = atBottom;
+        const vp = this.logViewport;
+        if (!vp) return;
+        // Threshold covers the content wrapper's vertical padding, which adds a
+        // few px of slop to the bottom-offset measurement.
+        this.state.logOutput.autoscrollEnabled = vp.measureScrollOffset("bottom") <= 24;
     }
 
     // Tab scroll methods
@@ -523,7 +531,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     }
 
     sendLogToAi(): void {
-        const logText = this.state.logOutput.control.value;
+        const logText = this.state.logOutput.fullText;
         if (!logText) return;
 
         // Gate before navigating: a single wand click would otherwise silently
@@ -567,7 +575,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     }
 
     canExportLog(): boolean {
-        return !!this.state.logOutput.control.value.length;
+        return this.state.logOutput.lines.length > 0;
     }
 
     canExportRaw(): boolean {

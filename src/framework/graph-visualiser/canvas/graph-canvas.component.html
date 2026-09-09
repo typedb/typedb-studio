@@ -82,6 +82,12 @@
       @case ("noInstancesFound") {
         <p class="status-text">No instances were found.</p>
       }
+      @case ("webglUnavailable") {
+        <div class="status-text status-text-left">
+          <p>Graph visualisation requires WebGL, which is unavailable.</p>
+          <p>Enable hardware acceleration or update your graphics drivers, then restart TypeDB Studio to use this view.</p>
+        </div>
+      }
       @case ("multiQuery") {
         <p class="status-text">Graph view is not available for multi-query results. <a (click)="statusAction.emit('viewLog')">View results in log</a></p>
       }

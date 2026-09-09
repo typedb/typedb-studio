@@ -13,6 +13,7 @@ import { SchemaConcept } from "./schema-state.service";
 import { GraphStyleService } from "./graph-style.service";
 import { AppData } from "./app-data.service";
 import { createRunOutputState, GraphOutputStatus, RunOutputState } from "./query-page-state.service";
+import { WebGLUnavailableError } from "../framework/graph-visualiser/engine/sigma-settings";
 
 export type SelectionMode = "types" | "instances";
 
@@ -702,7 +703,14 @@ export class GraphViewState {
     }
 
     private pushSafely(run: RunOutputState, res: ApiResponse<QueryResponse>): void {
-        try { run.graph.push(res); } catch (err) { console.error("[Graph push]", err); }
+        try {
+            run.graph.push(res);
+        } catch (err) {
+            // Without this the canvas would just come up blank: the caller's
+            // post-fetch logic promotes a still-"running" status to "ok".
+            if (err instanceof WebGLUnavailableError) run.graph.status = "webglUnavailable";
+            else console.error("[Graph push]", err);
+        }
     }
 
     private instanceVar(type: SchemaConcept): string {

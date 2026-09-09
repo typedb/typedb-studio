@@ -123,7 +123,7 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
     onCopyLogClick() {
         const run = this.currentRun;
         if (!run) return;
-        navigator.clipboard.writeText(run.log.control.value);
+        navigator.clipboard.writeText(run.log.fullText);
         this.copied = true;
         setTimeout(() => this.copied = false, 3000);
     }
@@ -131,7 +131,7 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
     onAiClick() {
         const run = this.currentRun;
         if (!run) return;
-        this.sendLogToAi.emit(run.log.control.value);
+        this.sendLogToAi.emit(run.log.fullText);
         this.aiSent = true;
         setTimeout(() => this.aiSent = false, 3000);
     }

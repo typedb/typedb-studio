@@ -13,7 +13,7 @@ import Graph from "graphology";
 import { BehaviorSubject, combineLatest, distinctUntilChanged, finalize, first, map } from "rxjs";
 import Sigma, { Camera } from "sigma";
 import { GraphVisualiser } from "../framework/graph-visualiser/engine";
-import { createSigmaRenderer, defaultSigmaSettings } from "../framework/graph-visualiser/engine/sigma-settings";
+import { createSigmaRenderer, defaultSigmaSettings, WebGLUnavailableError } from "../framework/graph-visualiser/engine/sigma-settings";
 import { newGraph } from "../framework/graph-visualiser/engine/graph";
 import { Layouts } from "../framework/graph-visualiser/engine/layout";
 import { DriverState } from "./driver-state.service";
@@ -32,7 +32,7 @@ const schemaQueries = {
 } as const satisfies Record<string, string>;
 const schemaQueriesList = Object.values(schemaQueries);
 
-type VisualiserStatus = "ok" | "running" | "emptySchema" | "error";
+type VisualiserStatus = "ok" | "running" | "emptySchema" | "error" | "webglUnavailable";
 
 export interface SchemaEntity extends EntityType {
     supertype?: SchemaEntity;
@@ -439,12 +439,21 @@ export class VisualiserState {
     constructor(private styleService: GraphStyleService) {
         this.canvasEl$.subscribe(el => {
             if (el && this.savedState && this.database) {
+                // The canvas can re-emit while a visualiser is still live (host
+                // remounts); destroy it first or its document-level listeners
+                // leak for the rest of the session.
+                this.destroy();
                 this._status = "ok";
-                const graph = newGraph();
-                const sigma = createSigmaRenderer(el, defaultSigmaSettings as any, graph);
-                const layout = Layouts.createD3ForceSupervisor(graph);
-                this.visualiser = new GraphVisualiser(graph, sigma, layout, this.styleService);
-                this.restoreState(this.savedState, sigma);
+                try {
+                    const graph = newGraph();
+                    const sigma = createSigmaRenderer(el, defaultSigmaSettings as any, graph);
+                    const layout = Layouts.createD3ForceSupervisor(graph);
+                    this.visualiser = new GraphVisualiser(graph, sigma, layout, this.styleService);
+                    this.restoreState(this.savedState, sigma);
+                } catch (err) {
+                    if (!(err instanceof WebGLUnavailableError)) throw err;
+                    this._status = "webglUnavailable";
+                }
             }
         });
     }
@@ -453,10 +462,16 @@ export class VisualiserState {
         if (!this.canvasEl$.value) throw `Missing canvas element`;
 
         if (!this.visualiser) {
-            const graph = newGraph();
-            const sigma = createSigmaRenderer(this.canvasEl$.value, defaultSigmaSettings as any, graph);
-            const layout = Layouts.createD3ForceSupervisor(graph);
-            this.visualiser = new GraphVisualiser(graph, sigma, layout, this.styleService);
+            try {
+                const graph = newGraph();
+                const sigma = createSigmaRenderer(this.canvasEl$.value, defaultSigmaSettings as any, graph);
+                const layout = Layouts.createD3ForceSupervisor(graph);
+                this.visualiser = new GraphVisualiser(graph, sigma, layout, this.styleService);
+            } catch (err) {
+                if (!(err instanceof WebGLUnavailableError)) throw err;
+                this.status = "webglUnavailable";
+                return;
+            }
         }
 
         if (isApiErrorResponse(res)) {

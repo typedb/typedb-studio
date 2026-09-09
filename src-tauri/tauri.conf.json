@@ -23,6 +23,7 @@
   },
   "bundle": {
     "active": true,
+    "category": "DeveloperTool",
     "publisher": "TypeDB Ltd",
     "targets": [
       "msi",
@@ -42,6 +43,14 @@
     },
     "macOS": {
       "signingIdentity": "Developer ID Application: Vaticle LTD (RHKH8FP9SX)"
+    },
+    "linux": {
+      "deb": {
+        "section": "database",
+        "files": {
+          "/usr/share/doc/typedb-studio/copyright": "../LICENSE"
+        }
+      }
     }
   }
 }
