@@ -106,6 +106,9 @@ ol li {
         ::ng-deep pre {
             max-height: 120px;
             min-height: 56px;
+            // Keeps the code block's internals out of the list's layout/paint work
+            // (pane drags relayout this subtree on every mousemove).
+            contain: content;
         }
     }
 }
