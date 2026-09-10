@@ -320,9 +320,6 @@ jobs:
 
   deploy-linux-x86_64-snapshot:
     executor: linux-x86_64
-    environment:
-      # Dummy version for test snapshots while we validate the .deb metadata fixes on development.
-      STUDIO_VERSION: "0.0.1"
     steps:
       - checkout
       - fetch-submodules
@@ -490,22 +487,20 @@ workflows:
       - deploy-linux-x86_64-snapshot:
           filters:
             branches:
-              # Temporarily on development to validate the .deb metadata fixes; revert to a
-              # disabled placeholder branch once the package name and lintian output look right.
-              only: [development]
+              only: [banana]
       - deploy-mac-arm64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [development]
       - deploy-mac-x86_64-snapshot:
           filters:
             branches:
-              only: [banana]
+              only: [development]
       - deploy-windows-x86_64-snapshot:
           context: [default]
           filters:
             branches:
-              only: [banana]
+              only: [development]
       - deploy-apt-arm64-snapshot:
           filters:
             branches:
