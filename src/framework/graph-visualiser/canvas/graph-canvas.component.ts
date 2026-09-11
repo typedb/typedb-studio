@@ -66,10 +66,10 @@ export class GraphCanvasComponent implements AfterViewInit, AfterViewChecked, On
     @Output() selectionModeChange = new EventEmitter<SelectionMode>();
     /** Fires when the `#canvasEl` host node is rebuilt (dock axis flip rebuilds
      *  the resizable subtree). Surfaces are responsible for re-homing their
-     *  sigma renderer onto the new element. The internal `[run]`-driven path in
-     *  `ngAfterViewChecked` already handles this for the graph page; the query
-     *  page (which doesn't pass `[run]`) listens to this instead. Emits the new
-     *  element. */
+     *  sigma renderer onto the new element. Surfaces that manage attach/detach
+     *  centrally (query page, chat) bind this and re-home themselves; the graph
+     *  page doesn't bind it and lets `ngAfterViewChecked` re-home via `run`.
+     *  Emits the new element. */
     @Output() canvasElRebuilt = new EventEmitter<HTMLElement>();
 
     get queryRunning() { return this.status === "running"; }
@@ -104,8 +104,12 @@ export class GraphCanvasComponent implements AfterViewInit, AfterViewChecked, On
             // The host element was rebuilt (dock axis changed). Re-home the
             // renderer onto the new node.
             this.attachedCanvasEl = el;
-            if (this.run) {
+            if (!this.canvasElRebuilt.observed && this.run) {
                 // Graph page: this canvas owns its run, so re-home here.
+                // Keyed off `canvasElRebuilt` having no subscriber rather than
+                // off `run` alone — the query page and chat also pass `[run]`
+                // (the context menu needs it) but re-home centrally via the
+                // output, and both paths running would double-attach.
                 // GraphOutputState.attach/detach preserves the graph and
                 // restores the camera, so no graph state is lost. Deferred via
                 // setTimeout so detach() (which sets visualiser=null) doesn't
@@ -123,9 +127,9 @@ export class GraphCanvasComponent implements AfterViewInit, AfterViewChecked, On
                     run.graph.visualiser?.sigma.refresh();
                 });
             } else {
-                // Query page (and other run-less surfaces): the parent manages
-                // attach/detach centrally, so hand it the new element. Deferred
-                // for the same CD-safety reason as above.
+                // Query page / chat (and other centrally-managed surfaces):
+                // the parent manages attach/detach, so hand it the new element.
+                // Deferred for the same CD-safety reason as above.
                 setTimeout(() => {
                     this.applyBackground();
                     this.canvasElRebuilt.emit(el);

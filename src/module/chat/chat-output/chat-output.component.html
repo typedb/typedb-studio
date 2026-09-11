@@ -137,6 +137,7 @@
                        class="output-view"
                        [visualiser]="currentRun!.graph.visualiser ?? null"
                        [status]="currentRun!.graph.status"
+                       [run]="currentRun"
                        [(maximised)]="graphMaximised"
                        (canvasElRebuilt)="onGraphCanvasRebuilt($event)"
                        (statusAction)="onGraphStatusAction($event)">

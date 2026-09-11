@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, inject, Input, OnChanges, OnDestroy, Output, SimpleChanges } from "@angular/core";
+import { Component, EventEmitter, HostBinding, inject, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges } from "@angular/core";
 import { NgTemplateOutlet } from "@angular/common";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatMenuModule } from "@angular/material/menu";
@@ -77,6 +77,7 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
     lowerPanelPercent = 50;
 
     private schemaState = inject(SchemaState);
+    private ngZone = inject(NgZone);
     private selectionSub: Subscription | null = null;
     private typeSelectionSub: Subscription | null = null;
 
@@ -91,11 +92,19 @@ export class GraphSidePanelComponent implements OnChanges, OnDestroy {
             this.selectedTypeForTypeMode = null;
             const v = this.visualiser;
             if (v) {
+                // Sigma's event dispatch runs outside the Angular zone (see
+                // runOutsideAngularZone in sigma-settings.ts), so selection$ /
+                // typeSelection$ emissions from a node click arrive here still
+                // in Zone.root. Without re-entering the zone, the state writes
+                // below happen, but Angular doesn't know to re-render until
+                // some unrelated in-zone event triggers change detection —
+                // the panel then only appears to update on the interaction
+                // after the one that actually changed the selection.
                 this.selectionSub = v.interactionHandler.selection$.subscribe(sel => {
-                    this.applyInstanceSelection(sel);
+                    this.ngZone.run(() => this.applyInstanceSelection(sel));
                 });
                 this.typeSelectionSub = v.interactionHandler.typeSelection$.subscribe(sel => {
-                    this.applyTypeSelection(sel);
+                    this.ngZone.run(() => this.applyTypeSelection(sel));
                 });
             }
         }
