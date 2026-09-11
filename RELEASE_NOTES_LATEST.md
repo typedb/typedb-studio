@@ -40,6 +40,7 @@ Queries returning a lot of data could previously make Studio unresponsive; this 
 
 ### Other bugs fixed
 
+- Fix graph exploration buttons not doing anything on Query or Chat pages
 - Graphs no longer attempt to render when WebGL is not available - graph pane shows a status warning instead
 - Fix a stack overflow error when rendering a table with >64k rows
 - Linux Debian package is now correctly named "typedb-studio". If you previously installed TypeDB Studio 3.13.0, please uninstall it: `sudo apt remove type-db-studio`. Versions prior to 3.13 were not affected by this bug.
