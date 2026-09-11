@@ -1,6 +1,6 @@
 [package]
 name = "typedb-studio"
-version = "3.13.0"
+version = "3.13.1"
 description = "Interactive visual environment for building with TypeDB"
 authors = ["TypeDB Ltd <community@typedb.com>"]
 edition = "2021"
@@ -13,6 +13,11 @@ edition = "2021"
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
 name = "tauri_app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
+
+# Strip debug symbols from release binaries: shrinks the bundles and avoids the
+# `unstripped-binary-or-object` lintian error on the .deb.
+[profile.release]
+strip = true
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

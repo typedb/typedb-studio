@@ -128,6 +128,14 @@ export class InteractionHandler {
         // overlay the default browser menu on top of ours. Suppress it on
         // the canvas container so only our menu appears.
         renderer.getContainer().addEventListener("contextmenu", e => e.preventDefault());
+        // Losing focus mid-drag can swallow the mouseup — treat it as a release.
+        window.addEventListener("blur", this.windowBlurListener);
+    }
+
+    private readonly windowBlurListener = () => this.finishDragGesture();
+
+    destroy() {
+        window.removeEventListener("blur", this.windowBlurListener);
     }
 
     registerAll(renderer: Sigma) {
@@ -206,6 +214,13 @@ export class InteractionHandler {
         let mouseCoords = event.event;
         if (this.state.draggedNode == null) return;
 
+        // No buttons held means the mouseup happened outside the OS window and was never delivered.
+        const originalEvent = mouseCoords.original;
+        if (originalEvent instanceof MouseEvent && originalEvent.buttons === 0) {
+            this.finishDragGesture();
+            return;
+        }
+
         // Suppress camera panning for the whole gesture while a node is held —
         // but don't actually move the node until the pointer has travelled past
         // the drag threshold from the press point. Below the threshold this is a
@@ -268,6 +283,13 @@ export class InteractionHandler {
     }
 
     onUpStage(_event: SigmaEventPayload) {
+        this.finishDragGesture();
+    }
+
+    /** Release the pressed/dragged node and restore its colour. Also used by the
+     *  lost-pointer fallbacks — a missed release leaves the drag sim (alphaTarget
+     *  > 0, no stop condition) spinning forever. */
+    private finishDragGesture(): void {
         const node = this.state.draggedNode;
         if (node != null) {
             this.releaseDrag(node);

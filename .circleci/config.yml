@@ -179,6 +179,8 @@ commands:
           nvm use 22
           corepack enable
           corepack prepare pnpm@10.12.1 --activate
+          # CI jobs may request a throwaway build version (e.g. snapshot testing) via STUDIO_VERSION
+          if [ -n "${STUDIO_VERSION:-}" ]; then pnpm set-version "${STUDIO_VERSION}"; fi
           pnpm build
           export DEBIAN_FRONTEND=noninteractive
           # us-east-1.ec2.ports.ubuntu.com (baked into the base image's sources.list for

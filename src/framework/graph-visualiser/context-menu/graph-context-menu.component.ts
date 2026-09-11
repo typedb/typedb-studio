@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { Component, inject, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild } from "@angular/core";
+import { Component, inject, Input, NgZone, OnChanges, OnDestroy, SimpleChanges, ViewChild } from "@angular/core";
 import { MatMenu, MatMenuModule, MatMenuTrigger } from "@angular/material/menu";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatTooltipModule } from "@angular/material/tooltip";
@@ -91,6 +91,7 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
     private schemaState = inject(SchemaState);
     private styleService = inject(GraphStyleService);
     private snackbar = inject(SnackbarService);
+    private ngZone = inject(NgZone);
     private sub: Subscription | null = null;
 
     /** A restricted, Google-Calendar-style palette for the per-type colour
@@ -118,18 +119,29 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
             const v = this.visualiser;
             if (v) {
                 this.sub = v.interactionHandler.nodeContextMenu$.subscribe(ev => {
-                    this.triggerPosition = { x: ev.clientX, y: ev.clientY };
-                    this.target = ev.target;
-                    this.refreshRows();
-                    // setTimeout so position styles flush to the DOM before
-                    // mat-menu measures the trigger. Setting `_openedBy` to
-                    // "mouse" lets FocusMonitor suppress the focus ring on
-                    // the first auto-focused item — equivalent to what would
-                    // happen if the user had clicked the trigger directly
-                    // instead of us calling openMenu() programmatically.
-                    setTimeout(() => {
-                        (this.trigger as any)._openedBy = "mouse";
-                        this.trigger.openMenu();
+                    // Sigma's renderer (and hence its event dispatch, including
+                    // rightClickNode) runs outside the Angular zone — see
+                    // runOutsideAngularZone in sigma-settings.ts. Without
+                    // re-entering the zone here, openMenu() below would attach
+                    // the CDK overlay/portal while Zone.current is Zone.root,
+                    // leaving every (click) binding in the menu content bound
+                    // to the wrong zone: the native DOM event still fires, but
+                    // it never drives Angular's event handling, so clicking a
+                    // scope chip silently does nothing.
+                    this.ngZone.run(() => {
+                        this.triggerPosition = { x: ev.clientX, y: ev.clientY };
+                        this.target = ev.target;
+                        this.refreshRows();
+                        // setTimeout so position styles flush to the DOM before
+                        // mat-menu measures the trigger. Setting `_openedBy` to
+                        // "mouse" lets FocusMonitor suppress the focus ring on
+                        // the first auto-focused item — equivalent to what would
+                        // happen if the user had clicked the trigger directly
+                        // instead of us calling openMenu() programmatically.
+                        setTimeout(() => {
+                            (this.trigger as any)._openedBy = "mouse";
+                            this.trigger.openMenu();
+                        });
                     });
                 });
             }

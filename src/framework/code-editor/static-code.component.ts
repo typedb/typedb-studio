@@ -9,6 +9,11 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { classHighlighter, highlightCode } from "@lezer/highlight";
 import { TypeQLLanguage } from "../codemirror-lang-typeql";
 
+/** Rendering a whole large query is wasted work in a clipped preview box, and its DOM
+ *  makes every subsequent layout (e.g. each frame of a pane drag) expensive. */
+const PREVIEW_MAX_LINES = 40;
+const PREVIEW_MAX_CHARS = 4000;
+
 /**
  * Read-only, statically highlighted TypeQL code block. Unlike CodeEditorComponent,
  * this creates no CodeMirror instance — safe to render in large lists (e.g. query history).
@@ -24,6 +29,8 @@ export class StaticCodeComponent implements OnChanges, AfterViewInit {
 
     @Input({ required: true }) code!: string;
     @Input() copyOverlayVisible = false;
+    /** Render only the head of the code — for clipped previews inside long lists. */
+    @Input() preview = false;
     @Input() expandOverlayVisible = false;
     @Output() expandButtonClick = new EventEmitter<void>();
 
@@ -44,7 +51,8 @@ export class StaticCodeComponent implements OnChanges, AfterViewInit {
         // The first ngOnChanges can fire before the view (and #codeEl) exists;
         // ngAfterViewInit covers that case.
         if (!this.codeEl) return;
-        const code = this.code ?? "";
+        const full = this.code ?? "";
+        const code = this.preview ? truncateForPreview(full) : full;
         if (code === this.renderedCode) return;
         this.renderedCode = code;
 
@@ -65,6 +73,7 @@ export class StaticCodeComponent implements OnChanges, AfterViewInit {
             },
             () => el.appendChild(document.createTextNode("\n")),
         );
+        if (code.length < full.length) el.appendChild(document.createTextNode("\n…"));
     }
 
     async onCopyButtonClick() {
@@ -76,4 +85,15 @@ export class StaticCodeComponent implements OnChanges, AfterViewInit {
             console.error('Failed to copy code:', err);
         }
     }
+}
+
+function truncateForPreview(code: string): string {
+    let end = 0;
+    for (let line = 0; line < PREVIEW_MAX_LINES; line++) {
+        const next = code.indexOf("\n", end);
+        if (next === -1) return code.length <= PREVIEW_MAX_CHARS ? code : code.slice(0, PREVIEW_MAX_CHARS);
+        end = next + 1;
+        if (end >= PREVIEW_MAX_CHARS) break;
+    }
+    return code.slice(0, Math.min(end, PREVIEW_MAX_CHARS));
 }

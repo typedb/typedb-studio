@@ -608,8 +608,27 @@ button {
     .answers-text-box {
         height: 100% !important;
         resize: none;
-    
+
         @include typography.code;
+    }
+
+    .log-lines-viewport {
+        color: var(--theme-white);
+
+        // Padding lives on the content, not the viewport, so the scrollable
+        // area (and its scrollbars) spans the entire panel.
+        ::ng-deep .cdk-virtual-scroll-content-wrapper {
+            padding: 8px 0;
+        }
+
+        // 22px matches the code editor's line height (typography.code is 12px/22px);
+        // must also match the viewport's itemSize so virtual scrolling measures correctly.
+        .log-line {
+            height: 22px;
+            line-height: 22px;
+            white-space: pre;
+            padding: 0 14px;
+        }
     }
 }
 

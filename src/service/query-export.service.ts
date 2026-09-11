@@ -18,7 +18,7 @@ export interface SerializedOutput {
 export class QueryExportService {
 
     serializeLog(run: RunOutputState): SerializedOutput | null {
-        const text = run.log.control.value;
+        const text = run.log.fullText;
         if (!text) return null;
         return { text, mime: "text/plain;charset=utf-8", ext: "txt" };
     }

@@ -125,9 +125,12 @@
         @if ((driver.status$ | async) === "connected" && (driver.database$ | async) && state.currentTabRuns.length > 0) {
           <div class="answers-outer-container">
             <div class="answers-container answers-text-container" [hidden]="state.outputTypeControl.value !== 'log'" [class.has-scrollbar]="logHasScrollbar">
-              <mat-form-field class="code-text-field">
-                <textarea #logTextarea class="answers-text-box" [formControl]="state.logOutput.control" (scroll)="onLogScroll()" readonly matInput></textarea>
-              </mat-form-field>
+              <cdk-virtual-scroll-viewport #logViewport itemSize="22" minBufferPx="440" maxBufferPx="880"
+                                           class="answers-text-box log-lines-viewport" (scroll)="onLogScroll()">
+                <!-- Bound as an Observable (no async pipe): emissions re-use the same array
+                     reference, which an unwrapped-value binding would never see as a change. -->
+                <div class="log-line" *cdkVirtualFor="let line of state.logOutput.lines$">{{ line }}</div>
+              </cdk-virtual-scroll-viewport>
               <div class="copy-overlay" [class.visible]="canExportLog()" (click)="sendLogToAi()" matTooltip="Send to AI" matTooltipPosition="below" [matTooltipShowDelay]="500">
                 <i [class]="sentLogToAi ? 'fal fa-check' : 'fal fa-wand-magic-sparkles'"></i>
               </div>
@@ -184,6 +187,10 @@
                               <tr mat-header-row *matHeaderRowDef="sub.table.displayedColumns"></tr>
                               <tr mat-row *matRowDef="let row; columns: sub.table.displayedColumns"></tr>
                             </table>
+                            @if (sub.table.totalRows > sub.table.pageSizeOptions[0]) {
+                              <mat-paginator [length]="sub.table.totalRows" [pageIndex]="sub.table.pageIndex" [pageSize]="sub.table.pageSize"
+                                             [pageSizeOptions]="sub.table.pageSizeOptions" (page)="sub.table.handlePageEvent($event)" showFirstLastButtons/>
+                            }
                           }
                           @case ("error") {
                             <div class="status-text-inline"><p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p></div>
@@ -220,6 +227,10 @@
                         <tr mat-header-row *matHeaderRowDef="state.tableOutput.displayedColumns"></tr>
                         <tr mat-row *matRowDef="let row; columns: state.tableOutput.displayedColumns"></tr>
                       </table>
+                      @if (state.tableOutput.totalRows > state.tableOutput.pageSizeOptions[0]) {
+                        <mat-paginator [length]="state.tableOutput.totalRows" [pageIndex]="state.tableOutput.pageIndex" [pageSize]="state.tableOutput.pageSize"
+                                       [pageSizeOptions]="state.tableOutput.pageSizeOptions" (page)="state.tableOutput.handlePageEvent($event)" showFirstLastButtons/>
+                      }
                     }
                     @case ("error") {
                       <div class="status-text-container"><p class="status-text">This query returned an error. <a (click)="state.outputTypeControl.patchValue('log')">View in log</a></p></div>
@@ -247,6 +258,7 @@
                             [class.invisible]="state.outputTypeControl.value !== 'graph'"
                             [visualiser]="state.graphOutput.visualiser"
                             [status]="state.graphOutput.status"
+                            [run]="currentRun"
                             [graphPercent]="panelSizes[5]" (graphPercentChange)="onPanelResize(5, $event)"
                             [stylesPanePercent]="panelSizes[6]" (stylesPanePercentChange)="onPanelResize(6, $event)"
                             [(maximised)]="graphMaximised"

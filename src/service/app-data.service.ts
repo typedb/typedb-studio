@@ -643,11 +643,21 @@ function parsePanelLayoutData(obj: Object | null): PanelLayoutData {
     return Object.assign({}, INITIAL_PANEL_LAYOUT, obj) as PanelLayoutData;
 }
 
+/** Resize drags call `set` on every mousemove; localStorage reads and writes are
+ *  synchronous, so persisting per frame stalls the drag. State is held in memory
+ *  and written at most this often (plus a final write on page hide). */
+const PANEL_LAYOUT_WRITE_INTERVAL_MS = 500;
+
 class PanelLayout {
+    private cache: PanelLayoutData | null = null;
+    private writeTimer: ReturnType<typeof setTimeout> | null = null;
+
     constructor(private storage: StorageService) {
         if (this.storage.isAccessible && this.readStorage() == null) {
             this.writeStorage(INITIAL_PANEL_LAYOUT);
         }
+        // A drag that ends within the debounce window would otherwise be lost.
+        window.addEventListener("pagehide", () => this.flush());
     }
 
     private readStorage(): PanelLayoutData {
@@ -659,15 +669,30 @@ class PanelLayout {
         return this.storage.write(PANEL_LAYOUT, data);
     }
 
-    get(page: PanelLayoutPage): number[] | null {
-        const data = this.readStorage();
-        return data[page] || null;
+    private data(): PanelLayoutData {
+        if (!this.cache) this.cache = this.readStorage();
+        return this.cache;
     }
 
-    set(page: PanelLayoutPage, sizes: number[]): StorageWriteResult {
-        const data = this.readStorage();
-        data[page] = sizes;
-        return this.writeStorage(data);
+    get(page: PanelLayoutPage): number[] | null {
+        return this.data()[page] || null;
+    }
+
+    set(page: PanelLayoutPage, sizes: number[]): void {
+        this.data()[page] = sizes;
+        if (this.writeTimer != null) return;
+        this.writeTimer = setTimeout(() => {
+            this.writeTimer = null;
+            this.flush();
+        }, PANEL_LAYOUT_WRITE_INTERVAL_MS);
+    }
+
+    flush(): void {
+        if (this.writeTimer != null) {
+            clearTimeout(this.writeTimer);
+            this.writeTimer = null;
+        }
+        if (this.cache) this.writeStorage(this.cache);
     }
 }
 

@@ -54,7 +54,16 @@ export class TypeQLAutocompleteSchema {
         this.dbFunctions = functions;
     }
 
+    // Last (doc, tree) identities — both are immutable, so this skips the
+    // O(document) rebuild that otherwise runs on every completion query.
+    private lastEditorDoc: unknown = null;
+    private lastEditorTree: Tree | null = null;
+
     mayUpdateFromEditorState(context: CompletionContext, tree: Tree): void {
+        const doc = context.state.doc;
+        if (doc === this.lastEditorDoc && tree === this.lastEditorTree) return;
+        this.lastEditorDoc = doc;
+        this.lastEditorTree = tree;
         const text = context.state.sliceDoc();
         this.fromEditor = buildSchemafromTypeQL(text, tree);
         this.editorFunctions = parseFunctionsFromTypeQL(text);

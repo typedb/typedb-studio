@@ -5,7 +5,7 @@
  */
 
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, concatMap, concatWith, defer, distinctUntilChanged, filter, finalize, from, ignoreElements, map, Observable, of, shareReplay, skip, startWith, Subject, switchMap, takeUntil, tap, throwError } from "rxjs";
+import { BehaviorSubject, catchError, concatMap, concatWith, defer, distinctUntilChanged, filter, finalize, from, ignoreElements, map, Observable, of, shareReplay, skip, startWith, Subject, switchMap, tap, throwError } from "rxjs";
 import { v4 as uuid } from "uuid";
 import { DriverAction, QueryRunAction, queryRunActionOf, transactionOperationActionOf } from "../concept/action";
 import { ConnectionConfig, databasesSortedByName } from "../concept/connection";
@@ -52,7 +52,6 @@ export class DriverState {
     isAdmin$ = new BehaviorSubject<boolean | null>(null);
     private _actionLog$ = new Subject<DriverAction>();
     private _writeLock$ = new BehaviorSubject<Semaphore | null>(null);
-    private _stopSignal$ = new Subject<void>();
     /** Emits whenever a schema transaction commits successfully. Consumers (e.g. SchemaState) can react by refreshing. */
     schemaCommitted$ = new Subject<void>();
     /** Fires when the schema as seen by queries may have changed without a commit:
@@ -231,8 +230,7 @@ export class DriverState {
         return fromPromiseWithRetry(() => driver.getDatabases()).pipe(
             tap(res => {
                 if (isOkResponse(res)) this._databaseList$.next(databasesSortedByName(res.ok.databases));
-            }),
-            takeUntil(this._stopSignal$)
+            })
         );
     }
 
@@ -257,8 +255,7 @@ export class DriverState {
             }),
             tap(res => {
                 if (isOkResponse(res)) this.userList$.next(res.ok.users);
-            }),
-            takeUntil(this._stopSignal$)
+            })
         );
     }
 
@@ -293,8 +290,7 @@ export class DriverState {
                 const databaseList = this.requireDatabaseList();
                 this._databaseList$.next(databasesSortedByName([...databaseList, { name }]));
                 this.selectDatabase({ name }, lockId);
-            }),
-            takeUntil(this._stopSignal$)
+            })
         ), lockId);
     }
 
@@ -306,8 +302,7 @@ export class DriverState {
                 const databaseList = this.requireDatabaseList();
                 this.selectDatabase(null, lockId);
                 this._databaseList$.next(databaseList.filter(x => x.name !== database.name));
-            }),
-            takeUntil(this._stopSignal$)
+            })
         ), lockId);
     }
 
@@ -321,7 +316,6 @@ export class DriverState {
                 this._transaction$.next(tx);
                 this.lastTransaction$.next(tx);
             }),
-            takeUntil(this._stopSignal$),
         ), lockId);
     }
 
@@ -340,7 +334,6 @@ export class DriverState {
                 if (isApiErrorResponse(res)) throw res.err;
                 if (transactionType === "schema") this.schemaCommitted$.next();
             }),
-            takeUntil(this._stopSignal$),
             catchError((err) => {
                 this.updateActionResultUnexpectedError(action, err);
                 return throwError(() => err);
@@ -366,7 +359,6 @@ export class DriverState {
                     if (hadSchemaChanges) this.schemaChanged$.next();
                 }
             }),
-            takeUntil(this._stopSignal$),
             catchError((err) => {
                 this.updateActionResultUnexpectedError(action, err);
                 return throwError(() => err);
@@ -388,7 +380,6 @@ export class DriverState {
                 this._transaction$.next(null);
                 if (discardsSchemaChanges) this.schemaChanged$.next();
             }),
-            takeUntil(this._stopSignal$),
         ), lockId);
     }
 
@@ -420,7 +411,6 @@ export class DriverState {
 
         const detectedType = detectTransactionType(queries[0]) ?? "read";
         return this.autoMultiQuery(driver, databaseName, queries, detectedType, queryOptions).pipe(
-            takeUntil(this._stopSignal$),
         );
     }
 
@@ -435,75 +425,88 @@ export class DriverState {
     ): Observable<{ index: number, res: ApiResponse<QueryResponse>, autoCommitted: boolean }> {
         const shouldCommit = transactionType !== "read";
 
-        return fromPromiseWithRetry(() => driver.openTransaction(databaseName, transactionType, this.transactionOptions(transactionType))).pipe(
-            switchMap(openRes => {
-                if (isApiErrorResponse(openRes)) throw openRes;
-                const transactionId = openRes.ok.transactionId;
-                const tx = new Transaction({ id: transactionId, type: transactionType });
-                this.lastTransaction$.next(tx);
-                let cleanupDone = false;
+        return defer(() => {
+            let disposed = false;
+            return fromPromiseWithRetry(async () => {
+                const res = await driver.openTransaction(databaseName, transactionType, this.transactionOptions(transactionType));
+                // Unsubscribing can't cancel a promise. If we were torn down while this was in
+                // flight the result never reaches the switchMap below, so its cleanup never runs
+                // and nothing would close this — a dangling schema transaction blocks writes.
+                if (disposed && !isApiErrorResponse(res)) {
+                    fromPromiseWithRetry(() => driver.closeTransaction(res.ok.transactionId)).subscribe({ error: () => {} });
+                }
+                return res;
+            }).pipe(
+                switchMap(openRes => {
+                    if (isApiErrorResponse(openRes)) throw openRes;
+                    const transactionId = openRes.ok.transactionId;
+                    const tx = new Transaction({ id: transactionId, type: transactionType });
+                    this.lastTransaction$.next(tx);
+                    let cleanupDone = false;
 
-                const commitOrClose$: Observable<null> = defer(() => {
-                    if (cleanupDone) return of(null);
-                    cleanupDone = true;
-                    if (shouldCommit) {
-                        return fromPromiseWithRetry(() => driver.commitTransaction(transactionId)).pipe(
-                            tap(res => {
-                                if (isApiErrorResponse(res)) throw res;
-                                tx.committed = true;
-                                tx.closedAtTimestamp = Date.now();
-                                this.lastTransaction$.next(tx);
-                                if (transactionType === "schema") this.schemaCommitted$.next();
-                            }),
+                    const commitOrClose$: Observable<null> = defer(() => {
+                        if (cleanupDone) return of(null);
+                        cleanupDone = true;
+                        if (shouldCommit) {
+                            return fromPromiseWithRetry(() => driver.commitTransaction(transactionId)).pipe(
+                                tap(res => {
+                                    if (isApiErrorResponse(res)) throw res;
+                                    tx.committed = true;
+                                    tx.closedAtTimestamp = Date.now();
+                                    this.lastTransaction$.next(tx);
+                                    if (transactionType === "schema") this.schemaCommitted$.next();
+                                }),
+                                map(() => null),
+                            );
+                        }
+                        return fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).pipe(
+                            tap(() => { tx.closedAtTimestamp = Date.now(); this.lastTransaction$.next(tx); }),
                             map(() => null),
                         );
-                    }
-                    return fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).pipe(
-                        tap(() => { tx.closedAtTimestamp = Date.now(); this.lastTransaction$.next(tx); }),
-                        map(() => null),
-                    );
-                });
+                    });
 
-                return from(queries.map((q, i) => ({ query: q, index: i }))).pipe(
-                    concatMap(({ query, index }) => {
-                        return fromPromiseWithRetry(() => driver.query(transactionId, query, queryOptions)).pipe(
-                            tap(res => { if (isApiErrorResponse(res)) throw res; }),
-                            map(res => ({ index, res, autoCommitted: false as boolean })),
-                        );
-                    }),
-                    // After all query results emit, run commit (or close for read). The commit emits
-                    // nothing on success (ignoreElements); on failure it throws, turning the outer
-                    // stream into an error so subscribers see the failed commit as a failed query batch.
-                    concatWith(commitOrClose$.pipe(ignoreElements())),
-                    // If an error happens before commit (e.g. a query failed), still best-effort close the transaction.
-                    catchError(err => {
-                        if (!cleanupDone) {
-                            cleanupDone = true;
-                            tx.closedAtTimestamp = Date.now();
-                            this.lastTransaction$.next(tx);
-                            fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).subscribe({ error: () => {} });
-                        }
-                        return throwError(() => err);
-                    }),
-                    // If unsubscribed (e.g. user stopped the query), close the transaction.
-                    finalize(() => {
-                        if (!cleanupDone) {
-                            cleanupDone = true;
-                            tx.closedAtTimestamp = Date.now();
-                            this.lastTransaction$.next(tx);
-                            fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).subscribe({ error: () => {} });
-                        }
-                    }),
-                );
-            }),
-            catchError((err): Observable<{ index: number, res: ApiResponse<QueryResponse>, autoCommitted: boolean }> => {
-                if (this.isWrongTransactionTypeError(err)) {
-                    const nextType = this.nextTransactionType(transactionType);
-                    if (nextType) return this.autoMultiQuery(driver, databaseName, queries, nextType, queryOptions);
-                }
-                return throwError(() => err);
-            }),
-        );
+                    return from(queries.map((q, i) => ({ query: q, index: i }))).pipe(
+                        concatMap(({ query, index }) => {
+                            return fromPromiseWithRetry(() => driver.query(transactionId, query, queryOptions)).pipe(
+                                tap(res => { if (isApiErrorResponse(res)) throw res; }),
+                                map(res => ({ index, res, autoCommitted: false as boolean })),
+                            );
+                        }),
+                        // After all query results emit, run commit (or close for read). The commit emits
+                        // nothing on success (ignoreElements); on failure it throws, turning the outer
+                        // stream into an error so subscribers see the failed commit as a failed query batch.
+                        concatWith(commitOrClose$.pipe(ignoreElements())),
+                        // If an error happens before commit (e.g. a query failed), still best-effort close the transaction.
+                        catchError(err => {
+                            if (!cleanupDone) {
+                                cleanupDone = true;
+                                tx.closedAtTimestamp = Date.now();
+                                this.lastTransaction$.next(tx);
+                                fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).subscribe({ error: () => {} });
+                            }
+                            return throwError(() => err);
+                        }),
+                        // If unsubscribed (e.g. user stopped the query), close the transaction.
+                        finalize(() => {
+                            if (!cleanupDone) {
+                                cleanupDone = true;
+                                tx.closedAtTimestamp = Date.now();
+                                this.lastTransaction$.next(tx);
+                                fromPromiseWithRetry(() => driver.closeTransaction(transactionId)).subscribe({ error: () => {} });
+                            }
+                        }),
+                    );
+                }),
+                catchError((err): Observable<{ index: number, res: ApiResponse<QueryResponse>, autoCommitted: boolean }> => {
+                    if (this.isWrongTransactionTypeError(err)) {
+                        const nextType = this.nextTransactionType(transactionType);
+                        if (nextType) return this.autoMultiQuery(driver, databaseName, queries, nextType, queryOptions);
+                    }
+                    return throwError(() => err);
+                }),
+                finalize(() => { disposed = true; }),
+            );
+        });
     }
 
     private transactionOptions(_type: TransactionType): { transactionTimeoutMillis: number } {
@@ -550,8 +553,7 @@ export class DriverState {
             catchError((err) => {
                 this.updateActionResultUnexpectedError(queryAction, err);
                 return throwError(() => err);
-            }),
-            takeUntil(this._stopSignal$)
+            })
         );
     }
 
@@ -611,8 +613,7 @@ export class DriverState {
             catchError((err) => {
                 if (queryRunAction) this.updateActionResultUnexpectedError(queryRunAction, err);
                 return throwError(() => err);
-            }),
-            takeUntil(this._stopSignal$)
+            })
         ), lockId);
     }
 
@@ -632,20 +633,40 @@ export class DriverState {
                 )),
             );
         }
-        return fromPromiseWithRetry(() => driver.openTransaction(databaseName, "read", this.transactionOptions("read"))).pipe(
-            switchMap((res) => {
-                if (isApiErrorResponse(res)) throw res.err;
-                return from(queries).pipe(
-                    concatMap(x => fromPromiseWithRetry(() => driver.query(res.ok.transactionId, x, queryOptions)).pipe(
-                        map(x => {
-                            if (isApiErrorResponse(x)) throw x;
-                            else return x;
-                        })
-                    )),
-                    finalize(() => fromPromiseWithRetry(() => driver.closeTransaction(res.ok.transactionId)).subscribe()),
-                );
-            }),
-        );
+        return defer(() => {
+            let transactionId: string | null = null;
+            let disposed = false;
+            const closeIfOpen = () => {
+                if (transactionId == null) return;
+                const id = transactionId;
+                transactionId = null;
+                fromPromiseWithRetry(() => driver.closeTransaction(id)).subscribe({ error: () => {} });
+            };
+            return fromPromiseWithRetry(async () => {
+                const res = await driver.openTransaction(databaseName, "read", this.transactionOptions("read"));
+                // Unsubscribing can't cancel a promise, so if we were torn down while this was
+                // in flight, close the transaction as soon as it materialises rather than
+                // leaving it dangling until the transaction timeout.
+                if (!isApiErrorResponse(res)) {
+                    transactionId = res.ok.transactionId;
+                    if (disposed) closeIfOpen();
+                }
+                return res;
+            }).pipe(
+                switchMap((res) => {
+                    if (isApiErrorResponse(res)) throw res.err;
+                    return from(queries).pipe(
+                        concatMap(x => fromPromiseWithRetry(() => driver.query(res.ok.transactionId, x, queryOptions)).pipe(
+                            map(x => {
+                                if (isApiErrorResponse(x)) throw x;
+                                else return x;
+                            })
+                        )),
+                    );
+                }),
+                finalize(() => { disposed = true; closeIfOpen(); }),
+            );
+        });
     }
 
     createUser(username: string, password: string) {
@@ -683,10 +704,6 @@ export class DriverState {
         const [body, suffix] = raw.split(`-`) as [string, string?];
         const [major, minor, patch] = body.split(`.`).map(x => parseInt(x));
         return { major, minor, patch, suffix };
-    }
-
-    sendStopSignal() {
-        this._stopSignal$.next();
     }
 
     private tryUseWriteLock<RES = any>(job: () => RES, lockId = uuid()): RES {

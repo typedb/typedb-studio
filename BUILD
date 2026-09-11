@@ -40,6 +40,7 @@ genrule(
     outs = ["typedb-studio-arm64.deb"],
     cmd = """
         cp src-tauri/target/release/bundle/deb/*.deb "$(OUTS)"
+        dpkg-deb -I "$(OUTS)" control || true
     """,
     tags = ["local"],
     target_compatible_with = constraint_linux_arm64,
@@ -50,6 +51,7 @@ genrule(
     outs = ["typedb-studio-amd64.deb"],
     cmd = """
         cp src-tauri/target/release/bundle/deb/*.deb "$(OUTS)"
+        dpkg-deb -I "$(OUTS)" control || true
     """,
     tags = ["local"],
     target_compatible_with = constraint_linux_x86_64,

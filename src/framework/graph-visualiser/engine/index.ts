@@ -35,6 +35,9 @@ const MAX_EXPORT_DIMENSION = 8192;
  */
 const AUTO_FIT_MIN_RATIO_CHANGE = 0.04;
 
+/** Pipeline phases slower than this get a console.info breakdown line. */
+const SLOW_PHASE_LOG_MS = 100;
+
 export class GraphVisualiser {
     interactionHandler: InteractionHandler;
     state: StudioState;
@@ -632,10 +635,39 @@ export class GraphVisualiser {
         if (isApiErrorResponse(res)) return;
         if (res.ok.answerType == "conceptRows" && res.ok.query != null) {
             (window as any)._lastQueryAnswers = res.ok.answers; // TODO: Remove once schema based autocomplete is stable.
+            const buildStartMs = performance.now();
             let builder = new GraphBuilder(this.graph, res.ok.query, false, this.structureParams, this.styleParams);
             let answers = buildStructuredAnswers(res.ok as any);
             builder.build(answers);
             refreshInstanceLabels(this.graph, this.displayAttributes, this.labelOverridesByType);
+            const buildMs = performance.now() - buildStartMs;
+            if (buildMs > SLOW_PHASE_LOG_MS) {
+                console.info(`[graph-vis] graph build: ${this.graph.order} nodes / ${this.graph.size} edges in ${Math.round(buildMs)}ms`);
+            }
+        }
+    }
+
+    /** First-push fast path: bulk-build the graph while sigma watches an empty
+     *  placeholder (its graph-event handlers do synchronous per-element work,
+     *  so big builds are much cheaper detached), then attach the finished
+     *  graph for a single index + paint. Mirrors handleQueryResponse's
+     *  was-empty branch. */
+    buildDetachedThenAttach(res: ApiResponse<QueryResponse>, database: string) {
+        if (isApiErrorResponse(res) || res.ok.answerType !== "conceptRows") return;
+        this.state.activeQueryDatabase = database;
+        this.handleQueryResult(res);
+        if (this.styleService.degreeScaling) this.applyStyleUpdate();
+        const attachStartMs = performance.now();
+        this.sigma.setGraph(this.graph);
+        const attachMs = performance.now() - attachStartMs;
+        if (attachMs > SLOW_PHASE_LOG_MS) {
+            console.info(`[graph-vis] sigma attach (initial index): ${Math.round(attachMs)}ms`);
+        }
+        if (this.graph.order > 0) {
+            this.autoZoomEnabled = true;
+            this.peakCameraRatio = 0;
+            this.layout.startOrRedraw();
+            this.centerCamera();
         }
     }
 
@@ -1320,6 +1352,7 @@ export class GraphVisualiser {
 
     destroy() {
         this.stylesSub.unsubscribe();
+        this.interactionHandler.destroy();
         this.contextGuardCleanups.forEach(fn => fn());
         this.contextGuardCleanups = [];
         // Stop the layout sim and detach our onTick before killing sigma —
@@ -1327,6 +1360,7 @@ export class GraphVisualiser {
         // centerCamera() on the dead sigma, which schedules renders that
         // crash inside process() (empty nodePrograms / nodeDataCache).
         this.layout.stop();
+        this.layout.destroy?.();
         this.layout.onTick = null;
         if (this.cameraUpdatedListener) {
             this.sigma.getCamera().removeListener("updated", this.cameraUpdatedListener);
