@@ -10,7 +10,7 @@ import {
     isApiErrorResponse, QueryResponse, RelationType, RoleType, Type
 } from "@typedb/driver-http";
 import Graph from "graphology";
-import { BehaviorSubject, combineLatest, distinctUntilChanged, finalize, first, map } from "rxjs";
+import { BehaviorSubject, catchError, combineLatest, defer, distinctUntilChanged, EMPTY, first, map, Observable, Subject, switchMap, tap, toArray } from "rxjs";
 import Sigma, { Camera } from "sigma";
 import { GraphVisualiser } from "../framework/graph-visualiser/engine";
 import { createSigmaRenderer, defaultSigmaSettings, WebGLUnavailableError } from "../framework/graph-visualiser/engine/sigma-settings";
@@ -73,7 +73,7 @@ export class SchemaState {
     readonly visualiser = new VisualiserState(this.graphStyleService);
     queryResponses$ = new BehaviorSubject<ApiOkResponse<ConceptRowsQueryResponse>[] | null>(null);
     readonly value$ = new BehaviorSubject<Schema | null>(null);
-    isRefreshing = false;
+    private readonly refreshRequest$ = new Subject<void>();
     readonly interactionDisabledReason$ = combineLatest([this.driver.status$, this.driver.database$]).pipe(map(([status, db]) => {
         if (status !== "connected") return NO_SERVER_CONNECTED;
         else if (db == null) return NO_DATABASE_SELECTED;
@@ -83,6 +83,9 @@ export class SchemaState {
 
     constructor(private driver: DriverState, private snackbar: SnackbarService) {
         (window as any)["schemaState"] = this;
+        // Latest request wins: a refresh already in flight read a pre-commit snapshot,
+        // so cancel it rather than letting it finish and overwrite the tree.
+        this.refreshRequest$.pipe(switchMap(() => this.runRefresh$())).subscribe();
         this.driver.database$.pipe(
             distinctUntilChanged((x, y) => x?.name === y?.name)
         ).subscribe(() => {
@@ -120,41 +123,42 @@ export class SchemaState {
     }
 
     refresh() {
-        if (this.isRefreshing) return;
+        this.refreshRequest$.next();
+    }
 
-        this.driver.database$.pipe(first()).subscribe(db => {
+    private runRefresh$(): Observable<unknown> {
+        return defer(() => {
             this.visualiser.dropSavedState();
 
+            const db = this.driver.database$.value;
             if (db == null) {
                 this.queryResponses$.next(null);
                 this.visualiser.destroy();
                 this.visualiser.database = undefined;
-                return;
+                return EMPTY;
             }
 
             this.initialiseOutput();
-            const responses: ApiOkResponse<ConceptRowsQueryResponse>[] = [];
-            this.isRefreshing = true;
             // Server defaults this to 10k rows, which is exceeded by hierarchy/owns/plays/relates
             // queries on very large schemas — silently truncating the tree. Lift the cap so we get
             // a complete picture even on big schemas.
-            this.driver.runBackgroundReadQueries(schemaQueriesList, { answerCountLimit: 100000 }).pipe(
-                finalize(() => { this.isRefreshing = false; })
-            ).subscribe({
-                next: (res) => {
+            return this.driver.runBackgroundReadQueries(schemaQueriesList, { answerCountLimit: 100000 }).pipe(
+                map(res => {
                     if (res.ok.answerType !== `conceptRows`) throw `Unexpected answerType: '${res.ok.answerType}' (expected 'conceptRows')`;
-                    responses.push(res as ApiOkResponse<ConceptRowsQueryResponse>);
-                },
-                error: (err) => { this.handleQueryError(err); },
-                complete: () => {
+                    return res as ApiOkResponse<ConceptRowsQueryResponse>;
+                }),
+                toArray(),
+                tap(responses => {
                     this.queryResponses$.next(responses);
                     if (this.visualiser.status === "running") {
-                        if (responses[0].ok.answers.length) this.visualiser.status = "ok";
-                        else this.visualiser.status = "emptySchema";
+                        this.visualiser.status = responses[0].ok.answers.length ? "ok" : "emptySchema";
                     }
-                },
-            });
-        });
+                }),
+            );
+        }).pipe(
+            // Must stay inside the switchMap: an error escaping here would kill refreshRequest$ for good.
+            catchError(err => { this.handleQueryError(err); return EMPTY; }),
+        );
     }
 
     push(data: ApiOkResponse<ConceptRowsQueryResponse>[] | null) {
