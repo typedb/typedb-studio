@@ -141,6 +141,8 @@
                        [visualiser]="currentRun!.graph.visualiser ?? null"
                        [status]="currentRun!.graph.status"
                        [run]="currentRun"
+                       [resetDisabledReason]="graphResetDisabledReason"
+                       (resetChangesClicked)="onResetGraphChanges()"
                        [(maximised)]="graphMaximised"
                        (canvasElRebuilt)="onGraphCanvasRebuilt($event)"
                        (statusAction)="onGraphStatusAction($event)">

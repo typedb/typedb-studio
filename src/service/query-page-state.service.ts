@@ -720,6 +720,7 @@ function outputQueryResponseWithAnswers(run: RunOutputState, res: ApiResponse<Qu
             deps.snackbar.errorPersistent(`Failed to render graph visualization: ${err instanceof Error ? err.message : err}`);
         }
     }
+    run.graph.snapshotInitialNodeCount();
     run.raw.push(JSON.stringify(res, null, 2));
 }
 
@@ -1255,6 +1256,30 @@ export class GraphOutputState {
      *  display-attrs). Drained into the visualiser as soon as it's created. */
     private _pendingLabelOverrides: Map<string, string> | null = null;
     private _styleService: GraphStyleService;
+    /**
+     * For each source type (key = type label), the set of target type labels
+     * (attribute or relation type labels) that have been loaded into the
+     * graph via a type-detail chip toggle. Tracked separately from the graph
+     * itself so the chip state isn't conflated with whatever happened at the
+     * single-instance level — toggling ON for the type means "load it across
+     * every instance of this source type"; the chip's loaded indicator stays
+     * sticky regardless of what other adds may have introduced.
+     */
+    loadedConnections = new Map<string, Set<string>>();
+    /**
+     * Per-instance counterpart to {@link loadedConnections}: for each instance
+     * IID (key), the set of connection labels (attribute / relation type
+     * labels, or scoped role labels) that have been loaded for *just that
+     * instance* via a context-menu "here" action. Lets the context menu show a
+     * sticky loaded indicator for single-instance loads, independent of the
+     * type-level state. (A type-level load implies every instance is loaded,
+     * so consumers OR the two together when deciding a "here" chip's state.)
+     */
+    loadedInstanceConnections = new Map<string, Set<string>>();
+    /** Node count right after the query that produced this graph finished
+     *  building. Anything above this is user exploration, which is what
+     *  "Reset changes" throws away. */
+    initialNodeCount = 0;
 
     constructor(styleService: GraphStyleService) {
         this._styleService = styleService;
@@ -1414,6 +1439,33 @@ export class GraphOutputState {
         this.visualiser?.destroy();
         this.visualiser = null;
         this._preservedGraph = null;
+    }
+
+    /** Whether anything has been added beyond what the initial query built. */
+    get hasChanges(): boolean {
+        return (this.visualiser?.graph.order ?? 0) > this.initialNodeCount;
+    }
+
+    snapshotInitialNodeCount(): void {
+        this.initialNodeCount = this.visualiser?.graph.order ?? 0;
+    }
+
+    /** Drop everything back to a blank slate so the initial query can be
+     *  replayed: graph contents, selection, viewport pin, and the sticky
+     *  loaded-connection flags that tracked the discarded exploration. */
+    clearForReset(): void {
+        const visualiser = this.visualiser;
+        if (visualiser) {
+            visualiser.interactionHandler.clearSelection();
+            visualiser.interactionHandler.setSecondaryAnchors(new Set());
+            visualiser.unfreezeViewport();
+            visualiser.graph.clear();
+            visualiser.layout.forgetSettled();
+            visualiser.clearDisplayAttributes();
+        }
+        this.initialNodeCount = 0;
+        this.loadedConnections.clear();
+        this.loadedInstanceConnections.clear();
     }
 }
 

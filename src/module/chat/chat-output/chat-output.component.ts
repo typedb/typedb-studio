@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { AfterViewChecked, AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from "@angular/core";
+import { AfterViewChecked, AfterViewInit, Component, ElementRef, EventEmitter, inject, Input, OnDestroy, Output, ViewChild } from "@angular/core";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
@@ -17,6 +17,7 @@ import { CdkVirtualScrollViewport, ScrollingModule } from "@angular/cdk/scrollin
 import { Subscription } from "rxjs";
 import { OutputState, OutputType } from "../../../service/chat-state.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
+import { GraphViewState } from "../../../service/graph-view-state.service";
 import { GraphCanvasComponent } from "../../../framework/graph-visualiser/canvas/graph-canvas.component";
 
 @Component({
@@ -49,6 +50,19 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
     graphMaximised = false;
     private outputTypeSub?: Subscription;
     private lastAttachedRun: RunOutputState | null = null;
+
+    private graphViewState = inject(GraphViewState);
+
+    /** Drives the graph canvas's "Reset changes" button and its tooltip. */
+    get graphResetDisabledReason(): string | null {
+        const run = this.currentRun;
+        return run ? this.graphViewState.resetDisabledReason(run) : "Nothing to reset";
+    }
+
+    onResetGraphChanges(): void {
+        const run = this.currentRun;
+        if (run) this.graphViewState.resetRunGraph(run);
+    }
 
     get currentRun(): RunOutputState | null {
         const { runs, selectedRunIndex } = this.outputState;
