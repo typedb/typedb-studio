@@ -27,7 +27,7 @@ import { DriverState } from "../../../service/driver-state.service";
 import { ApiResponse, Attribute, Concept, ConceptRow, ConceptRowAnswer, isApiErrorResponse, QueryResponse } from "@typedb/driver-http";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { extractErrorMessage } from "../../../framework/util/observable";
-import { typeqlStringLiteral } from "../../../framework/util/strings";
+import { typeqlStringLiteral } from "../../../framework/util/typeql";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 
 /** Primitive value types that TypeDB attributes can hold */
