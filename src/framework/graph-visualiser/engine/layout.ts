@@ -209,8 +209,24 @@ export interface LayoutWrapper {
      */
     forgetSettled(): void;
 
+    /** Snapshot the state that {@link restoreState} carries into a replacement layout. */
+    snapshotState?(): LayoutRestoreState;
+
+    /**
+     * Carry tunable state (density, user pins) over from the layout of a detached
+     * visualiser, treating every current node as settled so the next run only
+     * eases new arrivals in. Doesn't start a run.
+     */
+    restoreState?(state: LayoutRestoreState): void;
+
     /** Release resources beyond stop() (e.g. terminate a layout worker). */
     destroy?(): void;
+}
+
+/** Layout state preserved across a visualiser's detach / re-attach. */
+export interface LayoutRestoreState {
+    density: LayoutDensity;
+    pinned: Map<string, { x: number; y: number }>;
 }
 
 type LayoutSupervisor = ForceSupervisor | FA2LayoutSupervisor;
@@ -380,6 +396,17 @@ class D3ForceSupervisorWrapper implements LayoutWrapper {
         // A fresh layout (Redraw / Reset changes) starts from default gravity.
         this.gravityMultiplier = DEFAULT_GRAVITY_MULTIPLIER;
         this.density = "default";
+    }
+
+    snapshotState(): LayoutRestoreState {
+        return { density: this.density, pinned: new Map(this.pinned) };
+    }
+
+    restoreState(state: LayoutRestoreState): void {
+        this.density = state.density;
+        this.gravityMultiplier = DENSITY_GRAVITY[state.density];
+        this.pinned = new Map(state.pinned);
+        this.graph.nodes().forEach(key => this.settledNodes.add(key));
     }
 
     private buildSimulation(opts?: LayoutStartOptions): ReturnType<typeof forceSimulation<D3Node>> {
@@ -872,6 +899,18 @@ class WorkerD3ForceSupervisorWrapper implements LayoutWrapper {
         this.gravityMultiplier = DEFAULT_GRAVITY_MULTIPLIER;
         this.density = "default";
         this.fallback?.forgetSettled();
+    }
+
+    snapshotState(): LayoutRestoreState {
+        return { density: this.density, pinned: new Map(this.pinned) };
+    }
+
+    restoreState(state: LayoutRestoreState): void {
+        this.density = state.density;
+        this.gravityMultiplier = DENSITY_GRAVITY[state.density];
+        this.pinned = new Map(state.pinned);
+        this.graph.nodes().forEach(key => this.settledNodes.add(key));
+        this.fallback?.restoreState(state);
     }
 
     destroy(): void {

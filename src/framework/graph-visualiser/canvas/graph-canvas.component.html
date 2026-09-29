@@ -51,7 +51,7 @@
     </button>
 
     <ts-graph-controls [visualiser]="visualiser" [queryRunning]="queryRunning"
-                       [hasChanges]="hasChanges"
+                       [resetDisabledReason]="resetDisabledReason"
                        (resetChangesClicked)="resetChangesClicked.emit()"/>
 
     <ts-graph-context-menu [visualiser]="visualiser" [run]="run"/>

@@ -29,35 +29,10 @@ export interface GraphViewTab {
     /** Options the tab was originally opened with — used by `resetTab` to
      *  replay the exact initial query when the user clicks "Reset changes". */
     initialOptions: OpenTypeTabOptions;
-    /** Snapshot of `graph.order` taken right after the initial query
-     *  completes; the UI compares the current order against this to decide
-     *  whether anything's been added since (so it can enable the
-     *  "Reset changes" button only when there's actually something to undo). */
-    initialNodeCount: number;
     /** Whether clicking a node selects the node's type (Inspector shows
      *  type-detail) or the instance itself (Inspector shows instance-detail).
      *  Defaults to "types" — type-level exploration is the primary flow. */
     selectionMode: SelectionMode;
-    /**
-     * For each source type (key = type label), the set of target type labels
-     * (attribute or relation type labels) that have been loaded into the
-     * graph via a type-detail chip toggle. Tracked separately from the graph
-     * itself so the chip state isn't conflated with whatever happened at the
-     * single-instance level — toggling ON for the type means "load it across
-     * every instance of this source type"; the chip's loaded indicator stays
-     * sticky regardless of what other adds may have introduced.
-     */
-    loadedConnections: Map<string, Set<string>>;
-    /**
-     * Per-instance counterpart to {@link loadedConnections}: for each instance
-     * IID (key), the set of connection labels (attribute / relation type
-     * labels, or scoped role labels) that have been loaded for *just that
-     * instance* via a context-menu "here" action. Lets the context menu show a
-     * sticky loaded indicator for single-instance loads, independent of the
-     * type-level state. (A type-level load implies every instance is loaded,
-     * so consumers OR the two together when deciding a "here" chip's state.)
-     */
-    loadedInstanceConnections: Map<string, Set<string>>;
 }
 
 export interface OpenTypeTabOptions {
@@ -165,10 +140,7 @@ export class GraphViewState {
                 rootKind,
                 run,
                 initialOptions: {},
-                initialNodeCount: 0,
                 selectionMode: "types",
-                loadedConnections: new Map(),
-                loadedInstanceConnections: new Map(),
             };
             this.openTabs$.next([...tabs, tab]);
             this.selectedTabIndex$.next(this.openTabs$.value.indexOf(tab));
@@ -190,10 +162,7 @@ export class GraphViewState {
             tab = {
                 type, run,
                 initialOptions: options,
-                initialNodeCount: 0,
                 selectionMode: "types",
-                loadedConnections: new Map(),
-                loadedInstanceConnections: new Map(),
             };
             this.openTabs$.next([...tabs, tab]);
             this.selectedTabIndex$.next(this.openTabs$.value.indexOf(tab));
@@ -282,9 +251,7 @@ export class GraphViewState {
                     }
                 }
             }
-            if (isNew) {
-                tab.initialNodeCount = run.graph.visualiser?.graph.order ?? 0;
-            }
+            if (isNew) run.graph.snapshotInitialNodeCount();
             const postStatus = run.graph.status as GraphOutputStatus;
             if (postStatus === "noQueryAnswers") run.graph.status = "noInstancesFound";
             else if (postStatus === "running") run.graph.status = "ok";
@@ -302,18 +269,7 @@ export class GraphViewState {
      * cleared so the result behaves like a freshly-opened tab.
      */
     async resetTab(tab: GraphViewTab): Promise<void> {
-        const visualiser = tab.run.graph.visualiser;
-        if (visualiser) {
-            visualiser.interactionHandler.clearSelection();
-            visualiser.interactionHandler.setSecondaryAnchors(new Set());
-            visualiser.unfreezeViewport();
-            visualiser.graph.clear();
-            visualiser.layout.forgetSettled();
-            visualiser.clearDisplayAttributes();
-        }
-        tab.initialNodeCount = 0;
-        tab.loadedConnections.clear();
-        tab.loadedInstanceConnections.clear();
+        tab.run.graph.clearForReset();
         // Pass isNew=true so the post-reset node count is re-snapshotted; the
         // tab itself stays in openTabs$ throughout.
         await this.runInitialFetches(tab, tab.type, tab.initialOptions, true);
@@ -321,32 +277,54 @@ export class GraphViewState {
 
     /** Whether the tab's graph has anything in it beyond the initial query's results. */
     tabHasChanges(tab: GraphViewTab): boolean {
-        const order = tab.run.graph.visualiser?.graph.order ?? 0;
-        return order > tab.initialNodeCount;
+        return tab.run.graph.hasChanges;
     }
 
-    /** Find the tab whose `run` matches the given one, or null. */
-    findTabForRun(run: RunOutputState): GraphViewTab | null {
-        return this.openTabs$.value.find(t => t.run === run) ?? null;
+    /** Reset replays the run's query, so it's offered only where replaying is side-effect free. */
+    resetDisabledReason(run: RunOutputState): string | null {
+        if (run.multiQuery) return "Reset is unavailable for multi-query runs";
+        const res = run.lastResponse;
+        if (!res || isApiErrorResponse(res) || !run.graph.query) return "Nothing to reset";
+        if (res.ok.queryType !== "read") return `Reset is unavailable for ${res.ok.queryType} queries`;
+        return run.graph.hasChanges ? null : "Nothing to reset";
+    }
+
+    canResetRun(run: RunOutputState): boolean {
+        return this.resetDisabledReason(run) === null;
+    }
+
+    /** Replays the run's query into the same graph. Leaves log, table and raw output alone. */
+    async resetRunGraph(run: RunOutputState): Promise<void> {
+        if (!this.canResetRun(run)) return;
+        if (!this.guardExploration()) return;
+        const query = run.graph.query!;
+        run.graph.clearForReset();
+        run.graph.status = "running";
+        try {
+            const res = await this.runQuery(query, this.appData.preferences.queryRowLimit());
+            if (!isApiErrorResponse(res)) this.pushSafely(run, res);
+            run.graph.snapshotInitialNodeCount();
+            if ((run.graph.status as GraphOutputStatus) === "running") run.graph.status = "ok";
+        } catch (err) {
+            console.error("[Graph reset]", err);
+            run.graph.status = "error";
+        }
     }
 
     /**
      * Whether the user has loaded `targetTypeLabel` for `sourceTypeLabel`
-     * via a type-detail chip toggle on this tab.
+     * via a type-detail chip toggle for this run.
      */
     isConnectionLoaded(run: RunOutputState, sourceTypeLabel: string, targetTypeLabel: string): boolean {
-        const tab = this.findTabForRun(run);
-        return tab?.loadedConnections.get(sourceTypeLabel)?.has(targetTypeLabel) ?? false;
+        return run.graph.loadedConnections.get(sourceTypeLabel)?.has(targetTypeLabel) ?? false;
     }
 
-    /** Mark `targetTypeLabel` as loaded for `sourceTypeLabel` on this tab. */
+    /** Mark `targetTypeLabel` as loaded for `sourceTypeLabel` for this run. */
     markConnectionLoaded(run: RunOutputState, sourceTypeLabel: string, targetTypeLabel: string): void {
-        const tab = this.findTabForRun(run);
-        if (!tab) return;
-        let targets = tab.loadedConnections.get(sourceTypeLabel);
+        let targets = run.graph.loadedConnections.get(sourceTypeLabel);
         if (!targets) {
             targets = new Set();
-            tab.loadedConnections.set(sourceTypeLabel, targets);
+            run.graph.loadedConnections.set(sourceTypeLabel, targets);
         }
         targets.add(targetTypeLabel);
     }
@@ -354,29 +332,25 @@ export class GraphViewState {
     /** Clear the loaded flag for `targetTypeLabel` on `sourceTypeLabel` (used
      *  when the user unloads a type-level connection). */
     removeConnectionLoaded(run: RunOutputState, sourceTypeLabel: string, targetTypeLabel: string): void {
-        const tab = this.findTabForRun(run);
-        tab?.loadedConnections.get(sourceTypeLabel)?.delete(targetTypeLabel);
+        run.graph.loadedConnections.get(sourceTypeLabel)?.delete(targetTypeLabel);
     }
 
     /**
      * Whether `connectionLabel` has been loaded for the single instance
-     * `instanceId` (a context-menu "here" load) on this tab. Does NOT account
+     * `instanceId` (a context-menu "here" load) for this run. Does NOT account
      * for type-level loads — callers that want "is this instance covered either
      * way" should also check {@link isConnectionLoaded} for the instance's type.
      */
     isInstanceConnectionLoaded(run: RunOutputState, instanceId: string, connectionLabel: string): boolean {
-        const tab = this.findTabForRun(run);
-        return tab?.loadedInstanceConnections.get(instanceId)?.has(connectionLabel) ?? false;
+        return run.graph.loadedInstanceConnections.get(instanceId)?.has(connectionLabel) ?? false;
     }
 
     /** Mark `connectionLabel` as loaded for the single instance `instanceId`. */
     markInstanceConnectionLoaded(run: RunOutputState, instanceId: string, connectionLabel: string): void {
-        const tab = this.findTabForRun(run);
-        if (!tab) return;
-        let targets = tab.loadedInstanceConnections.get(instanceId);
+        let targets = run.graph.loadedInstanceConnections.get(instanceId);
         if (!targets) {
             targets = new Set();
-            tab.loadedInstanceConnections.set(instanceId, targets);
+            run.graph.loadedInstanceConnections.set(instanceId, targets);
         }
         targets.add(connectionLabel);
     }
@@ -384,8 +358,7 @@ export class GraphViewState {
     /** Clear the loaded flag for `connectionLabel` on the single instance
      *  `instanceId` (used when the user unloads a "here" connection). */
     removeInstanceConnectionLoaded(run: RunOutputState, instanceId: string, connectionLabel: string): void {
-        const tab = this.findTabForRun(run);
-        tab?.loadedInstanceConnections.get(instanceId)?.delete(connectionLabel);
+        run.graph.loadedInstanceConnections.get(instanceId)?.delete(connectionLabel);
     }
 
     closeTab(tab: GraphViewTab) {

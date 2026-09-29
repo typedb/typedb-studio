@@ -29,6 +29,8 @@ export class StaticCodeComponent implements OnChanges, AfterViewInit {
 
     @Input({ required: true }) code!: string;
     @Input() copyOverlayVisible = false;
+    @Input() runOverlayVisible = false;
+    @Output() runButtonClick = new EventEmitter<void>();
     /** Render only the head of the code — for clipped previews inside long lists. */
     @Input() preview = false;
     @Input() expandOverlayVisible = false;

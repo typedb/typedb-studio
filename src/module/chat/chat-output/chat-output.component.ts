@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { AfterViewChecked, AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from "@angular/core";
+import { AfterViewChecked, AfterViewInit, Component, ElementRef, EventEmitter, inject, Input, OnDestroy, Output, ViewChild } from "@angular/core";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
@@ -13,9 +13,11 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatTableModule } from "@angular/material/table";
 import { MatSortModule } from "@angular/material/sort";
+import { CdkVirtualScrollViewport, ScrollingModule } from "@angular/cdk/scrolling";
 import { Subscription } from "rxjs";
 import { OutputState, OutputType } from "../../../service/chat-state.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
+import { GraphViewState } from "../../../service/graph-view-state.service";
 import { GraphCanvasComponent } from "../../../framework/graph-visualiser/canvas/graph-canvas.component";
 
 @Component({
@@ -32,6 +34,7 @@ import { GraphCanvasComponent } from "../../../framework/graph-visualiser/canvas
         MatTableModule,
         MatSortModule,
         MatTooltipModule,
+        ScrollingModule,
         GraphCanvasComponent,
     ],
 })
@@ -39,6 +42,7 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
     @Input({ required: true }) outputState!: OutputState;
     @Output() sendLogToAi = new EventEmitter<string>();
     @ViewChild(GraphCanvasComponent) graphCanvas?: GraphCanvasComponent;
+    @ViewChild("logViewport") logViewport?: CdkVirtualScrollViewport;
 
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
     copied = false;
@@ -46,6 +50,20 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
     graphMaximised = false;
     private outputTypeSub?: Subscription;
     private lastAttachedRun: RunOutputState | null = null;
+    private lastLogLineCount = 0;
+
+    private graphViewState = inject(GraphViewState);
+
+    /** Drives the graph canvas's "Reset changes" button and its tooltip. */
+    get graphResetDisabledReason(): string | null {
+        const run = this.currentRun;
+        return run ? this.graphViewState.resetDisabledReason(run) : "Nothing to reset";
+    }
+
+    onResetGraphChanges(): void {
+        const run = this.currentRun;
+        if (run) this.graphViewState.resetRunGraph(run);
+    }
 
     get currentRun(): RunOutputState | null {
         const { runs, selectedRunIndex } = this.outputState;
@@ -59,11 +77,35 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
             if (value === "graph") {
                 requestAnimationFrame(() => this.currentRun?.graph.resize());
             }
+            // The log viewport is [hidden] while another output is selected; a
+            // virtual-scroll viewport measured at display:none renders nothing
+            // until told to re-measure.
+            if (value === "log") {
+                requestAnimationFrame(() => this.logViewport?.checkViewportSize());
+            }
         });
     }
 
     ngAfterViewChecked() {
         this.attachCanvasIfNeeded();
+        this.followLogTail();
+    }
+
+    private followLogTail() {
+        const vp = this.logViewport;
+        const log = this.currentRun?.log;
+        if (!vp || !log) return;
+        if (log.lines.length === this.lastLogLineCount) return;
+        this.lastLogLineCount = log.lines.length;
+        if (log.autoscrollEnabled) vp.scrollTo({ bottom: 0 });
+    }
+
+    onLogScroll() {
+        const vp = this.logViewport;
+        const log = this.currentRun?.log;
+        if (!vp || !log) return;
+        // Threshold covers the content wrapper's vertical padding.
+        log.autoscrollEnabled = vp.measureScrollOffset("bottom") <= 24;
     }
 
     private attachCanvasIfNeeded() {

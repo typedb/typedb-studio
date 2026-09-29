@@ -152,6 +152,8 @@ export class SchemaToolWindowComponent {
      *  the global path). */
     @HostListener("window:keydown", ["$event"])
     onWindowKeydown(event: KeyboardEvent) {
+        // Leave keys that a code editor has already handled (e.g. its own Ctrl+F search panel) alone
+        if (event.defaultPrevented || (event.target instanceof Element && event.target.closest(".cm-editor"))) return;
         if ((event.ctrlKey || event.metaKey) && (event.key === "f" || event.key === "F")) {
             event.preventDefault();
             this.openSearch();

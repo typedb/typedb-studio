@@ -259,6 +259,8 @@
                             [visualiser]="state.graphOutput.visualiser"
                             [status]="state.graphOutput.status"
                             [run]="currentRun"
+                            [resetDisabledReason]="graphResetDisabledReason"
+                            (resetChangesClicked)="onResetGraphChanges()"
                             [graphPercent]="panelSizes[5]" (graphPercentChange)="onPanelResize(5, $event)"
                             [stylesPanePercent]="panelSizes[6]" (stylesPanePercentChange)="onPanelResize(6, $event)"
                             [(maximised)]="graphMaximised"

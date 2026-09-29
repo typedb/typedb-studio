@@ -16,7 +16,7 @@ import { GraphViewState, GraphViewTab, SelectionMode } from "../../../service/gr
             [visualiser]="tab.run.graph.visualiser"
             [status]="tab.run.graph.status"
             [run]="tab.run"
-            [hasChanges]="hasChanges"
+            [resetDisabledReason]="resetDisabledReason"
             [selectionMode]="tab.selectionMode"
             (statusAction)="onGraphStatusAction($event)"
             (resetChangesClicked)="onResetChanges()"
@@ -46,8 +46,8 @@ export class GraphTabComponent implements AfterViewInit, OnDestroy {
 
     constructor(private router: Router) {}
 
-    get hasChanges(): boolean {
-        return this.graphViewState.tabHasChanges(this.tab);
+    get resetDisabledReason(): string | null {
+        return this.graphViewState.tabHasChanges(this.tab) ? null : "Nothing to reset";
     }
 
     onResetChanges(): void {

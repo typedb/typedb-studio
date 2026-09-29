@@ -48,6 +48,10 @@
         right: 48px;
     }
 
+    .copy-overlay + .copy-overlay + .copy-overlay {
+        right: 88px;
+    }
+
     .copy-overlay.visible {
         opacity: 0;
         transform: translateY(-4px);

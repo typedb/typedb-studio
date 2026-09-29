@@ -38,6 +38,7 @@ import { QueryTab, QueryTabsState } from "../../service/query-tabs-state.service
 import { SavedQueriesState, isDefaultQueryTabName } from "../../service/saved-queries-state.service";
 import { SaveQueryDialogComponent, SaveQueryDialogData } from "../saved-queries/save-query-dialog/save-query-dialog.component";
 import { RunOutputState } from "../../service/query-page-state.service";
+import { GraphViewState } from "../../service/graph-view-state.service";
 import { QueryExportService, SerializedOutput } from "../../service/query-export.service";
 import { SnackbarService } from "../../service/snackbar.service";
 import { DatabaseCreateDialogComponent } from "../database/create-dialog/database-create-dialog.component";
@@ -90,6 +91,7 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     private dialog = inject(MatDialog);
     private router = inject(Router);
     private savedQueries = inject(SavedQueriesState);
+    private graphViewState = inject(GraphViewState);
 
     // Query tab context menu state
     queryTabContextMenuPosition = { x: 0, y: 0 };
@@ -105,6 +107,17 @@ export class QueryPageComponent implements OnInit, AfterViewInit, AfterViewCheck
     newTabContextMenuPosition = { x: 0, y: 0 };
 
     graphMaximised = false;
+
+    /** Drives the graph canvas's "Reset changes" button and its tooltip. */
+    get graphResetDisabledReason(): string | null {
+        const run = this.currentRun;
+        return run ? this.graphViewState.resetDisabledReason(run) : "Nothing to reset";
+    }
+
+    onResetGraphChanges(): void {
+        const run = this.currentRun;
+        if (run) this.graphViewState.resetRunGraph(run);
+    }
 
     get currentRun(): RunOutputState | null {
         const runs = this.state.currentTabRuns;

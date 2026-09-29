@@ -1,4 +1,9 @@
 <pre><code #codeEl></code></pre>
+@if (runOverlayVisible) {
+  <div class="copy-overlay visible" (click)="runButtonClick.emit()" matTooltip="Run" [matTooltipShowDelay]="500">
+    <i class="fal fa-play"></i>
+  </div>
+}
 @if (copyOverlayVisible) {
   <div class="copy-overlay visible" (click)="onCopyButtonClick()" matTooltip="Copy" [matTooltipShowDelay]="500">
     <i [class]="copied ? 'fal fa-check' : 'fal fa-copy'"></i>

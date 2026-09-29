@@ -11,7 +11,7 @@ import { DriverAction, queryRunActionOf } from "../concept/action";
 import { GraphVisualiser } from "../framework/graph-visualiser/engine";
 import { createSigmaRenderer, defaultSigmaSettings, WebGLUnavailableError } from "../framework/graph-visualiser/engine/sigma-settings";
 import { newGraph, Graph } from "../framework/graph-visualiser/engine/graph";
-import { Layouts } from "../framework/graph-visualiser/engine/layout";
+import { Layouts, LayoutRestoreState } from "../framework/graph-visualiser/engine/layout";
 import { detectOS } from "../framework/util/os";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
@@ -720,6 +720,7 @@ function outputQueryResponseWithAnswers(run: RunOutputState, res: ApiResponse<Qu
             deps.snackbar.errorPersistent(`Failed to render graph visualization: ${err instanceof Error ? err.message : err}`);
         }
     }
+    run.graph.snapshotInitialNodeCount();
     run.raw.push(JSON.stringify(res, null, 2));
 }
 
@@ -850,8 +851,8 @@ export class LogOutputState {
 
     constructor() {}
 
-    /** Bumped on every content mutation; keys the fullText cache (small logs,
-     *  e.g. the chat output, bind fullText directly in templates). */
+    /** Bumped on every content mutation; keys the fullText cache (used by copy
+     *  and send-to-AI actions, which may read it repeatedly). */
     private version = 0;
     private fullTextCache: { version: number; text: string } | null = null;
 
@@ -1246,6 +1247,7 @@ export class GraphOutputState {
     private _canvasEl: HTMLElement | null = null;
     private _preservedGraph: Graph | null = null;
     private _preservedCamera: { x: number; y: number; ratio: number; angle: number } | null = null;
+    private _preservedLayoutState: LayoutRestoreState | null = null;
     private _pendingResponses: ApiResponse<QueryResponse>[] = [];
     /** Display-attribute responses recorded *before* the visualiser exists.
      *  Drained into the visualiser as soon as `pushInternal` constructs it. */
@@ -1254,6 +1256,28 @@ export class GraphOutputState {
      *  display-attrs). Drained into the visualiser as soon as it's created. */
     private _pendingLabelOverrides: Map<string, string> | null = null;
     private _styleService: GraphStyleService;
+    /**
+     * For each source type (key = type label), the set of target type labels
+     * (attribute or relation type labels) that have been loaded into the
+     * graph via a type-detail chip toggle. Tracked separately from the graph
+     * itself so the chip state isn't conflated with whatever happened at the
+     * single-instance level — toggling ON for the type means "load it across
+     * every instance of this source type"; the chip's loaded indicator stays
+     * sticky regardless of what other adds may have introduced.
+     */
+    loadedConnections = new Map<string, Set<string>>();
+    /**
+     * Per-instance counterpart to {@link loadedConnections}: for each instance
+     * IID (key), the set of connection labels (attribute / relation type
+     * labels, or scoped role labels) that have been loaded for *just that
+     * instance* via a context-menu "here" action. Lets the context menu show a
+     * sticky loaded indicator for single-instance loads, independent of the
+     * type-level state. (A type-level load implies every instance is loaded,
+     * so consumers OR the two together when deciding a "here" chip's state.)
+     */
+    loadedInstanceConnections = new Map<string, Set<string>>();
+    /** Node count once the query that produced this graph finished building. */
+    initialNodeCount = 0;
 
     constructor(styleService: GraphStyleService) {
         this._styleService = styleService;
@@ -1384,6 +1408,7 @@ export class GraphOutputState {
             this._preservedGraph = this.visualiser.graph;
             const cam = this.visualiser.sigma.getCamera().getState();
             this._preservedCamera = { x: cam.x, y: cam.y, ratio: cam.ratio, angle: cam.angle };
+            this._preservedLayoutState = this.visualiser.layout.snapshotState?.() ?? null;
             this.visualiser.destroy();
             this.visualiser = null;
         }
@@ -1394,7 +1419,12 @@ export class GraphOutputState {
         this.canvasEl = canvasEl;
         if (this._preservedGraph && this._preservedGraph.nodes().length > 0 && !this.visualiser) {
             const sigma = createSigmaRenderer(canvasEl, defaultSigmaSettings as any, this._preservedGraph);
-            const layout = Layouts.createD3ForceStatic(this._preservedGraph);
+            // The live (animated) layout, so density changes and explorations keep working after re-attach
+            const layout = Layouts.createD3ForceSupervisor(this._preservedGraph);
+            if (this._preservedLayoutState) {
+                layout.restoreState?.(this._preservedLayoutState);
+                this._preservedLayoutState = null;
+            }
             this.visualiser = new GraphVisualiser(this._preservedGraph, sigma, layout, this._styleService);
             if (this._preservedCamera) {
                 this.visualiser.sigma.getCamera().setState(this._preservedCamera);
@@ -1407,6 +1437,30 @@ export class GraphOutputState {
         this.visualiser?.destroy();
         this.visualiser = null;
         this._preservedGraph = null;
+    }
+
+    get hasChanges(): boolean {
+        return (this.visualiser?.graph.order ?? 0) > this.initialNodeCount;
+    }
+
+    snapshotInitialNodeCount(): void {
+        this.initialNodeCount = this.visualiser?.graph.order ?? 0;
+    }
+
+    /** Blank slate for replaying the initial query: contents, selection, viewport, loaded flags. */
+    clearForReset(): void {
+        const visualiser = this.visualiser;
+        if (visualiser) {
+            visualiser.interactionHandler.clearSelection();
+            visualiser.interactionHandler.setSecondaryAnchors(new Set());
+            visualiser.unfreezeViewport();
+            visualiser.graph.clear();
+            visualiser.layout.forgetSettled();
+            visualiser.clearDisplayAttributes();
+        }
+        this.initialNodeCount = 0;
+        this.loadedConnections.clear();
+        this.loadedInstanceConnections.clear();
     }
 }
 
