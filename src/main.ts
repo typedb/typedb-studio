@@ -74,9 +74,6 @@ Intercom({
 
 bootstrapApplication(RootComponent, {
     providers: [
-        // Run change detection at most once per frame for DOM events, not once per listener: every
-        // CodeMirror editor adds document/window listeners (selectionchange, scroll, resize), so pages
-        // with many editors otherwise ran dozens of app-wide checks per keystroke.
         provideZoneChangeDetection({ eventCoalescing: true }),
         provideRouter(routes),
         { provide: TitleStrategy, useClass: TypeDBStudioTitleStrategy },
