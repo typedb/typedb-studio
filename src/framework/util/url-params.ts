@@ -4,8 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { ConnectionConfig } from "../../concept/connection";
-
 export const USERNAME = "username";
 export const ADDRESS = "address";
 export const NAME = "name";
@@ -24,13 +22,4 @@ export function addressesFromParams(params: QueryParams): string[] {
         .flatMap(value => value.split(","))
         .map(address => address.trim())
         .filter(address => address.length > 0);
-}
-
-/** Whether the URL's `address` and `username` params are both present and identify the given connection. */
-export function paramsMatchConnection(params: QueryParams, connection: ConnectionConfig): boolean {
-    const [addresses, username] = [addressesFromParams(params), params.get(USERNAME)];
-    if (username == null || addresses.length === 0) return false;
-    const savedAddresses = "addresses" in connection.params ? connection.params.addresses : [];
-    const sameAddresses = savedAddresses.length === addresses.length && addresses.every(a => savedAddresses.includes(a));
-    return connection.params.username === username && sameAddresses;
 }

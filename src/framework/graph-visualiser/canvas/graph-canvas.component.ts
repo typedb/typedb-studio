@@ -43,11 +43,7 @@ export class GraphCanvasComponent implements AfterViewInit, AfterViewChecked, On
     /** The run that owns this canvas's graph. Passed through to the side panel
      *  so the Inspector knows where to push instances/attributes/links. */
     @Input() run: RunOutputState | null = null;
-    /** Why "Reset changes" is unavailable on this surface, or null when the
-     *  graph has diverged from its initial query and can be reset. Drives both
-     *  the enabled state and the tooltip of the zoom-controls reset button, so
-     *  surfaces that never support reset explain themselves rather than showing
-     *  a silent greyed-out control. */
+    /** Why "Reset changes" is unavailable, or null when it's actionable. Doubles as its tooltip. */
     @Input() resetDisabledReason: string | null = "Nothing to reset";
     /** When non-null, an in-canvas toggle is shown for switching between
      *  type-selection and instance-selection modes. Null hides the toggle

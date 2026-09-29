@@ -180,6 +180,12 @@ export class ConnectionCreatorComponent {
                 address: (paramAddresses.length ? paramAddresses.join(",") : null) ?? currentAddress ?? ``,
                 username: params.get(USERNAME) ?? currentUsername ?? ``,
             });
+
+            const namedConnection = this.appData.connections.urlNamedConnection(params);
+            if (namedConnection) {
+                this.advancedForm.patchValue({ username: namedConnection.params.username });
+                this.connectWith(namedConnection);
+            }
         });
     }
 
@@ -274,11 +280,17 @@ export class ConnectionCreatorComponent {
         if (!config) throw new Error(INTERNAL_ERROR);
         const usedAdvancedRoute = this.form.value.advancedConfigActive === true;
         const submittedAddress = this.advancedForm.controls.address.value;
+        this.connectWith(config, usedAdvancedRoute ? submittedAddress : null);
+    }
+
+    /** Connects, holding the form in its submitting state until the attempt resolves. */
+    private connectWith(config: ConnectionConfig, rememberAddress: string | null = null) {
         this.form.disable();
+        this.isSubmitting$.next(true);
         this.driver.tryConnect(config).subscribe({
             next: () => {
-                if (usedAdvancedRoute && submittedAddress) {
-                    this.appData.recentAddresses.push(submittedAddress);
+                if (rememberAddress) {
+                    this.appData.recentAddresses.push(rememberAddress);
                 }
                 this.snackbar.success(`Connected to ${config.name}`);
                 this.router.navigate([this.appData.viewState.lastUsedToolRoute()]).then((navigated) => {

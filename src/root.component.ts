@@ -15,7 +15,6 @@ import { DriverState } from "./service/driver-state.service";
 import { StartupMessage, StartupMessageService } from "./service/startup-message.service";
 import { SnackbarService } from "./service/snackbar.service";
 import { ThemeService } from "./service/theme.service";
-import { addressesFromParams, paramsMatchConnection } from "./framework/util/url-params";
 
 @Component({
     selector: "ts-root", // eslint-disable-line @angular-eslint/component-selector
@@ -52,14 +51,13 @@ export class RootComponent implements OnInit {
         const message = this.startupMessage.consume();
         if (message) this.showStartupMessage(message);
 
-        const initialConnectionConfig = this.appData.connections.findStartupConnection();
-        // A launch URL naming a different server (e.g. "Connect with TypeDB Studio" from TypeDB Cloud) takes
-        // precedence over the saved connection, so don't reconnect to the latter behind the connection form
+        // The connect page runs its own reconnect, in-form; don't race it.
+        const landingOnConnectPage = window.location.pathname.replace(/\/+$/, "").endsWith("/connect");
         const launchParams = new URLSearchParams(window.location.search);
-        const launchTargetsOtherServer = initialConnectionConfig != null
-            && addressesFromParams(launchParams).length > 0
-            && !paramsMatchConnection(launchParams, initialConnectionConfig);
-        if (initialConnectionConfig && !launchTargetsOtherServer) {
+        const initialConnectionConfig = landingOnConnectPage
+            ? null
+            : this.appData.connections.autoReconnectTarget(launchParams);
+        if (initialConnectionConfig) {
             this.driver.tryConnect(initialConnectionConfig).subscribe({
                 next: () => {
                     this.snackbar.info(`Connected to ${initialConnectionConfig.name}`);

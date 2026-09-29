@@ -1276,9 +1276,7 @@ export class GraphOutputState {
      * so consumers OR the two together when deciding a "here" chip's state.)
      */
     loadedInstanceConnections = new Map<string, Set<string>>();
-    /** Node count right after the query that produced this graph finished
-     *  building. Anything above this is user exploration, which is what
-     *  "Reset changes" throws away. */
+    /** Node count once the query that produced this graph finished building. */
     initialNodeCount = 0;
 
     constructor(styleService: GraphStyleService) {
@@ -1441,7 +1439,6 @@ export class GraphOutputState {
         this._preservedGraph = null;
     }
 
-    /** Whether anything has been added beyond what the initial query built. */
     get hasChanges(): boolean {
         return (this.visualiser?.graph.order ?? 0) > this.initialNodeCount;
     }
@@ -1450,9 +1447,7 @@ export class GraphOutputState {
         this.initialNodeCount = this.visualiser?.graph.order ?? 0;
     }
 
-    /** Drop everything back to a blank slate so the initial query can be
-     *  replayed: graph contents, selection, viewport pin, and the sticky
-     *  loaded-connection flags that tracked the discarded exploration. */
+    /** Blank slate for replaying the initial query: contents, selection, viewport, loaded flags. */
     clearForReset(): void {
         const visualiser = this.visualiser;
         if (visualiser) {

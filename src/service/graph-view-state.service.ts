@@ -280,12 +280,7 @@ export class GraphViewState {
         return tab.run.graph.hasChanges;
     }
 
-    /**
-     * Why "Reset changes" is unavailable for a run that has no graph view tab
-     * (the Query page's graph output), or null when it's actionable. Reset
-     * replays the run's query, so it's only offered where replaying is free of
-     * side effects: a single read query that completed successfully.
-     */
+    /** Reset replays the run's query, so it's offered only where replaying is side-effect free. */
     resetDisabledReason(run: RunOutputState): string | null {
         if (run.multiQuery) return "Reset is unavailable for multi-query runs";
         const res = run.lastResponse;
@@ -298,11 +293,7 @@ export class GraphViewState {
         return this.resetDisabledReason(run) === null;
     }
 
-    /**
-     * "Reset changes" for a tabless run: discard everything exploration added
-     * and replay the run's own query into the same graph. The run's log, table
-     * and raw output are deliberately left alone — only the graph resets.
-     */
+    /** Replays the run's query into the same graph. Leaves log, table and raw output alone. */
     async resetRunGraph(run: RunOutputState): Promise<void> {
         if (!this.canResetRun(run)) return;
         if (!this.guardExploration()) return;
