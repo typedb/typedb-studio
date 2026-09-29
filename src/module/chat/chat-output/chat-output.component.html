@@ -34,7 +34,7 @@
       <div class="output-view log-view" [hidden]="outputState.outputTypeControl.value !== 'log'">
         <!-- Virtualised, like the query page's log: many chat outputs each holding a full
              log in a textarea make the whole page sluggish to type in. -->
-        <cdk-virtual-scroll-viewport #logViewport itemSize="22" minBufferPx="440" maxBufferPx="880" class="log-lines-viewport">
+        <cdk-virtual-scroll-viewport #logViewport itemSize="22" minBufferPx="440" maxBufferPx="880" class="log-lines-viewport" (scroll)="onLogScroll()">
           <!-- Bound as an Observable (no async pipe): emissions re-use the same array reference. -->
           <div class="log-line" *cdkVirtualFor="let line of currentRun.log.lines$">{{ line }}</div>
         </cdk-virtual-scroll-viewport>

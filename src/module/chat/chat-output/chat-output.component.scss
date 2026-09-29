@@ -7,6 +7,7 @@
 
 @use "shapes";
 @use "typography";
+@use "log-lines";
 
 .chat-output-container {
     margin-top: 0.75rem;
@@ -201,18 +202,7 @@
         color: var(--fg1);
         @include typography.code;
 
-        // Padding lives on the content, not the viewport, so the scrollbars span the whole panel.
-        ::ng-deep .cdk-virtual-scroll-content-wrapper {
-            padding: 0.75rem 0;
-        }
-
-        // Must match the viewport's itemSize so virtual scrolling measures correctly.
-        .log-line {
-            height: 22px;
-            line-height: 22px;
-            white-space: pre;
-            padding: 0 0.75rem;
-        }
+        @include log-lines.log-lines(0.75rem, 0.75rem);
     }
 
     .output-text-box {

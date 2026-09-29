@@ -1,0 +1,22 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+/// Line rules for a cdk-virtual-scroll log viewport. The 22px line height must
+/// match the viewport's `itemSize`, or virtual scrolling mismeasures.
+@mixin log-lines($wrapper-padding-y, $line-padding-x) {
+    // Padding lives on the content, not the viewport, so the scrollable area
+    // (and its scrollbars) spans the entire panel.
+    ::ng-deep .cdk-virtual-scroll-content-wrapper {
+        padding: $wrapper-padding-y 0;
+    }
+
+    .log-line {
+        height: 22px;
+        line-height: 22px;
+        white-space: pre;
+        padding: 0 $line-padding-x;
+    }
+}

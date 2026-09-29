@@ -50,6 +50,7 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
     graphMaximised = false;
     private outputTypeSub?: Subscription;
     private lastAttachedRun: RunOutputState | null = null;
+    private lastLogLineCount = 0;
 
     private graphViewState = inject(GraphViewState);
 
@@ -87,6 +88,24 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
 
     ngAfterViewChecked() {
         this.attachCanvasIfNeeded();
+        this.followLogTail();
+    }
+
+    private followLogTail() {
+        const vp = this.logViewport;
+        const log = this.currentRun?.log;
+        if (!vp || !log) return;
+        if (log.lines.length === this.lastLogLineCount) return;
+        this.lastLogLineCount = log.lines.length;
+        if (log.autoscrollEnabled) vp.scrollTo({ bottom: 0 });
+    }
+
+    onLogScroll() {
+        const vp = this.logViewport;
+        const log = this.currentRun?.log;
+        if (!vp || !log) return;
+        // Threshold covers the content wrapper's vertical padding.
+        log.autoscrollEnabled = vp.measureScrollOffset("bottom") <= 24;
     }
 
     private attachCanvasIfNeeded() {
