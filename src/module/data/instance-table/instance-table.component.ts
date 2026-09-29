@@ -27,6 +27,7 @@ import { DriverState } from "../../../service/driver-state.service";
 import { ApiResponse, Attribute, Concept, ConceptRow, ConceptRowAnswer, isApiErrorResponse, QueryResponse } from "@typedb/driver-http";
 import { SnackbarService } from "../../../service/snackbar.service";
 import { extractErrorMessage } from "../../../framework/util/observable";
+import { typeqlStringLiteral } from "../../../framework/util/strings";
 import { RichTooltipDirective } from "../../../framework/tooltip/rich-tooltip.directive";
 
 /** Primitive value types that TypeDB attributes can hold */
@@ -406,10 +407,10 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
             if (this.filterText) {
                 if (this.tab.type.kind === "attributeType") {
                     // For attribute types, filter on the attribute value
-                    filterClause = `$instance contains "${this.filterText}"; `;
+                    filterClause = `$instance contains ${typeqlStringLiteral(this.filterText)}; `;
                 } else {
                     // For entity/relation types, filter on owned attributes
-                    filterClause = `$instance has $attr; $attr contains "${this.filterText}"; `;
+                    filterClause = `$instance has $attr; $attr contains ${typeqlStringLiteral(this.filterText)}; `;
                 }
             }
 
@@ -825,7 +826,7 @@ export class InstanceTableComponent implements OnInit, OnDestroy {
         // User filter - search in all text attributes
         let filterClause = "";
         if (this.filterText) {
-            filterClause = `$instance has $attr; $attr contains "${this.filterText}";`;
+            filterClause = `$instance has $attr; $attr contains ${typeqlStringLiteral(this.filterText)};`;
         }
 
         // Tab-level TypeQL filter (structural filter, e.g., for filtered relation views)
@@ -901,7 +902,7 @@ offset ${offset}; limit ${limit};${secondMatch}`.trim();
         // Filter on the attribute value
         let filterClause = "";
         if (this.filterText) {
-            filterClause = `$instance contains "${this.filterText}";`;
+            filterClause = `$instance contains ${typeqlStringLiteral(this.filterText)};`;
         }
 
         const tabFilter = this.tab.typeqlFilter || "";

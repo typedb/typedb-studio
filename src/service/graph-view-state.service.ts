@@ -330,23 +330,36 @@ export class GraphViewState {
         return this.openTabs$.value.find(t => t.run === run) ?? null;
     }
 
-    /**
-     * Whether the user has loaded `targetTypeLabel` for `sourceTypeLabel`
-     * via a type-detail chip toggle on this tab.
-     */
-    isConnectionLoaded(run: RunOutputState, sourceTypeLabel: string, targetTypeLabel: string): boolean {
+    /** Loaded-connection state for runs that have no graph view tab (Query and Agent mode graph outputs). */
+    private tablessLoadedState = new WeakMap<RunOutputState, Pick<GraphViewTab, "loadedConnections" | "loadedInstanceConnections">>();
+
+    /** The loaded-connection state for `run`: its tab's, if it belongs to a graph view tab, otherwise its own. */
+    private loadedState(run: RunOutputState): Pick<GraphViewTab, "loadedConnections" | "loadedInstanceConnections"> {
         const tab = this.findTabForRun(run);
-        return tab?.loadedConnections.get(sourceTypeLabel)?.has(targetTypeLabel) ?? false;
+        if (tab) return tab;
+        let state = this.tablessLoadedState.get(run);
+        if (!state) {
+            state = { loadedConnections: new Map(), loadedInstanceConnections: new Map() };
+            this.tablessLoadedState.set(run, state);
+        }
+        return state;
     }
 
-    /** Mark `targetTypeLabel` as loaded for `sourceTypeLabel` on this tab. */
+    /**
+     * Whether the user has loaded `targetTypeLabel` for `sourceTypeLabel`
+     * via a type-detail chip toggle for this run.
+     */
+    isConnectionLoaded(run: RunOutputState, sourceTypeLabel: string, targetTypeLabel: string): boolean {
+        return this.loadedState(run).loadedConnections.get(sourceTypeLabel)?.has(targetTypeLabel) ?? false;
+    }
+
+    /** Mark `targetTypeLabel` as loaded for `sourceTypeLabel` for this run. */
     markConnectionLoaded(run: RunOutputState, sourceTypeLabel: string, targetTypeLabel: string): void {
-        const tab = this.findTabForRun(run);
-        if (!tab) return;
-        let targets = tab.loadedConnections.get(sourceTypeLabel);
+        const state = this.loadedState(run);
+        let targets = state.loadedConnections.get(sourceTypeLabel);
         if (!targets) {
             targets = new Set();
-            tab.loadedConnections.set(sourceTypeLabel, targets);
+            state.loadedConnections.set(sourceTypeLabel, targets);
         }
         targets.add(targetTypeLabel);
     }
@@ -354,29 +367,26 @@ export class GraphViewState {
     /** Clear the loaded flag for `targetTypeLabel` on `sourceTypeLabel` (used
      *  when the user unloads a type-level connection). */
     removeConnectionLoaded(run: RunOutputState, sourceTypeLabel: string, targetTypeLabel: string): void {
-        const tab = this.findTabForRun(run);
-        tab?.loadedConnections.get(sourceTypeLabel)?.delete(targetTypeLabel);
+        this.loadedState(run).loadedConnections.get(sourceTypeLabel)?.delete(targetTypeLabel);
     }
 
     /**
      * Whether `connectionLabel` has been loaded for the single instance
-     * `instanceId` (a context-menu "here" load) on this tab. Does NOT account
+     * `instanceId` (a context-menu "here" load) for this run. Does NOT account
      * for type-level loads — callers that want "is this instance covered either
      * way" should also check {@link isConnectionLoaded} for the instance's type.
      */
     isInstanceConnectionLoaded(run: RunOutputState, instanceId: string, connectionLabel: string): boolean {
-        const tab = this.findTabForRun(run);
-        return tab?.loadedInstanceConnections.get(instanceId)?.has(connectionLabel) ?? false;
+        return this.loadedState(run).loadedInstanceConnections.get(instanceId)?.has(connectionLabel) ?? false;
     }
 
     /** Mark `connectionLabel` as loaded for the single instance `instanceId`. */
     markInstanceConnectionLoaded(run: RunOutputState, instanceId: string, connectionLabel: string): void {
-        const tab = this.findTabForRun(run);
-        if (!tab) return;
-        let targets = tab.loadedInstanceConnections.get(instanceId);
+        const state = this.loadedState(run);
+        let targets = state.loadedInstanceConnections.get(instanceId);
         if (!targets) {
             targets = new Set();
-            tab.loadedInstanceConnections.set(instanceId, targets);
+            state.loadedInstanceConnections.set(instanceId, targets);
         }
         targets.add(connectionLabel);
     }
@@ -384,8 +394,7 @@ export class GraphViewState {
     /** Clear the loaded flag for `connectionLabel` on the single instance
      *  `instanceId` (used when the user unloads a "here" connection). */
     removeInstanceConnectionLoaded(run: RunOutputState, instanceId: string, connectionLabel: string): void {
-        const tab = this.findTabForRun(run);
-        tab?.loadedInstanceConnections.get(instanceId)?.delete(connectionLabel);
+        this.loadedState(run).loadedInstanceConnections.get(instanceId)?.delete(connectionLabel);
     }
 
     closeTab(tab: GraphViewTab) {

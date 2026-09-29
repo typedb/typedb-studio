@@ -27,9 +27,10 @@
             </div>
           </aside>
           <div class="saved-code-editor">
-            <tp-code-editor [formControlProp]="getEntryControl(entry)"
-                            [runOverlayVisible]="true"
-                            (runButtonClick)="onRun(entry)"/>
+            <tp-static-code [code]="entry.query" [preview]="true"
+                            [runOverlayVisible]="true" (runButtonClick)="onRun(entry)"
+                            [copyOverlayVisible]="true"
+                            [expandOverlayVisible]="true" (expandButtonClick)="onViewFull(entry)"/>
           </div>
         </li>
       }

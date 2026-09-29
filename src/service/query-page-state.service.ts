@@ -11,7 +11,7 @@ import { DriverAction, queryRunActionOf } from "../concept/action";
 import { GraphVisualiser } from "../framework/graph-visualiser/engine";
 import { createSigmaRenderer, defaultSigmaSettings, WebGLUnavailableError } from "../framework/graph-visualiser/engine/sigma-settings";
 import { newGraph, Graph } from "../framework/graph-visualiser/engine/graph";
-import { Layouts } from "../framework/graph-visualiser/engine/layout";
+import { Layouts, LayoutRestoreState } from "../framework/graph-visualiser/engine/layout";
 import { detectOS } from "../framework/util/os";
 import { INTERNAL_ERROR } from "../framework/util/strings";
 import { DriverState } from "./driver-state.service";
@@ -850,8 +850,8 @@ export class LogOutputState {
 
     constructor() {}
 
-    /** Bumped on every content mutation; keys the fullText cache (small logs,
-     *  e.g. the chat output, bind fullText directly in templates). */
+    /** Bumped on every content mutation; keys the fullText cache (used by copy
+     *  and send-to-AI actions, which may read it repeatedly). */
     private version = 0;
     private fullTextCache: { version: number; text: string } | null = null;
 
@@ -1246,6 +1246,7 @@ export class GraphOutputState {
     private _canvasEl: HTMLElement | null = null;
     private _preservedGraph: Graph | null = null;
     private _preservedCamera: { x: number; y: number; ratio: number; angle: number } | null = null;
+    private _preservedLayoutState: LayoutRestoreState | null = null;
     private _pendingResponses: ApiResponse<QueryResponse>[] = [];
     /** Display-attribute responses recorded *before* the visualiser exists.
      *  Drained into the visualiser as soon as `pushInternal` constructs it. */
@@ -1384,6 +1385,7 @@ export class GraphOutputState {
             this._preservedGraph = this.visualiser.graph;
             const cam = this.visualiser.sigma.getCamera().getState();
             this._preservedCamera = { x: cam.x, y: cam.y, ratio: cam.ratio, angle: cam.angle };
+            this._preservedLayoutState = this.visualiser.layout.snapshotState?.() ?? null;
             this.visualiser.destroy();
             this.visualiser = null;
         }
@@ -1394,7 +1396,12 @@ export class GraphOutputState {
         this.canvasEl = canvasEl;
         if (this._preservedGraph && this._preservedGraph.nodes().length > 0 && !this.visualiser) {
             const sigma = createSigmaRenderer(canvasEl, defaultSigmaSettings as any, this._preservedGraph);
-            const layout = Layouts.createD3ForceStatic(this._preservedGraph);
+            // The live (animated) layout, so density changes and explorations keep working after re-attach
+            const layout = Layouts.createD3ForceSupervisor(this._preservedGraph);
+            if (this._preservedLayoutState) {
+                layout.restoreState?.(this._preservedLayoutState);
+                this._preservedLayoutState = null;
+            }
             this.visualiser = new GraphVisualiser(this._preservedGraph, sigma, layout, this._styleService);
             if (this._preservedCamera) {
                 this.visualiser.sigma.getCamera().setState(this._preservedCamera);

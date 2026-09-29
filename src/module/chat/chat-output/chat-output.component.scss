@@ -6,6 +6,7 @@
 
 
 @use "shapes";
+@use "typography";
 
 .chat-output-container {
     margin-top: 0.75rem;
@@ -192,6 +193,25 @@
 
         ::ng-deep .mat-mdc-form-field-infix {
             height: 100%;
+        }
+    }
+
+    .log-lines-viewport {
+        flex: 1;
+        color: var(--fg1);
+        @include typography.code;
+
+        // Padding lives on the content, not the viewport, so the scrollbars span the whole panel.
+        ::ng-deep .cdk-virtual-scroll-content-wrapper {
+            padding: 0.75rem 0;
+        }
+
+        // Must match the viewport's itemSize so virtual scrolling measures correctly.
+        .log-line {
+            height: 22px;
+            line-height: 22px;
+            white-space: pre;
+            padding: 0 0.75rem;
         }
     }
 

@@ -7,3 +7,8 @@
 export const LOADING = "Loading..."
 export const NO_ITEMS_SELECTED = "No items selected";
 export const INTERNAL_ERROR = `Unexpected internal error`;
+
+/** Quotes text as a TypeQL string literal, escaping backslashes and double quotes. */
+export function typeqlStringLiteral(text: string): string {
+    return `"${text.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}

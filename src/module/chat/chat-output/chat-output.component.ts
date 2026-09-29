@@ -13,6 +13,7 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatTableModule } from "@angular/material/table";
 import { MatSortModule } from "@angular/material/sort";
+import { CdkVirtualScrollViewport, ScrollingModule } from "@angular/cdk/scrolling";
 import { Subscription } from "rxjs";
 import { OutputState, OutputType } from "../../../service/chat-state.service";
 import { RunOutputState } from "../../../service/query-page-state.service";
@@ -32,6 +33,7 @@ import { GraphCanvasComponent } from "../../../framework/graph-visualiser/canvas
         MatTableModule,
         MatSortModule,
         MatTooltipModule,
+        ScrollingModule,
         GraphCanvasComponent,
     ],
 })
@@ -39,6 +41,7 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
     @Input({ required: true }) outputState!: OutputState;
     @Output() sendLogToAi = new EventEmitter<string>();
     @ViewChild(GraphCanvasComponent) graphCanvas?: GraphCanvasComponent;
+    @ViewChild("logViewport") logViewport?: CdkVirtualScrollViewport;
 
     outputTypes: OutputType[] = ["log", "table", "graph", "raw"];
     copied = false;
@@ -58,6 +61,12 @@ export class ChatOutputComponent implements AfterViewInit, AfterViewChecked, OnD
         this.outputTypeSub = this.outputState.outputTypeControl.valueChanges.subscribe((value) => {
             if (value === "graph") {
                 requestAnimationFrame(() => this.currentRun?.graph.resize());
+            }
+            // The log viewport is [hidden] while another output is selected; a
+            // virtual-scroll viewport measured at display:none renders nothing
+            // until told to re-measure.
+            if (value === "log") {
+                requestAnimationFrame(() => this.logViewport?.checkViewportSize());
             }
         });
     }

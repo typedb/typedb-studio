@@ -21,7 +21,7 @@
     handler. Same trick the connection widget uses.
   -->
   <span class="menu-content" (click)="$event.stopPropagation()">
-  @if (target && !isAttributeTarget) {
+  @if (target) {
     <aside class="node-label">{{ nodeLabel }}</aside>
     <mat-divider/>
     @if (hasRelations) {
@@ -101,8 +101,11 @@
     }
 
     <!-- Per-type colour: a restricted swatch palette, applied to every node of
-         the target's type. The selected swatch (if any) gets a ring. -->
-    <mat-divider></mat-divider>
+         the target's type. The selected swatch (if any) gets a ring. Attribute
+         targets have no load sections, so this is all they show. -->
+    @if (hasRelations || hasRoles || hasAttributes) {
+      <mat-divider></mat-divider>
+    }
     <div class="colour-swatches">
       @for (hex of colorSwatches; track hex) {
         <button class="colour-swatch"
