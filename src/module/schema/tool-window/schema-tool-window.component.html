@@ -176,6 +176,8 @@
       } @else {
         <button mat-menu-item (click)="loadInstances(concept)">Load instances</button>
       }
+      <button mat-menu-item (click)="loadFocus('subSchema', concept)">Load sub-schema</button>
+      <button mat-menu-item (click)="loadFocus('typeHierarchy', concept)">Load type hierarchy</button>
     </span>
   </ng-template>
 </mat-menu>

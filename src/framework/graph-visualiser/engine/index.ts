@@ -608,26 +608,29 @@ export class GraphVisualiser {
         this.settingCameraProgrammatically = false;
     }
 
-    handleQueryResponse(res: ApiResponse<QueryResponse>, database: string) {
-        if (isApiErrorResponse(res)) return;
+    /** Responses that draw one graph together (e.g. the schema queries) must be passed as one
+     *  array: the layout simulates only the nodes present when it starts, so nodes added by
+     *  a later push would be left unsimulated at the origin. */
+    handleQueryResponse(res: ApiResponse<QueryResponse> | ApiResponse<QueryResponse>[], database: string) {
+        const responses = (Array.isArray(res) ? res : [res])
+            .filter(x => !isApiErrorResponse(x) && x.ok.answerType === "conceptRows");
+        if (!responses.length) return;
 
-        if (res.ok.answerType === "conceptRows") {
-            // Snapshot whether the graph was empty *before* this push. A
-            // first-time push (e.g. opening a new type tab) gets the full
-            // auto-fit treatment; subsequent incremental pushes (Inspector
-            // Explore/Add actions) leave the camera and layout supervisor
-            // alone so the user's focused view isn't yanked away. The
-            // inspector kicks its own `reheat({ preserveCamera })` after.
-            const wasEmpty = this.graph.order === 0;
-            this.state.activeQueryDatabase = database;
-            this.handleQueryResult(res);
-            if (this.styleService.degreeScaling) this.applyStyleUpdate();
-            if (wasEmpty && this.graph.order > 0) {
-                this.autoZoomEnabled = true;
-                this.peakCameraRatio = 0;
-                this.layout.startOrRedraw();
-                this.centerCamera();
-            }
+        // Snapshot whether the graph was empty *before* this push. A
+        // first-time push (e.g. opening a new type tab) gets the full
+        // auto-fit treatment; subsequent incremental pushes (Inspector
+        // Explore/Add actions) leave the camera and layout supervisor
+        // alone so the user's focused view isn't yanked away. The
+        // inspector kicks its own `reheat({ preserveCamera })` after.
+        const wasEmpty = this.graph.order === 0;
+        this.state.activeQueryDatabase = database;
+        responses.forEach(x => this.handleQueryResult(x));
+        if (this.styleService.degreeScaling) this.applyStyleUpdate();
+        if (wasEmpty && this.graph.order > 0) {
+            this.autoZoomEnabled = true;
+            this.peakCameraRatio = 0;
+            this.layout.startOrRedraw();
+            this.centerCamera();
         }
     }
 
