@@ -158,17 +158,23 @@ commands:
           curl -sS --max-time 30 -o /tmp/g2.cer \
             https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer || true
           security import /tmp/g2.cer -k "$KC" -t cert -f openssl 2>/dev/null || true
-          rm -f "$P12" /tmp/g2.cer
-          # A trust-settings override produces the SAME "unable to build chain to self-signed
-          # root" symptom as a missing intermediate, so rule it out explicitly. A stock machine
-          # should report no user/admin trust settings for code-signing certs.
-          echo "===== trust settings: user domain ====="
-          security dump-trust-settings 2>&1 | head -30 || true
-          echo "===== trust settings: admin domain ====="
-          security dump-trust-settings -d 2>&1 | head -30 || true
-          echo "===== Apple Root CA present in the system trust domain? ====="
-          security dump-trust-settings -s 2>/dev/null | grep -A2 "^Cert .*Apple Root CA$" | head -12 || \
-            echo "  (not listed by that exact name)"
+          # codesign has to find the self-signed ROOT in a searchable keychain to assemble the
+          # chain it embeds; being trusted in the system domain is not sufficient. The only run
+          # that has ever signed successfully had this import, and dropping it regressed us.
+          security find-certificate -a -c "Apple Root CA" -p \
+            /System/Library/Keychains/SystemRootCertificates.keychain > /tmp/roots.pem 2>/dev/null || true
+          rm -f /tmp/r.*.pem
+          awk '/BEGIN CERT/{n++} {print > ("/tmp/r."n".pem")}' /tmp/roots.pem || true
+          for f in /tmp/r.*.pem; do
+            cn=$(openssl x509 -in "$f" -noout -subject 2>/dev/null | sed 's/.*CN=//; s/,.*//')
+            if [ "$cn" = "Apple Root CA" ]; then
+              echo "importing exact root: $cn"
+              security import "$f" -k "$KC" -t cert -f openssl 2>/dev/null || true
+            fi
+          done
+          rm -f "$P12" /tmp/g2.cer /tmp/roots.pem /tmp/r.*.pem
+          echo "===== certs now in the signing keychain (expect leaf, G2, Apple Root CA) ====="
+          security find-certificate -a -Z "$KC" 2>/dev/null | grep '"labl"' || true
           echo "===== waiting for trustd to observe the new keychain ====="
           signed=no
           for i in $(seq 1 45); do
