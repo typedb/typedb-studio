@@ -6,10 +6,10 @@
 
 import { Component, EventEmitter, Output } from "@angular/core";
 import { AsyncPipe, DatePipe } from "@angular/common";
-import { FormControl } from "@angular/forms";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatDialog } from "@angular/material/dialog";
-import { CodeEditorComponent } from "../../../framework/code-editor/code-editor.component";
+import { StaticCodeComponent } from "../../../framework/code-editor/static-code.component";
+import { QueryTextDialogComponent } from "../../../framework/query-text-dialog/query-text-dialog.component";
 import { PersistedSavedQuery } from "../../../service/app-data.service";
 import { SavedQueriesState } from "../../../service/saved-queries-state.service";
 import { SnackbarService } from "../../../service/snackbar.service";
@@ -19,15 +19,11 @@ import { SaveQueryDialogComponent, SaveQueryDialogData } from "../save-query-dia
     selector: "ts-saved-queries-pane",
     templateUrl: "./saved-queries-pane.component.html",
     styleUrls: ["./saved-queries-pane.component.scss"],
-    imports: [AsyncPipe, DatePipe, MatTooltipModule, CodeEditorComponent],
+    imports: [AsyncPipe, DatePipe, MatTooltipModule, StaticCodeComponent],
 })
 export class SavedQueriesPaneComponent {
     @Output() runSavedQuery = new EventEmitter<PersistedSavedQuery>();
     @Output() openSavedQuery = new EventEmitter<PersistedSavedQuery>();
-
-    /** Stable per-entry FormControl so the CodeMirror editor doesn't unmount
-     *  when entries re-shuffle on save/delete. Keyed by saved-query id. */
-    private entryControls = new Map<string, FormControl<string>>();
 
     constructor(
         public state: SavedQueriesState,
@@ -37,20 +33,15 @@ export class SavedQueriesPaneComponent {
 
     trackById(_: number, entry: PersistedSavedQuery): string { return entry.id; }
 
-    getEntryControl(entry: PersistedSavedQuery): FormControl<string> {
-        let control = this.entryControls.get(entry.id);
-        if (!control) {
-            control = new FormControl(entry.query, { nonNullable: true });
-            this.entryControls.set(entry.id, control);
-        } else if (control.value !== entry.query) {
-            // Persisted query was edited externally — keep editor in sync.
-            control.setValue(entry.query, { emitEvent: false });
-        }
-        return control;
-    }
-
     onRun(entry: PersistedSavedQuery) {
         this.runSavedQuery.emit(entry);
+    }
+
+    onViewFull(entry: PersistedSavedQuery) {
+        this.dialog.open(QueryTextDialogComponent, {
+            data: { query: entry.query },
+            width: "800px",
+        });
     }
 
     onOpen(entry: PersistedSavedQuery) {

@@ -58,6 +58,19 @@ button {
     }
 }
 
+.focus-label {
+    @include typography.p2;
+    color: var(--theme-grey);
+    margin-left: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    strong {
+        color: var(--theme-white);
+    }
+}
+
 .answers-outer-container {
     flex: 1;
     min-height: 0;

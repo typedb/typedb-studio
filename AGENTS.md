@@ -3,6 +3,19 @@
 TypeDB Studio is an interactive visual environment for working with TypeDB.
 It is an Angular app whose source code lives under the `src` directory.
 
+## Versioning
+
+**Never hand-edit a version file.** The version lives in `VERSION`, `package.json`,
+`src-tauri/Cargo.toml`, `src-tauri/Cargo.lock` and `src-tauri/tauri.conf.json`. To change it:
+
+```
+pnpm set-version <semver>
+```
+
+That propagates to all five files. Read the current version from [VERSION](VERSION) to work out
+the next one. A `PreToolUse` hook ([.claude/settings.json](.claude/settings.json)) blocks direct
+edits to these files.
+
 ## Submodule Dependencies
 
 **typedb-web** is a Git submodule dependency used via pnpm workspace:
@@ -27,16 +40,6 @@ When editing Angular SCSS files:
 When writing TypeQL, refer to https://typedb.com/docs/llms-short.txt. Refer to https://typedb.com/docs articles ONLY if their URL contains any of the following: \[/home, /examples, /guides, /core-concepts, /typeql-reference, /tools, /maintenance-operation, /academy, /reference\] and does NOT contain "2.x". 
 
 When setting up TypeDB tooling (driver SDKs, etc.) ensure that the installed drivers are NOT for TypeDB 2.x.
-
-## Versioning
-
-To bump the Studio version, run:
-
-```
-pnpm set-version <semver>
-```
-
-This propagates the version to all required files.
 
 ## General Development Guidelines
 

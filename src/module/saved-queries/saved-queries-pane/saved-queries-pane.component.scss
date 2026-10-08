@@ -78,22 +78,13 @@ ol li {
     overflow: hidden;
     position: relative;
 
-    tp-code-editor {
+    tp-static-code {
         display: block;
 
-        ::ng-deep code-editor {
-            .cm-editor {
-                max-height: 200px;
-                overflow: auto;
-            }
-
-            .cm-scroller {
-                overflow: auto;
-            }
-
-            .cm-content {
-                min-height: 56px;
-            }
+        ::ng-deep pre {
+            max-height: 200px;
+            min-height: 56px;
+            contain: content;
         }
     }
 }

@@ -7,7 +7,6 @@
 import { inject } from "@angular/core";
 import { CanActivateFn, Router, Routes } from "@angular/router";
 import { of } from "rxjs";
-import { addressesFromParams, USERNAME } from "../framework/util/url-params";
 
 import { _404PageComponent } from "../module/404/404-page.component";
 import { ConnectionCreatorComponent } from "../module/connection/create/connection-creator.component";
@@ -29,30 +28,10 @@ const homeGuard: CanActivateFn = () => {
     return of(router.parseUrl(lastUsedToolRoute));
 };
 
-const connectGuard: CanActivateFn = (route) => {
-    const [addresses, username] = [addressesFromParams(route.queryParamMap), route.queryParamMap.get(USERNAME)];
-    if (username == null || addresses.length === 0) return true;
-    const appData = inject(AppData);
-    const startupConnection = appData.connections.findStartupConnection();
-    if (!startupConnection) return true;
-    const savedAddresses = "addresses" in startupConnection.params ? startupConnection.params.addresses : [];
-    const sameAddresses = savedAddresses.length === addresses.length && addresses.every(a => savedAddresses.includes(a));
-    if (startupConnection.params.username !== username || !sameAddresses) return true;
-    const router = inject(Router);
-    switch (appData.viewState.lastUsedTool()) {
-        case "query": return of(router.parseUrl(`query`));
-        case "schema": return of(router.parseUrl(`schema`));
-        case "data": return of(router.parseUrl(`data`));
-        case "chat": return of(router.parseUrl(`agent-mode`));
-        case "graph": return of(router.parseUrl(`graph`));
-        default: return of(router.parseUrl(`welcome`));
-    }
-}
-
 export const routes: Routes = [
     { path: "", canActivate: [homeGuard], children: [] },
     { path: "welcome", component: HomeComponent, title: "Welcome", data: { domain: "overview" } },
-    { path: "connect", component: ConnectionCreatorComponent, canActivate: [connectGuard], title: "Connect" },
+    { path: "connect", component: ConnectionCreatorComponent, title: "Connect" },
     { path: "query", component: QueryPageComponent, title: "Query", data: { domain: "query" } },
     { path: "schema", component: SchemaPageComponent, title: "Schema", data: { domain: "schema" } },
     { path: "data", component: DataPageComponent, title: "Data", data: { domain: "data" } },

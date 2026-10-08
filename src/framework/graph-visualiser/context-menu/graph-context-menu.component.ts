@@ -198,8 +198,8 @@ export class GraphContextMenuComponent implements OnChanges, OnDestroy {
         }
     }
 
-    /** True when both action groups should be hidden — attributes don't have
-     *  links/attributes of their own, only owners. */
+    /** True when the load sections should be hidden — attributes don't have
+     *  links/attributes of their own, only owners. The menu still offers colours. */
     get isAttributeTarget(): boolean {
         return this.target?.kind === "attribute";
     }

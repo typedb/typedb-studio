@@ -17,7 +17,8 @@ export class GraphControlsComponent {
 
     @Input() visualiser: GraphVisualiser | null = null;
     @Input() queryRunning = false;
-    @Input() hasChanges = false;
+    /** Why the reset control is unavailable, or null when it's actionable. Doubles as its tooltip. */
+    @Input() resetDisabledReason: string | null = "Nothing to reset";
 
     @Output() resetChangesClicked = new EventEmitter<void>();
 

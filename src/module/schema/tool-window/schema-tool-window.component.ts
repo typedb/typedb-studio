@@ -25,7 +25,7 @@ import { DriverState } from "../../../service/driver-state.service";
 import { MatDialog } from "@angular/material/dialog";
 import { SchemaTextDialogComponent } from "../text-dialog/schema-text-dialog.component";
 import { SampleDatasetDialogComponent } from "../../database/sample-dataset-dialog/sample-dataset-dialog.component";
-import { SchemaConcept } from "../../../service/schema-state.service";
+import { SchemaConcept, SchemaFocus } from "../../../service/schema-state.service";
 import { DataEditorState } from "../../../service/data-editor-state.service";
 import { QueryTabsState } from "../../../service/query-tabs-state.service";
 import { QueryPageState } from "../../../service/query-page-state.service";
@@ -152,6 +152,8 @@ export class SchemaToolWindowComponent {
      *  the global path). */
     @HostListener("window:keydown", ["$event"])
     onWindowKeydown(event: KeyboardEvent) {
+        // Leave keys that a code editor has already handled (e.g. its own Ctrl+F search panel) alone
+        if (event.defaultPrevented || (event.target instanceof Element && event.target.closest(".cm-editor"))) return;
         if ((event.ctrlKey || event.metaKey) && (event.key === "f" || event.key === "F")) {
             event.preventDefault();
             this.openSearch();
@@ -311,6 +313,12 @@ export class SchemaToolWindowComponent {
             case "attributeType": return `match $x isa ${concept.label};`;
             default: return `match $x isa ${concept.label}; fetch { $x.* };`;
         }
+    }
+
+    /** Shows just the type's part of the schema in the schema visualiser. */
+    loadFocus(view: SchemaFocus["view"], concept: SchemaConcept) {
+        this.state.schema.loadFocus({ view, root: concept });
+        if (!this.router.url.startsWith("/schema")) this.router.navigate(["/schema"]);
     }
 
     openDataTab(concept: SchemaConcept) {

@@ -1,0 +1,10 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+/** Quotes text as a TypeQL string literal, escaping backslashes and double quotes. */
+export function typeqlStringLiteral(text: string): string {
+    return `"${text.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}

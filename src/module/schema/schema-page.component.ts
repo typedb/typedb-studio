@@ -99,13 +99,13 @@ export class SchemaPageComponent implements OnInit, AfterViewInit, OnDestroy {
                 this.state.visualiser.visualiser.sigma.scheduleRender();
             }
         });
-        this.state.queryResponses$.pipe(
+        this.state.visualiserResponses$.pipe(
             takeUntilDestroyed(this.destroyRef),
             filter(x => !!x),
             map(x => x!)
         ).subscribe((queryResponses) => {
             if (!this.state.visualiser.visualiser) {
-                queryResponses.forEach(x => this.state.visualiser.push(x));
+                this.state.visualiser.push(queryResponses);
             }
             this.cdr.detectChanges();
         });

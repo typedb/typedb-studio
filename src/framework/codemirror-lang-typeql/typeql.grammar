@@ -160,13 +160,15 @@ NamedTypeList { NamedType SQBRACKETOPEN SQBRACKETCLOSE }
 NamedType { LABEL | ValueType }
 
 // Annotations
-AnnotationCategory { 
+AnnotationCategory {
   ANNOTATION_ABSTRACT
   | ANNOTATION_CARD
   | ANNOTATION_CASCADE
   | ANNOTATION_DISTINCT
+  | ANNOTATION_DOC
   | ANNOTATION_INDEPENDENT
   | ANNOTATION_KEY
+  | ANNOTATION_META
   | ANNOTATION_RANGE
   | ANNOTATION_REGEX
   | ANNOTATION_SUBKEY
@@ -187,6 +189,8 @@ Annotation {
   ANNOTATION_KEY |
   ANNOTATION_UNIQUE |
   ANNOTATION_CARD PARENOPEN Cardinality PARENCLOSE |
+  ANNOTATION_DOC PARENOPEN STRINGLITERAL PARENCLOSE |
+  ANNOTATION_META PARENOPEN STRINGLITERAL COMMA STRINGLITERAL PARENCLOSE |
   ANNOTATION_RANGE PARENOPEN Range PARENCLOSE |
   ANNOTATION_REGEX PARENOPEN STRINGLITERAL PARENCLOSE |
   ANNOTATION_SUBKEY PARENOPEN IDENTIFIER PARENCLOSE |
@@ -627,103 +631,113 @@ ExpressionParenthesis {
 // }
 
 
+// Keywords
+// Keywords are recognised from LABEL tokens, so a keyword only matches a whole word: `notes`,
+// `funding_sources` and `end_date` stay labels instead of splitting into `not` + `es` etc.
+// Words TypeQL reserves are @specialize'd: they are always keywords. Other keywords are @extend'ed,
+// so they can also be labels (e.g. an attribute named `count` or `value`).
+DEFINE { @specialize<LABEL, "define"> }
+UNDEFINE { @specialize<LABEL, "undefine"> }
+REDEFINE { @specialize<LABEL, "redefine"> }
+
+MATCH { @specialize<LABEL, "match"> }
+INSERT { @specialize<LABEL, "insert"> }
+PUT { @specialize<LABEL, "put"> }
+UPDATE { @specialize<LABEL, "update"> }
+DELETE { @specialize<LABEL, "delete"> }
+SELECT { @extend<LABEL, "select"> }
+SORT { @extend<LABEL, "sort"> }
+OFFSET { @extend<LABEL, "offset"> }
+LIMIT { @extend<LABEL, "limit"> }
+REQUIRE { @extend<LABEL, "require"> }
+DISTINCT { @extend<LABEL, "distinct"> }
+REDUCE { @extend<LABEL, "reduce"> }
+GROUPBY { @extend<LABEL, "groupby"> }
+
+COUNT { @extend<LABEL, "count"> }
+MAX { @extend<LABEL, "max"> }
+MIN { @extend<LABEL, "min"> }
+MEAN { @extend<LABEL, "mean"> }
+MEDIAN { @extend<LABEL, "median"> }
+STD { @extend<LABEL, "std"> }
+SUM { @extend<LABEL, "sum"> }
+LIST { @extend<LABEL, "list"> }
+ORDER { @specialize<LABEL, "asc"> | @specialize<LABEL, "desc"> }
+
+// Patterns
+OR { @specialize<LABEL, "or"> }
+NOT { @specialize<LABEL, "not"> }
+TRY { @specialize<LABEL, "try"> }
+
+// Statements
+HAS { @specialize<LABEL, "has"> }
+ISA { @specialize<LABEL, "isa"> }
+LINKS { @specialize<LABEL, "links"> }
+IID { @specialize<LABEL, "iid"> }
+
+SUB { @specialize<LABEL, "sub"> }
+VALUEKEYWORD { @extend<LABEL, "value"> }
+LABELKEYWORD { @extend<LABEL, "label"> }
+OWNS { @specialize<LABEL, "owns"> }
+RELATES { @specialize<LABEL, "relates"> }
+PLAYS { @specialize<LABEL, "plays"> }
+
+KIND { @specialize<LABEL, "entity"> | @specialize<LABEL, "relation"> | @specialize<LABEL, "attribute"> }
+
+OF { @specialize<LABEL, "of"> }
+AS { @specialize<LABEL, "as"> }
+FROM { @specialize<LABEL, "from"> }
+
+// Value types
+BOOLEAN { @extend<LABEL, "boolean"> }
+INTEGER { @extend<LABEL, "integer"> }
+DOUBLE { @extend<LABEL, "double"> }
+DECIMAL { @extend<LABEL, "decimal"> }
+DATETIMETZ { @extend<LABEL, "datetime-tz"> }
+DATETIME { @extend<LABEL, "datetime"> }
+DATE { @extend<LABEL, "date"> }
+DURATION { @extend<LABEL, "duration"> }
+STRING { @extend<LABEL, "string"> }
+
+// Functions & structs
+FUN { @specialize<LABEL, "fun"> }
+STRUCT { @specialize<LABEL, "struct"> }
+RETURN { @specialize<LABEL, "return"> }
+FIRST { @specialize<LABEL, "first"> }
+LAST { @specialize<LABEL, "last"> }
+
+LET { @extend<LABEL, "let"> }
+IN { @specialize<LABEL, "in"> }
+
+LIKE { @extend<LABEL, "like"> }
+CONTAINS { @extend<LABEL, "contains"> }
+
+BOOLEANLITERAL { @specialize<LABEL, "true"> | @specialize<LABEL, "false"> }
+
+
 @tokens {
   VAR { DOLLAR $[a-zA-Z_\-0-9]+ }
   // IDENTIFIER { $[a-zA-Z_\-0-9]+ } // Consider splitting this into Label and LabelScoped
   LABEL { $[a-zA-Z] $[a-zA-Z_\-0-9]+ (':' $[a-zA-Z_\-0-9]+)?  } // Consider splitting this into Label and LabelScoped
   DOLLAR { "$" }
 
-  DISTINCT { "distinct" }
-  //
-  DEFINE { "define" }
-  UNDEFINE { "undefine" }
-  REDEFINE { "redefine" } 
-
   ANNOTATION_ABSTRACT { "@abstract" }
   ANNOTATION_CASCADE { "@cascade" }
   ANNOTATION_DISTINCT { "@distinct" }
+  ANNOTATION_DOC { "@doc" }
   ANNOTATION_INDEPENDENT { "@independent" }
   ANNOTATION_KEY { "@key" }
+  ANNOTATION_META { "@meta" }
   ANNOTATION_UNIQUE { "@unique" }
   ANNOTATION_CARD { "@card" }
   ANNOTATION_RANGE { "@range" }
   ANNOTATION_REGEX { "@regex" }
   ANNOTATION_SUBKEY { "@subkey" }
   ANNOTATION_VALUES { "@values" }
-  
 
-  // WITH { "with" }
-  MATCH { "match" }
-  INSERT { "insert" }
-  PUT { "put" }
-  UPDATE { "update" }
-  DELETE { "delete" }
-  SELECT { "select" }
-  SORT { "sort" }
-  OFFSET { "offset" }
-  LIMIT { "limit" }
-  REQUIRE { "require" }
-  // DISTINCT is already covered
-  REDUCE { "reduce" }
-  GROUPBY { "groupby" }
   ENDSEMICOLON { "end;" }
 
-  COUNT { "count" }
-  MAX { "max" }
-  MIN { "min" }
-  MEAN { "mean" }
-  MEDIAN { "median" }
-  STD { "std" }
-  SUM { "sum" }
-  LIST { "list" }
-  ORDER { ASCENDINGORDER | DESCENDINGORDER }
-  ASCENDINGORDER { "asc" }
-  DESCENDINGORDER { "desc" }
-
-  
-  // Patterns
-  OR { "or" }
-  NOT { "not" }
-  TRY { "try" }
-  
-  // Statements
-  HAS { "has" }
-  ISA { "isa" }
-  LINKS { "links" }
-  IID { "iid" }
-
-  SUB { "sub" }
-  VALUEKEYWORD { "value" }
-  LABELKEYWORD { "label" }
-  OWNS { "owns" }
-  RELATES { "relates" }
-  PLAYS { "plays" }
-
-  KIND { "entity" | "relation" | "attribute" }
-
-  OF { "of" }
-  AS { "as" }
-  FROM { "from" }
-
-  // ValueTypes 
-  BOOLEAN { "boolean" }
-  INTEGER { "integer" }
-  DOUBLE { "double" }
-  DECIMAL { "decimal" }
-  DATETIMETZ { "datetime-tz" }
-  DATETIME { "datetime" }
-  DATE { "date" }
-  DURATION { "duration" }
-  STRING { "string" }
-
-  // Functions & structs
-  FUN { "fun" }
   ARROW { "->" }
-  STRUCT { "struct" }
-  RETURN { "return" }
-
-  FIRST { "first" }
-  LAST { "last" }
 
   // Punctuation
   SEMICOLON { ";" }
@@ -739,9 +753,7 @@ ExpressionParenthesis {
   QUESTIONMARK { "?" }
   
   // Expression operators
-  LET { "let" }
   ASSIGN { "=" }
-  IN { "in" }
   POWER { "^" }
   TIMES { "*" }
   DIVIDE { "/" }
@@ -756,26 +768,20 @@ ExpressionParenthesis {
   GREATER_EQUAL { ">=" }
   LESS { "<" }
   LESS_EQUAL { "<=" }
-  LIKE { "like" }
-  CONTAINS { "contains" }
 
-  //@precedence { ASCENDINGORDER, DESCENDINGORDER }
-  @precedence { 
-    ENDSEMICOLON, KIND, STRUCT, LET, FUN, RETURN,
-    BOOLEAN, INTEGER, STRING, DURATION, DOUBLE, DECIMAL, DATETIME, DATETIMETZ, DATE, 
-    BOOLEANLITERAL, LIKE, CONTAINS,
-    NOT, TRY, DELETE, DISTINCT, MATCH, INSERT, PUT, UPDATE, SELECT, SORT, OFFSET, LIMIT, REQUIRE, REDUCE, 
-    LABEL } // This causes some weird parses sometimes.
+  // `end;` must win over the label `end` followed by `;`. Keywords need no precedence: they are
+  // specialisations of LABEL (see "Keywords" above).
+  @precedence { ENDSEMICOLON, LABEL }
 
   // Literals
   IID_VALUE { "0x" $[0-9a-fA-F]+ }
 
-  BOOLEANLITERAL { "false" | "true" }
   STRINGLITERAL { '"' (!["\\] | "\\" _)* '"' }
   DATETIMELITERAL { $[0-9]+ "-" $[0-9]+ "-" $[0-9]+ "T" $[0-9]+ ":" $[0-9]+ (":" $[0-9]+ ("." $[0-9]+)?)? }
   DATELITERAL     { $[0-9]+ "-" $[0-9]+ "-" $[0-9]+ }
   INTEGERLITERAL { "-"? $[0-9]+ }
-  DOUBLELITERAL { "-"? $[0-9]+('.' $[0-9]+)?  }
+  // The fraction is required: otherwise every integer lexes as a double and `@card(0..1)` can't parse.
+  DOUBLELITERAL { "-"? $[0-9]+ '.' $[0-9]+ }
   @precedence { DATETIMELITERAL, DATELITERAL, DOUBLELITERAL, INTEGERLITERAL }
   
   LINECOMMENT { "#" ![\n]* }

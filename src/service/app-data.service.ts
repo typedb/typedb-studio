@@ -9,6 +9,7 @@ import { ConnectionConfig, ConnectionJson } from "../concept/connection";
 import { OperationMode } from "../concept/transaction";
 import { SchemaToolWindowState, SidebarState, sidebarStates, Tool, tools } from "../concept/view-state";
 import { StorageService, StorageWriteResult } from "./storage.service";
+import { addressesFromParams, QueryParams, USERNAME } from "../framework/util/url-params";
 
 export type RowLimit = 10 | 50 | 100 | 500 | 1000 | 5000 | 10000 | 25000 | 100000;
 
@@ -124,6 +125,27 @@ class Connections {
 
     findStartupConnection(): ConnectionConfig | null {
         return this.list().find(x => x.preferences.isStartupConnection) || null;
+    }
+
+    /** The saved connection to resume at launch, unless the URL names a different server. */
+    autoReconnectTarget(params: QueryParams): ConnectionConfig | null {
+        const connection = this.findStartupConnection();
+        if (!connection) return null;
+        if (addressesFromParams(params).length === 0) return connection;
+        return this.urlNamedConnection(params);
+    }
+
+    /** The saved connection the URL explicitly names. A `username` param must match if present. */
+    urlNamedConnection(params: QueryParams): ConnectionConfig | null {
+        const connection = this.findStartupConnection();
+        if (!connection) return null;
+        const addresses = addressesFromParams(params);
+        if (addresses.length === 0) return null;
+        const saved = "addresses" in connection.params ? connection.params.addresses : [];
+        if (saved.length !== addresses.length || !addresses.every(a => saved.includes(a))) return null;
+        const username = params.get(USERNAME);
+        if (username != null && username !== connection.params.username) return null;
+        return connection;
     }
 
     list(): ConnectionConfig[] {
