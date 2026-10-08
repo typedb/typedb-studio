@@ -128,45 +128,35 @@ commands:
           git rev-parse HEAD > VERSION
           bazel run --define version=$(git rev-parse HEAD) //:setup-mac-signing-keychain
           # ---- TEMPORARY: mac codesign diagnosis. Remove once signing is green. ----
-          # Every probe is `|| true`: a bare failing command aborts the step under
-          # `bash -eo pipefail`, which truncated the previous run's diagnostics.
+          # 3.13.1 signed fine with the old Vaticle leaf, whose intermediate (Developer ID CA,
+          # OU=Apple Certification Authority) ships inside macOS's SystemRootCertificates.
+          # The renewed TYPEDB leaf chains via the G2 intermediate, which macOS does NOT ship --
+          # it exists only inside the p12. `security verify-cert` passes because SecTrust fetches
+          # missing intermediates over the network (AIA); codesign does not, so it may be unable
+          # to assemble the chain it has to embed. Test that by putting G2 where G1 lives.
           KC=typedb-studio-apple-signing-keychain
           IDENT="Developer ID Application: TYPEDB LTD (RHKH8FP9SX)"
-          ROOTS=/System/Library/Keychains/SystemRootCertificates.keychain
           security default-keychain -s "$KC" || true
-          # The 300s auto-lock default is confirmed present on these runners.
           security set-keychain-settings "$KC" || true
-          echo "===== keychain settings ====="
-          security show-keychain-info "$KC" || true
-          echo "===== ALL certs in the signing keychain (unfiltered) ====="
-          security find-certificate -a -Z "$KC" 2>/dev/null | grep '"labl"' || true
-          echo "===== Apple trust evaluation of the leaf (codeSign policy) ====="
-          security find-certificate -c "$IDENT" -p "$KC" > /tmp/leaf.pem 2>/dev/null || true
-          security verify-cert -c /tmp/leaf.pem -p codeSign || true
-          echo "===== codesign BEFORE adding the root ====="
+          echo "===== install the G2 intermediate into the SYSTEM keychain (where G1 lives) ====="
+          curl -sS --max-time 30 -o /tmp/DeveloperIDG2CA.cer \
+            https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer || true
+          shasum -a 256 /tmp/DeveloperIDG2CA.cer || true
+          echo "  expecting f16cd3c54c7f83cea4bf1a3e6a0819c8aaa8e4a1528fd144715f350643d2df3a"
+          sudo security import /tmp/DeveloperIDG2CA.cer -k /Library/Keychains/System.keychain \
+            -t cert -f openssl || true
+          echo "===== codesign AFTER the system-keychain intermediate install ====="
           cp /bin/echo /tmp/probe-bin
           codesign -vvvv --force --timestamp=none --sign "$IDENT" /tmp/probe-bin || true
-          echo "===== import the EXACT 'Apple Root CA' (plain CN, not the -G2/-G3 roots) ====="
-          security find-certificate -a -c "Apple Root CA" -p "$ROOTS" > /tmp/roots.pem 2>/dev/null || true
-          rm -f /tmp/r.*.pem
-          awk '/BEGIN CERT/{n++} {print > ("/tmp/r."n".pem")}' /tmp/roots.pem || true
-          for f in /tmp/r.*.pem; do
-            cn=$(openssl x509 -in "$f" -noout -subject 2>/dev/null | sed 's/.*CN=//; s/,.*//')
-            echo "  root candidate: $cn"
-            if [ "$cn" = "Apple Root CA" ]; then security import "$f" -k "$KC" || true; fi
-          done
-          echo "===== trust evaluation AFTER adding the root ====="
-          security verify-cert -c /tmp/leaf.pem -p codeSign || true
-          echo "===== codesign AFTER adding the root ====="
-          cp /bin/echo /tmp/probe-bin
-          codesign -vvvv --force --timestamp=none --sign "$IDENT" /tmp/probe-bin || true
-          echo "===== codesign AFTER, with explicit --keychain ====="
-          cp /bin/echo /tmp/probe-bin
-          codesign -vvvv --force --timestamp=none --keychain "$KC" --sign "$IDENT" /tmp/probe-bin || true
-          echo "===== codesign AFTER, WITH secure timestamp (what tauri does) ====="
-          cp /bin/echo /tmp/probe-bin
-          codesign -vvvv --force --timestamp --sign "$IDENT" /tmp/probe-bin || true
-          rm -f /tmp/probe-bin /tmp/leaf.pem /tmp/roots.pem /tmp/r.*.pem
+          echo "===== independent key-access test (isolates the key from chain building) ====="
+          # If CMS signing succeeds, the private key is reachable and the blocker is the chain.
+          # If it fails the same way, the blocker is key access, not certificates.
+          echo probe > /tmp/cmsdata
+          security cms -S -N "$IDENT" -i /tmp/cmsdata -o /tmp/cmsout && echo "CMS SIGN OK: key is usable" \
+            || echo "CMS SIGN FAILED: key access is the problem"
+          echo "===== if signing worked, what chain got embedded? ====="
+          codesign -dvvv /tmp/probe-bin 2>&1 | grep -iE "Authority|TeamIdentifier" || true
+          rm -f /tmp/probe-bin /tmp/cmsdata /tmp/cmsout /tmp/DeveloperIDG2CA.cer
           echo "===== end diagnostics ====="
           # ---- end TEMPORARY ----
           npx tauri build --target <<parameters.target-triple>>
