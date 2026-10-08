@@ -175,6 +175,28 @@ commands:
           rm -f "$P12" /tmp/g2.cer /tmp/roots.pem /tmp/r.*.pem
           echo "===== certs now in the signing keychain (expect leaf, G2, Apple Root CA) ====="
           security find-certificate -a -Z "$KC" 2>/dev/null | grep '"labl"' || true
+          # Apple's remaining documented cause is the CI system establishing only a Unix UID
+          # switch, not a security context. Running codesign inside the user's Mach bootstrap via
+          # launchctl asuser is the known workaround. Probe it before the normal path so the log
+          # shows which, if either, works. Untested locally (asuser needs root).
+          echo "===== probe: codesign inside the user's Mach bootstrap (launchctl asuser) ====="
+          echo "uid=$(id -u) user=$(whoami)"
+          cp /bin/echo /tmp/asuser-bin
+          arc=0
+          runt 40 sudo launchctl asuser "$(id -u)" sudo -u "$(whoami)" \
+            codesign -vvvv --force --timestamp=none --sign "$IDENT" /tmp/asuser-bin || arc=$?
+          echo "asuser probe exit=$arc"
+          if [ "$arc" = "0" ]; then
+            echo "ASUSER WORKS - security context was the problem"
+            runt 20 codesign -dvvv /tmp/asuser-bin 2>&1 | grep -iE "Authority|TeamIdentifier" || true
+          fi
+          rm -f /tmp/asuser-bin
+          echo "===== probe: is there a GUI/Aqua session at all on this runner? ====="
+          # If no Aqua session exists, asuser cannot help and this is a vendor limitation.
+          runt 20 launchctl print "user/$(id -u)" 2>/dev/null | grep -iE "^\s*(state|type) " | head -5 || \
+            echo "  (could not read user domain)"
+          who || true
+          stat -f '%Su' /dev/console 2>/dev/null | sed 's/^/console owner: /' || true
           echo "===== waiting for trustd to observe the new keychain ====="
           signed=no
           for i in $(seq 1 45); do
