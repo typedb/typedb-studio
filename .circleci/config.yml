@@ -169,6 +169,15 @@ commands:
             fi
           done
           rm -f "$P12" /tmp/g2.cer /tmp/roots.pem /tmp/r.*.pem
+          echo "===== shell/process architecture (x86_64 job runs Intel bazel under Rosetta) ====="
+          echo "arch=$(arch)  uname -m=$(uname -m)"
+          echo "codesign is: $(file -b /usr/bin/codesign | head -1)"
+          echo "security  is: $(file -b /usr/bin/security | head -1)"
+          echo "===== keychain state ====="
+          echo "default: $(security default-keychain 2>&1 | tr -d ' \"')"
+          echo "search list (combined):"; security list-keychains || true
+          echo "search list (user):"; security list-keychains -d user || true
+          security show-keychain-info "$KC" || true
           echo "===== identities ====="
           runt 30 security find-identity -v -p codesigning "$KC" || true
           echo "===== certs now in the signing keychain ====="
@@ -177,6 +186,18 @@ commands:
           cp /bin/echo /tmp/probe-bin
           rc=0; runt 30 codesign -vvvv --force --timestamp=none --sign "$IDENT" /tmp/probe-bin || rc=$?
           echo "probe exit=$rc"
+          if [ "$rc" != "0" ]; then
+            echo "----- retrying once after 10s, to tell a hard failure from a flake -----"
+            sleep 10
+            cp /bin/echo /tmp/probe-bin
+            rc2=0; runt 30 codesign -vvvv --force --timestamp=none --sign "$IDENT" /tmp/probe-bin || rc2=$?
+            echo "probe retry exit=$rc2"
+            echo "----- and once with the keychain explicitly re-unlocked -----"
+            security unlock-keychain -p "$KCPW" "$KC" || true
+            cp /bin/echo /tmp/probe-bin
+            rc3=0; runt 30 codesign -vvvv --force --timestamp=none --keychain "$KC" --sign "$IDENT" /tmp/probe-bin || rc3=$?
+            echo "probe re-unlock exit=$rc3"
+          fi
           if [ "$rc" = "0" ]; then
             echo "PROBE SIGNED OK - embedded chain:"
             runt 20 codesign -dvvv /tmp/probe-bin 2>&1 | grep -iE "Authority|TeamIdentifier" || true
