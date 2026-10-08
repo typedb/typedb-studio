@@ -5,7 +5,7 @@ TypeDB Studio is hosted on the Web at https://studio.typedb.com.
 Alternatively:
 
 - Install: https://typedb.com/docs/home/install/studio
-- Direct download: https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:3.13.1
+- Direct download: https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:3.13.2
 
 Desktop builds of TypeDB Studio run in the following environments:
 
@@ -20,32 +20,25 @@ Desktop builds of TypeDB Studio run in the following environments:
 
 ### TypeDB server compatibility
 
-TypeDB Studio 3.13.1 is compatible with TypeDB >= 3.3. For older TypeDB versions, enquire on the TypeDB Discord chat server (https://typedb.com/discord).
+TypeDB Studio 3.13.2 is compatible with TypeDB >= 3.3. For older TypeDB versions, enquire on the TypeDB Discord chat server (https://typedb.com/discord).
 
 ---
 
+## New features
+
+- Sub-schema visualisation: right click any type in the schema tree in Schema Visualiser to open options to visualise a subset of your schema.
+
 ## Bugs fixed
 
-### Performance of long query texts (eg. data load scripts)
-
-Running very long queries (for example, sample dataset loading) could previously make Studio unresponsive. That is fixed in this release, as we now **render only the first 40 lines in History pane queries** (you can still view the full query by expanding it).
-
-### Performance of large query result sets
-
-Queries returning a lot of data could previously make Studio unresponsive; this release fixes that.
-
-- Log output is now lazily rendered
-- Table output is now paginated
-- Graph physics now runs off the main thread
-
-### Other bugs fixed
-
-- Fix graph exploration buttons not doing anything on Query or Chat pages
-- Graphs no longer attempt to render when WebGL is not available - graph pane shows a status warning instead
-- Fix a stack overflow error when rendering a table with >64k rows
-- Linux Debian package is now correctly named "typedb-studio". If you previously installed TypeDB Studio 3.13.0, please uninstall it: `sudo apt remove type-db-studio`. Versions prior to 3.13 were not affected by this bug.
+- Fix degraded performance in Agent Mode after running queries with long outputs
+- Syntax highlighter should no longer highlight keywords that are part of another word (e.g. relation-ship). `@doc` and `@card` are now highlighted correctly.
+- Right-clicking an attribute node in a graph no longer brings up a blank menu
+- Fix a bug where Data Explorer search would error if the search string contained a double quote
+- Suppress auto-reconnect when the entry URL of Studio has an address query parameter that differs from the stored connection parameters
+- Graph exploration in Query Editor's graph output now correctly updates explored states in nodes' context menus, and is now undoable
+- Fix a bug where hitting Ctrl+F in Query Editor's code editor would additionally open a search box in the schema tree view
+- Fix a bug where various graph actions would stop working after changing the dock position of the graph side panel
 
 ## Other improvements
 
-- Cache code editor's internal configuration to slightly improve code editor performance
-- Tweak Sigma initialisation timing to slightly improve graph vis performance
+- Improve overall UI performance
