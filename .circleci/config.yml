@@ -128,37 +128,45 @@ commands:
           git rev-parse HEAD > VERSION
           bazel run --define version=$(git rev-parse HEAD) //:setup-mac-signing-keychain
           # ---- TEMPORARY: mac codesign diagnosis. Remove once signing is green. ----
-          # The bazel keychain_setup adds the keychain to the search list but never makes it
-          # the default keychain; candidate fix for codesign's errSecInternalComponent.
-          security default-keychain -s typedb-studio-apple-signing-keychain || true
+          # Every probe is `|| true`: a bare failing command aborts the step under
+          # `bash -eo pipefail`, which truncated the previous run's diagnostics.
+          KC=typedb-studio-apple-signing-keychain
           IDENT="Developer ID Application: TYPEDB LTD (RHKH8FP9SX)"
-          echo "===== default keychain ====="
-          security default-keychain || true
-          echo "===== search list (combined) ====="
-          security list-keychains || true
-          echo "===== search list (user domain) ====="
-          security list-keychains -d user || true
-          echo "===== signing keychain settings ====="
-          security show-keychain-info typedb-studio-apple-signing-keychain || true
-          echo "===== valid identities via search list ====="
-          security find-identity -v -p codesigning || true
-          echo "===== valid identities in the signing keychain ====="
-          security find-identity -v -p codesigning typedb-studio-apple-signing-keychain || true
-          echo "===== certs in the signing keychain (chain material) ====="
-          security find-certificate -a -c "Developer ID" -Z typedb-studio-apple-signing-keychain 2>/dev/null \
-            | grep -E "^SHA-256|\"labl\"" || true
-          # Isolate codesign from tauri on a throwaway Mach-O. --timestamp=none first:
-          # if that succeeds and the timestamped one fails, the blocker is Apple's TSA, not the keychain.
+          ROOTS=/System/Library/Keychains/SystemRootCertificates.keychain
+          security default-keychain -s "$KC" || true
+          # The 300s auto-lock default is confirmed present on these runners.
+          security set-keychain-settings "$KC" || true
+          echo "===== keychain settings ====="
+          security show-keychain-info "$KC" || true
+          echo "===== ALL certs in the signing keychain (unfiltered) ====="
+          security find-certificate -a -Z "$KC" 2>/dev/null | grep '"labl"' || true
+          echo "===== Apple trust evaluation of the leaf (codeSign policy) ====="
+          security find-certificate -c "$IDENT" -p "$KC" > /tmp/leaf.pem 2>/dev/null || true
+          security verify-cert -c /tmp/leaf.pem -p codeSign || true
+          echo "===== codesign BEFORE adding the root ====="
           cp /bin/echo /tmp/probe-bin
-          echo "===== codesign probe WITHOUT secure timestamp ====="
-          codesign -vvvv --force --timestamp=none --sign "$IDENT" /tmp/probe-bin; echo "exit=$?"
+          codesign -vvvv --force --timestamp=none --sign "$IDENT" /tmp/probe-bin || true
+          echo "===== import the EXACT 'Apple Root CA' (plain CN, not the -G2/-G3 roots) ====="
+          security find-certificate -a -c "Apple Root CA" -p "$ROOTS" > /tmp/roots.pem 2>/dev/null || true
+          rm -f /tmp/r.*.pem
+          awk '/BEGIN CERT/{n++} {print > ("/tmp/r."n".pem")}' /tmp/roots.pem || true
+          for f in /tmp/r.*.pem; do
+            cn=$(openssl x509 -in "$f" -noout -subject 2>/dev/null | sed 's/.*CN=//; s/,.*//')
+            echo "  root candidate: $cn"
+            if [ "$cn" = "Apple Root CA" ]; then security import "$f" -k "$KC" || true; fi
+          done
+          echo "===== trust evaluation AFTER adding the root ====="
+          security verify-cert -c /tmp/leaf.pem -p codeSign || true
+          echo "===== codesign AFTER adding the root ====="
           cp /bin/echo /tmp/probe-bin
-          echo "===== codesign probe WITH secure timestamp (what tauri does) ====="
-          codesign -vvvv --force --timestamp --sign "$IDENT" /tmp/probe-bin; echo "exit=$?"
-          echo "===== can we reach Apple's timestamp server? ====="
-          curl -sS -o /dev/null -w "timestamp.apple.com http=%{http_code} connect=%{time_connect}s\n" \
-            --max-time 20 http://timestamp.apple.com/ts01 || echo "timestamp.apple.com UNREACHABLE"
-          rm -f /tmp/probe-bin
+          codesign -vvvv --force --timestamp=none --sign "$IDENT" /tmp/probe-bin || true
+          echo "===== codesign AFTER, with explicit --keychain ====="
+          cp /bin/echo /tmp/probe-bin
+          codesign -vvvv --force --timestamp=none --keychain "$KC" --sign "$IDENT" /tmp/probe-bin || true
+          echo "===== codesign AFTER, WITH secure timestamp (what tauri does) ====="
+          cp /bin/echo /tmp/probe-bin
+          codesign -vvvv --force --timestamp --sign "$IDENT" /tmp/probe-bin || true
+          rm -f /tmp/probe-bin /tmp/leaf.pem /tmp/roots.pem /tmp/r.*.pem
           echo "===== end diagnostics ====="
           # ---- end TEMPORARY ----
           npx tauri build --target <<parameters.target-triple>>
