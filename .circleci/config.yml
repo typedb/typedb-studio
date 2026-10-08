@@ -126,105 +126,31 @@ commands:
           rustup target add <<parameters.target-triple>>
           # --define version doesn't seem to work, so we just write it into the VERSION file.
           git rev-parse HEAD > VERSION
-          # ---- TEMPORARY: inline keychain setup, replacing //:setup-mac-signing-keychain ----
-          # Two things the bazel keychain_setup cannot do, both suspected here:
-          #  1. it omits `-A` on `security import`, so the key's ACL still asks for
-          #     authorisation; headless that fails (errSecInternalComponent) or hangs.
-          #  2. it cannot place chain certs. The renewed TYPEDB leaf chains via the G2
-          #     intermediate, which macOS does not preinstall (the old Vaticle leaf used G1,
-          #     which it does). SIP blocks installing G2 into /Library/Keychains/System.keychain,
-          #     so put it in the signing keychain instead.
+          # ---- TEMPORARY: use tauri's own signing path instead of a hand-rolled keychain ----
+          # tauri-macos-sign creates and manages its own keychain when APPLE_CERTIFICATE and
+          # APPLE_CERTIFICATE_PASSWORD are set, and signs with `codesign --keychain <path>`.
+          # Unlike the bazel keychain_setup it APPENDS to the user search list rather than
+          # replacing it. The identity still comes from tauri.conf.json's signingIdentity,
+          # which must be a substring of the certificate's identity.
           runt() { perl -e 'alarm shift; exec @ARGV' "$@"; }   # macOS has no GNU timeout
-          KC=typedb-studio-apple-signing-keychain
-          KCPW="ci-$RANDOM-$RANDOM"
-          IDENT="Developer ID Application: TYPEDB LTD (RHKH8FP9SX)"
-          P12=/tmp/signing.p12
           if [ -z "${APPLE_SIGNING_IDENTITIES_PASSWORD:-}" ]; then
             echo "Error: APPLE_SIGNING_IDENTITIES_PASSWORD must be set to sign"; exit 1
           fi
-          curl -sS --netrc --max-time 60 -o "$P12" \
+          curl -sS --netrc --max-time 60 -o /tmp/signing.p12 \
             https://repo.typedb.com/basic/private-tools/raw/files/TypeDBDeveloperIDCombined.p12
-          echo "p12 sha256: $(shasum -a 256 "$P12" | awk '{print $1}')"
+          echo "p12 sha256: $(shasum -a 256 /tmp/signing.p12 | awk '{print $1}')"
           echo "   expected: 51807e7c881c1e7885d55fa6a74f4d0229787bcc5fdd164b33b81238b0199baf"
-          security delete-keychain "$KC" 2>/dev/null || true
-          security create-keychain -p "$KCPW" "$KC"
-          security default-keychain -s "$KC"
-          security unlock-keychain -p "$KCPW" "$KC"
-          security set-keychain-settings "$KC"
-          security list-keychains -d user -s login.keychain "$KC"
-          security import "$P12" -k "$KC" -P "$APPLE_SIGNING_IDENTITIES_PASSWORD" \
-            -A -T /usr/bin/codesign -T /usr/bin/productsign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KCPW" "$KC" >/dev/null
-          curl -sS --max-time 30 -o /tmp/g2.cer \
-            https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer || true
-          security import /tmp/g2.cer -k "$KC" -t cert -f openssl 2>/dev/null || true
-          security find-certificate -a -c "Apple Root CA" -p \
-            /System/Library/Keychains/SystemRootCertificates.keychain > /tmp/roots.pem 2>/dev/null || true
-          rm -f /tmp/r.*.pem
-          awk '/BEGIN CERT/{n++} {print > ("/tmp/r."n".pem")}' /tmp/roots.pem || true
-          for f in /tmp/r.*.pem; do
-            cn=$(openssl x509 -in "$f" -noout -subject 2>/dev/null | sed 's/.*CN=//; s/,.*//')
-            if [ "$cn" = "Apple Root CA" ]; then
-              security import "$f" -k "$KC" -t cert -f openssl 2>/dev/null || true
-            fi
-          done
-          rm -f "$P12" /tmp/g2.cer /tmp/roots.pem /tmp/r.*.pem
-          echo "===== shell/process architecture (x86_64 job runs Intel bazel under Rosetta) ====="
-          echo "arch=$(arch)  uname -m=$(uname -m)"
-          echo "codesign is: $(file -b /usr/bin/codesign | head -1)"
-          echo "security  is: $(file -b /usr/bin/security | head -1)"
-          echo "===== keychain state ====="
-          echo "default: $(security default-keychain 2>&1 | tr -d ' \"')"
-          echo "search list (combined):"; security list-keychains || true
-          echo "search list (user):"; security list-keychains -d user || true
-          security show-keychain-info "$KC" || true
-          echo "===== identities ====="
-          runt 30 security find-identity -v -p codesigning "$KC" || true
-          echo "===== certs now in the signing keychain ====="
-          security find-certificate -a -Z "$KC" 2>/dev/null | grep '"labl"' || true
-          echo "===== codesign probe, 30s cap so it cannot hang the job ====="
-          cp /bin/echo /tmp/probe-bin
-          rc=0; runt 30 codesign -vvvv --force --timestamp=none --sign "$IDENT" /tmp/probe-bin || rc=$?
-          echo "probe exit=$rc"
-          if [ "$rc" != "0" ]; then
-            echo "----- retrying once after 10s, to tell a hard failure from a flake -----"
-            sleep 10
-            cp /bin/echo /tmp/probe-bin
-            rc2=0; runt 30 codesign -vvvv --force --timestamp=none --sign "$IDENT" /tmp/probe-bin || rc2=$?
-            echo "probe retry exit=$rc2"
-            echo "----- and once with the keychain explicitly re-unlocked -----"
-            security unlock-keychain -p "$KCPW" "$KC" || true
-            cp /bin/echo /tmp/probe-bin
-            rc3=0; runt 30 codesign -vvvv --force --timestamp=none --keychain "$KC" --sign "$IDENT" /tmp/probe-bin || rc3=$?
-            echo "probe re-unlock exit=$rc3"
-          fi
-          if [ "$rc" = "0" ]; then
-            echo "PROBE SIGNED OK - embedded chain:"
-            runt 20 codesign -dvvv /tmp/probe-bin 2>&1 | grep -iE "Authority|TeamIdentifier" || true
-          fi
-          rm -f /tmp/probe-bin
-          echo "===== runner environment ====="
-          sw_vers || true
-          xcodebuild -version 2>/dev/null | head -2 || true
-          echo "codesign: $(codesign --version 2>&1 || true)"
-          echo "===== does the RUNNER preinstall the G2 intermediate? ====="
-          # Answers whether a newer/older Xcode image would even help.
-          security find-certificate -a -c "Developer ID Certification Authority" -p \
-            /System/Library/Keychains/SystemRootCertificates.keychain > /tmp/sysi.pem 2>/dev/null || true
-          rm -f /tmp/si.*.pem
-          awk '/BEGIN CERT/{n++} {print > ("/tmp/si."n".pem")}' /tmp/sysi.pem || true
-          for f in /tmp/si.*.pem; do
-            openssl x509 -in "$f" -noout -subject 2>/dev/null | grep -o 'OU=[^,]*' || true
-          done
-          rm -f /tmp/sysi.pem /tmp/si.*.pem
-          echo "===== control: can codesign sign AD-HOC on this runner at all? ====="
-          # Ad-hoc needs no identity, keychain or trust. If THIS fails, codesign/Security on the
-          # runner is broken generally and the certificate work is a red herring.
+          export APPLE_CERTIFICATE="$(base64 -i /tmp/signing.p12 | tr -d '\n')"
+          export APPLE_CERTIFICATE_PASSWORD="$APPLE_SIGNING_IDENTITIES_PASSWORD"
+          echo "APPLE_CERTIFICATE length: ${#APPLE_CERTIFICATE} chars (base64, value not printed)"
+          rm -f /tmp/signing.p12
+          echo "===== control: can codesign sign ad-hoc on this runner? ====="
           cp /bin/echo /tmp/adhoc-bin
           arc=0; runt 30 codesign -vvvv --force --sign - /tmp/adhoc-bin || arc=$?
-          echo "ad-hoc exit=$arc"
-          rm -f /tmp/adhoc-bin
-          echo "===== end inline setup ====="
+          echo "ad-hoc exit=$arc"; rm -f /tmp/adhoc-bin
+          echo "===== keychain state BEFORE tauri (it appends, so this should be preserved) ====="
+          security list-keychains -d user || true
+          echo "===== handing signing to tauri ====="
           # ---- end TEMPORARY ----
           npx tauri build --target <<parameters.target-triple>>
           bazel run --define version=$(git rev-parse HEAD) //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
