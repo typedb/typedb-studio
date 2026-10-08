@@ -126,31 +126,70 @@ commands:
           rustup target add <<parameters.target-triple>>
           # --define version doesn't seem to work, so we just write it into the VERSION file.
           git rev-parse HEAD > VERSION
-          # ---- TEMPORARY: use tauri's own signing path instead of a hand-rolled keychain ----
-          # tauri-macos-sign creates and manages its own keychain when APPLE_CERTIFICATE and
-          # APPLE_CERTIFICATE_PASSWORD are set, and signs with `codesign --keychain <path>`.
-          # Unlike the bazel keychain_setup it APPENDS to the user search list rather than
-          # replacing it. The identity still comes from tauri.conf.json's signingIdentity,
-          # which must be a substring of the certificate's identity.
+          # ---- TEMPORARY: keychain setup + wait for trustd. Remove once signing is green. ----
+          # Root cause: trustd observes keychain search-list changes ASYNCHRONOUSLY, so codesign
+          # run immediately after the keychain is created evaluates against the stale list and
+          # fails with "unable to build chain to self-signed root" / errSecInternalComponent.
+          # That is why this was non-deterministic and why every implementation failed alike.
+          # Fix: poll by signing a throwaway binary until it succeeds, then build for real.
           runt() { perl -e 'alarm shift; exec @ARGV' "$@"; }   # macOS has no GNU timeout
+          KC=typedb-studio-apple-signing-keychain
+          KCPW="ci-$RANDOM-$RANDOM"
+          IDENT="Developer ID Application: TYPEDB LTD (RHKH8FP9SX)"
+          P12=/tmp/signing.p12
           if [ -z "${APPLE_SIGNING_IDENTITIES_PASSWORD:-}" ]; then
             echo "Error: APPLE_SIGNING_IDENTITIES_PASSWORD must be set to sign"; exit 1
           fi
-          curl -sS --netrc --max-time 60 -o /tmp/signing.p12 \
+          curl -sS --netrc --max-time 60 -o "$P12" \
             https://repo.typedb.com/basic/private-tools/raw/files/TypeDBDeveloperIDCombined.p12
-          echo "p12 sha256: $(shasum -a 256 /tmp/signing.p12 | awk '{print $1}')"
-          echo "   expected: 51807e7c881c1e7885d55fa6a74f4d0229787bcc5fdd164b33b81238b0199baf"
-          export APPLE_CERTIFICATE="$(base64 -i /tmp/signing.p12 | tr -d '\n')"
-          export APPLE_CERTIFICATE_PASSWORD="$APPLE_SIGNING_IDENTITIES_PASSWORD"
-          echo "APPLE_CERTIFICATE length: ${#APPLE_CERTIFICATE} chars (base64, value not printed)"
-          rm -f /tmp/signing.p12
-          echo "===== control: can codesign sign ad-hoc on this runner? ====="
-          cp /bin/echo /tmp/adhoc-bin
-          arc=0; runt 30 codesign -vvvv --force --sign - /tmp/adhoc-bin || arc=$?
-          echo "ad-hoc exit=$arc"; rm -f /tmp/adhoc-bin
-          echo "===== keychain state BEFORE tauri (it appends, so this should be preserved) ====="
-          security list-keychains -d user || true
-          echo "===== handing signing to tauri ====="
+          echo "p12 sha256: $(shasum -a 256 "$P12" | awk '{print $1}')"
+          security delete-keychain "$KC" 2>/dev/null || true
+          security create-keychain -p "$KCPW" "$KC"
+          security default-keychain -s "$KC"
+          security unlock-keychain -p "$KCPW" "$KC"
+          security set-keychain-settings "$KC"
+          # keep login.keychain in the list; replacing it wholesale is what trustd has to catch up on
+          security list-keychains -d user -s login.keychain "$KC"
+          # -A: no ACL prompt for any application (headless cannot answer one)
+          security import "$P12" -k "$KC" -P "$APPLE_SIGNING_IDENTITIES_PASSWORD" \
+            -A -T /usr/bin/codesign -T /usr/bin/productsign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KCPW" "$KC" >/dev/null
+          # macOS ships the G1 intermediate but not G2, which the renewed TYPEDB cert chains via.
+          curl -sS --max-time 30 -o /tmp/g2.cer \
+            https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer || true
+          security import /tmp/g2.cer -k "$KC" -t cert -f openssl 2>/dev/null || true
+          rm -f "$P12" /tmp/g2.cer
+          # A trust-settings override produces the SAME "unable to build chain to self-signed
+          # root" symptom as a missing intermediate, so rule it out explicitly. A stock machine
+          # should report no user/admin trust settings for code-signing certs.
+          echo "===== trust settings: user domain ====="
+          security dump-trust-settings 2>&1 | head -30 || true
+          echo "===== trust settings: admin domain ====="
+          security dump-trust-settings -d 2>&1 | head -30 || true
+          echo "===== Apple Root CA present in the system trust domain? ====="
+          security dump-trust-settings -s 2>/dev/null | grep -A2 "^Cert .*Apple Root CA$" | head -12 || \
+            echo "  (not listed by that exact name)"
+          echo "===== waiting for trustd to observe the new keychain ====="
+          signed=no
+          for i in $(seq 1 45); do
+            cp /bin/echo /tmp/await-bin
+            if runt 25 codesign --force --timestamp=none --sign "$IDENT" /tmp/await-bin >/dev/null 2>&1; then
+              echo "codesign became usable after ${i}s"
+              signed=yes
+              break
+            fi
+            sleep 1
+          done
+          rm -f /tmp/await-bin
+          if [ "$signed" != "yes" ]; then
+            echo "codesign never became usable after 45s; last attempt in full:"
+            cp /bin/echo /tmp/await-bin
+            runt 25 codesign -vvvv --force --timestamp=none --sign "$IDENT" /tmp/await-bin || true
+            security find-identity -v -p codesigning "$KC" || true
+            security list-keychains -d user || true
+            rm -f /tmp/await-bin
+            exit 1
+          fi
           # ---- end TEMPORARY ----
           npx tauri build --target <<parameters.target-triple>>
           bazel run --define version=$(git rev-parse HEAD) //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
