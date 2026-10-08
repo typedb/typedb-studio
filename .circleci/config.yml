@@ -491,11 +491,15 @@ workflows:
       - deploy-mac-arm64-snapshot:
           filters:
             branches:
-              only: [banana]
+              # TEMPORARY: validating the renewed Developer ID cert; restore to
+              # [banana] once a snapshot signs and notarises cleanly.
+              only: [development]
       - deploy-mac-x86_64-snapshot:
           filters:
             branches:
-              only: [banana]
+              # TEMPORARY: validating the renewed Developer ID cert; restore to
+              # [banana] once a snapshot signs and notarises cleanly.
+              only: [development]
       - deploy-windows-x86_64-snapshot:
           context: [default]
           filters:
