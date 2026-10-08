@@ -126,95 +126,17 @@ commands:
           rustup target add <<parameters.target-triple>>
           # --define version doesn't seem to work, so we just write it into the VERSION file.
           git rev-parse HEAD > VERSION
-          # ---- TEMPORARY: keychain setup + wait for trustd. Remove once signing is green. ----
-          # Root cause: trustd observes keychain search-list changes ASYNCHRONOUSLY, so codesign
-          # run immediately after the keychain is created evaluates against the stale list and
-          # fails with "unable to build chain to self-signed root" / errSecInternalComponent.
-          # That is why this was non-deterministic and why every implementation failed alike.
-          # Fix: poll by signing a throwaway binary until it succeeds, then build for real.
-          runt() { perl -e 'alarm shift; exec @ARGV' "$@"; }   # macOS has no GNU timeout
-          KC=typedb-studio-apple-signing-keychain
-          KCPW="ci-$RANDOM-$RANDOM"
-          IDENT="Developer ID Application: TYPEDB LTD (RHKH8FP9SX)"
-          P12=/tmp/signing.p12
-          if [ -z "${APPLE_SIGNING_IDENTITIES_PASSWORD:-}" ]; then
-            echo "Error: APPLE_SIGNING_IDENTITIES_PASSWORD must be set to sign"; exit 1
-          fi
-          curl -sS --netrc --max-time 60 -o "$P12" \
-            https://repo.typedb.com/basic/private-tools/raw/files/TypeDBDeveloperIDCombined.p12
-          echo "p12 sha256: $(shasum -a 256 "$P12" | awk '{print $1}')"
-          security delete-keychain "$KC" 2>/dev/null || true
-          security create-keychain -p "$KCPW" "$KC"
-          security default-keychain -s "$KC"
-          security unlock-keychain -p "$KCPW" "$KC"
-          security set-keychain-settings "$KC"
-          # keep login.keychain in the list; replacing it wholesale is what trustd has to catch up on
-          security list-keychains -d user -s login.keychain "$KC"
-          # -A: no ACL prompt for any application (headless cannot answer one)
-          security import "$P12" -k "$KC" -P "$APPLE_SIGNING_IDENTITIES_PASSWORD" \
-            -A -T /usr/bin/codesign -T /usr/bin/productsign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KCPW" "$KC" >/dev/null
-          # macOS ships the G1 intermediate but not G2, which the renewed TYPEDB cert chains via.
-          curl -sS --max-time 30 -o /tmp/g2.cer \
-            https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer || true
-          security import /tmp/g2.cer -k "$KC" -t cert -f openssl 2>/dev/null || true
-          # codesign has to find the self-signed ROOT in a searchable keychain to assemble the
-          # chain it embeds; being trusted in the system domain is not sufficient. The only run
-          # that has ever signed successfully had this import, and dropping it regressed us.
-          security find-certificate -a -c "Apple Root CA" -p \
-            /System/Library/Keychains/SystemRootCertificates.keychain > /tmp/roots.pem 2>/dev/null || true
-          rm -f /tmp/r.*.pem
-          awk '/BEGIN CERT/{n++} {print > ("/tmp/r."n".pem")}' /tmp/roots.pem || true
-          for f in /tmp/r.*.pem; do
-            cn=$(openssl x509 -in "$f" -noout -subject 2>/dev/null | sed 's/.*CN=//; s/,.*//')
-            if [ "$cn" = "Apple Root CA" ]; then
-              echo "importing exact root: $cn"
-              security import "$f" -k "$KC" -t cert -f openssl 2>/dev/null || true
-            fi
-          done
-          rm -f "$P12" /tmp/g2.cer /tmp/roots.pem /tmp/r.*.pem
-          echo "===== certs now in the signing keychain (expect leaf, G2, Apple Root CA) ====="
-          security find-certificate -a -Z "$KC" 2>/dev/null | grep '"labl"' || true
-          # Apple DTS: this exact error means the Developer ID G2 intermediate is missing.
-          # It IS in our signing keychain and still fails, so the question is WHERE it must live.
-          # macOS ships G1 in SystemRootCertificates (which is why the old cert worked) but not G2.
-          # Probe three locations in one run. `security import` into System.keychain returns
-          # "Function or operation not implemented", so use `add-certificates` instead.
-          # NB deliberately NOT using add-trusted-cert: a trust override masks the real problem.
-          curl -sS --max-time 30 -o /tmp/g2.cer \
-            https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer || true
-          probe() {
-            cp /bin/echo /tmp/p-bin
-            local rc=0
-            runt 30 codesign --force --timestamp=none --sign "$IDENT" /tmp/p-bin >/dev/null 2>&1 || rc=$?
-            rm -f /tmp/p-bin
-            echo "  -> codesign exit=$rc"
-            return $rc
-          }
-          OK=no
-          echo "===== A: G2 in the signing keychain only (current state) ====="
-          if probe; then OK=yes; fi
-          if [ "$OK" = no ]; then
-            echo "===== B: also add G2 to the user's login keychain ====="
-            security add-certificates -k "$HOME/Library/Keychains/login.keychain-db" /tmp/g2.cer 2>&1 || true
-            if probe; then OK=yes; echo "  LOGIN KEYCHAIN was the required location"; fi
-          fi
-          if [ "$OK" = no ]; then
-            echo "===== C: also add G2 to the SYSTEM keychain (where G1 effectively lives) ====="
-            sudo security add-certificates -k /Library/Keychains/System.keychain /tmp/g2.cer 2>&1 || true
-            if probe; then OK=yes; echo "  SYSTEM KEYCHAIN was the required location"; fi
-          fi
-          rm -f /tmp/g2.cer
-          if [ "$OK" != yes ]; then
-            echo "===== none of the three locations worked; full output of a final attempt ====="
-            cp /bin/echo /tmp/p-bin
-            runt 30 codesign -vvvv --force --timestamp=none --sign "$IDENT" /tmp/p-bin || true
-            rm -f /tmp/p-bin
-            security find-identity -v -p codesigning "$KC" || true
-            exit 1
-          fi
-          echo "===== signing is usable; proceeding to build ====="
-          # ---- end TEMPORARY ----
+          bazel run --define version=$(git rev-parse HEAD) //:setup-mac-signing-keychain
+          # macOS ships the Developer ID G1 intermediate (OU=Apple Certification Authority) inside
+          # SystemRootCertificates, but NOT G2 (OU=G2). Certs issued/renewed after ~Sept 2021
+          # chain via G2, and codesign will only pick the intermediate up from the LOGIN keychain
+          # -- putting it in the signing keychain is not enough. Without this, signing fails with
+          # "unable to build chain to self-signed root" / errSecInternalComponent.
+          curl -sS --max-time 30 -o /tmp/DeveloperIDG2CA.cer \
+            https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
+          security add-certificates -k "$HOME/Library/Keychains/login.keychain-db" \
+            /tmp/DeveloperIDG2CA.cer
+          rm -f /tmp/DeveloperIDG2CA.cer
           npx tauri build --target <<parameters.target-triple>>
           bazel run --define version=$(git rev-parse HEAD) //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
 
@@ -252,6 +174,16 @@ commands:
           pnpm build
           rustup target add <<parameters.target-triple>>
           bazel run //:setup-mac-signing-keychain
+          # macOS ships the Developer ID G1 intermediate (OU=Apple Certification Authority) inside
+          # SystemRootCertificates, but NOT G2 (OU=G2). Certs issued/renewed after ~Sept 2021
+          # chain via G2, and codesign will only pick the intermediate up from the LOGIN keychain
+          # -- putting it in the signing keychain is not enough. Without this, signing fails with
+          # "unable to build chain to self-signed root" / errSecInternalComponent.
+          curl -sS --max-time 30 -o /tmp/DeveloperIDG2CA.cer \
+            https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
+          security add-certificates -k "$HOME/Library/Keychains/login.keychain-db" \
+            /tmp/DeveloperIDG2CA.cer
+          rm -f /tmp/DeveloperIDG2CA.cer
           npx tauri build --target <<parameters.target-triple>>
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- release
 
