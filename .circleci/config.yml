@@ -127,10 +127,6 @@ commands:
           # --define version doesn't seem to work, so we just write it into the VERSION file.
           git rev-parse HEAD > VERSION
           bazel run --define version=$(git rev-parse HEAD) //:setup-mac-signing-keychain
-          # A freshly created keychain carries a 300s auto-lock timeout, and the random
-          # unlock password is not retained anywhere, so it relocks during the long cargo
-          # build and codesign then fails with "item could not be found in the keychain".
-          security set-keychain-settings typedb-studio-apple-signing-keychain
           npx tauri build --target <<parameters.target-triple>>
           bazel run --define version=$(git rev-parse HEAD) //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
 
@@ -168,10 +164,6 @@ commands:
           pnpm build
           rustup target add <<parameters.target-triple>>
           bazel run //:setup-mac-signing-keychain
-          # A freshly created keychain carries a 300s auto-lock timeout, and the random
-          # unlock password is not retained anywhere, so it relocks during the long cargo
-          # build and codesign then fails with "item could not be found in the keychain".
-          security set-keychain-settings typedb-studio-apple-signing-keychain
           npx tauri build --target <<parameters.target-triple>>
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- release
 
@@ -499,15 +491,11 @@ workflows:
       - deploy-mac-arm64-snapshot:
           filters:
             branches:
-              # TEMPORARY: validating the mac codesign keychain fix; restore to
-              # [banana] once a snapshot signs and notarises cleanly.
-              only: [development]
+              only: [banana]
       - deploy-mac-x86_64-snapshot:
           filters:
             branches:
-              # TEMPORARY: validating the mac codesign keychain fix; restore to
-              # [banana] once a snapshot signs and notarises cleanly.
-              only: [development]
+              only: [banana]
       - deploy-windows-x86_64-snapshot:
           context: [default]
           filters:
