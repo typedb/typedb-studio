@@ -198,6 +198,7 @@ keychain_setup(
 
     partition_list = "apple-tool:,apple:,codesign:",
     trusted_apps = ["/usr/bin/codesign", "/usr/bin/productsign"],
+    login_keychain_certificates = ["Developer ID Certification Authority"],
 
     passwords = [],
     tags = ["manual"],

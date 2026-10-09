@@ -29,7 +29,7 @@ bazel_dep(name = "typedb_bazel_distribution", version = "0.0.0")
 git_override(
     module_name = "typedb_bazel_distribution",
     remote = "https://github.com/alexjpwalker/bazel-distribution",
-    commit = "2e1add354ab967263d9f508fdbdbbd30f164be8b",
+    commit = "60a72658306d8947f05ae83c3f249394231f886c",
 )
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
