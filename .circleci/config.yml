@@ -127,16 +127,6 @@ commands:
           # --define version doesn't seem to work, so we just write it into the VERSION file.
           git rev-parse HEAD > VERSION
           bazel run --define version=$(git rev-parse HEAD) //:setup-mac-signing-keychain
-          # macOS ships the Developer ID G1 intermediate (OU=Apple Certification Authority) inside
-          # SystemRootCertificates, but NOT G2 (OU=G2). Certs issued/renewed after ~Sept 2021
-          # chain via G2, and codesign will only pick the intermediate up from the LOGIN keychain
-          # -- putting it in the signing keychain is not enough. Without this, signing fails with
-          # "unable to build chain to self-signed root" / errSecInternalComponent.
-          curl -sS --max-time 30 -o /tmp/DeveloperIDG2CA.cer \
-            https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
-          security add-certificates -k "$HOME/Library/Keychains/login.keychain-db" \
-            /tmp/DeveloperIDG2CA.cer
-          rm -f /tmp/DeveloperIDG2CA.cer
           npx tauri build --target <<parameters.target-triple>>
           bazel run --define version=$(git rev-parse HEAD) //:deploy-mac-<<parameters.target-arch>>-dmg -- snapshot
 
@@ -174,16 +164,6 @@ commands:
           pnpm build
           rustup target add <<parameters.target-triple>>
           bazel run //:setup-mac-signing-keychain
-          # macOS ships the Developer ID G1 intermediate (OU=Apple Certification Authority) inside
-          # SystemRootCertificates, but NOT G2 (OU=G2). Certs issued/renewed after ~Sept 2021
-          # chain via G2, and codesign will only pick the intermediate up from the LOGIN keychain
-          # -- putting it in the signing keychain is not enough. Without this, signing fails with
-          # "unable to build chain to self-signed root" / errSecInternalComponent.
-          curl -sS --max-time 30 -o /tmp/DeveloperIDG2CA.cer \
-            https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
-          security add-certificates -k "$HOME/Library/Keychains/login.keychain-db" \
-            /tmp/DeveloperIDG2CA.cer
-          rm -f /tmp/DeveloperIDG2CA.cer
           npx tauri build --target <<parameters.target-triple>>
           bazel run //:deploy-mac-<<parameters.target-arch>>-dmg -- release
 
@@ -511,14 +491,12 @@ workflows:
       - deploy-mac-arm64-snapshot:
           filters:
             branches:
-              # TEMPORARY: validating the renewed Developer ID cert; restore to
-              # [banana] once a snapshot signs and notarises cleanly.
+              # TEMPORARY: verifying the bazel-distribution G2 fix; restore to [banana]
               only: [development]
       - deploy-mac-x86_64-snapshot:
           filters:
             branches:
-              # TEMPORARY: validating the renewed Developer ID cert; restore to
-              # [banana] once a snapshot signs and notarises cleanly.
+              # TEMPORARY: verifying the bazel-distribution G2 fix; restore to [banana]
               only: [development]
       - deploy-windows-x86_64-snapshot:
           context: [default]
