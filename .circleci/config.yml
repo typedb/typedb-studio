@@ -501,13 +501,17 @@ workflows:
             branches:
               only: [banana]
       - deploy-mac-arm64-snapshot:
+          context: [default]
           filters:
             branches:
-              only: [banana]
+              # TEMPORARY: verifying the new p12 + rotated password; restore to [banana]
+              only: [development]
       - deploy-mac-x86_64-snapshot:
+          context: [default]
           filters:
             branches:
-              only: [banana]
+              # TEMPORARY: verifying the new p12 + rotated password; restore to [banana]
+              only: [development]
       - deploy-windows-x86_64-snapshot:
           context: [default]
           filters:
@@ -532,10 +536,12 @@ workflows:
             branches:
               only: master
       - deploy-mac-arm64-release:
+          context: [default]
           filters:
             branches:
               only: master
       - deploy-mac-x86_64-release:
+          context: [default]
           filters:
             branches:
               only: master
