@@ -489,11 +489,13 @@ workflows:
             branches:
               only: [banana]
       - deploy-mac-arm64-snapshot:
+          context: [default]
           filters:
             branches:
               # TEMPORARY: verifying the bazel-distribution G2 fix; restore to [banana]
               only: [development]
       - deploy-mac-x86_64-snapshot:
+          context: [default]
           filters:
             branches:
               # TEMPORARY: verifying the bazel-distribution G2 fix; restore to [banana]
@@ -522,10 +524,12 @@ workflows:
             branches:
               only: master
       - deploy-mac-arm64-release:
+          context: [default]
           filters:
             branches:
               only: master
       - deploy-mac-x86_64-release:
+          context: [default]
           filters:
             branches:
               only: master
