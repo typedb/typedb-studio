@@ -492,13 +492,13 @@ workflows:
           context: [default]
           filters:
             branches:
-              # TEMPORARY: verifying the bazel-distribution G2 fix; restore to [banana]
+              # TEMPORARY: verifying the new p12 + rotated password; restore to [banana]
               only: [development]
       - deploy-mac-x86_64-snapshot:
           context: [default]
           filters:
             branches:
-              # TEMPORARY: verifying the bazel-distribution G2 fix; restore to [banana]
+              # TEMPORARY: verifying the new p12 + rotated password; restore to [banana]
               only: [development]
       - deploy-windows-x86_64-snapshot:
           context: [default]

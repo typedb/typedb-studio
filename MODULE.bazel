@@ -36,6 +36,6 @@ http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_
 http_file(
     name = "vaticle_developer_id_combined",
     url = "https://repo.typedb.com/basic/private-tools/raw/files/TypeDBDeveloperIDCombined.p12",
-    sha256 = "51807e7c881c1e7885d55fa6a74f4d0229787bcc5fdd164b33b81238b0199baf",
+    sha256 = "a61b4c24292c584b11893a1e8c8d328dbbdfc46d1344c6c991ff1c55a615914a",
     downloaded_file_path = "TypeDBDeveloperIDCombined.p12",
 )
