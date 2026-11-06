@@ -1,0 +1,6 @@
+<div class="support-agent-panel" [class.open]="supportAgent.open$ | async" role="dialog" aria-label="AI Support">
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+  <div #host class="chatkit-host"></div>
+</div>

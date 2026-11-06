@@ -15,7 +15,7 @@ import { SnackbarService } from "./snackbar.service";
  * which share the database schema and chat data with the AI backend (OpenAI).
  *
  * Consent is a single global, persisted opt-in flag. It does NOT gate the
- * Intercom-based "AI Support" button, which is unrelated. Enforcement lives at
+ * ChatKit-based "AI Support" button, which never sees schema or data. Enforcement lives at
  * the network chokepoint (`CloudService`) so no path can leak data; this
  * service drives the consent UX (lazy grant modal on first use, withdrawal).
  */
