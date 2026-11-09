@@ -14,6 +14,7 @@ export const environment: Environment = {
     env: "local",
     /* Use http://localhost:8080 for locally running Cloud, https://cloud.typedb.dev for hosted dev Cloud */
     cloudUrl: "https://cloud.typedb.dev",
+    supportAgentUrl: "https://development.typedb.com/api/support-agent?source=studio",
     sampleDatasetsManifestUrl: "https://raw.githubusercontent.com/typedb/typedb-examples/refs/heads/master/sample-datasets.yml",
 };
 

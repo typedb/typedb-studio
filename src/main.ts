@@ -22,7 +22,6 @@ import { provideRouter, TitleStrategy } from "@angular/router";
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from "@angular/material/form-field";
 import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipDefaultOptions } from "@angular/material/tooltip";
 import { MAT_CHECKBOX_DEFAULT_OPTIONS, MatCheckboxDefaultOptions } from "@angular/material/checkbox";
-import Intercom from "@intercom/messenger-js-sdk";
 import { Overlay } from "@angular/cdk/overlay";
 import "posthog-js/dist/exception-autocapture";
 import "posthog-js/dist/dead-clicks-autocapture";
@@ -65,12 +64,6 @@ if (environment.env !== "local") {
         }
     );
 }
-
-Intercom({
-    app_id: "zof896ic",
-    hide_default_launcher: true,
-    custom_launcher_selector: ".ask-typedb-ai",
-});
 
 bootstrapApplication(RootComponent, {
     providers: [

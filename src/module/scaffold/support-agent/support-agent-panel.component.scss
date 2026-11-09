@@ -1,0 +1,46 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+@use "shapes";
+
+:host {
+    display: contents;
+}
+
+.support-agent-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    // Above the sidenavs, below Material dialogs and snackbars (cdk overlay is 1000).
+    z-index: 900;
+    width: 440px;
+    max-width: 100vw;
+    display: none;
+    flex-direction: column;
+    background: var(--theme-deep-purple);
+    border-left: shapes.$border;
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+
+    &.open {
+        display: flex;
+    }
+
+    .error {
+        margin: 16px;
+    }
+
+    .chatkit-host {
+        flex: 1 1 auto;
+        min-height: 0;
+
+        openai-chatkit {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    }
+}

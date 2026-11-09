@@ -5,7 +5,7 @@
  */
 
 import { animate, state, style, transition, trigger } from "@angular/animations";
-import { NgClass } from "@angular/common";
+import { AsyncPipe, NgClass } from "@angular/common";
 import { AfterViewInit, Component, ElementRef, Input, ViewChild } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 import { MatSidenavModule } from "@angular/material/sidenav";
@@ -13,9 +13,11 @@ import { ButtonComponent } from "../../../framework/button/button.component";
 import { FeedbackDialogComponent } from "../../../framework/modal/feedback/feedback-dialog.component";
 import { SpinnerComponent } from "../../../framework/spinner/spinner.component";
 import { AppData } from "../../../service/app-data.service";
+import { SupportAgentService } from "../../../service/support-agent.service";
 import { ConnectionWidgetComponent } from "../../connection/widget/connection-widget.component";
 import { RightSidebarComponent } from "../sidebar/right/right-sidebar.component";
 import { SidebarComponent } from "../sidebar/sidebar.component";
+import { SupportAgentPanelComponent } from "../support-agent/support-agent-panel.component";
 
 export type ResourceAvailability = "ready" | "loading" | "failed";
 
@@ -24,7 +26,8 @@ export type ResourceAvailability = "ready" | "loading" | "failed";
     templateUrl: "./page-scaffold.component.html",
     styleUrls: ["./page-scaffold.component.scss"],
     imports: [
-        SidebarComponent, RightSidebarComponent, SpinnerComponent, NgClass, MatSidenavModule, ButtonComponent, ConnectionWidgetComponent,
+        SidebarComponent, RightSidebarComponent, SpinnerComponent, NgClass, AsyncPipe, MatSidenavModule, ButtonComponent,
+        ConnectionWidgetComponent, SupportAgentPanelComponent,
     ],
     animations: [
         trigger("sidebarLeftMargin", [
@@ -42,7 +45,7 @@ export class PageScaffoldComponent implements AfterViewInit {
     condensed = false;
     initializing = true;
 
-    constructor(private appData: AppData, private dialog: MatDialog) {
+    constructor(private appData: AppData, private dialog: MatDialog, readonly supportAgent: SupportAgentService) {
         // Disable CSS transitions during initial render to prevent sidebar flicker
         setTimeout(() => this.initializing = false);
     }
