@@ -100,20 +100,20 @@ export class SupportAgentPanelComponent implements AfterViewInit, OnDestroy {
             },
             history: { enabled: true, showDelete: true, showRename: false },
             startScreen: {
-                greeting: "What would you like to know about TypeDB?",
+                greeting: "How can I help you today?",
                 prompts: [
-                    { label: "Connect to a server", prompt: "How do I connect TypeDB Studio to my TypeDB server?" },
+                    { label: "Get started", prompt: "How do I get started with TypeDB Studio? Also briefly include info about and links to TypeDB crash courses." },
                     {
-                        label: "Write a query",
-                        prompt: "Help me write a TypeQL query. I'll provide the relevant schema and details of the query I want you to write.",
+                        label: "TypeDB Studio features",
+                        prompt: "Walk me through TypeDB Studio's features.",
                     },
                     {
-                        label: "Design a schema",
-                        prompt: "Help me design a TypeDB schema. I'll describe the domain in a sentence or two. Make sensible assumptions and give me a first draft we can refine.",
+                        label: "Visualise data",
+                        prompt: "Describe how to visualise data in TypeDB Studio, and tell me how to access Agent Mode for AI-assisted visualisation.",
                     },
                     {
-                        label: "What's new",
-                        prompt: "What's the latest news from TypeDB? Use recent news-like blog posts and recent releases in the main TypeDB repos as content sources (for example: typedb, typeql, typedb-studio, typedb-driver, typedb-tools, typedb-examples). In your summary, include only 'major' / interesting news and present news broken down by theme, not by content source.",
+                        label: "Design schema / query data",
+                        prompt: "Explain how to access Agent Mode for AI-assisted schema design and query writing in TypeDB Studio.",
                     },
                 ],
             },
