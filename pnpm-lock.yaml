@@ -77,9 +77,6 @@ importers:
       '@hhangular/resizable':
         specifier: 1.18.1
         version: 1.18.1
-      '@intercom/messenger-js-sdk':
-        specifier: 0.0.14
-        version: 0.0.14
       '@lezer/common':
         specifier: 1.5.0
         version: 1.5.0
@@ -174,6 +171,9 @@ importers:
       '@lezer/generator':
         specifier: 1.8.0
         version: 1.8.0
+      '@openai/chatkit':
+        specifier: 1.9.0
+        version: 1.9.0
       '@sanity/asset-utils':
         specifier: 1.3.0
         version: 1.3.0
@@ -1642,9 +1642,6 @@ packages:
       '@types/node':
         optional: true
 
-  '@intercom/messenger-js-sdk@0.0.14':
-    resolution: {integrity: sha512-2dH4BDAh9EI90K7hUkAdZ76W79LM45Sd1OBX7t6Vzy8twpNiQ5X+7sH9G5hlJlkSGnf+vFWlFcy9TOYAyEs1hA==}
-
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
     engines: {node: '>=12'}
@@ -2059,6 +2056,9 @@ packages:
   '@npmcli/run-script@9.1.0':
     resolution: {integrity: sha512-aoNSbxtkePXUlbZB+anS1LqsJdctG5n3UVhfU47+CDdwMi6uNTBMF9gPcQRnqghQd2FGzcwwIFBruFMxjhBewg==}
     engines: {node: ^18.17.0 || >=20.5.0}
+
+  '@openai/chatkit@1.9.0':
+    resolution: {integrity: sha512-AbqNYaCkQfOauFIk/xL3LFmZ/zIBJuvV71EMUK1o1Tu3/qCG5qRjuDnTUVLkkX9Al2ZYQ6yB1oyWN0jNhoBRMQ==}
 
   '@parcel/watcher-android-arm64@2.5.6':
     resolution: {integrity: sha512-YQxSS34tPF/6ZG7r/Ih9xy+kP/WwediEUsqmtf0cuCV5TPPKw/PQHRhueUo6JdeFJaqV3pyjm0GdYjZotbRt/A==}
@@ -7993,8 +7993,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.3.0
 
-  '@intercom/messenger-js-sdk@0.0.14': {}
-
   '@isaacs/cliui@8.0.2':
     dependencies:
       string-width: 5.1.2
@@ -8383,6 +8381,8 @@ snapshots:
       which: 5.0.0
     transitivePeerDependencies:
       - supports-color
+
+  '@openai/chatkit@1.9.0': {}
 
   '@parcel/watcher-android-arm64@2.5.6':
     optional: true

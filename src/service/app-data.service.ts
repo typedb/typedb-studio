@@ -784,7 +784,7 @@ const AI_CONSENT = "aiConsent";
 interface AiConsentData {
     /** True once the user has explicitly opted in to AI Agent features, which
      *  share the database schema and chat data with the AI backend (OpenAI).
-     *  Gates every AI Agent path; does NOT gate Intercom "AI Support". */
+     *  Gates every AI Agent path; does NOT gate the ChatKit "AI Support" widget. */
     granted: boolean;
     /** ms since epoch the consent was granted, for display/audit. null when
      *  never granted or after withdrawal. */

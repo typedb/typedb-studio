@@ -24,7 +24,7 @@
           <tp-button buttonId="actionBarFeedback" buttonStyle="secondary" (click)="openFeedbackDialog()">
             <span>Feedback</span><i class="fa-light fa-message-lines"></i>
           </tp-button>
-          <tp-button buttonId="actionBarSupport" buttonClass="ask-typedb-ai" buttonStyle="secondary">
+          <tp-button buttonId="actionBarSupport" buttonStyle="secondary" [buttonClass]="(supportAgent.open$ | async) ? 'active' : ''" (click)="supportAgent.toggle()">
             <span>AI Support</span><i class="fa-light fa-circle-question"></i>
           </tp-button>
           <tp-button buttonId="actionBarSupport" buttonStyle="secondary" [buttonClass]="rightSidebar.opened ? 'active' : ''" (click)="rightSidebar.toggle(undefined, 'mouse')">
@@ -48,3 +48,5 @@
     <div class="tp-sidenav-container right"><tp-right-sidebar/></div>
   </mat-sidenav>
 </mat-sidenav-container>
+
+<ts-support-agent-panel/>

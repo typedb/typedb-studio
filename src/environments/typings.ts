@@ -7,5 +7,7 @@
 export interface Environment {
     env: string;
     cloudUrl: string;
+    /** ChatKit backend for "AI Support" (typedb-web support-agent edge function). */
+    supportAgentUrl: string;
     sampleDatasetsManifestUrl: string;
 }
