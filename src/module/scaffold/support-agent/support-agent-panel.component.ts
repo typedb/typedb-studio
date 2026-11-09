@@ -109,11 +109,11 @@ export class SupportAgentPanelComponent implements AfterViewInit, OnDestroy {
                     },
                     {
                         label: "Visualise data",
-                        prompt: "I'm in TypeDB Studio. Describe how to visualise data in it, and tell me how to access Agent Mode for AI-assisted visualisation.",
+                        prompt: "I'm in TypeDB Studio. Describe how to visualise data in it. Mention Agent Mode and how to access it for AI-assisted visualisation.",
                     },
                     {
                         label: "Design schema / query data",
-                        prompt: "I'm in TypeDB Studio. Explain how to access Agent Mode for AI-assisted schema design and query writing.",
+                        prompt: "I'm in TypeDB Studio. Explain what Agent Mode is and how to access it for AI-assisted schema design and query writing.",
                     },
                 ],
             },
