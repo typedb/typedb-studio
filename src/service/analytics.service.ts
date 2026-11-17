@@ -7,7 +7,6 @@
 import { Injectable } from "@angular/core";
 import { environment } from "../environments/environment";
 import posthog, { Properties } from "posthog-js/dist/module.no-external";
-import { AnalyticsBrowser, ID as CioID, UserTraits } from "@customerio/cdp-analytics-browser";
 
 const GOOGLE_TAG_ID = "G-SNVZCNLJ9R"; // used by Google Analytics
 
@@ -15,18 +14,6 @@ const GOOGLE_TAG_ID = "G-SNVZCNLJ9R"; // used by Google Analytics
     providedIn: "root",
 })
 export class AnalyticsService {
-    private _cio = AnalyticsBrowser.load({
-        writeKey: environment.env === "production" ? "13252ebf8d339959b5b9" : "5fed4032be64c59cf336",
-        cdnURL: "https://typedb.com/platform",
-    }, {
-        integrations: {
-            "Customer.io Data Pipelines": {
-                apiHost: "typedb.com/platform/v1",
-                protocol: "https",
-            },
-        },
-    });
-
     public constructor() {}
 
     posthog = {
@@ -47,18 +34,6 @@ export class AnalyticsService {
         },
         set: (userPropertiesToSet: Properties) => {
             posthog.setPersonProperties(userPropertiesToSet);
-        },
-    };
-
-    cio = {
-        identify: (id?: CioID, traits?: UserTraits) => {
-            this._cio.identify(id, traits);
-        },
-        page: () => {
-            this._cio.page();
-        },
-        reset: () => {
-            this._cio.reset();
         },
     };
 
