@@ -16,7 +16,10 @@ const GOOGLE_TAG_ID = "G-SNVZCNLJ9R"; // used by Google Analytics
 })
 export class AnalyticsService {
     private _cio = AnalyticsBrowser.load({
-        writeKey: environment.env === "production" ? "13252ebf8d339959b5b9" : "5fed4032be64c59cf336",
+        // Customer.io public keys: safe to ship in the app, cannot delete or suppress people
+        writeKey: environment.env === "production"
+            ? "pk_us_CwgT7tzEDIIhjql6vrJROXK3l8FGpSN5_1q6jKh"
+            : "pk_us_AadB8oYD2MZDFxO1wg3q3IlYRraHxrOV_4esHxz",
         cdnURL: "https://typedb.com/platform",
     }, {
         integrations: {
