@@ -5,7 +5,7 @@ TypeDB Studio is hosted on the Web at https://studio.typedb.com.
 Alternatively:
 
 - Install: https://typedb.com/docs/home/install/studio
-- Direct download: https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:3.14.0
+- Direct download: https://cloudsmith.io/~typedb/repos/public-release/packages/?q=name:^typedb-studio+version:3.13.4
 
 Desktop builds of TypeDB Studio run in the following environments:
 
@@ -20,10 +20,10 @@ Desktop builds of TypeDB Studio run in the following environments:
 
 ### TypeDB server compatibility
 
-TypeDB Studio 3.14.0 is compatible with TypeDB >= 3.3. For older TypeDB versions, enquire on the TypeDB Discord chat server (https://typedb.com/discord).
+TypeDB Studio 3.13.4 is compatible with TypeDB >= 3.3. For older TypeDB versions, enquire on the TypeDB Discord chat server (https://typedb.com/discord).
 
 ---
 
-## New features
+## Other improvements
 
-- New support agent: Retire the old support agent powered by Intercom and replace it with one powered by OpenAI that generally gives much more accurate responses.
+- Analytics: Retire Customer.io analytics script
