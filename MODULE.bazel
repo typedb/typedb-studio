@@ -12,16 +12,6 @@ bazel_dep(name = "platforms", version = "0.0.10")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 
-################################
-# Load @typedb_dependencies #
-################################
-bazel_dep(name = "typedb_dependencies", version = "0.0.0")
-git_override(
-    module_name = "typedb_dependencies",
-    remote = "https://github.com/typedb/dependencies",
-    commit = "a5c51254088f343fb8b6a9668eaf99b35503dad4",
-)
-
 ######################################
 # Load @typedb_bazel_distribution #
 ######################################
@@ -29,7 +19,17 @@ bazel_dep(name = "typedb_bazel_distribution", version = "0.0.0")
 git_override(
     module_name = "typedb_bazel_distribution",
     remote = "https://github.com/typedb/bazel-distribution",
-    commit = "3140b73924132511cfd4015479816f94351b90a8",
+    commit = "28485723a1a690ca2daf3af4d5210bbe1d37377d",
+)
+
+################################
+# Load @typedb_dependencies #
+################################
+bazel_dep(name = "typedb_dependencies", version = "0.0.0")
+git_override(
+    module_name = "typedb_dependencies",
+    remote = "https://github.com/typedb/dependencies",
+    commit = "be9e35d316db96606526446df2f9c38157b19646",
 )
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
